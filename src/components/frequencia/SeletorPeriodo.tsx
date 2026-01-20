@@ -25,10 +25,10 @@ export function SeletorPeriodo({
           variant="outline"
           className="w-full h-9 sm:h-10 px-3 sm:px-4 gap-1.5 sm:gap-2 text-sm font-medium border-border/60 bg-card hover:bg-secondary/50 shadow-sm"
         >
-          <Calendar className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+          <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <span className="truncate">
-            <span className="hidden sm:inline">Analisar: </span>
-            <span className="font-semibold">Últ. {selecionado}</span>
+            <span className="hidden sm:inline">Período: </span>
+            <span className="font-semibold">Últimos {selecionado}</span>
           </span>
           <ChevronDown className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
         </Button>

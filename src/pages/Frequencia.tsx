@@ -1,20 +1,14 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Flame } from "lucide-react";
 import { SeletorPeriodo } from "@/components/frequencia/SeletorPeriodo";
-import { SeletorOrdenacao, OrdenacaoTipo } from "@/components/frequencia/SeletorOrdenacao";
 import { DezenaCard } from "@/components/frequencia/DezenaCard";
-import {
-  useFrequenciaDezenas,
-  DezenaEstatistica,
-} from "@/hooks/useFrequenciaDezenas";
+import { useFrequenciaDezenas } from "@/hooks/useFrequenciaDezenas";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const PERIODOS = [3, 5, 10, 15, 20, 25, 50];
 
 export default function Frequencia() {
   const [periodo, setPeriodo] = useState<number>(10);
-  const [ordenacao, setOrdenacao] = useState<OrdenacaoTipo>("dezena");
 
   const {
     data: estatisticas,
@@ -22,65 +16,31 @@ export default function Frequencia() {
     error,
   } = useFrequenciaDezenas(periodo);
 
-  const ordenarEstatisticas = (
-    dados: DezenaEstatistica[] | undefined
-  ): DezenaEstatistica[] => {
-    if (!dados) return [];
-    
-    const sorted = [...dados];
-    
-    switch (ordenacao) {
-      case "recentes":
-        return sorted.sort((a, b) => b.ultimaVez - a.ultimaVez);
-      case "quentes":
-        return sorted.sort((a, b) => b.frequencia - a.frequencia);
-      case "frias":
-        return sorted.sort((a, b) => a.frequencia - b.frequencia);
-      case "sequencia":
-        return sorted.sort((a, b) => b.maiorSequencia - a.maiorSequencia);
-      case "atraso":
-        return sorted.sort((a, b) => b.maiorAtraso - a.maiorAtraso);
-      default:
-        return sorted.sort((a, b) => a.dezena - b.dezena);
-    }
-  };
-
-  const estatisticasOrdenadas = ordenarEstatisticas(estatisticas);
+  // Ordenar por dezena (ordem natural)
+  const estatisticasOrdenadas = estatisticas
+    ? [...estatisticas].sort((a, b) => a.dezena - b.dezena)
+    : [];
 
   return (
     <MainLayout>
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-        {/* Header */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
-            <Flame className="h-6 w-6 text-primary" />
-            <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
-              Dezenas Quentes e Frias
-            </h1>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Análise de frequência individual de cada dezena
-          </p>
-        </div>
-
-        {/* Filtros */}
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+        {/* Header com Seletor */}
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
+            Análise de Dezenas
+          </h1>
           <SeletorPeriodo
             periodos={PERIODOS}
             selecionado={periodo}
             onChange={setPeriodo}
           />
-          <SeletorOrdenacao
-            selecionado={ordenacao}
-            onChange={setOrdenacao}
-          />
         </div>
 
         {/* Loading State */}
         {isLoading && (
-          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {Array.from({ length: 25 }).map((_, i) => (
-              <Skeleton key={i} className="h-[260px] rounded-xl" />
+              <Skeleton key={i} className="h-[280px] rounded-xl" />
             ))}
           </div>
         )}
@@ -94,7 +54,7 @@ export default function Frequencia() {
 
         {/* Grid de Cards */}
         {!isLoading && !error && estatisticasOrdenadas && (
-          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {estatisticasOrdenadas.map((est) => (
               <DezenaCard
                 key={est.dezena}
