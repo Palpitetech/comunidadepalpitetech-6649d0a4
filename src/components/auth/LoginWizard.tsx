@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Lock, ArrowLeft, Phone, Mail, LifeBuoy } from "lucide-react";
+import { Loader2, Lock, ArrowLeft, Phone, Mail, LifeBuoy, MessageCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { RegisterWizard, type RegisterWizardProps } from "./RegisterWizard";
+import { RegisterWizard } from "./RegisterWizard";
 
 type Etapa = "identificar" | "senha" | "cadastro";
 
@@ -47,7 +47,8 @@ export function LoginWizard() {
   const normalized = useMemo(() => normalizeIdentifier(identificador), [identificador]);
   const Icon = normalized.tipo === "email" ? Mail : Phone;
 
-  const supportHref = "tel:+5516997175392";
+  const supportPhone = "tel:+5516997175392";
+  const supportWhatsApp = "https://wa.me/5516997175392";
 
   const handleIdentificar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,11 +58,22 @@ export function LoginWizard() {
     // Validação rápida no client (o backend valida de novo)
     if (normalized.tipo === "celular") {
       const d = normalized.celular || "";
+      const isShort = d.length < 10;
       const ok = d.length === 10 || d.length === 11 || (d.length >= 12 && d.startsWith("55"));
+      
+      if (isShort) {
+        toast({
+          title: "O telefone parece curto",
+          description: "Lembre-se de colocar o DDD (Ex: 11 99999-9999)",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       if (!ok) {
         toast({
-          title: "Telefone inválido",
-          description: "Digite com DDD. Ex: (16) 99999-9999",
+          title: "Verifique o número",
+          description: "O telefone não está no formato esperado. Ex: (16) 99999-9999",
           variant: "destructive",
         });
         return;
@@ -161,13 +173,27 @@ export function LoginWizard() {
                   Resetar senha
                 </Link>
 
-                <a
-                  href={supportHref}
-                  className="inline-flex items-center justify-center gap-2 text-senior-base text-muted-foreground hover:text-foreground"
-                >
-                  <LifeBuoy className="h-5 w-5" />
-                  Chamar no Suporte (16) 99717-5392
-                </a>
+                <div className="flex items-center justify-center gap-4">
+                  <a
+                    href={supportPhone}
+                    className="inline-flex items-center justify-center gap-2 text-senior-base text-muted-foreground hover:text-foreground h-12 px-4"
+                  >
+                    <Phone className="h-5 w-5" />
+                    Ligar
+                  </a>
+                  <a
+                    href={supportWhatsApp}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 text-senior-base text-primary hover:text-primary/80 h-12 px-4"
+                  >
+                    <MessageCircle className="h-5 w-5" />
+                    WhatsApp
+                  </a>
+                </div>
+                <span className="text-center text-sm text-muted-foreground">
+                  Suporte: (16) 99717-5392
+                </span>
               </div>
             </form>
           </CardContent>
