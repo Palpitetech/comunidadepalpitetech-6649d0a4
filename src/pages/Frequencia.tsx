@@ -64,7 +64,7 @@ export default function Frequencia() {
         </div>
 
         {/* Filtros */}
-        <div className="flex flex-wrap gap-3">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
           <SeletorPeriodo
             periodos={PERIODOS}
             selecionado={periodo}
