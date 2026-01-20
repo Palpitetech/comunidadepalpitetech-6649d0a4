@@ -13,11 +13,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
-  ChevronRight,
   Home,
   Users,
   BarChart3,
@@ -67,123 +64,116 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
           <SheetTitle>Menu Principal</SheetTitle>
         </SheetHeader>
 
-        {/* Botão Voltar */}
-        <div className="p-4 border-b">
-          <Button
-            variant="ghost"
+        {/* Header Unificado: Voltar + Perfil Compacto */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+          {/* Lado Esquerdo: Voltar */}
+          <button
             onClick={() => onOpenChange(false)}
-            className="w-full justify-start h-14 text-senior-base gap-3"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-[13px]"
           >
-            <ArrowLeft className="h-5 w-5" />
-            Voltar para tela anterior
-          </Button>
-        </div>
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+          </button>
 
-        {/* Bloco Perfil Clicável */}
-        <div className="p-4 border-b">
+          {/* Lado Direito: Perfil Compacto */}
           {isAuthenticated ? (
             <Link to="/perfil" onClick={closeAndNavigate}>
-              <div className="flex items-center gap-3 p-3 hover:bg-muted/50 rounded-lg cursor-pointer transition-colors">
-                <Avatar className="h-12 w-12">
+              <div className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <span className="text-[13px] font-medium text-foreground">
+                  {profile?.nome?.split(' ')[0] || 'Usuário'}
+                </span>
+                <Avatar className="h-8 w-8">
                   <AvatarImage src={profile?.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-lg">
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs">
                     {getInitials(profile?.nome)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-senior-base font-semibold truncate">{profile?.nome || "Usuário"}</p>
-                  <Badge variant="secondary" className="mt-1">Grátis</Badge>
-                </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
               </div>
             </Link>
           ) : (
             <Link to="/login" onClick={closeAndNavigate}>
-              <div className="flex items-center gap-3 p-3 hover:bg-muted/50 rounded-lg cursor-pointer transition-colors">
-                <Avatar className="h-12 w-12">
-                  <AvatarFallback className="bg-muted text-muted-foreground text-lg">?</AvatarFallback>
+              <div className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <span className="text-[13px] text-muted-foreground">Entrar</span>
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-muted text-muted-foreground text-xs">?</AvatarFallback>
                 </Avatar>
-                <div className="flex-1">
-                  <p className="text-senior-base text-muted-foreground">Entrar na conta</p>
-                </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground" />
               </div>
             </Link>
           )}
         </div>
 
-        {/* Navegação Fixa + Accordion de Ferramentas */}
-        <div className="flex-1 overflow-y-auto p-4">
+        {/* Corpo do Menu */}
+        <div className="flex-1 overflow-y-auto">
           {/* Itens Fixos de Navegação */}
-          <div className="space-y-2 mb-6">
+          <nav className="px-4 py-6 space-y-1">
             <Link to="/" onClick={closeAndNavigate}>
-              <Button variant="ghost" className="w-full justify-start h-14 text-senior-base gap-3">
-                <Home className="h-6 w-6" />
+              <div className="flex items-center gap-3 py-3 text-[13px] text-foreground hover:text-primary transition-colors">
+                <Home className="h-[18px] w-[18px] stroke-[1.5]" />
                 Início
-              </Button>
+              </div>
             </Link>
             <Link to="/comunidade" onClick={closeAndNavigate}>
-              <Button variant="ghost" className="w-full justify-start h-14 text-senior-base gap-3">
-                <Users className="h-6 w-6" />
+              <div className="flex items-center gap-3 py-3 text-[13px] text-foreground hover:text-primary transition-colors">
+                <Users className="h-[18px] w-[18px] stroke-[1.5]" />
                 Comunidade
-              </Button>
+              </div>
             </Link>
-          </div>
+          </nav>
 
-          {/* Dropdown de Ferramentas de Análise */}
-          <Accordion type="single" collapsible defaultValue="ferramentas">
-            <AccordionItem value="ferramentas" className="border rounded-lg px-2">
-              <AccordionTrigger className="text-senior-base py-4 hover:no-underline">
-                <div className="flex items-center gap-3">
-                  <BarChart3 className="h-5 w-5" />
-                  Ferramentas de Análise
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pb-2">
-                <Link to="/resultados" onClick={closeAndNavigate}>
-                  <Button variant="ghost" className="w-full justify-start h-12 text-senior-base gap-3 pl-8">
-                    <BarChart3 className="h-5 w-5" />
-                    Resultados Completos
-                  </Button>
-                </Link>
-                <Link to="/tendencias" onClick={closeAndNavigate}>
-                  <Button variant="ghost" className="w-full justify-start h-12 text-senior-base gap-3 pl-8">
-                    <TrendingUp className="h-5 w-5" />
-                    Tendências
-                  </Button>
-                </Link>
-                <Link to="/frequencia" onClick={closeAndNavigate}>
-                  <Button variant="ghost" className="w-full justify-start h-12 text-senior-base gap-3 pl-8">
-                    <Flame className="h-5 w-5" />
-                    Quentes e Frias
-                  </Button>
-                </Link>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+          {/* Accordion de Ferramentas de Análise */}
+          <div className="px-4">
+            <Accordion type="single" collapsible>
+              <AccordionItem value="ferramentas" className="border-none">
+                <AccordionTrigger className="py-3 text-[13px] hover:no-underline hover:text-primary">
+                  <div className="flex items-center gap-3">
+                    <BarChart3 className="h-[18px] w-[18px] stroke-[1.5]" />
+                    <span>Ferramentas de Análise</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-0">
+                  <div className="pl-7 space-y-0">
+                    <Link to="/resultados" onClick={closeAndNavigate}>
+                      <div className="py-2.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors">
+                        Resultados
+                      </div>
+                    </Link>
+                    <Link to="/tendencias" onClick={closeAndNavigate}>
+                      <div className="py-2.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors">
+                        Tendências
+                      </div>
+                    </Link>
+                    <Link to="/frequencia" onClick={closeAndNavigate}>
+                      <div className="py-2.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors">
+                        Quentes e Frias
+                      </div>
+                    </Link>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
         </div>
 
-        {/* Suporte Minimalista no Rodapé */}
-        <div className="mt-auto p-4 border-t space-y-2">
+        {/* Rodapé Minimalista */}
+        <div className="mt-auto px-4 py-4 border-t border-border/30 space-y-3">
           <a
             href={supportWhatsApp}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 text-[#25D366] hover:text-[#25D366]/80 text-senior-base py-2 transition-colors"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground text-[13px] transition-colors"
           >
-            <MessageCircle className="h-5 w-5" />
+            <MessageCircle className="h-4 w-4" />
             Preciso de Suporte
           </a>
 
           {isAuthenticated && (
-            <Button
-              variant="ghost"
-              className="w-full justify-start h-10 text-sm gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+            <button
               onClick={handleSignOut}
+              className="flex items-center gap-2 text-muted-foreground hover:text-destructive text-[13px] transition-colors"
             >
               <LogOut className="h-4 w-4" />
               Sair da conta
-            </Button>
+            </button>
           )}
         </div>
       </SheetContent>
