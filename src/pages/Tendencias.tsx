@@ -3,6 +3,7 @@ import { TrendingUp } from "lucide-react";
 import { TabelaParesImpares } from "@/components/tendencias/TabelaParesImpares";
 import { TabelaMoldura } from "@/components/tendencias/TabelaMoldura";
 import { TabelaPrimos } from "@/components/tendencias/TabelaPrimos";
+import { TabelaRepetidas } from "@/components/tendencias/TabelaRepetidas";
 
 export default function Tendencias() {
   return (
@@ -38,6 +39,15 @@ export default function Tendencias() {
             Combinações de Primos e Não Primos
           </h2>
           <TabelaPrimos />
+        </section>
+
+        {/* Tabela de Repetidas */}
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <span className="text-2xl">🔄</span>
+            Combinações de Repetidas e Novas
+          </h2>
+          <TabelaRepetidas />
         </section>
       </div>
     </MainLayout>
