@@ -173,27 +173,15 @@ export function LoginWizard() {
                   Resetar senha
                 </Link>
 
-                <div className="flex items-center justify-center gap-4">
-                  <a
-                    href={supportPhone}
-                    className="inline-flex items-center justify-center gap-2 text-senior-base text-muted-foreground hover:text-foreground h-12 px-4"
-                  >
-                    <Phone className="h-5 w-5" />
-                    Ligar
-                  </a>
-                  <a
-                    href={supportWhatsApp}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 text-senior-base text-primary hover:text-primary/80 h-12 px-4"
-                  >
-                    <MessageCircle className="h-5 w-5" />
-                    WhatsApp
-                  </a>
-                </div>
-                <span className="text-center text-sm text-muted-foreground">
-                  Suporte: (16) 99717-5392
-                </span>
+                <a
+                  href={supportWhatsApp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 text-senior-base text-primary hover:text-primary/80 h-12 px-4"
+                >
+                  <MessageCircle className="h-5 w-5" />
+                  WhatsApp (16) 99717-5392
+                </a>
               </div>
             </form>
           </CardContent>
