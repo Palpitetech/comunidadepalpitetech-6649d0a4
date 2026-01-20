@@ -30,37 +30,37 @@ export function ResultadoCard({ resultado, onClick }: ResultadoCardProps) {
     <button
       onClick={onClick}
       className={cn(
-        "w-full py-3 px-1",
+        "w-full py-3 px-3 text-left",
         "hover:bg-accent/20 transition-colors",
         "focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/30",
         "cursor-pointer"
       )}
     >
-      {/* Topo: Concurso e Data na mesma linha */}
-      <div className="text-center mb-2">
+      {/* Topo: Concurso e Data alinhados à esquerda */}
+      <div className="text-left mb-2">
         <span className="text-xs text-muted-foreground">
           #{resultado.concurso_id} — {dataFormatada}
         </span>
       </div>
 
-      {/* Grid de Dezenas: 2 linhas centralizadas */}
-      <div className="flex flex-col items-center gap-1 mb-2">
+      {/* Grid de Dezenas: 2 linhas alinhadas à esquerda */}
+      <div className="flex flex-col items-start gap-1 mb-2">
         {/* Linha 1: 8 dezenas */}
-        <div className="flex justify-center gap-1">
+        <div className="flex justify-start gap-1.5">
           {primeiraLinha.map((dezena, index) => (
             <DezenaCirculoMini key={index} dezena={dezena} />
           ))}
         </div>
         {/* Linha 2: 7 dezenas */}
-        <div className="flex justify-center gap-1">
+        <div className="flex justify-start gap-1.5">
           {segundaLinha.map((dezena, index) => (
             <DezenaCirculoMini key={index + 8} dezena={dezena} />
           ))}
         </div>
       </div>
 
-      {/* Rodapé: Parâmetros com palavras completas */}
-      <div className="text-center text-sm text-muted-foreground">
+      {/* Rodapé: Parâmetros alinhados à esquerda */}
+      <div className="text-left text-sm text-muted-foreground">
         Ímpares: {resultado.qtd_impares ?? "-"} | Repetidas: {resultado.qtd_repetidas ?? "-"} | Moldura: {resultado.qtd_moldura ?? "-"} | Primos: {resultado.qtd_primos ?? "-"}
       </div>
     </button>
