@@ -9,7 +9,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Lock, ArrowLeft, Phone, Mail, LifeBuoy } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { RegisterWizard } from "./RegisterWizard";
+import { RegisterWizard, type RegisterWizardProps } from "./RegisterWizard";
 
 type Etapa = "identificar" | "senha" | "cadastro";
 
