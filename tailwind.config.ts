@@ -65,6 +65,15 @@ export default {
           primo: "hsl(var(--lotofacil-primo))",
           repetida: "hsl(var(--lotofacil-repetida))",
         },
+        // Status Quente/Frio
+        status: {
+          quente: "hsl(var(--status-quente))",
+          "quente-foreground": "hsl(var(--status-quente-foreground))",
+          "quente-bg": "hsl(var(--status-quente-bg))",
+          frio: "hsl(var(--status-frio))",
+          "frio-foreground": "hsl(var(--status-frio-foreground))",
+          "frio-bg": "hsl(var(--status-frio-bg))",
+        },
       },
       fontSize: {
         // Tipografia otimizada para idosos
