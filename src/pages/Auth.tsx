@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { AuthForm } from "@/components/auth/AuthForm";
+import { LoginWizard } from "@/components/auth/LoginWizard";
 import { Loader2 } from "lucide-react";
 
 export default function Auth() {
@@ -28,8 +28,8 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/30 to-background p-6">
       <div className="w-full max-w-lg">
-        <AuthForm />
-        
+        <LoginWizard />
+
         <p className="text-center mt-6 text-muted-foreground text-senior-sm">
           Ao criar uma conta, você concorda com nossos termos de uso.
         </p>
