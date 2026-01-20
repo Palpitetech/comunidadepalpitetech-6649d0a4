@@ -223,7 +223,12 @@ export function TabelaEstatisticaGenerica({ config }: Props) {
                 <TableCell>
                   <div className="flex items-center gap-1.5">
                     {getTrendIcon(item.atrasoAtual, item.mediaOcorrencia)}
-                    <span className="text-base">{item.atrasoAtual}</span>
+                    <span className={cn(
+                      "text-base font-medium",
+                      item.atrasoAtual >= item.mediaOcorrencia && "text-green-600"
+                    )}>
+                      {item.atrasoAtual}
+                    </span>
                   </div>
                 </TableCell>
                 <TableCell className="hidden md:table-cell text-base text-muted-foreground">
