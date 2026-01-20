@@ -18,6 +18,45 @@ const corsHeaders = {
 };
 
 // =============================================================================
+// SISTEMA DE RETRY COM RESILIÊNCIA
+// =============================================================================
+
+async function fetchWithRetry(
+  apiUrl: string,
+  maxAttempts: number = 3,
+  delayMs: number = 900000 // 15 minutos em produção
+): Promise<Response> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      console.log(`[RETRY] Tentativa ${attempt}/${maxAttempts}...`);
+      const response = await fetch(apiUrl);
+
+      if (response.ok) {
+        console.log(`[RETRY] Sucesso na tentativa ${attempt}`);
+        return response;
+      }
+
+      // Se a API retornou erro HTTP, lançar exceção
+      throw new Error(`API retornou status ${response.status}`);
+    } catch (error) {
+      lastError = error as Error;
+      console.error(`[RETRY] Tentativa ${attempt} falhou: ${lastError.message}`);
+
+      if (attempt < maxAttempts) {
+        // Em ambiente de desenvolvimento, usar delay menor (5 segundos)
+        const actualDelay = delayMs > 60000 ? 5000 : delayMs; // Se > 1min, usar 5s para teste
+        console.log(`[RETRY] Aguardando ${actualDelay / 1000}s para nova tentativa...`);
+        await new Promise(resolve => setTimeout(resolve, actualDelay));
+      }
+    }
+  }
+
+  throw new Error(`Todas as ${maxAttempts} tentativas falharam. Último erro: ${lastError?.message}`);
+}
+
+// =============================================================================
 // FUNÇÕES DE CÁLCULO
 // =============================================================================
 
@@ -149,6 +188,8 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -161,23 +202,36 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const url = new URL(req.url);
+    
+    // NOVO: Parâmetro 'quantidade' para definir quantos concursos buscar
+    const quantidade = url.searchParams.get('quantidade');
     const concursoEspecifico = url.searchParams.get('concurso');
     const debug = url.searchParams.get('debug') === 'true';
 
     let apiUrl: string;
-    if (concursoEspecifico && concursoEspecifico !== 'ultimos100') {
+    let modoOperacao: string;
+    
+    if (concursoEspecifico) {
+      // Modo 1: Concurso específico
       apiUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=lotofacil&token=${apiToken}&concurso=${concursoEspecifico}`;
+      modoOperacao = `Concurso específico: ${concursoEspecifico}`;
+    } else if (quantidade) {
+      // Modo 2: Carga de histórico (ex: quantidade=100)
+      apiUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=lotofacil&token=${apiToken}&concurso=ultimos${quantidade}`;
+      modoOperacao = `Carga de histórico: últimos ${quantidade}`;
     } else {
-      apiUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=lotofacil&token=${apiToken}&concurso=ultimos100`;
+      // Modo 3 (PADRÃO): Atualização diária - apenas último concurso
+      apiUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=lotofacil&token=${apiToken}&concurso=ultimos1`;
+      modoOperacao = 'Atualização diária: ultimos1';
     }
 
-    console.log(`[SYNC] Buscando dados da API...`);
+    console.log(`[SYNC] ========================================`);
+    console.log(`[SYNC] Iniciando sincronização`);
+    console.log(`[SYNC] Modo: ${modoOperacao}`);
+    console.log(`[SYNC] ========================================`);
 
-    const apiResponse = await fetch(apiUrl);
-    if (!apiResponse.ok) {
-      throw new Error(`API retornou erro: ${apiResponse.status}`);
-    }
-
+    // Usar sistema de retry para buscar da API
+    const apiResponse = await fetchWithRetry(apiUrl);
     const apiData = await apiResponse.json();
     
     // Log de debug para ver estrutura da API
@@ -255,7 +309,7 @@ Deno.serve(async (req) => {
       try {
         console.log(`[SYNC] Processando concurso ${concurso.numero} (${i + 1}/${concursosProcessados.length})`);
 
-        // Verificar se já existe
+        // Verificar se já existe (IDEMPOTÊNCIA)
         const { data: existente } = await supabase
           .from('resultados')
           .select('id')
@@ -263,7 +317,8 @@ Deno.serve(async (req) => {
           .single();
 
         if (existente) {
-          console.log(`[SYNC] Concurso ${concurso.numero} já existe, pulando...`);
+          // LOG DE AUDITORIA: Concurso já existente
+          console.log(`[AUDIT] Ignorado: Concurso ${concurso.numero} já existente`);
           resultados.existentes++;
           
           const { data: dadosExistente } = await supabase
@@ -353,9 +408,10 @@ Deno.serve(async (req) => {
           throw new Error(insertError.message);
         }
 
-        console.log(`[SYNC] ✓ Concurso ${concurso.numero} inserido`);
-        console.log(`       P:${indicadores.qtd_pares} I:${indicadores.qtd_impares} M:${indicadores.qtd_moldura} Pr:${indicadores.qtd_primos} R:${indicadores.qtd_repetidas}`);
-        console.log(`       Ciclo ${cicloInfo.ciclo_numero} | Faltantes: ${cicloInfo.dezenas_faltantes_ciclo.length}`);
+        // LOG DE AUDITORIA: Concurso adicionado com sucesso
+        console.log(`[AUDIT] Sucesso: Concurso ${concurso.numero} adicionado`);
+        console.log(`        P:${indicadores.qtd_pares} I:${indicadores.qtd_impares} M:${indicadores.qtd_moldura} Pr:${indicadores.qtd_primos} R:${indicadores.qtd_repetidas}`);
+        console.log(`        Ciclo ${cicloInfo.ciclo_numero} | Faltantes: ${cicloInfo.dezenas_faltantes_ciclo.length}`);
 
         resultados.novos++;
 
@@ -370,21 +426,37 @@ Deno.serve(async (req) => {
       }
     }
 
+    const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
+
     console.log(`[SYNC] ========================================`);
-    console.log(`[SYNC] Concluído! Novos: ${resultados.novos} | Existentes: ${resultados.existentes} | Erros: ${resultados.erros.length}`);
+    console.log(`[SYNC] Sincronização concluída em ${elapsedTime}s`);
+    console.log(`[SYNC] Modo: ${modoOperacao}`);
+    console.log(`[SYNC] Novos: ${resultados.novos} | Existentes: ${resultados.existentes} | Erros: ${resultados.erros.length}`);
     console.log(`[SYNC] ========================================`);
 
     return new Response(
-      JSON.stringify({ sucesso: true, ...resultados }),
+      JSON.stringify({ 
+        sucesso: true, 
+        modo: modoOperacao,
+        tempo_execucao: `${elapsedTime}s`,
+        ...resultados 
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
+    
     console.error(`[ERRO FATAL] ${errorMessage}`);
+    console.error(`[SYNC] Falha após ${elapsedTime}s`);
     
     return new Response(
-      JSON.stringify({ sucesso: false, erro: errorMessage }),
+      JSON.stringify({ 
+        sucesso: false, 
+        erro: errorMessage,
+        tempo_execucao: `${elapsedTime}s`
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
