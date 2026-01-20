@@ -196,4 +196,40 @@
   .input-senior {
     @apply h-14 text-lg px-4 rounded-xl border-2 focus:border-primary;
   }
+
+  /* Indicador de etapa circular grande */
+  .step-indicator {
+    @apply w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold transition-all duration-300;
+  }
+
+  .step-indicator.active {
+    @apply bg-primary text-primary-foreground shadow-lg;
+  }
+
+  .step-indicator.inactive {
+    @apply bg-muted text-muted-foreground;
+  }
+
+  /* Slots OTP grandes para idosos */
+  .otp-slot-senior {
+    @apply w-14 h-16 text-3xl font-bold text-center border-2 rounded-xl;
+  }
+
+  /* Timer visível */
+  .timer-senior {
+    @apply text-2xl font-mono font-bold text-primary bg-primary/10 px-4 py-2 rounded-lg;
+  }
+
+  /* Mensagem de status */
+  .status-message {
+    @apply text-lg p-4 rounded-xl text-center;
+  }
+
+  .status-message.success {
+    @apply bg-accent/10 text-accent border border-accent/30;
+  }
+
+  .status-message.error {
+    @apply bg-destructive/10 text-destructive border border-destructive/30;
+  }
 }

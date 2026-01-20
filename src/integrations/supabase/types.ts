@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      codigos_verificacao: {
+        Row: {
+          codigo: string
+          created_at: string | null
+          destino: string
+          expira_em: string
+          id: string
+          tentativas: number | null
+          tipo: string
+          usado: boolean | null
+          user_id: string
+        }
+        Insert: {
+          codigo: string
+          created_at?: string | null
+          destino: string
+          expira_em: string
+          id?: string
+          tentativas?: number | null
+          tipo: string
+          usado?: boolean | null
+          user_id: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string | null
+          destino?: string
+          expira_em?: string
+          id?: string
+          tentativas?: number | null
+          tipo?: string
+          usado?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       perfis: {
         Row: {
           avatar_url: string | null
