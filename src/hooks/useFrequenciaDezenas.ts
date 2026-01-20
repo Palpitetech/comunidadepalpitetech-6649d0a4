@@ -9,6 +9,8 @@ export interface DezenaEstatistica {
   frequencia: number;
   melhorDupla: number;
   correlacaoDupla: number;
+  melhorTrio: [number, number];
+  correlacaoTrio: number;
   status: "quente" | "frio" | "normal";
 }
 
@@ -30,7 +32,6 @@ function calcularMaiorSequencia(dezena: number, concursos: Concurso[]): number {
   let maiorSequencia = 0;
   let sequenciaAtual = 0;
 
-  // Percorre do mais antigo para o mais recente
   const concursosOrdenados = [...concursos].reverse();
 
   for (const concurso of concursosOrdenados) {
@@ -49,7 +50,6 @@ function calcularMaiorAtraso(dezena: number, concursos: Concurso[]): number {
   let maiorAtraso = 0;
   let atrasoAtual = 0;
 
-  // Percorre do mais antigo para o mais recente
   const concursosOrdenados = [...concursos].reverse();
 
   for (const concurso of concursosOrdenados) {
@@ -61,7 +61,6 @@ function calcularMaiorAtraso(dezena: number, concursos: Concurso[]): number {
     }
   }
 
-  // Verifica atraso final
   maiorAtraso = Math.max(maiorAtraso, atrasoAtual);
 
   return maiorAtraso;
@@ -105,17 +104,43 @@ function calcularMelhorDupla(
   return { dupla: melhorDupla, correlacao: maiorCorrelacao };
 }
 
-function calcularAtrasoAtual(dezena: number, concursos: Concurso[]): number {
-  let atraso = 0;
+function calcularMelhorTrio(
+  dezena: number,
+  concursos: Concurso[]
+): { trio: [number, number]; correlacao: number } {
+  const aparicoesDezena = concursos.filter((c) =>
+    c.dezenas.includes(dezena)
+  ).length;
 
-  for (const concurso of concursos) {
-    if (concurso.dezenas.includes(dezena)) {
-      break;
+  if (aparicoesDezena === 0) return { trio: [0, 0], correlacao: 0 };
+
+  let melhorTrio: [number, number] = [0, 0];
+  let maiorCorrelacao = 0;
+
+  // Itera sobre todos os pares possíveis de outras dezenas
+  for (let d1 = 1; d1 <= 25; d1++) {
+    if (d1 === dezena) continue;
+
+    for (let d2 = d1 + 1; d2 <= 25; d2++) {
+      if (d2 === dezena) continue;
+
+      const aparicaoTrio = concursos.filter(
+        (c) =>
+          c.dezenas.includes(dezena) &&
+          c.dezenas.includes(d1) &&
+          c.dezenas.includes(d2)
+      ).length;
+
+      const correlacao = Math.round((aparicaoTrio / aparicoesDezena) * 100);
+
+      if (correlacao > maiorCorrelacao) {
+        maiorCorrelacao = correlacao;
+        melhorTrio = [d1, d2];
+      }
     }
-    atraso++;
   }
 
-  return atraso;
+  return { trio: melhorTrio, correlacao: maiorCorrelacao };
 }
 
 function determinarStatus(frequencia: number): "quente" | "frio" | "normal" {
@@ -146,6 +171,10 @@ export function useFrequenciaDezenas(periodo: number) {
       for (let dezena = 1; dezena <= 25; dezena++) {
         const frequencia = calcularFrequencia(dezena, concursos);
         const { dupla, correlacao } = calcularMelhorDupla(dezena, concursos);
+        const { trio, correlacao: correlacaoTrio } = calcularMelhorTrio(
+          dezena,
+          concursos
+        );
 
         estatisticas.push({
           dezena,
@@ -155,6 +184,8 @@ export function useFrequenciaDezenas(periodo: number) {
           frequencia,
           melhorDupla: dupla,
           correlacaoDupla: correlacao,
+          melhorTrio: trio,
+          correlacaoTrio,
           status: determinarStatus(frequencia),
         });
       }
