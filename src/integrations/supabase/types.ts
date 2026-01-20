@@ -56,6 +56,7 @@ export type Database = {
           celular: string | null
           celular_verificado: boolean | null
           created_at: string
+          email: string | null
           email_verificado: boolean | null
           id: string
           is_bot: boolean | null
@@ -67,6 +68,7 @@ export type Database = {
           celular?: string | null
           celular_verificado?: boolean | null
           created_at?: string
+          email?: string | null
           email_verificado?: boolean | null
           id: string
           is_bot?: boolean | null
@@ -78,6 +80,7 @@ export type Database = {
           celular?: string | null
           celular_verificado?: boolean | null
           created_at?: string
+          email?: string | null
           email_verificado?: boolean | null
           id?: string
           is_bot?: boolean | null
@@ -146,6 +149,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "postagens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios_notificaveis_hoje"
             referencedColumns: ["id"]
           },
         ]
@@ -236,7 +246,20 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      usuarios_notificaveis_hoje: {
+        Row: {
+          celular: string | null
+          celular_verificado: boolean | null
+          created_at: string | null
+          email: string | null
+          email_verificado: boolean | null
+          esta_no_periodo_teste: boolean | null
+          id: string | null
+          nome: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
