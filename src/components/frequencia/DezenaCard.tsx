@@ -33,17 +33,17 @@ export function DezenaCard({
   status,
 }: DezenaCardProps) {
   return (
-    <Card className="bg-card border border-border/40 shadow-sm hover:shadow-md transition-shadow duration-200">
-      <CardContent className="p-5">
+    <Card className="bg-card border border-gray-100 dark:border-gray-800">
+      <CardContent className="p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           {/* Dezena Circle */}
           <div
             className={cn(
               "w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold border-2",
-              status === "quente" && "bg-emerald-50 border-emerald-300 text-emerald-700 dark:bg-emerald-950 dark:border-emerald-700 dark:text-emerald-300",
-              status === "frio" && "bg-slate-50 border-slate-300 text-slate-600 dark:bg-slate-900 dark:border-slate-600 dark:text-slate-400",
-              status === "normal" && "bg-secondary border-border text-foreground"
+              status === "quente" && "bg-green-50 border-green-300 text-green-700 dark:bg-green-950 dark:border-green-700 dark:text-green-300",
+              status === "frio" && "bg-blue-50 border-blue-300 text-blue-600 dark:bg-blue-950 dark:border-blue-700 dark:text-blue-300",
+              status === "normal" && "bg-gray-50 border-gray-200 text-gray-700 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-300"
             )}
           >
             {formatDezena(dezena)}
@@ -53,7 +53,7 @@ export function DezenaCard({
           {status === "quente" && (
             <Badge
               variant="secondary"
-              className="bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800 gap-1.5 px-3 py-1 text-xs font-medium"
+              className="bg-green-100 text-green-700 border border-green-200 hover:bg-green-100 dark:bg-green-900 dark:text-green-300 dark:border-green-800 gap-1.5 px-3 py-1 text-xs font-medium"
             >
               <Flame className="h-3 w-3" />
               Quente
@@ -62,7 +62,7 @@ export function DezenaCard({
           {status === "frio" && (
             <Badge
               variant="secondary"
-              className="bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-700 gap-1.5 px-3 py-1 text-xs font-medium"
+              className="bg-blue-100 text-blue-700 border border-blue-200 hover:bg-blue-100 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-800 gap-1.5 px-3 py-1 text-xs font-medium"
             >
               <Snowflake className="h-3 w-3" />
               Fria
@@ -79,8 +79,8 @@ export function DezenaCard({
             label="Frequência"
             value={`${frequencia}%`}
             valueClassName={cn(
-              status === "quente" && "text-emerald-600 dark:text-emerald-400",
-              status === "frio" && "text-slate-500 dark:text-slate-400"
+              status === "quente" && "text-green-600 dark:text-green-400",
+              status === "frio" && "text-blue-600 dark:text-blue-400"
             )}
           />
           <DataRow

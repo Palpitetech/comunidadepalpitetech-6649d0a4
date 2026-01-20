@@ -144,8 +144,8 @@ function calcularMelhorTrio(
 }
 
 function determinarStatus(frequencia: number): "quente" | "frio" | "normal" {
-  if (frequencia >= 60) return "quente";
-  if (frequencia <= 40) return "frio";
+  if (frequencia >= 71) return "quente";
+  if (frequencia <= 39) return "frio";
   return "normal";
 }
 
