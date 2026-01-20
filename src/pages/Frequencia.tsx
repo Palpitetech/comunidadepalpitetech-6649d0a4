@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { SeletorPeriodo } from "@/components/frequencia/SeletorPeriodo";
+import { FiltroStatus, StatusFiltro } from "@/components/frequencia/FiltroStatus";
 import { DezenaCard } from "@/components/frequencia/DezenaCard";
 import { useFrequenciaDezenas } from "@/hooks/useFrequenciaDezenas";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,6 +10,7 @@ const PERIODOS = [3, 5, 10, 15, 20, 25, 50];
 
 export default function Frequencia() {
   const [periodo, setPeriodo] = useState<number>(10);
+  const [filtroStatus, setFiltroStatus] = useState<StatusFiltro>("todas");
 
   const {
     data: estatisticas,
@@ -20,6 +22,19 @@ export default function Frequencia() {
   const estatisticasOrdenadas = estatisticas
     ? [...estatisticas].sort((a, b) => a.dezena - b.dezena)
     : [];
+
+  // Calcular contagens por status
+  const contagem = {
+    todas: estatisticas?.length ?? 0,
+    quentes: estatisticas?.filter((e) => e.status === "quente").length ?? 0,
+    frias: estatisticas?.filter((e) => e.status === "frio").length ?? 0,
+  };
+
+  // Aplicar filtro
+  const estatisticasFiltradas = estatisticasOrdenadas.filter((est) => {
+    if (filtroStatus === "todas") return true;
+    return est.status === filtroStatus;
+  });
 
   return (
     <MainLayout>
@@ -35,6 +50,15 @@ export default function Frequencia() {
             onChange={setPeriodo}
           />
         </div>
+
+        {/* Filtro de Status */}
+        {!isLoading && !error && (
+          <FiltroStatus
+            selecionado={filtroStatus}
+            onChange={setFiltroStatus}
+            contagem={contagem}
+          />
+        )}
 
         {/* Loading State */}
         {isLoading && (
@@ -52,10 +76,19 @@ export default function Frequencia() {
           </div>
         )}
 
+        {/* Empty State */}
+        {!isLoading && !error && estatisticasFiltradas.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>
+              Nenhuma dezena {filtroStatus === "quente" ? "quente" : "fria"} neste período.
+            </p>
+          </div>
+        )}
+
         {/* Grid de Cards */}
-        {!isLoading && !error && estatisticasOrdenadas && (
+        {!isLoading && !error && estatisticasFiltradas.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {estatisticasOrdenadas.map((est) => (
+            {estatisticasFiltradas.map((est) => (
               <DezenaCard
                 key={est.dezena}
                 dezena={est.dezena}
