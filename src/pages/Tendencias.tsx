@@ -1,9 +1,37 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { TrendingUp } from "lucide-react";
-import { TabelaParesImpares } from "@/components/tendencias/TabelaParesImpares";
-import { TabelaMoldura } from "@/components/tendencias/TabelaMoldura";
-import { TabelaPrimos } from "@/components/tendencias/TabelaPrimos";
-import { TabelaRepetidas } from "@/components/tendencias/TabelaRepetidas";
+import { 
+  TabelaEstatisticaGenerica, 
+  TabelaEstatisticaConfig 
+} from "@/components/tendencias/TabelaEstatisticaGenerica";
+
+const configParesImpares: TabelaEstatisticaConfig = {
+  queryKey: "estatisticas-pares-impares",
+  campoDb: "qtd_pares",
+  labelColunaPrincipal: "Qtd Pares",
+  labelColunaComplementar: "Qtd Ímpares",
+};
+
+const configMoldura: TabelaEstatisticaConfig = {
+  queryKey: "estatisticas-moldura",
+  campoDb: "qtd_moldura",
+  labelColunaPrincipal: "Qtd Moldura",
+  labelColunaComplementar: "Qtd Miolo",
+};
+
+const configPrimos: TabelaEstatisticaConfig = {
+  queryKey: "estatisticas-primos",
+  campoDb: "qtd_primos",
+  labelColunaPrincipal: "Qtd Primos",
+  labelColunaComplementar: "Qtd Não Primos",
+};
+
+const configRepetidas: TabelaEstatisticaConfig = {
+  queryKey: "estatisticas-repetidas",
+  campoDb: "qtd_repetidas",
+  labelColunaPrincipal: "Qtd Repetidas",
+  labelColunaComplementar: "Qtd Novas",
+};
 
 export default function Tendencias() {
   return (
@@ -20,7 +48,7 @@ export default function Tendencias() {
             <span className="text-2xl">🎯</span>
             Combinações de Pares e Ímpares
           </h2>
-          <TabelaParesImpares />
+          <TabelaEstatisticaGenerica config={configParesImpares} />
         </section>
 
         {/* Tabela de Moldura */}
@@ -29,7 +57,7 @@ export default function Tendencias() {
             <span className="text-2xl">🖼️</span>
             Combinações de Moldura e Miolo
           </h2>
-          <TabelaMoldura />
+          <TabelaEstatisticaGenerica config={configMoldura} />
         </section>
 
         {/* Tabela de Primos */}
@@ -38,7 +66,7 @@ export default function Tendencias() {
             <span className="text-2xl">🔢</span>
             Combinações de Primos e Não Primos
           </h2>
-          <TabelaPrimos />
+          <TabelaEstatisticaGenerica config={configPrimos} />
         </section>
 
         {/* Tabela de Repetidas */}
@@ -47,7 +75,7 @@ export default function Tendencias() {
             <span className="text-2xl">🔄</span>
             Combinações de Repetidas e Novas
           </h2>
-          <TabelaRepetidas />
+          <TabelaEstatisticaGenerica config={configRepetidas} />
         </section>
       </div>
     </MainLayout>

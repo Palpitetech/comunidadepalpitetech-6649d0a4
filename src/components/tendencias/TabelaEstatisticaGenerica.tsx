@@ -13,9 +13,18 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-interface EstatisticaPrimos {
-  qtdPrimos: number;
-  qtdNaoPrimos: number;
+type CampoDb = "qtd_pares" | "qtd_moldura" | "qtd_primos" | "qtd_repetidas";
+
+export interface TabelaEstatisticaConfig {
+  queryKey: string;
+  campoDb: CampoDb;
+  labelColunaPrincipal: string;
+  labelColunaComplementar: string;
+}
+
+interface EstatisticaItem {
+  valorPrincipal: number;
+  valorComplementar: number;
   ocorrencias: number;
   atrasoAtual: number;
   porcentagem: number;
@@ -24,19 +33,23 @@ interface EstatisticaPrimos {
   ranking: number;
 }
 
-type SortColumn = "ocorrencias" | "atrasoAtual" | "porcentagem" | "qtdPrimos";
+type SortColumn = "ocorrencias" | "atrasoAtual" | "porcentagem" | "valorPrincipal";
 type SortDirection = "asc" | "desc";
 
-export function TabelaPrimos() {
+interface Props {
+  config: TabelaEstatisticaConfig;
+}
+
+export function TabelaEstatisticaGenerica({ config }: Props) {
   const [sortColumn, setSortColumn] = useState<SortColumn>("ocorrencias");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   const { data: estatisticas, isLoading } = useQuery({
-    queryKey: ["estatisticas-primos"],
+    queryKey: [config.queryKey],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("resultados")
-        .select("concurso_id, qtd_primos")
+        .select(`concurso_id, ${config.campoDb}`)
         .order("concurso_id", { ascending: false });
 
       if (error) throw error;
@@ -45,19 +58,19 @@ export function TabelaPrimos() {
       const concursoMaisRecente = data[0].concurso_id;
       const totalConcursos = data.length;
 
-      // Agrupar por quantidade de primos
+      // Agrupar por quantidade
       const agrupado = new Map<number, {
-        qtdPrimos: number;
+        valor: number;
         ocorrencias: number;
         ultimaOcorrencia: number;
       }>();
 
       data.forEach((r) => {
-        const qtd = r.qtd_primos ?? 0;
+        const qtd = (r as Record<string, unknown>)[config.campoDb] as number ?? 0;
         
         if (!agrupado.has(qtd)) {
           agrupado.set(qtd, {
-            qtdPrimos: qtd,
+            valor: qtd,
             ocorrencias: 0,
             ultimaOcorrencia: r.concurso_id,
           });
@@ -68,10 +81,10 @@ export function TabelaPrimos() {
       });
 
       // Converter para array e calcular estatísticas
-      const resultado: EstatisticaPrimos[] = Array.from(agrupado.values())
+      const resultado: EstatisticaItem[] = Array.from(agrupado.values())
         .map((item) => ({
-          qtdPrimos: item.qtdPrimos,
-          qtdNaoPrimos: 15 - item.qtdPrimos, // Total de dezenas (15) - primos = não primos
+          valorPrincipal: item.valor,
+          valorComplementar: 15 - item.valor,
           ocorrencias: item.ocorrencias,
           atrasoAtual: concursoMaisRecente - item.ultimaOcorrencia,
           porcentagem: (item.ocorrencias / totalConcursos) * 100,
@@ -172,8 +185,10 @@ export function TabelaPrimos() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50 hover:bg-muted/50">
-              <SortableHeader column="qtdPrimos">Qtd Primos</SortableHeader>
-              <TableHead>Qtd Não Primos</TableHead>
+              <SortableHeader column="valorPrincipal">
+                {config.labelColunaPrincipal}
+              </SortableHeader>
+              <TableHead>{config.labelColunaComplementar}</TableHead>
               <SortableHeader column="ocorrencias">Ocorrências</SortableHeader>
               <SortableHeader column="atrasoAtual">Atraso</SortableHeader>
               <SortableHeader column="porcentagem" className="hidden md:table-cell">
@@ -186,14 +201,14 @@ export function TabelaPrimos() {
           <TableBody>
             {sortedData.map((item) => (
               <TableRow 
-                key={item.qtdPrimos}
+                key={item.valorPrincipal}
                 className="border-b border-border/30 hover:bg-muted/30"
               >
                 <TableCell className="text-base font-medium">
-                  {item.qtdPrimos}
+                  {item.valorPrincipal}
                 </TableCell>
                 <TableCell className="text-base font-medium">
-                  {item.qtdNaoPrimos}
+                  {item.valorComplementar}
                 </TableCell>
                 <TableCell>
                   <span
