@@ -2,6 +2,7 @@ import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Flame } from "lucide-react";
 import { SeletorPeriodo } from "@/components/frequencia/SeletorPeriodo";
+import { SeletorOrdenacao, OrdenacaoTipo } from "@/components/frequencia/SeletorOrdenacao";
 import { DezenaCard } from "@/components/frequencia/DezenaCard";
 import {
   useFrequenciaDezenas,
@@ -13,6 +14,7 @@ const PERIODOS = [3, 5, 10, 15, 20, 25, 50];
 
 export default function Frequencia() {
   const [periodo, setPeriodo] = useState<number>(10);
+  const [ordenacao, setOrdenacao] = useState<OrdenacaoTipo>("dezena");
 
   const {
     data: estatisticas,
@@ -24,7 +26,23 @@ export default function Frequencia() {
     dados: DezenaEstatistica[] | undefined
   ): DezenaEstatistica[] => {
     if (!dados) return [];
-    return [...dados].sort((a, b) => a.dezena - b.dezena);
+    
+    const sorted = [...dados];
+    
+    switch (ordenacao) {
+      case "recentes":
+        return sorted.sort((a, b) => b.ultimaVez - a.ultimaVez);
+      case "quentes":
+        return sorted.sort((a, b) => b.frequencia - a.frequencia);
+      case "frias":
+        return sorted.sort((a, b) => a.frequencia - b.frequencia);
+      case "sequencia":
+        return sorted.sort((a, b) => b.maiorSequencia - a.maiorSequencia);
+      case "atraso":
+        return sorted.sort((a, b) => b.maiorAtraso - a.maiorAtraso);
+      default:
+        return sorted.sort((a, b) => a.dezena - b.dezena);
+    }
   };
 
   const estatisticasOrdenadas = ordenarEstatisticas(estatisticas);
@@ -45,12 +63,18 @@ export default function Frequencia() {
           </p>
         </div>
 
-        {/* Period Selector */}
-        <SeletorPeriodo
-          periodos={PERIODOS}
-          selecionado={periodo}
-          onChange={setPeriodo}
-        />
+        {/* Filtros */}
+        <div className="flex flex-wrap gap-3">
+          <SeletorPeriodo
+            periodos={PERIODOS}
+            selecionado={periodo}
+            onChange={setPeriodo}
+          />
+          <SeletorOrdenacao
+            selecionado={ordenacao}
+            onChange={setOrdenacao}
+          />
+        </div>
 
         {/* Loading State */}
         {isLoading && (
