@@ -27,7 +27,9 @@ export function DezenaCard({
   maiorAtraso,
   frequencia,
   melhorDupla,
+  correlacaoDupla,
   melhorTrio,
+  correlacaoTrio,
   status,
 }: DezenaCardProps) {
   return (
@@ -83,13 +85,13 @@ export function DezenaCard({
           />
           <DataRow
             label="Melhor Dupla"
-            value={formatDezena(melhorDupla)}
+            value={`${formatDezena(melhorDupla)} (${correlacaoDupla}%)`}
           />
           <DataRow
             label="Melhor Trio"
             value={
               melhorTrio && melhorTrio[0] && melhorTrio[1]
-                ? `${formatDezena(melhorTrio[0])} e ${formatDezena(melhorTrio[1])}`
+                ? `${formatDezena(melhorTrio[0])} e ${formatDezena(melhorTrio[1])} (${correlacaoTrio}%)`
                 : "—"
             }
           />
