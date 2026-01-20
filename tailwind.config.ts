@@ -57,6 +57,23 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Cores específicas da Lotofácil
+        lotofacil: {
+          par: "hsl(var(--lotofacil-par))",
+          impar: "hsl(var(--lotofacil-impar))",
+          moldura: "hsl(var(--lotofacil-moldura))",
+          primo: "hsl(var(--lotofacil-primo))",
+          repetida: "hsl(var(--lotofacil-repetida))",
+        },
+      },
+      fontSize: {
+        // Tipografia otimizada para idosos
+        "senior-sm": ["1rem", { lineHeight: "1.5" }],
+        "senior-base": ["1.125rem", { lineHeight: "1.6" }],
+        "senior-lg": ["1.25rem", { lineHeight: "1.5" }],
+        "senior-xl": ["1.5rem", { lineHeight: "1.4" }],
+        "senior-2xl": ["1.875rem", { lineHeight: "1.3" }],
+        "senior-3xl": ["2.25rem", { lineHeight: "1.2" }],
       },
       borderRadius: {
         lg: "var(--radius)",
