@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import RecuperarSenha from "./pages/RecuperarSenha";
@@ -26,16 +27,20 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
+            {/* Rotas Públicas */}
             <Route path="/login" element={<Login />} />
             <Route path="/recuperar-senha" element={<RecuperarSenha />} />
-            <Route path="/comunidade" element={<Comunidade />} />
-            <Route path="/notificacoes" element={<Notificacoes />} />
-            <Route path="/resultados" element={<Resultados />} />
-            <Route path="/tendencias" element={<Tendencias />} />
-            <Route path="/frequencia" element={<Frequencia />} />
-            <Route path="/perfil" element={<Perfil />} />
-            <Route path="/criar-post" element={<CriarPost />} />
+
+            {/* Rotas Protegidas - Requer Login */}
+            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/comunidade" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
+            <Route path="/notificacoes" element={<ProtectedRoute><Notificacoes /></ProtectedRoute>} />
+            <Route path="/resultados" element={<ProtectedRoute><Resultados /></ProtectedRoute>} />
+            <Route path="/tendencias" element={<ProtectedRoute><Tendencias /></ProtectedRoute>} />
+            <Route path="/frequencia" element={<ProtectedRoute><Frequencia /></ProtectedRoute>} />
+            <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
+            <Route path="/criar-post" element={<ProtectedRoute><CriarPost /></ProtectedRoute>} />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
