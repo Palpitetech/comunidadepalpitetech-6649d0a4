@@ -338,12 +338,44 @@ function extrairNumeroConcurso(concurso: Record<string, unknown>): number | null
 
 // Extrair data do concurso
 function extrairData(concurso: Record<string, unknown>): string {
-  const campos = ['data', 'data_sorteio', 'dataApuracao', 'dataSorteio'];
+  // Campos possíveis onde a data pode estar
+  const campos = [
+    'data', 
+    'data_sorteio', 
+    'dataApuracao', 
+    'dataSorteio',
+    'data_concurso',
+    'dataResultado',
+    'dataDoSorteio',
+    'dataConcurso'
+  ];
+  
   for (const campo of campos) {
-    if (concurso[campo] && typeof concurso[campo] === 'string') {
-      return parseData(concurso[campo] as string);
+    const valor = concurso[campo];
+    
+    if (valor) {
+      // String no formato de data
+      if (typeof valor === 'string' && valor.length > 0) {
+        const parsed = parseData(valor);
+        if (parsed !== new Date().toISOString().split('T')[0]) {
+          return parsed;
+        }
+        // Se parseData retornou data de hoje, pode ser válido - verificar se não é fallback
+        if (valor.includes('/') || valor.includes('-')) {
+          return parsed;
+        }
+      }
+      // Número (timestamp)
+      if (typeof valor === 'number') {
+        return new Date(valor).toISOString().split('T')[0];
+      }
     }
   }
+  
+  // Log para debug se não encontrar a data
+  console.warn(`[WARN] Data não encontrada. Campos disponíveis: ${Object.keys(concurso).join(', ')}`);
+  console.warn(`[WARN] Valores dos campos: data=${concurso.data}, dataApuracao=${concurso.dataApuracao}, dataSorteio=${concurso.dataSorteio}`);
+  
   return new Date().toISOString().split('T')[0];
 }
 
