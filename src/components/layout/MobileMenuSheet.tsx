@@ -69,9 +69,9 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
           {/* Lado Esquerdo: Voltar */}
           <button
             onClick={() => onOpenChange(false)}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-[13px]"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-base"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-5 w-5" />
             Voltar
           </button>
 
@@ -79,12 +79,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
           {isAuthenticated ? (
             <Link to="/perfil" onClick={closeAndNavigate}>
               <div className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <span className="text-[13px] font-medium text-foreground">
+                <span className="text-base font-medium text-foreground">
                   {profile?.nome?.split(' ')[0] || 'Usuário'}
                 </span>
-                <Avatar className="h-8 w-8">
+                <Avatar className="h-9 w-9">
                   <AvatarImage src={profile?.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                  <AvatarFallback className="bg-primary/10 text-primary text-sm">
                     {getInitials(profile?.nome)}
                   </AvatarFallback>
                 </Avatar>
@@ -93,9 +93,9 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
           ) : (
             <Link to="/login" onClick={closeAndNavigate}>
               <div className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <span className="text-[13px] text-muted-foreground">Entrar</span>
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-muted text-muted-foreground text-xs">?</AvatarFallback>
+                <span className="text-base text-muted-foreground">Entrar</span>
+                <Avatar className="h-9 w-9">
+                  <AvatarFallback className="bg-muted text-muted-foreground text-sm">?</AvatarFallback>
                 </Avatar>
               </div>
             </Link>
@@ -107,14 +107,14 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
           {/* Itens Fixos de Navegação */}
           <nav className="px-4 py-6 space-y-1">
             <Link to="/" onClick={closeAndNavigate}>
-              <div className="flex items-center gap-3 py-3 text-[13px] text-foreground hover:text-primary transition-colors">
-                <Home className="h-[18px] w-[18px] stroke-[1.5]" />
+              <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
+                <Home className="h-5 w-5 stroke-[1.5]" />
                 Início
               </div>
             </Link>
             <Link to="/comunidade" onClick={closeAndNavigate}>
-              <div className="flex items-center gap-3 py-3 text-[13px] text-foreground hover:text-primary transition-colors">
-                <Users className="h-[18px] w-[18px] stroke-[1.5]" />
+              <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
+                <Users className="h-5 w-5 stroke-[1.5]" />
                 Comunidade
               </div>
             </Link>
@@ -124,26 +124,26 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
           <div className="px-4">
             <Accordion type="single" collapsible>
               <AccordionItem value="ferramentas" className="border-none">
-                <AccordionTrigger className="py-3 text-[13px] hover:no-underline hover:text-primary">
+                <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
                   <div className="flex items-center gap-3">
-                    <BarChart3 className="h-[18px] w-[18px] stroke-[1.5]" />
+                    <BarChart3 className="h-5 w-5 stroke-[1.5]" />
                     <span>Ferramentas de Análise</span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-0">
-                  <div className="pl-7 space-y-0">
+                  <div className="pl-8 space-y-0">
                     <Link to="/resultados" onClick={closeAndNavigate}>
-                      <div className="py-2.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors">
+                      <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
                         Resultados
                       </div>
                     </Link>
                     <Link to="/tendencias" onClick={closeAndNavigate}>
-                      <div className="py-2.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors">
+                      <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
                         Tendências
                       </div>
                     </Link>
                     <Link to="/frequencia" onClick={closeAndNavigate}>
-                      <div className="py-2.5 text-[12px] text-muted-foreground hover:text-foreground transition-colors">
+                      <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
                         Quentes e Frias
                       </div>
                     </Link>
@@ -160,18 +160,18 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
             href={supportWhatsApp}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground text-[13px] transition-colors"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground text-base transition-colors"
           >
-            <MessageCircle className="h-4 w-4" />
+            <MessageCircle className="h-5 w-5" />
             Preciso de Suporte
           </a>
 
           {isAuthenticated && (
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-2 text-muted-foreground hover:text-destructive text-[13px] transition-colors"
+              className="flex items-center gap-2 text-muted-foreground hover:text-destructive text-base transition-colors"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-5 w-5" />
               Sair da conta
             </button>
           )}
