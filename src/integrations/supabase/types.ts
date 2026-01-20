@@ -57,6 +57,7 @@ export type Database = {
           created_at: string
           curtidas: number | null
           id: string
+          metadata: Json | null
           parent_id: string | null
           respostas_count: number | null
           tipo: string | null
@@ -69,6 +70,7 @@ export type Database = {
           created_at?: string
           curtidas?: number | null
           id?: string
+          metadata?: Json | null
           parent_id?: string | null
           respostas_count?: number | null
           tipo?: string | null
@@ -81,6 +83,7 @@ export type Database = {
           created_at?: string
           curtidas?: number | null
           id?: string
+          metadata?: Json | null
           parent_id?: string | null
           respostas_count?: number | null
           tipo?: string | null
@@ -119,6 +122,7 @@ export type Database = {
           created_at: string
           data_sorteio: string
           dezenas: number[]
+          dezenas_faltantes_ciclo: number[] | null
           id: string
           locais_ganhadores: Json | null
           local_sorteio: string | null
@@ -138,6 +142,7 @@ export type Database = {
           created_at?: string
           data_sorteio: string
           dezenas: number[]
+          dezenas_faltantes_ciclo?: number[] | null
           id?: string
           locais_ganhadores?: Json | null
           local_sorteio?: string | null
@@ -157,6 +162,7 @@ export type Database = {
           created_at?: string
           data_sorteio?: string
           dezenas?: number[]
+          dezenas_faltantes_ciclo?: number[] | null
           id?: string
           locais_ganhadores?: Json | null
           local_sorteio?: string | null
