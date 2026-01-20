@@ -1,6 +1,7 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { TrendingUp } from "lucide-react";
 import { TabelaParesImpares } from "@/components/tendencias/TabelaParesImpares";
+import { TabelaMoldura } from "@/components/tendencias/TabelaMoldura";
 
 export default function Tendencias() {
   return (
@@ -19,11 +20,20 @@ export default function Tendencias() {
           </h2>
           <TabelaParesImpares />
         </section>
+
+        {/* Tabela de Moldura */}
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <span className="text-2xl">🖼️</span>
+            Combinações de Moldura e Miolo
+          </h2>
+          <TabelaMoldura />
+        </section>
         
         {/* Placeholder para futuras tabelas */}
         <div className="bg-card rounded-xl border border-border p-8 text-center">
           <p className="text-base text-muted-foreground">
-            Tabelas de Moldura e Primos em breve.
+            Tabela de Primos em breve.
           </p>
         </div>
       </div>
