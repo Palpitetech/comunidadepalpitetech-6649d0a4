@@ -194,7 +194,7 @@ export function TabelaEstatisticaGenerica({ config }: Props) {
               <SortableHeader column="porcentagem" className="hidden md:table-cell">
                 %
               </SortableHeader>
-              <TableHead className="hidden md:table-cell">Média</TableHead>
+              <TableHead>Frequência</TableHead>
               <TableHead>Última</TableHead>
             </TableRow>
           </TableHeader>
@@ -229,7 +229,7 @@ export function TabelaEstatisticaGenerica({ config }: Props) {
                 <TableCell className="hidden md:table-cell text-base text-muted-foreground">
                   {item.porcentagem.toFixed(2)}%
                 </TableCell>
-                <TableCell className="hidden md:table-cell text-base text-muted-foreground">
+                <TableCell className="text-base text-muted-foreground">
                   {formatMedia(item.mediaOcorrencia)}
                 </TableCell>
                 <TableCell className="text-base text-muted-foreground">
