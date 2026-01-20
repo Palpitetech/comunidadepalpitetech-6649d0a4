@@ -7,19 +7,9 @@ import { BarChart3, TrendingUp, Flame, Users } from "lucide-react";
 const Index = () => {
   return (
     <MainLayout>
-      <div className="container-senior py-8">
-        {/* Hero Section */}
-        <div className="text-center mb-8">
-          <h1 className="text-senior-2xl font-bold text-primary mb-2">
-            Bem-vindo ao Palpite Tech
-          </h1>
-          <p className="text-senior-lg text-muted-foreground">
-            Análise inteligente para seus jogos da Lotofácil
-          </p>
-        </div>
-
+      <div className="container-senior pt-4 pb-8">
         {/* Cards de Acesso Rápido */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           <Link to="/resultados">
             <Card className="hover:border-primary transition-colors cursor-pointer h-full">
               <CardHeader className="pb-2">

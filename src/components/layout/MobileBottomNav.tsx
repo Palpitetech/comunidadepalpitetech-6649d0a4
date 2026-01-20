@@ -1,4 +1,4 @@
-import { Users, PlusCircle, Bell, Menu } from "lucide-react";
+import { Home, Users, Bell, Menu } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +15,20 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border safe-area-bottom">
       <div className="flex items-center justify-around h-16">
+        {/* Início */}
+        <Link
+          to="/"
+          className={cn(
+            "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors",
+            isActive("/")
+              ? "text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <Home className="h-6 w-6" />
+          <span className="text-xs mt-1 font-medium">Início</span>
+        </Link>
+
         {/* Comunidade */}
         <Link
           to="/comunidade"
@@ -29,18 +43,7 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
           <span className="text-xs mt-1 font-medium">Comunidade</span>
         </Link>
 
-        {/* Criar Post - Botão Central Destacado */}
-        <Link
-          to="/criar-post"
-          className="flex flex-col items-center justify-center flex-1 h-full min-w-[72px] py-2"
-        >
-          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent text-accent-foreground shadow-lg -mt-4">
-            <PlusCircle className="h-7 w-7" />
-          </div>
-          <span className="text-xs mt-1 font-medium text-accent">Criar</span>
-        </Link>
-
-        {/* Notificações */}
+        {/* Alertas */}
         <Link
           to="/notificacoes"
           className={cn(
