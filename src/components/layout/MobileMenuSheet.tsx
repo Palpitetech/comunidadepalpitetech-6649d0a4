@@ -18,7 +18,6 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
   ChevronRight,
-  Compass,
   Home,
   Users,
   BarChart3,
@@ -113,34 +112,26 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
           )}
         </div>
 
-        {/* Menus em Accordion */}
+        {/* Navegação Fixa + Accordion de Ferramentas */}
         <div className="flex-1 overflow-y-auto p-4">
-          <Accordion type="multiple" defaultValue={["navegacao", "ferramentas"]} className="space-y-2">
-            {/* Navegação */}
-            <AccordionItem value="navegacao" className="border rounded-lg px-2">
-              <AccordionTrigger className="text-senior-base py-4 hover:no-underline">
-                <div className="flex items-center gap-3">
-                  <Compass className="h-5 w-5" />
-                  Navegação
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pb-2">
-                <Link to="/" onClick={closeAndNavigate}>
-                  <Button variant="ghost" className="w-full justify-start h-12 text-senior-base gap-3 pl-8">
-                    <Home className="h-5 w-5" />
-                    Início
-                  </Button>
-                </Link>
-                <Link to="/comunidade" onClick={closeAndNavigate}>
-                  <Button variant="ghost" className="w-full justify-start h-12 text-senior-base gap-3 pl-8">
-                    <Users className="h-5 w-5" />
-                    Comunidade
-                  </Button>
-                </Link>
-              </AccordionContent>
-            </AccordionItem>
+          {/* Itens Fixos de Navegação */}
+          <div className="space-y-2 mb-6">
+            <Link to="/" onClick={closeAndNavigate}>
+              <Button variant="ghost" className="w-full justify-start h-14 text-senior-base gap-3">
+                <Home className="h-6 w-6" />
+                Início
+              </Button>
+            </Link>
+            <Link to="/comunidade" onClick={closeAndNavigate}>
+              <Button variant="ghost" className="w-full justify-start h-14 text-senior-base gap-3">
+                <Users className="h-6 w-6" />
+                Comunidade
+              </Button>
+            </Link>
+          </div>
 
-            {/* Ferramentas de Análise */}
+          {/* Dropdown de Ferramentas de Análise */}
+          <Accordion type="single" collapsible defaultValue="ferramentas">
             <AccordionItem value="ferramentas" className="border rounded-lg px-2">
               <AccordionTrigger className="text-senior-base py-4 hover:no-underline">
                 <div className="flex items-center gap-3">
@@ -152,7 +143,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                 <Link to="/resultados" onClick={closeAndNavigate}>
                   <Button variant="ghost" className="w-full justify-start h-12 text-senior-base gap-3 pl-8">
                     <BarChart3 className="h-5 w-5" />
-                    Tabela de Resultados
+                    Resultados Completos
                   </Button>
                 </Link>
                 <Link to="/tendencias" onClick={closeAndNavigate}>
