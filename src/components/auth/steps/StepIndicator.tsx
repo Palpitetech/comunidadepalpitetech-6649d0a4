@@ -1,36 +1,58 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface StepIndicatorProps {
+interface Step {
   number: number;
   label: string;
-  active: boolean;
-  completed?: boolean;
 }
 
-export function StepIndicator({ number, label, active, completed }: StepIndicatorProps) {
+interface StepIndicatorProps {
+  currentStep: number;
+  steps: Step[];
+}
+
+export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div
-        className={cn(
-          "w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold transition-all duration-300",
-          completed
-            ? "bg-accent text-accent-foreground shadow-lg"
-            : active
-            ? "bg-primary text-primary-foreground shadow-lg ring-4 ring-primary/30"
-            : "bg-muted text-muted-foreground"
-        )}
-      >
-        {completed ? <Check className="h-7 w-7" /> : number}
-      </div>
-      <span
-        className={cn(
-          "text-senior-sm font-medium transition-colors",
-          active || completed ? "text-foreground" : "text-muted-foreground"
-        )}
-      >
-        {label}
-      </span>
+    <div className="flex items-center justify-center gap-4">
+      {steps.map((step, index) => {
+        const isActive = step.number === currentStep;
+        const isCompleted = step.number < currentStep;
+
+        return (
+          <div key={step.number} className="flex items-center gap-4">
+            <div className="flex flex-col items-center gap-2">
+              <div
+                className={cn(
+                  "w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold transition-all duration-300",
+                  isCompleted
+                    ? "bg-accent text-accent-foreground shadow-lg"
+                    : isActive
+                    ? "bg-primary text-primary-foreground shadow-lg ring-4 ring-primary/30"
+                    : "bg-muted text-muted-foreground"
+                )}
+              >
+                {isCompleted ? <Check className="h-7 w-7" /> : step.number}
+              </div>
+              <span
+                className={cn(
+                  "text-senior-sm font-medium transition-colors",
+                  isActive || isCompleted ? "text-foreground" : "text-muted-foreground"
+                )}
+              >
+                {step.label}
+              </span>
+            </div>
+            {index < steps.length - 1 && (
+              <div
+                className={cn(
+                  "w-8 h-1 rounded-full transition-colors mb-6",
+                  step.number < currentStep ? "bg-accent" : "bg-muted"
+                )}
+              />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
