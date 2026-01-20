@@ -2,22 +2,27 @@ import { useState, useEffect } from "react";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { Loader2, CheckCircle, AlertCircle, RefreshCw, Phone } from "lucide-react";
-import { useVerificacaoSMS } from "@/hooks/useVerificacaoSMS";
+import { Loader2, CheckCircle, AlertCircle, RefreshCw, Phone, Mail } from "lucide-react";
+import { useVerificacao } from "@/hooks/useVerificacao";
 
-interface StepCodigoSMSProps {
+interface StepCodigoOTPProps {
   userId: string;
-  celular: string;
+  tipo: 'sms' | 'email';
+  destino: string;
+  nome?: string;
   onVerified: () => void;
 }
 
-export function StepCodigoSMS({ userId, celular, onVerified }: StepCodigoSMSProps) {
+export function StepCodigoOTP({ userId, tipo, destino, nome, onVerified }: StepCodigoOTPProps) {
   const [codigo, setCodigo] = useState("");
   const [destinoMascarado, setDestinoMascarado] = useState("");
   const [tempoRestante, setTempoRestante] = useState(600); // 10 minutos em segundos
   const [codigoEnviado, setCodigoEnviado] = useState(false);
   
-  const { enviarCodigo, verificarCodigo, isLoading, error, cooldown, resetError } = useVerificacaoSMS();
+  const { enviarCodigo, verificarCodigo, isLoading, error, cooldown, resetError } = useVerificacao();
+
+  const Icon = tipo === 'email' ? Mail : Phone;
+  const tipoTexto = tipo === 'email' ? 'email' : 'celular';
 
   // Timer de expiração do código
   useEffect(() => {
@@ -38,14 +43,14 @@ export function StepCodigoSMS({ userId, celular, onVerified }: StepCodigoSMSProp
 
   // Enviar código ao montar
   useEffect(() => {
-    if (!codigoEnviado && userId && celular) {
+    if (!codigoEnviado && userId && destino) {
       handleEnviarCodigo();
     }
-  }, [userId, celular]);
+  }, [userId, destino]);
 
   const handleEnviarCodigo = async () => {
     resetError();
-    const result = await enviarCodigo(userId, celular);
+    const result = await enviarCodigo({ userId, tipo, destino, nome });
     
     if (result.sucesso) {
       setCodigoEnviado(true);
@@ -80,7 +85,7 @@ export function StepCodigoSMS({ userId, celular, onVerified }: StepCodigoSMSProp
     <>
       <CardHeader className="text-center pb-6">
         <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-          <Phone className="h-8 w-8 text-primary" />
+          <Icon className="h-8 w-8 text-primary" />
         </div>
         <CardTitle className="text-senior-2xl">Digite o código</CardTitle>
         <CardDescription className="text-senior-base">
@@ -88,10 +93,10 @@ export function StepCodigoSMS({ userId, celular, onVerified }: StepCodigoSMSProp
             <>
               Enviamos um código de 6 dígitos para
               <br />
-              <span className="font-semibold text-foreground">{destinoMascarado || celular}</span>
+              <span className="font-semibold text-foreground">{destinoMascarado || destino}</span>
             </>
           ) : (
-            "Enviando código de verificação..."
+            `Enviando código para seu ${tipoTexto}...`
           )}
         </CardDescription>
       </CardHeader>
@@ -170,7 +175,7 @@ export function StepCodigoSMS({ userId, celular, onVerified }: StepCodigoSMSProp
         {/* Reenviar código */}
         <div className="text-center pt-4 border-t">
           <p className="text-muted-foreground text-senior-sm mb-3">
-            Não recebeu o SMS?
+            Não recebeu o {tipo === 'email' ? 'email' : 'SMS'}?
           </p>
           <Button
             variant="outline"

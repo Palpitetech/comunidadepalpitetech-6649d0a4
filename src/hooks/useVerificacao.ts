@@ -1,8 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-interface UseVerificacaoSMSReturn {
-  enviarCodigo: (userId: string, celular: string) => Promise<{ sucesso: boolean; erro?: string; destino_mascarado?: string }>;
+type TipoVerificacao = 'sms' | 'email';
+
+interface EnviarCodigoParams {
+  userId: string;
+  tipo: TipoVerificacao;
+  destino: string;
+  nome?: string;
+}
+
+interface UseVerificacaoReturn {
+  enviarCodigo: (params: EnviarCodigoParams) => Promise<{ sucesso: boolean; erro?: string; destino_mascarado?: string }>;
   verificarCodigo: (userId: string, codigo: string) => Promise<{ sucesso: boolean; erro?: string }>;
   isLoading: boolean;
   error: string | null;
@@ -10,7 +19,7 @@ interface UseVerificacaoSMSReturn {
   resetError: () => void;
 }
 
-export function useVerificacaoSMS(): UseVerificacaoSMSReturn {
+export function useVerificacao(): UseVerificacaoReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
@@ -32,17 +41,20 @@ export function useVerificacaoSMS(): UseVerificacaoSMSReturn {
     return () => clearInterval(timer);
   }, [cooldown]);
 
-  const enviarCodigo = useCallback(async (userId: string, celular: string) => {
+  const enviarCodigo = useCallback(async ({ userId, tipo, destino, nome }: EnviarCodigoParams) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const { data, error: invokeError } = await supabase.functions.invoke('enviar-codigo-sms', {
-        body: { user_id: userId, celular }
-      });
+      const functionName = tipo === 'email' ? 'enviar-codigo-email' : 'enviar-codigo-sms';
+      const body = tipo === 'email' 
+        ? { user_id: userId, email: destino, nome }
+        : { user_id: userId, celular: destino };
+
+      const { data, error: invokeError } = await supabase.functions.invoke(functionName, { body });
 
       if (invokeError) {
-        const errorMessage = invokeError.message || 'Erro ao enviar SMS';
+        const errorMessage = invokeError.message || `Erro ao enviar ${tipo === 'email' ? 'email' : 'SMS'}`;
         setError(errorMessage);
         return { sucesso: false, erro: errorMessage };
       }
@@ -52,12 +64,12 @@ export function useVerificacaoSMS(): UseVerificacaoSMSReturn {
         return { sucesso: true, destino_mascarado: data.destino_mascarado };
       }
 
-      const errorMessage = data?.erro || 'Erro ao enviar SMS';
+      const errorMessage = data?.erro || `Erro ao enviar ${tipo === 'email' ? 'email' : 'SMS'}`;
       setError(errorMessage);
       return { sucesso: false, erro: errorMessage };
       
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao enviar SMS';
+      const errorMessage = err instanceof Error ? err.message : `Erro ao enviar ${tipo === 'email' ? 'email' : 'SMS'}`;
       setError(errorMessage);
       return { sucesso: false, erro: errorMessage };
     } finally {

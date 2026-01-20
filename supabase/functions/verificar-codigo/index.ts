@@ -75,10 +75,14 @@ Deno.serve(async (req) => {
       .update({ usado: true })
       .eq('id', codigoData.id);
 
-    // Atualizar perfil como verificado
+    // Atualizar perfil como verificado baseado no tipo
+    const updateData = codigoData.tipo === 'email' 
+      ? { email_verificado: true } 
+      : { celular_verificado: true };
+
     const { error: updateError } = await supabase
       .from('perfis')
-      .update({ celular_verificado: true })
+      .update(updateData)
       .eq('id', user_id);
 
     if (updateError) {
@@ -86,7 +90,7 @@ Deno.serve(async (req) => {
       // Não lançamos erro aqui pois o código foi verificado
     }
 
-    console.log(`[VERIFICAÇÃO] Usuário ${user_id} verificado com sucesso`);
+    console.log(`[VERIFICAÇÃO] Usuário ${user_id} verificado via ${codigoData.tipo} com sucesso`);
 
     return new Response(
       JSON.stringify({ sucesso: true, mensagem: 'Celular verificado com sucesso!' }),

@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { StepIndicator } from "./steps/StepIndicator";
 import { StepDadosPessoais } from "./steps/StepDadosPessoais";
-import { StepCodigoSMS } from "./steps/StepCodigoSMS";
+import { StepEscolhaVerificacao } from "./steps/StepEscolhaVerificacao";
+import { StepCodigoOTP } from "./steps/StepCodigoOTP";
 import { StepSucesso } from "./steps/StepSucesso";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useVerificacao } from "@/hooks/useVerificacao";
 
 interface FormData {
   nome: string;
@@ -13,6 +15,7 @@ interface FormData {
   celular: string;
   password: string;
   userId: string;
+  tipoVerificacao: 'sms' | 'email' | null;
 }
 
 export function RegisterWizard() {
@@ -24,10 +27,12 @@ export function RegisterWizard() {
     celular: "",
     password: "",
     userId: "",
+    tipoVerificacao: null,
   });
 
   const { signUp } = useAuthContext();
   const { toast } = useToast();
+  const { enviarCodigo, isLoading: isEnviandoCodigo } = useVerificacao();
 
   const handleFormDataChange = (data: Partial<FormData>) => {
     setFormData((prev) => ({ ...prev, ...data }));
@@ -48,7 +53,7 @@ export function RegisterWizard() {
         setStep(2);
         toast({
           title: "Conta criada!",
-          description: "Enviamos um código de verificação para seu celular.",
+          description: "Escolha como deseja verificar sua conta.",
         });
       }
     } catch (error) {
@@ -63,14 +68,48 @@ export function RegisterWizard() {
     }
   };
 
+  const handleEscolhaVerificacao = async (tipo: 'sms' | 'email') => {
+    setFormData((prev) => ({ ...prev, tipoVerificacao: tipo }));
+    
+    const destino = tipo === 'email' ? formData.email : formData.celular.replace(/\D/g, "");
+    
+    const result = await enviarCodigo({
+      userId: formData.userId,
+      tipo,
+      destino,
+      nome: formData.nome,
+    });
+
+    if (result.sucesso) {
+      setStep(3);
+      toast({
+        title: "Código enviado!",
+        description: `Verifique seu ${tipo === 'email' ? 'email' : 'celular'}.`,
+      });
+    } else {
+      toast({
+        title: "Erro ao enviar código",
+        description: result.erro,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleVerificado = () => {
-    setStep(3);
+    setStep(4);
+  };
+
+  const getDestinoVerificacao = () => {
+    if (formData.tipoVerificacao === 'email') {
+      return formData.email;
+    }
+    return formData.celular.replace(/\D/g, "");
   };
 
   return (
     <Card className="w-full max-w-lg shadow-xl">
       {/* Indicadores de etapa */}
-      <div className="flex justify-center gap-6 p-6 border-b bg-muted/30">
+      <div className="flex justify-center items-center gap-3 p-6 border-b bg-muted/30 flex-wrap">
         <StepIndicator
           number={1}
           label="Dados"
@@ -78,22 +117,31 @@ export function RegisterWizard() {
           completed={step > 1}
         />
         <div className="flex items-center">
-          <div className={`w-12 h-1 rounded ${step > 1 ? "bg-accent" : "bg-muted"}`} />
+          <div className={`w-8 h-1 rounded ${step > 1 ? "bg-accent" : "bg-muted"}`} />
         </div>
         <StepIndicator
           number={2}
-          label="Código"
+          label="Escolha"
           active={step >= 2}
           completed={step > 2}
         />
         <div className="flex items-center">
-          <div className={`w-12 h-1 rounded ${step > 2 ? "bg-accent" : "bg-muted"}`} />
+          <div className={`w-8 h-1 rounded ${step > 2 ? "bg-accent" : "bg-muted"}`} />
         </div>
         <StepIndicator
           number={3}
-          label="Pronto"
+          label="Código"
           active={step >= 3}
           completed={step > 3}
+        />
+        <div className="flex items-center">
+          <div className={`w-8 h-1 rounded ${step > 3 ? "bg-accent" : "bg-muted"}`} />
+        </div>
+        <StepIndicator
+          number={4}
+          label="Pronto"
+          active={step >= 4}
+          completed={step > 4}
         />
       </div>
 
@@ -108,14 +156,25 @@ export function RegisterWizard() {
       )}
 
       {step === 2 && (
-        <StepCodigoSMS
-          userId={formData.userId}
+        <StepEscolhaVerificacao
+          email={formData.email}
           celular={formData.celular}
+          onEscolha={handleEscolhaVerificacao}
+          isLoading={isEnviandoCodigo}
+        />
+      )}
+
+      {step === 3 && formData.tipoVerificacao && (
+        <StepCodigoOTP
+          userId={formData.userId}
+          tipo={formData.tipoVerificacao}
+          destino={getDestinoVerificacao()}
+          nome={formData.nome}
           onVerified={handleVerificado}
         />
       )}
 
-      {step === 3 && <StepSucesso />}
+      {step === 4 && <StepSucesso />}
     </Card>
   );
 }
