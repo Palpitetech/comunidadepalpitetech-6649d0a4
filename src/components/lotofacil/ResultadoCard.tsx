@@ -22,41 +22,46 @@ export function ResultadoCard({ resultado, onClick }: ResultadoCardProps) {
     locale: ptBR,
   });
 
+  // Dividir dezenas: 8 na primeira linha, 7 na segunda
+  const primeiraLinha = resultado.dezenas.slice(0, 8);
+  const segundaLinha = resultado.dezenas.slice(8, 15);
+
   return (
     <button
       onClick={onClick}
       className={cn(
-        "w-full text-left py-4 px-2",
-        "hover:bg-accent/30 transition-colors",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+        "w-full py-3 px-1",
+        "hover:bg-accent/20 transition-colors",
+        "focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/30",
         "cursor-pointer"
       )}
     >
-      <div className="flex gap-3">
-        {/* Lado esquerdo: Concurso e Data */}
-        <div className="flex flex-col items-start min-w-[72px]">
-          <span className="text-primary font-bold text-base">
-            #{resultado.concurso_id}
-          </span>
-          <span className="text-muted-foreground text-sm">
-            {dataFormatada}
-          </span>
-        </div>
+      {/* Topo: Concurso e Data na mesma linha */}
+      <div className="text-center mb-2">
+        <span className="text-xs text-muted-foreground">
+          #{resultado.concurso_id} — {dataFormatada}
+        </span>
+      </div>
 
-        {/* Lado direito: Dezenas e Indicadores */}
-        <div className="flex-1 flex flex-col gap-2">
-          {/* Grid de dezenas */}
-          <div className="flex flex-wrap gap-1">
-            {resultado.dezenas.map((dezena, index) => (
-              <DezenaCirculoMini key={index} dezena={dezena} />
-            ))}
-          </div>
-
-          {/* Indicadores resumidos */}
-          <div className="text-xs text-muted-foreground">
-            I:{resultado.qtd_impares ?? "-"} | P:{resultado.qtd_pares ?? "-"} | M:{resultado.qtd_moldura ?? "-"} | Pr:{resultado.qtd_primos ?? "-"} | R:{resultado.qtd_repetidas ?? "-"}
-          </div>
+      {/* Grid de Dezenas: 2 linhas centralizadas */}
+      <div className="flex flex-col items-center gap-1 mb-2">
+        {/* Linha 1: 8 dezenas */}
+        <div className="flex justify-center gap-1">
+          {primeiraLinha.map((dezena, index) => (
+            <DezenaCirculoMini key={index} dezena={dezena} />
+          ))}
         </div>
+        {/* Linha 2: 7 dezenas */}
+        <div className="flex justify-center gap-1">
+          {segundaLinha.map((dezena, index) => (
+            <DezenaCirculoMini key={index + 8} dezena={dezena} />
+          ))}
+        </div>
+      </div>
+
+      {/* Rodapé: Parâmetros com palavras completas */}
+      <div className="text-center text-sm text-muted-foreground">
+        Ímpares: {resultado.qtd_impares ?? "-"} | Repetidas: {resultado.qtd_repetidas ?? "-"} | Moldura: {resultado.qtd_moldura ?? "-"} | Primos: {resultado.qtd_primos ?? "-"}
       </div>
     </button>
   );

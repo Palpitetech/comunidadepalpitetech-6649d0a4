@@ -9,8 +9,8 @@ export function DezenaCirculoMini({ dezena, className }: DezenaCirculoMiniProps)
   return (
     <div
       className={cn(
-        "w-7 h-7 rounded-full flex items-center justify-center",
-        "bg-white border border-primary/30 text-primary",
+        "w-[30px] h-[30px] rounded-full flex items-center justify-center",
+        "bg-primary/10 text-primary",
         "text-sm font-semibold",
         className
       )}
