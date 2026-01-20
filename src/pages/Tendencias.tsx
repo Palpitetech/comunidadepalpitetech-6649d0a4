@@ -1,18 +1,29 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { TrendingUp } from "lucide-react";
+import { TabelaParesImpares } from "@/components/tendencias/TabelaParesImpares";
 
 export default function Tendencias() {
   return (
     <MainLayout>
-      <div className="container-senior py-8">
+      <div className="container-senior py-6">
         <div className="flex items-center gap-3 mb-6">
-          <TrendingUp className="h-8 w-8 text-primary" />
-          <h1 className="text-senior-2xl font-bold">Tendências</h1>
+          <TrendingUp className="h-7 w-7 text-primary" />
+          <h1 className="text-xl font-bold">Tendências</h1>
         </div>
+
+        {/* Tabela de Pares/Ímpares */}
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <span className="text-2xl">🎯</span>
+            Combinações de Pares e Ímpares
+          </h2>
+          <TabelaParesImpares />
+        </section>
         
+        {/* Placeholder para futuras tabelas */}
         <div className="bg-card rounded-xl border border-border p-8 text-center">
-          <p className="text-senior-lg text-muted-foreground">
-            Análise de Pares/Ímpares, Primos e Moldura em breve.
+          <p className="text-base text-muted-foreground">
+            Tabelas de Moldura e Primos em breve.
           </p>
         </div>
       </div>
