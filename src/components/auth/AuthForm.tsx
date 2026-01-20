@@ -176,6 +176,15 @@ export function AuthForm() {
                   "Entrar"
                 )}
               </Button>
+
+              <div className="text-center pt-2">
+                <a
+                  href="/recuperar-senha"
+                  className="text-primary hover:underline text-senior-sm"
+                >
+                  Esqueceu sua senha?
+                </a>
+              </div>
             </form>
           </TabsContent>
 

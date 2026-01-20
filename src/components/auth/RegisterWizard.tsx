@@ -106,43 +106,18 @@ export function RegisterWizard() {
     return formData.celular.replace(/\D/g, "");
   };
 
+  const steps = [
+    { number: 1, label: "Dados" },
+    { number: 2, label: "Escolha" },
+    { number: 3, label: "Código" },
+    { number: 4, label: "Pronto" },
+  ];
+
   return (
     <Card className="w-full max-w-lg shadow-xl">
       {/* Indicadores de etapa */}
-      <div className="flex justify-center items-center gap-3 p-6 border-b bg-muted/30 flex-wrap">
-        <StepIndicator
-          number={1}
-          label="Dados"
-          active={step >= 1}
-          completed={step > 1}
-        />
-        <div className="flex items-center">
-          <div className={`w-8 h-1 rounded ${step > 1 ? "bg-accent" : "bg-muted"}`} />
-        </div>
-        <StepIndicator
-          number={2}
-          label="Escolha"
-          active={step >= 2}
-          completed={step > 2}
-        />
-        <div className="flex items-center">
-          <div className={`w-8 h-1 rounded ${step > 2 ? "bg-accent" : "bg-muted"}`} />
-        </div>
-        <StepIndicator
-          number={3}
-          label="Código"
-          active={step >= 3}
-          completed={step > 3}
-        />
-        <div className="flex items-center">
-          <div className={`w-8 h-1 rounded ${step > 3 ? "bg-accent" : "bg-muted"}`} />
-        </div>
-        <StepIndicator
-          number={4}
-          label="Pronto"
-          active={step >= 4}
-          completed={step > 4}
-        />
+      <div className="p-6 border-b bg-muted/30">
+        <StepIndicator currentStep={step} steps={steps} />
       </div>
 
       {/* Conteúdo da etapa atual */}
