@@ -73,6 +73,119 @@ async function dispararNotificacaoResultadoNovo(params: {
 }
 
 // =============================================================================
+// NOTIFICAÇÕES (comunidade via fila)
+// =============================================================================
+
+const COMMUNITY_TARGET_UTC_HOUR = 19; // ~16h BRT (UTC-3)
+
+function shouldEnqueueComunicadoComunidade(nowUtc: Date): boolean {
+  return nowUtc.getUTCHours() >= COMMUNITY_TARGET_UTC_HOUR;
+}
+
+function formatUtcDateYYYYMMDD(nowUtc: Date): string {
+  const yyyy = String(nowUtc.getUTCFullYear());
+  const mm = String(nowUtc.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(nowUtc.getUTCDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+async function enfileirarNotificacaoComunidade(params: {
+  supabase: any;
+  chaveDedup: string;
+  payload: Record<string, unknown>;
+}) {
+  const { supabase, chaveDedup, payload } = params;
+
+  const { error } = await (supabase as any)
+    .from('notificacoes_pendentes' as any)
+    .upsert(
+      {
+        tipo: 'comunidade',
+        payload,
+        chave_dedup: chaveDedup,
+        processado: false,
+      } as any,
+      {
+        onConflict: 'chave_dedup',
+        ignoreDuplicates: true,
+      } as any
+    );
+
+  if (error) throw new Error(error.message);
+}
+
+async function processarFilaComunidade(params: {
+  supabase: any;
+  supabaseUrl: string;
+  authBearer: string;
+  webhookSecret: string | undefined;
+}) {
+  const { supabase, supabaseUrl, authBearer, webhookSecret } = params;
+
+  if (!webhookSecret) {
+    console.warn('[COMUNIDADE] NOTIFICATIONS_WEBHOOK_SECRET não configurado; fila não será processada.');
+    return;
+  }
+
+  const { data: pendentes, error } = await (supabase as any)
+    .from('notificacoes_pendentes' as any)
+    .select('id,payload')
+    .eq('tipo', 'comunidade')
+    .eq('processado', false)
+    .order('created_at', { ascending: true })
+    .limit(5);
+
+  if (error) throw new Error(error.message);
+  if (!pendentes || pendentes.length === 0) return;
+
+  for (const item of pendentes as Array<{ id: string; payload: any }>) {
+    try {
+      const fnUrl = `${supabaseUrl}/functions/v1/send-notifications`;
+      const body = item.payload ?? {};
+
+      const res = await fetch(fnUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authBearer}`,
+          'x-webhook-secret': webhookSecret,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`send-notifications ${res.status}: ${text}`);
+      }
+
+      const { error: updErr } = await (supabase as any)
+        .from('notificacoes_pendentes' as any)
+        .update(
+          {
+            processado: true,
+            processado_em: new Date().toISOString(),
+            erro: null,
+          } as any
+        )
+        .eq('id', item.id);
+
+      if (updErr) throw new Error(updErr.message);
+
+      console.log(`[COMUNIDADE] Notificação processada (id=${item.id}).`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error(`[COMUNIDADE] Falha ao processar (id=${item.id}): ${msg}`);
+
+      await (supabase as any)
+        .from('notificacoes_pendentes' as any)
+        .update({ erro: msg } as any)
+        .eq('id', item.id);
+      // Não interrompe o sync por falha de notificação
+    }
+  }
+}
+
+// =============================================================================
 // SISTEMA DE RETRY COM RESILIÊNCIA
 // =============================================================================
 
@@ -286,6 +399,34 @@ Deno.serve(async (req) => {
     console.log(`[SYNC] Iniciando sincronização`);
     console.log(`[SYNC] Modo: ${modoOperacao}`);
     console.log(`[SYNC] ========================================`);
+
+    // Comunidade (automático via sync): enfileira e processa 1x/dia após ~16h BRT
+    try {
+      const nowUtc = new Date();
+      if (shouldEnqueueComunicadoComunidade(nowUtc)) {
+        const dia = formatUtcDateYYYYMMDD(nowUtc);
+        const chaveDedup = `comunidade:${dia}`;
+        const payload = {
+          titulo: 'Comunidade Lotofácil',
+          mensagem: 'Acompanhe nossa comunidade! Veja análises, palpites e novidades no app.',
+          tipo_disparo: 'comunidade',
+        };
+
+        await enfileirarNotificacaoComunidade({ supabase, chaveDedup, payload });
+        await processarFilaComunidade({
+          supabase,
+          supabaseUrl,
+          authBearer: supabaseAnonKey,
+          webhookSecret: notificationsWebhookSecret,
+        });
+      } else {
+        console.log('[COMUNIDADE] Ainda fora da janela (~16h BRT); não enfileirado.');
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error(`[COMUNIDADE] Erro no fluxo de fila: ${msg}`);
+      // Não interrompe o sync por falha de comunidade
+    }
 
     // Usar sistema de retry para buscar da API
     const apiResponse = await fetchWithRetry(apiUrl);
