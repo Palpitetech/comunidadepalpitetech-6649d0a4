@@ -87,7 +87,11 @@ export function DezenaCard({
           />
           <DataRow
             label="Melhor Trio"
-            value={`${formatDezena(melhorTrio[0])} e ${formatDezena(melhorTrio[1])}`}
+            value={
+              melhorTrio && melhorTrio[0] && melhorTrio[1]
+                ? `${formatDezena(melhorTrio[0])} e ${formatDezena(melhorTrio[1])}`
+                : "—"
+            }
           />
         </div>
       </CardContent>
