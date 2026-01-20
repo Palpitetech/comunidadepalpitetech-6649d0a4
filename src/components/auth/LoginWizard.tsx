@@ -180,7 +180,7 @@ export function LoginWizard() {
                   className="inline-flex items-center justify-center gap-2 text-senior-base text-primary hover:text-primary/80 h-12 px-4"
                 >
                   <MessageCircle className="h-5 w-5" />
-                  WhatsApp (16) 99717-5392
+                  Preciso de Suporte
                 </a>
               </div>
             </form>
