@@ -6,7 +6,7 @@ import { DezenaCard } from "@/components/frequencia/DezenaCard";
 import { useFrequenciaDezenas } from "@/hooks/useFrequenciaDezenas";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const PERIODOS = [3, 5, 10, 15, 20, 25, 50];
+const PERIODOS = [3, 5, 10, 15, 20, 25, 50, 100];
 
 export default function Frequencia() {
   const [periodo, setPeriodo] = useState<number>(10);
@@ -39,16 +39,19 @@ export default function Frequencia() {
   return (
     <MainLayout>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-        {/* Header com Seletor */}
-        <div className="flex items-center justify-between gap-4">
+        {/* Header - Desktop: título esquerda, seletor direita */}
+        {/* Header - Mobile: título em cima, seletor centralizado abaixo */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
             Análise de Dezenas
           </h1>
-          <SeletorPeriodo
-            periodos={PERIODOS}
-            selecionado={periodo}
-            onChange={setPeriodo}
-          />
+          <div className="flex justify-center sm:justify-end">
+            <SeletorPeriodo
+              periodos={PERIODOS}
+              selecionado={periodo}
+              onChange={setPeriodo}
+            />
+          </div>
         </div>
 
         {/* Filtro de Status */}
