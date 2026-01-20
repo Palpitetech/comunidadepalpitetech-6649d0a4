@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { StepIndicator } from "./steps/StepIndicator";
 import { StepDadosPessoais } from "./steps/StepDadosPessoais";
@@ -38,7 +38,7 @@ function formatCelularBR(value: string) {
   return value;
 }
 
-export function RegisterWizard({ initialData }: RegisterWizardProps) {
+export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) => {
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
@@ -172,6 +172,6 @@ export function RegisterWizard({ initialData }: RegisterWizardProps) {
       {step === 4 && <StepSucesso />}
     </Card>
   );
-}
+};
 
-export default RegisterWizard;
+// Named export only - do not use default export to avoid TypeScript ambiguity
