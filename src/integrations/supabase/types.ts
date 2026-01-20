@@ -50,6 +50,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notificacoes_pendentes: {
+        Row: {
+          chave_dedup: string | null
+          created_at: string
+          erro: string | null
+          id: string
+          payload: Json
+          processado: boolean
+          processado_em: string | null
+          tipo: string
+        }
+        Insert: {
+          chave_dedup?: string | null
+          created_at?: string
+          erro?: string | null
+          id?: string
+          payload: Json
+          processado?: boolean
+          processado_em?: string | null
+          tipo: string
+        }
+        Update: {
+          chave_dedup?: string | null
+          created_at?: string
+          erro?: string | null
+          id?: string
+          payload?: Json
+          processado?: boolean
+          processado_em?: string | null
+          tipo?: string
+        }
+        Relationships: []
+      }
       perfis: {
         Row: {
           avatar_url: string | null
