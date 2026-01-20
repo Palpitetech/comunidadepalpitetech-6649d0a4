@@ -40,12 +40,8 @@ export function Header() {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 no-underline">
           <span className="text-3xl">🍀</span>
-          <span className="text-senior-xl font-bold text-primary hidden sm:inline">
-            Lotofácil Inteligente
-          </span>
-          <span className="text-senior-xl font-bold text-primary sm:hidden">
-            Lotofácil
-          </span>
+          <span className="text-senior-xl font-bold text-primary hidden sm:inline">Palpite Tech</span>
+          <span className="text-senior-xl font-bold text-primary sm:hidden">Palpite</span>
         </Link>
 
         {/* Desktop Navigation */}

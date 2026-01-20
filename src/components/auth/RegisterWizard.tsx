@@ -18,13 +18,33 @@ interface FormData {
   tipoVerificacao: 'sms' | 'email' | null;
 }
 
-export function RegisterWizard() {
+export interface RegisterWizardProps {
+  initialData?: Partial<Pick<FormData, "email" | "celular" | "nome">>;
+}
+
+function formatCelularBR(value: string) {
+  const digits = value.replace(/\D/g, "");
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 11) {
+    const is9 = digits.length === 11;
+    const mid = is9 ? 7 : 6;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, mid)}-${digits.slice(mid)}`;
+  }
+  // Se vier com DDI 55, tenta remover para exibir bonitinho
+  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
+    return formatCelularBR(digits.slice(2));
+  }
+  return value;
+}
+
+export function RegisterWizard({ initialData }: RegisterWizardProps) {
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     nome: "",
-    email: "",
-    celular: "",
+    email: initialData?.email ? String(initialData.email).toLowerCase() : "",
+    celular: initialData?.celular ? formatCelularBR(String(initialData.celular)) : "",
     password: "",
     userId: "",
     tipoVerificacao: null,
@@ -153,3 +173,5 @@ export function RegisterWizard() {
     </Card>
   );
 }
+
+export default RegisterWizard;
