@@ -1,5 +1,11 @@
-import { cn } from "@/lib/utils";
+import { Calendar, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface SeletorPeriodoProps {
   periodos: number[];
@@ -13,21 +19,33 @@ export function SeletorPeriodo({
   onChange,
 }: SeletorPeriodoProps) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-      {periodos.map((periodo) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
         <Button
-          key={periodo}
-          variant={selecionado === periodo ? "default" : "secondary"}
+          variant="outline"
           size="lg"
-          onClick={() => onChange(periodo)}
-          className={cn(
-            "min-w-[52px] text-lg font-semibold shrink-0",
-            selecionado === periodo && "shadow-md"
-          )}
+          className="h-12 px-5 gap-3 text-base font-medium border-border/60 bg-card hover:bg-secondary/50 shadow-sm"
         >
-          {periodo}
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <span>
+            Analisar: <span className="font-semibold">Últimos {selecionado}</span>
+          </span>
+          <ChevronDown className="h-4 w-4 text-muted-foreground ml-1" />
         </Button>
-      ))}
-    </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-48 bg-card border-border shadow-lg">
+        {periodos.map((periodo) => (
+          <DropdownMenuItem
+            key={periodo}
+            onClick={() => onChange(periodo)}
+            className={`text-base py-3 cursor-pointer ${
+              selecionado === periodo ? "bg-secondary font-medium" : ""
+            }`}
+          >
+            Últimos {periodo} concursos
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
