@@ -103,7 +103,7 @@ export function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Link to="/auth">
+          <Link to="/login">
               <Button className="btn-senior bg-accent hover:bg-accent/90 text-accent-foreground">
                 Entrar
               </Button>
