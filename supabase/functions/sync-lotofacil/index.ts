@@ -18,6 +18,61 @@ const corsHeaders = {
 };
 
 // =============================================================================
+// NOTIFICAÇÕES (resultado novo)
+// =============================================================================
+
+function shouldNotifyResultadoNovo(url: URL): boolean {
+  const notify = url.searchParams.get('notify');
+  if (notify === 'false') return false;
+
+  // Evita notificar em cargas históricas (ultimosN, N > 1)
+  const quantidade = url.searchParams.get('quantidade');
+  if (quantidade) {
+    const n = Number(quantidade);
+    if (!Number.isNaN(n) && n > 1) return false;
+  }
+  return true;
+}
+
+async function dispararNotificacaoResultadoNovo(params: {
+  supabaseUrl: string;
+  authBearer: string;
+  webhookSecret: string | undefined;
+  concurso: number;
+}) {
+  const { supabaseUrl, authBearer, webhookSecret, concurso } = params;
+
+  if (!webhookSecret) {
+    console.warn('[NOTIFY] NOTIFICATIONS_WEBHOOK_SECRET não configurado; pulando disparo.');
+    return;
+  }
+
+  const fnUrl = `${supabaseUrl}/functions/v1/send-notifications`;
+  const body = {
+    titulo: 'Resultado Lotofácil',
+    mensagem: `Resultado da Lotofácil Concurso ${concurso} disponível! Confira as dezenas e as dezenas faltantes do ciclo no nosso app.`,
+    tipo_disparo: 'resultado_novo',
+    concurso_id: concurso,
+  };
+
+  const res = await fetch(fnUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      // JWT (anon) para satisfazer validação padrão (se existir) + rastreabilidade
+      Authorization: `Bearer ${authBearer}`,
+      'x-webhook-secret': webhookSecret,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Falha ao chamar send-notifications: ${res.status} ${text}`);
+  }
+}
+
+// =============================================================================
 // SISTEMA DE RETRY COM RESILIÊNCIA
 // =============================================================================
 
@@ -193,7 +248,9 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const apiToken = Deno.env.get('LOTOFACIL_API_TOKEN');
+    const notificationsWebhookSecret = Deno.env.get('NOTIFICATIONS_WEBHOOK_SECRET');
 
     if (!apiToken) {
       throw new Error('LOTOFACIL_API_TOKEN não configurado');
@@ -412,6 +469,25 @@ Deno.serve(async (req) => {
         console.log(`[AUDIT] Sucesso: Concurso ${concurso.numero} adicionado`);
         console.log(`        P:${indicadores.qtd_pares} I:${indicadores.qtd_impares} M:${indicadores.qtd_moldura} Pr:${indicadores.qtd_primos} R:${indicadores.qtd_repetidas}`);
         console.log(`        Ciclo ${cicloInfo.ciclo_numero} | Faltantes: ${cicloInfo.dezenas_faltantes_ciclo.length}`);
+
+        // Disparo de notificação (apenas quando não for carga histórica)
+        if (shouldNotifyResultadoNovo(url)) {
+          try {
+            await dispararNotificacaoResultadoNovo({
+              supabaseUrl,
+              authBearer: supabaseAnonKey,
+              webhookSecret: notificationsWebhookSecret,
+              concurso: concurso.numero,
+            });
+            console.log(`[NOTIFY] send-notifications acionada para concurso ${concurso.numero}`);
+          } catch (notifyErr) {
+            const msg = notifyErr instanceof Error ? notifyErr.message : String(notifyErr);
+            console.error(`[NOTIFY] Falha ao disparar notificação: ${msg}`);
+            // Não interrompe sincronização por falha de notificação
+          }
+        } else {
+          console.log('[NOTIFY] Disparo desativado (carga histórica ou notify=false).');
+        }
 
         resultados.novos++;
 
