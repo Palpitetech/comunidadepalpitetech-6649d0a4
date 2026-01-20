@@ -169,10 +169,10 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
             href={supportWhatsApp}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground text-senior-base py-2 transition-colors"
+            className="flex items-center gap-2 text-[#25D366] hover:text-[#25D366]/80 text-senior-base py-2 transition-colors"
           >
             <MessageCircle className="h-5 w-5" />
-            Suporte via WhatsApp
+            Preciso de Suporte
           </a>
 
           {isAuthenticated && (

@@ -177,7 +177,7 @@ export function LoginWizard() {
                   href={supportWhatsApp}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 text-senior-base text-primary hover:text-primary/80 h-12 px-4"
+                  className="inline-flex items-center justify-center gap-2 text-senior-base text-[#25D366] hover:text-[#25D366]/80 h-12 px-4 transition-colors"
                 >
                   <MessageCircle className="h-5 w-5" />
                   Preciso de Suporte
