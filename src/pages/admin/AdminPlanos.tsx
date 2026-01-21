@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Crown, Star, Gift, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { PlanForm } from "@/components/admin/PlanForm";
 import type { Plan, PlanFeatures } from "@/types/plans";
@@ -22,7 +22,7 @@ export default function AdminPlanos() {
       const { data, error } = await supabase
         .from("plans")
         .select("*")
-        .order("display_order", { ascending: true });
+        .order("price", { ascending: true });
 
       if (error) throw error;
 
@@ -79,6 +79,17 @@ export default function AdminPlanos() {
     return Object.values(features).filter((v) => v === true).length;
   };
 
+  const getPlanIcon = (price: number) => {
+    if (price === 0) return <Gift className="h-5 w-5 text-primary" />;
+    if (price >= 200) return <Crown className="h-5 w-5 text-primary" />;
+    return <Star className="h-5 w-5 text-primary" />;
+  };
+
+  const copyCheckoutLink = (link: string) => {
+    navigator.clipboard.writeText(link);
+    toast.success("Link copiado!");
+  };
+
   if (loading) {
     return (
       <MainLayout>
@@ -94,8 +105,8 @@ export default function AdminPlanos() {
       <div className="container-senior py-8 max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-senior-2xl font-bold">Gestão de Planos</h1>
-            <p className="text-muted-foreground">Crie e gerencie os planos de assinatura</p>
+            <h1 className="text-senior-2xl font-bold">Planos & Preços</h1>
+            <p className="text-muted-foreground">Gerencie o catálogo de produtos e preços</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -125,7 +136,15 @@ export default function AdminPlanos() {
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <CardTitle className="text-senior-lg">{plan.name}</CardTitle>
+                    {getPlanIcon(plan.price)}
+                    <div>
+                      <CardTitle className="text-senior-lg">{plan.name}</CardTitle>
+                      {plan.description && (
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          {plan.description}
+                        </p>
+                      )}
+                    </div>
                     {!plan.is_active && (
                       <Badge variant="secondary">Inativo</Badge>
                     )}
@@ -148,11 +167,17 @@ export default function AdminPlanos() {
                     </Button>
                   </div>
                 </div>
-                <CardDescription>
-                  R$ {plan.price.toFixed(2).replace(".", ",")} / mês
-                </CardDescription>
+                <div className="flex items-center gap-4 mt-2">
+                  <CardDescription className="text-base font-medium text-foreground">
+                    R$ {plan.price.toFixed(2).replace(".", ",")}
+                    <span className="text-muted-foreground font-normal"> / mês</span>
+                  </CardDescription>
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                    slug: {plan.slug}
+                  </span>
+                </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3">
                 <div className="flex flex-wrap gap-2">
                   {FEATURE_LIST.map((feature) => (
                     <Badge
@@ -168,9 +193,27 @@ export default function AdminPlanos() {
                     </Badge>
                   ))}
                 </div>
-                <p className="text-sm text-muted-foreground mt-3">
+                <p className="text-sm text-muted-foreground">
                   {countActiveFeatures(plan.features)} de {FEATURE_LIST.length} recursos ativos
                 </p>
+
+                {plan.checkout_link && (
+                  <div className="flex items-center gap-2 pt-2 border-t">
+                    <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs text-muted-foreground truncate flex-1">
+                      {plan.checkout_link}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyCheckoutLink(plan.checkout_link!)}
+                      className="h-7 px-2 gap-1"
+                    >
+                      <Copy className="h-3 w-3" />
+                      Copiar
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}

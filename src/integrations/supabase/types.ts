@@ -234,7 +234,9 @@ export type Database = {
       }
       plans: {
         Row: {
+          checkout_link: string | null
           created_at: string
+          description: string | null
           display_order: number
           features: Json
           id: string
@@ -245,7 +247,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          checkout_link?: string | null
           created_at?: string
+          description?: string | null
           display_order?: number
           features?: Json
           id?: string
@@ -256,7 +260,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          checkout_link?: string | null
           created_at?: string
+          description?: string | null
           display_order?: number
           features?: Json
           id?: string

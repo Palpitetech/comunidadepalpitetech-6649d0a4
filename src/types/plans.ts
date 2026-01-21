@@ -28,6 +28,8 @@ export interface Plan {
   name: string;
   slug: string;
   price: number;
+  description: string | null;
+  checkout_link: string | null;
   features: PlanFeatures;
   is_active: boolean;
   display_order: number;
@@ -54,14 +56,14 @@ export interface ExtendedProfile {
 // Labels amigáveis para cada feature
 export const FEATURE_LABELS: Record<FeatureKey, string> = {
   gerador: 'Gerador de Jogos',
-  estatisticas: 'Estatísticas Básicas',
+  estatisticas: 'Estatísticas Avançadas',
   quentes_frias: 'Quentes e Frias',
   ciclos: 'Análise de Ciclos',
-  comunidade_full: 'Comunidade Completa',
-  guias: 'Acesso aos Guias',
+  comunidade_full: 'Mesa Redonda (Comunidade)',
+  guias: 'Mentoria IA (Guias)',
   notificacoes_push: 'Notificações Push',
   notificacoes_email: 'Notificações Email',
-  notificacoes_sms: 'Notificações SMS',
+  notificacoes_sms: 'Notificações WhatsApp',
 };
 
 // Lista ordenada de features para exibição
