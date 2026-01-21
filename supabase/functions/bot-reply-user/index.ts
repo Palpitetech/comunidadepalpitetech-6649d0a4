@@ -59,7 +59,31 @@ serve(async (req) => {
       );
     }
     
-    // 2. Buscar guias ativos
+    // 2. Verificar se já existe resposta de bot para este comentário (evitar duplicatas)
+    const { data: existingReplies } = await supabaseAdmin
+      .from("post_comments")
+      .select("id, user_id")
+      .eq("parent_id", comment_id);
+    
+    if (existingReplies && existingReplies.length > 0) {
+      // Verificar se alguma das respostas é de um bot
+      const replyUserIds = existingReplies.map(r => r.user_id);
+      const { data: replyProfiles } = await supabaseAdmin
+        .from("perfis")
+        .select("id, is_bot")
+        .in("id", replyUserIds)
+        .eq("is_bot", true);
+      
+      if (replyProfiles && replyProfiles.length > 0) {
+        console.log(`Comentário ${comment_id} já tem resposta de bot - ignorando`);
+        return new Response(
+          JSON.stringify({ skipped: true, reason: "already_replied" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+    
+    // 3. Buscar guias ativos
     const { data: guides, error: guidesError } = await supabaseAdmin
       .from("guide_personas")
       .select("id, perfil_id, system_prompt, especialidade, cargo, perfis(nome)")
