@@ -41,9 +41,9 @@ export function useUserRole() {
     return roles.includes(role);
   };
 
-  const isAdmin = hasRole("admin");
-  const isModerator = hasRole("moderator") || isAdmin;
-  const isPremium = hasRole("premium") || isModerator;
+  const isAdmin = roles.includes("admin");
+  const isModerator = roles.includes("moderator") || isAdmin;
+  const isPremium = roles.includes("premium") || isModerator;
 
   return {
     roles,
