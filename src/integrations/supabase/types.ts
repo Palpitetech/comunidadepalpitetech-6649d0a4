@@ -173,9 +173,12 @@ export type Database = {
       perfis: {
         Row: {
           admin_notes: string | null
+          asaas_customer_id: string | null
+          asaas_subscription_id: string | null
           avatar_url: string | null
           celular: string | null
           celular_verificado: boolean | null
+          cpf: string | null
           created_at: string
           custom_features: Json | null
           email: string | null
@@ -185,14 +188,19 @@ export type Database = {
           is_bot: boolean | null
           nome: string | null
           plan_id: string | null
+          status_assinatura: string | null
           updated_at: string
+          validade_assinatura: string | null
           whatsapp: string | null
         }
         Insert: {
           admin_notes?: string | null
+          asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
           avatar_url?: string | null
           celular?: string | null
           celular_verificado?: boolean | null
+          cpf?: string | null
           created_at?: string
           custom_features?: Json | null
           email?: string | null
@@ -202,14 +210,19 @@ export type Database = {
           is_bot?: boolean | null
           nome?: string | null
           plan_id?: string | null
+          status_assinatura?: string | null
           updated_at?: string
+          validade_assinatura?: string | null
           whatsapp?: string | null
         }
         Update: {
           admin_notes?: string | null
+          asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
           avatar_url?: string | null
           celular?: string | null
           celular_verificado?: boolean | null
+          cpf?: string | null
           created_at?: string
           custom_features?: Json | null
           email?: string | null
@@ -219,7 +232,9 @@ export type Database = {
           is_bot?: boolean | null
           nome?: string | null
           plan_id?: string | null
+          status_assinatura?: string | null
           updated_at?: string
+          validade_assinatura?: string | null
           whatsapp?: string | null
         }
         Relationships: [
