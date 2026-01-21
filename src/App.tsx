@@ -15,6 +15,7 @@ import Tendencias from "./pages/Tendencias";
 import Frequencia from "./pages/Frequencia";
 import Perfil from "./pages/Perfil";
 import CriarPost from "./pages/CriarPost";
+import PostDetalhes from "./pages/PostDetalhes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/frequencia" element={<ProtectedRoute><Frequencia /></ProtectedRoute>} />
             <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
             <Route path="/criar-post" element={<ProtectedRoute><CriarPost /></ProtectedRoute>} />
+            <Route path="/comunidade/post/:id" element={<ProtectedRoute><PostDetalhes /></ProtectedRoute>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

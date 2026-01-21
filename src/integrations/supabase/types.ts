@@ -122,17 +122,88 @@ export type Database = {
         }
         Relationships: []
       }
+      post_comments: {
+        Row: {
+          conteudo: string
+          created_at: string | null
+          id: string
+          post_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          conteudo: string
+          created_at?: string | null
+          id?: string
+          post_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          conteudo?: string
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "postagens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "postagens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       postagens: {
         Row: {
           concurso_referencia: number | null
           conteudo: string
           created_at: string
           curtidas: number | null
+          external_link_text: string | null
+          external_link_url: string | null
           id: string
+          loteria_tag: string | null
+          media_type: string | null
+          media_url: string | null
           metadata: Json | null
           parent_id: string | null
           respostas_count: number | null
           tipo: string | null
+          titulo: string | null
+          tool_snapshot: boolean | null
           updated_at: string
           user_id: string
         }
@@ -141,11 +212,18 @@ export type Database = {
           conteudo: string
           created_at?: string
           curtidas?: number | null
+          external_link_text?: string | null
+          external_link_url?: string | null
           id?: string
+          loteria_tag?: string | null
+          media_type?: string | null
+          media_url?: string | null
           metadata?: Json | null
           parent_id?: string | null
           respostas_count?: number | null
           tipo?: string | null
+          titulo?: string | null
+          tool_snapshot?: boolean | null
           updated_at?: string
           user_id: string
         }
@@ -154,11 +232,18 @@ export type Database = {
           conteudo?: string
           created_at?: string
           curtidas?: number | null
+          external_link_text?: string | null
+          external_link_url?: string | null
           id?: string
+          loteria_tag?: string | null
+          media_type?: string | null
+          media_url?: string | null
           metadata?: Json | null
           parent_id?: string | null
           respostas_count?: number | null
           tipo?: string | null
+          titulo?: string | null
+          tool_snapshot?: boolean | null
           updated_at?: string
           user_id?: string
         }

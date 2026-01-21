@@ -1,20 +1,46 @@
+import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Users } from "lucide-react";
+import { FeedHeader } from "@/components/comunidade/FeedHeader";
+import { PostCard } from "@/components/comunidade/PostCard";
+import { PostCardSkeleton } from "@/components/comunidade/PostCardSkeleton";
+import { useCommunityPosts } from "@/hooks/useCommunityPosts";
 
 export default function Comunidade() {
+  const navigate = useNavigate();
+  const { data: posts, isLoading, error } = useCommunityPosts();
+
   return (
     <MainLayout>
-      <div className="container-senior py-8">
-        <div className="flex items-center gap-3 mb-6">
-          <Users className="h-8 w-8 text-primary" />
-          <h1 className="text-senior-2xl font-bold">Comunidade</h1>
-        </div>
-        
-        <div className="bg-card rounded-xl border border-border p-8 text-center">
-          <p className="text-senior-lg text-muted-foreground">
-            Em breve você poderá compartilhar seus palpites e ver os palpites da comunidade.
-          </p>
-        </div>
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        <FeedHeader />
+
+        {isLoading && <PostCardSkeleton count={5} />}
+
+        {error && (
+          <div className="bg-destructive/10 text-destructive rounded-lg p-4">
+            <p>Erro ao carregar os posts. Tente novamente.</p>
+          </div>
+        )}
+
+        {!isLoading && posts && posts.length === 0 && (
+          <div className="bg-muted/50 rounded-lg p-8 text-center">
+            <p className="text-muted-foreground">
+              Nenhum post ainda. Seja o primeiro a compartilhar!
+            </p>
+          </div>
+        )}
+
+        {posts && posts.length > 0 && (
+          <div className="space-y-4">
+            {posts.map((post) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                onClick={() => navigate(`/comunidade/post/${post.id}`)}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </MainLayout>
   );
