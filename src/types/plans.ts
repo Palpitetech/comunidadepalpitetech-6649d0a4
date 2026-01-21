@@ -37,6 +37,8 @@ export interface Plan {
   updated_at: string;
 }
 
+export type StatusAssinatura = 'ativa' | 'cancelada' | 'inadimplente' | 'inativa';
+
 export interface ExtendedProfile {
   id: string;
   nome: string | null;
@@ -44,6 +46,8 @@ export interface ExtendedProfile {
   celular: string | null;
   whatsapp: string | null;
   avatar_url: string | null;
+  email_verificado?: boolean;
+  celular_verificado?: boolean;
   is_bot: boolean;
   is_blocked: boolean;
   admin_notes: string | null;
@@ -51,6 +55,13 @@ export interface ExtendedProfile {
   custom_features: PlanFeatures | null;
   created_at: string;
   updated_at: string;
+  
+  // Campos de assinatura Asaas
+  asaas_customer_id: string | null;
+  asaas_subscription_id: string | null;
+  status_assinatura: string | null;
+  validade_assinatura: string | null;
+  cpf: string | null;
 }
 
 // Labels amigáveis para cada feature
