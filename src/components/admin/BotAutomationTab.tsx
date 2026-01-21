@@ -6,12 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { Loader2, Save, Plus, X, FileText, Clock } from "lucide-react";
+import { Loader2, Save, Plus, X, FileText, Clock, Calendar, ChevronDown } from "lucide-react";
 import { DIAS_SEMANA } from "@/types/bots";
 import type { BotWithStats, BotSchedule } from "@/types/bots";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { WeeklyBotCalendar } from "./WeeklyBotCalendar";
 
 interface BotAutomationTabProps {
   bot: BotWithStats;
@@ -219,6 +221,26 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
           Salvar Automação
         </Button>
       </form>
+
+      <Separator />
+
+      {/* Calendário Semanal de Todos os Bots */}
+      <Collapsible defaultOpen={false}>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" className="w-full justify-between gap-2 h-auto py-3">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="text-base font-medium">Calendário Semanal (Todos os Bots)</span>
+            </div>
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-2">
+          <div className="border rounded-lg p-4 bg-muted/20">
+            <WeeklyBotCalendar />
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       <Separator />
 
