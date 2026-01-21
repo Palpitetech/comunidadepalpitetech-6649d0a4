@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, CreditCard, Calendar, Copy, ExternalLink, Clock, User } from "lucide-react";
+import { Loader2, CreditCard, Calendar, Clock } from "lucide-react";
 import { differenceInDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { ExtendedProfile, Plan, StatusAssinatura } from "@/types/plans";
@@ -180,87 +180,6 @@ export function UserPlanTab({ user, plans, onUserUpdated }: UserPlanTabProps) {
 
       <Separator />
 
-      {/* Seção 3: Dados Asaas */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <User className="h-4 w-4 text-muted-foreground" />
-          <h3 className="font-medium">Integração Asaas</h3>
-        </div>
-
-        <div className="space-y-3">
-          {user.asaas_customer_id ? (
-            <>
-              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
-                <div>
-                  <p className="text-xs text-muted-foreground">Customer ID</p>
-                  <p className="text-sm font-mono">{user.asaas_customer_id}</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(user.asaas_customer_id!, "Customer ID")}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {user.asaas_subscription_id && (
-                <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Subscription ID</p>
-                    <p className="text-sm font-mono">{user.asaas_subscription_id}</p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(user.asaas_subscription_id!, "Subscription ID")}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-
-              {user.cpf && (
-                <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
-                  <div>
-                    <p className="text-xs text-muted-foreground">CPF</p>
-                    <p className="text-sm font-mono">{user.cpf}</p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(user.cpf!, "CPF")}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => window.open(`https://www.asaas.com/customerAccount/show/${user.asaas_customer_id}`, "_blank")}
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Ver no Painel Asaas
-              </Button>
-            </>
-          ) : (
-            <div className="p-4 border rounded-lg bg-muted/30 text-center">
-              <p className="text-sm text-muted-foreground">
-                Nenhuma integração Asaas vinculada a este usuário.
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                O vínculo será criado automaticamente ao processar o primeiro pagamento.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <Separator />
-
       {/* Seção 4: Ações Manuais */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
@@ -277,7 +196,7 @@ export function UserPlanTab({ user, plans, onUserUpdated }: UserPlanTabProps) {
             onChange={(e) => setValidadeManual(e.target.value)}
           />
           <p className="text-xs text-muted-foreground">
-            Defina uma data para conceder acesso manual sem passar pelo Asaas.
+            Defina uma data para conceder acesso cortesia (ex: compensação, teste).
           </p>
         </div>
       </div>
