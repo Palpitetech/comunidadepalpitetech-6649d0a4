@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.seed-guides]
 verify_jwt = false
+
+[functions.update-guide-prompts]
+verify_jwt = false
