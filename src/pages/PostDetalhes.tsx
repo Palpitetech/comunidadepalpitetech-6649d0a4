@@ -184,7 +184,7 @@ export default function PostDetalhes() {
           comments={comments}
           commentsCount={post.respostas_count || 0}
           currentUserId={user?.id}
-          onAddComment={addComment}
+          onAddComment={(content, parentId) => addComment({ content, parentId })}
           onDeleteComment={deleteComment}
           isLoading={isLoadingComments}
           isAdding={isAddingComment}
