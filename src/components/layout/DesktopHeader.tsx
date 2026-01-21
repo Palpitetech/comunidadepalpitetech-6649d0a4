@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle } from "lucide-react";
+import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown } from "lucide-react";
 
 export function DesktopHeader() {
   const { isAuthenticated, profile, signOut } = useAuthContext();
@@ -55,12 +55,35 @@ export function DesktopHeader() {
               Comunidade
             </Button>
           </Link>
-          <Link to="/resultados">
-            <Button variant="ghost" className="text-senior-base gap-2 h-12">
-              <BarChart3 className="h-5 w-5" />
-              Resultados
-            </Button>
-          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="text-senior-base gap-2 h-12">
+                <Wrench className="h-5 w-5" />
+                Ferramentas
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-56">
+              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                <Link to="/resultados">
+                  <BarChart3 className="h-5 w-5" />
+                  Resultados
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                <Link to="/tendencias">
+                  <TrendingUp className="h-5 w-5" />
+                  Tendências
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                <Link to="/frequencia">
+                  <Flame className="h-5 w-5" />
+                  Quentes e Frias
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
 
         {/* User Actions */}
