@@ -5,6 +5,47 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, asaas-access-token',
 };
 
+const jsonHeaders = { ...corsHeaders, 'Content-Type': 'application/json' };
+
+function isTruthyHeader(value: string | null) {
+  if (!value) return false;
+  const v = value.trim().toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes' || v === 'on';
+}
+
+async function requireAdminForTestMode(req: Request) {
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return { ok: false as const, error: 'Authorization Bearer obrigatório no modo de teste' };
+  }
+
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+  const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+
+  const token = authHeader.replace('Bearer ', '');
+  const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+  if (claimsError || !claimsData?.claims?.sub) {
+    return { ok: false as const, error: 'JWT inválido no modo de teste' };
+  }
+
+  const userId = claimsData.claims.sub;
+  const { data: roleRow, error: roleError } = await supabaseAuth
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .eq('role', 'admin')
+    .maybeSingle();
+
+  if (roleError || !roleRow) {
+    return { ok: false as const, error: 'Apenas admins podem usar modo de teste' };
+  }
+
+  return { ok: true as const, userId };
+}
+
 // Eventos que ativam assinatura
 const EVENTOS_ATIVAR = ['PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED'];
 const EVENTOS_CANCELAR = ['PAYMENT_REFUNDED', 'PAYMENT_DELETED'];
@@ -36,16 +77,24 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // 1. Validar token de acesso do Asaas
-    const accessToken = req.headers.get('asaas-access-token');
-    const expectedToken = Deno.env.get('ASAAS_WEBHOOK_ACCESS_TOKEN');
-    
-    if (!expectedToken || accessToken !== expectedToken) {
-      console.error('[WEBHOOK] Token inválido ou não configurado');
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // 1. Validar token de acesso do Asaas (ou permitir modo de teste autenticado)
+    const isTestMode = isTruthyHeader(req.headers.get('x-test-mode'));
+
+    if (isTestMode) {
+      const adminCheck = await requireAdminForTestMode(req);
+      if (!adminCheck.ok) {
+        console.error('[WEBHOOK][TEST] Acesso negado:', adminCheck.error);
+        return new Response(JSON.stringify({ error: adminCheck.error }), { status: 401, headers: jsonHeaders });
+      }
+      console.log(`[WEBHOOK][TEST] Modo de teste habilitado por admin: ${adminCheck.userId}`);
+    } else {
+      const accessToken = req.headers.get('asaas-access-token');
+      const expectedToken = Deno.env.get('ASAAS_WEBHOOK_ACCESS_TOKEN');
+
+      if (!expectedToken || accessToken !== expectedToken) {
+        console.error('[WEBHOOK] Token inválido ou não configurado');
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: jsonHeaders });
+      }
     }
 
     // 2. Parsear payload
