@@ -239,12 +239,44 @@ Indicadores: ${ultimo.qtd_pares} pares, ${ultimo.qtd_impares} ímpares, ${ultimo
   return contexto;
 }
 
+// Monta instruções específicas baseadas no tipo de post
+function montarInstrucoesTipo(tipoPost: string): string {
+  if (tipoPost === "pos_sorteio") {
+    return `
+CONTEXTO DO POST: Acabou de sair o resultado do concurso (sorteio das 20h). Este é um post de ANÁLISE PÓS-SORTEIO.
+- Comente sobre o que aconteceu no sorteio de hoje
+- Compare com suas observações anteriores (se aplicável)
+- Analise os indicadores do resultado (pares/ímpares, primos, repetidas)
+- Destaque se alguma previsão/tendência se confirmou
+- Convide a comunidade a discutir o que observaram`;
+  } else if (tipoPost === "pre_sorteio") {
+    return `
+CONTEXTO DO POST: O sorteio será hoje às 20h. Este é um post de ORIENTAÇÃO PRÉ-SORTEIO.
+- Compartilhe observações úteis para quem vai jogar hoje
+- Mencione tendências que tem notado nos últimos sorteios
+- Comente sobre o status do ciclo e dezenas em destaque
+- Lembre que não há garantias, mas vale observar os padrões
+- Deseje boa sorte à comunidade!`;
+  }
+  return `
+CONTEXTO DO POST: Post geral de análise e orientação.
+- Compartilhe insights e observações sobre os últimos resultados
+- Destaque padrões interessantes que notou
+- Convide a comunidade para discutir`;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Extrair tipo do corpo da requisição
+    const body = await req.json().catch(() => ({}));
+    const tipoPost = body.tipo_post || "geral";
+    
+    console.log(`Gerando post do tipo: ${tipoPost}`);
+
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -281,8 +313,11 @@ serve(async (req) => {
 
     // 3. Montar contexto enriquecido
     const contextoEnriquecido = montarContextoEnriquecido(resultados as Concurso[]);
+    
+    // 4. Montar instruções específicas do tipo de post
+    const instrucoesTipo = montarInstrucoesTipo(tipoPost);
 
-    // 4. Chamar Lovable AI com a personalidade do guia
+    // 5. Chamar Lovable AI com a personalidade do guia
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY não configurada");
@@ -301,6 +336,8 @@ serve(async (req) => {
           { 
             role: "user", 
             content: `Crie um post para AJUDAR os usuários da comunidade Palpite Tech.
+
+${instrucoesTipo}
 
 CONTEXTO ESTATÍSTICO COMPLETO:
 ${contextoEnriquecido}
@@ -373,13 +410,14 @@ Responda APENAS no formato JSON:
       .update({ ultimo_post_em: new Date().toISOString() })
       .eq("id", guide.id);
 
-    console.log(`Post criado com sucesso pelo guia: ${guide.perfis?.nome}`);
+    console.log(`Post criado com sucesso pelo guia: ${guide.perfis?.nome} (tipo: ${tipoPost})`);
     console.log(`Contexto utilizado:\n${contextoEnriquecido}`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         guide: guide.perfis?.nome,
+        tipo_post: tipoPost,
         titulo: parsed.titulo,
         contexto_resumo: {
           concursos_analisados: resultados?.length || 0,
