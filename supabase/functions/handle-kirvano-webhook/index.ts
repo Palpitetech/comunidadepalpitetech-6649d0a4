@@ -12,6 +12,26 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[KIRVANO-WEBHOOK] ${step}${suffix}`);
 };
 
+function pickQueryAuth(reqUrl: string): { key: string; value: string } | null {
+  // Some providers send the secret/token via querystring.
+  // We accept multiple common keys to be resilient.
+  let url: URL;
+  try {
+    url = new URL(reqUrl);
+  } catch (_e) {
+    return null;
+  }
+
+  const keys = ["token", "secret", "webhook_secret", "access_token"];
+  for (const key of keys) {
+    const value = url.searchParams.get(key);
+    if (typeof value === "string" && value.trim()) {
+      return { key, value: value.trim() };
+    }
+  }
+  return null;
+}
+
 function timingSafeEqual(a: string, b: string) {
   // Deno doesn't provide constant-time string compare; do a byte compare.
   const aBytes = new TextEncoder().encode(a);
@@ -210,17 +230,30 @@ serve(async (req) => {
   if (!authorized) {
     const signature = req.headers.get("x-kirvano-signature") || req.headers.get("kirvano-signature");
     const token = req.headers.get("x-kirvano-token") || req.headers.get("kirvano-token");
+    const queryAuth = pickQueryAuth(req.url);
 
     if (signature) {
       const expected = await hmacSha256Hex(webhookSecret, rawBody);
       authorized = timingSafeEqual(signature.trim().toLowerCase(), expected);
     } else if (token) {
       authorized = timingSafeEqual(token.trim(), webhookSecret);
+    } else if (queryAuth) {
+      authorized = timingSafeEqual(queryAuth.value, webhookSecret);
+      logStep("Auth via query", { key: queryAuth.key, authorized });
     }
   }
 
   if (!authorized) {
-    logStep("Unauthorized webhook");
+    const signature = req.headers.get("x-kirvano-signature") || req.headers.get("kirvano-signature");
+    const token = req.headers.get("x-kirvano-token") || req.headers.get("kirvano-token");
+    const queryAuth = pickQueryAuth(req.url);
+    logStep("Unauthorized webhook", {
+      hasSignatureHeader: Boolean(signature),
+      hasTokenHeader: Boolean(token),
+      hasQueryToken: Boolean(queryAuth),
+      queryKeyUsed: queryAuth?.key ?? null,
+      isTestMode,
+    });
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
