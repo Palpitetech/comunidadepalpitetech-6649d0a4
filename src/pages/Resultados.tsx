@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { BarChart3, Search, Calendar as CalendarIcon, X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { SnapshotButton } from "@/components/shared/SnapshotButton";
 
 interface Resultado {
   id: string;
@@ -37,6 +38,7 @@ export default function Resultados() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchConcurso, setSearchConcurso] = useState("");
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["resultados", currentPage, searchConcurso, dateFilter?.toISOString()],
@@ -87,9 +89,15 @@ export default function Resultados() {
     <MainLayout>
       <div className="container-senior py-6">
         {/* Header compacto */}
-        <div className="flex items-center gap-3 mb-4">
-          <BarChart3 className="h-7 w-7 text-primary" />
-          <h1 className="text-xl font-bold">Resultados</h1>
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3">
+            <BarChart3 className="h-7 w-7 text-primary" />
+            <h1 className="text-xl font-bold">Resultados</h1>
+          </div>
+          <SnapshotButton 
+            targetRef={contentRef} 
+            defaultTitle="Resultados Lotofácil"
+          />
         </div>
 
         {/* Barra de Filtros */}
@@ -185,7 +193,7 @@ export default function Resultados() {
 
         {/* Lista de Resultados */}
         {resultados.length > 0 && (
-          <div className="divide-y divide-border/50">
+          <div ref={contentRef} className="divide-y divide-border/50">
             {resultados.map((resultado) => (
               <ResultadoCard
                 key={resultado.id}
