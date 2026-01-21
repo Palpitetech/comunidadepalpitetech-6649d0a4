@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -9,10 +10,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog } from "lucide-react";
 
 export function DesktopHeader() {
   const { isAuthenticated, profile, signOut } = useAuthContext();
+  const { isAdmin } = useUserRole();
 
   const handleSignOut = async () => {
     try {
@@ -63,25 +66,76 @@ export function DesktopHeader() {
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="w-56">
-              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                <Link to="/resultados">
-                  <BarChart3 className="h-5 w-5" />
-                  Resultados
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                <Link to="/tendencias">
-                  <TrendingUp className="h-5 w-5" />
-                  Tendências
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                <Link to="/frequencia">
-                  <Flame className="h-5 w-5" />
-                  Quentes e Frias
-                </Link>
-              </DropdownMenuItem>
+            <DropdownMenuContent align="center" className="w-64 p-2">
+              {isAdmin ? (
+                <Tabs defaultValue="ferramentas" className="w-full">
+                  <TabsList className="w-full mb-2">
+                    <TabsTrigger value="ferramentas" className="flex-1 text-sm">Ferramentas</TabsTrigger>
+                    <TabsTrigger value="admin" className="flex-1 text-sm">Admin</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="ferramentas" className="mt-0 space-y-1">
+                    <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                      <Link to="/resultados">
+                        <BarChart3 className="h-5 w-5" />
+                        Resultados
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                      <Link to="/tendencias">
+                        <TrendingUp className="h-5 w-5" />
+                        Tendências
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                      <Link to="/frequencia">
+                        <Flame className="h-5 w-5" />
+                        Quentes e Frias
+                      </Link>
+                    </DropdownMenuItem>
+                  </TabsContent>
+                  <TabsContent value="admin" className="mt-0 space-y-1">
+                    <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                      <Link to="/admin">
+                        <UserCog className="h-5 w-5" />
+                        Painel Admin
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                      <Link to="/admin/planos">
+                        <FileText className="h-5 w-5" />
+                        Planos
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                      <Link to="/admin/usuarios">
+                        <Users className="h-5 w-5" />
+                        Usuários
+                      </Link>
+                    </DropdownMenuItem>
+                  </TabsContent>
+                </Tabs>
+              ) : (
+                <>
+                  <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                    <Link to="/resultados">
+                      <BarChart3 className="h-5 w-5" />
+                      Resultados
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                    <Link to="/tendencias">
+                      <TrendingUp className="h-5 w-5" />
+                      Tendências
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                    <Link to="/frequencia">
+                      <Flame className="h-5 w-5" />
+                      Quentes e Frias
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </nav>
