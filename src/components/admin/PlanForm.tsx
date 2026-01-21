@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, DollarSign, AlertTriangle } from "lucide-react";
+import { Loader2, DollarSign } from "lucide-react";
 import type { Plan, PlanFeatures, FeatureKey } from "@/types/plans";
 import { FEATURE_LABELS, FEATURE_LIST } from "@/types/plans";
 
@@ -156,26 +156,19 @@ export function PlanForm({ plan, onSaved, onCancel }: PlanFormProps) {
             value={price}
             onChange={(e) => setPrice(e.target.value)}
           />
-          <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
-            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-amber-700 dark:text-amber-300">
-              <strong>Importante:</strong> Este valor deve ser EXATAMENTE igual ao cobrado no Asaas 
-              para o webhook identificar o pagamento automaticamente.
-            </p>
-          </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="checkoutLink">Link de Checkout</Label>
+          <Label htmlFor="checkoutLink">Link de Checkout Stripe</Label>
           <Input
             id="checkoutLink"
             type="url"
             value={checkoutLink}
             onChange={(e) => setCheckoutLink(e.target.value)}
-            placeholder="https://pay.asaas.com/..."
+            placeholder="https://buy.stripe.com/..."
           />
           <p className="text-xs text-muted-foreground">
-            Link universal do Asaas. Copie e cole a URL de pagamento.
+            Link de pagamento da Stripe. Copie e cole a URL de checkout.
           </p>
         </div>
       </div>

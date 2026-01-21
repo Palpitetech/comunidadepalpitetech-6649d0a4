@@ -56,9 +56,7 @@ export interface ExtendedProfile {
   created_at: string;
   updated_at: string;
   
-  // Campos de assinatura Asaas
-  asaas_customer_id: string | null;
-  asaas_subscription_id: string | null;
+  // Campos de assinatura
   status_assinatura: string | null;
   validade_assinatura: string | null;
   cpf: string | null;
