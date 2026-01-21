@@ -12,12 +12,8 @@ const PERIODO_ANALISE = 20;
 const LIMIAR_QUENTE = 0.71;
 const LIMIAR_FRIO = 0.39;
 
-// ID do perfil Augusto Honorato (autor dos posts)
-const AUGUSTO_PERFIL_ID = "b7f71e16-bea0-4529-a4b8-95490830d8e4";
-
-// System prompt para posts do Augusto
-const AUGUSTO_SYSTEM_PROMPT = `Você é Augusto Honorato, fundador e líder do Palpite Tech.
-Você compartilha análises sobre a Lotofácil e lidera a comunidade.
+// System prompt padrão para autor de mesa redonda (fallback)
+const DEFAULT_ROUNDTABLE_PROMPT = `Você é o líder do Palpite Tech e compartilha análises sobre a Lotofácil.
 
 Diretrizes:
 - Fale como líder que trabalha com sua equipe de especialistas
@@ -201,7 +197,7 @@ function montarInstrucoesTipo(tipoPost: string): string {
 async function gerarComentarioMesaRedonda(
   guide: GuideData,
   contexto: string,
-  postAugusto: string,
+  postConteudo: string,
   LOVABLE_API_KEY: string
 ): Promise<string> {
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -216,16 +212,16 @@ async function gerarComentarioMesaRedonda(
         { role: "system", content: guide.system_prompt },
         { 
           role: "user", 
-          content: `Você está em uma mesa redonda comentando a análise do Augusto.
+          content: `Você está em uma mesa redonda comentando a análise do líder.
 
-POST DO AUGUSTO:
-"${postAugusto}"
+POST DO LÍDER:
+"${postConteudo}"
 
 CONTEXTO ESTATÍSTICO:
 ${contexto}
 
 INSTRUÇÕES:
-- Complemente a análise do Augusto com sua perspectiva de ${guide.especialidade}
+- Complemente a análise com sua perspectiva de ${guide.especialidade}
 - Concorde, adicione um ponto novo ou destaque algo diferente
 - Fale como se estivesse conversando na equipe
 - Máximo 280 caracteres
@@ -258,7 +254,28 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // 1. Buscar últimos resultados para análise
+    // 1. Buscar autor principal da mesa redonda (is_roundtable_author = true)
+    const { data: authorGuide, error: authorError } = await supabaseAdmin
+      .from("guide_personas")
+      .select("*, perfis(id, nome)")
+      .eq("is_roundtable_author", true)
+      .eq("ativo", true)
+      .single();
+
+    if (authorError || !authorGuide) {
+      console.error("Nenhum autor de mesa redonda configurado:", authorError);
+      throw new Error("Nenhum bot configurado como autor da mesa redonda. Configure is_roundtable_author = true em um bot.");
+    }
+
+    const authorPerfilId = authorGuide.perfil_id;
+    const authorName = (authorGuide.perfis as { nome: string | null })?.nome || "Autor";
+    const authorPrompt = authorGuide.system_prompt || DEFAULT_ROUNDTABLE_PROMPT;
+    const authorModel = authorGuide.ai_model || "google/gemini-3-flash-preview";
+    const maxChars = authorGuide.max_chars_post || 400;
+
+    console.log(`Autor da mesa redonda: ${authorName} (${authorPerfilId})`);
+
+    // 2. Buscar últimos resultados para análise
     const { data: resultados, error: resultadosError } = await supabaseAdmin
       .from("resultados")
       .select("concurso_id, dezenas, data_sorteio, ciclo_numero, dezenas_faltantes_ciclo, qtd_pares, qtd_impares, qtd_repetidas, qtd_primos, qtd_moldura")
@@ -269,11 +286,11 @@ serve(async (req) => {
       throw new Error("Erro ao buscar resultados");
     }
 
-    // 2. Montar contexto enriquecido
+    // 3. Montar contexto enriquecido
     const contextoEnriquecido = montarContextoEnriquecido(resultados as Concurso[]);
     const instrucoesTipo = montarInstrucoesTipo(tipoPost);
 
-    // 3. Gerar post como Augusto
+    // 4. Gerar post como autor principal
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY não configurada");
@@ -286,9 +303,9 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: authorModel,
         messages: [
-          { role: "system", content: AUGUSTO_SYSTEM_PROMPT },
+          { role: "system", content: authorPrompt },
           { 
             role: "user", 
             content: `Crie um post para a comunidade Palpite Tech.
@@ -300,12 +317,12 @@ ${contextoEnriquecido}
 
 INSTRUÇÕES:
 - Você é o líder da comunidade, compartilhando análises com todos
-- Mencione que sua equipe (Ana, Sr. Zé, Prof. Mário) vai complementar nos comentários
+- Mencione que sua equipe vai complementar nos comentários
 - NUNCA prometa resultados ou dê certezas sobre o que vai sair
 - Reconheça que loteria envolve sorte
 - Convide à discussão
 - Título: máximo 60 caracteres
-- Conteúdo: máximo 400 caracteres
+- Conteúdo: máximo ${maxChars} caracteres
 
 Responda APENAS no formato JSON:
 {"titulo": "seu título aqui", "conteudo": "seu conteúdo aqui"}`
@@ -325,7 +342,7 @@ Responda APENAS no formato JSON:
       throw new Error("Resposta da IA vazia");
     }
 
-    // 4. Extrair JSON da resposta
+    // 5. Extrair JSON da resposta
     let parsed;
     try {
       const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || 
@@ -341,11 +358,11 @@ Responda APENAS no formato JSON:
       throw new Error("Resposta incompleta");
     }
 
-    // 5. Criar post como Augusto
+    // 6. Criar post como autor principal
     const { data: newPost, error: postError } = await supabaseAdmin
       .from("postagens")
       .insert({
-        user_id: AUGUSTO_PERFIL_ID,
+        user_id: authorPerfilId,
         titulo: parsed.titulo.substring(0, 100),
         conteudo: parsed.conteudo.substring(0, 1000),
         loteria_tag: "Lotofácil",
@@ -357,24 +374,35 @@ Responda APENAS no formato JSON:
       throw new Error("Erro ao criar post");
     }
 
-    console.log(`Post criado por Augusto: ${newPost.id}`);
+    console.log(`Post criado por ${authorName}: ${newPost.id}`);
 
-    // 6. Delay inicial antes dos comentários
+    // 7. Atualizar estatísticas do autor
+    await supabaseAdmin
+      .from("guide_personas")
+      .update({ 
+        ultimo_post_em: new Date().toISOString(),
+        total_posts: (authorGuide.total_posts || 0) + 1
+      })
+      .eq("id", authorGuide.id);
+
+    // 8. Delay inicial antes dos comentários
     await new Promise(r => setTimeout(r, 2000));
 
-    // 7. Buscar TODOS os guias ativos
+    // 9. Buscar TODOS os guias ativos (exceto o autor)
     const { data: guides, error: guidesError } = await supabaseAdmin
       .from("guide_personas")
       .select("id, perfil_id, system_prompt, especialidade, cargo, perfis(nome)")
       .eq("ativo", true)
+      .neq("id", authorGuide.id)
       .order("created_at", { ascending: true });
 
     if (guidesError || !guides || guides.length === 0) {
-      console.log("Nenhum guia ativo encontrado para comentar");
+      console.log("Nenhum guia comentarista encontrado");
       return new Response(
         JSON.stringify({ 
           success: true, 
           post_id: newPost.id,
+          author: authorName,
           comments: 0,
           message: "Post criado, mas sem guias para comentar"
         }),
@@ -382,7 +410,7 @@ Responda APENAS no formato JSON:
       );
     }
 
-    // 8. Para cada guia, gerar e inserir comentário
+    // 10. Para cada guia, gerar e inserir comentário
     const comentariosInseridos: string[] = [];
     
     for (const guide of guides as GuideData[]) {
@@ -401,8 +429,14 @@ Responda APENAS no formato JSON:
             post_id: newPost.id,
             user_id: guide.perfil_id,
             conteudo: comentario.substring(0, 500),
-            parent_id: null, // Comentário raiz (não é resposta)
+            parent_id: null,
           });
+
+          // Atualizar contador de comentários do guia
+          await supabaseAdmin
+            .from("guide_personas")
+            .update({ total_comments: guide.id })
+            .eq("id", guide.id);
 
           comentariosInseridos.push(guideName || guide.perfil_id);
           console.log(`Comentário inserido por: ${guideName}`);
@@ -420,6 +454,8 @@ Responda APENAS no formato JSON:
       JSON.stringify({ 
         success: true, 
         post_id: newPost.id,
+        author: authorName,
+        author_id: authorPerfilId,
         tipo_post: tipoPost,
         titulo: parsed.titulo,
         comentarios: comentariosInseridos,
