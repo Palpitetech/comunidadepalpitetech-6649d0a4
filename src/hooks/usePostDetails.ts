@@ -10,6 +10,7 @@ export interface PostComment {
   perfis: {
     nome: string | null;
     avatar_url: string | null;
+    is_bot: boolean | null;
   } | null;
 }
 
@@ -30,6 +31,7 @@ export interface PostDetails {
   perfis: {
     nome: string | null;
     avatar_url: string | null;
+    is_bot: boolean | null;
   } | null;
 }
 
@@ -56,7 +58,7 @@ export function usePostDetails(postId: string) {
           tool_snapshot,
           external_link_url,
           external_link_text,
-          perfis:user_id (nome, avatar_url)
+          perfis:user_id (nome, avatar_url, is_bot)
         `
         )
         .eq("id", postId)
@@ -86,11 +88,11 @@ export function usePostDetails(postId: string) {
       const userIds = [...new Set(commentsData.map((c) => c.user_id))];
       const { data: profilesData } = await supabase
         .from("perfis")
-        .select("id, nome, avatar_url")
+        .select("id, nome, avatar_url, is_bot")
         .in("id", userIds);
 
       const profilesMap = new Map(
-        profilesData?.map((p) => [p.id, { nome: p.nome, avatar_url: p.avatar_url }]) || []
+        profilesData?.map((p) => [p.id, { nome: p.nome, avatar_url: p.avatar_url, is_bot: p.is_bot }]) || []
       );
 
       // Combinar dados

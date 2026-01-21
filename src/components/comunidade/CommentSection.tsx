@@ -13,6 +13,7 @@ interface Comment {
   perfis: {
     nome: string | null;
     avatar_url: string | null;
+    is_bot: boolean | null;
   } | null;
 }
 

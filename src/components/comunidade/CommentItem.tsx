@@ -1,6 +1,7 @@
 import { Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { GuideBadge } from "./GuideBadge";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -13,6 +14,7 @@ interface CommentItemProps {
     perfis: {
       nome: string | null;
       avatar_url: string | null;
+      is_bot: boolean | null;
     } | null;
   };
   currentUserId?: string;
@@ -51,10 +53,11 @@ export function CommentItem({
       </Avatar>
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
           <span className="font-medium text-sm text-foreground">
             {authorName}
           </span>
+          {comment.perfis?.is_bot && <GuideBadge />}
           <span className="text-xs text-muted-foreground">{timeAgo}</span>
         </div>
         <p className="text-sm text-foreground whitespace-pre-wrap break-words">

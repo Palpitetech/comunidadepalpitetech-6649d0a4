@@ -4,6 +4,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LoteriaBadge } from "@/components/comunidade/LoteriaBadge";
+import { GuideBadge } from "@/components/comunidade/GuideBadge";
 import { ActionBar } from "@/components/comunidade/ActionBar";
 import { CommentSection } from "@/components/comunidade/CommentSection";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -123,6 +124,7 @@ export default function PostDetalhes() {
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-medium text-foreground">{authorName}</span>
+              {post.perfis?.is_bot && <GuideBadge />}
               {post.loteria_tag && <LoteriaBadge tag={post.loteria_tag} />}
             </div>
             <span className="text-sm text-muted-foreground">{timeAgo}</span>

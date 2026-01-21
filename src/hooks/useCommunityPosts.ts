@@ -18,6 +18,7 @@ export interface CommunityPost {
   perfis: {
     nome: string | null;
     avatar_url: string | null;
+    is_bot: boolean | null;
   } | null;
 }
 
@@ -42,7 +43,7 @@ export function useCommunityPosts() {
           tool_snapshot,
           external_link_url,
           external_link_text,
-          perfis:user_id (nome, avatar_url)
+          perfis:user_id (nome, avatar_url, is_bot)
         `
         )
         .order("created_at", { ascending: false })
