@@ -109,17 +109,23 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
         {/* Toggle Ferramentas/Admin - Apenas para Admins */}
         {isAdmin && (
           <div className="px-4 pt-4">
-            <div className="flex bg-muted rounded-lg p-1">
+            <div className={`flex rounded-lg p-1 transition-colors ${menuMode === "admin" ? "bg-[#1E3A5F]" : "bg-muted"}`}>
               <button
                 className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors
-                  ${menuMode === "ferramentas" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  ${menuMode === "ferramentas" 
+                    ? "bg-background shadow-sm text-foreground" 
+                    : menuMode === "admin" 
+                      ? "text-white/60 hover:text-white" 
+                      : "text-muted-foreground hover:text-foreground"}`}
                 onClick={() => setMenuMode("ferramentas")}
               >
                 Ferramentas
               </button>
               <button
                 className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors
-                  ${menuMode === "admin" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  ${menuMode === "admin" 
+                    ? "bg-white text-[#1E3A5F] shadow-sm font-semibold" 
+                    : "text-muted-foreground hover:text-foreground"}`}
                 onClick={() => setMenuMode("admin")}
               >
                 Admin
@@ -182,27 +188,29 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
               </div>
             </>
           ) : (
-            /* Conteúdo Admin */
-            <nav className="px-4 py-6 space-y-1">
-              <Link to="/admin" onClick={closeAndNavigate}>
-                <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
-                  <UserCog className="h-5 w-5 stroke-[1.5]" />
-                  Painel Admin
-                </div>
-              </Link>
-              <Link to="/admin/planos" onClick={closeAndNavigate}>
-                <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
-                  <FileText className="h-5 w-5 stroke-[1.5]" />
-                  Planos
-                </div>
-              </Link>
-              <Link to="/admin/usuarios" onClick={closeAndNavigate}>
-                <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
-                  <Users className="h-5 w-5 stroke-[1.5]" />
-                  Usuários
-                </div>
-              </Link>
-            </nav>
+            /* Conteúdo Admin - Estilo Azul Escuro */
+            <div className="flex-1 bg-[#1E3A5F] -mx-0">
+              <nav className="px-4 py-6 space-y-1">
+                <Link to="/admin" onClick={closeAndNavigate}>
+                  <div className="flex items-center gap-3 py-3 text-base text-white hover:text-white/80 transition-colors">
+                    <UserCog className="h-5 w-5 stroke-[1.5]" />
+                    Painel Admin
+                  </div>
+                </Link>
+                <Link to="/admin/planos" onClick={closeAndNavigate}>
+                  <div className="flex items-center gap-3 py-3 text-base text-white hover:text-white/80 transition-colors">
+                    <FileText className="h-5 w-5 stroke-[1.5]" />
+                    Planos
+                  </div>
+                </Link>
+                <Link to="/admin/usuarios" onClick={closeAndNavigate}>
+                  <div className="flex items-center gap-3 py-3 text-base text-white hover:text-white/80 transition-colors">
+                    <Users className="h-5 w-5 stroke-[1.5]" />
+                    Usuários
+                  </div>
+                </Link>
+              </nav>
+            </div>
           )}
         </div>
 
