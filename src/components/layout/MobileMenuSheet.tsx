@@ -108,15 +108,13 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
 
         {/* Toggle Ferramentas/Admin - Apenas para Admins */}
         {isAdmin && (
-          <div className="px-4 pt-4">
-            <div className={`flex rounded-lg p-1 transition-colors ${menuMode === "admin" ? "bg-[#1E3A5F]" : "bg-muted"}`}>
+          <div className="px-4 pt-4 mb-2">
+            <div className="flex rounded-lg p-1 bg-muted/50">
               <button
                 className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors
                   ${menuMode === "ferramentas" 
                     ? "bg-background shadow-sm text-foreground" 
-                    : menuMode === "admin" 
-                      ? "text-white/60 hover:text-white" 
-                      : "text-muted-foreground hover:text-foreground"}`}
+                    : "text-muted-foreground hover:text-foreground"}`}
                 onClick={() => setMenuMode("ferramentas")}
               >
                 Ferramentas
@@ -124,7 +122,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
               <button
                 className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors
                   ${menuMode === "admin" 
-                    ? "bg-white text-[#1E3A5F] shadow-sm font-semibold" 
+                    ? "bg-red-500 text-white shadow-sm" 
                     : "text-muted-foreground hover:text-foreground"}`}
                 onClick={() => setMenuMode("admin")}
               >
@@ -188,23 +186,23 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
               </div>
             </>
           ) : (
-            /* Conteúdo Admin - Estilo Azul Escuro */
-            <div className="flex-1 bg-[#1E3A5F] -mx-0">
-              <nav className="px-4 py-6 space-y-1">
+            /* Conteúdo Admin - Estilo com Destaque Vermelho */
+            <div className="mx-4 mt-2 p-3 rounded-r-md bg-red-50 dark:bg-red-950/30 border-l-4 border-red-500">
+              <nav className="space-y-1">
                 <Link to="/admin" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-white hover:text-white/80 transition-colors">
+                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
                     <UserCog className="h-5 w-5 stroke-[1.5]" />
                     Painel Admin
                   </div>
                 </Link>
                 <Link to="/admin/planos" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-white hover:text-white/80 transition-colors">
+                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
                     <FileText className="h-5 w-5 stroke-[1.5]" />
                     Planos
                   </div>
                 </Link>
                 <Link to="/admin/usuarios" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-white hover:text-white/80 transition-colors">
+                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
                     <Users className="h-5 w-5 stroke-[1.5]" />
                     Usuários
                   </div>
