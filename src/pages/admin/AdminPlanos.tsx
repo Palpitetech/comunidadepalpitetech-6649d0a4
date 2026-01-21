@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Plus, Pencil, Trash2, Loader2, Crown, Star, Gift, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { PlanForm } from "@/components/admin/PlanForm";
+import { KirvanoWebhookCard } from "@/components/admin/KirvanoWebhookCard";
 import type { Plan, PlanFeatures } from "@/types/plans";
 import { FEATURE_LABELS, FEATURE_LIST } from "@/types/plans";
 
@@ -103,6 +104,10 @@ export default function AdminPlanos() {
   return (
     <MainLayout>
       <div className="container-senior py-8 max-w-4xl mx-auto">
+        <div className="mb-6">
+          <KirvanoWebhookCard />
+        </div>
+
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-senior-2xl font-bold">Planos & Preços</h1>
