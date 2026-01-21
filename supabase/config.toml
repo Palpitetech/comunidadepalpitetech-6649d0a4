@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.generate-guide-post]
 verify_jwt = false
+
+[functions.seed-guides]
+verify_jwt = false
