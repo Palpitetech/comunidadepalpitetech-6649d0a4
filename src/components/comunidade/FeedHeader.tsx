@@ -1,10 +1,10 @@
-import { Users, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { Users } from "lucide-react";
+
+// Feature flag para controlar criação de posts por usuários
+// Mudar para true quando quiser reativar
+const PERMITIR_POSTS_USUARIOS = false;
 
 export function FeedHeader() {
-  const navigate = useNavigate();
-
   return (
     <div className="flex items-center justify-between gap-4 mb-6">
       <div className="flex items-center gap-3">
@@ -13,14 +13,14 @@ export function FeedHeader() {
           Comunidade
         </h1>
       </div>
-      <Button
-        onClick={() => navigate("/criar-post")}
-        className="gap-2"
-        size="sm"
-      >
-        <Plus className="h-4 w-4" />
-        <span className="hidden sm:inline">Criar Post</span>
-      </Button>
+      
+      {/* Botão de criar post desativado temporariamente
+          Para reativar: mudar PERMITIR_POSTS_USUARIOS para true */}
+      {PERMITIR_POSTS_USUARIOS && (
+        <button className="hidden">
+          {/* Código preservado para reativação futura */}
+        </button>
+      )}
     </div>
   );
 }

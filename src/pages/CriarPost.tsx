@@ -1,8 +1,40 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { MainLayout } from "@/components/layout/MainLayout";
+import { toast } from "sonner";
+
+// Feature flag para controlar criação de posts por usuários
+// Mudar para true quando quiser reativar
+const PERMITIR_POSTS_USUARIOS = false;
+
+export default function CriarPost() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!PERMITIR_POSTS_USUARIOS) {
+      toast.info("A criação de posts está temporariamente desativada. Interaja nos posts dos especialistas!");
+      navigate("/comunidade", { replace: true });
+    }
+  }, [navigate]);
+
+  // Se posts de usuários estiverem desativados, não renderiza nada
+  if (!PERMITIR_POSTS_USUARIOS) {
+    return null;
+  }
+
+  // =====================================================
+  // CÓDIGO ORIGINAL PRESERVADO PARA REATIVAÇÃO FUTURA
+  // Para reativar: mudar PERMITIR_POSTS_USUARIOS para true
+  // =====================================================
+
+  return <CriarPostForm />;
+}
+
+// Componente separado para manter o código original intacto
 import { useState, useRef, ChangeEvent } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ImagePlus, X, Loader2 } from "lucide-react";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,7 +48,6 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { toast } from "sonner";
 
 const LOTERIAS = [
   "Lotofácil",
@@ -31,7 +62,7 @@ interface LocationState {
   snapshotTitle?: string;
 }
 
-export default function CriarPost() {
+function CriarPostForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
