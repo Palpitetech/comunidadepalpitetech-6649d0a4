@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Loader2, MessageSquare, FileText, Settings, Bot } from "lucide-react";
+import { Plus, Loader2, MessageSquare, FileText, Bot, User } from "lucide-react";
 import { useBots } from "@/hooks/useBots";
 import { BotDetailSheet } from "@/components/admin/BotDetailSheet";
 import { BotForm } from "@/components/admin/BotForm";
@@ -122,8 +122,15 @@ export default function AdminBots() {
                     <div>
                       <CardTitle className="text-senior-lg flex items-center gap-2">
                         {bot.badge_emoji} {bot.perfis?.nome || "Bot"}
+                        {bot.perfis?.is_bot ? (
+                          <Bot className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <User className="h-4 w-4 text-primary" />
+                        )}
                         {bot.is_roundtable_author && (
-                          <Badge variant="secondary" className="text-xs">Autor Principal</Badge>
+                          <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30 text-xs">
+                            Mesa Redonda
+                          </Badge>
                         )}
                       </CardTitle>
                       <CardDescription>{bot.cargo}</CardDescription>

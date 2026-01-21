@@ -2,6 +2,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Bot, User } from "lucide-react";
 import { BotProfileTab } from "./BotProfileTab";
 import { BotPromptTab } from "./BotPromptTab";
 import { BotAutomationTab } from "./BotAutomationTab";
@@ -40,21 +42,41 @@ export function BotDetailSheet({ bot, open, onOpenChange, onBotUpdated }: BotDet
             <div>
               <SheetTitle className="text-xl flex items-center gap-2">
                 {bot.badge_emoji} {bot.perfis?.nome || "Bot"}
+                {bot.perfis?.is_bot ? (
+                  <Bot className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <User className="h-5 w-5 text-primary" />
+                )}
               </SheetTitle>
               <p className="text-sm text-muted-foreground">{bot.cargo}</p>
-              <div className="flex gap-2 mt-1">
+              <div className="flex flex-wrap gap-2 mt-1">
                 {bot.ativo ? (
                   <Badge className="bg-green-500/10 text-green-600">Ativo</Badge>
                 ) : (
                   <Badge variant="secondary">Inativo</Badge>
                 )}
                 {bot.is_roundtable_author && (
-                  <Badge variant="outline">Autor Mesa Redonda</Badge>
+                  <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30">
+                    Autor Mesa Redonda
+                  </Badge>
+                )}
+                {!bot.perfis?.is_bot && (
+                  <Badge variant="outline">Conta Humana</Badge>
                 )}
               </div>
             </div>
           </div>
         </SheetHeader>
+
+        {!bot.perfis?.is_bot && (
+          <Alert className="mt-4 border-primary/20 bg-primary/5">
+            <User className="h-4 w-4" />
+            <AlertDescription>
+              Esta persona está vinculada a uma conta de usuário real. Posts podem ser 
+              gerados automaticamente, mas a conta mantém acesso normal ao sistema.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Tabs defaultValue="perfil" className="mt-6">
           <TabsList className="w-full grid grid-cols-4">
