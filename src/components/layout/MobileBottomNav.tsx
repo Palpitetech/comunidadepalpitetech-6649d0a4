@@ -9,6 +9,7 @@ interface MobileBottomNavProps {
 export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
   const location = useLocation();
   const currentPath = location.pathname;
+  const isAdminRoute = currentPath.startsWith('/admin');
 
   const isActive = (path: string) => currentPath === path;
 
@@ -60,9 +61,19 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
         {/* Menu */}
         <button
           onClick={onMenuClick}
-          className="flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 text-muted-foreground hover:text-foreground transition-colors"
+          className={cn(
+            "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors",
+            isAdminRoute 
+              ? "text-red-500" 
+              : "text-muted-foreground hover:text-foreground"
+          )}
         >
-          <Menu className="h-6 w-6" />
+          <div className="relative">
+            <Menu className="h-6 w-6" />
+            {isAdminRoute && (
+              <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 border-2 border-card" />
+            )}
+          </div>
           <span className="text-xs mt-1 font-medium">Menu</span>
         </button>
       </div>
