@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, DollarSign, AlertTriangle } from "lucide-react";
 import type { Plan, PlanFeatures, FeatureKey } from "@/types/plans";
 import { FEATURE_LABELS, FEATURE_LIST } from "@/types/plans";
 
@@ -28,7 +29,9 @@ function generateSlug(name: string): string {
 export function PlanForm({ plan, onSaved, onCancel }: PlanFormProps) {
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState(plan?.name || "");
+  const [description, setDescription] = useState(plan?.description || "");
   const [price, setPrice] = useState(plan?.price?.toString() || "0");
+  const [checkoutLink, setCheckoutLink] = useState(plan?.checkout_link || "");
   const [isActive, setIsActive] = useState(plan?.is_active ?? true);
   const [displayOrder, setDisplayOrder] = useState(plan?.display_order?.toString() || "0");
   const [features, setFeatures] = useState<PlanFeatures>(
@@ -64,14 +67,15 @@ export function PlanForm({ plan, onSaved, onCancel }: PlanFormProps) {
       const planData: any = {
         name: name.trim(),
         slug,
+        description: description.trim() || null,
         price: parseFloat(price) || 0,
+        checkout_link: checkoutLink.trim() || null,
         is_active: isActive,
         display_order: parseInt(displayOrder) || 0,
         features,
       };
 
       if (plan) {
-        // Atualizar
         const { error } = await supabase
           .from("plans")
           .update(planData)
@@ -80,7 +84,6 @@ export function PlanForm({ plan, onSaved, onCancel }: PlanFormProps) {
         if (error) throw error;
         toast.success("Plano atualizado");
       } else {
-        // Criar
         const { error } = await supabase.from("plans").insert(planData);
 
         if (error) throw error;
@@ -98,36 +101,94 @@ export function PlanForm({ plan, onSaved, onCancel }: PlanFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Seção: Identificação */}
       <div className="space-y-4">
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          Identificação
+        </h3>
+        
         <div className="space-y-2">
           <Label htmlFor="name">Nome do Plano</Label>
           <Input
             id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ex: Ouro, Prata, Premium"
+            placeholder="Ex: Plano Mensal, Plano Anual"
           />
           {name && (
             <p className="text-xs text-muted-foreground">
-              Slug: {generateSlug(name)}
+              Slug: <code className="bg-muted px-1 py-0.5 rounded">{generateSlug(name)}</code>
             </p>
           )}
         </div>
 
+        <div className="space-y-2">
+          <Label htmlFor="description">Descrição</Label>
+          <Textarea
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Ex: Para quem joga toda semana"
+            rows={2}
+          />
+          <p className="text-xs text-muted-foreground">
+            Subtítulo exibido no card de vendas
+          </p>
+        </div>
+      </div>
+
+      {/* Seção: Mapeamento Financeiro */}
+      <div className="space-y-4 pt-4 border-t">
+        <div className="flex items-center gap-2">
+          <DollarSign className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            Mapeamento Financeiro
+          </h3>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="price">Preço (R$)</Label>
+          <Input
+            id="price"
+            type="number"
+            step="0.01"
+            min="0"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+          />
+          <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-amber-700 dark:text-amber-300">
+              <strong>Importante:</strong> Este valor deve ser EXATAMENTE igual ao cobrado no Asaas 
+              para o webhook identificar o pagamento automaticamente.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="checkoutLink">Link de Checkout</Label>
+          <Input
+            id="checkoutLink"
+            type="url"
+            value={checkoutLink}
+            onChange={(e) => setCheckoutLink(e.target.value)}
+            placeholder="https://pay.asaas.com/..."
+          />
+          <p className="text-xs text-muted-foreground">
+            Link universal do Asaas. Copie e cole a URL de pagamento.
+          </p>
+        </div>
+      </div>
+
+      {/* Seção: Configuração */}
+      <div className="space-y-4 pt-4 border-t">
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          Configuração
+        </h3>
+
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="price">Preço (R$)</Label>
-            <Input
-              id="price"
-              type="number"
-              step="0.01"
-              min="0"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="order">Ordem</Label>
+            <Label htmlFor="order">Ordem de Exibição</Label>
             <Input
               id="order"
               type="number"
@@ -136,21 +197,23 @@ export function PlanForm({ plan, onSaved, onCancel }: PlanFormProps) {
               onChange={(e) => setDisplayOrder(e.target.value)}
             />
           </div>
-        </div>
-
-        <div className="flex items-center justify-between py-2">
-          <Label htmlFor="active">Plano Ativo</Label>
-          <Switch
-            id="active"
-            checked={isActive}
-            onCheckedChange={setIsActive}
-          />
+          <div className="flex items-center justify-between py-2">
+            <Label htmlFor="active">Plano Ativo</Label>
+            <Switch
+              id="active"
+              checked={isActive}
+              onCheckedChange={setIsActive}
+            />
+          </div>
         </div>
       </div>
 
-      <div className="space-y-3">
-        <Label>Recursos Incluídos</Label>
-        <div className="border rounded-lg p-4 space-y-3">
+      {/* Seção: Funcionalidades */}
+      <div className="space-y-3 pt-4 border-t">
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          Funcionalidades Incluídas
+        </h3>
+        <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
           {FEATURE_LIST.map((feature) => (
             <div key={feature} className="flex items-center space-x-3">
               <Checkbox
@@ -171,13 +234,13 @@ export function PlanForm({ plan, onSaved, onCancel }: PlanFormProps) {
         </div>
       </div>
 
-      <div className="flex gap-3 pt-4">
+      <div className="flex gap-3 pt-4 border-t">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
           Cancelar
         </Button>
         <Button type="submit" disabled={saving} className="flex-1">
           {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-          {plan ? "Salvar" : "Criar Plano"}
+          {plan ? "Salvar Alterações" : "Criar Plano"}
         </Button>
       </div>
     </form>
