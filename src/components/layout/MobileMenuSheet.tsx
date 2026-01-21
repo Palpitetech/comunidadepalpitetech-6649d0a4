@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import {
   Sheet,
   SheetContent,
@@ -12,6 +13,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   ArrowLeft,
@@ -22,6 +24,8 @@ import {
   Flame,
   MessageCircle,
   LogOut,
+  FileText,
+  UserCog,
 } from "lucide-react";
 
 interface MobileMenuSheetProps {
@@ -31,6 +35,7 @@ interface MobileMenuSheetProps {
 
 export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
   const { isAuthenticated, profile, signOut } = useAuthContext();
+  const { isAdmin } = useUserRole();
 
   const handleSignOut = async () => {
     try {
@@ -131,23 +136,69 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-0">
-                  <div className="pl-8 space-y-0">
-                    <Link to="/resultados" onClick={closeAndNavigate}>
-                      <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
-                        Resultados
-                      </div>
-                    </Link>
-                    <Link to="/tendencias" onClick={closeAndNavigate}>
-                      <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
-                        Tendências
-                      </div>
-                    </Link>
-                    <Link to="/frequencia" onClick={closeAndNavigate}>
-                      <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
-                        Quentes e Frias
-                      </div>
-                    </Link>
-                  </div>
+                  {isAdmin ? (
+                    <Tabs defaultValue="ferramentas" className="w-full pl-4">
+                      <TabsList className="w-full mb-3">
+                        <TabsTrigger value="ferramentas" className="flex-1 text-sm">Ferramentas</TabsTrigger>
+                        <TabsTrigger value="admin" className="flex-1 text-sm">Admin</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="ferramentas" className="mt-0 space-y-0">
+                        <Link to="/resultados" onClick={closeAndNavigate}>
+                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
+                            Resultados
+                          </div>
+                        </Link>
+                        <Link to="/tendencias" onClick={closeAndNavigate}>
+                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
+                            Tendências
+                          </div>
+                        </Link>
+                        <Link to="/frequencia" onClick={closeAndNavigate}>
+                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
+                            Quentes e Frias
+                          </div>
+                        </Link>
+                      </TabsContent>
+                      <TabsContent value="admin" className="mt-0 space-y-0">
+                        <Link to="/admin" onClick={closeAndNavigate}>
+                          <div className="flex items-center gap-2 py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
+                            <UserCog className="h-4 w-4" />
+                            Painel Admin
+                          </div>
+                        </Link>
+                        <Link to="/admin/planos" onClick={closeAndNavigate}>
+                          <div className="flex items-center gap-2 py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
+                            <FileText className="h-4 w-4" />
+                            Planos
+                          </div>
+                        </Link>
+                        <Link to="/admin/usuarios" onClick={closeAndNavigate}>
+                          <div className="flex items-center gap-2 py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
+                            <Users className="h-4 w-4" />
+                            Usuários
+                          </div>
+                        </Link>
+                      </TabsContent>
+                    </Tabs>
+                  ) : (
+                    <div className="pl-8 space-y-0">
+                      <Link to="/resultados" onClick={closeAndNavigate}>
+                        <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
+                          Resultados
+                        </div>
+                      </Link>
+                      <Link to="/tendencias" onClick={closeAndNavigate}>
+                        <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
+                          Tendências
+                        </div>
+                      </Link>
+                      <Link to="/frequencia" onClick={closeAndNavigate}>
+                        <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
+                          Quentes e Frias
+                        </div>
+                      </Link>
+                    </div>
+                  )}
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
