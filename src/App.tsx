@@ -18,6 +18,7 @@ import Perfil from "./pages/Perfil";
 import CriarPost from "./pages/CriarPost";
 import PostDetalhes from "./pages/PostDetalhes";
 import Bloqueado from "./pages/Bloqueado";
+import AdminIndex from "./pages/admin/AdminIndex";
 import AdminPlanos from "./pages/admin/AdminPlanos";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import NotFound from "./pages/NotFound";
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/bloqueado" element={<Bloqueado />} />
             
             {/* Rotas Admin */}
+            <Route path="/admin" element={<AdminRoute><AdminIndex /></AdminRoute>} />
             <Route path="/admin/planos" element={<AdminRoute><AdminPlanos /></AdminRoute>} />
             <Route path="/admin/usuarios" element={<AdminRoute><AdminUsuarios /></AdminRoute>} />
             
