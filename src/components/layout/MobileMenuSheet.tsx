@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
@@ -23,7 +23,6 @@ import {
   MessageCircle,
   LogOut,
   FileText,
-  UserCog,
 } from "lucide-react";
 
 interface MobileMenuSheetProps {
@@ -34,7 +33,10 @@ interface MobileMenuSheetProps {
 export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
   const { isAuthenticated, profile, signOut } = useAuthContext();
   const { isAdmin } = useUserRole();
-  const [menuMode, setMenuMode] = useState<"ferramentas" | "admin">("ferramentas");
+  const location = useLocation();
+  const [menuMode, setMenuMode] = useState<"ferramentas" | "admin">(
+    location.pathname.startsWith('/admin') ? "admin" : "ferramentas"
+  );
 
   const handleSignOut = async () => {
     try {
@@ -189,12 +191,6 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
             /* Conteúdo Admin - Estilo com Destaque Vermelho */
             <div className="mx-4 mt-2 p-3 rounded-r-md bg-red-50 dark:bg-red-950/30 border-l-4 border-red-500">
               <nav className="space-y-1">
-                <Link to="/admin" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
-                    <UserCog className="h-5 w-5 stroke-[1.5]" />
-                    Painel Admin
-                  </div>
-                </Link>
                 <Link to="/admin/planos" onClick={closeAndNavigate}>
                   <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
                     <FileText className="h-5 w-5 stroke-[1.5]" />
