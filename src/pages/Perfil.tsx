@@ -6,9 +6,47 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { User, Mail, Phone, Lock, CreditCard, Calendar, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 export default function Perfil() {
-  const { profile } = useAuthContext();
+  const { profile, user } = useAuthContext();
+  const { toast } = useToast();
+  const [isOpeningPortal, setIsOpeningPortal] = useState(false);
+
+  const handleOpenPortal = async () => {
+    if (!user) {
+      toast({
+        title: "Você precisa estar logado",
+        description: "Faça login para gerenciar sua assinatura.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsOpeningPortal(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("customer-portal");
+      if (error) throw error;
+      if (!data?.url) throw new Error("URL do portal não retornada");
+
+      window.open(String(data.url), "_blank", "noopener,noreferrer");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Não foi possível abrir o portal";
+      const isNoCustomer = /cliente/i.test(message) || /not found/i.test(message) || /404/.test(message);
+
+      toast({
+        title: isNoCustomer ? "Você ainda não tem assinatura" : "Erro ao abrir portal",
+        description: isNoCustomer
+          ? "Assine um plano para poder cancelar ou alterar sua assinatura."
+          : message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsOpeningPortal(false);
+    }
+  };
 
   const getInitials = (nome: string | null) => {
     if (!nome) return "U";
@@ -58,7 +96,7 @@ export default function Perfil() {
               <Mail className="h-5 w-5 text-muted-foreground" />
               <div className="flex-1">
                 <p className="text-sm text-muted-foreground">E-mail</p>
-                <p className="text-senior-base font-medium">Não informado</p>
+                <p className="text-senior-base font-medium">{user?.email || "Não informado"}</p>
               </div>
             </div>
 
@@ -107,6 +145,15 @@ export default function Perfil() {
 
             {/* Botões de Assinatura */}
             <div className="pt-2 space-y-3">
+              <Button
+                variant="outline"
+                className="w-full h-12 text-senior-base"
+                onClick={handleOpenPortal}
+                disabled={isOpeningPortal}
+              >
+                <CreditCard className="h-5 w-5 mr-2" />
+                {isOpeningPortal ? "Abrindo portal..." : "Gerenciar Assinatura"}
+              </Button>
               <Button className="w-full h-12 text-senior-base gap-2 bg-accent hover:bg-accent/90 text-accent-foreground">
                 <Sparkles className="h-5 w-5" />
                 Assinar Premium
