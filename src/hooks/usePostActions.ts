@@ -40,7 +40,7 @@ export function usePostActions(postId: string) {
   });
 
   const addCommentMutation = useMutation({
-    mutationFn: async (content: string) => {
+    mutationFn: async ({ content, parentId }: { content: string; parentId?: string }) => {
       if (!user?.id) throw new Error("Usuário não autenticado");
 
       const { error } = await supabase
@@ -49,6 +49,7 @@ export function usePostActions(postId: string) {
           post_id: postId,
           user_id: user.id,
           conteudo: content,
+          parent_id: parentId || null,
         });
 
       if (error) throw error;

@@ -1,0 +1,197 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+interface GuideData {
+  id: string;
+  perfil_id: string;
+  system_prompt: string;
+  especialidade: string;
+  cargo: string;
+  perfis: { nome: string | null } | { nome: string | null }[] | null;
+}
+
+// Helper para extrair nome do perfil (pode vir como objeto ou array)
+function getGuideName(guide: GuideData): string | null {
+  if (!guide.perfis) return null;
+  if (Array.isArray(guide.perfis)) {
+    return guide.perfis[0]?.nome || null;
+  }
+  return guide.perfis.nome;
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { comment_id, post_id, user_id, conteudo } = await req.json();
+    
+    if (!comment_id || !post_id || !user_id || !conteudo) {
+      return new Response(
+        JSON.stringify({ error: "Parâmetros obrigatórios: comment_id, post_id, user_id, conteudo" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+    
+    // 1. Verificar se o autor é bot (evitar loop infinito)
+    const { data: authorProfile } = await supabaseAdmin
+      .from("perfis")
+      .select("is_bot, nome")
+      .eq("id", user_id)
+      .single();
+    
+    if (authorProfile?.is_bot) {
+      console.log(`Comentário de bot (${authorProfile.nome}) - ignorando para evitar loop`);
+      return new Response(
+        JSON.stringify({ skipped: true, reason: "bot_author" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    // 2. Buscar guias ativos
+    const { data: guides, error: guidesError } = await supabaseAdmin
+      .from("guide_personas")
+      .select("id, perfil_id, system_prompt, especialidade, cargo, perfis(nome)")
+      .eq("ativo", true);
+    
+    if (guidesError || !guides || guides.length === 0) {
+      console.log("Nenhum guia ativo encontrado");
+      return new Response(
+        JSON.stringify({ skipped: true, reason: "no_guides" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    // 3. Sortear 1 guia aleatório
+    // Opcional: dar peso maior para especialistas se o comentário tiver palavras-chave
+    const comentarioLower = conteudo.toLowerCase();
+    let selectedGuide: GuideData;
+    
+    // Palavras-chave por especialidade
+    const keywordWeights: { [key: string]: string[] } = {
+      "análise de dados": ["estatística", "dados", "frequência", "porcentagem", "chance"],
+      "vivência prática": ["experiência", "sempre", "geralmente", "costumo", "minha estratégia"],
+      "educação": ["como funciona", "o que é", "explica", "entender", "ciclo", "moldura"]
+    };
+    
+    // Verificar se há match de palavras-chave
+    let matchedGuide: GuideData | null = null;
+    for (const guide of guides as GuideData[]) {
+      const keywords = keywordWeights[guide.especialidade.toLowerCase()] || [];
+      if (keywords.some(kw => comentarioLower.includes(kw))) {
+        // 70% de chance de escolher o especialista relevante
+        if (Math.random() < 0.7) {
+          matchedGuide = guide;
+          break;
+        }
+      }
+    }
+    
+    selectedGuide = matchedGuide || guides[Math.floor(Math.random() * guides.length)] as GuideData;
+    
+    // 4. Buscar contexto do post original
+    const { data: post } = await supabaseAdmin
+      .from("postagens")
+      .select("titulo, conteudo")
+      .eq("id", post_id)
+      .single();
+    
+    // 5. Gerar resposta personalizada
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY não configurada");
+    }
+    
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: selectedGuide.system_prompt },
+          { 
+            role: "user", 
+            content: `Um usuário da comunidade acabou de comentar. Responda a ele.
+
+CONTEXTO DO POST:
+Título: "${post?.titulo || 'Post da comunidade'}"
+Conteúdo: "${post?.conteudo || ''}"
+
+COMENTÁRIO DO USUÁRIO:
+"${conteudo}"
+
+INSTRUÇÕES:
+- Responda de forma curta, simpática e útil
+- Se for uma dúvida, tente esclarecer com sua expertise em ${selectedGuide.especialidade}
+- Se for uma opinião, agradeça e comente
+- Máximo 200 caracteres
+- Seja acolhedor, como um colega ajudando
+- NUNCA mencione que é IA/bot
+- Pode usar emoji ocasionalmente
+
+Responda APENAS com o texto da resposta (sem JSON, sem aspas).`
+          }
+        ]
+      }),
+    });
+    
+    if (!aiResponse.ok) {
+      throw new Error(`Erro na API de IA: ${aiResponse.status}`);
+    }
+    
+    const aiData = await aiResponse.json();
+    const resposta = aiData.choices?.[0]?.message?.content?.trim();
+    
+    if (!resposta) {
+      throw new Error("Resposta da IA vazia");
+    }
+    
+    // 6. Inserir resposta com parent_id (resposta aninhada)
+    const { error: insertError } = await supabaseAdmin.from("post_comments").insert({
+      post_id: post_id,
+      user_id: selectedGuide.perfil_id,
+      conteudo: resposta.substring(0, 500),
+      parent_id: comment_id, // Resposta aninhada ao comentário do usuário
+    });
+    
+    if (insertError) {
+      throw new Error(`Erro ao inserir resposta: ${insertError.message}`);
+    }
+    
+    const guideName = getGuideName(selectedGuide);
+    console.log(`${guideName} respondeu ao comentário ${comment_id}`);
+    
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        guide: guideName,
+        especialidade: selectedGuide.especialidade,
+        parent_comment_id: comment_id,
+        resposta_preview: resposta.substring(0, 50) + "..."
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+    
+  } catch (error) {
+    console.error("Erro em bot-reply-user:", error);
+    return new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : "Erro desconhecido" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});

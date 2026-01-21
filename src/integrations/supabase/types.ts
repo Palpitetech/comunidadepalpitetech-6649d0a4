@@ -246,6 +246,7 @@ export type Database = {
           conteudo: string
           created_at: string | null
           id: string
+          parent_id: string | null
           post_id: string
           updated_at: string | null
           user_id: string
@@ -254,6 +255,7 @@ export type Database = {
           conteudo: string
           created_at?: string | null
           id?: string
+          parent_id?: string | null
           post_id: string
           updated_at?: string | null
           user_id: string
@@ -262,11 +264,19 @@ export type Database = {
           conteudo?: string
           created_at?: string | null
           id?: string
+          parent_id?: string | null
           post_id?: string
           updated_at?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "post_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "post_comments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "post_comments_post_id_fkey"
             columns: ["post_id"]

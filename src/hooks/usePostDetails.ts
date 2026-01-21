@@ -7,11 +7,13 @@ export interface PostComment {
   conteudo: string;
   created_at: string;
   user_id: string;
+  parent_id: string | null;
   perfis: {
     nome: string | null;
     avatar_url: string | null;
     is_bot: boolean | null;
   } | null;
+  replies?: PostComment[];
 }
 
 export interface PostDetails {
@@ -73,10 +75,10 @@ export function usePostDetails(postId: string) {
   const commentsQuery = useQuery({
     queryKey: ["post-comments", postId],
     queryFn: async () => {
-      // Buscar comentários
+      // Buscar comentários com parent_id
       const { data: commentsData, error: commentsError } = await supabase
         .from("post_comments")
-        .select("id, conteudo, created_at, user_id")
+        .select("id, conteudo, created_at, user_id, parent_id")
         .eq("post_id", postId)
         .order("created_at", { ascending: true });
 
@@ -95,11 +97,32 @@ export function usePostDetails(postId: string) {
         profilesData?.map((p) => [p.id, { nome: p.nome, avatar_url: p.avatar_url, is_bot: p.is_bot }]) || []
       );
 
-      // Combinar dados
-      return commentsData.map((comment) => ({
+      // Separar comentários raiz e respostas
+      const rootComments: PostComment[] = [];
+      const repliesMap = new Map<string, PostComment[]>();
+
+      for (const comment of commentsData) {
+        const enrichedComment: PostComment = {
+          ...comment,
+          perfis: profilesMap.get(comment.user_id) || null,
+          replies: [],
+        };
+
+        if (comment.parent_id) {
+          // É uma resposta - adicionar ao mapa
+          const existing = repliesMap.get(comment.parent_id) || [];
+          repliesMap.set(comment.parent_id, [...existing, enrichedComment]);
+        } else {
+          // É um comentário raiz
+          rootComments.push(enrichedComment);
+        }
+      }
+
+      // Anexar respostas aos comentários raiz
+      return rootComments.map((comment) => ({
         ...comment,
-        perfis: profilesMap.get(comment.user_id) || null,
-      })) as PostComment[];
+        replies: repliesMap.get(comment.id) || [],
+      }));
     },
     enabled: !!postId,
   });

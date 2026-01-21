@@ -10,18 +10,20 @@ interface Comment {
   conteudo: string;
   created_at: string;
   user_id: string;
+  parent_id?: string | null;
   perfis: {
     nome: string | null;
     avatar_url: string | null;
     is_bot: boolean | null;
   } | null;
+  replies?: Comment[];
 }
 
 interface CommentSectionProps {
   comments: Comment[];
   commentsCount: number;
   currentUserId?: string;
-  onAddComment: (content: string) => void;
+  onAddComment: (content: string, parentId?: string) => void;
   onDeleteComment: (commentId: string) => void;
   isLoading?: boolean;
   isAdding?: boolean;
@@ -45,6 +47,10 @@ export function CommentSection({
       onAddComment(newComment.trim());
       setNewComment("");
     }
+  };
+
+  const handleReply = (content: string, parentId: string) => {
+    onAddComment(content, parentId);
   };
 
   return (
@@ -106,7 +112,9 @@ export function CommentSection({
               comment={comment}
               currentUserId={currentUserId}
               onDelete={onDeleteComment}
+              onReply={handleReply}
               isDeleting={deletingId === comment.id}
+              isReplying={isAdding}
             />
           ))}
         </div>
