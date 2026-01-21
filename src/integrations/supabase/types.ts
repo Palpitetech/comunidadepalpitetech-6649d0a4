@@ -145,39 +145,98 @@ export type Database = {
       }
       perfis: {
         Row: {
+          admin_notes: string | null
           avatar_url: string | null
           celular: string | null
           celular_verificado: boolean | null
           created_at: string
+          custom_features: Json | null
           email: string | null
           email_verificado: boolean | null
           id: string
+          is_blocked: boolean
           is_bot: boolean | null
           nome: string | null
+          plan_id: string | null
           updated_at: string
+          whatsapp: string | null
         }
         Insert: {
+          admin_notes?: string | null
           avatar_url?: string | null
           celular?: string | null
           celular_verificado?: boolean | null
           created_at?: string
+          custom_features?: Json | null
           email?: string | null
           email_verificado?: boolean | null
           id: string
+          is_blocked?: boolean
           is_bot?: boolean | null
           nome?: string | null
+          plan_id?: string | null
           updated_at?: string
+          whatsapp?: string | null
         }
         Update: {
+          admin_notes?: string | null
           avatar_url?: string | null
           celular?: string | null
           celular_verificado?: boolean | null
           created_at?: string
+          custom_features?: Json | null
           email?: string | null
           email_verificado?: boolean | null
           id?: string
+          is_blocked?: boolean
           is_bot?: boolean | null
           nome?: string | null
+          plan_id?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "perfis_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          created_at: string
+          display_order: number
+          features: Json
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          features?: Json
+          id?: string
+          is_active?: boolean
+          name: string
+          price?: number
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          features?: Json
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          slug?: string
           updated_at?: string
         }
         Relationships: []

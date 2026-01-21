@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { AdminRoute } from "@/components/auth/AdminRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import RecuperarSenha from "./pages/RecuperarSenha";
@@ -16,6 +17,9 @@ import Frequencia from "./pages/Frequencia";
 import Perfil from "./pages/Perfil";
 import CriarPost from "./pages/CriarPost";
 import PostDetalhes from "./pages/PostDetalhes";
+import Bloqueado from "./pages/Bloqueado";
+import AdminPlanos from "./pages/admin/AdminPlanos";
+import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +46,11 @@ const App = () => (
             <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
             <Route path="/criar-post" element={<ProtectedRoute><CriarPost /></ProtectedRoute>} />
             <Route path="/comunidade/post/:id" element={<ProtectedRoute><PostDetalhes /></ProtectedRoute>} />
+            <Route path="/bloqueado" element={<Bloqueado />} />
+            
+            {/* Rotas Admin */}
+            <Route path="/admin/planos" element={<AdminRoute><AdminPlanos /></AdminRoute>} />
+            <Route path="/admin/usuarios" element={<AdminRoute><AdminUsuarios /></AdminRoute>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
