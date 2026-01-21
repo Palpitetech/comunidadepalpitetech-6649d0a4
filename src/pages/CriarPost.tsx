@@ -136,7 +136,10 @@ export default function CriarPost() {
     }
   };
 
-  const canSubmit = conteudo.trim().length > 0;
+  const canSubmit = 
+    titulo.trim().length > 0 && 
+    conteudo.trim().length > 0 && 
+    loteria.trim().length > 0;
 
   return (
     <MainLayout>
@@ -158,20 +161,21 @@ export default function CriarPost() {
         <div className="space-y-4">
           {/* Título */}
           <div className="space-y-2">
-            <Label htmlFor="titulo">Título (opcional)</Label>
+            <Label htmlFor="titulo">Título *</Label>
             <Input
               id="titulo"
               placeholder="Ex: Minha estratégia para o próximo sorteio"
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
               maxLength={100}
+              required
             />
           </div>
 
           {/* Loteria */}
           <div className="space-y-2">
-            <Label htmlFor="loteria">Loteria</Label>
-            <Select value={loteria} onValueChange={setLoteria}>
+            <Label htmlFor="loteria">Loteria *</Label>
+            <Select value={loteria} onValueChange={setLoteria} required>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione a loteria" />
               </SelectTrigger>
@@ -194,6 +198,7 @@ export default function CriarPost() {
               value={conteudo}
               onChange={(e) => setConteudo(e.target.value)}
               className="min-h-[150px] resize-none"
+              required
             />
           </div>
 
