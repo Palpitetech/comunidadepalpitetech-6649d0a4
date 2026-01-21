@@ -6,6 +6,239 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Constantes para cálculos
+const TOTAL_DEZENAS = 25;
+const DEZENAS_POR_SORTEIO = 15;
+const PERIODO_ANALISE = 20;
+const LIMIAR_QUENTE = 0.71;
+const LIMIAR_FRIO = 0.39;
+
+interface Concurso {
+  concurso_id: number;
+  dezenas: number[];
+  data_sorteio: string;
+  ciclo_numero: number | null;
+  dezenas_faltantes_ciclo: number[] | null;
+  qtd_pares: number;
+  qtd_impares: number;
+  qtd_repetidas: number;
+  qtd_primos: number;
+  qtd_moldura: number;
+}
+
+// Calcula a frequência de cada dezena nos últimos N concursos
+function calcularFrequencias(concursos: Concurso[]): Map<number, number> {
+  const frequencias = new Map<number, number>();
+  
+  for (let i = 1; i <= TOTAL_DEZENAS; i++) {
+    frequencias.set(i, 0);
+  }
+  
+  for (const concurso of concursos) {
+    for (const dezena of concurso.dezenas) {
+      frequencias.set(dezena, (frequencias.get(dezena) || 0) + 1);
+    }
+  }
+  
+  return frequencias;
+}
+
+// Identifica dezenas quentes e frias
+function identificarTemperatura(frequencias: Map<number, number>, totalConcursos: number): {
+  quentes: { dezena: number; percentual: number }[];
+  frias: { dezena: number; percentual: number }[];
+} {
+  const quentes: { dezena: number; percentual: number }[] = [];
+  const frias: { dezena: number; percentual: number }[] = [];
+  
+  for (const [dezena, freq] of frequencias) {
+    const percentual = freq / totalConcursos;
+    
+    if (percentual >= LIMIAR_QUENTE) {
+      quentes.push({ dezena, percentual });
+    } else if (percentual <= LIMIAR_FRIO) {
+      frias.push({ dezena, percentual });
+    }
+  }
+  
+  quentes.sort((a, b) => b.percentual - a.percentual);
+  frias.sort((a, b) => a.percentual - b.percentual);
+  
+  return { quentes: quentes.slice(0, 5), frias: frias.slice(0, 5) };
+}
+
+// Calcula o atraso atual de cada dezena (quantos concursos sem aparecer)
+function calcularAtrasos(concursos: Concurso[]): Map<number, number> {
+  const atrasos = new Map<number, number>();
+  
+  for (let i = 1; i <= TOTAL_DEZENAS; i++) {
+    atrasos.set(i, 0);
+    
+    for (let j = 0; j < concursos.length; j++) {
+      if (concursos[j].dezenas.includes(i)) {
+        atrasos.set(i, j);
+        break;
+      }
+      if (j === concursos.length - 1) {
+        atrasos.set(i, concursos.length);
+      }
+    }
+  }
+  
+  return atrasos;
+}
+
+// Calcula as duplas mais frequentes
+function calcularTopDuplas(concursos: Concurso[], top: number = 3): { dupla: [number, number]; frequencia: number; percentual: number }[] {
+  const duplas = new Map<string, number>();
+  
+  for (const concurso of concursos) {
+    const dezenas = concurso.dezenas.sort((a, b) => a - b);
+    
+    for (let i = 0; i < dezenas.length; i++) {
+      for (let j = i + 1; j < dezenas.length; j++) {
+        const chave = `${dezenas[i]}-${dezenas[j]}`;
+        duplas.set(chave, (duplas.get(chave) || 0) + 1);
+      }
+    }
+  }
+  
+  const ordenadas = Array.from(duplas.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, top);
+  
+  return ordenadas.map(([chave, freq]) => {
+    const [d1, d2] = chave.split("-").map(Number);
+    return {
+      dupla: [d1, d2] as [number, number],
+      frequencia: freq,
+      percentual: freq / concursos.length
+    };
+  });
+}
+
+// Calcula o trio mais frequente
+function calcularTopTrio(concursos: Concurso[]): { trio: [number, number, number]; frequencia: number; percentual: number } | null {
+  const trios = new Map<string, number>();
+  
+  for (const concurso of concursos) {
+    const dezenas = concurso.dezenas.sort((a, b) => a - b);
+    
+    for (let i = 0; i < dezenas.length; i++) {
+      for (let j = i + 1; j < dezenas.length; j++) {
+        for (let k = j + 1; k < dezenas.length; k++) {
+          const chave = `${dezenas[i]}-${dezenas[j]}-${dezenas[k]}`;
+          trios.set(chave, (trios.get(chave) || 0) + 1);
+        }
+      }
+    }
+  }
+  
+  const ordenados = Array.from(trios.entries())
+    .sort((a, b) => b[1] - a[1]);
+  
+  if (ordenados.length === 0) return null;
+  
+  const [chave, freq] = ordenados[0];
+  const [d1, d2, d3] = chave.split("-").map(Number);
+  
+  return {
+    trio: [d1, d2, d3] as [number, number, number],
+    frequencia: freq,
+    percentual: freq / concursos.length
+  };
+}
+
+// Formata dezena com 2 dígitos
+function formatarDezena(d: number): string {
+  return d.toString().padStart(2, "0");
+}
+
+// Monta o contexto enriquecido para a IA
+function montarContextoEnriquecido(concursos: Concurso[]): string {
+  if (!concursos || concursos.length === 0) {
+    return "Sem dados disponíveis para análise.";
+  }
+
+  const ultimo = concursos[0];
+  const frequencias = calcularFrequencias(concursos);
+  const { quentes, frias } = identificarTemperatura(frequencias, concursos.length);
+  const atrasos = calcularAtrasos(concursos);
+  const topDuplas = calcularTopDuplas(concursos);
+  const topTrio = calcularTopTrio(concursos);
+
+  // Dezenas com maior atraso
+  const maioresAtrasos = Array.from(atrasos.entries())
+    .filter(([_, atraso]) => atraso >= 5)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+
+  let contexto = `📊 ANÁLISE DOS ÚLTIMOS ${concursos.length} CONCURSOS:
+
+🎯 ÚLTIMO RESULTADO:
+Concurso ${ultimo.concurso_id} (${ultimo.data_sorteio})
+Dezenas: [${ultimo.dezenas.map(formatarDezena).join(", ")}]
+Indicadores: ${ultimo.qtd_pares} pares, ${ultimo.qtd_impares} ímpares, ${ultimo.qtd_moldura} moldura, ${ultimo.qtd_primos} primos, ${ultimo.qtd_repetidas} repetidas
+
+`;
+
+  // Dezenas quentes
+  if (quentes.length > 0) {
+    contexto += `🔥 DEZENAS QUENTES (aparecendo muito):\n`;
+    contexto += quentes.map(q => `${formatarDezena(q.dezena)} (${Math.round(q.percentual * 100)}%)`).join(", ");
+    contexto += "\n\n";
+  }
+
+  // Dezenas frias
+  if (frias.length > 0) {
+    contexto += `❄️ DEZENAS FRIAS (aparecendo pouco):\n`;
+    contexto += frias.map(f => `${formatarDezena(f.dezena)} (${Math.round(f.percentual * 100)}%)`).join(", ");
+    contexto += "\n";
+  }
+
+  // Maiores atrasos
+  if (maioresAtrasos.length > 0) {
+    contexto += `⏳ MAIORES ATRASOS:\n`;
+    contexto += maioresAtrasos.map(([d, a]) => `${formatarDezena(d)} (ausente há ${a} sorteios)`).join(", ");
+    contexto += "\n\n";
+  }
+
+  // Status do ciclo
+  if (ultimo.ciclo_numero !== null) {
+    contexto += `🔄 STATUS DO CICLO:\n`;
+    contexto += `Ciclo atual: ${ultimo.ciclo_numero}\n`;
+    
+    if (ultimo.dezenas_faltantes_ciclo && ultimo.dezenas_faltantes_ciclo.length > 0) {
+      const faltantes = ultimo.dezenas_faltantes_ciclo.map(formatarDezena).join(", ");
+      contexto += `Dezenas faltantes: [${faltantes}] (${ultimo.dezenas_faltantes_ciclo.length} restante${ultimo.dezenas_faltantes_ciclo.length > 1 ? "s" : ""})\n`;
+      
+      if (ultimo.dezenas_faltantes_ciclo.length <= 3) {
+        contexto += `⚡ Ciclo quase completo!\n`;
+      }
+    } else {
+      contexto += `✅ Ciclo completo - iniciando novo ciclo\n`;
+    }
+    contexto += "\n";
+  }
+
+  // Duplas mais frequentes
+  if (topDuplas.length > 0) {
+    contexto += `🤝 DUPLAS MAIS FREQUENTES:\n`;
+    topDuplas.forEach((d, i) => {
+      contexto += `${i + 1}. ${formatarDezena(d.dupla[0])}-${formatarDezena(d.dupla[1])} → aparecem juntas em ${Math.round(d.percentual * 100)}% dos sorteios\n`;
+    });
+    contexto += "\n";
+  }
+
+  // Trio mais frequente
+  if (topTrio) {
+    contexto += `🎯 TRIO MAIS FREQUENTE:\n`;
+    contexto += `${formatarDezena(topTrio.trio[0])}-${formatarDezena(topTrio.trio[1])}-${formatarDezena(topTrio.trio[2])} → aparece junto em ${Math.round(topTrio.percentual * 100)}% dos sorteios\n`;
+  }
+
+  return contexto;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -34,22 +267,20 @@ serve(async (req) => {
       );
     }
 
-    // 2. Buscar últimos resultados da Lotofácil
+    // 2. Buscar últimos resultados para análise enriquecida
     const { data: resultados, error: resultadosError } = await supabaseAdmin
       .from("resultados")
-      .select("concurso_id, dezenas, data_sorteio, qtd_pares, qtd_impares, qtd_repetidas, qtd_primos, qtd_moldura")
+      .select("concurso_id, dezenas, data_sorteio, ciclo_numero, dezenas_faltantes_ciclo, qtd_pares, qtd_impares, qtd_repetidas, qtd_primos, qtd_moldura")
       .order("concurso_id", { ascending: false })
-      .limit(5);
+      .limit(PERIODO_ANALISE);
 
     if (resultadosError) {
       console.error("Erro ao buscar resultados:", resultadosError.message);
       throw new Error("Erro ao buscar resultados");
     }
 
-    // 3. Formatar contexto para a IA
-    const contexto = resultados?.map(r => 
-      `Concurso ${r.concurso_id} (${r.data_sorteio}): Dezenas [${r.dezenas?.join(", ")}] | Pares: ${r.qtd_pares}, Ímpares: ${r.qtd_impares}, Repetidas: ${r.qtd_repetidas}, Primos: ${r.qtd_primos}, Moldura: ${r.qtd_moldura}`
-    ).join("\n") || "Sem dados disponíveis";
+    // 3. Montar contexto enriquecido
+    const contextoEnriquecido = montarContextoEnriquecido(resultados as Concurso[]);
 
     // 4. Chamar Lovable AI com a personalidade do guia
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -69,18 +300,23 @@ serve(async (req) => {
           { role: "system", content: guide.system_prompt },
           { 
             role: "user", 
-            content: `Crie um post para a comunidade Palpite Tech analisando os últimos resultados da Lotofácil.
+            content: `Crie um post para AJUDAR os usuários da comunidade Palpite Tech.
 
-Dados dos últimos sorteios:
-${contexto}
+CONTEXTO ESTATÍSTICO COMPLETO:
+${contextoEnriquecido}
 
-Instruções importantes:
-- Escreva um título curto e chamativo (máximo 60 caracteres)
-- Escreva o conteúdo do post (máximo 500 caracteres)
+INSTRUÇÕES IMPORTANTES:
+- Seu papel é GUIAR e ORIENTAR, não dar certezas absolutas
+- Compartilhe observações úteis baseadas nos dados acima
+- Use frases como "tenho observado", "vale a pena notar", "uma possibilidade interessante..."
+- NUNCA prometa resultados ou dê certezas sobre o que vai sair
+- Reconheça que loteria envolve sorte: "claro que não há garantias, mas..."
+- Convide à discussão no final: "O que vocês acham?" ou "Alguém mais notou isso?"
+- Título: máximo 60 caracteres, chamativo mas não sensacionalista
+- Conteúdo: máximo 400 caracteres
 - Fale em primeira pessoa como membro da equipe Palpite Tech
 - NUNCA mencione que você é IA, bot ou modelo de linguagem
-- Use linguagem natural e humana
-- Traga insights úteis para quem vai jogar
+- Seja prestativo e acolhedor, como um colega que divide o que descobriu
 
 Responda APENAS no formato JSON:
 {"titulo": "seu título aqui", "conteudo": "seu conteúdo aqui"}`
@@ -105,7 +341,6 @@ Responda APENAS no formato JSON:
     // 5. Extrair JSON da resposta (pode vir com markdown)
     let parsed;
     try {
-      // Tentar extrair JSON de dentro de blocos de código markdown
       const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || 
                         content.match(/\{[\s\S]*\}/);
       const jsonStr = jsonMatch ? (jsonMatch[1] || jsonMatch[0]).trim() : content.trim();
@@ -139,12 +374,17 @@ Responda APENAS no formato JSON:
       .eq("id", guide.id);
 
     console.log(`Post criado com sucesso pelo guia: ${guide.perfis?.nome}`);
+    console.log(`Contexto utilizado:\n${contextoEnriquecido}`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         guide: guide.perfis?.nome,
-        titulo: parsed.titulo 
+        titulo: parsed.titulo,
+        contexto_resumo: {
+          concursos_analisados: resultados?.length || 0,
+          ultimo_concurso: resultados?.[0]?.concurso_id
+        }
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

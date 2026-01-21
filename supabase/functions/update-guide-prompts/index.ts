@@ -6,15 +6,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Definição dos 3 guias especialistas com tom de GUIA PRESTATIVO
-const GUIDES = [
-  {
-    email: "ana@guia.palpitetech.com",
-    nome: "Ana",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ana&backgroundColor=b6e3f4",
+// Prompts atualizados com tom de GUIA PRESTATIVO
+const UPDATED_PROMPTS: Record<string, { cargo: string; system_prompt: string }> = {
+  "ana@guia.palpitetech.com": {
     cargo: "Analista de Dados",
-    especialidade: "estatisticas",
-    badge_emoji: "📊",
     system_prompt: `Você é Ana, parte da equipe de análise do Palpite Tech. Seu papel é AJUDAR os usuários a entenderem os dados, não dar certezas.
 
 Diretrizes:
@@ -29,13 +24,8 @@ Diretrizes:
 - Tom: profissional mas acessível, curioso, colaborativo
 - Limite posts a 400 caracteres`
   },
-  {
-    email: "srze@guia.palpitetech.com",
-    nome: "Sr. Zé",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=SrZe&backgroundColor=ffd5dc",
+  "srze@guia.palpitetech.com": {
     cargo: "Consultor Veterano",
-    especialidade: "experiencia",
-    badge_emoji: "🍀",
     system_prompt: `Você é o Sr. Zé, funcionário mais antigo do Palpite Tech que adora ajudar a galera. Você combina experiência com humildade - não é o guru que sabe tudo, é o tio legal que divide o que aprendeu.
 
 Diretrizes:
@@ -50,13 +40,8 @@ Diretrizes:
 - Tom: acolhedor, experiente mas humilde, motivador sem ser ingênuo
 - Limite posts a 400 caracteres`
   },
-  {
-    email: "mario@guia.palpitetech.com",
-    nome: "Prof. Mário",
-    avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mario&backgroundColor=d1d4f9",
+  "mario@guia.palpitetech.com": {
     cargo: "Educador",
-    especialidade: "ciclos",
-    badge_emoji: "🎓",
     system_prompt: `Você é o Prof. Mário, responsável por explicar conceitos do Palpite Tech de forma acessível. Seu papel é ENSINAR, não impressionar. Você é o professor paciente que todos gostariam de ter.
 
 Diretrizes:
@@ -71,7 +56,7 @@ Diretrizes:
 - Tom: didático, paciente, encorajador, acessível
 - Limite posts a 400 caracteres`
   }
-];
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -87,102 +72,48 @@ serve(async (req) => {
 
     const results = [];
 
-    for (const guide of GUIDES) {
-      // 1. Verificar se já existe um usuário com este email
-      const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-      const existingUser = existingUsers?.users?.find(u => u.email === guide.email);
+    for (const [email, updates] of Object.entries(UPDATED_PROMPTS)) {
+      // Buscar usuário pelo email
+      const { data: users } = await supabaseAdmin.auth.admin.listUsers();
+      const user = users?.users?.find(u => u.email === email);
 
-      let userId: string;
-
-      if (existingUser) {
-        userId = existingUser.id;
-        console.log(`Guia ${guide.nome} já existe com ID: ${userId}`);
-      } else {
-        // 2. Criar usuário auth
-        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-          email: guide.email,
-          password: crypto.randomUUID(), // Senha aleatória (não será usada)
-          email_confirm: true,
-          user_metadata: { nome: guide.nome, is_bot: true }
-        });
-
-        if (createError) {
-          console.error(`Erro ao criar usuário ${guide.nome}:`, createError.message);
-          results.push({ guide: guide.nome, error: createError.message });
-          continue;
-        }
-
-        userId = newUser.user.id;
-        console.log(`Guia ${guide.nome} criado com ID: ${userId}`);
+      if (!user) {
+        console.log(`Usuário não encontrado: ${email}`);
+        results.push({ email, error: "Usuário não encontrado" });
+        continue;
       }
 
-      // 3. Atualizar perfil com is_bot = true
-      const { error: profileError } = await supabaseAdmin
-        .from("perfis")
-        .update({
-          nome: guide.nome,
-          avatar_url: guide.avatar_url,
-          is_bot: true,
-          email_verificado: true
-        })
-        .eq("id", userId);
-
-      if (profileError) {
-        console.error(`Erro ao atualizar perfil ${guide.nome}:`, profileError.message);
-      }
-
-      // 4. Verificar se já existe guide_persona
-      const { data: existingPersona } = await supabaseAdmin
+      // Atualizar guide_persona
+      const { error: updateError } = await supabaseAdmin
         .from("guide_personas")
-        .select("id")
-        .eq("perfil_id", userId)
-        .maybeSingle();
+        .update({
+          cargo: updates.cargo,
+          system_prompt: updates.system_prompt,
+          updated_at: new Date().toISOString()
+        })
+        .eq("perfil_id", user.id);
 
-      if (!existingPersona) {
-        // 5. Criar guide_persona
-        const { error: personaError } = await supabaseAdmin
-          .from("guide_personas")
-          .insert({
-            perfil_id: userId,
-            cargo: guide.cargo,
-            especialidade: guide.especialidade,
-            badge_emoji: guide.badge_emoji,
-            system_prompt: guide.system_prompt,
-            ativo: true
-          });
-
-        if (personaError) {
-          console.error(`Erro ao criar persona ${guide.nome}:`, personaError.message);
-          results.push({ guide: guide.nome, error: personaError.message });
-          continue;
-        }
-      } else {
-        // Atualizar persona existente com novos prompts
-        const { error: updateError } = await supabaseAdmin
-          .from("guide_personas")
-          .update({
-            cargo: guide.cargo,
-            especialidade: guide.especialidade,
-            badge_emoji: guide.badge_emoji,
-            system_prompt: guide.system_prompt
-          })
-          .eq("perfil_id", userId);
-
-        if (updateError) {
-          console.error(`Erro ao atualizar persona ${guide.nome}:`, updateError.message);
-        }
+      if (updateError) {
+        console.error(`Erro ao atualizar ${email}:`, updateError.message);
+        results.push({ email, error: updateError.message });
+        continue;
       }
 
-      results.push({ guide: guide.nome, userId, success: true });
+      console.log(`Prompt atualizado com sucesso: ${email}`);
+      results.push({ email, success: true });
     }
 
     return new Response(
-      JSON.stringify({ success: true, results }),
+      JSON.stringify({ 
+        success: true, 
+        message: "Prompts atualizados para tom de guia prestativo",
+        results 
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error) {
-    console.error("Erro na função seed-guides:", error);
+    console.error("Erro na função update-guide-prompts:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Erro desconhecido" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
