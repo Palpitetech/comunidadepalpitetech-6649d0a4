@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -13,15 +14,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   ArrowLeft,
   Home,
   Users,
   BarChart3,
-  TrendingUp,
-  Flame,
   MessageCircle,
   LogOut,
   FileText,
@@ -36,6 +34,7 @@ interface MobileMenuSheetProps {
 export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
   const { isAuthenticated, profile, signOut } = useAuthContext();
   const { isAdmin } = useUserRole();
+  const [menuMode, setMenuMode] = useState<"ferramentas" | "admin">("ferramentas");
 
   const handleSignOut = async () => {
     try {
@@ -107,42 +106,60 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
           )}
         </div>
 
-        {/* Corpo do Menu */}
-        <div className="flex-1 overflow-y-auto">
-          {/* Itens Fixos de Navegação */}
-          <nav className="px-4 py-6 space-y-1">
-            <Link to="/" onClick={closeAndNavigate}>
-              <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
-                <Home className="h-5 w-5 stroke-[1.5]" />
-                Início
-              </div>
-            </Link>
-            <Link to="/comunidade" onClick={closeAndNavigate}>
-              <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
-                <Users className="h-5 w-5 stroke-[1.5]" />
-                Comunidade
-              </div>
-            </Link>
-          </nav>
+        {/* Toggle Ferramentas/Admin - Apenas para Admins */}
+        {isAdmin && (
+          <div className="px-4 pt-4">
+            <div className="flex bg-muted rounded-lg p-1">
+              <button
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors
+                  ${menuMode === "ferramentas" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setMenuMode("ferramentas")}
+              >
+                Ferramentas
+              </button>
+              <button
+                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors
+                  ${menuMode === "admin" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setMenuMode("admin")}
+              >
+                Admin
+              </button>
+            </div>
+          </div>
+        )}
 
-          {/* Accordion de Ferramentas de Análise */}
-          <div className="px-4">
-            <Accordion type="single" collapsible>
-              <AccordionItem value="ferramentas" className="border-none">
-                <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
-                  <div className="flex items-center gap-3">
-                    <BarChart3 className="h-5 w-5 stroke-[1.5]" />
-                    <span>Ferramentas de Análise</span>
+        {/* Corpo do Menu - Condicional */}
+        <div className="flex-1 overflow-y-auto">
+          {menuMode === "ferramentas" ? (
+            <>
+              {/* Itens Fixos de Navegação */}
+              <nav className="px-4 py-6 space-y-1">
+                <Link to="/" onClick={closeAndNavigate}>
+                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
+                    <Home className="h-5 w-5 stroke-[1.5]" />
+                    Início
                   </div>
-                </AccordionTrigger>
-                <AccordionContent className="pb-0">
-                  {isAdmin ? (
-                    <Tabs defaultValue="ferramentas" className="w-full pl-4">
-                      <TabsList className="w-full mb-3">
-                        <TabsTrigger value="ferramentas" className="flex-1 text-sm">Ferramentas</TabsTrigger>
-                        <TabsTrigger value="admin" className="flex-1 text-sm">Admin</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="ferramentas" className="mt-0 space-y-0">
+                </Link>
+                <Link to="/comunidade" onClick={closeAndNavigate}>
+                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
+                    <Users className="h-5 w-5 stroke-[1.5]" />
+                    Comunidade
+                  </div>
+                </Link>
+              </nav>
+
+              {/* Accordion de Ferramentas de Análise */}
+              <div className="px-4">
+                <Accordion type="single" collapsible>
+                  <AccordionItem value="ferramentas" className="border-none">
+                    <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
+                      <div className="flex items-center gap-3">
+                        <BarChart3 className="h-5 w-5 stroke-[1.5]" />
+                        <span>Ferramentas de Análise</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-0">
+                      <div className="pl-8 space-y-0">
                         <Link to="/resultados" onClick={closeAndNavigate}>
                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
                             Resultados
@@ -158,51 +175,35 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                             Quentes e Frias
                           </div>
                         </Link>
-                      </TabsContent>
-                      <TabsContent value="admin" className="mt-0 space-y-0">
-                        <Link to="/admin" onClick={closeAndNavigate}>
-                          <div className="flex items-center gap-2 py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
-                            <UserCog className="h-4 w-4" />
-                            Painel Admin
-                          </div>
-                        </Link>
-                        <Link to="/admin/planos" onClick={closeAndNavigate}>
-                          <div className="flex items-center gap-2 py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
-                            <FileText className="h-4 w-4" />
-                            Planos
-                          </div>
-                        </Link>
-                        <Link to="/admin/usuarios" onClick={closeAndNavigate}>
-                          <div className="flex items-center gap-2 py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
-                            <Users className="h-4 w-4" />
-                            Usuários
-                          </div>
-                        </Link>
-                      </TabsContent>
-                    </Tabs>
-                  ) : (
-                    <div className="pl-8 space-y-0">
-                      <Link to="/resultados" onClick={closeAndNavigate}>
-                        <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
-                          Resultados
-                        </div>
-                      </Link>
-                      <Link to="/tendencias" onClick={closeAndNavigate}>
-                        <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
-                          Tendências
-                        </div>
-                      </Link>
-                      <Link to="/frequencia" onClick={closeAndNavigate}>
-                        <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
-                          Quentes e Frias
-                        </div>
-                      </Link>
-                    </div>
-                  )}
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            </>
+          ) : (
+            /* Conteúdo Admin */
+            <nav className="px-4 py-6 space-y-1">
+              <Link to="/admin" onClick={closeAndNavigate}>
+                <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
+                  <UserCog className="h-5 w-5 stroke-[1.5]" />
+                  Painel Admin
+                </div>
+              </Link>
+              <Link to="/admin/planos" onClick={closeAndNavigate}>
+                <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
+                  <FileText className="h-5 w-5 stroke-[1.5]" />
+                  Planos
+                </div>
+              </Link>
+              <Link to="/admin/usuarios" onClick={closeAndNavigate}>
+                <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
+                  <Users className="h-5 w-5 stroke-[1.5]" />
+                  Usuários
+                </div>
+              </Link>
+            </nav>
+          )}
         </div>
 
         {/* Rodapé Minimalista */}
