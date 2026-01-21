@@ -21,6 +21,7 @@ import Bloqueado from "./pages/Bloqueado";
 import AdminIndex from "./pages/admin/AdminIndex";
 import AdminPlanos from "./pages/admin/AdminPlanos";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
+import AdminBots from "./pages/admin/AdminBots";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/admin" element={<AdminRoute><AdminIndex /></AdminRoute>} />
             <Route path="/admin/planos" element={<AdminRoute><AdminPlanos /></AdminRoute>} />
             <Route path="/admin/usuarios" element={<AdminRoute><AdminUsuarios /></AdminRoute>} />
+            <Route path="/admin/bots" element={<AdminRoute><AdminBots /></AdminRoute>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

@@ -1,0 +1,86 @@
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { BotProfileTab } from "./BotProfileTab";
+import { BotPromptTab } from "./BotPromptTab";
+import { BotAutomationTab } from "./BotAutomationTab";
+import { BotPostsTab } from "./BotPostsTab";
+import type { BotWithStats } from "@/types/bots";
+
+interface BotDetailSheetProps {
+  bot: BotWithStats;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onBotUpdated: () => void;
+}
+
+export function BotDetailSheet({ bot, open, onOpenChange, onBotUpdated }: BotDetailSheetProps) {
+  const getInitials = (nome: string | null) => {
+    if (!nome) return "B";
+    return nome
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+        <SheetHeader className="pb-4 border-b">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={bot.perfis?.avatar_url || undefined} />
+              <AvatarFallback className="bg-primary/10 text-primary text-xl">
+                {getInitials(bot.perfis?.nome)}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <SheetTitle className="text-xl flex items-center gap-2">
+                {bot.badge_emoji} {bot.perfis?.nome || "Bot"}
+              </SheetTitle>
+              <p className="text-sm text-muted-foreground">{bot.cargo}</p>
+              <div className="flex gap-2 mt-1">
+                {bot.ativo ? (
+                  <Badge className="bg-green-500/10 text-green-600">Ativo</Badge>
+                ) : (
+                  <Badge variant="secondary">Inativo</Badge>
+                )}
+                {bot.is_roundtable_author && (
+                  <Badge variant="outline">Autor Mesa Redonda</Badge>
+                )}
+              </div>
+            </div>
+          </div>
+        </SheetHeader>
+
+        <Tabs defaultValue="perfil" className="mt-6">
+          <TabsList className="w-full grid grid-cols-4">
+            <TabsTrigger value="perfil">Perfil</TabsTrigger>
+            <TabsTrigger value="prompt">Prompt IA</TabsTrigger>
+            <TabsTrigger value="automacao">Automação</TabsTrigger>
+            <TabsTrigger value="posts">Posts</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="perfil" className="mt-4">
+            <BotProfileTab bot={bot} onUpdated={onBotUpdated} />
+          </TabsContent>
+
+          <TabsContent value="prompt" className="mt-4">
+            <BotPromptTab bot={bot} onUpdated={onBotUpdated} />
+          </TabsContent>
+
+          <TabsContent value="automacao" className="mt-4">
+            <BotAutomationTab bot={bot} onUpdated={onBotUpdated} />
+          </TabsContent>
+
+          <TabsContent value="posts" className="mt-4">
+            <BotPostsTab bot={bot} />
+          </TabsContent>
+        </Tabs>
+      </SheetContent>
+    </Sheet>
+  );
+}

@@ -52,44 +52,71 @@ export type Database = {
       }
       guide_personas: {
         Row: {
+          ai_model: string | null
           ativo: boolean | null
+          auto_reply_enabled: boolean | null
           badge_emoji: string | null
+          can_create_posts: boolean | null
           cargo: string
           created_at: string | null
           especialidade: string
           estilo_escrita: string | null
           frequencia_posts: number | null
           id: string
+          is_roundtable_author: boolean | null
+          max_chars_comment: number | null
+          max_chars_post: number | null
           perfil_id: string
+          post_schedule: Json | null
           system_prompt: string
+          total_comments: number | null
+          total_posts: number | null
           ultimo_post_em: string | null
           updated_at: string | null
         }
         Insert: {
+          ai_model?: string | null
           ativo?: boolean | null
+          auto_reply_enabled?: boolean | null
           badge_emoji?: string | null
+          can_create_posts?: boolean | null
           cargo: string
           created_at?: string | null
           especialidade: string
           estilo_escrita?: string | null
           frequencia_posts?: number | null
           id?: string
+          is_roundtable_author?: boolean | null
+          max_chars_comment?: number | null
+          max_chars_post?: number | null
           perfil_id: string
+          post_schedule?: Json | null
           system_prompt: string
+          total_comments?: number | null
+          total_posts?: number | null
           ultimo_post_em?: string | null
           updated_at?: string | null
         }
         Update: {
+          ai_model?: string | null
           ativo?: boolean | null
+          auto_reply_enabled?: boolean | null
           badge_emoji?: string | null
+          can_create_posts?: boolean | null
           cargo?: string
           created_at?: string | null
           especialidade?: string
           estilo_escrita?: string | null
           frequencia_posts?: number | null
           id?: string
+          is_roundtable_author?: boolean | null
+          max_chars_comment?: number | null
+          max_chars_post?: number | null
           perfil_id?: string
+          post_schedule?: Json | null
           system_prompt?: string
+          total_comments?: number | null
+          total_posts?: number | null
           ultimo_post_em?: string | null
           updated_at?: string | null
         }
