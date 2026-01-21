@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { AdminLayout } from "@/components/layout/AdminLayout";
+import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -99,21 +99,21 @@ export default function AdminUsuarios() {
 
   if (loading) {
     return (
-      <AdminLayout>
+      <MainLayout>
         <div className="flex items-center justify-center min-h-[50vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-white" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </AdminLayout>
+      </MainLayout>
     );
   }
 
   return (
-    <AdminLayout>
+    <MainLayout>
       <div className="container-senior py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-senior-2xl font-bold text-white">Gestão de Usuários</h1>
-            <p className="text-white/70">
+            <h1 className="text-senior-2xl font-bold">Gestão de Usuários</h1>
+            <p className="text-muted-foreground">
               {users.length} usuário{users.length !== 1 ? "s" : ""} cadastrado{users.length !== 1 ? "s" : ""}
             </p>
           </div>
@@ -121,64 +121,64 @@ export default function AdminUsuarios() {
 
         {/* Busca */}
         <div className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por nome, email ou celular..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:border-white/40"
+            className="pl-10"
           />
         </div>
 
         {/* Tabela */}
-        <div className="border border-white/20 rounded-lg overflow-hidden">
+        <div className="border rounded-lg">
           <Table>
             <TableHeader>
-              <TableRow className="border-white/20 hover:bg-transparent">
-                <TableHead className="w-12 text-white/70"></TableHead>
-                <TableHead className="text-white/70">Nome</TableHead>
-                <TableHead className="text-white/70">Email</TableHead>
-                <TableHead className="text-white/70">Plano</TableHead>
-                <TableHead className="text-white/70">Status</TableHead>
-                <TableHead className="text-white/70">Cadastro</TableHead>
+              <TableRow>
+                <TableHead className="w-12"></TableHead>
+                <TableHead>Nome</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Plano</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Cadastro</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredUsers.map((user) => (
                 <TableRow
                   key={user.id}
-                  className="cursor-pointer border-white/10 hover:bg-white/5"
+                  className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleRowClick(user)}
                 >
                   <TableCell>
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={user.avatar_url || undefined} />
-                      <AvatarFallback className="text-xs bg-white/20 text-white">
+                      <AvatarFallback className="text-xs">
                         {getInitials(user.nome)}
                       </AvatarFallback>
                     </Avatar>
                   </TableCell>
-                  <TableCell className="font-medium text-white">
+                  <TableCell className="font-medium">
                     {user.nome || "Sem nome"}
                   </TableCell>
-                  <TableCell className="text-white/70">
+                  <TableCell className="text-muted-foreground">
                     {user.email || user.celular || "-"}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary" className="bg-white/20 text-white">
+                    <Badge variant="secondary">
                       {user.plan?.name || "Sem plano"}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {user.is_blocked ? (
+                {user.is_blocked ? (
                       <Badge variant="destructive">Bloqueado</Badge>
                     ) : (
-                      <Badge className="bg-emerald-500/80 text-white border-emerald-500/80">
+                      <Badge variant="outline" className="text-emerald-600 border-emerald-600">
                         Ativo
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-white/70">
+                  <TableCell className="text-muted-foreground">
                     {new Date(user.created_at).toLocaleDateString("pt-BR")}
                   </TableCell>
                 </TableRow>
@@ -186,7 +186,7 @@ export default function AdminUsuarios() {
 
               {filteredUsers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-white/70">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     {searchTerm
                       ? "Nenhum usuário encontrado para esta busca"
                       : "Nenhum usuário cadastrado"}
@@ -206,6 +206,6 @@ export default function AdminUsuarios() {
           onUserUpdated={handleUserUpdated}
         />
       </div>
-    </AdminLayout>
+    </MainLayout>
   );
 }
