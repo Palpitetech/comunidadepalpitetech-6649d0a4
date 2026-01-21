@@ -23,6 +23,64 @@ Diretrizes:
 - Convide à discussão
 - NUNCA mencione que é IA, bot ou modelo de linguagem`;
 
+// System prompt especial para RESULTADO OFICIAL (Plantão)
+const RESULTADO_OFICIAL_PROMPT = `Você é o âncora do PLANTÃO PALPITE TECH. Sua missão é anunciar o resultado oficial recém-saído da Lotofácil com entusiasmo e precisão jornalística.
+
+FORMATO OBRIGATÓRIO:
+1. Inicie com título chamativo usando emoji de alerta (ex: "🚨 SAIU! Resultado do Concurso [N]!")
+2. Liste as 15 dezenas sorteadas em DESTAQUE (formato: **01 - 02 - 03 - ...**)
+3. Apresente um "Raio-X Rápido" em tópicos:
+   - Pares/Ímpares: X/Y
+   - Moldura: X dezenas
+   - Primos: X dezenas
+   - Repetidas: X dezenas do concurso anterior
+   - Ciclo: [Status atual]
+4. Finalize chamando os especialistas: "Equipe, o que acharam desse padrão?"
+
+DIRETRIZES:
+- Tom: Jornalístico, ágil, informativo
+- Seja energético mas factual
+- NÃO faça previsões
+- NUNCA mencione que é IA, bot ou modelo de linguagem`;
+
+// Prompts especializados para comentaristas no modo RESULTADO OFICIAL
+const COMENTARISTAS_RESULTADO_OFICIAL: Record<string, string> = {
+  estatistica: `Você é especialista em estatística. Ao comentar o resultado oficial:
+- Analise se a distribuição de pares/ímpares foi dentro da média (6-9 pares é normal)
+- Comente se houve alguma anomalia estatística
+- Mencione desvios notáveis
+- Máximo 280 caracteres
+- NUNCA mencione que é IA`,
+
+  experiencia: `Você é um jogador veterano experiente. Ao comentar o resultado oficial:
+- Destaque dezenas que estavam muito atrasadas e finalmente saíram ("Olha a [X] aí, gente!")
+- Comente sobre dezenas que continuam sumidas
+- Use tom de quem "já viu de tudo"
+- Máximo 280 caracteres
+- NUNCA mencione que é IA`,
+
+  ciclos: `Você é professor especializado em ciclos da Lotofácil. Ao comentar o resultado oficial:
+- Confirme o status do ciclo atual (fechou ou não)
+- Liste quais dezenas ainda faltam para completar
+- Estime quando o ciclo pode fechar
+- Máximo 280 caracteres
+- NUNCA mencione que é IA`,
+
+  educação: `Você é professor de probabilidade. Ao comentar o resultado oficial:
+- Explique algum padrão interessante do resultado
+- Use didática para ensinar sobre probabilidades
+- Corrija mitos se aplicável
+- Máximo 280 caracteres
+- NUNCA mencione que é IA`,
+
+  engajamento: `Você é community manager entusiasta. Ao comentar o resultado oficial:
+- Celebre o resultado com energia positiva
+- Pergunte quem acertou quantas dezenas
+- Incentive a participação da comunidade
+- Máximo 280 caracteres
+- NUNCA mencione que é IA`,
+};
+
 interface Concurso {
   concurso_id: number;
   dezenas: number[];
@@ -34,6 +92,7 @@ interface Concurso {
   qtd_repetidas: number;
   qtd_primos: number;
   qtd_moldura: number;
+  acumulou?: boolean;
 }
 
 interface GuideData {
@@ -52,6 +111,27 @@ function getGuideName(guide: GuideData): string | null {
     return guide.perfis[0]?.nome || null;
   }
   return guide.perfis.nome;
+}
+
+// Mapeia especialidade do bot para chave do prompt especial
+function mapearEspecialidadeParaChave(especialidade: string): string {
+  const esp = especialidade.toLowerCase();
+  if (esp.includes("estatística") || esp.includes("dados") || esp.includes("padrões")) {
+    return "estatistica";
+  }
+  if (esp.includes("experiência") || esp.includes("intuição") || esp.includes("veterano")) {
+    return "experiencia";
+  }
+  if (esp.includes("ciclo") || esp.includes("matemática") || esp.includes("probabilidade")) {
+    return "ciclos";
+  }
+  if (esp.includes("educação") || esp.includes("didática") || esp.includes("professor")) {
+    return "educação";
+  }
+  if (esp.includes("engajamento") || esp.includes("motivação") || esp.includes("community")) {
+    return "engajamento";
+  }
+  return "estatistica"; // fallback
 }
 
 // Calcula a frequência de cada dezena nos últimos N concursos
@@ -183,12 +263,57 @@ Indicadores: ${ultimo.qtd_pares} pares, ${ultimo.qtd_impares} ímpares, ${ultimo
   return contexto;
 }
 
+// Monta contexto específico para RESULTADO OFICIAL
+function montarContextoResultadoOficial(ultimo: Concurso, concursoAnterior: Concurso | null): string {
+  const dezenasFormatadas = ultimo.dezenas.map(formatarDezena).join(" - ");
+  
+  let contexto = `🎯 RESULTADO OFICIAL CONCURSO ${ultimo.concurso_id}:
+
+📌 DEZENAS SORTEADAS: **${dezenasFormatadas}**
+
+📊 RAIO-X DO RESULTADO:
+- Pares: ${ultimo.qtd_pares} | Ímpares: ${ultimo.qtd_impares}
+- Moldura: ${ultimo.qtd_moldura} dezenas
+- Primos: ${ultimo.qtd_primos} dezenas
+- Repetidas: ${ultimo.qtd_repetidas} dezenas do concurso anterior
+`;
+
+  if (concursoAnterior) {
+    const repetidasList = ultimo.dezenas.filter(d => concursoAnterior.dezenas.includes(d));
+    if (repetidasList.length > 0) {
+      contexto += `- Dezenas repetidas: [${repetidasList.map(formatarDezena).join(", ")}]\n`;
+    }
+  }
+
+  contexto += `
+🔄 STATUS DO CICLO:
+- Ciclo atual: ${ultimo.ciclo_numero || "N/A"}
+`;
+
+  if (ultimo.dezenas_faltantes_ciclo && ultimo.dezenas_faltantes_ciclo.length > 0) {
+    contexto += `- Dezenas faltantes: [${ultimo.dezenas_faltantes_ciclo.map(formatarDezena).join(", ")}]\n`;
+    if (ultimo.dezenas_faltantes_ciclo.length <= 3) {
+      contexto += `- ⚡ Ciclo quase fechando!\n`;
+    }
+  } else {
+    contexto += `- ✅ Ciclo completo! Novo ciclo iniciando.\n`;
+  }
+
+  if (ultimo.acumulou) {
+    contexto += `\n💰 ACUMULOU! Prêmio maior no próximo sorteio.\n`;
+  }
+
+  return contexto;
+}
+
 // Monta instruções específicas baseadas no tipo de post
 function montarInstrucoesTipo(tipoPost: string): string {
   if (tipoPost === "pos_sorteio") {
     return `CONTEXTO: Pós-sorteio. Comente o resultado, destaque padrões, convide à discussão.`;
   } else if (tipoPost === "pre_sorteio") {
     return `CONTEXTO: Pré-sorteio. Compartilhe observações úteis, mencione tendências, deseje boa sorte.`;
+  } else if (tipoPost === "resultado_oficial") {
+    return `CONTEXTO: PLANTÃO - Resultado Oficial acabou de sair! Anuncie com destaque e energia.`;
   }
   return `CONTEXTO: Análise geral sobre os últimos resultados.`;
 }
@@ -198,8 +323,22 @@ async function gerarComentarioMesaRedonda(
   guide: GuideData,
   contexto: string,
   postConteudo: string,
-  LOVABLE_API_KEY: string
+  LOVABLE_API_KEY: string,
+  isResultadoOficial: boolean = false
 ): Promise<string> {
+  // Se for resultado oficial, usar prompt especializado
+  let systemPrompt = guide.system_prompt;
+  let instrucaoExtra = "";
+  
+  if (isResultadoOficial) {
+    const chaveEspecialidade = mapearEspecialidadeParaChave(guide.especialidade);
+    const promptEspecial = COMENTARISTAS_RESULTADO_OFICIAL[chaveEspecialidade];
+    if (promptEspecial) {
+      systemPrompt = promptEspecial;
+      instrucaoExtra = `\n\nIMPORTANTE: Este é o PLANTÃO de resultado oficial. Foque sua análise específica sobre ESTE sorteio que acabou de sair.`;
+    }
+  }
+
   const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -209,7 +348,7 @@ async function gerarComentarioMesaRedonda(
     body: JSON.stringify({
       model: "google/gemini-3-flash-preview",
       messages: [
-        { role: "system", content: guide.system_prompt },
+        { role: "system", content: systemPrompt },
         { 
           role: "user", 
           content: `Você está em uma mesa redonda comentando a análise do líder.
@@ -219,6 +358,7 @@ POST DO LÍDER:
 
 CONTEXTO ESTATÍSTICO:
 ${contexto}
+${instrucaoExtra}
 
 INSTRUÇÕES:
 - Complemente a análise com sua perspectiva de ${guide.especialidade}
@@ -246,8 +386,9 @@ serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const tipoPost = body.tipo_post || "geral";
+    const isResultadoOficial = tipoPost === "resultado_oficial";
     
-    console.log(`Gerando roundtable post do tipo: ${tipoPost}`);
+    console.log(`Gerando roundtable post do tipo: ${tipoPost}${isResultadoOficial ? " (PLANTÃO)" : ""}`);
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -269,16 +410,19 @@ serve(async (req) => {
 
     const authorPerfilId = authorGuide.perfil_id;
     const authorName = (authorGuide.perfis as { nome: string | null })?.nome || "Autor";
-    const authorPrompt = authorGuide.system_prompt || DEFAULT_ROUNDTABLE_PROMPT;
+    // Usar prompt especial para resultado oficial
+    const authorPrompt = isResultadoOficial 
+      ? RESULTADO_OFICIAL_PROMPT 
+      : (authorGuide.system_prompt || DEFAULT_ROUNDTABLE_PROMPT);
     const authorModel = authorGuide.ai_model || "google/gemini-3-flash-preview";
-    const maxChars = authorGuide.max_chars_post || 400;
+    const maxChars = isResultadoOficial ? 600 : (authorGuide.max_chars_post || 400);
 
     console.log(`Autor da mesa redonda: ${authorName} (${authorPerfilId})`);
 
     // 2. Buscar últimos resultados para análise
     const { data: resultados, error: resultadosError } = await supabaseAdmin
       .from("resultados")
-      .select("concurso_id, dezenas, data_sorteio, ciclo_numero, dezenas_faltantes_ciclo, qtd_pares, qtd_impares, qtd_repetidas, qtd_primos, qtd_moldura")
+      .select("concurso_id, dezenas, data_sorteio, ciclo_numero, dezenas_faltantes_ciclo, qtd_pares, qtd_impares, qtd_repetidas, qtd_primos, qtd_moldura, acumulou")
       .order("concurso_id", { ascending: false })
       .limit(PERIODO_ANALISE);
 
@@ -286,8 +430,15 @@ serve(async (req) => {
       throw new Error("Erro ao buscar resultados");
     }
 
-    // 3. Montar contexto enriquecido
-    const contextoEnriquecido = montarContextoEnriquecido(resultados as Concurso[]);
+    const concursos = resultados as Concurso[];
+    const ultimoResultado = concursos[0];
+    const concursoAnterior = concursos[1] || null;
+
+    // 3. Montar contexto enriquecido (diferente para resultado oficial)
+    const contextoEnriquecido = isResultadoOficial
+      ? montarContextoResultadoOficial(ultimoResultado, concursoAnterior)
+      : montarContextoEnriquecido(concursos);
+    
     const instrucoesTipo = montarInstrucoesTipo(tipoPost);
 
     // 4. Gerar post como autor principal
@@ -296,19 +447,23 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY não configurada");
     }
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: authorModel,
-        messages: [
-          { role: "system", content: authorPrompt },
-          { 
-            role: "user", 
-            content: `Crie um post para a comunidade Palpite Tech.
+    // Prompt diferente para resultado oficial
+    const userPrompt = isResultadoOficial
+      ? `Crie um post de PLANTÃO anunciando o resultado oficial da Lotofácil.
+
+${contextoEnriquecido}
+
+INSTRUÇÕES:
+- Use o formato de plantão jornalístico
+- Destaque as dezenas sorteadas em negrito
+- Apresente o Raio-X rápido em tópicos
+- Finalize convocando a equipe para análise
+- Título: máximo 60 caracteres (use emoji 🚨)
+- Conteúdo: máximo ${maxChars} caracteres
+
+Responda APENAS no formato JSON:
+{"titulo": "seu título aqui", "conteudo": "seu conteúdo aqui"}`
+      : `Crie um post para a comunidade Palpite Tech.
 
 ${instrucoesTipo}
 
@@ -325,8 +480,19 @@ INSTRUÇÕES:
 - Conteúdo: máximo ${maxChars} caracteres
 
 Responda APENAS no formato JSON:
-{"titulo": "seu título aqui", "conteudo": "seu conteúdo aqui"}`
-          }
+{"titulo": "seu título aqui", "conteudo": "seu conteúdo aqui"}`;
+
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: authorModel,
+        messages: [
+          { role: "system", content: authorPrompt },
+          { role: "user", content: userPrompt }
         ]
       }),
     });
@@ -358,15 +524,21 @@ Responda APENAS no formato JSON:
       throw new Error("Resposta incompleta");
     }
 
-    // 6. Criar post como autor principal
+    // 6. Criar post como autor principal (com concurso_referencia para resultado oficial)
+    const postData: Record<string, unknown> = {
+      user_id: authorPerfilId,
+      titulo: parsed.titulo.substring(0, 100),
+      conteudo: parsed.conteudo.substring(0, 1000),
+      loteria_tag: "Lotofácil",
+    };
+
+    if (isResultadoOficial && ultimoResultado) {
+      postData.concurso_referencia = ultimoResultado.concurso_id;
+    }
+
     const { data: newPost, error: postError } = await supabaseAdmin
       .from("postagens")
-      .insert({
-        user_id: authorPerfilId,
-        titulo: parsed.titulo.substring(0, 100),
-        conteudo: parsed.conteudo.substring(0, 1000),
-        loteria_tag: "Lotofácil",
-      })
+      .insert(postData)
       .select("id")
       .single();
 
@@ -374,7 +546,7 @@ Responda APENAS no formato JSON:
       throw new Error("Erro ao criar post");
     }
 
-    console.log(`Post criado por ${authorName}: ${newPost.id}`);
+    console.log(`Post criado por ${authorName}: ${newPost.id}${isResultadoOficial ? ` (Concurso ${ultimoResultado.concurso_id})` : ""}`);
 
     // 7. Atualizar estatísticas do autor
     await supabaseAdmin
@@ -419,7 +591,8 @@ Responda APENAS no formato JSON:
           guide,
           contextoEnriquecido,
           parsed.conteudo,
-          LOVABLE_API_KEY
+          LOVABLE_API_KEY,
+          isResultadoOficial
         );
 
         const guideName = getGuideName(guide);
@@ -458,6 +631,7 @@ Responda APENAS no formato JSON:
         author_id: authorPerfilId,
         tipo_post: tipoPost,
         titulo: parsed.titulo,
+        concurso_referencia: isResultadoOficial ? ultimoResultado.concurso_id : null,
         comentarios: comentariosInseridos,
         total_comentarios: comentariosInseridos.length
       }),
