@@ -9,11 +9,18 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useMySubscription } from "@/hooks/useMySubscription";
+import { STATUS_CONFIG } from "@/lib/subscription";
+import { differenceInDays, format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function Perfil() {
   const { profile, user } = useAuthContext();
   const { toast } = useToast();
   const [isOpeningPortal, setIsOpeningPortal] = useState(false);
+  const { isPremium } = useUserRole();
+  const { data: subscription } = useMySubscription(user?.id);
 
   const handleOpenPortal = async () => {
     if (!user) {
@@ -129,19 +136,49 @@ export default function Perfil() {
             <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
               <div>
                 <p className="text-sm text-muted-foreground">Status atual</p>
-                <p className="text-senior-base font-semibold">Plano Grátis</p>
+                <p className="text-senior-base font-semibold">{isPremium ? "Premium" : "Grátis"}</p>
               </div>
-              <Badge variant="secondary">Grátis</Badge>
+              <Badge variant={STATUS_CONFIG[(subscription?.status ?? "inativa")].variant}>
+                {STATUS_CONFIG[(subscription?.status ?? "inativa")].label}
+              </Badge>
             </div>
 
-            {/* Próxima Cobrança */}
-            <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
-              <Calendar className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Próxima cobrança</p>
-                <p className="text-senior-base font-medium">Sem cobrança (plano grátis)</p>
+            {/* Validade / Próxima cobrança */}
+            {subscription?.validade ? (
+              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Calendar className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Validade</p>
+                    <p className="text-senior-base font-medium">
+                      {format(new Date(subscription.validade), "dd/MM/yyyy", { locale: ptBR })}
+                    </p>
+                  </div>
+                </div>
+
+                {(() => {
+                  const diasRestantes = differenceInDays(new Date(subscription.validade), new Date());
+                  const variant = diasRestantes > 7 ? "outline" : diasRestantes > 0 ? "secondary" : "destructive";
+
+                  const label =
+                    diasRestantes > 0
+                      ? `${diasRestantes} dia${diasRestantes !== 1 ? "s" : ""} restante${diasRestantes !== 1 ? "s" : ""}`
+                      : diasRestantes === 0
+                        ? "Expira hoje"
+                        : `Expirou há ${Math.abs(diasRestantes)} dia${Math.abs(diasRestantes) !== 1 ? "s" : ""}`;
+
+                  return <Badge variant={variant}>{label}</Badge>;
+                })()}
               </div>
-            </div>
+            ) : (
+              <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
+                <Calendar className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Próxima cobrança</p>
+                  <p className="text-senior-base font-medium">Sem cobrança (plano grátis)</p>
+                </div>
+              </div>
+            )}
 
             {/* Botões de Assinatura */}
             <div className="pt-2 space-y-3">
