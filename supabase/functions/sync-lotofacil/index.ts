@@ -72,6 +72,40 @@ async function dispararNotificacaoResultadoNovo(params: {
   }
 }
 
+// Dispara o post de Plantão do resultado oficial na comunidade
+async function dispararPostResultadoOficial(params: {
+  supabaseUrl: string;
+  authBearer: string;
+  concurso: number;
+}): Promise<void> {
+  const fnUrl = `${params.supabaseUrl}/functions/v1/generate-roundtable-post`;
+  console.log(`[PLANTAO] Disparando post de resultado oficial para concurso ${params.concurso}`);
+  
+  try {
+    const response = await fetch(fnUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${params.authBearer}`,
+      },
+      body: JSON.stringify({
+        tipo_post: "resultado_oficial",
+        contexto_extra: `Resultado recém-sincronizado do concurso ${params.concurso}`,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[PLANTAO] Erro: ${response.status} - ${errorText}`);
+    } else {
+      const data = await response.json();
+      console.log(`[PLANTAO] Post criado com sucesso: ${data.post_id}`);
+    }
+  } catch (err) {
+    console.error(`[PLANTAO] Erro ao chamar edge function:`, err);
+  }
+}
+
 // =============================================================================
 // NOTIFICAÇÕES (comunidade via fila)
 // =============================================================================
@@ -657,6 +691,19 @@ Deno.serve(async (req) => {
             const msg = notifyErr instanceof Error ? notifyErr.message : String(notifyErr);
             console.error(`[NOTIFY] Falha ao disparar notificação: ${msg}`);
             // Não interrompe sincronização por falha de notificação
+          }
+
+          // Dispara post de Plantão na comunidade (resultado oficial)
+          try {
+            await dispararPostResultadoOficial({
+              supabaseUrl,
+              authBearer: supabaseAnonKey,
+              concurso: concurso.numero,
+            });
+          } catch (plantaoErr) {
+            const msg = plantaoErr instanceof Error ? plantaoErr.message : String(plantaoErr);
+            console.error(`[PLANTAO] Falha ao disparar post: ${msg}`);
+            // Não interrompe sincronização por falha do plantão
           }
         } else {
           console.log('[NOTIFY] Disparo desativado (carga histórica ou notify=false).');
