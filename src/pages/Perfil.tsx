@@ -18,40 +18,46 @@ import { ptBR } from "date-fns/locale";
 export default function Perfil() {
   const { profile, user } = useAuthContext();
   const { toast } = useToast();
-  const [isOpeningPortal, setIsOpeningPortal] = useState(false);
+  const [isOpeningCheckout, setIsOpeningCheckout] = useState(false);
   const { isPremium } = useUserRole();
   const { data: subscription } = useMySubscription(user?.id);
 
-  const handleOpenPortal = async () => {
+  const handleOpenCheckout = async () => {
     if (!user) {
       toast({
         title: "Você precisa estar logado",
-        description: "Faça login para gerenciar sua assinatura.",
+        description: "Faça login para assinar um plano.",
         variant: "destructive",
       });
       return;
     }
 
-    setIsOpeningPortal(true);
+    setIsOpeningCheckout(true);
     try {
-      const { data, error } = await supabase.functions.invoke("customer-portal");
+      const { data, error } = await supabase
+        .from("plans")
+        .select("checkout_link")
+        .eq("is_active", true)
+        .gt("price", 0)
+        .not("checkout_link", "is", null)
+        .order("price", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
       if (error) throw error;
-      if (!data?.url) throw new Error("URL do portal não retornada");
+      const url = data?.checkout_link;
+      if (!url) throw new Error("Nenhum link de checkout configurado para planos pagos.");
 
-      window.open(String(data.url), "_blank", "noopener,noreferrer");
+      window.open(String(url), "_blank", "noopener,noreferrer");
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Não foi possível abrir o portal";
-      const isNoCustomer = /cliente/i.test(message) || /not found/i.test(message) || /404/.test(message);
-
+      const message = err instanceof Error ? err.message : "Não foi possível abrir o checkout";
       toast({
-        title: isNoCustomer ? "Você ainda não tem assinatura" : "Erro ao abrir portal",
-        description: isNoCustomer
-          ? "Assine um plano para poder cancelar ou alterar sua assinatura."
-          : message,
+        title: "Erro ao abrir checkout",
+        description: message,
         variant: "destructive",
       });
     } finally {
-      setIsOpeningPortal(false);
+      setIsOpeningCheckout(false);
     }
   };
 
@@ -185,13 +191,17 @@ export default function Perfil() {
               <Button
                 variant="outline"
                 className="w-full h-12 text-senior-base"
-                onClick={handleOpenPortal}
-                disabled={isOpeningPortal}
+                onClick={handleOpenCheckout}
+                disabled={isOpeningCheckout}
               >
                 <CreditCard className="h-5 w-5 mr-2" />
-                {isOpeningPortal ? "Abrindo portal..." : "Gerenciar Assinatura"}
+                {isOpeningCheckout ? "Abrindo checkout..." : "Abrir Checkout"}
               </Button>
-              <Button className="w-full h-12 text-senior-base gap-2 bg-accent hover:bg-accent/90 text-accent-foreground">
+              <Button
+                className="w-full h-12 text-senior-base gap-2 bg-accent hover:bg-accent/90 text-accent-foreground"
+                onClick={handleOpenCheckout}
+                disabled={isOpeningCheckout}
+              >
                 <Sparkles className="h-5 w-5" />
                 Assinar Premium
               </Button>

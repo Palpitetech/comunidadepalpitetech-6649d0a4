@@ -159,16 +159,16 @@ export function PlanForm({ plan, onSaved, onCancel }: PlanFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="checkoutLink">Link de Checkout Stripe</Label>
+          <Label htmlFor="checkoutLink">Link de Checkout (Kirvano)</Label>
           <Input
             id="checkoutLink"
             type="url"
             value={checkoutLink}
             onChange={(e) => setCheckoutLink(e.target.value)}
-            placeholder="https://buy.stripe.com/..."
+            placeholder="https://checkout.kirvano.com/..."
           />
           <p className="text-xs text-muted-foreground">
-            Link de pagamento da Stripe. Copie e cole a URL de checkout.
+            Link de pagamento da Kirvano. Copie e cole a URL do checkout.
           </p>
         </div>
       </div>
