@@ -23,6 +23,7 @@ import {
   MessageCircle,
   LogOut,
   FileText,
+  Bot,
 } from "lucide-react";
 
 interface MobileMenuSheetProps {
@@ -201,6 +202,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                   <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
                     <Users className="h-5 w-5 stroke-[1.5]" />
                     Usuários
+                  </div>
+                </Link>
+                <Link to="/admin/bots" onClick={closeAndNavigate}>
+                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
+                    <Bot className="h-5 w-5 stroke-[1.5]" />
+                    Bots
                   </div>
                 </Link>
               </nav>

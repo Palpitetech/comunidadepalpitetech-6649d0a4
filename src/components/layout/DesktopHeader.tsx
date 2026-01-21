@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog } from "lucide-react";
+import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot } from "lucide-react";
 
 export function DesktopHeader() {
   const { isAuthenticated, profile, signOut } = useAuthContext();
@@ -110,6 +110,12 @@ export function DesktopHeader() {
                       <Link to="/admin/usuarios">
                         <Users className="h-5 w-5" />
                         Usuários
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                      <Link to="/admin/bots">
+                        <Bot className="h-5 w-5" />
+                        Bots
                       </Link>
                     </DropdownMenuItem>
                   </TabsContent>
