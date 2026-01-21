@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.identificar-conta]
 verify_jwt = false
+
+[functions.generate-guide-post]
+verify_jwt = false

@@ -50,6 +50,66 @@ export type Database = {
         }
         Relationships: []
       }
+      guide_personas: {
+        Row: {
+          ativo: boolean | null
+          badge_emoji: string | null
+          cargo: string
+          created_at: string | null
+          especialidade: string
+          estilo_escrita: string | null
+          frequencia_posts: number | null
+          id: string
+          perfil_id: string
+          system_prompt: string
+          ultimo_post_em: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          badge_emoji?: string | null
+          cargo: string
+          created_at?: string | null
+          especialidade: string
+          estilo_escrita?: string | null
+          frequencia_posts?: number | null
+          id?: string
+          perfil_id: string
+          system_prompt: string
+          ultimo_post_em?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          badge_emoji?: string | null
+          cargo?: string
+          created_at?: string | null
+          especialidade?: string
+          estilo_escrita?: string | null
+          frequencia_posts?: number | null
+          id?: string
+          perfil_id?: string
+          system_prompt?: string
+          ultimo_post_em?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guide_personas_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: true
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guide_personas_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: true
+            referencedRelation: "usuarios_notificaveis_hoje"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notificacoes_pendentes: {
         Row: {
           chave_dedup: string | null

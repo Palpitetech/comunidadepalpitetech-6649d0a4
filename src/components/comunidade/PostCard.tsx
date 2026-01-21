@@ -1,6 +1,7 @@
 import { Heart, MessageCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LoteriaBadge } from "./LoteriaBadge";
+import { GuideBadge } from "./GuideBadge";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -18,6 +19,7 @@ interface PostCardProps {
     perfis: {
       nome: string | null;
       avatar_url: string | null;
+      is_bot: boolean | null;
     } | null;
   };
   onClick: () => void;
@@ -55,6 +57,7 @@ export function PostCard({ post, onClick }: PostCardProps) {
             <span className="font-medium text-sm text-foreground truncate">
               {authorName}
             </span>
+            {post.perfis?.is_bot && <GuideBadge />}
             {post.loteria_tag && <LoteriaBadge tag={post.loteria_tag} />}
           </div>
           <span className="text-xs text-muted-foreground">{timeAgo}</span>
