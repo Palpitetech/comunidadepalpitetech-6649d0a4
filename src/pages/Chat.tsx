@@ -56,35 +56,43 @@ export default function Chat() {
 
   return (
     <MainLayout>
-      <div className="flex h-full flex-col">
+      {/*
+        No mobile existe o menu inferior fixo (h-16). Este padding garante que o composer
+        fique sempre visível acima dele (inclui safe-area do iOS).
+      */}
+      <div className="flex h-full flex-col pb-[calc(env(safe-area-inset-bottom)+4rem)] md:pb-0">
         {/* Header minimalista */}
-        <header className="sticky top-0 z-10 border-b border-border bg-background/80 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
+        <header className="sticky top-0 z-10 border-b border-border bg-background/80 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-3">
               <ChatAvatar />
-              <div className="leading-tight">
-                <h1 className="text-senior-lg font-semibold">Chat</h1>
-                <p className="text-sm text-muted-foreground">
-                  {topicMeta ? topicMeta.title : "Escolha um tema para começarmos"}
+              <div className="min-w-0 leading-tight">
+                <p className="truncate text-base font-semibold">
+                  {topicMeta ? topicMeta.title : "Escolha um tema"}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {topicMeta ? "Conversa ativa" : "Selecione uma opção abaixo para começar"}
                 </p>
               </div>
             </div>
 
-            <Button
-              variant="ghost"
-              className="h-10 rounded-full px-4"
-              onClick={() => {
-                setSelectedTopic(null);
-                setDraft("");
-                setPendingStarter(null);
-              }}
-            >
-              Trocar tema
-            </Button>
+            {selectedTopic ? (
+              <Button
+                variant="ghost"
+                className="h-9 rounded-full px-3 text-sm"
+                onClick={() => {
+                  setSelectedTopic(null);
+                  setDraft("");
+                  setPendingStarter(null);
+                }}
+              >
+                Fechar chat
+              </Button>
+            ) : null}
           </div>
 
           {selectedTopic === "estatisticas" && remainingToday !== null && (
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-[11px] text-muted-foreground">
               Mensagens restantes hoje (estatísticas): <strong>{remainingToday}</strong>
             </p>
           )}
