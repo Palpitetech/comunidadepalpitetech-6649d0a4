@@ -31,6 +31,9 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
   const [autoReply, setAutoReply] = useState(bot.auto_reply_enabled);
   const [frequencia, setFrequencia] = useState(bot.frequencia_posts);
   const [schedule, setSchedule] = useState<BotSchedule>(bot.post_schedule);
+  const [chatEnabled, setChatEnabled] = useState((bot as any).chat_enabled ?? true);
+  const [chatTags, setChatTags] = useState<string[]>((bot as any).chat_tags ?? []);
+  const [newChatTag, setNewChatTag] = useState("");
   const [newHorario, setNewHorario] = useState("");
   const [recentPosts, setRecentPosts] = useState<RecentPost[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
@@ -84,6 +87,18 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
     }));
   };
 
+  const addChatTag = () => {
+    const next = newChatTag.trim();
+    if (!next) return;
+    if (chatTags.includes(next)) return;
+    setChatTags((prev) => [...prev, next].sort());
+    setNewChatTag("");
+  };
+
+  const removeChatTag = (tag: string) => {
+    setChatTags((prev) => prev.filter((t) => t !== tag));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -95,6 +110,8 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
           auto_reply_enabled: autoReply,
           frequencia_posts: frequencia,
           post_schedule: JSON.parse(JSON.stringify(schedule)),
+          chat_enabled: chatEnabled,
+          chat_tags: chatTags,
         })
         .eq("id", bot.id);
 
@@ -213,7 +230,62 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
             <li>
               • Horários: <strong>{schedule.horarios.length || "Nenhum"}</strong>
             </li>
+            <li>
+              • Chat: <strong>{chatEnabled ? "Ativo" : "Inativo"}</strong>
+            </li>
+            <li>
+              • Tags do chat: <strong>{chatTags.length || "Nenhuma"}</strong>
+            </li>
           </ul>
+        </div>
+
+        {/* Chat */}
+        <div className="space-y-3">
+          <Label className="text-base">Chat (Roteamento por Tags)</Label>
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+            <div>
+              <Label className="text-base">Ativo no Chat</Label>
+              <p className="text-sm text-muted-foreground">
+                Permite que este bot responda conversas do Chat
+              </p>
+            </div>
+            <Switch checked={chatEnabled} onCheckedChange={setChatEnabled} />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Tags</Label>
+            <div className="flex gap-2">
+              <Input
+                value={newChatTag}
+                onChange={(e) => setNewChatTag(e.target.value)}
+                placeholder="Ex.: chat_estatisticas"
+              />
+              <Button type="button" variant="outline" size="icon" onClick={addChatTag}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {chatTags.map((tag) => (
+                <Badge key={tag} variant="secondary" className="gap-1 pr-1">
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => removeChatTag(tag)}
+                    className="ml-1 hover:text-destructive"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))}
+              {chatTags.length === 0 && (
+                <span className="text-sm text-muted-foreground">Nenhuma tag configurada</span>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Use tags para direcionar temas (ex.: <code className="bg-muted px-1 py-0.5 rounded">chat_estatisticas</code>, <code className="bg-muted px-1 py-0.5 rounded">chat_boloes</code>, <code className="bg-muted px-1 py-0.5 rounded">chat_upsell</code>).
+            </p>
+          </div>
         </div>
 
         <Button type="submit" className="w-full gap-2" disabled={loading}>

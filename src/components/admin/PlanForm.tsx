@@ -34,6 +34,9 @@ export function PlanForm({ plan, onSaved, onCancel }: PlanFormProps) {
   const [checkoutLink, setCheckoutLink] = useState(plan?.checkout_link || "");
   const [isActive, setIsActive] = useState(plan?.is_active ?? true);
   const [displayOrder, setDisplayOrder] = useState(plan?.display_order?.toString() || "0");
+  const [chatStatsLimit, setChatStatsLimit] = useState(
+    (plan?.chat_estatisticas_max_msgs_per_day ?? 0).toString()
+  );
   const [features, setFeatures] = useState<PlanFeatures>(
     plan?.features || {
       gerador: false,
@@ -73,6 +76,7 @@ export function PlanForm({ plan, onSaved, onCancel }: PlanFormProps) {
         is_active: isActive,
         display_order: parseInt(displayOrder) || 0,
         features,
+        chat_estatisticas_max_msgs_per_day: Math.max(0, parseInt(chatStatsLimit) || 0),
       };
 
       if (plan) {
@@ -198,6 +202,20 @@ export function PlanForm({ plan, onSaved, onCancel }: PlanFormProps) {
               onCheckedChange={setIsActive}
             />
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="chatStatsLimit">Chat (Estatísticas): limite de mensagens/dia</Label>
+          <Input
+            id="chatStatsLimit"
+            type="number"
+            min={0}
+            value={chatStatsLimit}
+            onChange={(e) => setChatStatsLimit(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Use 0 para não permitir conversas sobre estatísticas neste plano.
+          </p>
         </div>
       </div>
 
