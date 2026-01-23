@@ -76,6 +76,30 @@ function pickEmail(payload: any): string | undefined {
   return normalized.includes("@") ? normalized : undefined;
 }
 
+function pickPhone(payload: any): string | null {
+  const phone = coalesce(
+    payload?.phone,
+    payload?.buyer?.phone,
+    payload?.buyer?.phone_number,
+    payload?.customer?.phone,
+    payload?.customer?.phone_number,
+    payload?.data?.buyer?.phone,
+    payload?.data?.buyer?.phone_number,
+    payload?.data?.customer?.phone,
+    payload?.data?.customer?.phone_number,
+  );
+  if (typeof phone !== "string") return null;
+  const normalized = phone.trim();
+  return normalized ? normalized : null;
+}
+
+function pickCpf(payload: any): string | null {
+  const doc = coalesce(payload?.document, payload?.customer?.document, payload?.buyer?.document);
+  if (typeof doc !== "string") return null;
+  const normalized = doc.replace(/\D/g, "").trim();
+  return normalized ? normalized : null;
+}
+
 function pickEventName(payload: any): string {
   const ev = coalesce(payload?.event, payload?.type, payload?.name, payload?.action);
   return typeof ev === "string" ? ev : "unknown";
@@ -94,7 +118,9 @@ function pickStatus(payload: any): string {
 function parseDateToIsoMaybe(value: unknown): string | null {
   if (!value) return null;
   if (typeof value === "string") {
-    const d = new Date(value);
+    // Accept both ISO and formats like "2023-12-18 16:37:45"
+    const normalized = value.includes(" ") && !value.includes("T") ? value.replace(" ", "T") : value;
+    const d = new Date(normalized);
     return Number.isNaN(d.getTime()) ? null : d.toISOString();
   }
   if (typeof value === "number") {
@@ -148,6 +174,40 @@ function mapToStatusAssinatura(statusOrEvent: string): "ativa" | "cancelada" | "
   }
 
   return "inativa";
+}
+
+type SubscriptionAction = "activate" | "cancel" | "delinquent" | "ignore";
+
+function deriveSubscriptionAction(eventName: string, rawStatus: string): SubscriptionAction {
+  const s = `${eventName} ${rawStatus}`.toLowerCase();
+
+  // Apenas pagos/confirmados ativam acesso
+  if (["paid", "approved", "confirmed", "success", "completed"].some((k) => s.includes(k))) return "activate";
+
+  if (["cancel", "canceled", "cancelled", "refunded", "chargeback"].some((k) => s.includes(k))) return "cancel";
+
+  if (["overdue", "past_due", "inadimpl", "unpaid", "failed"].some((k) => s.includes(k))) return "delinquent";
+
+  // PENDING / boleto gerado / eventos intermediários: só audita
+  return "ignore";
+}
+
+function addDaysToIso(days: number): string {
+  const ms = Math.max(0, Math.trunc(days)) * 24 * 60 * 60 * 1000;
+  return new Date(Date.now() + ms).toISOString();
+}
+
+function pickOfferId(payload: any): string | null {
+  const products = payload?.products;
+  if (!Array.isArray(products) || products.length === 0) return null;
+  const main = products.find((p: any) => p && p.is_order_bump === false) ?? products[0];
+  const offerId = main?.offer_id ?? main?.offerId;
+  return typeof offerId === "string" && offerId.trim() ? offerId.trim() : null;
+}
+
+function pickCustomerName(payload: any): string | null {
+  const name = coalesce(payload?.customer?.name, payload?.buyer?.name, payload?.name);
+  return typeof name === "string" && name.trim() ? name.trim() : null;
 }
 
 async function isAdminFromBearer(authHeader: string | null) {
@@ -262,8 +322,14 @@ serve(async (req) => {
 
   const eventName = pickEventName(payload);
   const rawStatus = pickStatus(payload);
-  const mappedStatus = mapToStatusAssinatura(`${eventName} ${rawStatus}`);
   const email = pickEmail(payload);
+  const phone = pickPhone(payload);
+  const cpf = pickCpf(payload);
+  const offerId = pickOfferId(payload);
+  const customerName = pickCustomerName(payload);
+
+  const action = deriveSubscriptionAction(eventName, rawStatus);
+  const mappedStatus = mapToStatusAssinatura(`${eventName} ${rawStatus}`);
   const validUntilIso = pickValidUntil(payload);
 
   logStep("Webhook received", {
@@ -272,18 +338,70 @@ serve(async (req) => {
     mappedStatus,
     email: email ?? null,
     validUntilIso,
+    offerId,
+    action,
   });
 
+  const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+
+  // Descobre método de autorização para auditoria
+  const authMethod = (() => {
+    if (isTestMode) return "test_mode";
+    const signature = req.headers.get("x-kirvano-signature") || req.headers.get("kirvano-signature");
+    const token = req.headers.get("x-kirvano-token") || req.headers.get("kirvano-token");
+    const queryAuth = pickQueryAuth(req.url);
+    if (signature) return "signature";
+    if (token) return "token_header";
+    if (queryAuth) return `query:${queryAuth.key}`;
+    return "unknown";
+  })();
+
+  // 1) Auditoria: registra SEMPRE o evento recebido
+  const { data: logRow, error: logInsertError } = await admin
+    .from("kirvano_webhook_logs")
+    .insert({
+      event: eventName,
+      status: rawStatus || null,
+      email: email ?? null,
+      phone,
+      checkout_id: typeof payload?.checkout_id === "string" ? payload.checkout_id : null,
+      sale_id: typeof payload?.sale_id === "string" ? payload.sale_id : null,
+      payment_method: typeof payload?.payment_method === "string" ? payload.payment_method : null,
+      purchase_type: typeof payload?.type === "string" ? payload.type : null,
+      authorized_method: authMethod,
+      raw_payload: payload ?? {},
+    })
+    .select("id")
+    .maybeSingle();
+
+  if (logInsertError) {
+    logStep("Failed to insert kirvano_webhook_logs", { message: logInsertError.message });
+    // Não falha o webhook por auditoria
+  }
+
+  const finalizeLog = async (patch: Record<string, any>) => {
+    if (!logRow?.id) return;
+    const { error } = await admin.from("kirvano_webhook_logs").update(patch).eq("id", logRow.id);
+    if (error) logStep("Failed to update kirvano_webhook_logs", { message: error.message });
+  };
+
   if (!email) {
-    // We accept the webhook to avoid provider retries; but we can't map it.
     logStep("No email in payload", { keys: Object.keys(payload ?? {}) });
+    await finalizeLog({ processed: true, process_result: "missing_email" });
     return new Response(JSON.stringify({ ok: true, skipped: true, reason: "missing_email" }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+  // Regra do negócio: apenas pagos/confirmados ativam acesso
+  if (action === "ignore") {
+    await finalizeLog({ processed: true, process_result: "ignored_non_paid" });
+    return new Response(JSON.stringify({ ok: true, ignored: true }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   const { data: perfil, error: perfilError } = await admin
     .from("perfis")
@@ -293,56 +411,155 @@ serve(async (req) => {
 
   if (perfilError) {
     logStep("Error fetching perfil", { message: perfilError.message });
+    await finalizeLog({ processed: true, process_result: "error_fetch_user", error: perfilError.message });
     return new Response(JSON.stringify({ error: "Failed to fetch user" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  if (!perfil?.id) {
-    logStep("Perfil not found for email", { email });
-    return new Response(JSON.stringify({ ok: true, skipped: true, reason: "perfil_not_found" }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+  // Para ativar precisamos do mapeamento offer -> plano (validade definida por plano)
+  if (action === "activate") {
+    if (!offerId) {
+      await finalizeLog({ processed: true, process_result: "missing_offer_id" });
+      return new Response(JSON.stringify({ ok: true, skipped: true, reason: "missing_offer_id" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-  const updateData: Record<string, any> = {
-    status_assinatura: mappedStatus,
-  };
-  if (validUntilIso) updateData.validade_assinatura = validUntilIso;
+    const { data: offerMap, error: offerMapError } = await admin
+      .from("kirvano_offer_plan_map")
+      .select("plan_id, days_valid, is_active")
+      .eq("offer_id", offerId)
+      .eq("is_active", true)
+      .maybeSingle();
 
-  const { error: updateError } = await admin.from("perfis").update(updateData).eq("id", perfil.id);
-  if (updateError) {
-    logStep("Error updating perfil", { message: updateError.message });
-    return new Response(JSON.stringify({ error: "Failed to update user" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+    if (offerMapError) {
+      await finalizeLog({ processed: true, process_result: "error_offer_map", error: offerMapError.message });
+      return new Response(JSON.stringify({ error: "Failed to resolve offer mapping" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!offerMap?.plan_id) {
+      logStep("Offer mapping not found", { offerId });
+      await finalizeLog({ processed: true, process_result: "offer_mapping_not_found" });
+      return new Response(JSON.stringify({ ok: true, skipped: true, reason: "offer_mapping_not_found" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-  // Sync role premium
-  if (mappedStatus === "ativa") {
+    // Se não houver perfil, cria conta com email+telefone e tenta novamente
+    let targetPerfilId = perfil?.id ?? null;
+    if (!targetPerfilId) {
+      logStep("Perfil not found for email (will create auth user)", { email });
+      try {
+        // auth-js não expõe getUserByEmail aqui; tentamos criar e ignoramos se já existir.
+        const password = crypto.randomUUID();
+        const { error: createUserError } = await admin.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: {
+            nome: customerName ?? undefined,
+            phone_number: phone ?? undefined,
+          },
+        });
+
+        if (createUserError) {
+          const msg = createUserError.message?.toLowerCase?.() ?? "";
+          const alreadyExists = msg.includes("already") || msg.includes("exists") || msg.includes("registered");
+          if (!alreadyExists) throw createUserError;
+          logStep("Auth user already exists", { email });
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        logStep("Failed to create auth user", { message: msg });
+        await finalizeLog({ processed: true, process_result: "error_create_user", error: msg });
+        return new Response(JSON.stringify({ error: "Failed to create user" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: perfil2, error: perfil2Error } = await admin
+        .from("perfis")
+        .select("id, email")
+        .ilike("email", email)
+        .maybeSingle();
+
+      if (perfil2Error || !perfil2?.id) {
+        const msg = perfil2Error?.message ?? "perfil_not_created";
+        await finalizeLog({ processed: true, process_result: "error_fetch_created_profile", error: msg });
+        return new Response(JSON.stringify({ error: "Failed to load created profile" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      targetPerfilId = perfil2.id;
+    }
+
+    const daysValid = typeof offerMap.days_valid === "number" ? offerMap.days_valid : 30;
+    const validade = addDaysToIso(daysValid);
+
+    const updateData: Record<string, any> = {
+      status_assinatura: "ativa",
+      validade_assinatura: validade,
+      plan_id: offerMap.plan_id,
+    };
+    if (phone) updateData.celular = phone;
+    if (cpf) updateData.cpf = cpf;
+    if (customerName) updateData.nome = customerName;
+
+    const { error: updateError } = await admin.from("perfis").update(updateData).eq("id", targetPerfilId);
+    if (updateError) {
+      logStep("Error updating perfil", { message: updateError.message });
+      await finalizeLog({ processed: true, process_result: "error_update_profile", error: updateError.message });
+      return new Response(JSON.stringify({ error: "Failed to update user" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Sync role premium
     const { data: existing, error: existingError } = await admin
       .from("user_roles")
       .select("id")
-      .eq("user_id", perfil.id)
+      .eq("user_id", targetPerfilId)
       .eq("role", "premium")
       .limit(1);
 
     if (!existingError && (!existing || existing.length === 0)) {
-      const { error: insertError } = await admin
-        .from("user_roles")
-        .insert({ user_id: perfil.id, role: "premium" });
+      const { error: insertError } = await admin.from("user_roles").insert({ user_id: targetPerfilId, role: "premium" });
       if (insertError) logStep("Failed to insert premium role", { message: insertError.message });
     }
+
+    await finalizeLog({ processed: true, process_result: targetPerfilId === perfil?.id ? "updated_user_activated" : "created_user_activated" });
   } else {
-    const { error: deleteRoleError } = await admin
-      .from("user_roles")
-      .delete()
-      .eq("user_id", perfil.id)
-      .eq("role", "premium");
+    // cancel / delinquent: se existir perfil, atualiza status e remove premium
+    if (!perfil?.id) {
+      await finalizeLog({ processed: true, process_result: "no_profile_to_update" });
+      return new Response(JSON.stringify({ ok: true, skipped: true, reason: "perfil_not_found" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const statusToSet = action === "cancel" ? "cancelada" : "inadimplente";
+    const { error: updateError } = await admin.from("perfis").update({ status_assinatura: statusToSet }).eq("id", perfil.id);
+    if (updateError) {
+      await finalizeLog({ processed: true, process_result: "error_update_profile", error: updateError.message });
+      return new Response(JSON.stringify({ error: "Failed to update user" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { error: deleteRoleError } = await admin.from("user_roles").delete().eq("user_id", perfil.id).eq("role", "premium");
     if (deleteRoleError) logStep("Failed to delete premium role", { message: deleteRoleError.message });
+    await finalizeLog({ processed: true, process_result: action === "cancel" ? "canceled_removed_role" : "delinquent_removed_role" });
   }
 
   return new Response(JSON.stringify({ ok: true }), {
