@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_cta_settings: {
+        Row: {
+          buttons: Json
+          created_at: string
+          default_text: string
+          enabled: boolean
+          id: string
+          max_buttons: number
+          updated_at: string
+        }
+        Insert: {
+          buttons?: Json
+          created_at?: string
+          default_text?: string
+          enabled?: boolean
+          id?: string
+          max_buttons?: number
+          updated_at?: string
+        }
+        Update: {
+          buttons?: Json
+          created_at?: string
+          default_text?: string
+          enabled?: boolean
+          id?: string
+          max_buttons?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bot_post_interactions: {
         Row: {
           bot_perfil_id: string
@@ -135,6 +165,7 @@ export type Database = {
       }
       chat_messages: {
         Row: {
+          actions: Json | null
           bot_persona_id: string | null
           content: string
           conversation_id: string
@@ -144,6 +175,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          actions?: Json | null
           bot_persona_id?: string | null
           content: string
           conversation_id: string
@@ -153,6 +185,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          actions?: Json | null
           bot_persona_id?: string | null
           content?: string
           conversation_id?: string
@@ -227,6 +260,9 @@ export type Database = {
           chat_priority: number
           chat_tags: string[]
           created_at: string | null
+          cta_override_buttons: Json
+          cta_override_enabled: boolean
+          cta_override_text: string | null
           especialidade: string
           estilo_escrita: string | null
           frequencia_posts: number | null
@@ -260,6 +296,9 @@ export type Database = {
           chat_priority?: number
           chat_tags?: string[]
           created_at?: string | null
+          cta_override_buttons?: Json
+          cta_override_enabled?: boolean
+          cta_override_text?: string | null
           especialidade: string
           estilo_escrita?: string | null
           frequencia_posts?: number | null
@@ -293,6 +332,9 @@ export type Database = {
           chat_priority?: number
           chat_tags?: string[]
           created_at?: string | null
+          cta_override_buttons?: Json
+          cta_override_enabled?: boolean
+          cta_override_text?: string | null
           especialidade?: string
           estilo_escrita?: string | null
           frequencia_posts?: number | null
@@ -580,6 +622,7 @@ export type Database = {
       }
       post_comments: {
         Row: {
+          actions: Json | null
           conteudo: string
           created_at: string | null
           id: string
@@ -589,6 +632,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          actions?: Json | null
           conteudo: string
           created_at?: string | null
           id?: string
@@ -598,6 +642,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          actions?: Json | null
           conteudo?: string
           created_at?: string | null
           id?: string
@@ -654,6 +699,7 @@ export type Database = {
       }
       postagens: {
         Row: {
+          actions: Json | null
           bot_interactions_done: number
           bot_interactions_enabled: boolean
           bot_interactions_last_at: string | null
@@ -678,6 +724,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          actions?: Json | null
           bot_interactions_done?: number
           bot_interactions_enabled?: boolean
           bot_interactions_last_at?: string | null
@@ -702,6 +749,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          actions?: Json | null
           bot_interactions_done?: number
           bot_interactions_enabled?: boolean
           bot_interactions_last_at?: string | null
