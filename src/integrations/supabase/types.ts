@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      bot_post_interactions: {
+        Row: {
+          bot_perfil_id: string
+          comment_id: string | null
+          created_at: string
+          error: string | null
+          id: string
+          post_id: string
+          reason: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bot_perfil_id: string
+          comment_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          post_id: string
+          reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bot_perfil_id?: string
+          comment_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          post_id?: string
+          reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_post_interactions_bot_fk"
+            columns: ["bot_perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bot_post_interactions_bot_fk"
+            columns: ["bot_perfil_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios_notificaveis_hoje"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bot_post_interactions_comment_fk"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "post_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bot_post_interactions_post_fk"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "postagens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       codigos_verificacao: {
         Row: {
           codigo: string
@@ -56,6 +121,7 @@ export type Database = {
           ativo: boolean | null
           auto_reply_enabled: boolean | null
           badge_emoji: string | null
+          can_comment_on_posts: boolean
           can_create_posts: boolean | null
           cargo: string
           created_at: string | null
@@ -66,6 +132,7 @@ export type Database = {
           is_roundtable_author: boolean | null
           max_chars_comment: number | null
           max_chars_post: number | null
+          max_comments_per_post: number
           perfil_id: string
           post_schedule: Json | null
           system_prompt: string
@@ -79,6 +146,7 @@ export type Database = {
           ativo?: boolean | null
           auto_reply_enabled?: boolean | null
           badge_emoji?: string | null
+          can_comment_on_posts?: boolean
           can_create_posts?: boolean | null
           cargo: string
           created_at?: string | null
@@ -89,6 +157,7 @@ export type Database = {
           is_roundtable_author?: boolean | null
           max_chars_comment?: number | null
           max_chars_post?: number | null
+          max_comments_per_post?: number
           perfil_id: string
           post_schedule?: Json | null
           system_prompt: string
@@ -102,6 +171,7 @@ export type Database = {
           ativo?: boolean | null
           auto_reply_enabled?: boolean | null
           badge_emoji?: string | null
+          can_comment_on_posts?: boolean
           can_create_posts?: boolean | null
           cargo?: string
           created_at?: string | null
@@ -112,6 +182,7 @@ export type Database = {
           is_roundtable_author?: boolean | null
           max_chars_comment?: number | null
           max_chars_post?: number | null
+          max_comments_per_post?: number
           perfil_id?: string
           post_schedule?: Json | null
           system_prompt?: string
@@ -457,6 +528,10 @@ export type Database = {
       }
       postagens: {
         Row: {
+          bot_interactions_done: number
+          bot_interactions_enabled: boolean
+          bot_interactions_last_at: string | null
+          bot_interactions_target: number | null
           concurso_referencia: number | null
           conteudo: string
           created_at: string
@@ -477,6 +552,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          bot_interactions_done?: number
+          bot_interactions_enabled?: boolean
+          bot_interactions_last_at?: string | null
+          bot_interactions_target?: number | null
           concurso_referencia?: number | null
           conteudo: string
           created_at?: string
@@ -497,6 +576,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          bot_interactions_done?: number
+          bot_interactions_enabled?: boolean
+          bot_interactions_last_at?: string | null
+          bot_interactions_target?: number | null
           concurso_referencia?: number | null
           conteudo?: string
           created_at?: string
