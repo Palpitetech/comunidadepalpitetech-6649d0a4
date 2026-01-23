@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export type ChatBubbleRole = "user" | "assistant";
@@ -5,6 +6,7 @@ export type ChatBubbleRole = "user" | "assistant";
 interface ChatMessageBubbleProps {
   role: ChatBubbleRole;
   content: string;
+  children?: ReactNode;
   timeLabel?: string;
   showTail?: boolean;
   clickable?: boolean;
@@ -15,6 +17,7 @@ interface ChatMessageBubbleProps {
 export function ChatMessageBubble({
   role,
   content,
+  children,
   timeLabel,
   showTail = true,
   clickable = false,
@@ -23,20 +26,21 @@ export function ChatMessageBubble({
 }: ChatMessageBubbleProps) {
   const isUser = role === "user";
 
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={!clickable}
-      className={cn(
-        "chat-bubble",
-        isUser ? "chat-bubble--right" : "chat-bubble--left",
-        showTail && (isUser ? "chat-bubble--tail-right" : "chat-bubble--tail-left"),
-        clickable && "chat-bubble--clickable",
-        className
+  const bubbleClassName = cn(
+    "chat-bubble",
+    isUser ? "chat-bubble--right" : "chat-bubble--left",
+    showTail && (isUser ? "chat-bubble--tail-right" : "chat-bubble--tail-left"),
+    clickable && "chat-bubble--clickable",
+    className
+  );
+
+  const body = (
+    <>
+      {children ? (
+        <div className="w-full">{children}</div>
+      ) : (
+        <div className="whitespace-pre-wrap break-words">{content}</div>
       )}
-    >
-      <div className="whitespace-pre-wrap break-words">{content}</div>
       {timeLabel ? (
         <div
           className={cn(
@@ -47,6 +51,20 @@ export function ChatMessageBubble({
           {timeLabel}
         </div>
       ) : null}
-    </button>
+    </>
+  );
+
+  if (clickable) {
+    return (
+      <button type="button" onClick={onClick} className={bubbleClassName}>
+        {body}
+      </button>
+    );
+  }
+
+  return (
+    <div className={bubbleClassName}>
+      {body}
+    </div>
   );
 }
