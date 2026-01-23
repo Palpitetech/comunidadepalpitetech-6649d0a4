@@ -7,8 +7,11 @@ import { ChatAvatar } from "@/components/chat/ChatAvatar";
 import { ChatDaySeparator } from "@/components/chat/ChatDaySeparator";
 import { ChatMessageBubble } from "@/components/chat/ChatMessageBubble";
 import { ChatQuickReplies } from "@/components/chat/ChatQuickReplies";
+import { ChatTypingIndicator } from "@/components/chat/ChatTypingIndicator";
 import { CHAT_TOPICS, type ChatTopicId, getChatTopic } from "@/lib/chatTopics";
 import { useChat } from "@/hooks/useChat";
+import { useAssistantTypingSimulation } from "@/hooks/useAssistantTypingSimulation";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
 import { format, isSameDay, parseISO } from "date-fns";
 import { Send } from "lucide-react";
@@ -24,6 +27,15 @@ export default function Chat() {
   const { messages, loading, sending, error, remainingToday, sendMessage } = useChat({
     topic: selectedTopic,
   });
+
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const { uiMessages, isSimulatingTyping } = useAssistantTypingSimulation({
+    enabled: Boolean(selectedTopic),
+    messages,
+    prefersReducedMotion,
+  });
+
+  const showTyping = Boolean(selectedTopic) && (sending || isSimulatingTyping);
 
   const [draft, setDraft] = useState("");
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -44,7 +56,7 @@ export default function Chat() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages.length, sending, loading, selectedTopic]);
+  }, [uiMessages.length, sending, loading, selectedTopic, showTyping]);
 
   const handleSend = async () => {
     if (!selectedTopic) return;
@@ -123,7 +135,7 @@ export default function Chat() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {messages.length === 0 ? (
+                  {uiMessages.length === 0 ? (
                     <div className="flex items-end gap-2">
                       <ChatAvatar />
                       <ChatMessageBubble
@@ -135,8 +147,8 @@ export default function Chat() {
                       />
                     </div>
                   ) : (
-                    messages.map((m, idx) => {
-                      const prev = idx > 0 ? messages[idx - 1] : undefined;
+                    uiMessages.map((m, idx) => {
+                      const prev = idx > 0 ? uiMessages[idx - 1] : undefined;
                       const d = parseISO(m.created_at);
                       const prevDate = prev ? parseISO(prev.created_at) : null;
                       const showDaySeparator = !prevDate || !isSameDay(d, prevDate);
@@ -169,6 +181,21 @@ export default function Chat() {
                       );
                     })
                   )}
+
+                  {showTyping ? (
+                    <div className="flex items-end gap-2">
+                      <ChatAvatar />
+                      <ChatMessageBubble
+                        role="assistant"
+                        content=""
+                        showTail={
+                          uiMessages.length === 0 || uiMessages[uiMessages.length - 1]?.role !== "assistant"
+                        }
+                      >
+                        <ChatTypingIndicator reducedMotion={prefersReducedMotion} />
+                      </ChatMessageBubble>
+                    </div>
+                  ) : null}
 
                   {error && <p className="px-1 text-sm text-destructive">{error}</p>}
                 </div>
