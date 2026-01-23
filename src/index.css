@@ -248,4 +248,56 @@
   .status-message.error {
     @apply bg-destructive/10 text-destructive border border-destructive/30;
   }
+
+  /* ============ Chat (estilo WhatsApp) ============ */
+  .chat-wallpaper {
+    background-image:
+      radial-gradient(circle at 1px 1px, hsl(var(--muted-foreground) / 0.10) 1px, transparent 0);
+    background-size: 22px 22px;
+    background-color: hsl(var(--background));
+  }
+
+  .chat-bubble {
+    @apply relative max-w-[85%] rounded-2xl border px-4 py-3 text-left text-sm leading-relaxed shadow-sm;
+  }
+
+  .chat-bubble--left {
+    @apply bg-card text-foreground;
+  }
+
+  .chat-bubble--right {
+    /* Mantém tudo dentro do design system: primary + texto contrastante */
+    @apply border-transparent bg-primary text-primary-foreground;
+  }
+
+  .chat-bubble--clickable {
+    @apply cursor-pointer transition-transform duration-150 hover:-translate-y-[1px] hover:shadow-md active:translate-y-0;
+  }
+
+  /* Rabinhos (triângulo) feitos com pseudo-elemento */
+  .chat-bubble--tail-left::before {
+    content: "";
+    position: absolute;
+    left: -6px;
+    bottom: 10px;
+    width: 12px;
+    height: 12px;
+    background: hsl(var(--card));
+    border-left: 1px solid hsl(var(--border));
+    border-bottom: 1px solid hsl(var(--border));
+    transform: rotate(45deg);
+    border-bottom-left-radius: 2px;
+  }
+
+  .chat-bubble--tail-right::before {
+    content: "";
+    position: absolute;
+    right: -6px;
+    bottom: 10px;
+    width: 12px;
+    height: 12px;
+    background: hsl(var(--primary));
+    transform: rotate(45deg);
+    border-bottom-right-radius: 2px;
+  }
 }

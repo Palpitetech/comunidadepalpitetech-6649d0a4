@@ -1,15 +1,22 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { CHAT_TOPICS, type ChatTopicId } from "@/lib/chatTopics";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ChatAvatar } from "@/components/chat/ChatAvatar";
+import { ChatDaySeparator } from "@/components/chat/ChatDaySeparator";
+import { ChatMessageBubble } from "@/components/chat/ChatMessageBubble";
+import { ChatQuickReplies } from "@/components/chat/ChatQuickReplies";
+import { CHAT_TOPICS, type ChatTopicId, getChatTopic } from "@/lib/chatTopics";
 import { useChat } from "@/hooks/useChat";
 import { cn } from "@/lib/utils";
+import { format, isSameDay, parseISO } from "date-fns";
+import { Send } from "lucide-react";
 
 export default function Chat() {
   const [selectedTopic, setSelectedTopic] = useState<ChatTopicId | null>(null);
+  const [pendingStarter, setPendingStarter] = useState<string | null>(null);
   const topicMeta = useMemo(
     () => (selectedTopic ? CHAT_TOPICS.find((t) => t.id === selectedTopic) : undefined),
     [selectedTopic]
@@ -20,11 +27,25 @@ export default function Chat() {
   });
 
   const [draft, setDraft] = useState("");
+  const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const handlePickTopic = async (id: ChatTopicId) => {
+    const meta = getChatTopic(id);
     setSelectedTopic(id);
     setDraft("");
+    if (meta?.starterUserMessage) setPendingStarter(meta.starterUserMessage);
   };
+
+  useEffect(() => {
+    if (!selectedTopic) return;
+    if (!pendingStarter) return;
+    void sendMessage(pendingStarter);
+    setPendingStarter(null);
+  }, [pendingStarter, selectedTopic, sendMessage]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages.length, sending, loading, selectedTopic]);
 
   const handleSend = async () => {
     if (!selectedTopic) return;
@@ -36,111 +57,165 @@ export default function Chat() {
 
   return (
     <MainLayout>
-      <div className="container-senior pt-4 pb-8 space-y-6">
-        <header className="space-y-1">
-          <h1 className="text-senior-xl font-semibold">Chat</h1>
-          <p className="text-muted-foreground">
-            Escolha um tema para começarmos — você sempre verá todas as opções.
-          </p>
-        </header>
+      <div className="container-senior pt-4 pb-2">
+        <Card className="overflow-hidden">
+          <CardHeader className="border-b bg-card">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <ChatAvatar />
+                <div className="leading-tight">
+                  <h1 className="text-senior-lg font-semibold">Chat</h1>
+                  <p className="text-sm text-muted-foreground">
+                    {topicMeta ? topicMeta.title : "Escolha um tema para começarmos"}
+                  </p>
+                </div>
+              </div>
 
-        <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {CHAT_TOPICS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => handlePickTopic(t.id)}
-              className={cn("text-left", selectedTopic === t.id && "ring-2 ring-primary rounded-lg")}
-            >
-              <Card className="h-full hover:border-primary transition-colors">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-senior-lg">{t.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">{t.description}</p>
-                </CardContent>
-              </Card>
-            </button>
-          ))}
-        </section>
-
-        <Separator />
-
-        <section className="space-y-4">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div>
-              <h2 className="text-senior-lg font-semibold">
-                {topicMeta ? topicMeta.title : "Selecione um tema acima"}
-              </h2>
-              {selectedTopic === "estatisticas" && remainingToday !== null && (
-                <p className="text-sm text-muted-foreground">
-                  Mensagens restantes hoje (estatísticas): <strong>{remainingToday}</strong>
-                </p>
-              )}
-            </div>
-            {selectedTopic && (
-              <Button variant="outline" onClick={() => setSelectedTopic(null)}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedTopic(null);
+                  setDraft("");
+                  setPendingStarter(null);
+                }}
+              >
                 Trocar tema
               </Button>
-            )}
-          </div>
+            </div>
 
-          <Card>
-            <CardContent className="pt-6 space-y-4">
-              {!selectedTopic ? (
-                <p className="text-muted-foreground">
-                  Escolha uma das opções acima para abrir a conversa.
-                </p>
-              ) : loading ? (
-                <p className="text-muted-foreground">Carregando conversa...</p>
-              ) : (
-                <div className="space-y-3">
-                  {messages.length === 0 ? (
-                    <p className="text-muted-foreground">
-                      Sem mensagens ainda. Escreva sua primeira pergunta.
-                    </p>
+            {selectedTopic === "estatisticas" && remainingToday !== null && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Mensagens restantes hoje (estatísticas): <strong>{remainingToday}</strong>
+              </p>
+            )}
+          </CardHeader>
+
+          <CardContent className="p-0">
+            <div className="flex h-[72vh] flex-col">
+              <ScrollArea className="flex-1">
+                <div className="chat-wallpaper px-3 py-4 md:px-4">
+                  {/* Mensagem inicial + opções dentro do chat */}
+                  {!selectedTopic ? (
+                    <div className="space-y-3">
+                      <div className="flex items-end gap-2">
+                        <ChatAvatar />
+                        <ChatMessageBubble
+                          role="assistant"
+                          content={
+                            "Olá! Eu sou seu assistente. Toque em uma opção abaixo para começarmos."
+                          }
+                          timeLabel={format(new Date(), "HH:mm")}
+                        />
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="h-8 w-8" />
+                        <div className="w-full">
+                          <ChatQuickReplies
+                            topics={CHAT_TOPICS}
+                            onPick={(t) => void handlePickTopic(t.id)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : loading ? (
+                    <p className="px-1 text-muted-foreground">Carregando conversa...</p>
                   ) : (
                     <div className="space-y-2">
-                      {messages.map((m) => (
-                        <div
-                          key={m.id}
-                          className={cn(
-                            "max-w-[92%] rounded-lg border px-4 py-3 text-sm leading-relaxed",
-                            m.role === "user"
-                              ? "ml-auto bg-muted/40"
-                              : "mr-auto bg-card"
-                          )}
-                        >
-                          {m.content}
+                      {messages.length === 0 ? (
+                        <div className="flex items-end gap-2">
+                          <ChatAvatar />
+                          <ChatMessageBubble
+                            role="assistant"
+                            content={
+                              "Sem mensagens ainda. Se quiser, escreva uma pergunta aqui embaixo."
+                            }
+                            timeLabel={format(new Date(), "HH:mm")}
+                          />
                         </div>
-                      ))}
+                      ) : (
+                        messages.map((m, idx) => {
+                          const prev = idx > 0 ? messages[idx - 1] : undefined;
+                          const d = parseISO(m.created_at);
+                          const prevDate = prev ? parseISO(prev.created_at) : null;
+                          const showDaySeparator =
+                            !prevDate || !isSameDay(d, prevDate);
+                          const timeLabel = format(d, "HH:mm");
+                          const isAssistant = m.role === "assistant";
+                          const showAvatar =
+                            isAssistant &&
+                            (!prev || prev.role !== "assistant" || showDaySeparator);
+
+                          return (
+                            <div key={m.id} className="space-y-2">
+                              {showDaySeparator ? (
+                                <ChatDaySeparator date={m.created_at} />
+                              ) : null}
+
+                              {isAssistant ? (
+                                <div className="flex items-end gap-2">
+                                  {showAvatar ? <ChatAvatar /> : <div className="h-8 w-8" />}
+                                  <ChatMessageBubble
+                                    role="assistant"
+                                    content={m.content}
+                                    timeLabel={timeLabel}
+                                  />
+                                </div>
+                              ) : (
+                                <div className="flex justify-end">
+                                  <ChatMessageBubble
+                                    role="user"
+                                    content={m.content}
+                                    timeLabel={timeLabel}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+
+                      {error && (
+                        <p className="px-1 text-sm text-destructive">{error}</p>
+                      )}
                     </div>
                   )}
-
-                  {error && <p className="text-sm text-destructive">{error}</p>}
-
-                  <div className="flex gap-2">
-                    <Input
-                      value={draft}
-                      onChange={(e) => setDraft(e.target.value)}
-                      placeholder="Digite sua mensagem..."
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          void handleSend();
-                        }
-                      }}
-                      disabled={sending}
-                    />
-                    <Button onClick={() => void handleSend()} disabled={sending || !draft.trim()}>
-                      {sending ? "Enviando..." : "Enviar"}
-                    </Button>
-                  </div>
+                  <div ref={bottomRef} />
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </section>
+              </ScrollArea>
+
+              <div className="border-t bg-background/80 p-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <div className="flex gap-2">
+                  <Input
+                    className="input-senior rounded-full"
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    placeholder={
+                      selectedTopic
+                        ? "Digite sua mensagem..."
+                        : "Escolha um tema acima para começar"
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void handleSend();
+                      }
+                    }}
+                    disabled={sending || !selectedTopic}
+                  />
+
+                  <Button
+                    className={cn("h-14 w-14 rounded-full", "btn-senior px-0")}
+                    onClick={() => void handleSend()}
+                    disabled={sending || !draft.trim() || !selectedTopic}
+                    aria-label="Enviar"
+                  >
+                    <Send className="h-6 w-6" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </MainLayout>
   );
