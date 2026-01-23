@@ -60,18 +60,15 @@ export default function Chat() {
         No mobile existe o menu inferior fixo (h-16). Este padding garante que o composer
         fique sempre visível acima dele (inclui safe-area do iOS).
       */}
-      <div className="flex h-full flex-col pb-[calc(env(safe-area-inset-bottom)+4rem)] md:pb-0">
+      <div className="flex h-[calc(100dvh-5rem)] flex-col overflow-hidden md:h-full">
         {/* Header minimalista */}
-        <header className="sticky top-0 z-10 border-b border-border bg-background/80 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-4">
+        <header className="sticky top-0 z-10 border-b border-border bg-background/80 px-3 py-1.5 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-3">
               <ChatAvatar />
               <div className="min-w-0 leading-tight">
                 <p className="truncate text-base font-semibold">
                   {topicMeta ? topicMeta.title : "Escolha um tema"}
-                </p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {topicMeta ? "Conversa ativa" : "Selecione uma opção abaixo para começar"}
                 </p>
               </div>
             </div>
@@ -101,7 +98,11 @@ export default function Chat() {
         {/* Conteúdo */}
         <div className="flex min-h-0 flex-1 flex-col">
           <ScrollArea className="flex-1">
-            <div className="chat-wallpaper px-3 py-4 md:px-5">
+            {/*
+              Importante: como o composer é fixed, damos padding no final do conteúdo para
+              evitar que a última mensagem fique escondida atrás dele e do menu inferior.
+            */}
+            <div className="chat-wallpaper px-3 py-4 pb-[calc(env(safe-area-inset-bottom)+4rem+6rem)] md:px-5 md:pb-28">
               {!selectedTopic ? (
                 <div className="flex items-end gap-2">
                   <ChatAvatar />
@@ -177,8 +178,16 @@ export default function Chat() {
           </ScrollArea>
 
           {/* Composer */}
-          <div className="border-t border-border bg-background/80 p-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="flex gap-2">
+          <div
+            className={cn(
+              "fixed left-0 right-0 z-50 border-t border-border bg-background/80 p-3 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+              // Mobile: acima do menu inferior (h-16) + safe-area iOS
+              "bottom-[calc(env(safe-area-inset-bottom)+4rem)]",
+              // Desktop: no rodapé
+              "md:bottom-0"
+            )}
+          >
+            <div className="mx-auto flex max-w-3xl gap-2 md:max-w-4xl">
               <Input
                 className="input-senior rounded-full"
                 value={draft}
