@@ -137,6 +137,98 @@ export type Database = {
           },
         ]
       }
+      kirvano_offer_plan_map: {
+        Row: {
+          created_at: string
+          days_valid: number
+          id: string
+          is_active: boolean
+          offer_id: string
+          plan_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          days_valid?: number
+          id?: string
+          is_active?: boolean
+          offer_id: string
+          plan_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          days_valid?: number
+          id?: string
+          is_active?: boolean
+          offer_id?: string
+          plan_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kirvano_offer_plan_map_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kirvano_webhook_logs: {
+        Row: {
+          authorized_method: string | null
+          checkout_id: string | null
+          email: string | null
+          error: string | null
+          event: string | null
+          id: string
+          payment_method: string | null
+          phone: string | null
+          process_result: string | null
+          processed: boolean
+          purchase_type: string | null
+          raw_payload: Json
+          received_at: string
+          sale_id: string | null
+          status: string | null
+        }
+        Insert: {
+          authorized_method?: string | null
+          checkout_id?: string | null
+          email?: string | null
+          error?: string | null
+          event?: string | null
+          id?: string
+          payment_method?: string | null
+          phone?: string | null
+          process_result?: string | null
+          processed?: boolean
+          purchase_type?: string | null
+          raw_payload: Json
+          received_at?: string
+          sale_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          authorized_method?: string | null
+          checkout_id?: string | null
+          email?: string | null
+          error?: string | null
+          event?: string | null
+          id?: string
+          payment_method?: string | null
+          phone?: string | null
+          process_result?: string | null
+          processed?: boolean
+          purchase_type?: string | null
+          raw_payload?: Json
+          received_at?: string
+          sale_id?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       notificacoes_pendentes: {
         Row: {
           chave_dedup: string | null
