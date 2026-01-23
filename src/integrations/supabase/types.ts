@@ -237,6 +237,11 @@ export type Database = {
           max_comments_per_post: number
           perfil_id: string
           post_schedule: Json | null
+          safety_banned_topics: string[]
+          safety_banned_words: string[]
+          safety_block_pii: boolean
+          safety_enabled: boolean
+          safety_style: string
           system_prompt: string
           total_comments: number | null
           total_posts: number | null
@@ -265,6 +270,11 @@ export type Database = {
           max_comments_per_post?: number
           perfil_id: string
           post_schedule?: Json | null
+          safety_banned_topics?: string[]
+          safety_banned_words?: string[]
+          safety_block_pii?: boolean
+          safety_enabled?: boolean
+          safety_style?: string
           system_prompt: string
           total_comments?: number | null
           total_posts?: number | null
@@ -293,6 +303,11 @@ export type Database = {
           max_comments_per_post?: number
           perfil_id?: string
           post_schedule?: Json | null
+          safety_banned_topics?: string[]
+          safety_banned_words?: string[]
+          safety_block_pii?: boolean
+          safety_enabled?: boolean
+          safety_style?: string
           system_prompt?: string
           total_comments?: number | null
           total_posts?: number | null
