@@ -34,6 +34,10 @@ export interface GuidePersona {
   can_create_posts: boolean;
   total_posts: number;
   total_comments: number;
+  // Chat
+  chat_enabled: boolean;
+  chat_tags: string[];
+  chat_priority: number;
   // Relação
   perfis?: BotProfile;
 }

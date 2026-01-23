@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import RecuperarSenha from "./pages/RecuperarSenha";
 import Comunidade from "./pages/Comunidade";
+import Chat from "./pages/Chat";
 import Notificacoes from "./pages/Notificacoes";
 import Resultados from "./pages/Resultados";
 import Tendencias from "./pages/Tendencias";
@@ -39,8 +40,9 @@ const App = () => (
             <Route path="/recuperar-senha" element={<RecuperarSenha />} />
 
             {/* Rotas Protegidas - Requer Login */}
-            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
             <Route path="/comunidade" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
+            <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
             <Route path="/notificacoes" element={<ProtectedRoute><Notificacoes /></ProtectedRoute>} />
             <Route path="/resultados" element={<ProtectedRoute><Resultados /></ProtectedRoute>} />
             <Route path="/tendencias" element={<ProtectedRoute><Tendencias /></ProtectedRoute>} />

@@ -79,6 +79,105 @@ export type Database = {
           },
         ]
       }
+      chat_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          topic: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          topic: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          topic?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      chat_daily_usage: {
+        Row: {
+          count: number
+          created_at: string
+          day: string
+          id: string
+          topic: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          created_at?: string
+          day: string
+          id?: string
+          topic: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          created_at?: string
+          day?: string
+          id?: string
+          topic?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          bot_persona_id: string | null
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          bot_persona_id?: string | null
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          bot_persona_id?: string | null
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_bot_persona_id_fkey"
+            columns: ["bot_persona_id"]
+            isOneToOne: false
+            referencedRelation: "guide_personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       codigos_verificacao: {
         Row: {
           codigo: string
@@ -124,6 +223,9 @@ export type Database = {
           can_comment_on_posts: boolean
           can_create_posts: boolean | null
           cargo: string
+          chat_enabled: boolean
+          chat_priority: number
+          chat_tags: string[]
           created_at: string | null
           especialidade: string
           estilo_escrita: string | null
@@ -149,6 +251,9 @@ export type Database = {
           can_comment_on_posts?: boolean
           can_create_posts?: boolean | null
           cargo: string
+          chat_enabled?: boolean
+          chat_priority?: number
+          chat_tags?: string[]
           created_at?: string | null
           especialidade: string
           estilo_escrita?: string | null
@@ -174,6 +279,9 @@ export type Database = {
           can_comment_on_posts?: boolean
           can_create_posts?: boolean | null
           cargo?: string
+          chat_enabled?: boolean
+          chat_priority?: number
+          chat_tags?: string[]
           created_at?: string | null
           especialidade?: string
           estilo_escrita?: string | null
@@ -412,6 +520,7 @@ export type Database = {
       }
       plans: {
         Row: {
+          chat_estatisticas_max_msgs_per_day: number
           checkout_link: string | null
           created_at: string
           description: string | null
@@ -425,6 +534,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          chat_estatisticas_max_msgs_per_day?: number
           checkout_link?: string | null
           created_at?: string
           description?: string | null
@@ -438,6 +548,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          chat_estatisticas_max_msgs_per_day?: number
           checkout_link?: string | null
           created_at?: string
           description?: string | null

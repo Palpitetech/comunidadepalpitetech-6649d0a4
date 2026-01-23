@@ -1,4 +1,4 @@
-import { Home, Users, Bell, Menu } from "lucide-react";
+import { Users, Bell, Menu, MessageCircle } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -16,32 +16,32 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border safe-area-bottom">
       <div className="flex items-center justify-around h-16">
-        {/* Início */}
-        <Link
-          to="/"
-          className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors",
-            isActive("/")
-              ? "text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          <Home className="h-6 w-6" />
-          <span className="text-xs mt-1 font-medium">Início</span>
-        </Link>
-
-        {/* Comunidade */}
+        {/* Comunidade (Início) */}
         <Link
           to="/comunidade"
           className={cn(
             "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors",
-            isActive("/comunidade")
+            isActive("/comunidade") || isActive("/")
               ? "text-primary"
               : "text-muted-foreground hover:text-foreground"
           )}
         >
           <Users className="h-6 w-6" />
           <span className="text-xs mt-1 font-medium">Comunidade</span>
+        </Link>
+
+        {/* Chat */}
+        <Link
+          to="/chat"
+          className={cn(
+            "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors",
+            isActive("/chat")
+              ? "text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <MessageCircle className="h-6 w-6" />
+          <span className="text-xs mt-1 font-medium">Chat</span>
         </Link>
 
         {/* Alertas */}
@@ -64,14 +64,14 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
           className={cn(
             "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors",
             isAdminRoute 
-              ? "text-red-500" 
+              ? "text-destructive" 
               : "text-muted-foreground hover:text-foreground"
           )}
         >
           <div className="relative">
             <Menu className="h-6 w-6" />
             {isAdminRoute && (
-              <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 border-2 border-card" />
+              <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-destructive border-2 border-card" />
             )}
           </div>
           <span className="text-xs mt-1 font-medium">Menu</span>

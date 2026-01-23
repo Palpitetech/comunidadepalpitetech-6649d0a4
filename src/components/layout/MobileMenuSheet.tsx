@@ -20,6 +20,7 @@ import {
   Home,
   Users,
   BarChart3,
+  MessageSquare,
   MessageCircle,
   LogOut,
   FileText,
@@ -141,16 +142,16 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
             <>
               {/* Itens Fixos de Navegação */}
               <nav className="px-4 py-6 space-y-1">
-                <Link to="/" onClick={closeAndNavigate}>
+                <Link to="/comunidade" onClick={closeAndNavigate}>
                   <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
                     <Home className="h-5 w-5 stroke-[1.5]" />
                     Início
                   </div>
                 </Link>
-                <Link to="/comunidade" onClick={closeAndNavigate}>
+                <Link to="/chat" onClick={closeAndNavigate}>
                   <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
-                    <Users className="h-5 w-5 stroke-[1.5]" />
-                    Comunidade
+                    <MessageSquare className="h-5 w-5 stroke-[1.5]" />
+                    Chat
                   </div>
                 </Link>
               </nav>
