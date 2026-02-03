@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot } from "lucide-react";
+import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot, Dices } from "lucide-react";
 
 export function DesktopHeader() {
   const { isAuthenticated, profile, signOut } = useAuthContext();
@@ -92,6 +92,12 @@ export function DesktopHeader() {
                         Quentes e Frias
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                      <Link to="/gerador">
+                        <Dices className="h-5 w-5" />
+                        Gerador de Palpites
+                      </Link>
+                    </DropdownMenuItem>
                   </TabsContent>
                   <TabsContent value="admin" className="mt-0 space-y-1">
                     <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
@@ -138,6 +144,12 @@ export function DesktopHeader() {
                     <Link to="/frequencia">
                       <Flame className="h-5 w-5" />
                       Quentes e Frias
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                    <Link to="/gerador">
+                      <Dices className="h-5 w-5" />
+                      Gerador de Palpites
                     </Link>
                   </DropdownMenuItem>
                 </>
