@@ -247,6 +247,33 @@ export type Database = {
         }
         Relationships: []
       }
+      gerador_daily_usage: {
+        Row: {
+          count: number
+          created_at: string
+          day: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          created_at?: string
+          day?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          created_at?: string
+          day?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       guide_personas: {
         Row: {
           ai_model: string | null
@@ -583,6 +610,7 @@ export type Database = {
           description: string | null
           display_order: number
           features: Json
+          gerador_max_per_day: number
           id: string
           is_active: boolean
           name: string
@@ -597,6 +625,7 @@ export type Database = {
           description?: string | null
           display_order?: number
           features?: Json
+          gerador_max_per_day?: number
           id?: string
           is_active?: boolean
           name: string
@@ -611,6 +640,7 @@ export type Database = {
           description?: string | null
           display_order?: number
           features?: Json
+          gerador_max_per_day?: number
           id?: string
           is_active?: boolean
           name?: string
