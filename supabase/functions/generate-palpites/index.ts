@@ -187,7 +187,7 @@ DEFINIÇÕES:
 - Repetidas: dezenas que saíram no concurso anterior
 `;
 
-    const systemPrompt = `Você é o PT Analista, especialista em análise estatística da Lotofácil.
+    const systemPrompt = `Você é um especialista em análise estatística da Lotofácil.
 
 REGRAS OBRIGATÓRIAS:
 1. Cada jogo DEVE ter EXATAMENTE 15 dezenas únicas de 01 a 25

@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { QuantidadeSelector } from "@/components/gerador/QuantidadeSelector";
-import { JogoCard } from "@/components/gerador/JogoCard";
+import { JogoLista } from "@/components/gerador/JogoLista";
 import { EstrategiaCard } from "@/components/gerador/EstrategiaCard";
 import { useGerador } from "@/hooks/useGerador";
 import { useGeradorStatus } from "@/hooks/useGeradorStatus";
-import { Dices, Loader2, RefreshCw, Sparkles, AlertCircle, Clock } from "lucide-react";
+import { Dices, Loader2, RefreshCw, AlertCircle, Clock } from "lucide-react";
 
 export default function Gerador() {
   const [quantidade, setQuantidade] = useState(3);
@@ -21,7 +21,6 @@ export default function Gerador() {
     generatePalpites(quantidade);
   };
 
-  // Atualizar status após geração bem-sucedida
   useEffect(() => {
     if (result) {
       refetch();
@@ -35,28 +34,22 @@ export default function Gerador() {
 
   return (
     <MainLayout>
-      <div className="container-senior py-6 space-y-6 max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center space-y-2">
+      <div className="container-senior py-6 space-y-6 max-w-2xl mx-auto">
+        {/* Header compacto */}
+        <div className="text-center space-y-1">
           <div className="flex items-center justify-center gap-2">
-            <Dices className="h-8 w-8 text-primary" />
+            <Dices className="h-7 w-7 text-primary" />
             <h1 className="text-2xl font-bold">Gerador de Palpites</h1>
           </div>
-          <p className="text-muted-foreground">
-            Palpites inteligentes baseados em análise estatística
+          <p className="text-sm text-muted-foreground">
+            Palpites baseados em análise estatística
           </p>
         </div>
 
         {/* Seção de Geração */}
         {!result && (
           <Card>
-            <CardHeader>
-              <CardTitle className="text-center flex items-center justify-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                Gerar Novos Palpites
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="pt-6 space-y-5">
               {/* Status de uso */}
               {!statusLoading && (
                 <div className={`flex items-center justify-center gap-2 p-3 rounded-lg ${
@@ -114,15 +107,12 @@ export default function Gerador() {
               </Button>
 
               {isLoading && (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="text-center text-sm text-muted-foreground">
                     Analisando os últimos 50 concursos...
                   </div>
-                  <div className="space-y-3">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4 mx-auto" />
-                    <Skeleton className="h-4 w-1/2 mx-auto" />
-                  </div>
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4 mx-auto" />
                 </div>
               )}
             </CardContent>
@@ -131,37 +121,29 @@ export default function Gerador() {
 
         {/* Resultados */}
         {result && (
-          <div className="space-y-6">
-            {/* Botão de novo sorteio */}
+          <div className="space-y-4">
+            {/* Ações */}
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
                 {result.remaining_today > 0 ? (
                   <span>
-                    Você ainda pode gerar <strong>{result.remaining_today}</strong> vez(es) hoje
+                    Restam <strong>{result.remaining_today}</strong> geração(ões) hoje
                   </span>
                 ) : (
-                  <span className="text-muted-foreground">Limite diário atingido</span>
+                  <span>Limite diário atingido</span>
                 )}
               </div>
               <Button variant="outline" onClick={handleReset} className="gap-2">
                 <RefreshCw className="h-4 w-4" />
-                Novo Sorteio
+                Nova Geração
               </Button>
             </div>
 
-            {/* Estratégia */}
-            <EstrategiaCard estrategia={result.estrategia} />
+            {/* Lista de Jogos */}
+            <JogoLista jogos={result.jogos} />
 
-            {/* Grid de Jogos */}
-            <div className="grid gap-4 md:grid-cols-2">
-              {result.jogos.map((jogo, index) => (
-                <JogoCard
-                  key={index}
-                  numero={index + 1}
-                  dezenas={jogo.dezenas}
-                />
-              ))}
-            </div>
+            {/* Estratégia (colapsável) */}
+            <EstrategiaCard estrategia={result.estrategia} />
           </div>
         )}
       </div>
