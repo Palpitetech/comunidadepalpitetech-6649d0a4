@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,15 +7,26 @@ import { QuantidadeSelector } from "@/components/gerador/QuantidadeSelector";
 import { JogoCard } from "@/components/gerador/JogoCard";
 import { EstrategiaCard } from "@/components/gerador/EstrategiaCard";
 import { useGerador } from "@/hooks/useGerador";
-import { Dices, Loader2, RefreshCw, Sparkles, AlertCircle } from "lucide-react";
+import { useGeradorStatus } from "@/hooks/useGeradorStatus";
+import { Dices, Loader2, RefreshCw, Sparkles, AlertCircle, Clock } from "lucide-react";
 
 export default function Gerador() {
   const [quantidade, setQuantidade] = useState(3);
   const { isLoading, result, error, generatePalpites, reset } = useGerador();
+  const { remaining_today, max_per_day, isLoading: statusLoading, refetch } = useGeradorStatus();
+
+  const canGenerate = remaining_today > 0;
 
   const handleGenerate = () => {
     generatePalpites(quantidade);
   };
+
+  // Atualizar status após geração bem-sucedida
+  useEffect(() => {
+    if (result) {
+      refetch();
+    }
+  }, [result]);
 
   const handleReset = () => {
     reset();
@@ -46,11 +57,29 @@ export default function Gerador() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Status de uso */}
+              {!statusLoading && (
+                <div className={`flex items-center justify-center gap-2 p-3 rounded-lg ${
+                  canGenerate 
+                    ? "bg-primary/10 text-primary" 
+                    : "bg-destructive/10 text-destructive"
+                }`}>
+                  <Clock className="h-4 w-4" />
+                  <span className="text-sm font-medium">
+                    {canGenerate ? (
+                      <>Você pode gerar <strong>{remaining_today}</strong> vez(es) hoje</>
+                    ) : (
+                      <>Limite diário atingido. Volte amanhã!</>
+                    )}
+                  </span>
+                </div>
+              )}
+
               <QuantidadeSelector
                 value={quantidade}
                 onChange={setQuantidade}
                 max={10}
-                disabled={isLoading}
+                disabled={isLoading || !canGenerate}
               />
 
               {error && (
@@ -62,7 +91,7 @@ export default function Gerador() {
 
               <Button
                 onClick={handleGenerate}
-                disabled={isLoading}
+                disabled={isLoading || !canGenerate}
                 className="w-full h-14 text-lg gap-2"
                 size="lg"
               >
@@ -70,6 +99,11 @@ export default function Gerador() {
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" />
                     Analisando dados...
+                  </>
+                ) : !canGenerate ? (
+                  <>
+                    <Clock className="h-5 w-5" />
+                    Aguarde até amanhã
                   </>
                 ) : (
                   <>
@@ -106,7 +140,7 @@ export default function Gerador() {
                     Você ainda pode gerar <strong>{result.remaining_today}</strong> vez(es) hoje
                   </span>
                 ) : (
-                  <span className="text-amber-500">Limite diário atingido</span>
+                  <span className="text-muted-foreground">Limite diário atingido</span>
                 )}
               </div>
               <Button variant="outline" onClick={handleReset} className="gap-2">
