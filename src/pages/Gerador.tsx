@@ -78,7 +78,7 @@ export default function Gerador() {
               <QuantidadeSelector
                 value={quantidade}
                 onChange={setQuantidade}
-                max={10}
+                max={12}
                 disabled={isLoading || !canGenerate}
               />
 
@@ -116,7 +116,7 @@ export default function Gerador() {
               {isLoading && (
                 <div className="space-y-4">
                   <div className="text-center text-sm text-muted-foreground">
-                    O PT Analista está analisando os últimos 50 concursos...
+                    Analisando os últimos 50 concursos...
                   </div>
                   <div className="space-y-3">
                     <Skeleton className="h-4 w-full" />

@@ -59,7 +59,7 @@ serve(async (req) => {
 
     // Obter quantidade de jogos do body
     const body = await req.json().catch(() => ({}));
-    const quantidade = Math.min(Math.max(body.quantidade || 1, 1), 10);
+    const quantidade = Math.min(Math.max(body.quantidade || 1, 1), 12);
 
     // Verificar plano e feature do usuário
     const { data: perfil } = await supabaseAdmin
