@@ -103,22 +103,23 @@ TÉCNICAS DISPONÍVEIS (escolha UMA):
 IMPORTANTE: NÃO dê palpites prontos, apenas ensine a técnica.`;
 
         case "palpite_gratis":
-           return `OBJETIVO: Compartilhar UM palpite grátis para a comunidade como amostra do trabalho do especialista.
+          return `OBJETIVO: Mostrar UMA ESTRATÉGIA de análise e informar que os palpites gerados com ela estão disponíveis para clientes VIP.
 
 ESTRUTURA DO POST:
-1. Título chamativo (ex: "🎁 Palpite Grátis do Dia")
-2. Gancho: "Analisando a tabela de Tendências..." (mostre análise real: Tendências + Quentes e Frias)
-3. Gere EXATAMENTE 15 dezenas únicas de 01 a 25 em ordem crescente
-4. Breve explicação da estratégia (como chegou no resultado usando as ferramentas)
-5. Revelação: "Isso é o que o Augusto, há 5 anos no mercado com dezena de 14 pontos entrega para vocês no Gerador de Palpites. É só clicar e gerar seus palpites. Augusto deixa pelo menos 5 estratégias diferentes por dia!"
-6. OBRIGATÓRIO incluir: "⚠️ Loteria é sorte, jogue com responsabilidade!"
+1. Título chamativo (ex: "🎯 Estratégia do Dia: Ciclo de Alta")
+2. Gancho: "Analisando a tabela de Tendências do concurso ${resultados?.[0]?.concurso_id || 'atual'}..."
+3. ESTRATÉGIA: Explique a técnica usada (cruzar Tendências + Quentes e Frias, equilibrar pares/ímpares, etc.)
+4. INSIGHT: Mostre o que a análise revelou (ex: "as dezenas 02, 08 e 15 estão em ciclo de alta")
+5. REVELAÇÃO VIP: "Os palpites gerados com essa estratégia estão disponíveis agora no Gerador de Palpites para nossos clientes VIP. O Augusto, há 5 anos no mercado, deixa pelo menos 5 estratégias diferentes por dia!"
+6. CTA: Convide a fazer upgrade
+7. OBRIGATÓRIO incluir: "⚠️ Loteria é sorte, jogue com responsabilidade!"
 
-REGRAS:
-- Formato das dezenas: separadas por vírgula (01, 02, 03...)
-- Use os dados estatísticos para embasar: ${contexto}
+REGRAS CRÍTICAS:
+- NUNCA entregue as 15 dezenas prontas - apenas mostre o raciocínio da estratégia
+- Mostre insights da análise (quais dezenas estão em alta, padrões observados)
+- Use os dados estatísticos reais: ${contexto}
 - Menção clara do nome "Augusto" como especialista humano
-- Mencione "5 estratégias diferentes por dia"
-- Apenas 1 jogo por post (não abuse)`;
+- Mencione "5 estratégias diferentes por dia" e "clientes VIP"`;
 
         case "sistema_vendas":
           return `OBJETIVO: Educar sobre UMA ferramenta específica do Palpite Tech, mostrando como ela ajuda na jornada dos 15 pontos.
