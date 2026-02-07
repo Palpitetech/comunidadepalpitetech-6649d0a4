@@ -59,8 +59,18 @@ serve(async (req) => {
 
     // Obter parâmetros do body
     const body = await req.json().catch(() => ({}));
-    const quantidade = Math.min(Math.max(body.quantidade || 1, 1), 12);
+    const quantidade = Math.min(Math.max(body.quantidade || 1, 1), 250);
     const qtdDezenas = Math.min(Math.max(body.qtdDezenas || 15, 15), 20);
+
+    // Verificar se é admin (geração infinita)
+    const { data: userRole } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .single();
+    
+    const isAdmin = !!userRole;
 
     // Verificar plano e feature do usuário
     const { data: perfil } = await supabaseAdmin
@@ -94,7 +104,7 @@ serve(async (req) => {
       }
     }
 
-    // Verificar uso diário
+    // Verificar uso diário (admins ignoram o limite)
     const today = new Date().toISOString().split("T")[0];
     const { data: usage } = await supabaseAdmin
       .from("gerador_daily_usage")
@@ -104,9 +114,12 @@ serve(async (req) => {
       .single();
 
     const currentUsage = usage?.count || 0;
-    const remainingToday = Math.max(geradorMaxPerDay - currentUsage, 0);
+    
+    // Admins têm geração infinita
+    const remainingToday = isAdmin ? 999 : Math.max(geradorMaxPerDay - currentUsage, 0);
+    const effectiveMaxPerDay = isAdmin ? -1 : geradorMaxPerDay; // -1 = infinito
 
-    if (remainingToday <= 0 && geradorMaxPerDay > 0) {
+    if (!isAdmin && remainingToday <= 0 && geradorMaxPerDay > 0) {
       return new Response(JSON.stringify({
         error: "Limite diário atingido",
         remaining_today: 0,
@@ -338,8 +351,9 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
     return new Response(JSON.stringify({
       jogos: jogosValidados,
       estrategia: palpitesData.estrategia,
-      remaining_today: Math.max(remainingToday - 1, 0),
-      max_per_day: geradorMaxPerDay
+      remaining_today: isAdmin ? 999 : Math.max(remainingToday - 1, 0),
+      max_per_day: effectiveMaxPerDay,
+      is_admin: isAdmin
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

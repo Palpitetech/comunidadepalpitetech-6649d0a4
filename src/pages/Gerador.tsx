@@ -18,9 +18,9 @@ export default function Gerador() {
   const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
   
   const { isLoading, result, error, generatePalpites, reset } = useGerador();
-  const { remaining_today, max_per_day, isLoading: statusLoading, refetch } = useGeradorStatus();
+  const { remaining_today, max_per_day, isLoading: statusLoading, refetch, isAdmin } = useGeradorStatus();
 
-  const canGenerate = remaining_today > 0;
+  const canGenerate = isAdmin || remaining_today > 0;
 
   // Buscar último concurso para cálculo de repetidas
   useEffect(() => {
@@ -142,7 +142,9 @@ export default function Gerador() {
               }`}>
                 <Clock className="h-4 w-4" />
                 <span className="text-sm">
-                  {canGenerate ? (
+                  {isAdmin ? (
+                    <>🛡️ Modo Admin: <strong>Geração ilimitada</strong></>
+                  ) : canGenerate ? (
                     <>Você pode gerar <strong>{remaining_today}</strong> vez(es) hoje</>
                   ) : (
                     <>Limite diário atingido. Volte amanhã!</>
