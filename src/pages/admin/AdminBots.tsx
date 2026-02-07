@@ -110,132 +110,142 @@ export default function AdminBots() {
           </div>
         </div>
 
-        {/* Lista de Bots */}
-        <Card>
-          <CardContent className="p-0">
-            {bots.length === 0 ? (
-              <div className="py-12 text-center">
-                <Bot className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">
-                  Nenhum bot cadastrado. Clique em "Novo Bot" para começar.
-                </p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[300px]">Bot</TableHead>
-                    <TableHead className="hidden md:table-cell">Estatísticas</TableHead>
-                    <TableHead className="hidden sm:table-cell">Recursos</TableHead>
-                    <TableHead className="w-[80px] text-center">Ativo</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {bots.map((bot) => (
-                    <TableRow 
-                      key={bot.id} 
-                      className={`cursor-pointer hover:bg-muted/50 ${!bot.ativo ? "opacity-60" : ""}`}
-                      onClick={() => handleBotClick(bot)}
-                    >
-                      {/* Bot Info */}
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={bot.perfis?.avatar_url || undefined} />
-                            <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                              {getInitials(bot.perfis?.nome)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="font-medium truncate">
-                                {bot.perfis?.nome || "Bot"}
-                              </span>
-                              {bot.perfis?.is_bot ? (
-                                <Bot className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                              ) : (
-                                <User className="h-3.5 w-3.5 text-primary shrink-0" />
-                              )}
-                              {bot.is_result_author && (
-                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                                  🎯 Resultados
-                                </Badge>
-                              )}
-                              {bot.is_strategy_author && (
-                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-blue-500/10 text-blue-600">
-                                  📚 Estratégia
-                                </Badge>
-                              )}
-                              {bot.is_sales_author && (
-                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-green-500/10 text-green-600">
-                                  💰 Vendas
-                                </Badge>
-                              )}
-                              {bot.is_system_sales_author && (
-                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-purple-500/10 text-purple-600">
-                                  🕕 Vendas 18h
-                                </Badge>
-                              )}
+        {/* Categoria: Especialistas para Postagens */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 px-1">
+            <div className="h-6 w-1 rounded-full bg-primary" />
+            <h2 className="text-lg font-semibold">Especialistas para Postagens</h2>
+            <span className="text-sm text-muted-foreground">
+              ({bots.length} {bots.length === 1 ? "bot" : "bots"})
+            </span>
+          </div>
+          
+          <Card>
+            <CardContent className="p-0">
+              {bots.length === 0 ? (
+                <div className="py-12 text-center">
+                  <Bot className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">
+                    Nenhum bot cadastrado. Clique em "Novo Bot" para começar.
+                  </p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[300px]">Bot</TableHead>
+                      <TableHead className="hidden md:table-cell">Estatísticas</TableHead>
+                      <TableHead className="hidden sm:table-cell">Recursos</TableHead>
+                      <TableHead className="w-[80px] text-center">Ativo</TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {bots.map((bot) => (
+                      <TableRow 
+                        key={bot.id} 
+                        className={`cursor-pointer hover:bg-muted/50 ${!bot.ativo ? "opacity-60" : ""}`}
+                        onClick={() => handleBotClick(bot)}
+                      >
+                        {/* Bot Info */}
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={bot.perfis?.avatar_url || undefined} />
+                              <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                                {getInitials(bot.perfis?.nome)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-medium truncate">
+                                  {bot.perfis?.nome || "Bot"}
+                                </span>
+                                {bot.perfis?.is_bot ? (
+                                  <Bot className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                ) : (
+                                  <User className="h-3.5 w-3.5 text-primary shrink-0" />
+                                )}
+                                {bot.is_result_author && (
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                    🎯 Resultados
+                                  </Badge>
+                                )}
+                                {bot.is_strategy_author && (
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary">
+                                    📚 Estratégia
+                                  </Badge>
+                                )}
+                                {bot.is_sales_author && (
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-accent/50 text-accent-foreground">
+                                    💰 Vendas
+                                  </Badge>
+                                )}
+                                {bot.is_system_sales_author && (
+                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-secondary text-secondary-foreground">
+                                    🕕 Vendas 18h
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </TableCell>
+                        </TableCell>
 
-                      {/* Stats */}
-                      <TableCell className="hidden md:table-cell">
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <FileText className="h-3.5 w-3.5" />
-                            {bot.total_posts}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MessageSquare className="h-3.5 w-3.5" />
-                            {bot.total_comments}
-                          </span>
-                        </div>
-                      </TableCell>
+                        {/* Stats */}
+                        <TableCell className="hidden md:table-cell">
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <FileText className="h-3.5 w-3.5" />
+                              {bot.total_posts}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <MessageSquare className="h-3.5 w-3.5" />
+                              {bot.total_comments}
+                            </span>
+                          </div>
+                        </TableCell>
 
-                      {/* Features */}
-                      <TableCell className="hidden sm:table-cell">
-                        <div className="flex flex-wrap gap-1">
-                          {bot.can_create_posts && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                              Posts
-                            </Badge>
-                          )}
-                          {bot.auto_reply_enabled && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                              Auto-reply
-                            </Badge>
-                          )}
-                          {bot.chat_enabled && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                              Chat
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
+                        {/* Features */}
+                        <TableCell className="hidden sm:table-cell">
+                          <div className="flex flex-wrap gap-1">
+                            {bot.can_create_posts && (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                Posts
+                              </Badge>
+                            )}
+                            {bot.auto_reply_enabled && (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                Auto-reply
+                              </Badge>
+                            )}
+                            {bot.chat_enabled && (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                Chat
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
 
-                      {/* Toggle */}
-                      <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                        <Switch
-                          checked={bot.ativo}
-                          onCheckedChange={(checked) => toggleBotActive(bot.id, checked)}
-                        />
-                      </TableCell>
+                        {/* Toggle */}
+                        <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                          <Switch
+                            checked={bot.ativo}
+                            onCheckedChange={(checked) => toggleBotActive(bot.id, checked)}
+                          />
+                        </TableCell>
 
-                      {/* Arrow */}
-                      <TableCell>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                        {/* Arrow */}
+                        <TableCell>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Detail Sheet */}
