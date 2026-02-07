@@ -14,13 +14,24 @@ export interface GeradorResult {
   max_per_day: number;
 }
 
+export interface FiltrosGerador {
+  dezenasFiexas?: number[];
+  dezenasExcluidas?: number[];
+  pedidoEspecial?: string;
+}
+
 export function useGerador() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<GeradorResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const generatePalpites = async (quantidade: number, qtdDezenas: number = 15, periodoAnalise: number = 50) => {
+  const generatePalpites = async (
+    quantidade: number, 
+    qtdDezenas: number = 15, 
+    periodoAnalise: number = 50,
+    filtros?: FiltrosGerador
+  ) => {
     setIsLoading(true);
     setError(null);
     setResult(null);
@@ -39,7 +50,14 @@ export function useGerador() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${sessionData.session.access_token}`,
           },
-          body: JSON.stringify({ quantidade, qtdDezenas, periodoAnalise }),
+          body: JSON.stringify({ 
+            quantidade, 
+            qtdDezenas, 
+            periodoAnalise,
+            dezenasFiexas: filtros?.dezenasFiexas,
+            dezenasExcluidas: filtros?.dezenasExcluidas,
+            pedidoEspecial: filtros?.pedidoEspecial,
+          }),
         }
       );
 

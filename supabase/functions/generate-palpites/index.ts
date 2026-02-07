@@ -62,6 +62,15 @@ serve(async (req) => {
     const quantidade = Math.min(Math.max(body.quantidade || 1, 1), 250);
     const qtdDezenas = Math.min(Math.max(body.qtdDezenas || 15, 15), 20);
     const periodoAnalise = Math.min(Math.max(body.periodoAnalise || 50, 1), 100);
+    
+    // Filtros avançados
+    const dezenasFiexas: number[] = (body.dezenasFiexas || [])
+      .filter((d: number) => d >= 1 && d <= 25)
+      .slice(0, 10);
+    const dezenasExcluidas: number[] = (body.dezenasExcluidas || [])
+      .filter((d: number) => d >= 1 && d <= 25)
+      .slice(0, 10);
+    const pedidoEspecial: string = (body.pedidoEspecial || "").trim().slice(0, 200);
 
     // Verificar se é admin (geração infinita)
     const { data: userRole } = await supabaseAdmin
@@ -204,6 +213,18 @@ DEFINIÇÕES:
 PERÍODO DE ANÁLISE: ${periodoAnalise} concurso(s) - ${periodoAnalise <= 5 ? 'Foco em tendências recentes' : periodoAnalise <= 10 ? 'Equilíbrio recente/histórico' : 'Base histórica ampla'}
 `;
 
+    // Construir regras de filtros para o prompt
+    let filtrosTexto = "";
+    if (dezenasFiexas.length > 0) {
+      filtrosTexto += `\nDEZENAS FIXAS (OBRIGATÓRIAS em TODOS os jogos): ${dezenasFiexas.map((d: number) => d.toString().padStart(2, '0')).join(', ')}`;
+    }
+    if (dezenasExcluidas.length > 0) {
+      filtrosTexto += `\nDEZENAS EXCLUÍDAS (PROIBIDAS em todos os jogos): ${dezenasExcluidas.map((d: number) => d.toString().padStart(2, '0')).join(', ')}`;
+    }
+    if (pedidoEspecial) {
+      filtrosTexto += `\nPEDIDO ESPECIAL DO USUÁRIO: "${pedidoEspecial}" (atenda dentro das possibilidades matemáticas)`;
+    }
+
     const systemPrompt = `Você é um especialista em análise estatística da Lotofácil.
 
 REGRAS OBRIGATÓRIAS:
@@ -214,10 +235,12 @@ REGRAS OBRIGATÓRIAS:
 5. Inclua pelo menos algumas dezenas faltantes do ciclo quando disponíveis
 6. NUNCA prometa vitória - loteria é probabilidade
 7. Seja didático e acessível na explicação
+${dezenasFiexas.length > 0 ? `8. OBRIGATÓRIO: Todas as dezenas fixas [${dezenasFiexas.join(', ')}] DEVEM aparecer em TODOS os jogos` : ''}
+${dezenasExcluidas.length > 0 ? `9. PROIBIDO: As dezenas excluídas [${dezenasExcluidas.join(', ')}] NÃO PODEM aparecer em nenhum jogo` : ''}
 
 Você deve usar a função generate_palpites para retornar os jogos estruturados.`;
 
-    const userPrompt = `${contextoEstatistico}
+    const userPrompt = `${contextoEstatistico}${filtrosTexto}
 
 Com base nesta análise, gere ${quantidade} jogo(s) de Lotofácil com EXATAMENTE ${qtdDezenas} dezenas cada.
 
@@ -366,16 +389,30 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
     // Validar jogos
     const jogosValidados = [];
     for (const jogo of palpitesData.jogos) {
-      const dezenas = jogo.dezenas
+      let dezenas = jogo.dezenas
         .map((d: number) => Math.round(d))
         .filter((d: number) => d >= 1 && d <= 25);
       
+      // Remover dezenas excluídas
+      if (dezenasExcluidas.length > 0) {
+        dezenas = dezenas.filter((d: number) => !dezenasExcluidas.includes(d));
+      }
+      
+      // Garantir dezenas fixas presentes
+      if (dezenasFiexas.length > 0) {
+        for (const fixa of dezenasFiexas) {
+          if (!dezenas.includes(fixa)) {
+            dezenas.push(fixa);
+          }
+        }
+      }
+      
       const dezenasUnicas = [...new Set(dezenas)].slice(0, qtdDezenas);
       
-      // Completar com dezenas aleatórias se necessário
+      // Completar com dezenas aleatórias se necessário (evitando excluídas)
       while (dezenasUnicas.length < qtdDezenas) {
         const random = Math.floor(Math.random() * 25) + 1;
-        if (!dezenasUnicas.includes(random)) {
+        if (!dezenasUnicas.includes(random) && !dezenasExcluidas.includes(random)) {
           dezenasUnicas.push(random);
         }
       }

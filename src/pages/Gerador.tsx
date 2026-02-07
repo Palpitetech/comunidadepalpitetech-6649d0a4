@@ -3,14 +3,17 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import { QuantidadeSelector } from "@/components/gerador/QuantidadeSelector";
 import { DezenasSelector } from "@/components/gerador/DezenasSelector";
 import { PeriodoAnaliseSelector } from "@/components/gerador/PeriodoAnaliseSelector";
+import { FiltroDezenasSelector } from "@/components/gerador/FiltroDezenasSelector";
+import { PedidoEspecialInput } from "@/components/gerador/PedidoEspecialInput";
 import { ResultadosSheet } from "@/components/gerador/ResultadosSheet";
 import { useGerador } from "@/hooks/useGerador";
 import { useGeradorStatus } from "@/hooks/useGeradorStatus";
 import { supabase } from "@/integrations/supabase/client";
-import { Dices, Loader2, Clock, AlertCircle } from "lucide-react";
+import { Dices, Loader2, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function Gerador() {
   const [quantidade, setQuantidade] = useState(3);
@@ -18,6 +21,14 @@ export default function Gerador() {
   const [periodoAnalise, setPeriodoAnalise] = useState(50);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
+  
+  // Novos estados para filtros
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false);
+  const [dezenasFiexasOpcao, setDezenasFiexasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
+  const [dezenasFixas, setDezenasFixas] = useState<number[]>([]);
+  const [dezenasExcluidasOpcao, setDezenasExcluidasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
+  const [dezenasExcluidas, setDezenasExcluidas] = useState<number[]>([]);
+  const [pedidoEspecial, setPedidoEspecial] = useState("");
   
   const { isLoading, result, error, generatePalpites, reset } = useGerador();
   const { remaining_today, max_per_day, isLoading: statusLoading, refetch, isAdmin } = useGeradorStatus();
@@ -42,7 +53,14 @@ export default function Gerador() {
   }, []);
 
   const handleGenerate = () => {
-    generatePalpites(quantidade, qtdDezenas, periodoAnalise);
+    // Preparar filtros
+    const filtros = {
+      dezenasFiexas: dezenasFiexasOpcao === "sim" ? dezenasFixas : [],
+      dezenasExcluidas: dezenasExcluidasOpcao === "sim" ? dezenasExcluidas : [],
+      pedidoEspecial: pedidoEspecial.trim() || undefined,
+    };
+    
+    generatePalpites(quantidade, qtdDezenas, periodoAnalise, filtros);
   };
 
   // Abrir sheet quando resultado chegar
@@ -58,7 +76,17 @@ export default function Gerador() {
     setQuantidade(3);
     setQtdDezenas(15);
     setPeriodoAnalise(50);
+    setDezenasFiexasOpcao("padrao");
+    setDezenasFixas([]);
+    setDezenasExcluidasOpcao("padrao");
+    setDezenasExcluidas([]);
+    setPedidoEspecial("");
   };
+
+  const temFiltrosAtivos = 
+    dezenasFiexasOpcao !== "padrao" || 
+    dezenasExcluidasOpcao !== "padrao" || 
+    pedidoEspecial.trim().length > 0;
 
   return (
     <MainLayout>
@@ -98,6 +126,65 @@ export default function Gerador() {
               onChange={setPeriodoAnalise}
               disabled={isLoading || !canGenerate}
             />
+
+            <Separator />
+
+            {/* Botão para abrir/fechar filtros avançados */}
+            <button
+              type="button"
+              onClick={() => setFiltrosAbertos(!filtrosAbertos)}
+              className="w-full flex items-center justify-between py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                Filtros Avançados
+                {temFiltrosAtivos && (
+                  <span className="px-1.5 py-0.5 text-[10px] bg-primary/10 text-primary rounded-full">
+                    Ativos
+                  </span>
+                )}
+              </span>
+              {filtrosAbertos ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </button>
+
+            {/* Filtros Avançados */}
+            {filtrosAbertos && (
+              <div className="space-y-6 pt-2">
+                {/* Dezenas Fixas */}
+                <FiltroDezenasSelector
+                  label="Dezenas Fixas"
+                  description="Forçar dezenas específicas em todos os jogos"
+                  value={dezenasFiexasOpcao}
+                  onChange={setDezenasFiexasOpcao}
+                  dezenasSelecionadas={dezenasFixas}
+                  onDezenasChange={setDezenasFixas}
+                  disabled={isLoading || !canGenerate}
+                  tipo="fixas"
+                />
+
+                {/* Dezenas Excluídas */}
+                <FiltroDezenasSelector
+                  label="Dezenas Excluídas"
+                  description="Evitar dezenas específicas nos jogos"
+                  value={dezenasExcluidasOpcao}
+                  onChange={setDezenasExcluidasOpcao}
+                  dezenasSelecionadas={dezenasExcluidas}
+                  onDezenasChange={setDezenasExcluidas}
+                  disabled={isLoading || !canGenerate}
+                  tipo="excluidas"
+                />
+
+                {/* Pedido Especial */}
+                <PedidoEspecialInput
+                  value={pedidoEspecial}
+                  onChange={setPedidoEspecial}
+                  disabled={isLoading || !canGenerate}
+                />
+              </div>
+            )}
 
             {/* Erro */}
             {error && (
@@ -175,6 +262,7 @@ export default function Gerador() {
             onClearAll={handleClearAll}
             estrategia={result.estrategia}
             periodoAnalise={periodoAnalise}
+            dezenasFixes={dezenasFiexasOpcao === "sim" ? dezenasFixas : undefined}
           />
         )}
       </div>
