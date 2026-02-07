@@ -274,6 +274,19 @@ export function PastaSheet({
     }
   };
 
+  const handleExcluirTodos = async () => {
+    if (palpites.length === 0) return;
+    
+    const ids = palpites.map(p => p.id);
+    const success = await excluirVarios(ids);
+    if (success) {
+      setPalpites([]);
+      onPalpitesChange([]);
+      setSelected(new Set());
+      onOpenChange(false);
+    }
+  };
+
   const handleDeleteSingle = async (id: string) => {
     const success = await excluirPalpite(id);
     if (success) {
@@ -436,6 +449,13 @@ export function PastaSheet({
                 >
                   <Trash2 className="h-4 w-4" />
                   Excluir Selecionados ({selected.size})
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={handleExcluirTodos}
+                  className="gap-2 text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Excluir Todos ({palpites.length})
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
