@@ -13,6 +13,7 @@ interface GuideData {
   especialidade: string;
   cargo: string;
   can_respond_to_bot_posts: boolean;
+  can_reply_own_post_comments: boolean;
   perfis: { nome: string | null } | { nome: string | null }[] | null;
 }
 
@@ -98,33 +99,66 @@ serve(async (req) => {
       .single();
     
     const postIsFromBot = postAuthorProfile?.is_bot === true;
+    const postAuthorId = postData?.user_id;
     
-    // 4. Buscar guias ativos com filtro condicional
+    // 4. Buscar guias ativos - lógica de filtro baseada no tipo de post
+    // Cenário A: Post é do próprio bot → usar can_reply_own_post_comments
+    // Cenário B: Post é de outro bot → usar can_respond_to_bot_posts  
+    // Cenário C: Post é de humano → usar auto_reply_enabled
+    
     let guideQuery = supabaseAdmin
       .from("guide_personas")
-      .select("id, perfil_id, system_prompt, especialidade, cargo, can_respond_to_bot_posts, perfis(nome)")
-      .eq("ativo", true)
-      .eq("auto_reply_enabled", true);
+      .select("id, perfil_id, system_prompt, especialidade, cargo, can_respond_to_bot_posts, can_reply_own_post_comments, perfis(nome)")
+      .eq("ativo", true);
     
-    // Se o post é de bot, filtrar apenas guias que podem responder a posts de bots
-    if (postIsFromBot) {
-      guideQuery = guideQuery.eq("can_respond_to_bot_posts", true);
+    const { data: allGuides, error: guidesError } = await guideQuery;
+    
+    if (guidesError || !allGuides || allGuides.length === 0) {
+      console.log("Nenhum guia ativo encontrado");
+      return new Response(
+        JSON.stringify({ skipped: true, reason: "no_guides" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
     
-    const { data: guides, error: guidesError } = await guideQuery;
+    // Filtrar guias elegíveis baseado no cenário
+    let eligibleGuides: GuideData[] = [];
     
-    if (guidesError || !guides || guides.length === 0) {
+    if (postIsFromBot) {
+      // O post é de um bot - verificar dois cenários:
+      // 1. Se o bot que pode responder é o AUTOR do post → usa can_reply_own_post_comments
+      // 2. Se o bot é diferente do autor → usa can_respond_to_bot_posts + auto_reply_enabled
+      
+      for (const guide of allGuides as GuideData[]) {
+        if (guide.perfil_id === postAuthorId) {
+          // Este guia é o autor do post - verificar se pode responder seus próprios posts
+          if (guide.can_reply_own_post_comments) {
+            eligibleGuides.push(guide);
+          }
+        } else {
+          // Outro guia - verificar se pode responder posts de bots E tem auto_reply ativo
+          if (guide.can_respond_to_bot_posts && (guide as any).auto_reply_enabled) {
+            eligibleGuides.push(guide);
+          }
+        }
+      }
+    } else {
+      // Post é de humano - usar filtro padrão auto_reply_enabled
+      eligibleGuides = (allGuides as any[]).filter(g => g.auto_reply_enabled) as GuideData[];
+    }
+    
+    if (eligibleGuides.length === 0) {
       const reason = postIsFromBot ? "no_guides_for_bot_posts" : "no_guides";
       console.log(postIsFromBot 
         ? "Nenhum guia configurado para responder posts de bots" 
-        : "Nenhum guia ativo encontrado");
+        : "Nenhum guia com auto_reply ativo");
       return new Response(
         JSON.stringify({ skipped: true, reason }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
     
-    console.log(`Post é de bot: ${postIsFromBot}. Guias disponíveis: ${guides.length}`);
+    console.log(`Post é de bot: ${postIsFromBot}. Guias elegíveis: ${eligibleGuides.length}`);
     
     // 3. Sortear 1 guia aleatório
     // Opcional: dar peso maior para especialistas se o comentário tiver palavras-chave
@@ -140,7 +174,7 @@ serve(async (req) => {
     
     // Verificar se há match de palavras-chave
     let matchedGuide: GuideData | null = null;
-    for (const guide of guides as GuideData[]) {
+    for (const guide of eligibleGuides) {
       const keywords = keywordWeights[guide.especialidade.toLowerCase()] || [];
       if (keywords.some(kw => comentarioLower.includes(kw))) {
         // 70% de chance de escolher o especialista relevante
@@ -151,7 +185,10 @@ serve(async (req) => {
       }
     }
     
-    selectedGuide = matchedGuide || guides[Math.floor(Math.random() * guides.length)] as GuideData;
+    selectedGuide = matchedGuide || eligibleGuides[Math.floor(Math.random() * eligibleGuides.length)];
+    
+    // Verificar se é o autor do post respondendo
+    const isOwnPostReply = selectedGuide.perfil_id === postAuthorId;
     
     // Usar dados do post já buscados anteriormente
     const post = postData;

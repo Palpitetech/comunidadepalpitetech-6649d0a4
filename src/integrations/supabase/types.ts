@@ -282,6 +282,7 @@ export type Database = {
           badge_emoji: string | null
           can_comment_on_posts: boolean
           can_create_posts: boolean | null
+          can_reply_own_post_comments: boolean
           can_respond_to_bot_posts: boolean
           cargo: string
           chat_enabled: boolean
@@ -324,6 +325,7 @@ export type Database = {
           badge_emoji?: string | null
           can_comment_on_posts?: boolean
           can_create_posts?: boolean | null
+          can_reply_own_post_comments?: boolean
           can_respond_to_bot_posts?: boolean
           cargo: string
           chat_enabled?: boolean
@@ -366,6 +368,7 @@ export type Database = {
           badge_emoji?: string | null
           can_comment_on_posts?: boolean
           can_create_posts?: boolean | null
+          can_reply_own_post_comments?: boolean
           can_respond_to_bot_posts?: boolean
           cargo?: string
           chat_enabled?: boolean
