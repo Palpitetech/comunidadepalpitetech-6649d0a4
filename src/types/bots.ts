@@ -34,6 +34,8 @@ export interface GuidePersona {
   can_create_posts: boolean;
   total_posts: number;
   total_comments: number;
+  can_comment_on_posts: boolean;
+  max_comments_per_post: number;
   // Chat
   chat_enabled: boolean;
   chat_tags: string[];
