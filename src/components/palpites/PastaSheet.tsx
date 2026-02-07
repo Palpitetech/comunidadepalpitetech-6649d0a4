@@ -185,6 +185,18 @@ export function PastaSheet({
     return { contagem, total };
   }, [acertosPorPalpite]);
 
+  // Calcular resumo de estratégias
+  const resumoEstrategias = useMemo(() => {
+    const contagem: Record<string, number> = {};
+    palpites.forEach(palpite => {
+      if (palpite.estrategia) {
+        contagem[palpite.estrategia] = (contagem[palpite.estrategia] || 0) + 1;
+      }
+    });
+    const estrategias = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
+    return estrategias.length > 0 ? estrategias : null;
+  }, [palpites]);
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('pt-BR', {
       day: '2-digit',
@@ -513,6 +525,29 @@ export function PastaSheet({
               </div>
             </div>
           )}
+
+          {/* Resumo de Estratégias */}
+          {resumoEstrategias && resumoEstrategias.length > 0 && (
+            <div className="bg-muted/50 border border-border rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-base">🎯</span>
+                <span className="font-semibold text-foreground text-sm">
+                  {resumoEstrategias.length === 1 ? "Estratégia" : "Estratégias"} utilizadas
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {resumoEstrategias.map(([estrategia, count]) => (
+                  <span 
+                    key={estrategia}
+                    className="bg-primary/10 text-primary text-xs font-medium px-2.5 py-1 rounded-full"
+                  >
+                    {estrategia} ({count})
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Lista de Palpites */}
           <div className="grid gap-2">
             {palpitesPaginados.map((palpite, localIndex) => {
