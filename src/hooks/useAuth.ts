@@ -1,19 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
+import type { Profile } from "@/types/profile";
 
 interface AuthState {
   user: User | null;
   session: Session | null;
   loading: boolean;
-}
-
-interface Profile {
-  id: string;
-  nome: string | null;
-  celular: string | null;
-  is_bot: boolean;
-  avatar_url: string | null;
 }
 
 export function useAuth() {

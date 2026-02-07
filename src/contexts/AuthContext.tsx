@@ -1,14 +1,7 @@
 import React, { createContext, useContext } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import type { User, Session } from "@supabase/supabase-js";
-
-interface Profile {
-  id: string;
-  nome: string | null;
-  celular: string | null;
-  is_bot: boolean;
-  avatar_url: string | null;
-}
+import type { Profile } from "@/types/profile";
 
 interface AuthContextType {
   user: User | null;
