@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PalpiteCard } from "@/components/shared/PalpiteCard";
+import { EstrategiaCard, type EstrategiaData } from "@/components/gerador/EstrategiaCard";
 import { formatarDezena } from "@/lib/lotofacil";
 import { useToast } from "@/hooks/use-toast";
 import { usePalpitesSalvos, type PalpiteSalvo } from "@/hooks/usePalpitesSalvos";
@@ -656,22 +657,26 @@ export function PastaSheet({
           </div>
 
           <div className="px-3 py-3 space-y-3">
-            {/* Card da Estratégia */}
-            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
-              <div className="flex items-start gap-3">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <Dices className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-foreground text-base mb-1">
-                    {estrategiaSelecionada}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Estratégia utilizada para gerar {palpitesDaEstrategia.length} palpite{palpitesDaEstrategia.length !== 1 ? "s" : ""} nesta pasta.
-                  </p>
+            {/* Card da Estratégia Completa */}
+            {palpitesDaEstrategia[0]?.estrategia_data ? (
+              <EstrategiaCard estrategia={palpitesDaEstrategia[0].estrategia_data} />
+            ) : (
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <Dices className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-foreground text-base mb-1">
+                      {estrategiaSelecionada}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Estratégia utilizada para gerar {palpitesDaEstrategia.length} palpite{palpitesDaEstrategia.length !== 1 ? "s" : ""} nesta pasta.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Lista de Palpites */}
             <div className="space-y-2">
