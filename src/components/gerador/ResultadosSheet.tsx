@@ -186,7 +186,7 @@ export function ResultadosSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-full p-0 overflow-y-auto">
+      <SheetContent side="bottom" className="h-[calc(100%-4rem)] p-0 overflow-y-auto">
         {/* Header fixo no topo */}
         <div className="sticky top-0 z-10 bg-background border-b">
           <SheetHeader className="px-4 py-3 flex-row items-center justify-between">
