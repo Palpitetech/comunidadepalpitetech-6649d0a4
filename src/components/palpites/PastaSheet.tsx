@@ -655,20 +655,40 @@ export function PastaSheet({
             </SheetHeader>
           </div>
 
-          <div className="px-3 py-3 space-y-2">
-            {palpitesDaEstrategia.map((palpite, idx) => (
-              <PalpiteCard
-                key={palpite.id}
-                index={idx}
-                dezenas={palpite.dezenas}
-                ultimoConcursoDezenas={ultimoConcursoDezenas}
-                hideSelection
-                createdAt={palpite.created_at}
-                acertos={acertosPorPalpite[palpite.id] ?? (palpite.conferido ? palpite.acertos : undefined)}
-                onCopy={() => handleCopySingle(palpite)}
-                hideVerificar
-              />
-            ))}
+          <div className="px-3 py-3 space-y-3">
+            {/* Card da Estratégia */}
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <Dices className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-foreground text-base mb-1">
+                    {estrategiaSelecionada}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Estratégia utilizada para gerar {palpitesDaEstrategia.length} palpite{palpitesDaEstrategia.length !== 1 ? "s" : ""} nesta pasta.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Lista de Palpites */}
+            <div className="space-y-2">
+              {palpitesDaEstrategia.map((palpite, idx) => (
+                <PalpiteCard
+                  key={palpite.id}
+                  index={idx}
+                  dezenas={palpite.dezenas}
+                  ultimoConcursoDezenas={ultimoConcursoDezenas}
+                  hideSelection
+                  createdAt={palpite.created_at}
+                  acertos={acertosPorPalpite[palpite.id] ?? (palpite.conferido ? palpite.acertos : undefined)}
+                  onCopy={() => handleCopySingle(palpite)}
+                  hideVerificar
+                />
+              ))}
+            </div>
             <div className="h-8" />
           </div>
         </SheetContent>
