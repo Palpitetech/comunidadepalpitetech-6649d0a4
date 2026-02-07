@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,10 +13,12 @@ import { PedidoEspecialInput } from "@/components/gerador/PedidoEspecialInput";
 import { ResultadosSheet } from "@/components/gerador/ResultadosSheet";
 import { useGerador } from "@/hooks/useGerador";
 import { useGeradorStatus } from "@/hooks/useGeradorStatus";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { Dices, Loader2, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function Gerador() {
+  const isMobile = useIsMobile();
   const [quantidade, setQuantidade] = useState(3);
   const [qtdDezenas, setQtdDezenas] = useState(15);
   const [periodoAnalise, setPeriodoAnalise] = useState(50);
@@ -90,17 +93,22 @@ export default function Gerador() {
 
   return (
     <MainLayout>
+      {/* Header mobile minimalista */}
+      {isMobile && <PageHeader title="Gerador de Palpites" />}
+      
       <div className="container-senior py-6 space-y-6 max-w-md mx-auto">
-        {/* Header compacto */}
-        <div className="text-center space-y-1">
-          <div className="flex items-center justify-center gap-2">
-            <Dices className="h-7 w-7 text-primary" />
-            <h1 className="text-2xl font-bold">Gerador de Palpites</h1>
+        {/* Header desktop com ícone */}
+        {!isMobile && (
+          <div className="text-center space-y-1">
+            <div className="flex items-center justify-center gap-2">
+              <Dices className="h-7 w-7 text-primary" />
+              <h1 className="text-2xl font-bold">Gerador de Palpites</h1>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Palpites baseados em análise estatística
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Palpites baseados em análise estatística
-          </p>
-        </div>
+        )}
 
         {/* Card de Configuração */}
         <Card>
