@@ -292,7 +292,7 @@ export function ResultadosSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
         side="bottom" 
-        className="h-[calc(100%-4rem)] p-0 overflow-y-auto z-40"
+        className="h-[calc(100dvh-4rem-4rem)] p-0 overflow-y-auto z-40"
         onInteractOutside={(e) => e.preventDefault()}
         hideCloseButton
         hideOverlay

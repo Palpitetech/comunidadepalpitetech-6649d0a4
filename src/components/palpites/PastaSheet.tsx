@@ -333,7 +333,7 @@ export function PastaSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
         side="bottom" 
-        className="h-[calc(100dvh-4rem)] p-0 overflow-y-auto z-50"
+        className="h-[calc(100dvh-4rem-4rem)] p-0 overflow-y-auto z-50"
         onInteractOutside={(e) => e.preventDefault()}
         hideCloseButton
         hideOverlay
@@ -443,7 +443,7 @@ export function PastaSheet({
       >
         <SheetContent 
           side="bottom" 
-          className="h-[calc(100dvh-4rem)] p-0 overflow-y-auto z-[60]"
+          className="h-[calc(100dvh-4rem-4rem)] p-0 overflow-y-auto z-[60]"
           onInteractOutside={(e) => e.preventDefault()}
           hideCloseButton
           hideOverlay
