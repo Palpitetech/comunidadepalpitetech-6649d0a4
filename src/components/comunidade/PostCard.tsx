@@ -1,4 +1,4 @@
-import { Heart, MessageCircle } from "lucide-react";
+import { Heart, MessageCircle, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LoteriaBadge } from "./LoteriaBadge";
 import { GuideBadge } from "./GuideBadge";
@@ -42,38 +42,36 @@ export function PostCard({ post, onClick }: PostCardProps) {
   return (
     <article
       onClick={onClick}
-      className="bg-card border border-border rounded-xl p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+      className="bg-card border border-border rounded-xl p-3 cursor-pointer hover:bg-muted/30 transition-colors"
     >
-      {/* Header: Avatar + Nome + Badge */}
-      <div className="flex items-center gap-3 mb-3">
-        <Avatar className="h-9 w-9">
+      {/* Header compacto: Avatar + Nome + Badges + Tempo em linha */}
+      <div className="flex items-center gap-2 mb-2">
+        <Avatar className="h-7 w-7">
           <AvatarImage src={post.perfis?.avatar_url || undefined} />
-          <AvatarFallback className="text-xs bg-primary/10 text-primary">
+          <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
             {initials}
           </AvatarFallback>
         </Avatar>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium text-sm text-foreground truncate">
-              {authorName}
-            </span>
-            {post.perfis?.is_bot && <GuideBadge />}
-            {post.loteria_tag && <LoteriaBadge tag={post.loteria_tag} />}
-          </div>
-          <span className="text-xs text-muted-foreground">{timeAgo}</span>
-        </div>
+        <span className="font-medium text-sm text-foreground truncate max-w-[120px]">
+          {authorName}
+        </span>
+        {post.perfis?.is_bot && <GuideBadge />}
+        {post.loteria_tag && <LoteriaBadge tag={post.loteria_tag} />}
+        <span className="text-xs text-muted-foreground ml-auto whitespace-nowrap">
+          {timeAgo}
+        </span>
       </div>
 
       {/* Título */}
       {post.titulo && (
-        <h3 className="font-semibold text-base text-foreground mb-2 line-clamp-2">
+        <h3 className="font-semibold text-sm text-foreground mb-2 line-clamp-2">
           {post.titulo}
         </h3>
       )}
 
       {/* Thumbnail da Mídia */}
       {post.media_url && (
-        <div className="relative aspect-video rounded-lg overflow-hidden mb-3 bg-muted">
+        <div className="relative aspect-video rounded-lg overflow-hidden mb-2 bg-muted">
           {post.media_type === "video" ? (
             <video
               src={post.media_url}
@@ -92,20 +90,26 @@ export function PostCard({ post, onClick }: PostCardProps) {
 
       {/* Conteúdo resumido (se não tiver mídia) */}
       {!post.media_url && post.conteudo && (
-        <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
+        <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
           {post.conteudo}
         </p>
       )}
 
-      {/* Footer: Indicadores (não são botões) */}
-      <div className="flex items-center gap-4 text-muted-foreground">
-        <span className="flex items-center gap-1.5 text-sm">
-          <Heart className="h-4 w-4" />
-          {post.curtidas || 0}
-        </span>
-        <span className="flex items-center gap-1.5 text-sm">
-          <MessageCircle className="h-4 w-4" />
-          {post.respostas_count || 0}
+      {/* Footer: Indicadores + Botão Continue Lendo */}
+      <div className="flex items-center justify-between pt-1">
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <span className="flex items-center gap-1 text-xs">
+            <Heart className="h-3.5 w-3.5" />
+            {post.curtidas || 0}
+          </span>
+          <span className="flex items-center gap-1 text-xs">
+            <MessageCircle className="h-3.5 w-3.5" />
+            {post.respostas_count || 0}
+          </span>
+        </div>
+        <span className="flex items-center gap-1 text-xs text-primary font-medium">
+          Continue lendo
+          <ChevronRight className="h-3.5 w-3.5" />
         </span>
       </div>
     </article>
