@@ -282,6 +282,10 @@ export function ResultadosSheet({
     onEstrategiaClick: () => {}, // Não usado em resultado
     onCopiarSelecionados: handleCopiarSelecionados,
     onExcluirSelecionados: handleExcluirSelecionados,
+    onSalvarTodos: handleSalvarTodos,
+    onSalvarSelecionados: handleSalvarSelecionados,
+    hidePremios: true, // Não há verificação de prêmios no gerador
+    hideEstrategias: true, // Estratégia já está exibida acima
   };
 
   return (

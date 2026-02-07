@@ -21,7 +21,9 @@ import {
   ChevronDown,
   Check,
   Dices,
-  X
+  X,
+  Bookmark,
+  Save
 } from "lucide-react";
 import { formatarDezena } from "@/lib/lotofacil";
 import type { EstrategiaData } from "@/components/gerador/EstrategiaCard";
@@ -51,6 +53,10 @@ export interface PalpitesToolbarProps<T extends PalpiteBase> {
   onExcluirTodos?: () => void;
   onVerificarTodos?: (concurso: ConcursoOption, acertosPorPalpite: Record<string, number>) => void;
   onEstrategiaClick?: (estrategia: string) => void;
+  /** Salvar todos os palpites */
+  onSalvarTodos?: () => void;
+  /** Salvar palpites selecionados */
+  onSalvarSelecionados?: () => void;
   /** Esconder botão de excluir */
   hideExcluir?: boolean;
   /** Esconder verificação de prêmios */
@@ -69,6 +75,8 @@ export function PalpitesToolbar<T extends PalpiteBase>({
   onExcluirTodos,
   onVerificarTodos,
   onEstrategiaClick,
+  onSalvarTodos,
+  onSalvarSelecionados,
   hideExcluir = false,
   hidePremios = false,
   hideEstrategias = false,
@@ -298,6 +306,30 @@ export function PalpitesToolbar<T extends PalpiteBase>({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="bg-popover z-50 w-56">
+            {/* Ações de Salvar */}
+            {(onSalvarTodos || onSalvarSelecionados) && (
+              <>
+                {onSalvarTodos && (
+                  <DropdownMenuItem onClick={onSalvarTodos} className="gap-2">
+                    <Bookmark className="h-4 w-4" />
+                    Salvar Todos ({palpites.length})
+                  </DropdownMenuItem>
+                )}
+                {onSalvarSelecionados && (
+                  <DropdownMenuItem 
+                    onClick={onSalvarSelecionados} 
+                    disabled={selected.size === 0}
+                    className="gap-2"
+                  >
+                    <Save className="h-4 w-4" />
+                    Salvar Selecionados ({selected.size})
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+              </>
+            )}
+            
+            {/* Ações de Copiar */}
             <DropdownMenuItem onClick={onCopiarTodos} className="gap-2">
               <Copy className="h-4 w-4" />
               Copiar Todos ({palpites.length})
@@ -310,6 +342,8 @@ export function PalpitesToolbar<T extends PalpiteBase>({
               <CopyCheck className="h-4 w-4" />
               Copiar Selecionados ({selected.size})
             </DropdownMenuItem>
+            
+            {/* Ações de Excluir */}
             {!hideExcluir && (
               <>
                 <DropdownMenuSeparator />
