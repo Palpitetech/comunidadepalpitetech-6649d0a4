@@ -1,3 +1,10 @@
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 interface DezenasSelectorProps {
@@ -13,30 +20,39 @@ export function DezenasSelector({
   onChange,
   disabled = false,
 }: DezenasSelectorProps) {
+  const handleSelectChange = (val: string) => {
+    onChange(parseInt(val, 10));
+  };
+
   return (
     <div className="space-y-3">
       <div className="text-center">
         <p className="text-sm font-medium text-foreground mb-1">Dezenas por palpite</p>
         <p className="text-xs text-muted-foreground">Quantas dezenas em cada jogo?</p>
       </div>
-      <div className="flex flex-wrap justify-center gap-2">
-        {DEZENAS_OPTIONS.map((num) => (
-          <button
-            key={num}
-            onClick={() => onChange(num)}
-            disabled={disabled}
-            className={cn(
-              "w-12 h-11 rounded-lg font-semibold text-lg transition-all",
-              "border-2 focus:outline-none focus:ring-2 focus:ring-primary/50",
-              value === num
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-card border-border hover:border-primary/50 hover:bg-accent",
-              disabled && "opacity-50 cursor-not-allowed"
-            )}
-          >
-            {num}
-          </button>
-        ))}
+
+      <div className="flex justify-center">
+        <Select
+          value={value.toString()}
+          onValueChange={handleSelectChange}
+          disabled={disabled}
+        >
+          <SelectTrigger className={cn(
+            "w-48 h-12 text-lg font-semibold justify-center",
+            disabled && "opacity-50 cursor-not-allowed"
+          )}>
+            <SelectValue placeholder="Selecione">
+              {value} dezena{value > 1 ? "s" : ""}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="bg-popover z-50">
+            {DEZENAS_OPTIONS.map((num) => (
+              <SelectItem key={num} value={num.toString()} className="text-base">
+                {num} dezena{num > 1 ? "s" : ""}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );
