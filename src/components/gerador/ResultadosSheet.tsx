@@ -1,33 +1,15 @@
 import { useState, useMemo, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { PalpiteCard } from "@/components/shared/PalpiteCard";
 import { EstrategiaCard, type EstrategiaData } from "./EstrategiaCard";
+import { PalpitesToolbar } from "@/components/palpites/PalpitesToolbar";
 import { NovaPastaDialog } from "@/components/palpites/NovaPastaDialog";
 import { SelecionarPastaDialog } from "@/components/palpites/SelecionarPastaDialog";
 import { formatarDezena } from "@/lib/lotofacil";
 import { useToast } from "@/hooks/use-toast";
 import { usePalpitesSalvos, type PalpitePasta } from "@/hooks/usePalpitesSalvos";
-import { 
-  Copy, 
-  CopyCheck, 
-  Trash2, 
-  ChevronLeft, 
-  ChevronRight,
-  CheckSquare,
-  Square,
-  MoreHorizontal,
-  Save,
-  Bookmark,
-  ArrowLeft
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
 
 interface JogoGerado {
   dezenas: number[];
@@ -59,7 +41,7 @@ export function ResultadosSheet({
   const { toast } = useToast();
   const { salvarPalpites, buscarPastas, criarPasta, isLoading: isSaving } = usePalpitesSalvos();
   const [jogos, setJogos] = useState<JogoGerado[]>(jogosIniciais);
-  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(0);
   
   // Estados para dialogs de pasta
@@ -89,26 +71,37 @@ export function ResultadosSheet({
     return jogos.slice(start, start + ITEMS_PER_PAGE);
   }, [jogos, currentPage]);
 
+  // Converter jogos para formato de palpite para PalpitesToolbar
+  const palpitesParaToolbar = jogos.map((jogo, i) => ({
+    id: `gerador-${i}`,
+    dezenas: jogo.dezenas,
+    qtd_dezenas: jogo.dezenas.length,
+    conferido: false,
+    acertos: null as number | null,
+  }));
+
   const handleSelectChange = (globalIndex: number, checked: boolean) => {
     const newSelected = new Set(selected);
+    const id = `gerador-${globalIndex}`;
     if (checked) {
-      newSelected.add(globalIndex);
+      newSelected.add(id);
     } else {
-      newSelected.delete(globalIndex);
+      newSelected.delete(id);
     }
     setSelected(newSelected);
   };
 
-  const handleSelectAll = () => {
-    if (selected.size === jogos.length) {
-      setSelected(new Set());
-    } else {
-      setSelected(new Set(jogos.map((_, i) => i)));
-    }
-  };
-
   const formatJogoParaCopia = (jogo: JogoGerado, index: number) => {
     return `Palpite ${index + 1}: ${jogo.dezenas.map(formatarDezena).join(" ")}`;
+  };
+
+  const handleCopiarTodos = async () => {
+    const texto = jogos.map((jogo, i) => formatJogoParaCopia(jogo, i)).join("\n");
+    await navigator.clipboard.writeText(texto);
+    toast({
+      title: "Todos copiados! 📋",
+      description: `${jogos.length} palpite(s) copiado(s) para a área de transferência.`,
+    });
   };
 
   const handleCopiarSelecionados = async () => {
@@ -121,12 +114,12 @@ export function ResultadosSheet({
       return;
     }
 
-    const texto = jogos
-      .filter((_, i) => selected.has(i))
-      .map((jogo, i) => {
-        const originalIndex = Array.from(selected).sort((a, b) => a - b)[i];
-        return formatJogoParaCopia(jogo, originalIndex);
-      })
+    const indices = Array.from(selected)
+      .map(id => parseInt(id.replace('gerador-', '')))
+      .sort((a, b) => a - b);
+
+    const texto = indices
+      .map((i) => formatJogoParaCopia(jogos[i], i))
       .join("\n");
 
     await navigator.clipboard.writeText(texto);
@@ -136,23 +129,8 @@ export function ResultadosSheet({
     });
   };
 
-  const handleCopiarTodos = async () => {
-    const texto = jogos.map((jogo, i) => formatJogoParaCopia(jogo, i)).join("\n");
-    await navigator.clipboard.writeText(texto);
-    toast({
-      title: "Todos copiados! 📋",
-      description: `${jogos.length} palpite(s) copiado(s) para a área de transferência.`,
-    });
-  };
-
-  // Criar texto resumido da estratégia para salvar
-  const getEstrategiaTexto = () => {
-    if (!estrategia) return undefined;
-    return estrategia.ferramentas.slice(0, 2).join(" + ");
-  };
-
-  // Fluxo de salvar com seleção de pasta
-  const handleIniciarSalvarSelecionados = () => {
+  // Funções para salvar
+  const handleSalvarSelecionados = () => {
     if (selected.size === 0) {
       toast({
         title: "Nenhum palpite selecionado",
@@ -165,15 +143,27 @@ export function ResultadosSheet({
     setSelecionarPastaOpen(true);
   };
 
-  const handleIniciarSalvarTodos = () => {
+  const handleSalvarTodos = () => {
     setSalvarTodosMode(true);
     setSelecionarPastaOpen(true);
   };
 
   const handleSelecionarPasta = async (pastaId: string | null) => {
-    const palpitesParaSalvar = salvarTodosMode 
-      ? jogos 
-      : jogos.filter((_, i) => selected.has(i));
+    let palpitesParaSalvar: JogoGerado[];
+    
+    if (salvarTodosMode) {
+      palpitesParaSalvar = jogos;
+    } else {
+      const indices = Array.from(selected)
+        .map(id => parseInt(id.replace('gerador-', '')))
+        .sort((a, b) => a - b);
+      palpitesParaSalvar = indices.map(i => jogos[i]);
+    }
+    
+    const getEstrategiaTexto = () => {
+      if (!estrategia) return undefined;
+      return estrategia.ferramentas.slice(0, 2).join(" + ");
+    };
     
     await salvarPalpites(palpitesParaSalvar, periodoAnalise, pastaId, getEstrategiaTexto(), estrategia);
     setSelecionarPastaOpen(false);
@@ -188,16 +178,29 @@ export function ResultadosSheet({
     const novaPasta = await criarPasta(nome, cor);
     if (novaPasta) {
       setPastas(prev => [...prev, novaPasta]);
-      // Salvar na nova pasta
-      const palpitesParaSalvar = salvarTodosMode 
-        ? jogos 
-        : jogos.filter((_, i) => selected.has(i));
+      
+      let palpitesParaSalvar: JogoGerado[];
+      
+      if (salvarTodosMode) {
+        palpitesParaSalvar = jogos;
+      } else {
+        const indices = Array.from(selected)
+          .map(id => parseInt(id.replace('gerador-', '')))
+          .sort((a, b) => a - b);
+        palpitesParaSalvar = indices.map(i => jogos[i]);
+      }
+      
+      const getEstrategiaTexto = () => {
+        if (!estrategia) return undefined;
+        return estrategia.ferramentas.slice(0, 2).join(" + ");
+      };
       
       await salvarPalpites(palpitesParaSalvar, periodoAnalise, novaPasta.id, getEstrategiaTexto(), estrategia);
     }
     setNovaPastaOpen(false);
   };
 
+  // Funções para excluir
   const handleExcluirSelecionados = () => {
     if (selected.size === 0) {
       toast({
@@ -208,11 +211,14 @@ export function ResultadosSheet({
       return;
     }
 
-    const novosJogos = jogos.filter((_, i) => !selected.has(i));
+    const indices = new Set(
+      Array.from(selected).map(id => parseInt(id.replace('gerador-', '')))
+    );
+    
+    const novosJogos = jogos.filter((_, i) => !indices.has(i));
     setJogos(novosJogos);
     setSelected(new Set());
     
-    // Ajustar página se necessário
     const newTotalPages = Math.ceil(novosJogos.length / ITEMS_PER_PAGE);
     if (currentPage >= newTotalPages && newTotalPages > 0) {
       setCurrentPage(newTotalPages - 1);
@@ -223,7 +229,6 @@ export function ResultadosSheet({
       description: `${selected.size} palpite(s) removido(s).`,
     });
 
-    // Se não sobrou nenhum jogo, fechar o sheet
     if (novosJogos.length === 0) {
       onClearAll();
       onOpenChange(false);
@@ -240,27 +245,44 @@ export function ResultadosSheet({
     setJogos(novosJogos);
     
     // Atualizar seleção removendo índices inválidos
-    const newSelected = new Set<number>();
-    selected.forEach((i) => {
-      if (i < index) newSelected.add(i);
-      else if (i > index) newSelected.add(i - 1);
+    const newSelected = new Set<string>();
+    selected.forEach((id) => {
+      const i = parseInt(id.replace('gerador-', ''));
+      if (i < index) newSelected.add(id);
+      else if (i > index) newSelected.add(`gerador-${i - 1}`);
     });
     setSelected(newSelected);
     
-    // Ajustar página se necessário
     const newTotalPages = Math.ceil(novosJogos.length / ITEMS_PER_PAGE);
     if (currentPage >= newTotalPages && newTotalPages > 0) {
       setCurrentPage(newTotalPages - 1);
     }
 
-    // Se não sobrou nenhum jogo, fechar o sheet
     if (novosJogos.length === 0) {
       onClearAll();
       onOpenChange(false);
     }
   };
 
-  const allSelected = selected.size === jogos.length && jogos.length > 0;
+  const handleSelectAll = () => {
+    if (selected.size === jogos.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(jogos.map((_, i) => `gerador-${i}`)));
+    }
+  };
+
+  const toolbarProps = {
+    palpites: palpitesParaToolbar,
+    selected,
+    onSelectAll: handleSelectAll,
+    onCopiarTodos: handleCopiarTodos,
+    onExcluirTodos: handleExcluirTodos,
+    onVerificarTodos: () => {}, // Não usado em resultado
+    onEstrategiaClick: () => {}, // Não usado em resultado
+    onCopiarSelecionados: handleCopiarSelecionados,
+    onExcluirSelecionados: handleExcluirSelecionados,
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -291,100 +313,15 @@ export function ResultadosSheet({
           </SheetHeader>
         </div>
 
-        {/* Conteúdo com scroll da página toda */}
+        {/* Conteúdo com scroll */}
         <div className="px-3 py-3 space-y-3">
-          {/* Estratégia de Geração - Primeiro */}
+          {/* Estratégia de Geração */}
           {estrategia && (
             <EstrategiaCard estrategia={estrategia} />
           )}
 
-          {/* Barra de seleção e ações - Entre estratégia e palpites */}
-          <div className="flex items-center justify-between py-2">
-            <Button
-              variant={allSelected ? "default" : "outline"}
-              size="sm"
-              onClick={handleSelectAll}
-              className="gap-2 text-xs h-8"
-            >
-              {allSelected ? (
-                <>
-                  <CheckSquare className="h-4 w-4" />
-                  Todos selecionados
-                </>
-              ) : (
-                <>
-                  <Square className="h-4 w-4" />
-                  Selecionar todos
-                </>
-              )}
-            </Button>
-            
-            <div className="flex items-center gap-2">
-              {selected.size > 0 && (
-                <span className="text-xs text-muted-foreground">
-                  {selected.size} de {jogos.length}
-                </span>
-              )}
-              
-              {/* Dropdown de ações */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 gap-2" disabled={isSaving}>
-                    <MoreHorizontal className="h-4 w-4" />
-                    Ações
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-popover z-50 w-56">
-                  {/* Ações de Salvar */}
-                  <DropdownMenuItem onClick={handleIniciarSalvarTodos} disabled={isSaving} className="gap-2">
-                    <Bookmark className="h-4 w-4" />
-                    Salvar Todos ({jogos.length})
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={handleIniciarSalvarSelecionados} 
-                    disabled={selected.size === 0 || isSaving}
-                    className="gap-2"
-                  >
-                    <Save className="h-4 w-4" />
-                    Salvar Selecionados ({selected.size})
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  
-                  {/* Ações de Copiar */}
-                  <DropdownMenuItem onClick={handleCopiarTodos} className="gap-2">
-                    <Copy className="h-4 w-4" />
-                    Copiar Todos ({jogos.length})
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={handleCopiarSelecionados} 
-                    disabled={selected.size === 0}
-                    className="gap-2"
-                  >
-                    <CopyCheck className="h-4 w-4" />
-                    Copiar Selecionados ({selected.size})
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  
-                  {/* Ações de Excluir */}
-                  <DropdownMenuItem 
-                    onClick={handleExcluirSelecionados} 
-                    disabled={selected.size === 0}
-                    className="gap-2 text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Excluir Selecionados ({selected.size})
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={handleExcluirTodos}
-                    className="gap-2 text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Limpar Tudo
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
+          {/* Toolbar unificada */}
+          <PalpitesToolbar {...toolbarProps} />
 
           {/* Lista de Palpites */}
           <div className="grid gap-2">
@@ -397,7 +334,7 @@ export function ResultadosSheet({
                   dezenas={jogo.dezenas}
                   ultimoConcursoDezenas={ultimoConcursoDezenas}
                   dezenasFixes={dezenasFixes}
-                  isSelected={selected.has(globalIndex)}
+                  isSelected={selected.has(`gerador-${globalIndex}`)}
                   onSelectChange={(checked) => handleSelectChange(globalIndex, checked)}
                   onDelete={() => handleDeleteSingle(globalIndex)}
                 />
