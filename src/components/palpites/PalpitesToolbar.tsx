@@ -37,6 +37,8 @@ interface PalpiteBase {
   dezenas: number[];
   estrategia?: string | null;
   estrategia_data?: EstrategiaData | null;
+  qtd_dezenas?: number;
+  periodo_analise?: number | null;
 }
 
 export interface PalpitesToolbarProps<T extends PalpiteBase> {
@@ -83,16 +85,36 @@ export function PalpitesToolbar<T extends PalpiteBase>({
 
   const allSelected = selected.size === palpites.length && palpites.length > 0;
 
-  // Calcular resumo de estratégias
+  // Calcular resumo de estratégias com dados completos
   const resumoEstrategias = useMemo(() => {
     if (hideEstrategias) return null;
-    const contagem: Record<string, number> = {};
+    const estrategiasMap: Record<string, { 
+      count: number; 
+      data: EstrategiaData | null;
+      periodo?: number | null;
+    }> = {};
+    
     palpites.forEach(palpite => {
       if (palpite.estrategia) {
-        contagem[palpite.estrategia] = (contagem[palpite.estrategia] || 0) + 1;
+        if (!estrategiasMap[palpite.estrategia]) {
+          estrategiasMap[palpite.estrategia] = {
+            count: 0,
+            data: palpite.estrategia_data || null,
+            periodo: palpite.periodo_analise,
+          };
+        }
+        estrategiasMap[palpite.estrategia].count++;
+        // Usar dados mais completos se disponíveis
+        if (palpite.estrategia_data && !estrategiasMap[palpite.estrategia].data) {
+          estrategiasMap[palpite.estrategia].data = palpite.estrategia_data;
+        }
       }
     });
-    const estrategias = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
+    
+    const estrategias = Object.entries(estrategiasMap)
+      .map(([nome, info]) => ({ nome, ...info }))
+      .sort((a, b) => b.count - a.count);
+    
     return estrategias.length > 0 ? estrategias : null;
   }, [palpites, hideEstrategias]);
 
@@ -319,20 +341,44 @@ export function PalpitesToolbar<T extends PalpiteBase>({
                 <Dices className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-popover z-50 w-56">
+            <DropdownMenuContent align="end" className="bg-popover z-50 w-72">
               <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-b mb-1">
                 Estratégias utilizadas
               </div>
-              {resumoEstrategias.map(([estrategia, count]) => (
+              {resumoEstrategias.map((estrategia) => (
                 <DropdownMenuItem 
-                  key={estrategia} 
-                  className="gap-2 cursor-pointer"
-                  onClick={() => onEstrategiaClick?.(estrategia)}
+                  key={estrategia.nome} 
+                  className="gap-2 cursor-pointer flex-col items-start py-2"
+                  onClick={() => onEstrategiaClick?.(estrategia.nome)}
                 >
-                  <span className="flex-1 truncate">{estrategia}</span>
-                  <span className="text-xs bg-primary/10 text-primary font-medium px-2 py-0.5 rounded-full">
-                    {count}
-                  </span>
+                  <div className="flex items-center justify-between w-full">
+                    <span className="font-medium truncate flex-1">{estrategia.nome}</span>
+                    <span className="text-xs bg-primary/10 text-primary font-medium px-2 py-0.5 rounded-full ml-2">
+                      {estrategia.count}
+                    </span>
+                  </div>
+                  {estrategia.data && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {estrategia.data.ferramentas.slice(0, 3).map((ferramenta, idx) => (
+                        <span 
+                          key={idx}
+                          className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded"
+                        >
+                          {ferramenta}
+                        </span>
+                      ))}
+                      {estrategia.data.ferramentas.length > 3 && (
+                        <span className="text-[10px] text-muted-foreground">
+                          +{estrategia.data.ferramentas.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {estrategia.periodo && (
+                    <span className="text-[10px] text-muted-foreground mt-0.5">
+                      Análise: {estrategia.periodo} concursos
+                    </span>
+                  )}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
