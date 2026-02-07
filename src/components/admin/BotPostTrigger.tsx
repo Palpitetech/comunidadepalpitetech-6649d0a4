@@ -15,7 +15,7 @@ interface BotPostTriggerProps {
   onSuccess: () => void;
 }
 
-type PostType = "pre_sorteio" | "pos_sorteio" | "geral" | "resultado_oficial" | "estrategia" | "palpite_gratis";
+type PostType = "pre_sorteio" | "pos_sorteio" | "geral" | "resultado_oficial" | "estrategia" | "vendas";
 
 interface UltimoResultado {
   concurso_id: number;
@@ -53,8 +53,8 @@ export function BotPostTrigger({ bots, onSuccess }: BotPostTriggerProps) {
         return bots.filter(b => b.ativo && b.is_result_author);
       case "estrategia":
         return bots.filter(b => b.ativo && b.is_strategy_author);
-      case "palpite_gratis":
-        return bots.filter(b => b.ativo && b.is_free_tips_author);
+      case "vendas":
+        return bots.filter(b => b.ativo && (b.is_sales_author || b.is_system_sales_author));
       default:
         return activeBots;
     }
@@ -230,10 +230,10 @@ export function BotPostTrigger({ bots, onSuccess }: BotPostTriggerProps) {
                 📚 Dica de Estratégia
               </div>
             </SelectItem>
-            <SelectItem value="palpite_gratis">
+            <SelectItem value="vendas">
               <div className="flex items-center gap-2">
                 <Gift className="h-4 w-4 text-green-500" />
-                🎁 Palpite Grátis do Dia
+                💰 Conteúdo de Vendas
               </div>
             </SelectItem>
           </SelectContent>
@@ -248,9 +248,9 @@ export function BotPostTrigger({ bots, onSuccess }: BotPostTriggerProps) {
             📚 Ensina UMA técnica de análise sem dar palpites prontos
           </p>
         )}
-        {postType === "palpite_gratis" && (
+        {postType === "vendas" && (
           <p className="text-xs text-green-600">
-            🎁 Compartilha UM palpite grátis com explicação da estratégia
+            💰 Promove upsell ou conteúdo promocional do sistema
           </p>
         )}
       </div>

@@ -22,7 +22,8 @@ export function BotProfileTab({ bot, onUpdated }: BotProfileTabProps) {
     ativo: bot.ativo,
     is_result_author: bot.is_result_author,
     is_strategy_author: bot.is_strategy_author ?? false,
-    is_free_tips_author: bot.is_free_tips_author ?? false,
+    is_sales_author: bot.is_sales_author ?? false,
+    is_system_sales_author: bot.is_system_sales_author ?? false,
     can_create_posts: bot.can_create_posts,
   });
 
@@ -50,7 +51,8 @@ export function BotProfileTab({ bot, onUpdated }: BotProfileTabProps) {
           ativo: formData.ativo,
           is_result_author: formData.is_result_author,
           is_strategy_author: formData.is_strategy_author,
-          is_free_tips_author: formData.is_free_tips_author,
+          is_sales_author: formData.is_sales_author,
+          is_system_sales_author: formData.is_system_sales_author,
           can_create_posts: formData.can_create_posts,
         })
         .eq("id", bot.id);
@@ -142,13 +144,26 @@ export function BotProfileTab({ bot, onUpdated }: BotProfileTabProps) {
 
         <div className="flex items-center justify-between">
           <div>
-            <Label>Autor de Palpites Grátis</Label>
-            <p className="text-sm text-muted-foreground">Compartilha palpites gratuitos com explicação</p>
+            <Label>Autor de Vendas</Label>
+            <p className="text-sm text-muted-foreground">Promove upsell após o resultado (depende do resultado)</p>
           </div>
           <Switch
-            checked={formData.is_free_tips_author}
+            checked={formData.is_sales_author}
             onCheckedChange={(checked) =>
-              setFormData((prev) => ({ ...prev, is_free_tips_author: checked }))
+              setFormData((prev) => ({ ...prev, is_sales_author: checked }))
+            }
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <Label>Autor de Vendas do Sistema</Label>
+            <p className="text-sm text-muted-foreground">Promove às 18h (independente do resultado)</p>
+          </div>
+          <Switch
+            checked={formData.is_system_sales_author}
+            onCheckedChange={(checked) =>
+              setFormData((prev) => ({ ...prev, is_system_sales_author: checked }))
             }
           />
         </div>

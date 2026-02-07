@@ -167,9 +167,14 @@ export default function AdminBots() {
                                   📚 Estratégia
                                 </Badge>
                               )}
-                              {bot.is_free_tips_author && (
+                              {bot.is_sales_author && (
                                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-green-500/10 text-green-600">
-                                  🎁 Palpites
+                                  💰 Vendas
+                                </Badge>
+                              )}
+                              {bot.is_system_sales_author && (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-purple-500/10 text-purple-600">
+                                  🕕 Vendas 18h
                                 </Badge>
                               )}
                             </div>

@@ -64,9 +64,14 @@ export function BotDetailSheet({ bot, open, onOpenChange, onBotUpdated }: BotDet
                     📚 Estratégias
                   </Badge>
                 )}
-                {bot.is_free_tips_author && (
+                {bot.is_sales_author && (
                   <Badge className="bg-green-500/10 text-green-600 border-green-500/30">
-                    🎁 Palpites
+                    💰 Vendas
+                  </Badge>
+                )}
+                {bot.is_system_sales_author && (
+                  <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/30">
+                    🕕 Vendas 18h
                   </Badge>
                 )}
                 {!bot.perfis?.is_bot && (

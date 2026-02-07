@@ -159,7 +159,8 @@ serve(async (req) => {
         can_respond_to_bot_posts: false,
         can_reply_own_post_comments: false,
         is_strategy_author: false,
-        is_free_tips_author: false,
+        is_sales_author: false,
+        is_system_sales_author: false,
         // CTA override
         cta_override_enabled: false,
         cta_override_buttons: {},
