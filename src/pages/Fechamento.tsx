@@ -179,14 +179,25 @@ export default function Fechamento() {
         </div>
 
         {/* Estatísticas */}
-        <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-          <span>Ímpar: <strong className="text-foreground">{estatisticas.impares}</strong></span>
-          <span>Moldura: <strong className="text-foreground">{estatisticas.moldura}</strong></span>
-          <span>Múltiplo 3: <strong className="text-foreground">{estatisticas.multiplosDe3}</strong></span>
-          <span>Repetidas: <strong className="text-foreground">{estatisticas.repetidas}</strong></span>
-          <span>Total: <strong className={cn(
-            podeGerar ? "text-primary" : "text-foreground"
-          )}>{totalSelecionadas}/{tipoAtual.dezenas}</strong></span>
+        <div className="space-y-1 text-sm text-center">
+          {/* Linha 1: Indicadores */}
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-muted-foreground">
+            <span>Ímpar: <strong className="text-foreground">{estatisticas.impares}</strong></span>
+            <span>Moldura: <strong className="text-foreground">{estatisticas.moldura}</strong></span>
+            <span>M3: <strong className="text-foreground">{estatisticas.multiplosDe3}</strong></span>
+            <span>Repetidas: <strong className="text-foreground">{estatisticas.repetidas}</strong></span>
+          </div>
+          
+          {/* Linha 2: Contadores */}
+          <div className="flex flex-wrap justify-center gap-x-3 text-muted-foreground">
+            <span>Total: <strong className={cn(
+              podeGerar ? "text-primary" : "text-foreground"
+            )}>{totalSelecionadas}/{tipoAtual.dezenas}</strong></span>
+            <span>/</span>
+            <span>Fixas: <strong className="text-foreground">{fixas.length}</strong></span>
+            <span>/</span>
+            <span>Selecionadas: <strong className="text-foreground">{selecionadas.length}</strong></span>
+          </div>
         </div>
 
         {/* Botão Gerar */}
