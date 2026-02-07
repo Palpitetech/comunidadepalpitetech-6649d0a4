@@ -5,15 +5,24 @@ import { MobileBottomNav } from "./MobileBottomNav";
 import { MobileMenuSheet } from "./MobileMenuSheet";
 import { PageHeader } from "./PageHeader";
 
+interface BreadcrumbItem {
+  label: string;
+  onClick?: () => void;
+}
+
 interface MainLayoutProps {
   children: ReactNode;
   /** Título da página - quando fornecido, renderiza o PageHeader no mobile automaticamente */
   pageTitle?: string;
+  /** Breadcrumb trail antes do título */
+  breadcrumb?: BreadcrumbItem[];
   /** Callback customizado para o botão voltar */
   onBack?: () => void;
+  /** Conteúdo à direita do header (mobile) */
+  headerRightContent?: ReactNode;
 }
 
-export function MainLayout({ children, pageTitle, onBack }: MainLayoutProps) {
+export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRightContent }: MainLayoutProps) {
   const isMobile = useIsMobile();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -21,7 +30,14 @@ export function MainLayout({ children, pageTitle, onBack }: MainLayoutProps) {
     <div className="min-h-screen flex flex-col bg-background">
       {/* Desktop: Header completo / Mobile: PageHeader se pageTitle fornecido */}
       {!isMobile && <DesktopHeader />}
-      {isMobile && pageTitle && <PageHeader title={pageTitle} onBack={onBack} />}
+      {isMobile && pageTitle && (
+        <PageHeader 
+          title={pageTitle} 
+          breadcrumb={breadcrumb}
+          onBack={onBack} 
+          rightContent={headerRightContent}
+        />
+      )}
 
       {/* Main Content */}
       <main className={`flex-1 ${isMobile ? 'pb-20' : ''}`}>
