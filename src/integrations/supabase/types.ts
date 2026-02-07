@@ -587,6 +587,33 @@ export type Database = {
         }
         Relationships: []
       }
+      palpites_pastas: {
+        Row: {
+          cor: string | null
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cor?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cor?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       palpites_salvos: {
         Row: {
           acertos: number | null
@@ -594,9 +621,11 @@ export type Database = {
           conferido: boolean
           created_at: string
           dezenas: number[]
+          estrategia: string | null
           id: string
           loteria: string | null
           nome: string | null
+          pasta_id: string | null
           periodo_analise: number | null
           qtd_dezenas: number
           user_id: string
@@ -607,9 +636,11 @@ export type Database = {
           conferido?: boolean
           created_at?: string
           dezenas: number[]
+          estrategia?: string | null
           id?: string
           loteria?: string | null
           nome?: string | null
+          pasta_id?: string | null
           periodo_analise?: number | null
           qtd_dezenas?: number
           user_id: string
@@ -620,14 +651,24 @@ export type Database = {
           conferido?: boolean
           created_at?: string
           dezenas?: number[]
+          estrategia?: string | null
           id?: string
           loteria?: string | null
           nome?: string | null
+          pasta_id?: string | null
           periodo_analise?: number | null
           qtd_dezenas?: number
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "palpites_salvos_pasta_id_fkey"
+            columns: ["pasta_id"]
+            isOneToOne: false
+            referencedRelation: "palpites_pastas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       perfis: {
         Row: {
