@@ -33,9 +33,41 @@ serve(async (req) => {
     const currentTime = `${currentHour}:${currentMinute}`;
     const currentDay = brasiliaTime.getDay(); // 0=Dom, 1=Seg...
 
+    // Data de hoje no fuso de Brasília (para verificar posts do dia)
+    const todayStart = new Date(brasiliaTime);
+    todayStart.setHours(0, 0, 0, 0);
+    const todayStartISO = new Date(todayStart.getTime() - (brasiliaOffset * 60 * 1000)).toISOString();
+
     console.log(`[process-scheduled-posts] Verificando: ${currentTime}, dia ${currentDay}`);
 
-    // Buscar bots ativos que podem criar posts
+    // 1. Verificar se o Autor de Resultados já postou hoje
+    const { data: resultAuthor } = await supabaseAdmin
+      .from("guide_personas")
+      .select("perfil_id, perfis(nome)")
+      .eq("is_result_author", true)
+      .eq("ativo", true)
+      .single();
+
+    let resultAuthorPostedToday = false;
+    
+    if (resultAuthor) {
+      const { data: todayResultPost } = await supabaseAdmin
+        .from("postagens")
+        .select("id")
+        .eq("user_id", resultAuthor.perfil_id)
+        .gte("created_at", todayStartISO)
+        .limit(1)
+        .single();
+      
+      resultAuthorPostedToday = !!todayResultPost;
+      console.log(`[process-scheduled-posts] Autor de Resultados (${(resultAuthor.perfis as any)?.nome}) postou hoje: ${resultAuthorPostedToday}`);
+    } else {
+      // Se não há autor de resultados configurado, liberar todos
+      resultAuthorPostedToday = true;
+      console.log("[process-scheduled-posts] Nenhum Autor de Resultados configurado, liberando todos");
+    }
+
+    // 2. Buscar bots ativos que podem criar posts
     const { data: guides, error: guidesError } = await supabaseAdmin
       .from("guide_personas")
       .select("*, perfis(nome)")
@@ -46,7 +78,6 @@ serve(async (req) => {
 
     if (!guides?.length) {
       console.log("[process-scheduled-posts] ❌ Nenhum bot encontrado com permissões");
-      console.log("[process-scheduled-posts] Filtros aplicados: ativo=true, can_create_posts=true");
       return new Response(
         JSON.stringify({ success: true, processed: 0, message: "Nenhum bot ativo com permissão para criar posts" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -56,10 +87,25 @@ serve(async (req) => {
     console.log(`[process-scheduled-posts] ✅ ${guides.length} bot(s) com permissão encontrado(s)`);
 
     const processed: string[] = [];
+    const skipped: string[] = [];
     const errors: string[] = [];
 
     for (const guide of guides) {
       try {
+        // REGRA: Autor de Resultados NÃO usa schedule (é triggado pelo sync-lotofacil)
+        if (guide.is_result_author) {
+          console.log(`[${guide.perfis?.nome}] É Autor de Resultados, ignora schedule (usa sync-lotofacil)`);
+          skipped.push(`${guide.perfis?.nome}: Autor de Resultados (sync-lotofacil)`);
+          continue;
+        }
+
+        // REGRA: Demais autores só postam se o Autor de Resultados já postou hoje
+        if (!resultAuthorPostedToday) {
+          console.log(`[${guide.perfis?.nome}] Aguardando Autor de Resultados postar primeiro`);
+          skipped.push(`${guide.perfis?.nome}: Aguardando resultado do dia`);
+          continue;
+        }
+
         const schedule = guide.post_schedule as BotSchedule | null;
         
         if (!schedule?.horarios?.length || !schedule?.dias?.length) {
@@ -88,7 +134,15 @@ serve(async (req) => {
 
         console.log(`[${guide.perfis?.nome}] ✅ Gerando post (horário: ${matchingTime})`);
 
-        // Gerar post usando a mesma lógica do generate-bot-post
+        // Determinar tipo de post baseado no papel do bot
+        let tipoPost = "geral";
+        if (guide.is_strategy_author) {
+          tipoPost = "estrategia";
+        } else if (guide.is_free_tips_author) {
+          tipoPost = "palpite_gratis";
+        }
+
+        // Buscar últimos resultados para contexto
         const { data: resultados } = await supabaseAdmin
           .from("resultados")
           .select("concurso_id, dezenas, data_sorteio")
@@ -101,6 +155,51 @@ serve(async (req) => {
 
         const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
         if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurada");
+
+        // Gerar instruções específicas por tipo de post
+        const getInstrucoesTipo = (tipo: string): string => {
+          switch (tipo) {
+            case "estrategia":
+              return `OBJETIVO: Ensinar UMA técnica de análise para a comunidade.
+
+ESTRUTURA DO POST:
+1. Título da técnica (chamativo, ex: "🎯 Técnica: Equilíbrio Pares/Ímpares")
+2. Explicação simples de como funciona
+3. Exemplo prático usando dados reais: ${contexto}
+4. Convite para o usuário tentar por conta própria
+
+TÉCNICAS DISPONÍVEIS (escolha UMA):
+- Análise de dezenas quentes/frias
+- Ciclo de dezenas
+- Equilíbrio pares/ímpares
+- Duplas e trios frequentes
+- Moldura do volante
+- Sequências e saltos
+
+IMPORTANTE: NÃO dê palpites prontos, apenas ensine a técnica.`;
+
+            case "palpite_gratis":
+              return `OBJETIVO: Compartilhar UM palpite grátis para a comunidade.
+
+ESTRUTURA DO POST:
+1. Título chamativo (ex: "🎁 Palpite Grátis do Dia")
+2. Gere EXATAMENTE 15 dezenas únicas de 01 a 25 em ordem crescente
+3. Breve explicação da estratégia usada (1-2 frases)
+4. OBRIGATÓRIO incluir: "⚠️ Loteria é sorte, jogue com responsabilidade!"
+
+REGRAS:
+- Formato das dezenas: separadas por vírgula (01, 02, 03...)
+- Use os dados estatísticos para embasar: ${contexto}
+- Apenas 1 jogo por post (não abuse)
+- Seja criativo na explicação da estratégia`;
+
+            default:
+              return `Crie um post engajante sobre análise da Lotofácil.
+Contexto atual: ${contexto}`;
+          }
+        };
+
+        const instrucoesTipo = getInstrucoesTipo(tipoPost);
 
         const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
@@ -116,7 +215,8 @@ serve(async (req) => {
                 role: "user",
                 content: `Crie um post para a comunidade Palpite Tech.
 
-CONTEXTO: ${contexto}
+TIPO: ${tipoPost}
+${instrucoesTipo}
 
 INSTRUÇÕES:
 - Máximo ${guide.max_chars_post || 400} caracteres no conteúdo
@@ -182,7 +282,9 @@ Responda APENAS no formato JSON:
         success: true, 
         processed: processed.length,
         posts: processed,
+        skipped: skipped.length ? skipped : undefined,
         errors: errors.length ? errors : undefined,
+        resultAuthorPostedToday,
         checkedAt: currentTime,
         day: currentDay
       }),

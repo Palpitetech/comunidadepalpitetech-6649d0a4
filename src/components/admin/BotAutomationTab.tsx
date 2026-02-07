@@ -220,13 +220,41 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
 
         <Separator />
 
+        {/* Aviso sobre lógica de publicação */}
+        {bot.is_result_author ? (
+          <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+            <p className="text-sm font-medium text-amber-600 mb-1">
+              📢 Autor de Resultados
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Este bot <strong>não usa agenda</strong>. Ele publica automaticamente quando há um novo resultado 
+              (acionado pelo sincronizador da Lotofácil).
+            </p>
+          </div>
+        ) : (bot.is_strategy_author || bot.is_free_tips_author) ? (
+          <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+            <p className="text-sm font-medium text-blue-600 mb-1">
+              ⏳ Publicação Condicional
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Este bot só publica <strong>após o Autor de Resultados</strong> ter postado o resultado do dia.
+              Configure a agenda abaixo para definir quando ele deve verificar.
+            </p>
+          </div>
+        ) : null}
+
         {/* Seção de Agenda de Posts */}
-        <div className={`space-y-4 ${!canConfigureSchedule ? 'opacity-60' : ''}`}>
+        <div className={`space-y-4 ${!canConfigureSchedule || bot.is_result_author ? 'opacity-60 pointer-events-none' : ''}`}>
           <div className="flex items-center justify-between">
             <Label className="text-base font-medium">📅 Agenda de Posts Automáticos</Label>
             {!canConfigureSchedule && (
               <span className="text-xs text-destructive">
                 ⚠️ Ative "Pode Criar Posts" no perfil
+              </span>
+            )}
+            {bot.is_result_author && (
+              <span className="text-xs text-amber-600">
+                ⚠️ Autor de Resultados usa sync automático
               </span>
             )}
           </div>
@@ -242,7 +270,7 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
               min={0}
               max={10}
               className="w-32"
-              disabled={!canConfigureSchedule}
+              disabled={!canConfigureSchedule || bot.is_result_author}
             />
             <p className="text-xs text-muted-foreground">
               Máximo de posts automáticos por dia
@@ -260,7 +288,7 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
                   variant={schedule.dias.includes(dia.value) ? "default" : "outline"}
                   size="sm"
                   onClick={() => toggleDia(dia.value)}
-                  disabled={!canConfigureSchedule}
+                  disabled={!canConfigureSchedule || bot.is_result_author}
                 >
                   {dia.label}
                 </Button>
@@ -282,14 +310,14 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
                 value={newHorario}
                 onChange={(e) => setNewHorario(e.target.value)}
                 className="w-32"
-                disabled={!canConfigureSchedule}
+                disabled={!canConfigureSchedule || bot.is_result_author}
               />
               <Button 
                 type="button" 
                 variant="outline" 
                 size="icon" 
                 onClick={addHorario}
-                disabled={!canConfigureSchedule}
+                disabled={!canConfigureSchedule || bot.is_result_author}
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -302,7 +330,7 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
                     type="button"
                     onClick={() => removeHorario(horario)}
                     className="ml-1 hover:text-destructive"
-                    disabled={!canConfigureSchedule}
+                    disabled={!canConfigureSchedule || bot.is_result_author}
                   >
                     <X className="h-3 w-3" />
                   </button>
