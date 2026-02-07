@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Loader2, MessageSquare, FileText, Bot, User } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Plus, Loader2, MessageSquare, FileText, Bot, User, ChevronRight } from "lucide-react";
 import { useBots } from "@/hooks/useBots";
 import { BotDetailSheet } from "@/components/admin/BotDetailSheet";
 import { BotForm } from "@/components/admin/BotForm";
@@ -102,93 +103,120 @@ export default function AdminBots() {
           </div>
         </div>
 
-        {/* Grid de Bots */}
-        <div className="grid gap-4 md:grid-cols-2">
-          {bots.map((bot) => (
-            <Card 
-              key={bot.id} 
-              className={`cursor-pointer hover:shadow-lg transition-shadow ${!bot.ativo ? "opacity-60" : ""}`}
-              onClick={() => handleBotClick(bot)}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={bot.perfis?.avatar_url || undefined} />
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        {getInitials(bot.perfis?.nome)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <CardTitle className="text-senior-lg flex items-center gap-2">
-                        {bot.badge_emoji} {bot.perfis?.nome || "Bot"}
-                        {bot.perfis?.is_bot ? (
-                          <Bot className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <User className="h-4 w-4 text-primary" />
-                        )}
-                        {bot.is_roundtable_author && (
-                          <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30 text-xs">
-                            Mesa Redonda
-                          </Badge>
-                        )}
-                      </CardTitle>
-                      <CardDescription>{bot.cargo}</CardDescription>
-                    </div>
-                  </div>
-                  <div onClick={(e) => e.stopPropagation()}>
-                    <Switch
-                      checked={bot.ativo}
-                      onCheckedChange={(checked) => toggleBotActive(bot.id, checked)}
-                    />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  <Badge variant="outline">{bot.especialidade}</Badge>
-                  <Badge variant="outline">{bot.estilo_escrita}</Badge>
-                  {bot.can_create_posts && (
-                    <Badge className="bg-green-500/10 text-green-600 border-green-500/30">
-                      Cria Posts
-                    </Badge>
-                  )}
-                  {bot.auto_reply_enabled && (
-                    <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/30">
-                      Auto-responde
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <FileText className="h-4 w-4" />
-                    {bot.total_posts} posts
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <MessageSquare className="h-4 w-4" />
-                    {bot.total_comments} comentários
-                  </span>
-                </div>
-                {bot.ultimo_post_em && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Último post: {new Date(bot.ultimo_post_em).toLocaleDateString("pt-BR")}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-
-          {bots.length === 0 && (
-            <Card className="col-span-full">
-              <CardContent className="py-12 text-center">
+        {/* Lista de Bots */}
+        <Card>
+          <CardContent className="p-0">
+            {bots.length === 0 ? (
+              <div className="py-12 text-center">
                 <Bot className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">
                   Nenhum bot cadastrado. Clique em "Novo Bot" para começar.
                 </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[300px]">Bot</TableHead>
+                    <TableHead className="hidden md:table-cell">Estatísticas</TableHead>
+                    <TableHead className="hidden sm:table-cell">Recursos</TableHead>
+                    <TableHead className="w-[80px] text-center">Ativo</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bots.map((bot) => (
+                    <TableRow 
+                      key={bot.id} 
+                      className={`cursor-pointer hover:bg-muted/50 ${!bot.ativo ? "opacity-60" : ""}`}
+                      onClick={() => handleBotClick(bot)}
+                    >
+                      {/* Bot Info */}
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={bot.perfis?.avatar_url || undefined} />
+                            <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                              {getInitials(bot.perfis?.nome)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-medium truncate">
+                                {bot.badge_emoji} {bot.perfis?.nome || "Bot"}
+                              </span>
+                              {bot.perfis?.is_bot ? (
+                                <Bot className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              ) : (
+                                <User className="h-3.5 w-3.5 text-primary shrink-0" />
+                              )}
+                              {bot.is_roundtable_author && (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                  Mesa
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {bot.cargo} · {bot.especialidade}
+                            </p>
+                          </div>
+                        </div>
+                      </TableCell>
+
+                      {/* Stats */}
+                      <TableCell className="hidden md:table-cell">
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <FileText className="h-3.5 w-3.5" />
+                            {bot.total_posts}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MessageSquare className="h-3.5 w-3.5" />
+                            {bot.total_comments}
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      {/* Features */}
+                      <TableCell className="hidden sm:table-cell">
+                        <div className="flex flex-wrap gap-1">
+                          {bot.can_create_posts && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                              Posts
+                            </Badge>
+                          )}
+                          {bot.auto_reply_enabled && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                              Auto-reply
+                            </Badge>
+                          )}
+                          {bot.chat_enabled && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                              Chat
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      {/* Toggle */}
+                      <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                        <Switch
+                          checked={bot.ativo}
+                          onCheckedChange={(checked) => toggleBotActive(bot.id, checked)}
+                        />
+                      </TableCell>
+
+                      {/* Arrow */}
+                      <TableCell>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Detail Sheet */}
