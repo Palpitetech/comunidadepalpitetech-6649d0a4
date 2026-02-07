@@ -26,6 +26,7 @@ import {
   FileText,
   Bot,
   Dices,
+  Ticket,
 } from "lucide-react";
 
 interface MobileMenuSheetProps {
@@ -153,6 +154,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                   <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
                     <MessageSquare className="h-5 w-5 stroke-[1.5]" />
                     Chat
+                  </div>
+                </Link>
+                <Link to="/boloes" onClick={closeAndNavigate}>
+                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
+                    <Ticket className="h-5 w-5 stroke-[1.5]" />
+                    Bolões
                   </div>
                 </Link>
               </nav>
