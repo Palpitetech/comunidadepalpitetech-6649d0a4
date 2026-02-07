@@ -24,7 +24,7 @@ export interface GuidePersona {
   ultimo_post_em: string | null;
   created_at: string;
   updated_at: string;
-  // Novas colunas
+  // Modelos e limites
   ai_model: string;
   post_schedule: BotSchedule;
   auto_reply_enabled: boolean;
@@ -38,6 +38,16 @@ export interface GuidePersona {
   chat_enabled: boolean;
   chat_tags: string[];
   chat_priority: number;
+  // Prompt segmentado
+  prompt_objetivo: string;
+  prompt_estrutura_post: string;
+  prompt_modelos_mensagem: string;
+  // Segurança
+  safety_enabled: boolean;
+  safety_block_pii: boolean;
+  safety_banned_topics: string[];
+  safety_banned_words: string[];
+  safety_style: string;
   // Relação
   perfis?: BotProfile;
 }

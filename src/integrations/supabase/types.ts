@@ -300,6 +300,9 @@ export type Database = {
           max_comments_per_post: number
           perfil_id: string
           post_schedule: Json | null
+          prompt_estrutura_post: string | null
+          prompt_modelos_mensagem: string | null
+          prompt_objetivo: string | null
           safety_banned_topics: string[]
           safety_banned_words: string[]
           safety_block_pii: boolean
@@ -336,6 +339,9 @@ export type Database = {
           max_comments_per_post?: number
           perfil_id: string
           post_schedule?: Json | null
+          prompt_estrutura_post?: string | null
+          prompt_modelos_mensagem?: string | null
+          prompt_objetivo?: string | null
           safety_banned_topics?: string[]
           safety_banned_words?: string[]
           safety_block_pii?: boolean
@@ -372,6 +378,9 @@ export type Database = {
           max_comments_per_post?: number
           perfil_id?: string
           post_schedule?: Json | null
+          prompt_estrutura_post?: string | null
+          prompt_modelos_mensagem?: string | null
+          prompt_objetivo?: string | null
           safety_banned_topics?: string[]
           safety_banned_words?: string[]
           safety_block_pii?: boolean
