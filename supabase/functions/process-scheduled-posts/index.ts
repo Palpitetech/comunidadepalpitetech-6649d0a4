@@ -98,6 +98,17 @@ serve(async (req) => {
         if (guide.is_result_author) {
           console.log(`[${guide.perfis?.nome}] É Autor de Resultados, ignora schedule (usa sync-lotofacil)`);
           skipped.push(`${guide.perfis?.nome}: Autor de Resultados (sync-lotofacil)`);
+          
+          // Log skip
+          await supabaseAdmin
+            .from("bot_publishing_logs")
+            .insert({
+              guide_persona_id: guide.id,
+              bot_name: guide.perfis?.nome,
+              event_type: "skipped",
+              reason: "Result author uses sync-lotofacil instead",
+              details: { is_result_author: true }
+            });
           continue;
         }
 
@@ -110,6 +121,17 @@ serve(async (req) => {
           // Demais autores só postam se o Autor de Resultados já postou
           console.log(`[${guide.perfis?.nome}] Aguardando Autor de Resultados postar primeiro`);
           skipped.push(`${guide.perfis?.nome}: Aguardando resultado do dia`);
+          
+          // Log skip
+          await supabaseAdmin
+            .from("bot_publishing_logs")
+            .insert({
+              guide_persona_id: guide.id,
+              bot_name: guide.perfis?.nome,
+              event_type: "skipped",
+              reason: "Waiting for result author to post",
+              details: { resultAuthorPostedToday: false }
+            });
           continue;
         }
 
@@ -279,10 +301,32 @@ Responda APENAS no formato JSON:
         processed.push(`${guide.perfis?.nome}: post ${newPost.id}`);
         console.log(`[${guide.perfis?.nome}] Post criado: ${newPost.id}`);
 
+        // Log success
+        await supabaseAdmin
+          .from("bot_publishing_logs")
+          .insert({
+            guide_persona_id: guide.id,
+            bot_name: guide.perfis?.nome,
+            event_type: "success",
+            reason: "Scheduled post created successfully",
+            details: { post_id: newPost.id, scheduled_time: matchingTime }
+          });
+
       } catch (err) {
         const errorMsg = `${guide.perfis?.nome}: ${err instanceof Error ? err.message : "Erro"}`;
         errors.push(errorMsg);
         console.error(`[${guide.perfis?.nome}] Erro:`, err);
+        
+        // Log error
+        await supabaseAdmin
+          .from("bot_publishing_logs")
+          .insert({
+            guide_persona_id: guide.id,
+            bot_name: guide.perfis?.nome,
+            event_type: "error",
+            reason: err instanceof Error ? err.message : "Unknown error",
+            details: { error: String(err) }
+          });
       }
     }
 
