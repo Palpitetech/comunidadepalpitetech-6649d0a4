@@ -32,42 +32,42 @@ export function PalpiteCard({
   return (
     <div
       className={cn(
-        "rounded-xl border-2 p-4 transition-all",
+        "rounded-xl border-2 p-3 transition-all",
         isSelected
           ? "border-primary bg-primary/5"
           : "border-border bg-card hover:border-muted-foreground/30"
       )}
     >
       {/* Header com checkbox */}
-      <div className="flex items-center gap-3 mb-3">
+      <div className="flex items-center gap-2 mb-2">
         <Checkbox
           checked={isSelected}
           onCheckedChange={onSelectChange}
-          className="h-5 w-5"
+          className="h-5 w-5 shrink-0"
         />
-        <span className="font-semibold text-foreground">
+        <span className="font-semibold text-foreground text-sm">
           Palpite {index + 1}
         </span>
       </div>
 
-      {/* Dezenas */}
-      <div className="space-y-2 mb-3">
-        <div className="flex flex-wrap justify-center gap-1.5">
+      {/* Dezenas - Grid fixo para mobile */}
+      <div className="space-y-1.5 mb-2">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(28px,1fr))] gap-1 max-w-[320px] mx-auto">
           {primeiraLinha.map((dezena) => (
             <span
               key={dezena}
-              className="w-9 h-9 flex items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm"
+              className="aspect-square flex items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs min-w-[28px] max-w-[36px]"
             >
               {formatarDezena(dezena)}
             </span>
           ))}
         </div>
         {segundaLinha.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-1.5">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(28px,1fr))] gap-1 max-w-[320px] mx-auto">
             {segundaLinha.map((dezena) => (
               <span
                 key={dezena}
-                className="w-9 h-9 flex items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm"
+                className="aspect-square flex items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs min-w-[28px] max-w-[36px]"
               >
                 {formatarDezena(dezena)}
               </span>
@@ -76,14 +76,11 @@ export function PalpiteCard({
         )}
       </div>
 
-      {/* Estatísticas */}
-      <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+      {/* Estatísticas - Grid 2x2 para mobile */}
+      <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
         <span>Ímpares: <strong className="text-foreground">{impares}</strong></span>
-        <span className="text-border">|</span>
         <span>Moldura: <strong className="text-foreground">{moldura}</strong></span>
-        <span className="text-border">|</span>
         <span>Repetidas: <strong className="text-foreground">{repetidas}</strong></span>
-        <span className="text-border">|</span>
         <span>Múlt.3: <strong className="text-foreground">{multiplosDe3}</strong></span>
       </div>
     </div>
