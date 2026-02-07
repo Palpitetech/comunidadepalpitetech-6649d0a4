@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { toast } from "sonner";
 
 // Feature flag para controlar criação de posts por usuários
@@ -176,8 +175,7 @@ function CriarPostForm() {
     loteria.trim().length > 0;
 
   return (
-    <MainLayout>
-      {isMobile && <PageHeader title="Criar Post" />}
+    <MainLayout pageTitle="Criar Post">
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* Header - Desktop only */}
         {!isMobile && (

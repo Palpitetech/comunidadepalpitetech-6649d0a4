@@ -1,6 +1,5 @@
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -64,8 +63,7 @@ const Boloes = () => {
   };
 
   return (
-    <MainLayout>
-      {isMobile && <PageHeader title="Bolões" />}
+    <MainLayout pageTitle="Bolões">
       <div className="container-senior pt-4 pb-8">
         {/* Header - Desktop only */}
         {!isMobile && (

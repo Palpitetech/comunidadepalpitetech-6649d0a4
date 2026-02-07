@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -142,24 +141,35 @@ export default function MeusPalpites() {
   };
 
   return (
-    <MainLayout>
+    <MainLayout pageTitle="Meus Palpites">
       <div className="flex flex-col min-h-[calc(100vh-4rem)]">
-        {/* Header Fixo */}
-        <div className="sticky top-0 z-10 bg-background border-b">
-          <div className="px-4 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Dices className="h-7 w-7 text-primary" />
-                <div>
-                  <h1 className="text-xl font-bold">Meus Palpites</h1>
-                  <p className="text-sm text-muted-foreground">
-                    {palpites.length} palpite{palpites.length !== 1 ? "s" : ""} • {pastas.length} pasta{pastas.length !== 1 ? "s" : ""}
-                  </p>
+        {/* Header Fixo - Desktop only */}
+        {!isMobile && (
+          <div className="sticky top-0 z-10 bg-background border-b">
+            <div className="px-4 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Dices className="h-7 w-7 text-primary" />
+                  <div>
+                    <h1 className="text-xl font-bold">Meus Palpites</h1>
+                    <p className="text-sm text-muted-foreground">
+                      {palpites.length} palpite{palpites.length !== 1 ? "s" : ""} • {pastas.length} pasta{pastas.length !== 1 ? "s" : ""}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Mobile subtitle */}
+        {isMobile && palpites.length > 0 && (
+          <div className="px-4 py-2 border-b">
+            <p className="text-sm text-muted-foreground">
+              {palpites.length} palpite{palpites.length !== 1 ? "s" : ""} • {pastas.length} pasta{pastas.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+        )}
 
         {/* Conteúdo Principal */}
         <div className="flex-1">

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -70,8 +69,7 @@ export default function Chat() {
   };
 
   return (
-    <MainLayout>
-      {isMobile && <PageHeader title="Chat" />}
+    <MainLayout pageTitle="Chat">
       {/*
         No mobile existe o menu inferior fixo (h-16). Este padding garante que o composer
         fique sempre visível acima dele (inclui safe-area do iOS).

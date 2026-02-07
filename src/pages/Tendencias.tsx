@@ -1,6 +1,5 @@
 import { useRef } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { TrendingUp } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SnapshotButton } from "@/components/shared/SnapshotButton";
@@ -42,10 +41,7 @@ export default function Tendencias() {
   const contentRef = useRef<HTMLDivElement>(null);
 
   return (
-    <MainLayout>
-      {/* Header mobile minimalista */}
-      {isMobile && <PageHeader title="Tendências" />}
-      
+    <MainLayout pageTitle="Tendências">
       <div className="container-senior py-6">
         {/* Header desktop */}
         {!isMobile && (

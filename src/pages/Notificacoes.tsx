@@ -1,13 +1,11 @@
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { Bell } from "lucide-react";
 
 export default function Notificacoes() {
   const isMobile = useIsMobile();
   return (
-    <MainLayout>
-      {isMobile && <PageHeader title="Notificações" />}
+    <MainLayout pageTitle="Notificações">
       <div className="container-senior py-8">
         {!isMobile && (
           <div className="flex items-center gap-3 mb-6">

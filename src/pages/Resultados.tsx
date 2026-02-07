@@ -1,7 +1,6 @@
 import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { BarChart3, Search, Calendar as CalendarIcon, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,19 +88,21 @@ export default function Resultados() {
   const hasFilters = searchConcurso.trim() || dateFilter;
 
   return (
-    <MainLayout>
+    <MainLayout pageTitle="Resultados">
       <div className="container-senior py-6">
-        {/* Header compacto */}
-        <div className="flex items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-3">
-            <BarChart3 className="h-7 w-7 text-primary" />
-            <h1 className="text-xl font-bold">Resultados</h1>
+        {/* Header compacto - Desktop only */}
+        {!isMobile && (
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-3">
+              <BarChart3 className="h-7 w-7 text-primary" />
+              <h1 className="text-xl font-bold">Resultados</h1>
+            </div>
+            <SnapshotButton 
+              targetRef={contentRef} 
+              defaultTitle="Resultados Lotofácil"
+            />
           </div>
-          <SnapshotButton 
-            targetRef={contentRef} 
-            defaultTitle="Resultados Lotofácil"
-          />
-        </div>
+        )}
 
         {/* Barra de Filtros */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
