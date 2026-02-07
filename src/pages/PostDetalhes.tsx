@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePostDetails } from "@/hooks/usePostDetails";
 import { usePostActions } from "@/hooks/usePostActions";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useMySubscription } from "@/hooks/useMySubscription";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -19,7 +20,8 @@ export default function PostDetalhes() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthContext();
-
+  const { data: subscription } = useMySubscription(user?.id);
+  const isFreePlan = !subscription || subscription.status === "inativa";
   const {
     post,
     isLoadingPost,
@@ -171,8 +173,8 @@ export default function PostDetalhes() {
           </Button>
         )}
 
-        {/* CTA do Bot - apenas na visualização detalhada */}
-        {post.perfis?.is_bot && post.cta_override_enabled && post.cta_override_buttons && post.cta_override_buttons.length > 0 && (
+        {/* CTA do Bot - apenas para usuários do plano Free */}
+        {isFreePlan && post.perfis?.is_bot && post.cta_override_enabled && post.cta_override_buttons && post.cta_override_buttons.length > 0 && (
           <BotCta
             text={post.cta_override_text}
             buttons={post.cta_override_buttons}
