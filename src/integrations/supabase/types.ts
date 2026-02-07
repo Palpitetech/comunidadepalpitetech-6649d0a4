@@ -587,6 +587,48 @@ export type Database = {
         }
         Relationships: []
       }
+      palpites_salvos: {
+        Row: {
+          acertos: number | null
+          concurso_alvo: number | null
+          conferido: boolean
+          created_at: string
+          dezenas: number[]
+          id: string
+          loteria: string | null
+          nome: string | null
+          periodo_analise: number | null
+          qtd_dezenas: number
+          user_id: string
+        }
+        Insert: {
+          acertos?: number | null
+          concurso_alvo?: number | null
+          conferido?: boolean
+          created_at?: string
+          dezenas: number[]
+          id?: string
+          loteria?: string | null
+          nome?: string | null
+          periodo_analise?: number | null
+          qtd_dezenas?: number
+          user_id: string
+        }
+        Update: {
+          acertos?: number | null
+          concurso_alvo?: number | null
+          conferido?: boolean
+          created_at?: string
+          dezenas?: number[]
+          id?: string
+          loteria?: string | null
+          nome?: string | null
+          periodo_analise?: number | null
+          qtd_dezenas?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       perfis: {
         Row: {
           admin_notes: string | null

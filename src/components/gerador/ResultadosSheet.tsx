@@ -12,6 +12,7 @@ import { PalpiteCard } from "./PalpiteCard";
 import { EstrategiaCard, type EstrategiaData } from "./EstrategiaCard";
 import { formatarDezena } from "@/lib/lotofacil";
 import { useToast } from "@/hooks/use-toast";
+import { usePalpitesSalvos } from "@/hooks/usePalpitesSalvos";
 import { 
   Copy, 
   CopyCheck, 
@@ -20,7 +21,9 @@ import {
   ChevronRight,
   CheckSquare,
   Square,
-  MoreHorizontal
+  MoreHorizontal,
+  Save,
+  Bookmark
 } from "lucide-react";
 
 interface JogoGerado {
@@ -34,6 +37,7 @@ interface ResultadosSheetProps {
   ultimoConcursoDezenas?: number[];
   onClearAll: () => void;
   estrategia?: EstrategiaData;
+  periodoAnalise?: number;
 }
 
 const ITEMS_PER_PAGE = 12;
@@ -45,8 +49,10 @@ export function ResultadosSheet({
   ultimoConcursoDezenas = [],
   onClearAll,
   estrategia,
+  periodoAnalise,
 }: ResultadosSheetProps) {
   const { toast } = useToast();
+  const { salvarPalpites, isLoading: isSaving } = usePalpitesSalvos();
   const [jogos, setJogos] = useState<JogoGerado[]>(jogosIniciais);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [currentPage, setCurrentPage] = useState(0);
@@ -119,6 +125,24 @@ export function ResultadosSheet({
       title: "Todos copiados! 📋",
       description: `${jogos.length} palpite(s) copiado(s) para a área de transferência.`,
     });
+  };
+
+  const handleSalvarSelecionados = async () => {
+    if (selected.size === 0) {
+      toast({
+        title: "Nenhum palpite selecionado",
+        description: "Selecione pelo menos um palpite para salvar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const palpitesParaSalvar = jogos.filter((_, i) => selected.has(i));
+    await salvarPalpites(palpitesParaSalvar, periodoAnalise);
+  };
+
+  const handleSalvarTodos = async () => {
+    await salvarPalpites(jogos, periodoAnalise);
   };
 
   const handleExcluirSelecionados = () => {
@@ -215,12 +239,28 @@ export function ResultadosSheet({
               {/* Dropdown de ações */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 gap-2">
+                  <Button variant="outline" size="sm" className="h-8 gap-2" disabled={isSaving}>
                     <MoreHorizontal className="h-4 w-4" />
                     Ações
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-popover z-50 w-52">
+                <DropdownMenuContent align="end" className="bg-popover z-50 w-56">
+                  {/* Ações de Salvar */}
+                  <DropdownMenuItem onClick={handleSalvarTodos} disabled={isSaving} className="gap-2">
+                    <Bookmark className="h-4 w-4" />
+                    Salvar Todos ({jogos.length})
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={handleSalvarSelecionados} 
+                    disabled={selected.size === 0 || isSaving}
+                    className="gap-2"
+                  >
+                    <Save className="h-4 w-4" />
+                    Salvar Selecionados ({selected.size})
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  
+                  {/* Ações de Copiar */}
                   <DropdownMenuItem onClick={handleCopiarTodos} className="gap-2">
                     <Copy className="h-4 w-4" />
                     Copiar Todos ({jogos.length})
@@ -234,6 +274,8 @@ export function ResultadosSheet({
                     Copiar Selecionados ({selected.size})
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
+                  
+                  {/* Ações de Excluir */}
                   <DropdownMenuItem 
                     onClick={handleExcluirSelecionados} 
                     disabled={selected.size === 0}

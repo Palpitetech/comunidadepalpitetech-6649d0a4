@@ -174,6 +174,7 @@ export default function Gerador() {
             ultimoConcursoDezenas={ultimoConcursoDezenas}
             onClearAll={handleClearAll}
             estrategia={result.estrategia}
+            periodoAnalise={periodoAnalise}
           />
         )}
       </div>
