@@ -1,4 +1,4 @@
-import { Users, Bell, Menu, MessageCircle } from "lucide-react";
+import { Users, Ticket, Menu, MessageCircle } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -44,18 +44,18 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
           <span className="text-xs mt-1 font-medium">Chat</span>
         </Link>
 
-        {/* Alertas */}
+        {/* Bolões */}
         <Link
-          to="/notificacoes"
+          to="/boloes"
           className={cn(
             "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors",
-            isActive("/notificacoes")
+            isActive("/boloes")
               ? "text-primary"
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          <Bell className="h-6 w-6" />
-          <span className="text-xs mt-1 font-medium">Alertas</span>
+          <Ticket className="h-6 w-6" />
+          <span className="text-xs mt-1 font-medium">Bolões</span>
         </Link>
 
         {/* Menu */}
