@@ -11,6 +11,8 @@ export interface PalpiteCardProps {
   dezenas: number[];
   /** Dezenas do último concurso para calcular repetidas */
   ultimoConcursoDezenas?: number[];
+  /** Dezenas fixas (exibidas em preto) */
+  dezenasFixes?: number[];
   /** Se o card está selecionado */
   isSelected?: boolean;
   /** Callback ao mudar seleção */
@@ -35,6 +37,7 @@ export function PalpiteCard({
   index,
   dezenas,
   ultimoConcursoDezenas = [],
+  dezenasFixes = [],
   isSelected = false,
   onSelectChange,
   onDelete,
@@ -103,7 +106,7 @@ export function PalpiteCard({
           {acertos !== undefined && acertos !== null && (
             <span className={cn(
               "text-[10px] font-bold px-2 py-0.5 rounded-full",
-              acertos >= 11 ? "bg-green-500/20 text-green-600" : "bg-muted text-muted-foreground"
+              acertos >= 11 ? "bg-accent/20 text-accent" : "bg-muted text-muted-foreground"
             )}>
               {acertos} acertos
             </span>
@@ -145,25 +148,41 @@ export function PalpiteCard({
       {/* Dezenas - Alinhadas à esquerda */}
       <div className="space-y-1 mb-2">
         <div className="flex flex-wrap gap-1">
-          {primeiraLinha.map((dezena) => (
-            <span
-              key={dezena}
-              className="w-7 h-7 flex items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs"
-            >
-              {formatarDezena(dezena)}
-            </span>
-          ))}
-        </div>
-        {segundaLinha.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {segundaLinha.map((dezena) => (
+          {primeiraLinha.map((dezena) => {
+            const isFixa = dezenasFixes.includes(dezena);
+            return (
               <span
                 key={dezena}
-                className="w-7 h-7 flex items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs"
+                className={cn(
+                  "w-7 h-7 flex items-center justify-center rounded-md font-bold text-xs",
+                  isFixa 
+                    ? "bg-palpite-fixa text-palpite-fixa-foreground" 
+                    : "bg-palpite-dezena text-palpite-dezena-foreground"
+                )}
               >
                 {formatarDezena(dezena)}
               </span>
-            ))}
+            );
+          })}
+        </div>
+        {segundaLinha.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {segundaLinha.map((dezena) => {
+              const isFixa = dezenasFixes.includes(dezena);
+              return (
+                <span
+                  key={dezena}
+                  className={cn(
+                    "w-7 h-7 flex items-center justify-center rounded-md font-bold text-xs",
+                    isFixa 
+                      ? "bg-palpite-fixa text-palpite-fixa-foreground" 
+                      : "bg-palpite-dezena text-palpite-dezena-foreground"
+                  )}
+                >
+                  {formatarDezena(dezena)}
+                </span>
+              );
+            })}
           </div>
         )}
       </div>

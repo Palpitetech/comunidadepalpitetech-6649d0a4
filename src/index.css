@@ -54,6 +54,12 @@
     --lotofacil-moldura: 35 90% 55%;
     --lotofacil-primo: 142 70% 40%;
     --lotofacil-repetida: 0 70% 50%;
+    
+    /* Palpites - Roxo Lotofácil como padrão */
+    --palpite-dezena: 270 60% 50%;
+    --palpite-dezena-foreground: 0 0% 100%;
+    --palpite-dezena-fixa: 0 0% 15%;
+    --palpite-dezena-fixa-foreground: 0 0% 100%;
 
     /* Status Quente/Frio */
     --status-quente: 142 70% 45%;
