@@ -307,11 +307,11 @@ export function PastaSheet({
                 <Button 
                   variant={concursoSelecionado ? "default" : "outline"} 
                   size="sm" 
-                  className="gap-1.5 text-xs h-8 flex-1 max-w-[160px]"
+                  className="gap-1.5 text-xs h-8 flex-1 max-w-[140px]"
                 >
                   <Trophy className="h-4 w-4 shrink-0" />
                   <span className="truncate">
-                    {concursoSelecionado ? `Prêmio #${concursoSelecionado.concurso_id}` : "Verificar Prêmio"}
+                    {concursoSelecionado ? `#${concursoSelecionado.concurso_id}` : "Prêmio"}
                   </span>
                   <ChevronDown className="h-3 w-3 shrink-0" />
                 </Button>
