@@ -150,7 +150,7 @@ export default function AdminBots() {
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="font-medium truncate">
-                                {bot.badge_emoji} {bot.perfis?.nome || "Bot"}
+                                {bot.perfis?.nome || "Bot"}
                               </span>
                               {bot.perfis?.is_bot ? (
                                 <Bot className="h-3.5 w-3.5 text-muted-foreground shrink-0" />

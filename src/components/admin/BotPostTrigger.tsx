@@ -189,7 +189,7 @@ export function BotPostTrigger({ bots, onSuccess }: BotPostTriggerProps) {
             {filteredBots.map((bot) => (
               <SelectItem key={bot.id} value={bot.id}>
                 <div className="flex items-center gap-2">
-                  {bot.badge_emoji} {bot.perfis?.nome}
+                  {bot.perfis?.nome}
                 </div>
               </SelectItem>
             ))}
