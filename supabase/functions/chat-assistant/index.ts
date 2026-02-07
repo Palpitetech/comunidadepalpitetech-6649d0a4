@@ -7,35 +7,27 @@ const corsHeaders = {
 };
 
 type ChatTopicId =
-  | "boloess"
-  | "duvidas_ferramentas"
-  | "duvidas_comunidade"
-  | "acesso_ferramentas"
-  | "estatisticas";
+  | "boloes"
+  | "estrategias"
+  | "conhecer_planos";
 
 const TOPIC_TO_FEATURE: Record<ChatTopicId, string> = {
-  boloess: "chat_boloes",
-  duvidas_ferramentas: "chat_duvidas_ferramentas",
-  duvidas_comunidade: "chat_duvidas_comunidade",
-  acesso_ferramentas: "chat_acesso_ferramentas",
-  estatisticas: "chat_estatisticas",
+  boloes: "chat_boloes",
+  estrategias: "chat_duvidas_ferramentas",
+  conhecer_planos: "chat_acesso_ferramentas",
 };
 
 const TOPIC_TO_BOT_TAG: Record<ChatTopicId, string> = {
-  boloess: "chat_boloes",
-  duvidas_ferramentas: "chat_duvidas_ferramentas",
-  duvidas_comunidade: "chat_duvidas_comunidade",
-  acesso_ferramentas: "chat_acesso_ferramentas",
-  estatisticas: "chat_estatisticas",
+  boloes: "chat_boloes",
+  estrategias: "chat_duvidas_ferramentas",
+  conhecer_planos: "chat_upsell",
 };
 
 function isTopicId(value: unknown): value is ChatTopicId {
   return (
-    value === "boloess" ||
-    value === "duvidas_ferramentas" ||
-    value === "duvidas_comunidade" ||
-    value === "acesso_ferramentas" ||
-    value === "estatisticas"
+    value === "boloes" ||
+    value === "estrategias" ||
+    value === "conhecer_planos"
   );
 }
 
@@ -89,11 +81,9 @@ type BotRow = {
 function upsellMessage(args: { firstName?: string | null; topic: ChatTopicId }): string {
   const name = args.firstName ? `, ${args.firstName}` : "";
   const topicLabel: Record<ChatTopicId, string> = {
-    boloess: "bolões",
-    duvidas_ferramentas: "ferramentas",
-    duvidas_comunidade: "comunidade",
-    acesso_ferramentas: "acesso às ferramentas",
-    estatisticas: "estatísticas",
+    boloes: "bolões",
+    estrategias: "estratégias e ferramentas",
+    conhecer_planos: "planos",
   };
 
   return (
@@ -124,11 +114,9 @@ function buildSystemPrompt(args: {
 }): string {
   const nameHint = args.userFirstName ? `O usuário se chama ${args.userFirstName}.` : "";
   const topicHint: Record<ChatTopicId, string> = {
-    boloess: "Bolões",
-    duvidas_ferramentas: "Dúvidas das ferramentas",
-    duvidas_comunidade: "Dúvidas da comunidade",
-    acesso_ferramentas: "Acesso às ferramentas",
-    estatisticas: "Estatísticas",
+    boloes: "Bolões",
+    estrategias: "Estratégias e Ferramentas",
+    conhecer_planos: "Conhecer os Planos",
   };
 
   return `${args.botSystemPrompt}
@@ -274,8 +262,7 @@ serve(async (req) => {
     if (insertUserMsgError) throw insertUserMsgError;
 
     // 4) Se não tiver permissão, responder com upsell (sem IA para economizar)
-    const statsLimit = Math.max(0, Math.trunc(Number(plan?.chat_estatisticas_max_msgs_per_day ?? 0)));
-    const allowed = topic === "estatisticas" ? allowedByFeature && statsLimit > 0 : allowedByFeature;
+    const allowed = allowedByFeature;
 
     if (!allowed) {
       const reply = upsellMessage({ firstName, topic });
@@ -293,57 +280,8 @@ serve(async (req) => {
       });
     }
 
-    // 5) Limite diário (apenas estatísticas)
+    // 5) Limite diário removido (sem mais tema de estatísticas com limite)
     let remainingToday: number | null = null;
-    if (topic === "estatisticas") {
-      const day = formatSaoPauloDay(new Date());
-      const { data: usageRow, error: usageReadError } = await userClient
-        .from("chat_daily_usage")
-        .select("id, count")
-        .eq("user_id", userId)
-        .eq("topic", topic)
-        .eq("day", day)
-        .maybeSingle();
-
-      if (usageReadError) console.error("Erro ao ler chat_daily_usage:", usageReadError.message);
-
-      const current = Math.max(0, Math.trunc(Number(usageRow?.count ?? 0)));
-      if (current >= statsLimit) {
-        const reply = limitReachedMessage({ firstName, limit: statsLimit });
-        const { error: insertAssistantError } = await userClient.from("chat_messages").insert({
-          user_id: userId,
-          conversation_id: convId,
-          role: "assistant",
-          content: reply,
-          bot_persona_id: null,
-        });
-        if (insertAssistantError) throw insertAssistantError;
-
-        return new Response(JSON.stringify({ conversation_id: convId, remaining_today: 0 }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // Incremento com service role (RLS do upsert está no service_role)
-      if (!usageRow?.id) {
-        const { error: insertUsageError } = await adminClient.from("chat_daily_usage").insert({
-          user_id: userId,
-          topic,
-          day,
-          count: 1,
-        });
-        if (insertUsageError) throw insertUsageError;
-        remainingToday = Math.max(0, statsLimit - 1);
-      } else {
-        const next = current + 1;
-        const { error: updateUsageError } = await adminClient
-          .from("chat_daily_usage")
-          .update({ count: next })
-          .eq("id", usageRow.id);
-        if (updateUsageError) throw updateUsageError;
-        remainingToday = Math.max(0, statsLimit - next);
-      }
-    }
 
     // 6) Seleção do bot por tag
     const tag = TOPIC_TO_BOT_TAG[topic];
