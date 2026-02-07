@@ -180,8 +180,8 @@ export default function Fechamento() {
 
         {/* Estatísticas */}
         <div className="space-y-1 text-sm text-center">
-          {/* Linha 1: Indicadores */}
-          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-muted-foreground">
+          {/* Linha 1: Indicadores - sempre em linha única */}
+          <div className="flex justify-center gap-x-3 text-muted-foreground whitespace-nowrap text-xs sm:text-sm">
             <span>Ímpar: <strong className="text-foreground">{estatisticas.impares}</strong></span>
             <span>Moldura: <strong className="text-foreground">{estatisticas.moldura}</strong></span>
             <span>M3: <strong className="text-foreground">{estatisticas.multiplosDe3}</strong></span>
