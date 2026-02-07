@@ -22,8 +22,8 @@ export function DezenaVolante({ numero, selecionada, fixa, onClick, disabled }: 
         "active:scale-95",
         "disabled:opacity-50 disabled:cursor-not-allowed",
         // Estados visuais
-        fixa && "bg-amber-100 border-amber-500 text-amber-700 dark:bg-amber-900/30 dark:border-amber-500 dark:text-amber-300",
-        selecionada && !fixa && "bg-primary/20 border-primary text-primary",
+        fixa && "bg-palpite-fixa text-palpite-fixa-foreground border-palpite-fixa",
+        selecionada && !fixa && "bg-palpite-dezena text-palpite-dezena-foreground border-palpite-dezena",
         !selecionada && !fixa && "bg-card border-border text-foreground hover:border-muted-foreground"
       )}
     >
