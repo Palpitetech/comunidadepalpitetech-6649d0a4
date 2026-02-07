@@ -1,4 +1,6 @@
+import { useIsMobile } from "@/hooks/use-mobile";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +55,7 @@ const boloesSimulados = [
 ];
 
 const Boloes = () => {
+  const isMobile = useIsMobile();
   const handleComprar = (bolao: typeof boloesSimulados[0]) => {
     const mensagem = encodeURIComponent(
       `Olá! Tenho interesse no *${bolao.nome}* para o concurso ${bolao.concurso}. Valor da cota: R$ ${bolao.valorCota.toFixed(2)}`
@@ -62,14 +65,17 @@ const Boloes = () => {
 
   return (
     <MainLayout>
+      {isMobile && <PageHeader title="Bolões" />}
       <div className="container-senior pt-4 pb-8">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <Ticket className="h-7 w-7 text-primary" />
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-            Bolões
-          </h1>
-        </div>
+        {/* Header - Desktop only */}
+        {!isMobile && (
+          <div className="flex items-center gap-3 mb-6">
+            <Ticket className="h-7 w-7 text-primary" />
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+              Bolões
+            </h1>
+          </div>
+        )}
 
         {/* Banner informativo */}
         <Card className="bg-primary/5 border-primary/20 mb-6">

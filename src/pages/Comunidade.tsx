@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { FeedHeader } from "@/components/comunidade/FeedHeader";
 import { PostCard } from "@/components/comunidade/PostCard";
 import { PostCardSkeleton } from "@/components/comunidade/PostCardSkeleton";
@@ -7,12 +9,14 @@ import { useCommunityPosts } from "@/hooks/useCommunityPosts";
 
 export default function Comunidade() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { data: posts, isLoading, error } = useCommunityPosts();
 
   return (
     <MainLayout>
+      {isMobile && <PageHeader title="Comunidade" />}
       <div className="max-w-2xl mx-auto px-4 py-6">
-        <FeedHeader />
+        {!isMobile && <FeedHeader />}
 
         {isLoading && <PostCardSkeleton count={5} />}
 

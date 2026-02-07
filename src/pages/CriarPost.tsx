@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { toast } from "sonner";
 
 // Feature flag para controlar criação de posts por usuários
@@ -64,6 +66,7 @@ interface LocationState {
 
 function CriarPostForm() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const location = useLocation();
   const queryClient = useQueryClient();
   const { user } = useAuthContext();
@@ -174,19 +177,22 @@ function CriarPostForm() {
 
   return (
     <MainLayout>
+      {isMobile && <PageHeader title="Criar Post" />}
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="-ml-2"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-xl font-bold text-foreground">Criar Post</h1>
-        </div>
+        {/* Header - Desktop only */}
+        {!isMobile && (
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="-ml-2"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-xl font-bold text-foreground">Criar Post</h1>
+          </div>
+        )}
 
         {/* Formulário */}
         <div className="space-y-4">
