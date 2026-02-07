@@ -91,9 +91,30 @@ export function BotForm({ onSaved, onCancel }: BotFormProps) {
           estilo_escrita: "profissional",
           system_prompt: DEFAULT_SYSTEM_PROMPT,
           ai_model: "google/gemini-3-flash-preview",
-          ativo: false, // Starts inactive until configured
+          ativo: false,
           can_create_posts: false,
           auto_reply_enabled: false,
+          // Chat settings
+          chat_enabled: false,
+          chat_tags: [],
+          chat_priority: 0,
+          // Safety settings
+          safety_enabled: true,
+          safety_block_pii: false,
+          safety_banned_topics: [],
+          safety_banned_words: [],
+          safety_style: "strict",
+          // Comments
+          can_comment_on_posts: true,
+          max_comments_per_post: 10,
+          // Bot interactions
+          can_respond_to_bot_posts: false,
+          can_reply_own_post_comments: false,
+          is_strategy_author: false,
+          is_free_tips_author: false,
+          // CTA override
+          cta_override_enabled: false,
+          cta_override_buttons: {},
         })
         .select("id")
         .single();
