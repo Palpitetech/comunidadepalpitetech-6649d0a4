@@ -152,7 +152,7 @@ export function ResultadosSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[95vh] flex flex-col p-0">
+      <SheetContent side="bottom" className="h-full flex flex-col p-0">
         <SheetHeader className="px-4 py-3 border-b shrink-0">
           <SheetTitle className="text-lg">
             {jogos.length} Palpite{jogos.length !== 1 ? "s" : ""} Gerado{jogos.length !== 1 ? "s" : ""}

@@ -24,9 +24,10 @@ export function PalpiteCard({
     ? contarRepetidas(dezenas, ultimoConcursoDezenas) 
     : 0;
 
-  // Dividir dezenas em linhas (8 + resto)
-  const primeiraLinha = dezenas.slice(0, 8);
-  const segundaLinha = dezenas.slice(8);
+  // Dividir dezenas em 2 linhas (metade em cada)
+  const metade = Math.ceil(dezenas.length / 2);
+  const primeiraLinha = dezenas.slice(0, metade);
+  const segundaLinha = dezenas.slice(metade);
 
   return (
     <div
