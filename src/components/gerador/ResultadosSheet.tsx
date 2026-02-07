@@ -1,6 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PalpiteCard } from "./PalpiteCard";
 import { formatarDezena } from "@/lib/lotofacil";
 import { useToast } from "@/hooks/use-toast";
@@ -8,11 +15,11 @@ import {
   Copy, 
   CopyCheck, 
   Trash2, 
-  X, 
   ChevronLeft, 
   ChevronRight,
   CheckSquare,
-  Square
+  Square,
+  MoreHorizontal
 } from "lucide-react";
 
 interface JogoGerado {
@@ -160,13 +167,14 @@ export function ResultadosSheet({
           </SheetTitle>
         </SheetHeader>
 
-        {/* Barra de Ações - Layout otimizado para mobile */}
-        <div className="grid grid-cols-2 gap-2 p-3 border-b bg-muted/30 shrink-0">
+        {/* Barra de Ações compacta */}
+        <div className="flex items-center justify-between gap-2 px-3 py-2 border-b bg-muted/30 shrink-0">
+          {/* Botão de seleção */}
           <Button
             variant="outline"
             size="sm"
             onClick={handleSelectAll}
-            className="gap-1.5 text-xs h-9"
+            className="gap-1.5 text-xs h-8"
           >
             {allSelected ? (
               <>
@@ -180,37 +188,46 @@ export function ResultadosSheet({
               </>
             )}
           </Button>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopiarTodos}
-            className="gap-1.5 text-xs h-9"
-          >
-            <Copy className="h-3.5 w-3.5" />
-            Copiar Todos
-          </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopiarSelecionados}
-            disabled={selected.size === 0}
-            className="gap-1.5 text-xs h-9"
-          >
-            <CopyCheck className="h-3.5 w-3.5" />
-            Copiar ({selected.size})
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExcluirTodos}
-            className="gap-1.5 text-xs h-9 text-destructive hover:text-destructive"
-          >
-            <X className="h-3.5 w-3.5" />
-            Limpar Tudo
-          </Button>
+          {/* Dropdown de ações */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8">
+                <MoreHorizontal className="h-3.5 w-3.5" />
+                Ações
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-popover z-50 w-48">
+              <DropdownMenuItem onClick={handleCopiarTodos} className="gap-2">
+                <Copy className="h-4 w-4" />
+                Copiar Todos
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={handleCopiarSelecionados} 
+                disabled={selected.size === 0}
+                className="gap-2"
+              >
+                <CopyCheck className="h-4 w-4" />
+                Copiar Selecionados ({selected.size})
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={handleExcluirSelecionados} 
+                disabled={selected.size === 0}
+                className="gap-2 text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+                Excluir Selecionados ({selected.size})
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={handleExcluirTodos}
+                className="gap-2 text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+                Limpar Tudo
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Lista de Palpites */}
