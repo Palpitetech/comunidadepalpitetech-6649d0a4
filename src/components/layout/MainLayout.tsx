@@ -20,9 +20,11 @@ interface MainLayoutProps {
   onBack?: () => void;
   /** Conteúdo à direita do header (mobile) */
   headerRightContent?: ReactNode;
+  /** Esconde o botão de voltar no header mobile */
+  hideBackButton?: boolean;
 }
 
-export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRightContent }: MainLayoutProps) {
+export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRightContent, hideBackButton }: MainLayoutProps) {
   const isMobile = useIsMobile();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -36,6 +38,7 @@ export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRigh
           breadcrumb={breadcrumb}
           onBack={onBack} 
           rightContent={headerRightContent}
+          hideBackButton={hideBackButton}
         />
       )}
 
