@@ -33,10 +33,11 @@ serve(async (req) => {
     const currentTime = `${currentHour}:${currentMinute}`;
     const currentDay = brasiliaTime.getDay(); // 0=Dom, 1=Seg...
 
-    // Data de hoje no fuso de Brasília (para verificar posts do dia)
-    const todayStart = new Date(brasiliaTime);
-    todayStart.setHours(0, 0, 0, 0);
-    const todayStartISO = new Date(todayStart.getTime() - (brasiliaOffset * 60 * 1000)).toISOString();
+    // Janela de 14 horas para verificar se o Autor de Resultados postou
+    // Isso cobre: resultado às 23h → posts válidos até 13h do dia seguinte
+    const windowHours = 14;
+    const windowStart = new Date(brasiliaTime.getTime() - (windowHours * 60 * 60 * 1000));
+    const windowStartISO = new Date(windowStart.getTime() - (brasiliaOffset * 60 * 1000)).toISOString();
 
     console.log(`[process-scheduled-posts] Verificando: ${currentTime}, dia ${currentDay}`);
 
@@ -51,16 +52,17 @@ serve(async (req) => {
     let resultAuthorPostedToday = false;
     
     if (resultAuthor) {
-      const { data: todayResultPost } = await supabaseAdmin
+      const { data: recentResultPost } = await supabaseAdmin
         .from("postagens")
-        .select("id")
+        .select("id, created_at")
         .eq("user_id", resultAuthor.perfil_id)
-        .gte("created_at", todayStartISO)
+        .gte("created_at", windowStartISO)
+        .order("created_at", { ascending: false })
         .limit(1)
         .single();
       
-      resultAuthorPostedToday = !!todayResultPost;
-      console.log(`[process-scheduled-posts] Autor de Resultados (${(resultAuthor.perfis as any)?.nome}) postou hoje: ${resultAuthorPostedToday}`);
+      resultAuthorPostedToday = !!recentResultPost;
+      console.log(`[process-scheduled-posts] Autor de Resultados (${(resultAuthor.perfis as any)?.nome}) postou nas últimas ${windowHours}h: ${resultAuthorPostedToday}`);
     } else {
       // Se não há autor de resultados configurado, liberar todos
       resultAuthorPostedToday = true;
