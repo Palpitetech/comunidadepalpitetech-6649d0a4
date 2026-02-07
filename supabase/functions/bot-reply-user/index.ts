@@ -108,7 +108,7 @@ serve(async (req) => {
     
     let guideQuery = supabaseAdmin
       .from("guide_personas")
-      .select("id, perfil_id, system_prompt, especialidade, cargo, can_respond_to_bot_posts, can_reply_own_post_comments, perfis(nome)")
+      .select("id, perfil_id, system_prompt, especialidade, cargo, can_respond_to_bot_posts, can_reply_own_post_comments, auto_reply_enabled, perfis(nome)")
       .eq("ativo", true);
     
     const { data: allGuides, error: guidesError } = await guideQuery;
