@@ -8,7 +8,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronRight, ChevronDown, Folder, MoreVertical, Pencil, Trash2, Check, X } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export interface Pasta {
   id: string;
@@ -50,24 +49,20 @@ export function PastaItem({
   };
 
   return (
-    <div className="space-y-2">
-      <div
-        className={cn(
-          "flex items-center gap-2 p-3 rounded-lg border bg-card transition-colors",
-          isExpanded && "bg-muted/50"
-        )}
-      >
+    <div>
+      {/* Header da pasta */}
+      <div className="flex items-center gap-2 px-4 py-3 hover:bg-muted/50 transition-colors">
         <button
           onClick={onToggle}
-          className="flex items-center gap-2 flex-1 text-left"
+          className="flex items-center gap-3 flex-1 text-left"
         >
           {isExpanded ? (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
           ) : (
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
           )}
           <Folder 
-            className="h-5 w-5" 
+            className="h-5 w-5 shrink-0" 
             style={{ color: pasta.cor }}
           />
           
@@ -76,25 +71,25 @@ export function PastaItem({
               <Input
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                className="h-7 text-sm"
+                className="h-8 text-sm"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSaveEdit();
                   if (e.key === "Escape") handleCancelEdit();
                 }}
               />
-              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleSaveEdit}>
+              <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={handleSaveEdit}>
                 <Check className="h-4 w-4 text-primary" />
               </Button>
-              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleCancelEdit}>
+              <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={handleCancelEdit}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
           ) : (
             <>
-              <span className="font-medium flex-1">{pasta.nome}</span>
+              <span className="font-medium flex-1 truncate">{pasta.nome}</span>
               {pasta.count !== undefined && (
-                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                <span className="text-sm text-muted-foreground bg-muted px-2 py-0.5 rounded-full shrink-0">
                   {pasta.count}
                 </span>
               )}
@@ -129,8 +124,9 @@ export function PastaItem({
         )}
       </div>
 
+      {/* Conteúdo expandido */}
       {isExpanded && children && (
-        <div className="pl-4 space-y-2">
+        <div className="px-4 pb-2">
           {children}
         </div>
       )}

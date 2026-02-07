@@ -1,9 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,11 +18,12 @@ import { PastaItem } from "@/components/palpites/PastaItem";
 import { NovaPastaDialog } from "@/components/palpites/NovaPastaDialog";
 import { formatarDezena } from "@/lib/lotofacil";
 import { 
-  Bookmark, 
   Trash2, 
   Dices,
   FolderPlus,
-  Folder
+  Folder,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -160,7 +159,6 @@ export default function MeusPalpites() {
     const success = await excluirPasta(id);
     if (success) {
       setPastas(prev => prev.filter(p => p.id !== id));
-      // Palpites são mantidos mas sem pasta
       setPalpites(prev => prev.map(p => p.pasta_id === id ? { ...p, pasta_id: null } : p));
     }
   };
@@ -176,158 +174,160 @@ export default function MeusPalpites() {
       onCopy={() => handleCopiar(palpite)}
       createdAt={palpite.created_at}
       acertos={palpite.conferido ? palpite.acertos : undefined}
-      label={palpite.estrategia ? `🎯 ${palpite.estrategia.substring(0, 20)}...` : undefined}
+      label={palpite.estrategia ? `🎯 ${palpite.estrategia}` : undefined}
       hideStats
     />
   );
 
   return (
     <MainLayout>
-      <div className="container-senior py-6 space-y-4 max-w-lg mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Bookmark className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold">Meus Palpites</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            {palpites.length > 0 && (
-              <Badge variant="secondary" className="text-xs">
-                {palpites.length} salvo{palpites.length > 1 ? "s" : ""}
-              </Badge>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setNovaPastaOpen(true)}
-              className="gap-1 h-8"
-            >
-              <FolderPlus className="h-4 w-4" />
-              <span className="sr-only sm:not-sr-only">Pasta</span>
-            </Button>
-          </div>
-        </div>
-
-        {/* Ações em massa */}
-        {palpites.length > 0 && (
-          <div className="flex items-center justify-between py-2">
-            <Button
-              variant={selected.size === palpites.length ? "default" : "outline"}
-              size="sm"
-              onClick={handleSelectAll}
-              className="text-xs h-8"
-            >
-              {selected.size === palpites.length ? "Desmarcar todos" : "Selecionar todos"}
-            </Button>
-            
-            {selected.size > 0 && (
+      <div className="flex flex-col min-h-[calc(100vh-4rem)]">
+        {/* Header Fixo */}
+        <div className="sticky top-0 z-10 bg-background border-b">
+          <div className="px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Dices className="h-6 w-6 text-primary" />
+                <div>
+                  <h1 className="text-lg font-bold">Meus Palpites</h1>
+                  <p className="text-xs text-muted-foreground">
+                    {palpites.length} palpite{palpites.length !== 1 ? "s" : ""} salvo{palpites.length !== 1 ? "s" : ""}
+                  </p>
+                </div>
+              </div>
               <Button
-                variant="destructive"
+                variant="outline"
                 size="sm"
-                onClick={() => setDeleteDialogOpen(true)}
-                className="text-xs h-8 gap-1"
+                onClick={() => setNovaPastaOpen(true)}
+                className="gap-2 h-9"
               >
-                <Trash2 className="h-3.5 w-3.5" />
-                Excluir ({selected.size})
+                <FolderPlus className="h-4 w-4" />
+                Nova Pasta
               </Button>
-            )}
-          </div>
-        )}
+            </div>
 
-        {/* Loading */}
-        {isLoading && (
-          <div className="space-y-3">
-            {[1, 2, 3].map(i => (
-              <Skeleton key={i} className="h-24 w-full rounded-lg" />
-            ))}
-          </div>
-        )}
-
-        {/* Lista vazia */}
-        {!isLoading && palpites.length === 0 && (
-          <Card className="border-dashed">
-            <CardContent className="py-12 text-center space-y-4">
-              <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                <Dices className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <div className="space-y-1">
-                <p className="font-medium">Nenhum palpite salvo</p>
-                <p className="text-sm text-muted-foreground">
-                  Gere palpites e salve seus favoritos
-                </p>
-              </div>
-              <Link to="/gerador">
-                <Button size="sm" className="gap-2">
-                  <Dices className="h-4 w-4" />
-                  Ir para o Gerador
+            {/* Barra de ações em massa */}
+            {palpites.length > 0 && (
+              <div className="flex items-center justify-between mt-3 pt-3 border-t">
+                <Button
+                  variant={selected.size === palpites.length ? "default" : "ghost"}
+                  size="sm"
+                  onClick={handleSelectAll}
+                  className="text-sm h-8"
+                >
+                  {selected.size === palpites.length ? "Desmarcar todos" : "Selecionar todos"}
                 </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Pastas e palpites */}
-        {!isLoading && palpites.length > 0 && (
-          <div className="space-y-3">
-            {/* Pastas com palpites */}
-            {pastas.map((pasta) => {
-              const palpitesDaPasta = palpitesPorPasta[pasta.id] || [];
-              if (palpitesDaPasta.length === 0) return null;
-              
-              return (
-                <PastaItem
-                  key={pasta.id}
-                  pasta={{ ...pasta, count: palpitesDaPasta.length }}
-                  isExpanded={expandedPastas.has(pasta.id)}
-                  onToggle={() => handleTogglePasta(pasta.id)}
-                  onRename={(nome) => handleRenomearPasta(pasta.id, nome)}
-                  onDelete={() => handleExcluirPasta(pasta.id)}
-                >
-                  <div className="space-y-2">
-                    {palpitesDaPasta.map((palpite, idx) => renderPalpiteCard(palpite, idx))}
-                  </div>
-                </PastaItem>
-              );
-            })}
-
-            {/* Pastas vazias */}
-            {pastas.filter(p => (palpitesPorPasta[p.id] || []).length === 0).map((pasta) => (
-              <PastaItem
-                key={pasta.id}
-                pasta={{ ...pasta, count: 0 }}
-                isExpanded={expandedPastas.has(pasta.id)}
-                onToggle={() => handleTogglePasta(pasta.id)}
-                onRename={(nome) => handleRenomearPasta(pasta.id, nome)}
-                onDelete={() => handleExcluirPasta(pasta.id)}
-              >
-                <p className="text-sm text-muted-foreground py-4 text-center">
-                  Pasta vazia
-                </p>
-              </PastaItem>
-            ))}
-
-            {/* Palpites sem pasta */}
-            {palpitesPorPasta["sem-pasta"]?.length > 0 && (
-              <div className="space-y-2">
-                <button
-                  onClick={() => handleTogglePasta("sem-pasta")}
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <Folder className="h-4 w-4" />
-                  <span>Sem pasta ({palpitesPorPasta["sem-pasta"].length})</span>
-                </button>
                 
-                {expandedPastas.has("sem-pasta") && (
-                  <div className="space-y-2 pl-6">
-                    {palpitesPorPasta["sem-pasta"].map((palpite, idx) => 
-                      renderPalpiteCard(palpite, idx)
-                    )}
-                  </div>
+                {selected.size > 0 && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setDeleteDialogOpen(true)}
+                    className="h-8 gap-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Excluir {selected.size}
+                  </Button>
                 )}
               </div>
             )}
           </div>
-        )}
+        </div>
+
+        {/* Conteúdo Principal - Full Width */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Loading */}
+          {isLoading && (
+            <div className="p-4 space-y-3">
+              {[1, 2, 3].map(i => (
+                <Skeleton key={i} className="h-24 w-full rounded-xl" />
+              ))}
+            </div>
+          )}
+
+          {/* Lista vazia */}
+          {!isLoading && palpites.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                <Dices className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h2 className="text-lg font-semibold mb-1">Nenhum palpite salvo</h2>
+              <p className="text-sm text-muted-foreground mb-6">
+                Gere palpites e salve seus favoritos para acessar aqui
+              </p>
+              <Link to="/gerador">
+                <Button className="gap-2">
+                  <Dices className="h-5 w-5" />
+                  Ir para o Gerador
+                </Button>
+              </Link>
+            </div>
+          )}
+
+          {/* Pastas e palpites */}
+          {!isLoading && palpites.length > 0 && (
+            <div className="divide-y">
+              {/* Pastas com palpites */}
+              {pastas.map((pasta) => {
+                const palpitesDaPasta = palpitesPorPasta[pasta.id] || [];
+                if (palpitesDaPasta.length === 0 && pastas.length > 3) return null;
+                
+                const isExpanded = expandedPastas.has(pasta.id);
+                
+                return (
+                  <div key={pasta.id} className="bg-background">
+                    <PastaItem
+                      pasta={{ ...pasta, count: palpitesDaPasta.length }}
+                      isExpanded={isExpanded}
+                      onToggle={() => handleTogglePasta(pasta.id)}
+                      onRename={(nome) => handleRenomearPasta(pasta.id, nome)}
+                      onDelete={() => handleExcluirPasta(pasta.id)}
+                    >
+                      {palpitesDaPasta.length > 0 ? (
+                        <div className="space-y-2 pb-2">
+                          {palpitesDaPasta.map((palpite, idx) => renderPalpiteCard(palpite, idx))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground py-6 text-center">
+                          Pasta vazia
+                        </p>
+                      )}
+                    </PastaItem>
+                  </div>
+                );
+              })}
+
+              {/* Palpites sem pasta */}
+              {palpitesPorPasta["sem-pasta"]?.length > 0 && (
+                <div className="bg-background">
+                  <button
+                    onClick={() => handleTogglePasta("sem-pasta")}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/50 transition-colors"
+                  >
+                    {expandedPastas.has("sem-pasta") ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <Folder className="h-5 w-5 text-muted-foreground" />
+                    <span className="flex-1 font-medium">Sem pasta</span>
+                    <span className="text-sm text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                      {palpitesPorPasta["sem-pasta"].length}
+                    </span>
+                  </button>
+                  
+                  {expandedPastas.has("sem-pasta") && (
+                    <div className="px-4 pb-4 space-y-2">
+                      {palpitesPorPasta["sem-pasta"].map((palpite, idx) => 
+                        renderPalpiteCard(palpite, idx)
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Dialog Nova Pasta */}
