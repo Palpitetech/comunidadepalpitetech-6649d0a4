@@ -27,7 +27,8 @@ import {
   Folder,
   Trophy,
   ChevronDown,
-  Check
+  Check,
+  X
 } from "lucide-react";
 
 interface ConcursoOption {
@@ -68,6 +69,7 @@ export function PastaSheet({
   const [concursosLoaded, setConcursosLoaded] = useState(false);
   const [concursoSelecionado, setConcursoSelecionado] = useState<ConcursoOption | null>(null);
   const [acertosPorPalpite, setAcertosPorPalpite] = useState<Record<string, number>>({});
+  const [resumoVisivel, setResumoVisivel] = useState(true);
 
   // Sincronizar palpites quando props mudam
   useEffect(() => {
@@ -447,8 +449,15 @@ export function PastaSheet({
           </div>
 
           {/* Resumo de Premiações */}
-          {resumoPremiacoes && resumoPremiacoes.total > 0 && (
-            <div className="bg-emerald-950 border border-emerald-600 rounded-xl p-3 animate-fade-in shadow-lg shadow-emerald-900/30">
+          {resumoPremiacoes && resumoPremiacoes.total > 0 && resumoVisivel && (
+            <div className="bg-emerald-950 border border-emerald-600 rounded-xl p-3 animate-fade-in shadow-lg shadow-emerald-900/30 relative">
+              <button
+                onClick={() => setResumoVisivel(false)}
+                className="absolute top-2 right-2 text-emerald-400 hover:text-white transition-colors p-1"
+                aria-label="Fechar resumo"
+              >
+                <X className="h-4 w-4" />
+              </button>
               <div className="flex items-center gap-2 mb-2">
                 <Trophy className="h-5 w-5 text-emerald-300" />
                 <span className="font-bold text-emerald-200 text-sm">
