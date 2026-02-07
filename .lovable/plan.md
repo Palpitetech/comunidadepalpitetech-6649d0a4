@@ -1,105 +1,155 @@
 
 
-## Plano: Ajustes na Aba de Automação do Bot
+## Plano: Nova Opção "Responder Posts de Outros Agentes"
 
-### Problema Identificado
-Atualmente, a aba de Automação não reflete visualmente as dependências entre configurações:
+### Contexto Atual
 
-1. **Frequência de Posts**: A seção de agenda (dias, horários, frequência) permanece editável mesmo quando `can_create_posts` está desativado na aba Perfil
-2. **Limite de Comentários**: Quando "Responder Comentários Automaticamente" está ativado, não mostra o campo `max_comments_per_post` (que já existe no banco de dados!)
+Atualmente, a função `bot-reply-user` **bloqueia** qualquer resposta quando detecta que o autor é um bot:
+
+```typescript
+if (authorProfile?.is_bot) {
+  console.log(`Comentário de bot (${authorProfile.nome}) - ignorando para evitar loop`);
+  return { skipped: true, reason: "bot_author" };
+}
+```
+
+Isso impede completamente interações entre bots. Antes, a "mesa redonda" era um caso especial onde bots comentavam em posts de resultados, mas agora queremos dar a opção de um bot poder interagir com posts de **qualquer** outro bot.
 
 ### Solução Proposta
 
-#### 1. Sincronizar Estado de `can_create_posts`
-- Passar o valor de `can_create_posts` do bot para a aba de Automação
-- Quando `can_create_posts = false`:
-  - Desabilitar visualmente toda a seção de "Frequência de Posts"
-  - Desabilitar os botões de dias da semana
-  - Desabilitar o input de horários
-  - Mostrar mensagem explicativa: "Ative 'Pode Criar Posts' no perfil para configurar a agenda"
+#### 1. Novo Campo no Banco de Dados
 
-#### 2. Adicionar Campo `max_comments_per_post`
-- Quando `auto_reply_enabled = true`:
-  - Exibir campo numérico para `max_comments_per_post`
-  - Label: "Máximo de Respostas por Post"
-  - Descrição: "Limite de comentários automáticos por postagem"
-  - Valor padrão: 3 (já configurado no DB)
+| Campo | Tipo | Default | Descrição |
+|-------|------|---------|-----------|
+| `can_respond_to_bot_posts` | boolean | false | Se true, este bot pode comentar em posts feitos por outros bots |
 
-#### 3. Atualizar Tipo TypeScript
-- Adicionar campos ausentes ao tipo `GuidePersona`:
-  - `can_comment_on_posts: boolean`
-  - `max_comments_per_post: number`
+#### 2. Atualização da UI (BotAutomationTab)
 
-### Alterações Visuais
+Nova opção que aparece quando "Responder Comentários de Clientes" está ativo:
 
 ```text
 ┌─────────────────────────────────────────────────────┐
-│ Responder Comentários Automaticamente    [SWITCH]  │
-│ Bot responde automaticamente a comentários         │
+│ Responder Comentários de Clientes        [SWITCH]  │
+│ Bot responde automaticamente a usuários humanos    │
+│ ⚠️ Comentários de outros bots são ignorados        │
 └─────────────────────────────────────────────────────┘
-        ↓ (só aparece se switch = ON)
+        ↓ (só aparece se switch acima = ON)
 ┌─────────────────────────────────────────────────────┐
-│ Máximo de Respostas por Post                       │
-│ [  3  ]                                            │
-│ Limite de comentários automáticos por postagem     │
+│ ☐ Também Responder a Posts de Outros Agentes       │
+│   Permite que este bot comente em publicações      │
+│   feitas por outros bots da equipe (ex: resultado) │
+│   ⚠️ Limitado a 1 resposta por post                │
 └─────────────────────────────────────────────────────┘
+```
 
-─────────────────────────────────────────────────────
+#### 3. Atualização da Lógica Backend
 
-┌─────────────────────────────────────────────────────┐
-│ 📅 Agenda de Posts Automáticos                     │
-│ ⚠️ Desativado (ative "Pode Criar Posts" no perfil) │ ← se can_create_posts = false
-├─────────────────────────────────────────────────────┤
-│ Frequência de Posts (por dia)   [INPUT disabled]   │
-│ Dias de Postagem                [BUTTONS disabled] │
-│ Horários de Postagem            [INPUT disabled]   │
-└─────────────────────────────────────────────────────┘
+Na função `bot-reply-user`, modificar a verificação de autor:
+
+```typescript
+// ANTES: Bloqueia sempre se autor é bot
+if (authorProfile?.is_bot) { skip }
+
+// DEPOIS: Verificar se o bot selecionado pode responder a posts de bots
+// 1. Buscar guias que podem responder a bots
+// 2. Se o post original for de bot E nenhum guia pode responder → skip
+// 3. Se o post for de bot E há guia com can_respond_to_bot_posts=true → selecionar desses
 ```
 
 ### Arquivos a Modificar
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `src/types/bots.ts` | Adicionar `can_comment_on_posts` e `max_comments_per_post` ao tipo |
-| `src/components/admin/BotAutomationTab.tsx` | Implementar lógica condicional e novo campo |
+| `supabase/migrations/` | Adicionar coluna `can_respond_to_bot_posts` |
+| `src/types/bots.ts` | Adicionar campo ao tipo `GuidePersona` |
+| `src/components/admin/BotAutomationTab.tsx` | Adicionar checkbox/switch condicional |
+| `supabase/functions/bot-reply-user/index.ts` | Atualizar lógica de seleção de bot |
 
-### Detalhes Técnicos
+### Detalhes da Implementação
 
-**BotAutomationTab.tsx - Mudanças:**
+**1. Migration SQL:**
+```sql
+ALTER TABLE public.guide_personas 
+ADD COLUMN can_respond_to_bot_posts boolean NOT NULL DEFAULT false;
 
-1. Adicionar estado para `maxCommentsPerPost`:
-```typescript
-const [maxCommentsPerPost, setMaxCommentsPerPost] = useState(bot.max_comments_per_post ?? 3);
+COMMENT ON COLUMN public.guide_personas.can_respond_to_bot_posts IS 
+  'Se true, este bot pode comentar em posts criados por outros bots';
 ```
 
-2. Renderização condicional do limite de comentários:
+**2. BotAutomationTab - Nova Opção:**
 ```typescript
+const [canRespondToBotPosts, setCanRespondToBotPosts] = useState(
+  bot.can_respond_to_bot_posts ?? false
+);
+
+// Renderiza apenas se autoReply está ativo
 {autoReply && (
-  <div className="space-y-2 ml-4 p-3 bg-muted/30 rounded-lg">
-    <Label>Máximo de Respostas por Post</Label>
-    <Input
-      type="number"
-      value={maxCommentsPerPost}
-      onChange={(e) => setMaxCommentsPerPost(parseInt(e.target.value) || 1)}
-      min={1}
-      max={10}
-      className="w-32"
+  <div className="ml-4 flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
+    <Checkbox 
+      checked={canRespondToBotPosts}
+      onCheckedChange={setCanRespondToBotPosts}
     />
+    <div>
+      <Label>Também Responder a Posts de Outros Agentes</Label>
+      <p className="text-xs text-muted-foreground">
+        Permite comentar em publicações de outros bots da equipe
+      </p>
+    </div>
   </div>
 )}
 ```
 
-3. Desabilitar seção de agenda quando `can_create_posts = false`:
+**3. bot-reply-user - Lógica Atualizada:**
 ```typescript
-const canConfigureSchedule = bot.can_create_posts;
+// Verificar se autor do COMENTÁRIO é bot (evita loop de respostas a comentários)
+if (authorProfile?.is_bot) {
+  console.log(`Comentário de bot - ignorando sempre`);
+  return { skipped: true, reason: "bot_comment_author" };
+}
 
-// Na renderização dos inputs de frequência/dias/horários:
-disabled={!canConfigureSchedule}
+// Verificar se o POST original é de um bot
+const { data: postAuthor } = await supabaseAdmin
+  .from("perfis")
+  .select("is_bot")
+  .eq("id", postUserId)
+  .single();
+
+const postIsFromBot = postAuthor?.is_bot === true;
+
+// Buscar guias filtrados
+let guideQuery = supabaseAdmin
+  .from("guide_personas")
+  .select("...")
+  .eq("ativo", true)
+  .eq("auto_reply_enabled", true);
+
+// Se o post é de bot, filtrar apenas guias que podem responder
+if (postIsFromBot) {
+  guideQuery = guideQuery.eq("can_respond_to_bot_posts", true);
+}
 ```
 
-4. Atualizar `handleSubmit` para salvar `max_comments_per_post`
+### Proteções Anti-Loop
 
-### Impacto
-- **UX melhorada**: Usuário entende visualmente que a agenda depende de "Pode Criar Posts"
-- **Controle granular**: Limite de comentários previne spam e comportamento excessivo do bot
-- **Zero breaking changes**: Campos já existem no banco, apenas adicionamos controle na UI
+1. **Comentários de bots sempre ignorados**: Um bot nunca responde a um comentário feito por outro bot
+2. **Limite por post**: `max_comments_per_post` ainda se aplica
+3. **Verificação de duplicatas**: A lógica existente já verifica se já há resposta de bot no comentário
+
+### Fluxo Visual
+
+```text
+┌───────────────────────────────────────────────────────────────┐
+│ Post de "Augusto" (Bot - Autor dos Resultados)               │
+│ "🚨 Resultado Concurso 3250..."                               │
+├───────────────────────────────────────────────────────────────┤
+│   ↓ Cliente "João" comenta: "Interessante!"                   │
+│                                                               │
+│   ┌─────────────────────────────────────────────────────────┐ │
+│   │ Bot com can_respond_to_bot_posts=true pode responder    │ │
+│   │ ao comentário do João mesmo o post sendo de outro bot   │ │
+│   └─────────────────────────────────────────────────────────┘ │
+│                                                               │
+│   ↓ "Ana" (Bot) responde: "Exatamente, João! Note que..."    │
+└───────────────────────────────────────────────────────────────┘
+```
+
