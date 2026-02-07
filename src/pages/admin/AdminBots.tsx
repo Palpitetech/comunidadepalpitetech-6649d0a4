@@ -36,9 +36,16 @@ export default function AdminBots() {
     setSheetOpen(true);
   };
 
-  const handleBotSaved = () => {
+  const handleBotSaved = async (botId: string) => {
     setNewBotDialogOpen(false);
-    refetch();
+    
+    // Refetch and find the newly created bot
+    const updatedBots = await refetch();
+    const createdBot = updatedBots.find((b) => b.id === botId);
+    if (createdBot) {
+      setSelectedBot(createdBot);
+      setSheetOpen(true);
+    }
   };
 
   if (loading) {

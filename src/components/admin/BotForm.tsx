@@ -3,38 +3,29 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Bot } from "lucide-react";
-import { AI_MODELS, PROMPT_TEMPLATES, type PromptTemplateId } from "@/types/bots";
+import { Loader2, Bot, Sparkles } from "lucide-react";
+
+const DEFAULT_SYSTEM_PROMPT = `Você é um especialista em Lotofácil da comunidade Palpite Tech.
+
+Diretrizes:
+- Seja prestativo e amigável
+- Compartilhe conhecimento de forma clara
+- Reconheça que loteria envolve sorte
+- NUNCA mencione que é IA, bot ou modelo de linguagem`;
 
 interface BotFormProps {
-  onSaved: () => void;
+  onSaved: (botId: string) => void;
   onCancel: () => void;
 }
 
 export function BotForm({ onSaved, onCancel }: BotFormProps) {
   const [loading, setLoading] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<PromptTemplateId | "">("");
   const [formData, setFormData] = useState({
     nome: "",
     avatar_url: "",
     badge_emoji: "🛡️",
-    system_prompt: "",
-    ai_model: "google/gemini-3-flash-preview",
   });
-
-  const handleTemplateChange = (templateId: PromptTemplateId) => {
-    const template = PROMPT_TEMPLATES.find((t) => t.id === templateId);
-    if (template) {
-      setSelectedTemplate(templateId);
-      setFormData((prev) => ({
-        ...prev,
-        system_prompt: template.prompt,
-      }));
-    }
-  };
 
   const generateEmail = (nome: string) => {
     const slug = nome
@@ -49,8 +40,8 @@ export function BotForm({ onSaved, onCancel }: BotFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.nome || !formData.system_prompt) {
-      toast.error("Preencha todos os campos obrigatórios");
+    if (!formData.nome.trim()) {
+      toast.error("Informe o nome do bot");
       return;
     }
 
@@ -87,27 +78,30 @@ export function BotForm({ onSaved, onCancel }: BotFormProps) {
 
       if (perfilError) {
         console.error("Erro ao atualizar perfil:", perfilError);
-        // Continuar mesmo com erro, pois o trigger pode ter criado o perfil
       }
 
-      // 3. Criar guide_personas
-      const { error: guideError } = await supabase.from("guide_personas").insert({
-        perfil_id: authData.user.id,
-        cargo: "Especialista", // Default value for DB compatibility
-        especialidade: "Lotofácil", // Default value for DB compatibility
-        badge_emoji: formData.badge_emoji,
-        estilo_escrita: "profissional", // Default value for DB compatibility
-        system_prompt: formData.system_prompt,
-        ai_model: formData.ai_model,
-        ativo: true,
-        can_create_posts: true,
-        auto_reply_enabled: true,
-      });
+      // 3. Criar guide_personas com defaults
+      const { data: guideData, error: guideError } = await supabase
+        .from("guide_personas")
+        .insert({
+          perfil_id: authData.user.id,
+          cargo: "Especialista",
+          especialidade: "Lotofácil",
+          badge_emoji: formData.badge_emoji,
+          estilo_escrita: "profissional",
+          system_prompt: DEFAULT_SYSTEM_PROMPT,
+          ai_model: "google/gemini-3-flash-preview",
+          ativo: false, // Starts inactive until configured
+          can_create_posts: false,
+          auto_reply_enabled: false,
+        })
+        .select("id")
+        .single();
 
       if (guideError) throw guideError;
 
-      toast.success("Bot criado com sucesso!");
-      onSaved();
+      toast.success("Bot criado! Configure-o agora.");
+      onSaved(guideData.id);
     } catch (err) {
       console.error("Erro ao criar bot:", err);
       toast.error(err instanceof Error ? err.message : "Erro ao criar bot");
@@ -118,24 +112,17 @@ export function BotForm({ onSaved, onCancel }: BotFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Template Selector */}
-      <div className="space-y-2">
-        <Label>Usar Template Base</Label>
-        <Select value={selectedTemplate} onValueChange={(v) => handleTemplateChange(v as PromptTemplateId)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione um template (opcional)" />
-          </SelectTrigger>
-          <SelectContent>
-            {PROMPT_TEMPLATES.map((template) => (
-              <SelectItem key={template.id} value={template.id}>
-                {template.nome} - {template.especialidade}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <p className="text-xs text-muted-foreground">
-          Templates pré-configurados para diferentes tipos de bot
-        </p>
+      <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-4">
+        <div className="flex items-start gap-3">
+          <Sparkles className="h-5 w-5 text-primary mt-0.5" />
+          <div className="text-sm">
+            <p className="font-medium text-foreground">Criação Rápida</p>
+            <p className="text-muted-foreground">
+              Crie o bot com as informações básicas. Você poderá configurar o prompt, 
+              automações e permissões no painel de edição que abrirá em seguida.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Nome */}
@@ -146,7 +133,7 @@ export function BotForm({ onSaved, onCancel }: BotFormProps) {
           value={formData.nome}
           onChange={(e) => setFormData((prev) => ({ ...prev, nome: e.target.value }))}
           placeholder="Ex: Ana Silva"
-          required
+          autoFocus
         />
         {formData.nome && (
           <p className="text-xs text-muted-foreground">
@@ -157,7 +144,7 @@ export function BotForm({ onSaved, onCancel }: BotFormProps) {
 
       {/* Avatar */}
       <div className="space-y-2">
-        <Label htmlFor="avatar_url">URL do Avatar</Label>
+        <Label htmlFor="avatar_url">URL do Avatar (opcional)</Label>
         <Input
           id="avatar_url"
           value={formData.avatar_url}
@@ -178,44 +165,8 @@ export function BotForm({ onSaved, onCancel }: BotFormProps) {
           onChange={(e) => setFormData((prev) => ({ ...prev, badge_emoji: e.target.value }))}
           placeholder="🛡️"
           maxLength={4}
+          className="w-24"
         />
-      </div>
-
-      {/* Modelo IA */}
-      <div className="space-y-2">
-        <Label>Modelo de IA</Label>
-        <Select
-          value={formData.ai_model}
-          onValueChange={(value) => setFormData((prev) => ({ ...prev, ai_model: value }))}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {AI_MODELS.map((model) => (
-              <SelectItem key={model.value} value={model.value}>
-                {model.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* System Prompt */}
-      <div className="space-y-2">
-        <Label htmlFor="system_prompt">System Prompt *</Label>
-        <Textarea
-          id="system_prompt"
-          value={formData.system_prompt}
-          onChange={(e) => setFormData((prev) => ({ ...prev, system_prompt: e.target.value }))}
-          placeholder="Instruções para a personalidade e comportamento do bot..."
-          rows={10}
-          className="font-mono text-sm"
-          required
-        />
-        <p className="text-xs text-muted-foreground">
-          {formData.system_prompt.length} caracteres
-        </p>
       </div>
 
       {/* Actions */}
@@ -229,7 +180,7 @@ export function BotForm({ onSaved, onCancel }: BotFormProps) {
           ) : (
             <Bot className="h-4 w-4" />
           )}
-          Criar Bot
+          Criar e Configurar
         </Button>
       </div>
     </form>
