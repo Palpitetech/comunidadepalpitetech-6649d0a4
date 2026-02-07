@@ -153,28 +153,29 @@ export function ResultadosSheet({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="h-full flex flex-col p-0">
-        <SheetHeader className="px-4 py-3 border-b shrink-0">
-          <SheetTitle className="text-lg">
-            {jogos.length} Palpite{jogos.length !== 1 ? "s" : ""} Gerado{jogos.length !== 1 ? "s" : ""}
+        {/* Header compacto */}
+        <SheetHeader className="px-3 py-2 border-b shrink-0 flex-row items-center justify-between">
+          <SheetTitle className="text-base font-semibold">
+            {jogos.length} Palpite{jogos.length !== 1 ? "s" : ""}
           </SheetTitle>
         </SheetHeader>
 
-        {/* Barra de Ações */}
-        <div className="flex flex-wrap gap-2 p-4 border-b bg-muted/30 shrink-0">
+        {/* Barra de Ações - Layout otimizado para mobile */}
+        <div className="grid grid-cols-2 gap-2 p-3 border-b bg-muted/30 shrink-0">
           <Button
             variant="outline"
             size="sm"
             onClick={handleSelectAll}
-            className="gap-1.5"
+            className="gap-1.5 text-xs h-9"
           >
             {allSelected ? (
               <>
-                <CheckSquare className="h-4 w-4" />
+                <CheckSquare className="h-3.5 w-3.5" />
                 Desmarcar
               </>
             ) : (
               <>
-                <Square className="h-4 w-4" />
+                <Square className="h-3.5 w-3.5" />
                 Selecionar
               </>
             )}
@@ -183,49 +184,38 @@ export function ResultadosSheet({
           <Button
             variant="outline"
             size="sm"
-            onClick={handleCopiarSelecionados}
-            disabled={selected.size === 0}
-            className="gap-1.5"
-          >
-            <CopyCheck className="h-4 w-4" />
-            Copiar ({selected.size})
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
             onClick={handleCopiarTodos}
-            className="gap-1.5"
+            className="gap-1.5 text-xs h-9"
           >
-            <Copy className="h-4 w-4" />
+            <Copy className="h-3.5 w-3.5" />
             Copiar Todos
           </Button>
 
           <Button
             variant="outline"
             size="sm"
-            onClick={handleExcluirSelecionados}
+            onClick={handleCopiarSelecionados}
             disabled={selected.size === 0}
-            className="gap-1.5 text-destructive hover:text-destructive"
+            className="gap-1.5 text-xs h-9"
           >
-            <Trash2 className="h-4 w-4" />
-            Excluir ({selected.size})
+            <CopyCheck className="h-3.5 w-3.5" />
+            Copiar ({selected.size})
           </Button>
 
           <Button
             variant="outline"
             size="sm"
             onClick={handleExcluirTodos}
-            className="gap-1.5 text-destructive hover:text-destructive"
+            className="gap-1.5 text-xs h-9 text-destructive hover:text-destructive"
           >
-            <X className="h-4 w-4" />
-            Excluir Todos
+            <X className="h-3.5 w-3.5" />
+            Limpar Tudo
           </Button>
         </div>
 
         {/* Lista de Palpites */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="grid gap-3 max-w-2xl mx-auto">
+        <div className="flex-1 overflow-y-auto p-3 pb-20">
+          <div className="grid gap-2">
             {jogosPaginados.map((jogo, localIndex) => {
               const globalIndex = currentPage * ITEMS_PER_PAGE + localIndex;
               return (
@@ -242,25 +232,27 @@ export function ResultadosSheet({
           </div>
         </div>
 
-        {/* Paginação */}
+        {/* Paginação fixa no rodapé */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-4 p-4 border-t bg-background shrink-0">
+          <div className="fixed bottom-0 left-0 right-0 flex items-center justify-center gap-4 p-3 border-t bg-background shrink-0 safe-area-bottom">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
               disabled={currentPage === 0}
+              className="h-9 px-4"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm text-muted-foreground">
-              Página {currentPage + 1} de {totalPages}
+            <span className="text-sm text-muted-foreground min-w-[100px] text-center">
+              {currentPage + 1} / {totalPages}
             </span>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={currentPage === totalPages - 1}
+              className="h-9 px-4"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
