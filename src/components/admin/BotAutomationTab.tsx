@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { Loader2, Save, Plus, X, FileText, Clock, Calendar, ChevronDown } from "lucide-react";
+import { Loader2, Save, Plus, X, FileText, Clock, Calendar, ChevronDown, Bot } from "lucide-react";
 import { DIAS_SEMANA } from "@/types/bots";
 import type { BotWithStats, BotSchedule } from "@/types/bots";
 import { formatDistanceToNow } from "date-fns";
@@ -29,6 +30,7 @@ interface RecentPost {
 export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
   const [loading, setLoading] = useState(false);
   const [autoReply, setAutoReply] = useState(bot.auto_reply_enabled);
+  const [canRespondToBotPosts, setCanRespondToBotPosts] = useState(bot.can_respond_to_bot_posts ?? false);
   const [maxCommentsPerPost, setMaxCommentsPerPost] = useState(bot.max_comments_per_post ?? 3);
   const [frequencia, setFrequencia] = useState(bot.frequencia_posts);
   const [schedule, setSchedule] = useState<BotSchedule>(bot.post_schedule);
@@ -111,6 +113,7 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
         .from("guide_personas")
         .update({
           auto_reply_enabled: autoReply,
+          can_respond_to_bot_posts: canRespondToBotPosts,
           max_comments_per_post: maxCommentsPerPost,
           frequencia_posts: frequencia,
           post_schedule: JSON.parse(JSON.stringify(schedule)),
@@ -150,20 +153,47 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
           </div>
           
           {autoReply && (
-            <div className="ml-4 p-3 bg-muted/30 rounded-lg border-l-2 border-primary/30">
-              <Label htmlFor="maxComments">Máximo de Respostas por Post</Label>
-              <Input
-                id="maxComments"
-                type="number"
-                value={maxCommentsPerPost}
-                onChange={(e) => setMaxCommentsPerPost(parseInt(e.target.value) || 1)}
-                min={1}
-                max={10}
-                className="w-32 mt-2"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Limite de comentários automáticos por postagem
-              </p>
+            <div className="ml-4 space-y-4">
+              {/* Máximo de respostas */}
+              <div className="p-3 bg-muted/30 rounded-lg border-l-2 border-primary/30">
+                <Label htmlFor="maxComments">Máximo de Respostas por Post</Label>
+                <Input
+                  id="maxComments"
+                  type="number"
+                  value={maxCommentsPerPost}
+                  onChange={(e) => setMaxCommentsPerPost(parseInt(e.target.value) || 1)}
+                  min={1}
+                  max={10}
+                  className="w-32 mt-2"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Limite de comentários automáticos por postagem
+                </p>
+              </div>
+              
+              {/* Nova opção: Responder a posts de outros bots */}
+              <div className="p-3 bg-muted/30 rounded-lg border-l-2 border-amber-500/30">
+                <div className="flex items-start gap-3">
+                  <Checkbox 
+                    id="canRespondToBotPosts"
+                    checked={canRespondToBotPosts}
+                    onCheckedChange={(checked) => setCanRespondToBotPosts(checked === true)}
+                    className="mt-0.5"
+                  />
+                  <div className="space-y-1">
+                    <Label htmlFor="canRespondToBotPosts" className="flex items-center gap-2 cursor-pointer">
+                      <Bot className="h-4 w-4 text-amber-600" />
+                      Também Responder a Posts de Outros Agentes
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Permite que este bot comente em publicações feitas por outros bots da equipe (ex: posts de resultado)
+                    </p>
+                    <p className="text-xs text-amber-600">
+                      ⚠️ Limitado a {maxCommentsPerPost} resposta(s) por post
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

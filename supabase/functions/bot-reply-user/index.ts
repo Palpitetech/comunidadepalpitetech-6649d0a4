@@ -12,6 +12,7 @@ interface GuideData {
   system_prompt: string;
   especialidade: string;
   cargo: string;
+  can_respond_to_bot_posts: boolean;
   perfis: { nome: string | null } | { nome: string | null }[] | null;
 }
 
@@ -44,7 +45,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
     
-    // 1. Verificar se o autor é bot (evitar loop infinito)
+    // 1. Verificar se o autor do COMENTÁRIO é bot (evitar loop infinito de respostas a comentários)
     const { data: authorProfile } = await supabaseAdmin
       .from("perfis")
       .select("is_bot, nome")
@@ -54,7 +55,7 @@ serve(async (req) => {
     if (authorProfile?.is_bot) {
       console.log(`Comentário de bot (${authorProfile.nome}) - ignorando para evitar loop`);
       return new Response(
-        JSON.stringify({ skipped: true, reason: "bot_author" }),
+        JSON.stringify({ skipped: true, reason: "bot_comment_author" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -83,19 +84,47 @@ serve(async (req) => {
       }
     }
     
-    // 3. Buscar guias ativos
-    const { data: guides, error: guidesError } = await supabaseAdmin
+    // 3. Verificar se o POST original é de um bot
+    const { data: postData } = await supabaseAdmin
+      .from("postagens")
+      .select("user_id, titulo, conteudo")
+      .eq("id", post_id)
+      .single();
+    
+    const { data: postAuthorProfile } = await supabaseAdmin
+      .from("perfis")
+      .select("is_bot")
+      .eq("id", postData?.user_id)
+      .single();
+    
+    const postIsFromBot = postAuthorProfile?.is_bot === true;
+    
+    // 4. Buscar guias ativos com filtro condicional
+    let guideQuery = supabaseAdmin
       .from("guide_personas")
-      .select("id, perfil_id, system_prompt, especialidade, cargo, perfis(nome)")
-      .eq("ativo", true);
+      .select("id, perfil_id, system_prompt, especialidade, cargo, can_respond_to_bot_posts, perfis(nome)")
+      .eq("ativo", true)
+      .eq("auto_reply_enabled", true);
+    
+    // Se o post é de bot, filtrar apenas guias que podem responder a posts de bots
+    if (postIsFromBot) {
+      guideQuery = guideQuery.eq("can_respond_to_bot_posts", true);
+    }
+    
+    const { data: guides, error: guidesError } = await guideQuery;
     
     if (guidesError || !guides || guides.length === 0) {
-      console.log("Nenhum guia ativo encontrado");
+      const reason = postIsFromBot ? "no_guides_for_bot_posts" : "no_guides";
+      console.log(postIsFromBot 
+        ? "Nenhum guia configurado para responder posts de bots" 
+        : "Nenhum guia ativo encontrado");
       return new Response(
-        JSON.stringify({ skipped: true, reason: "no_guides" }),
+        JSON.stringify({ skipped: true, reason }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    
+    console.log(`Post é de bot: ${postIsFromBot}. Guias disponíveis: ${guides.length}`);
     
     // 3. Sortear 1 guia aleatório
     // Opcional: dar peso maior para especialistas se o comentário tiver palavras-chave
@@ -124,12 +153,8 @@ serve(async (req) => {
     
     selectedGuide = matchedGuide || guides[Math.floor(Math.random() * guides.length)] as GuideData;
     
-    // 4. Buscar contexto do post original
-    const { data: post } = await supabaseAdmin
-      .from("postagens")
-      .select("titulo, conteudo")
-      .eq("id", post_id)
-      .single();
+    // Usar dados do post já buscados anteriormente
+    const post = postData;
     
     // 5. Gerar resposta personalizada
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
