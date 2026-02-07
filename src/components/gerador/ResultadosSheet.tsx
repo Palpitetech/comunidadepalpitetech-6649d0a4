@@ -10,9 +10,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PalpiteCard } from "@/components/shared/PalpiteCard";
 import { EstrategiaCard, type EstrategiaData } from "./EstrategiaCard";
+import { NovaPastaDialog } from "@/components/palpites/NovaPastaDialog";
+import { SelecionarPastaDialog } from "@/components/palpites/SelecionarPastaDialog";
 import { formatarDezena } from "@/lib/lotofacil";
 import { useToast } from "@/hooks/use-toast";
-import { usePalpitesSalvos } from "@/hooks/usePalpitesSalvos";
+import { usePalpitesSalvos, type PalpitePasta } from "@/hooks/usePalpitesSalvos";
 import { 
   Copy, 
   CopyCheck, 
@@ -55,10 +57,16 @@ export function ResultadosSheet({
   dezenasFixes = [],
 }: ResultadosSheetProps) {
   const { toast } = useToast();
-  const { salvarPalpites, isLoading: isSaving } = usePalpitesSalvos();
+  const { salvarPalpites, buscarPastas, criarPasta, isLoading: isSaving } = usePalpitesSalvos();
   const [jogos, setJogos] = useState<JogoGerado[]>(jogosIniciais);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [currentPage, setCurrentPage] = useState(0);
+  
+  // Estados para dialogs de pasta
+  const [pastas, setPastas] = useState<PalpitePasta[]>([]);
+  const [selecionarPastaOpen, setSelecionarPastaOpen] = useState(false);
+  const [novaPastaOpen, setNovaPastaOpen] = useState(false);
+  const [salvarTodosMode, setSalvarTodosMode] = useState(false);
 
   // Sincronizar jogos quando props mudam
   useEffect(() => {
@@ -66,6 +74,13 @@ export function ResultadosSheet({
     setSelected(new Set());
     setCurrentPage(0);
   }, [jogosIniciais]);
+
+  // Carregar pastas quando abrir
+  useEffect(() => {
+    if (open) {
+      buscarPastas().then(setPastas);
+    }
+  }, [open]);
 
   const totalPages = Math.ceil(jogos.length / ITEMS_PER_PAGE);
   
@@ -133,11 +148,11 @@ export function ResultadosSheet({
   // Criar texto resumido da estratégia para salvar
   const getEstrategiaTexto = () => {
     if (!estrategia) return undefined;
-    // Usar ferramentas como resumo da estratégia
     return estrategia.ferramentas.slice(0, 2).join(" + ");
   };
 
-  const handleSalvarSelecionados = async () => {
+  // Fluxo de salvar com seleção de pasta
+  const handleIniciarSalvarSelecionados = () => {
     if (selected.size === 0) {
       toast({
         title: "Nenhum palpite selecionado",
@@ -146,13 +161,41 @@ export function ResultadosSheet({
       });
       return;
     }
-
-    const palpitesParaSalvar = jogos.filter((_, i) => selected.has(i));
-    await salvarPalpites(palpitesParaSalvar, periodoAnalise, null, getEstrategiaTexto());
+    setSalvarTodosMode(false);
+    setSelecionarPastaOpen(true);
   };
 
-  const handleSalvarTodos = async () => {
-    await salvarPalpites(jogos, periodoAnalise, null, getEstrategiaTexto());
+  const handleIniciarSalvarTodos = () => {
+    setSalvarTodosMode(true);
+    setSelecionarPastaOpen(true);
+  };
+
+  const handleSelecionarPasta = async (pastaId: string | null) => {
+    const palpitesParaSalvar = salvarTodosMode 
+      ? jogos 
+      : jogos.filter((_, i) => selected.has(i));
+    
+    await salvarPalpites(palpitesParaSalvar, periodoAnalise, pastaId, getEstrategiaTexto());
+    setSelecionarPastaOpen(false);
+  };
+
+  const handleCriarNovaPasta = () => {
+    setSelecionarPastaOpen(false);
+    setNovaPastaOpen(true);
+  };
+
+  const handleConfirmarNovaPasta = async (nome: string, cor: string) => {
+    const novaPasta = await criarPasta(nome, cor);
+    if (novaPasta) {
+      setPastas(prev => [...prev, novaPasta]);
+      // Salvar na nova pasta
+      const palpitesParaSalvar = salvarTodosMode 
+        ? jogos 
+        : jogos.filter((_, i) => selected.has(i));
+      
+      await salvarPalpites(palpitesParaSalvar, periodoAnalise, novaPasta.id, getEstrategiaTexto());
+    }
+    setNovaPastaOpen(false);
   };
 
   const handleExcluirSelecionados = () => {
@@ -293,12 +336,12 @@ export function ResultadosSheet({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-popover z-50 w-56">
                   {/* Ações de Salvar */}
-                  <DropdownMenuItem onClick={handleSalvarTodos} disabled={isSaving} className="gap-2">
+                  <DropdownMenuItem onClick={handleIniciarSalvarTodos} disabled={isSaving} className="gap-2">
                     <Bookmark className="h-4 w-4" />
                     Salvar Todos ({jogos.length})
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={handleSalvarSelecionados} 
+                    onClick={handleIniciarSalvarSelecionados} 
                     disabled={selected.size === 0 || isSaving}
                     className="gap-2"
                   >
@@ -402,6 +445,24 @@ export function ResultadosSheet({
           <div className="h-8" />
         </div>
       </SheetContent>
+
+      {/* Dialog Selecionar Pasta */}
+      <SelecionarPastaDialog
+        open={selecionarPastaOpen}
+        onOpenChange={setSelecionarPastaOpen}
+        pastas={pastas.map(p => ({ id: p.id, nome: p.nome, cor: p.cor }))}
+        onSelect={handleSelecionarPasta}
+        onNovaPasta={handleCriarNovaPasta}
+        isLoading={isSaving}
+      />
+
+      {/* Dialog Nova Pasta */}
+      <NovaPastaDialog
+        open={novaPastaOpen}
+        onOpenChange={setNovaPastaOpen}
+        onConfirm={handleConfirmarNovaPasta}
+        isLoading={isSaving}
+      />
     </Sheet>
   );
 }
