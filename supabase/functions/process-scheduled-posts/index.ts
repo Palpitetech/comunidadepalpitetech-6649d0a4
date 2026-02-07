@@ -45,12 +45,15 @@ serve(async (req) => {
     if (guidesError) throw guidesError;
 
     if (!guides?.length) {
-      console.log("[process-scheduled-posts] Nenhum bot ativo encontrado");
+      console.log("[process-scheduled-posts] ❌ Nenhum bot encontrado com permissões");
+      console.log("[process-scheduled-posts] Filtros aplicados: ativo=true, can_create_posts=true");
       return new Response(
-        JSON.stringify({ success: true, processed: 0, message: "Nenhum bot ativo" }),
+        JSON.stringify({ success: true, processed: 0, message: "Nenhum bot ativo com permissão para criar posts" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    console.log(`[process-scheduled-posts] ✅ ${guides.length} bot(s) com permissão encontrado(s)`);
 
     const processed: string[] = [];
     const errors: string[] = [];

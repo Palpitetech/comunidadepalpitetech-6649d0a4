@@ -31,12 +31,23 @@ serve(async (req) => {
       .single();
 
     if (guideError || !guide) {
+      console.log(`[generate-bot-post] ❌ Bot ${guide_id} não encontrado`);
       throw new Error("Bot não encontrado");
     }
 
-    if (!guide.ativo || !guide.can_create_posts) {
-      throw new Error("Bot não está ativo ou não pode criar posts");
+    // Validação de permissões com logging detalhado
+    if (!guide.ativo) {
+      console.log(`[generate-bot-post] ❌ Bot ${guide.perfis?.nome || guide_id} rejeitado: ativo=false`);
+      throw new Error("Bot não está ativo");
     }
+
+    if (!guide.can_create_posts) {
+      console.log(`[generate-bot-post] ❌ Bot ${guide.perfis?.nome || guide_id} rejeitado: can_create_posts=false`);
+      throw new Error("Bot não pode criar posts (can_create_posts=false)");
+    }
+
+    console.log(`[generate-bot-post] ✅ Bot aceito: ${guide.perfis?.nome || guide_id}`);
+    console.log(`[generate-bot-post] Permissões: ativo=${guide.ativo}, can_create_posts=${guide.can_create_posts}`);
 
     // 2. Buscar últimos resultados
     const { data: resultados } = await supabaseAdmin
