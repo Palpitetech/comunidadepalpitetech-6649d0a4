@@ -12,7 +12,7 @@ export default function Comunidade() {
   const { data: posts, isLoading, error } = useCommunityPosts();
 
   return (
-    <MainLayout pageTitle="Comunidade">
+    <MainLayout pageTitle="Comunidade" hideBackButton>
       <div className="max-w-2xl mx-auto px-4 py-6">
         {!isMobile && <FeedHeader />}
 

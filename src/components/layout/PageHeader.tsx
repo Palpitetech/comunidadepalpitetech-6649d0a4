@@ -14,9 +14,11 @@ interface PageHeaderProps {
   onBack?: () => void;
   /** Ações à direita do header */
   rightContent?: ReactNode;
+  /** Esconde o botão de voltar (ex: página inicial) */
+  hideBackButton?: boolean;
 }
 
-export function PageHeader({ title, breadcrumb, onBack, rightContent }: PageHeaderProps) {
+export function PageHeader({ title, breadcrumb, onBack, rightContent, hideBackButton }: PageHeaderProps) {
   const navigate = useNavigate();
 
   const handleBack = () => {
@@ -34,13 +36,15 @@ export function PageHeader({ title, breadcrumb, onBack, rightContent }: PageHead
     <header className="sticky top-0 z-20 bg-background border-b border-border px-4 py-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <button
-            onClick={handleBack}
-            className="flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors shrink-0"
-            aria-label="Voltar"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
+          {!hideBackButton && (
+            <button
+              onClick={handleBack}
+              className="flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors shrink-0"
+              aria-label="Voltar"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+          )}
           
           {hasBreadcrumb ? (
             <div className="flex items-center gap-1 min-w-0 overflow-hidden">
