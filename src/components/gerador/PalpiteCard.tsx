@@ -85,24 +85,12 @@ export function PalpiteCard({
         )}
       </div>
 
-      {/* Estatísticas - Linha única compacta */}
-      <div className="flex items-center justify-center gap-3 text-[10px] text-muted-foreground border-t border-border/50 pt-2 mt-1">
-        <span className="flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-          <strong className="text-foreground">{impares}</strong> ímp
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-          <strong className="text-foreground">{moldura}</strong> mold
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-          <strong className="text-foreground">{repetidas}</strong> rep
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-          <strong className="text-foreground">{multiplosDe3}</strong> m3
-        </span>
+      {/* Estatísticas - Linha única neutra */}
+      <div className="flex items-center justify-center gap-4 text-[10px] text-muted-foreground border-t border-border/50 pt-2 mt-1">
+        <span>Ímp <strong className="text-foreground">{impares}</strong></span>
+        <span>Mold <strong className="text-foreground">{moldura}</strong></span>
+        <span>Rep <strong className="text-foreground">{repetidas}</strong></span>
+        <span>M3 <strong className="text-foreground">{multiplosDe3}</strong></span>
       </div>
     </div>
   );
