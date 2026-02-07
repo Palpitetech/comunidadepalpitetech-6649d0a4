@@ -175,7 +175,7 @@ export function ResultadosSheet({
       ? jogos 
       : jogos.filter((_, i) => selected.has(i));
     
-    await salvarPalpites(palpitesParaSalvar, periodoAnalise, pastaId, getEstrategiaTexto());
+    await salvarPalpites(palpitesParaSalvar, periodoAnalise, pastaId, getEstrategiaTexto(), estrategia);
     setSelecionarPastaOpen(false);
   };
 
@@ -193,7 +193,7 @@ export function ResultadosSheet({
         ? jogos 
         : jogos.filter((_, i) => selected.has(i));
       
-      await salvarPalpites(palpitesParaSalvar, periodoAnalise, novaPasta.id, getEstrategiaTexto());
+      await salvarPalpites(palpitesParaSalvar, periodoAnalise, novaPasta.id, getEstrategiaTexto(), estrategia);
     }
     setNovaPastaOpen(false);
   };

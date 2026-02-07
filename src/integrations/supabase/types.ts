@@ -622,6 +622,7 @@ export type Database = {
           created_at: string
           dezenas: number[]
           estrategia: string | null
+          estrategia_data: Json | null
           id: string
           loteria: string | null
           nome: string | null
@@ -637,6 +638,7 @@ export type Database = {
           created_at?: string
           dezenas: number[]
           estrategia?: string | null
+          estrategia_data?: Json | null
           id?: string
           loteria?: string | null
           nome?: string | null
@@ -652,6 +654,7 @@ export type Database = {
           created_at?: string
           dezenas?: number[]
           estrategia?: string | null
+          estrategia_data?: Json | null
           id?: string
           loteria?: string | null
           nome?: string | null

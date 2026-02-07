@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import type { EstrategiaData } from "@/components/gerador/EstrategiaCard";
 
 export interface PalpiteSalvo {
   id: string;
@@ -16,6 +17,7 @@ export interface PalpiteSalvo {
   acertos: number | null;
   pasta_id: string | null;
   estrategia: string | null;
+  estrategia_data: EstrategiaData | null;
 }
 
 export interface PalpitePasta {
@@ -35,7 +37,8 @@ export function usePalpitesSalvos() {
     palpites: { dezenas: number[] }[],
     periodoAnalise?: number,
     pastaId?: string | null,
-    estrategia?: string
+    estrategia?: string,
+    estrategiaData?: EstrategiaData | null
   ): Promise<boolean> => {
     setIsLoading(true);
     try {
@@ -57,11 +60,12 @@ export function usePalpitesSalvos() {
         loteria: "lotofacil",
         pasta_id: pastaId || null,
         estrategia: estrategia || null,
+        estrategia_data: estrategiaData ? JSON.parse(JSON.stringify(estrategiaData)) : null,
       }));
 
       const { error } = await supabase
         .from("palpites_salvos")
-        .insert(inserts);
+        .insert(inserts as any);
 
       if (error) throw error;
 
@@ -92,7 +96,7 @@ export function usePalpitesSalvos() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return (data || []) as PalpiteSalvo[];
+      return (data || []) as unknown as PalpiteSalvo[];
     } catch (error) {
       console.error("Erro ao buscar palpites:", error);
       return [];
