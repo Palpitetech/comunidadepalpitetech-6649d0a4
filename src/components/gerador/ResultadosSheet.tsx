@@ -179,7 +179,12 @@ export function ResultadosSheet({
 
         {/* Conteúdo com scroll da página toda */}
         <div className="px-3 py-3 space-y-3">
-          {/* Barra de seleção e ações - Primeiro */}
+          {/* Estratégia de Geração - Primeiro */}
+          {estrategia && (
+            <EstrategiaCard estrategia={estrategia} />
+          )}
+
+          {/* Barra de seleção e ações - Entre estratégia e palpites */}
           <div className="flex items-center justify-between py-2">
             <Button
               variant={allSelected ? "default" : "outline"}
@@ -210,8 +215,9 @@ export function ResultadosSheet({
               {/* Dropdown de ações */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-8 w-8">
+                  <Button variant="outline" size="sm" className="h-8 gap-2">
                     <MoreHorizontal className="h-4 w-4" />
+                    Ações
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-popover z-50 w-52">
@@ -247,11 +253,6 @@ export function ResultadosSheet({
               </DropdownMenu>
             </div>
           </div>
-
-          {/* Estratégia de Geração */}
-          {estrategia && (
-            <EstrategiaCard estrategia={estrategia} />
-          )}
 
           {/* Lista de Palpites */}
           <div className="grid gap-2">
