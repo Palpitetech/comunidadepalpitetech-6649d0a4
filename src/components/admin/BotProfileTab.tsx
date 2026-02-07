@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Upload, User, Trash2 } from "lucide-react";
 import type { BotWithStats } from "@/types/bots";
 
 interface BotProfileTabProps {
@@ -15,10 +16,10 @@ interface BotProfileTabProps {
 
 export function BotProfileTab({ bot, onUpdated }: BotProfileTabProps) {
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     nome: bot.perfis?.nome || "",
     avatar_url: bot.perfis?.avatar_url || "",
-    badge_emoji: bot.badge_emoji,
     ativo: bot.ativo,
     is_result_author: bot.is_result_author,
     is_strategy_author: bot.is_strategy_author ?? false,
@@ -26,6 +27,78 @@ export function BotProfileTab({ bot, onUpdated }: BotProfileTabProps) {
     is_system_sales_author: bot.is_system_sales_author ?? false,
     can_create_posts: bot.can_create_posts,
   });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Por favor, selecione uma imagem");
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 2MB");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Delete old avatar if exists
+      if (formData.avatar_url && formData.avatar_url.includes("bot-avatars")) {
+        const oldPath = formData.avatar_url.split("/bot-avatars/").pop();
+        if (oldPath) {
+          await supabase.storage.from("bot-avatars").remove([oldPath]);
+        }
+      }
+
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${bot.perfil_id}-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("bot-avatars")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("bot-avatars")
+        .getPublicUrl(fileName);
+
+      setFormData((prev) => ({ ...prev, avatar_url: publicUrl }));
+      toast.success("Avatar atualizado");
+    } catch (err) {
+      console.error("Erro ao fazer upload:", err);
+      toast.error("Erro ao fazer upload da imagem");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!formData.avatar_url) return;
+
+    setUploading(true);
+    try {
+      // Delete from storage if it's our bucket
+      if (formData.avatar_url.includes("bot-avatars")) {
+        const path = formData.avatar_url.split("/bot-avatars/").pop();
+        if (path) {
+          await supabase.storage.from("bot-avatars").remove([path]);
+        }
+      }
+      setFormData((prev) => ({ ...prev, avatar_url: "" }));
+      toast.success("Avatar removido");
+    } catch (err) {
+      console.error("Erro ao remover avatar:", err);
+      toast.error("Erro ao remover avatar");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +120,6 @@ export function BotProfileTab({ bot, onUpdated }: BotProfileTabProps) {
       const { error: guideError } = await supabase
         .from("guide_personas")
         .update({
-          badge_emoji: formData.badge_emoji,
           ativo: formData.ativo,
           is_result_author: formData.is_result_author,
           is_strategy_author: formData.is_strategy_author,
@@ -82,25 +154,59 @@ export function BotProfileTab({ bot, onUpdated }: BotProfileTabProps) {
           />
         </div>
 
+        {/* Avatar Upload */}
         <div className="space-y-2">
-          <Label htmlFor="avatar_url">URL do Avatar</Label>
-          <Input
-            id="avatar_url"
-            value={formData.avatar_url}
-            onChange={(e) => setFormData((prev) => ({ ...prev, avatar_url: e.target.value }))}
-            placeholder="https://..."
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="badge_emoji">Badge Emoji</Label>
-          <Input
-            id="badge_emoji"
-            value={formData.badge_emoji}
-            onChange={(e) => setFormData((prev) => ({ ...prev, badge_emoji: e.target.value }))}
-            placeholder="🛡️"
-            maxLength={4}
-          />
+          <Label>Foto do Avatar</Label>
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16 border-2 border-border">
+              <AvatarImage src={formData.avatar_url} alt="Avatar" />
+              <AvatarFallback>
+                <User className="h-8 w-8 text-muted-foreground" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 space-y-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="gap-2"
+                >
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  {formData.avatar_url ? "Trocar" : "Upload"}
+                </Button>
+                {formData.avatar_url && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRemoveAvatar}
+                    disabled={uploading}
+                    className="gap-2 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Remover
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                JPG, PNG ou WebP. Máx 2MB.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -182,7 +288,7 @@ export function BotProfileTab({ bot, onUpdated }: BotProfileTabProps) {
         </div>
       </div>
 
-      <Button type="submit" className="w-full gap-2" disabled={loading}>
+      <Button type="submit" className="w-full gap-2" disabled={loading || uploading}>
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
         Salvar Alterações
       </Button>

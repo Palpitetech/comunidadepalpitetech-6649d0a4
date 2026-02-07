@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Loader2, Bot, Sparkles } from "lucide-react";
+import { Loader2, Bot, Sparkles, Upload, User } from "lucide-react";
 
 interface BotFormProps {
   onSaved: (botId: string) => void;
@@ -13,11 +14,12 @@ interface BotFormProps {
 
 export function BotForm({ onSaved, onCancel }: BotFormProps) {
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     nome: "",
     avatar_url: "",
-    badge_emoji: "🛡️",
   });
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const generateEmail = (nome: string) => {
     const slug = nome
@@ -27,6 +29,47 @@ export function BotForm({ onSaved, onCancel }: BotFormProps) {
       .replace(/[^a-z0-9]/g, "")
       .substring(0, 20);
     return `${slug}@guia.palpitetech.com`;
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Por favor, selecione uma imagem");
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 2MB");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("bot-avatars")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("bot-avatars")
+        .getPublicUrl(fileName);
+
+      setFormData((prev) => ({ ...prev, avatar_url: publicUrl }));
+      toast.success("Avatar carregado com sucesso");
+    } catch (err) {
+      console.error("Erro ao fazer upload:", err);
+      toast.error("Erro ao fazer upload da imagem");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,7 +88,6 @@ export function BotForm({ onSaved, onCancel }: BotFormProps) {
         body: {
           nome: formData.nome.trim(),
           avatar_url: formData.avatar_url || null,
-          badge_emoji: formData.badge_emoji || "🛡️",
         },
       });
 
@@ -99,31 +141,43 @@ export function BotForm({ onSaved, onCancel }: BotFormProps) {
         )}
       </div>
 
-      {/* Avatar */}
+      {/* Avatar Upload */}
       <div className="space-y-2">
-        <Label htmlFor="avatar_url">URL do Avatar (opcional)</Label>
-        <Input
-          id="avatar_url"
-          value={formData.avatar_url}
-          onChange={(e) => setFormData((prev) => ({ ...prev, avatar_url: e.target.value }))}
-          placeholder="https://..."
-        />
-        <p className="text-xs text-muted-foreground">
-          Dica: use dicebear.com para gerar avatars
-        </p>
-      </div>
-
-      {/* Badge Emoji */}
-      <div className="space-y-2">
-        <Label htmlFor="badge_emoji">Badge Emoji</Label>
-        <Input
-          id="badge_emoji"
-          value={formData.badge_emoji}
-          onChange={(e) => setFormData((prev) => ({ ...prev, badge_emoji: e.target.value }))}
-          placeholder="🛡️"
-          maxLength={4}
-          className="w-24"
-        />
+        <Label>Foto do Avatar (opcional)</Label>
+        <div className="flex items-center gap-4">
+          <Avatar className="h-16 w-16 border-2 border-border">
+            <AvatarImage src={formData.avatar_url} alt="Avatar preview" />
+            <AvatarFallback>
+              <User className="h-8 w-8 text-muted-foreground" />
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="gap-2"
+            >
+              {uploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Upload className="h-4 w-4" />
+              )}
+              {uploading ? "Carregando..." : "Escolher Foto"}
+            </Button>
+            <p className="text-xs text-muted-foreground mt-1">
+              JPG, PNG ou WebP. Máx 2MB.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Actions */}
@@ -131,7 +185,7 @@ export function BotForm({ onSaved, onCancel }: BotFormProps) {
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
           Cancelar
         </Button>
-        <Button type="submit" className="flex-1 gap-2" disabled={loading}>
+        <Button type="submit" className="flex-1 gap-2" disabled={loading || uploading}>
           {loading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
