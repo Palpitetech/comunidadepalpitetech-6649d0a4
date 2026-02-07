@@ -154,40 +154,7 @@ export default function MeusPalpites() {
                   </p>
                 </div>
               </div>
-              <Button
-                onClick={() => setNovaPastaOpen(true)}
-                className="gap-2"
-              >
-                <FolderPlus className="h-4 w-4" />
-                Nova Pasta
-              </Button>
             </div>
-
-            {/* Ações em massa */}
-            {palpites.length > 0 && (
-              <div className="flex items-center justify-between mt-4 pt-3 border-t">
-                <Button
-                  variant={selected.size === palpites.length ? "default" : "ghost"}
-                  size="sm"
-                  onClick={handleSelectAll}
-                  className="text-sm"
-                >
-                  {selected.size === palpites.length ? "Desmarcar todos" : "Selecionar todos"}
-                </Button>
-                
-                {selected.size > 0 && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => setDeleteDialogOpen(true)}
-                    className="gap-2"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Excluir {selected.size}
-                  </Button>
-                )}
-              </div>
-            )}
           </div>
         </div>
 
