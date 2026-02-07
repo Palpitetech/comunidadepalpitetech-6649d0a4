@@ -17,9 +17,10 @@ export function QuantidadeSelector({
 
   return (
     <div className="space-y-3">
-      <p className="text-center text-muted-foreground">
-        Quantos jogos você quer gerar?
-      </p>
+      <div className="text-center">
+        <p className="text-sm font-medium text-foreground mb-1">Quantidade de palpites</p>
+        <p className="text-xs text-muted-foreground">Quantos jogos você quer gerar?</p>
+      </div>
       <div className="flex flex-wrap justify-center gap-2">
         {options.map((num) => (
           <button
