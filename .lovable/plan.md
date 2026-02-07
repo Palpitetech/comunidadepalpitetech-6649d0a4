@@ -1,155 +1,276 @@
 
 
-## Plano: Nova Opção "Responder Posts de Outros Agentes"
+## Plano: Novos Tipos de Autor - Estratégia e Palpites Grátis
 
-### Contexto Atual
+### Resumo Executivo
 
-Atualmente, a função `bot-reply-user` **bloqueia** qualquer resposta quando detecta que o autor é um bot:
+Serão criados **dois novos papéis de autor** para bots na comunidade:
 
-```typescript
-if (authorProfile?.is_bot) {
-  console.log(`Comentário de bot (${authorProfile.nome}) - ignorando para evitar loop`);
-  return { skipped: true, reason: "bot_author" };
-}
+| Autor | Objetivo | Exemplo de Conteúdo |
+|-------|----------|---------------------|
+| **Autor de Estratégias** | Ensinar usuários a criar seus próprios palpites | "Como usar dezenas quentes para montar seu jogo" |
+| **Autor de Palpites Grátis** | Fornecer sugestões gratuitas com explicação | "Palpite do dia: 01, 03, 05..." + estratégia usada |
+
+---
+
+### 1. Alterações no Banco de Dados
+
+Adicionar duas novas colunas booleanas na tabela `guide_personas`:
+
+| Coluna | Tipo | Default | Descrição |
+|--------|------|---------|-----------|
+| `is_strategy_author` | boolean | false | Bot publica posts ensinando estratégias |
+| `is_free_tips_author` | boolean | false | Bot publica palpites grátis com explicação |
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│ guide_personas                                               │
+├──────────────────────────────────────────────────────────────┤
+│ ...                                                          │
+│ is_result_author      boolean  (já existe)                   │
+│ is_strategy_author    boolean  NEW - Autor de Estratégias    │
+│ is_free_tips_author   boolean  NEW - Autor de Palpites       │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-Isso impede completamente interações entre bots. Antes, a "mesa redonda" era um caso especial onde bots comentavam em posts de resultados, mas agora queremos dar a opção de um bot poder interagir com posts de **qualquer** outro bot.
+---
 
-### Solução Proposta
+### 2. Atualizações na UI Admin
 
-#### 1. Novo Campo no Banco de Dados
+#### 2.1 BotProfileTab - Novos Switches
 
-| Campo | Tipo | Default | Descrição |
-|-------|------|---------|-----------|
-| `can_respond_to_bot_posts` | boolean | false | Se true, este bot pode comentar em posts feitos por outros bots |
-
-#### 2. Atualização da UI (BotAutomationTab)
-
-Nova opção que aparece quando "Responder Comentários de Clientes" está ativo:
+Adicionar dois novos switches na seção de permissões especiais:
 
 ```text
 ┌─────────────────────────────────────────────────────┐
-│ Responder Comentários de Clientes        [SWITCH]  │
-│ Bot responde automaticamente a usuários humanos    │
-│ ⚠️ Comentários de outros bots são ignorados        │
-└─────────────────────────────────────────────────────┘
-        ↓ (só aparece se switch acima = ON)
-┌─────────────────────────────────────────────────────┐
-│ ☐ Também Responder a Posts de Outros Agentes       │
-│   Permite que este bot comente em publicações      │
-│   feitas por outros bots da equipe (ex: resultado) │
-│   ⚠️ Limitado a 1 resposta por post                │
+│ Autor dos Resultados                    [SWITCH]   │
+│ Cria os posts de plantão de resultados oficiais    │
+├─────────────────────────────────────────────────────┤
+│ Autor de Estratégias                    [SWITCH]   │ NEW
+│ Publica posts ensinando como montar palpites       │
+├─────────────────────────────────────────────────────┤
+│ Autor de Palpites Grátis                [SWITCH]   │ NEW
+│ Compartilha palpites gratuitos com explicação      │
 └─────────────────────────────────────────────────────┘
 ```
 
-#### 3. Atualização da Lógica Backend
+#### 2.2 BotPostTrigger - Novos Tipos de Post
 
-Na função `bot-reply-user`, modificar a verificação de autor:
+Adicionar duas novas opções no seletor de tipo de post:
 
-```typescript
-// ANTES: Bloqueia sempre se autor é bot
-if (authorProfile?.is_bot) { skip }
+```text
+Tipos existentes:
+- pre_sorteio
+- pos_sorteio  
+- geral
+- resultado_oficial
 
-// DEPOIS: Verificar se o bot selecionado pode responder a posts de bots
-// 1. Buscar guias que podem responder a bots
-// 2. Se o post original for de bot E nenhum guia pode responder → skip
-// 3. Se o post for de bot E há guia com can_respond_to_bot_posts=true → selecionar desses
+Novos tipos:
+- estrategia         → "Dica de Estratégia"
+- palpite_gratis     → "Palpite Grátis do Dia"
 ```
 
-### Arquivos a Modificar
+O bot selecionado para cada tipo será filtrado automaticamente:
+- `resultado_oficial` → bots com `is_result_author = true`
+- `estrategia` → bots com `is_strategy_author = true`
+- `palpite_gratis` → bots com `is_free_tips_author = true`
+
+#### 2.3 AdminBots - Novos Badges na Listagem
+
+Adicionar badges visuais na lista de bots:
+
+```text
+🎯 Resultados    (is_result_author)
+📚 Estratégia    (is_strategy_author)  NEW
+🎁 Palpites      (is_free_tips_author) NEW
+```
+
+---
+
+### 3. Backend - Edge Functions
+
+#### 3.1 Atualização: `generate-bot-post/index.ts`
+
+Adicionar lógica específica para os novos tipos de post:
+
+**Para tipo `estrategia`:**
+- Prompt focado em ENSINAR técnicas
+- Usa dados estatísticos como exemplo didático
+- Não fornece números específicos para jogar
+- Convida usuários a aplicar a técnica
+
+**Para tipo `palpite_gratis`:**
+- Gera um jogo completo de 15 dezenas
+- Explica a estratégia usada (similar ao Gerador)
+- Inclui aviso sobre responsabilidade
+- Limite: 1 palpite por post (não abusa)
+
+#### 3.2 Prompts Específicos
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│ ESTRATÉGIA                                                       │
+│──────────────────────────────────────────────────────────────────│
+│ Você é um educador da Lotofácil. Seu papel é ENSINAR técnicas,  │
+│ não dar palpites prontos.                                        │
+│                                                                  │
+│ Neste post, escolha UMA técnica e explique passo a passo:       │
+│ - Como funciona                                                  │
+│ - Quando usar                                                    │
+│ - Exemplo prático com dados reais                                │
+│ - Convide o usuário a tentar por conta própria                  │
+│                                                                  │
+│ Técnicas disponíveis:                                            │
+│ - Análise de dezenas quentes/frias                              │
+│ - Ciclo de dezenas                                               │
+│ - Equilíbrio pares/ímpares                                       │
+│ - Duplas e trios frequentes                                      │
+│ - Moldura do volante                                             │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ PALPITE GRÁTIS                                                   │
+│──────────────────────────────────────────────────────────────────│
+│ Você vai compartilhar UM palpite grátis para a comunidade.       │
+│                                                                  │
+│ REGRAS:                                                          │
+│ 1. Gere EXATAMENTE 15 dezenas únicas de 01 a 25                 │
+│ 2. Explique brevemente a estratégia usada (1-2 frases)          │
+│ 3. Inclua sempre o aviso: "Loteria é sorte, jogue responsável!" │
+│ 4. Formato: liste as dezenas separadas por vírgula              │
+│                                                                  │
+│ Use os dados estatísticos fornecidos para embasar sua escolha.  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 4. Arquivos a Modificar
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `supabase/migrations/` | Adicionar coluna `can_respond_to_bot_posts` |
-| `src/types/bots.ts` | Adicionar campo ao tipo `GuidePersona` |
-| `src/components/admin/BotAutomationTab.tsx` | Adicionar checkbox/switch condicional |
-| `supabase/functions/bot-reply-user/index.ts` | Atualizar lógica de seleção de bot |
+| `supabase/migrations/` | Adicionar colunas `is_strategy_author` e `is_free_tips_author` |
+| `src/types/bots.ts` | Adicionar campos ao tipo `GuidePersona` |
+| `src/components/admin/BotProfileTab.tsx` | Adicionar 2 novos switches |
+| `src/components/admin/BotPostTrigger.tsx` | Adicionar tipos `estrategia` e `palpite_gratis` |
+| `src/pages/admin/AdminBots.tsx` | Adicionar badges na listagem |
+| `src/components/admin/BotDetailSheet.tsx` | Adicionar badges no header |
+| `supabase/functions/generate-bot-post/index.ts` | Adicionar prompts específicos para novos tipos |
 
-### Detalhes da Implementação
+---
 
-**1. Migration SQL:**
-```sql
-ALTER TABLE public.guide_personas 
-ADD COLUMN can_respond_to_bot_posts boolean NOT NULL DEFAULT false;
-
-COMMENT ON COLUMN public.guide_personas.can_respond_to_bot_posts IS 
-  'Se true, este bot pode comentar em posts criados por outros bots';
-```
-
-**2. BotAutomationTab - Nova Opção:**
-```typescript
-const [canRespondToBotPosts, setCanRespondToBotPosts] = useState(
-  bot.can_respond_to_bot_posts ?? false
-);
-
-// Renderiza apenas se autoReply está ativo
-{autoReply && (
-  <div className="ml-4 flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
-    <Checkbox 
-      checked={canRespondToBotPosts}
-      onCheckedChange={setCanRespondToBotPosts}
-    />
-    <div>
-      <Label>Também Responder a Posts de Outros Agentes</Label>
-      <p className="text-xs text-muted-foreground">
-        Permite comentar em publicações de outros bots da equipe
-      </p>
-    </div>
-  </div>
-)}
-```
-
-**3. bot-reply-user - Lógica Atualizada:**
-```typescript
-// Verificar se autor do COMENTÁRIO é bot (evita loop de respostas a comentários)
-if (authorProfile?.is_bot) {
-  console.log(`Comentário de bot - ignorando sempre`);
-  return { skipped: true, reason: "bot_comment_author" };
-}
-
-// Verificar se o POST original é de um bot
-const { data: postAuthor } = await supabaseAdmin
-  .from("perfis")
-  .select("is_bot")
-  .eq("id", postUserId)
-  .single();
-
-const postIsFromBot = postAuthor?.is_bot === true;
-
-// Buscar guias filtrados
-let guideQuery = supabaseAdmin
-  .from("guide_personas")
-  .select("...")
-  .eq("ativo", true)
-  .eq("auto_reply_enabled", true);
-
-// Se o post é de bot, filtrar apenas guias que podem responder
-if (postIsFromBot) {
-  guideQuery = guideQuery.eq("can_respond_to_bot_posts", true);
-}
-```
-
-### Proteções Anti-Loop
-
-1. **Comentários de bots sempre ignorados**: Um bot nunca responde a um comentário feito por outro bot
-2. **Limite por post**: `max_comments_per_post` ainda se aplica
-3. **Verificação de duplicatas**: A lógica existente já verifica se já há resposta de bot no comentário
-
-### Fluxo Visual
+### 5. Fluxo de Uso
 
 ```text
-┌───────────────────────────────────────────────────────────────┐
-│ Post de "Augusto" (Bot - Autor dos Resultados)               │
-│ "🚨 Resultado Concurso 3250..."                               │
-├───────────────────────────────────────────────────────────────┤
-│   ↓ Cliente "João" comenta: "Interessante!"                   │
-│                                                               │
-│   ┌─────────────────────────────────────────────────────────┐ │
-│   │ Bot com can_respond_to_bot_posts=true pode responder    │ │
-│   │ ao comentário do João mesmo o post sendo de outro bot   │ │
-│   └─────────────────────────────────────────────────────────┘ │
-│                                                               │
-│   ↓ "Ana" (Bot) responde: "Exatamente, João! Note que..."    │
-└───────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│ ADMIN: /admin/bots                                              │
+│                                                                  │
+│ 1. Abre perfil do bot "Ana" (Analista de Dados)                 │
+│ 2. Ativa "Autor de Estratégias" ✓                               │
+│ 3. Salva                                                         │
+│                                                                  │
+│ 4. Vai para "Disparar Post Manual"                              │
+│ 5. Seleciona tipo: "Dica de Estratégia"                         │
+│ 6. Sistema filtra apenas bots com is_strategy_author=true       │
+│ 7. Publica                                                       │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ RESULTADO NA COMUNIDADE:                                         │
+│                                                                  │
+│ 📚 Ana | Analista de Dados                                       │
+│ ──────────────────────────────────────────────────────────────── │
+│ "🎯 Técnica: Equilíbrio Pares/Ímpares"                          │
+│                                                                  │
+│ Você sabia que nos últimos 50 sorteios, 78% tiveram entre       │
+│ 7 e 8 pares? Aqui vai como usar isso a seu favor...             │
+│                                                                  │
+│ 1. Monte seu jogo com 7 ou 8 números pares                      │
+│ 2. Complete com 7 ou 8 ímpares                                   │
+│ 3. Verifique se está equilibrado                                 │
+│                                                                  │
+│ Tente aplicar essa técnica no próximo jogo! 🍀                   │
+└─────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+### 6. Detalhes Técnicos
+
+#### 6.1 Migration SQL
+
+```sql
+-- Adicionar colunas de autor especializado
+ALTER TABLE public.guide_personas 
+ADD COLUMN is_strategy_author boolean NOT NULL DEFAULT false,
+ADD COLUMN is_free_tips_author boolean NOT NULL DEFAULT false;
+
+-- Comentários explicativos
+COMMENT ON COLUMN public.guide_personas.is_strategy_author IS 
+  'Se true, este bot publica posts ensinando estratégias de jogo';
+
+COMMENT ON COLUMN public.guide_personas.is_free_tips_author IS 
+  'Se true, este bot publica palpites grátis com explicação da estratégia';
+```
+
+#### 6.2 BotPostTrigger - Lógica de Filtro
+
+```typescript
+// Filtrar bots por tipo de post
+const getAvailableBots = (postType: PostType) => {
+  switch (postType) {
+    case "resultado_oficial":
+      return bots.filter(b => b.is_result_author);
+    case "estrategia":
+      return bots.filter(b => b.is_strategy_author);
+    case "palpite_gratis":
+      return bots.filter(b => b.is_free_tips_author);
+    default:
+      return bots.filter(b => b.can_create_posts);
+  }
+};
+```
+
+#### 6.3 generate-bot-post - Prompts Condicionais
+
+```typescript
+// Instruções específicas por tipo
+function getInstrucoesTipo(tipo: string, contexto: string): string {
+  switch (tipo) {
+    case "estrategia":
+      return `OBJETIVO: Ensinar UMA técnica de análise.
+      
+ESTRUTURA:
+1. Título da técnica
+2. Explicação simples (como funciona)
+3. Exemplo com dados reais: ${contexto}
+4. Convite para o usuário tentar
+
+NÃO dê palpites prontos, apenas ensine a técnica.`;
+
+    case "palpite_gratis":
+      return `OBJETIVO: Compartilhar UM palpite grátis.
+
+ESTRUTURA:
+1. Título chamativo (ex: "Palpite do Dia 🎲")
+2. 15 dezenas separadas por vírgula
+3. Breve explicação da estratégia (1-2 frases)
+4. Aviso: "Loteria é sorte, jogue com responsabilidade!"
+
+Use os dados: ${contexto}`;
+
+    default:
+      return `Crie um post geral sobre análise.`;
+  }
+}
+```
+
+---
+
+### 7. Considerações de Segurança
+
+- **Palpites Grátis**: Limitar a 1 jogo por post para não substituir a ferramenta premium
+- **Estratégias**: Não revelar algoritmos proprietários, apenas técnicas públicas
+- **Disclaimers**: Sempre incluir aviso sobre jogo responsável
+- **Rate Limit**: Manter limites de frequência existentes por bot
 
