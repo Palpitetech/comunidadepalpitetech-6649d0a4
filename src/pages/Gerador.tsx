@@ -136,7 +136,7 @@ export default function Gerador() {
             {isLoading && (
               <div className="space-y-3">
                 <div className="text-center text-sm text-muted-foreground">
-                  Analisando os últimos 50 concursos...
+                  Analisando {periodoAnalise === 1 ? "o último concurso" : `os últimos ${periodoAnalise} concursos`}...
                 </div>
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-3/4 mx-auto" />
