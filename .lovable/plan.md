@@ -1,146 +1,142 @@
 
-# Plano: Refatorar Página do Gerador de Palpites
+# Plano: Gerador de Fechamento
 
-## Objetivo
-Redesenhar a página `/gerador` com uma experiência mais limpa e focada, separando a configuração dos resultados em duas telas distintas.
+## Resumo
+Criar uma nova página "Gerador de Fechamento" que permite ao usuário selecionar dezenas em um grid visual 5x5, com indicadores de propriedades matemáticas (Par/Ímpar, Moldura, Múltiplo de 3) em cada quadrado, e gerar combinações fechadas baseadas no tipo de fechamento selecionado.
 
 ---
 
-## Fluxo do Usuário
+## O que é Fechamento?
+O fechamento é uma técnica de loteria onde você seleciona mais dezenas do que o necessário e gera todas as combinações possíveis para garantir um prêmio mínimo caso acerte determinada quantidade de números.
+
+---
+
+## Estrutura Visual do Grid 5x5
+
+Cada quadrado do grid terá indicadores nos cantos:
 
 ```text
-┌─────────────────────────────────┐
-│     TELA 1: CONFIGURAÇÃO        │
-│  (Página /gerador - Compacta)   │
-├─────────────────────────────────┤
-│                                 │
-│   ┌─────────────────────────┐   │
-│   │  Quantos palpites?      │   │
-│   │  [1][2][3][4][5][6]...  │   │
-│   └─────────────────────────┘   │
-│                                 │
-│   ┌─────────────────────────┐   │
-│   │  Dezenas por palpite?   │   │
-│   │  [15][16][17][18][19]   │   │
-│   │        [20]             │   │
-│   └─────────────────────────┘   │
-│                                 │
-│   ┌─────────────────────────┐   │
-│   │     GERAR PALPITES      │   │
-│   └─────────────────────────┘   │
-│                                 │
-│   "Você pode gerar 3x hoje"    │
-└─────────────────────────────────┘
-              │
-              ▼
-┌─────────────────────────────────┐
-│   TELA 2: RESULTADOS (MODAL)    │
-│    (Fullscreen / Sheet)         │
-├─────────────────────────────────┤
-│  ┌───────────────────────────┐  │
-│  │ ☑ Copiar Selecionados     │  │
-│  │ 📋 Copiar Todos           │  │
-│  │ 🗑 Excluir Selecionados   │  │
-│  │ ❌ Excluir Todos          │  │
-│  └───────────────────────────┘  │
-│                                 │
-│  ┌───────────────────────────┐  │
-│  │ [☐] Palpite 1             │  │
-│  │ 01 02 03 04 05 06 07 08   │  │
-│  │ 09 10 11 12 13 14 15      │  │
-│  │ Ímpares: 7 | Moldura: 10  │  │
-│  │ Repetidas: 5 | Múlt.3: 5  │  │
-│  └───────────────────────────┘  │
-│                                 │
-│  ┌───────────────────────────┐  │
-│  │ [☐] Palpite 2             │  │
-│  │ ... (mesmo layout)        │  │
-│  └───────────────────────────┘  │
-│                                 │
-│   Página 1 de 2  [<] [>]       │
-└─────────────────────────────────┘
+┌─────────────┐
+│ I         P │  ← I = Ímpar (esquerda), P = Par (direita)
+│     01      │  ← Número central
+│ M        M3 │  ← M = Moldura (esquerda), M3 = Múltiplo 3 (direita)
+└─────────────┘
 ```
 
 ---
 
-## O Que Será Criado/Modificado
+## Componentes a Criar
 
-### Arquivos Novos
-| Arquivo | Descrição |
-|---------|-----------|
-| `src/components/gerador/DezenasSelector.tsx` | Seletor para quantidade de dezenas (15-20) |
-| `src/components/gerador/PalpiteCard.tsx` | Card visual de cada palpite com checkbox e estatísticas |
-| `src/components/gerador/ResultadosSheet.tsx` | Modal fullscreen com lista de palpites e ações em lote |
+### 1. Página Principal
+**Arquivo:** `src/pages/Fechamento.tsx`
+- Usa `MainLayout` com `pageTitle="Gerador de Fechamento"`
+- Desktop: Header com ícone e descrição
+- Card de configuração com seletores
 
-### Arquivos Modificados
-| Arquivo | Mudanças |
-|---------|----------|
-| `src/pages/Gerador.tsx` | Layout limpo com 2 seletores + botão + status |
-| `src/hooks/useGerador.ts` | Adicionar parâmetro `qtdDezenas` na requisição |
-| `supabase/functions/generate-palpites/index.ts` | Aceitar `qtdDezenas` (15-20) e gerar jogos dinâmicos |
-| `src/lib/lotofacil.ts` | Adicionar função para contar múltiplos de 3 |
+### 2. Seletor de Tipo de Fechamento (Dropdown)
+**Arquivo:** `src/components/fechamento/TipoFechamentoSelector.tsx`
+- Dropdown com tipos de fechamento comuns:
+  - 18 dezenas - Garante 14 pontos
+  - 19 dezenas - Garante 14 pontos
+  - 20 dezenas - Garante 14 pontos
+  - 21 dezenas - Garante 13 pontos
+  - 22 dezenas - Garante 13 pontos
+  - 23 dezenas - Garante 12 pontos
+  - 24 dezenas - Garante 12 pontos
+  - 25 dezenas - Garante 11 pontos
+
+### 3. Seletor de Chave (Modo de Seleção)
+**Arquivo:** `src/components/fechamento/ModoChaveSelector.tsx`
+- Radio buttons para alternar entre:
+  - **Selecionar**: Modo padrão de escolha
+  - **Fixar**: Dezenas que obrigatoriamente estarão em todos os jogos
+
+### 4. Grid 5x5 de Dezenas com Indicadores
+**Arquivo:** `src/components/fechamento/GridDezenasVolante.tsx`
+- Grid 5x5 representando o volante da Lotofácil
+- Cada célula mostra:
+  - Número central formatado (01-25)
+  - **Canto superior esquerdo**: "I" se ímpar
+  - **Canto superior direito**: "P" se par
+  - **Canto inferior esquerdo**: "M" se moldura
+  - **Canto inferior direito**: "M3" se múltiplo de 3
+- Estados visuais:
+  - Normal: borda cinza
+  - Selecionada: fundo roxo/primário
+  - Fixa: fundo amarelo/dourado (destaque especial)
+
+---
+
+## Fluxo de Uso
+
+1. Usuário seleciona o tipo de fechamento (ex: 18 dezenas - 14 pontos)
+2. Define o modo: Selecionar ou Fixar
+3. Clica nas dezenas do grid para selecioná-las/fixá-las
+4. Sistema valida se a quantidade mínima de dezenas foi atingida
+5. Botão "Gerar Fechamento" fica habilitado
+6. Ao clicar, gera as combinações (futura implementação do backend)
 
 ---
 
 ## Detalhes Técnicos
 
-### 1. Novo Seletor de Dezenas
-Componente similar ao `QuantidadeSelector`, mas com opções fixas: **15, 16, 17, 18, 19, 20**.
-
-### 2. Cálculo de Estatísticas
-Cada palpite exibirá:
-- **Ímpares**: Quantidade de números ímpares
-- **Repetidas**: Comparação com último concurso (buscar do banco)
-- **Moldura**: Dezenas nas bordas do volante
-- **Múltiplo de 3**: Dezenas divisíveis por 3 (3, 6, 9, 12, 15, 18, 21, 24)
-
-### 3. Funcionalidades da Tela de Resultados
-| Ação | Comportamento |
-|------|---------------|
-| Copiar Selecionados | Copia apenas os palpites marcados |
-| Copiar Todos | Copia todos os palpites formatados |
-| Excluir Selecionados | Remove palpites marcados da lista |
-| Excluir Todos | Limpa a lista e volta à configuração |
-
-### 4. Paginação
-- Máximo de **12 palpites por página**
-- Navegação simples com botões anterior/próximo
-
-### 5. Edge Function Atualizada
-```typescript
-// Novo parâmetro aceito
-const qtdDezenas = Math.min(Math.max(body.qtdDezenas || 15, 15), 20);
-
-// Prompt atualizado para a IA
-`Gere ${quantidade} jogo(s) com EXATAMENTE ${qtdDezenas} dezenas cada.`
+### Rota
+```tsx
+// App.tsx
+<Route path="/fechamento" element={<ProtectedRoute><Fechamento /></ProtectedRoute>} />
 ```
 
+### Uso das Funções Existentes
+```tsx
+// Reutilizar do src/lib/lotofacil.ts
+import { 
+  isPar, 
+  isImpar, 
+  isMoldura, 
+  isMultiploDe3, 
+  formatarDezena 
+} from "@/lib/lotofacil";
+```
+
+### Validações do Grid
+- Mínimo de dezenas = quantidade do fechamento selecionado
+- Máximo de dezenas fixas = quantidade do fechamento - 15
+- Feedback visual quando limites são atingidos
+
 ---
 
-## Mudanças Visuais
+## Arquivos a Criar
 
-### Página de Configuração (Limpa)
-- Header minimalista: apenas título + ícone
-- 2 seletores com labels claros
-- Botão de ação grande e destacado
-- Status de uso discreto no rodapé
-
-### Modal de Resultados (Fullscreen)
-- Barra de ações fixa no topo
-- Cards de palpite com checkbox para seleção
-- Dezenas em formato 8+7 (ou 8+8 para 16, etc.)
-- Linha de estatísticas compacta
-- Paginação se necessário
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/pages/Fechamento.tsx` | Página principal |
+| `src/components/fechamento/TipoFechamentoSelector.tsx` | Dropdown de tipos |
+| `src/components/fechamento/ModoChaveSelector.tsx` | Seletor de modo |
+| `src/components/fechamento/GridDezenasVolante.tsx` | Grid 5x5 interativo |
+| `src/components/fechamento/DezenaVolante.tsx` | Célula individual do grid |
 
 ---
 
-## Sequência de Implementação
+## Arquivo a Modificar
 
-1. Criar função `contarMultiplosDe3` em `src/lib/lotofacil.ts`
-2. Criar componente `DezenasSelector.tsx`
-3. Criar componente `PalpiteCard.tsx` com layout visual e checkbox
-4. Criar componente `ResultadosSheet.tsx` com ações e paginação
-5. Atualizar `useGerador.ts` para aceitar `qtdDezenas`
-6. Atualizar Edge Function `generate-palpites` para processar `qtdDezenas`
-7. Refatorar `Gerador.tsx` com novo layout limpo
-8. Testar fluxo completo
+| Arquivo | Mudança |
+|---------|---------|
+| `src/App.tsx` | Adicionar rota `/fechamento` |
+
+---
+
+## Cores e Estilos
+
+- **Dezena normal**: `bg-card border-border`
+- **Dezena selecionada**: `bg-primary/20 border-primary`
+- **Dezena fixa**: `bg-amber-100 border-amber-500` (dourado para destaque)
+- **Indicador I (ímpar)**: `text-purple-600 text-[10px]`
+- **Indicador P (par)**: `text-blue-600 text-[10px]`
+- **Indicador M (moldura)**: `text-amber-600 text-[10px]`
+- **Indicador M3 (múltiplo 3)**: `text-green-600 text-[10px]`
+
+---
+
+## Resultado Esperado
+
+Interface limpa e intuitiva seguindo o padrão de layout do sistema, com grid visual que facilita a seleção de dezenas mostrando todas as propriedades matemáticas de cada número, ideal para usuários seniores que precisam de informações visuais claras.
