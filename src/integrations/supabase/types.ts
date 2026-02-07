@@ -294,7 +294,7 @@ export type Database = {
           estilo_escrita: string | null
           frequencia_posts: number | null
           id: string
-          is_roundtable_author: boolean | null
+          is_result_author: boolean | null
           max_chars_comment: number | null
           max_chars_post: number | null
           max_comments_per_post: number
@@ -333,7 +333,7 @@ export type Database = {
           estilo_escrita?: string | null
           frequencia_posts?: number | null
           id?: string
-          is_roundtable_author?: boolean | null
+          is_result_author?: boolean | null
           max_chars_comment?: number | null
           max_chars_post?: number | null
           max_comments_per_post?: number
@@ -372,7 +372,7 @@ export type Database = {
           estilo_escrita?: string | null
           frequencia_posts?: number | null
           id?: string
-          is_roundtable_author?: boolean | null
+          is_result_author?: boolean | null
           max_chars_comment?: number | null
           max_chars_post?: number | null
           max_comments_per_post?: number

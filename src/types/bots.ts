@@ -30,7 +30,7 @@ export interface GuidePersona {
   auto_reply_enabled: boolean;
   max_chars_post: number;
   max_chars_comment: number;
-  is_roundtable_author: boolean;
+  is_result_author: boolean;
   can_create_posts: boolean;
   total_posts: number;
   total_comments: number;

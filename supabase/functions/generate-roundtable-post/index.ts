@@ -12,8 +12,8 @@ const PERIODO_ANALISE = 20;
 const LIMIAR_QUENTE = 0.71;
 const LIMIAR_FRIO = 0.39;
 
-// System prompt padrão para autor de mesa redonda (fallback)
-const DEFAULT_ROUNDTABLE_PROMPT = `Você é o líder do Palpite Tech e compartilha análises sobre a Lotofácil.
+// System prompt padrão para autor de resultados (fallback)
+const DEFAULT_RESULT_AUTHOR_PROMPT = `Você é o líder do Palpite Tech e compartilha análises sobre a Lotofácil.
 
 Diretrizes:
 - Fale como líder que trabalha com sua equipe de especialistas
@@ -388,24 +388,24 @@ serve(async (req) => {
     const tipoPost = body.tipo_post || "geral";
     const isResultadoOficial = tipoPost === "resultado_oficial";
     
-    console.log(`Gerando roundtable post do tipo: ${tipoPost}${isResultadoOficial ? " (PLANTÃO)" : ""}`);
+    console.log(`Gerando post de resultado do tipo: ${tipoPost}${isResultadoOficial ? " (PLANTÃO)" : ""}`);
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // 1. Buscar autor principal da mesa redonda (is_roundtable_author = true)
+    // 1. Buscar autor principal de resultados (is_result_author = true)
     const { data: authorGuide, error: authorError } = await supabaseAdmin
       .from("guide_personas")
       .select("*, perfis(id, nome)")
-      .eq("is_roundtable_author", true)
+      .eq("is_result_author", true)
       .eq("ativo", true)
       .single();
 
     if (authorError || !authorGuide) {
-      console.error("Nenhum autor de mesa redonda configurado:", authorError);
-      throw new Error("Nenhum bot configurado como autor da mesa redonda. Configure is_roundtable_author = true em um bot.");
+      console.error("Nenhum autor de resultados configurado:", authorError);
+      throw new Error("Nenhum bot configurado como autor de resultados. Configure is_result_author = true em um bot.");
     }
 
     const authorPerfilId = authorGuide.perfil_id;
@@ -413,11 +413,11 @@ serve(async (req) => {
     // Usar prompt especial para resultado oficial
     const authorPrompt = isResultadoOficial 
       ? RESULTADO_OFICIAL_PROMPT 
-      : (authorGuide.system_prompt || DEFAULT_ROUNDTABLE_PROMPT);
+      : (authorGuide.system_prompt || DEFAULT_RESULT_AUTHOR_PROMPT);
     const authorModel = authorGuide.ai_model || "google/gemini-3-flash-preview";
     const maxChars = isResultadoOficial ? 600 : (authorGuide.max_chars_post || 400);
 
-    console.log(`Autor da mesa redonda: ${authorName} (${authorPerfilId})`);
+    console.log(`Autor de resultados: ${authorName} (${authorPerfilId})`);
 
     // 2. Buscar últimos resultados para análise
     const { data: resultados, error: resultadosError } = await supabaseAdmin
@@ -639,7 +639,7 @@ Responda APENAS no formato JSON:
     );
 
   } catch (error) {
-    console.error("Erro em generate-roundtable-post:", error);
+    console.error("Erro em generate-roundtable-post (autor de resultados):", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Erro desconhecido" }),
       { 

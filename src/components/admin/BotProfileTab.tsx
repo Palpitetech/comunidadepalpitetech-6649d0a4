@@ -23,7 +23,7 @@ export function BotProfileTab({ bot, onUpdated }: BotProfileTabProps) {
     badge_emoji: bot.badge_emoji,
     estilo_escrita: bot.estilo_escrita,
     ativo: bot.ativo,
-    is_roundtable_author: bot.is_roundtable_author,
+    is_result_author: bot.is_result_author,
     can_create_posts: bot.can_create_posts,
   });
 
@@ -52,7 +52,7 @@ export function BotProfileTab({ bot, onUpdated }: BotProfileTabProps) {
           badge_emoji: formData.badge_emoji,
           estilo_escrita: formData.estilo_escrita,
           ativo: formData.ativo,
-          is_roundtable_author: formData.is_roundtable_author,
+          is_result_author: formData.is_result_author,
           can_create_posts: formData.can_create_posts,
         })
         .eq("id", bot.id);
@@ -152,13 +152,13 @@ export function BotProfileTab({ bot, onUpdated }: BotProfileTabProps) {
 
         <div className="flex items-center justify-between">
           <div>
-            <Label>Autor da Mesa Redonda</Label>
-            <p className="text-sm text-muted-foreground">Cria os posts principais do roundtable</p>
+            <Label>Autor dos Resultados</Label>
+            <p className="text-sm text-muted-foreground">Cria os posts de plantão de resultados oficiais</p>
           </div>
           <Switch
-            checked={formData.is_roundtable_author}
+            checked={formData.is_result_author}
             onCheckedChange={(checked) =>
-              setFormData((prev) => ({ ...prev, is_roundtable_author: checked }))
+              setFormData((prev) => ({ ...prev, is_result_author: checked }))
             }
           />
         </div>
