@@ -1,4 +1,6 @@
+import { useIsMobile } from "@/hooks/use-mobile";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -16,6 +18,7 @@ import { differenceInDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function Perfil() {
+  const isMobile = useIsMobile();
   const { profile, user } = useAuthContext();
   const { toast } = useToast();
   const [isOpeningCheckout, setIsOpeningCheckout] = useState(false);
@@ -73,6 +76,7 @@ export default function Perfil() {
 
   return (
     <MainLayout>
+      {isMobile && <PageHeader title="Perfil" />}
       <div className="container-senior py-8 max-w-2xl mx-auto">
         {/* Cabeçalho do Perfil */}
         <div className="flex flex-col items-center mb-8">

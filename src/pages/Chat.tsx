@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,6 +19,7 @@ import { format, isSameDay, parseISO } from "date-fns";
 import { Send } from "lucide-react";
 
 export default function Chat() {
+  const isMobile = useIsMobile();
   const [selectedTopic, setSelectedTopic] = useState<ChatTopicId | null>(null);
   const [pendingStarter, setPendingStarter] = useState<string | null>(null);
   const topicMeta = useMemo(
@@ -68,40 +71,41 @@ export default function Chat() {
 
   return (
     <MainLayout>
+      {isMobile && <PageHeader title="Chat" />}
       {/*
         No mobile existe o menu inferior fixo (h-16). Este padding garante que o composer
         fique sempre visível acima dele (inclui safe-area do iOS).
       */}
       <div className="flex h-[calc(100dvh-5rem)] flex-col overflow-hidden md:h-full">
-        {/* Header minimalista */}
-        <header className="sticky top-0 z-10 border-b border-border bg-background/80 px-3 py-1.5 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-3">
-              <ChatAvatar />
-              <div className="min-w-0 leading-tight">
-                <p className="truncate text-base font-semibold">
-                  {topicMeta ? topicMeta.title : "Escolha um tema"}
-                </p>
+        {/* Header minimalista - Desktop only */}
+        {!isMobile && (
+          <header className="sticky top-0 z-10 border-b border-border bg-background/80 px-3 py-1.5 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-3">
+                <ChatAvatar />
+                <div className="min-w-0 leading-tight">
+                  <p className="truncate text-base font-semibold">
+                    {topicMeta ? topicMeta.title : "Escolha um tema"}
+                  </p>
+                </div>
               </div>
+
+              {selectedTopic ? (
+                <Button
+                  variant="ghost"
+                  className="h-9 rounded-full px-3 text-sm"
+                  onClick={() => {
+                    setSelectedTopic(null);
+                    setDraft("");
+                    setPendingStarter(null);
+                  }}
+                >
+                  Fechar chat
+                </Button>
+              ) : null}
             </div>
-
-            {selectedTopic ? (
-              <Button
-                variant="ghost"
-                className="h-9 rounded-full px-3 text-sm"
-                onClick={() => {
-                  setSelectedTopic(null);
-                  setDraft("");
-                  setPendingStarter(null);
-                }}
-              >
-                Fechar chat
-              </Button>
-            ) : null}
-          </div>
-
-          {/* Contador de mensagens removido - não há mais limite por tema */}
-        </header>
+          </header>
+        )}
 
         {/* Conteúdo */}
         <div className="flex min-h-0 flex-1 flex-col">
