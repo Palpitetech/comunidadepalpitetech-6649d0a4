@@ -1,89 +1,112 @@
 
 
-## Plano: Otimizar Tela do Gerador de Palpites
+## Plano para Unificar Verificações de `can_create_posts` nas Edge Functions
 
-### Resumo das Alterações
+### Problema Identificado
+As três principais edge functions que geram posts têm **inconsistências nas verificações de permissão**:
 
-Vou remover todas as referências à IA, redesenhar a tela inicial para ser mais limpa, exibir os jogos em formato de lista compacta e adicionar um botão de copiar.
+| Função | Verifica `ativo` | Verifica `can_create_posts` | Status |
+|--------|------------------|------------------------------|--------|
+| `generate-bot-post` | ✅ Sim (linha 37) | ✅ Sim (linha 37) | ✅ Correto |
+| `process-scheduled-posts` | ✅ Sim (linha 42) | ✅ Sim (linha 43) | ✅ Correto |
+| `generate-guide-post` | ✅ Sim (linha 289) | ❌ **NÃO** | ⚠️ **BUG** |
 
----
+**Resultado**: Sr. Zé (e outros bots) conseguem criar posts via `generate-guide-post` mesmo com `can_create_posts = false`.
 
-### 1. Remover Referências à IA
+### Solução Proposta
 
-**Arquivo:** `supabase/functions/generate-palpites/index.ts`
-- Alterar o system prompt de "Você é o PT Analista" para algo neutro como "Você é um especialista em análise estatística"
-- Remover menções a "PT Analista" ou "IA"
+#### 1. **Criar Utilitário Compartilhado** (Nova Função)
+   - Criar arquivo: `supabase/functions/_shared/bot-permissions.ts`
+   - Função reutilizável: `validateBotPermissions(guide, options)`
+   - **Benefícios**: 
+     - DRY (Don't Repeat Yourself)
+     - Lógica centralizada
+     - Fácil manutenção futura
+   
+   ```typescript
+   interface BotPermissionCheck {
+     requireActive?: boolean;  // default: true
+     requireCanCreatePosts?: boolean;  // default: true
+   }
+   
+   export async function validateBotPermissions(
+     guide: any,
+     options: BotPermissionCheck = {}
+   ): Promise<void> {
+     const { requireActive = true, requireCanCreatePosts = true } = options;
+     
+     if (requireActive && !guide.ativo) {
+       throw new Error("Bot não está ativo");
+     }
+     
+     if (requireCanCreatePosts && !guide.can_create_posts) {
+       throw new Error("Bot não pode criar posts");
+     }
+   }
+   ```
 
----
+#### 2. **Corrigir `generate-guide-post/index.ts`**
+   - Adicionar verificação: `.eq("can_create_posts", true)` na query (linha 288-289)
+   - Alternativa: Importar validador compartilhado após buscar o guide
+   
+   **Opção A (Simples)**: Adicionar `.eq("can_create_posts", true)` à query
+   ```typescript
+   .eq("ativo", true)
+   .eq("can_create_posts", true)  // ← Adicionar
+   ```
 
-### 2. Otimizar Tela Inicial
+   **Opção B (Robusta)**: Usar validador reutilizável
+   ```typescript
+   await validateBotPermissions(guide, {
+     requireActive: true,
+     requireCanCreatePosts: true
+   });
+   ```
 
-**Arquivo:** `src/pages/Gerador.tsx`
-- Simplificar o header removendo o card wrapper desnecessário
-- Manter o status de uso, seletor de quantidade e botão de forma mais compacta
-- Remover ícone "Sparkles" que pode dar alusão a algo mágico/IA
+#### 3. **Refatorar as 3 Edge Functions**
+   - **Arquivos a modificar**:
+     - `supabase/functions/generate-bot-post/index.ts` (linha 37)
+     - `supabase/functions/process-scheduled-posts/index.ts` (linhas 42-43)
+     - `supabase/functions/generate-guide-post/index.ts` (linha 289)
+   
+   - Substituir verificações manuais pelo validador compartilhado
 
----
+#### 4. **Adicionar Logging Detalhado**
+   - Log quando um bot é **rejeitado** por falta de permissão
+   - Log quando um bot é **aceito** (com nome e tipo de post)
+   - Facilita debugging de problemas futuros
 
-### 3. Reformular Visualização da Estratégia
+#### 5. **Testar Cenários**
+   - ✅ Bot ativo + `can_create_posts = true` → Criar post
+   - ❌ Bot inativo → Rejeitar com erro
+   - ❌ Bot ativo + `can_create_posts = false` → Rejeitar com erro
+   - ⚠️ Edge case: Bot deletado → Verificar comportamento
 
-**Arquivo:** `src/components/gerador/EstrategiaCard.tsx`
-- Usar um componente Collapsible para mostrar/ocultar a estratégia
-- Título simplificado: "Metodologia Aplicada"
-- Visual mais discreto com opção de expandir
+### Sequência de Implementação
 
----
-
-### 4. Jogos em Lista Compacta
-
-**Novo componente:** `src/components/gerador/JogoLista.tsx`
-- Exibir cada jogo em no máximo 2 linhas
-- Formato: `Jogo 1: 01-02-03-04-05-06-07-08-09-10-11-12-13-14-15`
-- Visual limpo com badges para estatísticas opcionais
-
-**Arquivo:** `src/pages/Gerador.tsx`
-- Substituir o grid de `JogoCard` pelo novo `JogoLista`
-- Agrupar todos os jogos em um único card
-
----
-
-### 5. Botão de Copiar Palpites
-
-**Arquivo:** `src/pages/Gerador.tsx`
-- Adicionar botão "Copiar Palpites" na área de resultados
-- Ao clicar, copia todos os jogos no formato:
-  ```
-  Jogo 1: 01-02-03-04-05-06-07-08-09-10-11-12-13-14-15
-  Jogo 2: 01-03-05-07-09-11-13-15-17-19-21-22-23-24-25
-  ```
-- Mostrar toast de confirmação "Palpites copiados!"
-
----
-
-### Detalhes Técnicos
-
-**Dependências utilizadas:**
-- `lucide-react`: ícones Copy, Check, ChevronDown
-- `@radix-ui/react-collapsible`: para estratégia expansível
-- `sonner` ou `use-toast`: para notificações
-
-**Componentes afetados:**
 ```text
-src/pages/Gerador.tsx
-src/components/gerador/EstrategiaCard.tsx
-src/components/gerador/JogoLista.tsx (novo)
-supabase/functions/generate-palpites/index.ts
+1. Criar arquivo utilitário (_shared/bot-permissions.ts)
+   ↓
+2. Corrigir generate-guide-post/index.ts
+   ↓
+3. Refatorar generate-bot-post/index.ts (usar validador)
+   ↓
+4. Refatorar process-scheduled-posts/index.ts (usar validador)
+   ↓
+5. Adicionar logs consolidados em todas as funções
+   ↓
+6. Deploy e testes manuais
 ```
 
-**Estrutura do novo JogoLista:**
-```text
-+--------------------------------------------------+
-| Seus Palpites                      [Copiar]      |
-+--------------------------------------------------+
-| Jogo 1: 01-02-03-04-05-06-07-08-09-10-11-12-13   |
-|         -14-15                                    |
-| Jogo 2: 02-04-06-08-10-12-14-16-18-20-21-22-23   |
-|         -24-25                                    |
-+--------------------------------------------------+
-```
+### Impacto
+
+- **Zero breaking changes**: A correção apenas torna mais restritivo (reject mais bots)
+- **Comportamento esperado**: Respeitar a configuração `can_create_posts`
+- **Segurança**: Impede criação de posts por bots desativados
+- **Manutenibilidade**: Código mais limpo e centralizado
+
+### Notas Técnicas
+
+- ⚠️ Não é possível criar subpastas em edge functions; o arquivo compartilhado será inline ou duplicado
+- 📝 Supabase não suporta importação entre funções; melhor duplicar a lógica ou inline
 
