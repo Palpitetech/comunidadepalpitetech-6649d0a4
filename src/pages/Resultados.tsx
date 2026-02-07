@@ -1,7 +1,9 @@
 import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { BarChart3, Search, Calendar as CalendarIcon, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { ResultadoCard } from "@/components/lotofacil/ResultadoCard";
 import { ResultadoDetalhesSheet } from "@/components/lotofacil/ResultadoDetalhesSheet";
@@ -34,6 +36,7 @@ interface Resultado {
 const ITEMS_PER_PAGE = 20;
 
 export default function Resultados() {
+  const isMobile = useIsMobile();
   const [selectedResultado, setSelectedResultado] = useState<Resultado | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchConcurso, setSearchConcurso] = useState("");

@@ -1,7 +1,9 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, ExternalLink } from "lucide-react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LoteriaBadge } from "@/components/comunidade/LoteriaBadge";
 import { GuideBadge } from "@/components/comunidade/GuideBadge";
@@ -17,6 +19,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function PostDetalhes() {
+  const isMobile = useIsMobile();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthContext();
@@ -53,6 +56,7 @@ export default function PostDetalhes() {
   if (isLoadingPost) {
     return (
       <MainLayout>
+        {isMobile && <PageHeader title="Post" />}
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
           <Skeleton className="h-8 w-24" />
           <div className="flex items-center gap-3">
@@ -73,15 +77,18 @@ export default function PostDetalhes() {
   if (!post) {
     return (
       <MainLayout>
+        {isMobile && <PageHeader title="Post" />}
         <div className="max-w-2xl mx-auto px-4 py-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/comunidade")}
-            className="gap-2 mb-6"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar
-          </Button>
+          {!isMobile && (
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/comunidade")}
+              className="gap-2 mb-6"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Voltar
+            </Button>
+          )}
           <div className="bg-muted/50 rounded-lg p-8 text-center">
             <p className="text-muted-foreground">Post não encontrado.</p>
           </div>
@@ -103,18 +110,21 @@ export default function PostDetalhes() {
     locale: ptBR,
   });
 
+
   return (
     <MainLayout>
+      {isMobile && <PageHeader title="Post" />}
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-        {/* Voltar */}
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/comunidade")}
-          className="gap-2 -ml-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Button>
+        {!isMobile && (
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/comunidade")}
+            className="gap-2 -ml-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+          </Button>
+        )}
 
         {/* Header: Autor */}
         <div className="flex items-center gap-3">
