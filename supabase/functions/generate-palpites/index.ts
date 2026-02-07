@@ -57,9 +57,10 @@ serve(async (req) => {
     // Cliente service role para operações privilegiadas
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Obter quantidade de jogos do body
+    // Obter parâmetros do body
     const body = await req.json().catch(() => ({}));
     const quantidade = Math.min(Math.max(body.quantidade || 1, 1), 12);
+    const qtdDezenas = Math.min(Math.max(body.qtdDezenas || 15, 15), 20);
 
     // Verificar plano e feature do usuário
     const { data: perfil } = await supabaseAdmin
@@ -190,7 +191,7 @@ DEFINIÇÕES:
     const systemPrompt = `Você é um especialista em análise estatística da Lotofácil.
 
 REGRAS OBRIGATÓRIAS:
-1. Cada jogo DEVE ter EXATAMENTE 15 dezenas únicas de 01 a 25
+1. Cada jogo DEVE ter EXATAMENTE ${qtdDezenas} dezenas únicas de 01 a 25
 2. As dezenas devem ser números inteiros entre 1 e 25
 3. Diversifique as estratégias entre os jogos (se houver mais de um)
 4. Considere o equilíbrio histórico nas suas escolhas
@@ -202,7 +203,7 @@ Você deve usar a função generate_palpites para retornar os jogos estruturados
 
     const userPrompt = `${contextoEstatistico}
 
-Com base nesta análise, gere ${quantidade} jogo(s) de Lotofácil estratégico(s).
+Com base nesta análise, gere ${quantidade} jogo(s) de Lotofácil com EXATAMENTE ${qtdDezenas} dezenas cada.
 
 Para cada jogo, utilize uma abordagem diferente (se houver mais de um):
 - Jogo 1: Foco nas dezenas quentes (mais frequentes)
@@ -244,13 +245,13 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
                 properties: {
                   jogos: {
                     type: "array",
-                    description: "Lista de jogos gerados",
+                    description: `Lista de jogos gerados, cada um com exatamente ${qtdDezenas} dezenas`,
                     items: {
                       type: "object",
                       properties: {
                         dezenas: {
                           type: "array",
-                          description: "Array com exatamente 15 dezenas únicas de 1 a 25",
+                          description: `Array com exatamente ${qtdDezenas} dezenas únicas de 1 a 25`,
                           items: { type: "integer", minimum: 1, maximum: 25 }
                         }
                       },
@@ -307,10 +308,10 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
         .map((d: number) => Math.round(d))
         .filter((d: number) => d >= 1 && d <= 25);
       
-      const dezenasUnicas = [...new Set(dezenas)].slice(0, 15);
+      const dezenasUnicas = [...new Set(dezenas)].slice(0, qtdDezenas);
       
       // Completar com dezenas aleatórias se necessário
-      while (dezenasUnicas.length < 15) {
+      while (dezenasUnicas.length < qtdDezenas) {
         const random = Math.floor(Math.random() * 25) + 1;
         if (!dezenasUnicas.includes(random)) {
           dezenasUnicas.push(random);
