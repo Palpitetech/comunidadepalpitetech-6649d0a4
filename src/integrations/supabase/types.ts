@@ -296,9 +296,10 @@ export type Database = {
           estilo_escrita: string | null
           frequencia_posts: number | null
           id: string
-          is_free_tips_author: boolean
           is_result_author: boolean | null
+          is_sales_author: boolean
           is_strategy_author: boolean
+          is_system_sales_author: boolean
           max_chars_comment: number | null
           max_chars_post: number | null
           max_comments_per_post: number
@@ -339,9 +340,10 @@ export type Database = {
           estilo_escrita?: string | null
           frequencia_posts?: number | null
           id?: string
-          is_free_tips_author?: boolean
           is_result_author?: boolean | null
+          is_sales_author?: boolean
           is_strategy_author?: boolean
+          is_system_sales_author?: boolean
           max_chars_comment?: number | null
           max_chars_post?: number | null
           max_comments_per_post?: number
@@ -382,9 +384,10 @@ export type Database = {
           estilo_escrita?: string | null
           frequencia_posts?: number | null
           id?: string
-          is_free_tips_author?: boolean
           is_result_author?: boolean | null
+          is_sales_author?: boolean
           is_strategy_author?: boolean
+          is_system_sales_author?: boolean
           max_chars_comment?: number | null
           max_chars_post?: number | null
           max_comments_per_post?: number

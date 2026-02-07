@@ -231,7 +231,19 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
               (acionado pelo sincronizador da Lotofácil).
             </p>
           </div>
-        ) : (bot.is_strategy_author || bot.is_free_tips_author) ? (
+        ) : bot.is_system_sales_author ? (
+          <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+            <p className="text-sm font-medium text-purple-600 mb-1">
+              🕕 Publicação Independente (18h)
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Este bot publica <strong>independente do resultado</strong>. Ideal para conteúdo promocional do sistema.
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              💡 Configure o horário das 18h para máximo engajamento antes do sorteio.
+            </p>
+          </div>
+        ) : (bot.is_strategy_author || bot.is_sales_author) ? (
           <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
             <p className="text-sm font-medium text-blue-600 mb-1">
               ⏳ Publicação Condicional

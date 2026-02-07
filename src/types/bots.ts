@@ -35,7 +35,8 @@ export interface GuidePersona {
   max_chars_comment: number;
   is_result_author: boolean;
   is_strategy_author: boolean;
-  is_free_tips_author: boolean;
+  is_sales_author: boolean;
+  is_system_sales_author: boolean;
   can_create_posts: boolean;
   total_posts: number;
   total_comments: number;

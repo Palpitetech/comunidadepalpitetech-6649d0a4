@@ -101,8 +101,13 @@ serve(async (req) => {
           continue;
         }
 
-        // REGRA: Demais autores só postam se o Autor de Resultados já postou hoje
-        if (!resultAuthorPostedToday) {
+        // REGRA: Autor de Vendas do Sistema (is_system_sales_author) NÃO depende do resultado
+        // Ele pode publicar a qualquer momento (ex: 18h)
+        if (guide.is_system_sales_author) {
+          console.log(`[${guide.perfis?.nome}] É Autor de Vendas do Sistema, publica independente do resultado`);
+          // Continua para processar normalmente
+        } else if (!resultAuthorPostedToday) {
+          // Demais autores só postam se o Autor de Resultados já postou
           console.log(`[${guide.perfis?.nome}] Aguardando Autor de Resultados postar primeiro`);
           skipped.push(`${guide.perfis?.nome}: Aguardando resultado do dia`);
           continue;
@@ -140,8 +145,10 @@ serve(async (req) => {
         let tipoPost = "geral";
         if (guide.is_strategy_author) {
           tipoPost = "estrategia";
-        } else if (guide.is_free_tips_author) {
-          tipoPost = "palpite_gratis";
+        } else if (guide.is_sales_author) {
+          tipoPost = "vendas";
+        } else if (guide.is_system_sales_author) {
+          tipoPost = "vendas_sistema";
         }
 
         // Buscar últimos resultados para contexto
