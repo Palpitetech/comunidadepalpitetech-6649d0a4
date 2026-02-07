@@ -30,6 +30,7 @@ interface RecentPost {
 export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
   const [loading, setLoading] = useState(false);
   const [autoReply, setAutoReply] = useState(bot.auto_reply_enabled);
+  const [canReplyOwnPostComments, setCanReplyOwnPostComments] = useState(bot.can_reply_own_post_comments ?? false);
   const [canRespondToBotPosts, setCanRespondToBotPosts] = useState(bot.can_respond_to_bot_posts ?? false);
   const [maxCommentsPerPost, setMaxCommentsPerPost] = useState(bot.max_comments_per_post ?? 3);
   const [frequencia, setFrequencia] = useState(bot.frequencia_posts);
@@ -113,6 +114,7 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
         .from("guide_personas")
         .update({
           auto_reply_enabled: autoReply,
+          can_reply_own_post_comments: canReplyOwnPostComments,
           can_respond_to_bot_posts: canRespondToBotPosts,
           max_comments_per_post: maxCommentsPerPost,
           frequencia_posts: frequencia,
@@ -137,13 +139,13 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Auto-resposta */}
+        {/* Auto-resposta a comentários de clientes */}
         <div className="space-y-3">
           <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
             <div>
               <Label className="text-base">Responder Comentários de Clientes</Label>
               <p className="text-sm text-muted-foreground">
-                Bot responde automaticamente a comentários de <strong>usuários humanos</strong>
+                Bot responde automaticamente a comentários de <strong>usuários humanos</strong> em posts de terceiros
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 ⚠️ Comentários de outros bots são ignorados (evita loops)
@@ -171,7 +173,7 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
                 </p>
               </div>
               
-              {/* Nova opção: Responder a posts de outros bots */}
+              {/* Responder a posts de outros bots */}
               <div className="p-3 bg-muted/30 rounded-lg border-l-2 border-amber-500/30">
                 <div className="flex items-start gap-3">
                   <Checkbox 
@@ -196,6 +198,24 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
               </div>
             </div>
           )}
+        </div>
+
+        <Separator />
+
+        {/* Responder comentários do próprio post */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+            <div>
+              <Label className="text-base">Responder Comentários do Próprio Post</Label>
+              <p className="text-sm text-muted-foreground">
+                Bot responde automaticamente a comentários feitos <strong>nos seus próprios posts</strong>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                ⚠️ Ideal para manter engajamento em posts de resultado, estratégias, etc.
+              </p>
+            </div>
+            <Switch checked={canReplyOwnPostComments} onCheckedChange={setCanReplyOwnPostComments} />
+          </div>
         </div>
 
         <Separator />
