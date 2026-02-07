@@ -1,15 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,38 +14,80 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { usePalpitesSalvos, type PalpiteSalvo } from "@/hooks/usePalpitesSalvos";
+import { usePalpitesSalvos, type PalpiteSalvo, type PalpitePasta } from "@/hooks/usePalpitesSalvos";
+import { PalpiteCard } from "@/components/shared/PalpiteCard";
+import { PastaItem } from "@/components/palpites/PastaItem";
+import { NovaPastaDialog } from "@/components/palpites/NovaPastaDialog";
 import { formatarDezena } from "@/lib/lotofacil";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { 
   Bookmark, 
   Trash2, 
-  MoreVertical, 
-  Copy, 
-  Calendar,
   Dices,
-  CheckCircle2,
-  Clock
+  FolderPlus,
+  Folder
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 
 export default function MeusPalpites() {
-  const { buscarPalpites, excluirPalpite, excluirVarios, isLoading } = usePalpitesSalvos();
+  const { 
+    buscarPalpites, 
+    buscarPastas,
+    excluirPalpite, 
+    excluirVarios,
+    criarPasta,
+    renomearPasta,
+    excluirPasta,
+    isLoading 
+  } = usePalpitesSalvos();
+  
   const [palpites, setPalpites] = useState<PalpiteSalvo[]>([]);
+  const [pastas, setPastas] = useState<PalpitePasta[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [expandedPastas, setExpandedPastas] = useState<Set<string>>(new Set(["sem-pasta"]));
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [palpiteToDelete, setPalpiteToDelete] = useState<string | null>(null);
+  const [novaPastaOpen, setNovaPastaOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    loadPalpites();
+    loadData();
   }, []);
 
-  const loadPalpites = async () => {
-    const data = await buscarPalpites();
-    setPalpites(data);
+  const loadData = async () => {
+    const [palpitesData, pastasData] = await Promise.all([
+      buscarPalpites(),
+      buscarPastas()
+    ]);
+    setPalpites(palpitesData);
+    setPastas(pastasData);
+  };
+
+  // Agrupar palpites por pasta
+  const palpitesPorPasta = useMemo(() => {
+    const grouped: Record<string, PalpiteSalvo[]> = { "sem-pasta": [] };
+    
+    pastas.forEach(p => {
+      grouped[p.id] = [];
+    });
+    
+    palpites.forEach(palpite => {
+      const key = palpite.pasta_id || "sem-pasta";
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(palpite);
+    });
+    
+    return grouped;
+  }, [palpites, pastas]);
+
+  const handleTogglePasta = (pastaId: string) => {
+    const newExpanded = new Set(expandedPastas);
+    if (newExpanded.has(pastaId)) {
+      newExpanded.delete(pastaId);
+    } else {
+      newExpanded.add(pastaId);
+    }
+    setExpandedPastas(newExpanded);
   };
 
   const handleToggleSelect = (id: string) => {
@@ -104,9 +140,46 @@ export default function MeusPalpites() {
     setDeleteDialogOpen(false);
   };
 
-  const formatDate = (dateStr: string) => {
-    return format(new Date(dateStr), "dd MMM, HH:mm", { locale: ptBR });
+  const handleCriarPasta = async (nome: string, cor: string) => {
+    const pasta = await criarPasta(nome, cor);
+    if (pasta) {
+      setPastas(prev => [...prev, pasta]);
+      setExpandedPastas(prev => new Set([...prev, pasta.id]));
+    }
+    setNovaPastaOpen(false);
   };
+
+  const handleRenomearPasta = async (id: string, nome: string) => {
+    const success = await renomearPasta(id, nome);
+    if (success) {
+      setPastas(prev => prev.map(p => p.id === id ? { ...p, nome } : p));
+    }
+  };
+
+  const handleExcluirPasta = async (id: string) => {
+    const success = await excluirPasta(id);
+    if (success) {
+      setPastas(prev => prev.filter(p => p.id !== id));
+      // Palpites são mantidos mas sem pasta
+      setPalpites(prev => prev.map(p => p.pasta_id === id ? { ...p, pasta_id: null } : p));
+    }
+  };
+
+  const renderPalpiteCard = (palpite: PalpiteSalvo, index: number) => (
+    <PalpiteCard
+      key={palpite.id}
+      index={index}
+      dezenas={palpite.dezenas}
+      isSelected={selected.has(palpite.id)}
+      onSelectChange={() => handleToggleSelect(palpite.id)}
+      onDelete={() => setPalpiteToDelete(palpite.id)}
+      onCopy={() => handleCopiar(palpite)}
+      createdAt={palpite.created_at}
+      acertos={palpite.conferido ? palpite.acertos : undefined}
+      label={palpite.estrategia ? `🎯 ${palpite.estrategia.substring(0, 20)}...` : undefined}
+      hideStats
+    />
+  );
 
   return (
     <MainLayout>
@@ -117,11 +190,22 @@ export default function MeusPalpites() {
             <Bookmark className="h-6 w-6 text-primary" />
             <h1 className="text-xl font-bold">Meus Palpites</h1>
           </div>
-          {palpites.length > 0 && (
-            <Badge variant="secondary" className="text-xs">
-              {palpites.length} salvo{palpites.length > 1 ? "s" : ""}
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {palpites.length > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {palpites.length} salvo{palpites.length > 1 ? "s" : ""}
+              </Badge>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setNovaPastaOpen(true)}
+              className="gap-1 h-8"
+            >
+              <FolderPlus className="h-4 w-4" />
+              <span className="sr-only sm:not-sr-only">Pasta</span>
+            </Button>
+          </div>
         </div>
 
         {/* Ações em massa */}
@@ -182,86 +266,77 @@ export default function MeusPalpites() {
           </Card>
         )}
 
-        {/* Lista de palpites */}
+        {/* Pastas e palpites */}
         {!isLoading && palpites.length > 0 && (
-          <div className="space-y-2">
-            {palpites.map((palpite) => (
-              <Card 
-                key={palpite.id}
-                className={`transition-all ${
-                  selected.has(palpite.id) 
-                    ? "ring-2 ring-primary bg-primary/5" 
-                    : ""
-                }`}
-              >
-                <CardContent className="p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    {/* Checkbox + Conteúdo */}
-                    <div 
-                      className="flex-1 cursor-pointer"
-                      onClick={() => handleToggleSelect(palpite.id)}
-                    >
-                      {/* Dezenas */}
-                      <div className="flex flex-wrap gap-1.5 mb-2">
-                        {palpite.dezenas.map((d) => (
-                          <span
-                            key={d}
-                            className="w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center"
-                          >
-                            {formatarDezena(d)}
-                          </span>
-                        ))}
-                      </div>
-
-                      {/* Meta info */}
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {formatDate(palpite.created_at)}
-                        </span>
-                        {palpite.periodo_analise && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {palpite.periodo_analise} concursos
-                          </span>
-                        )}
-                        {palpite.conferido && (
-                          <Badge variant="outline" className="text-[10px] h-5 gap-1">
-                            <CheckCircle2 className="h-3 w-3" />
-                            {palpite.acertos} acertos
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Menu de ações */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-popover">
-                        <DropdownMenuItem onClick={() => handleCopiar(palpite)} className="gap-2">
-                          <Copy className="h-4 w-4" />
-                          Copiar dezenas
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => setPalpiteToDelete(palpite.id)}
-                          className="gap-2 text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+          <div className="space-y-3">
+            {/* Pastas com palpites */}
+            {pastas.map((pasta) => {
+              const palpitesDaPasta = palpitesPorPasta[pasta.id] || [];
+              if (palpitesDaPasta.length === 0) return null;
+              
+              return (
+                <PastaItem
+                  key={pasta.id}
+                  pasta={{ ...pasta, count: palpitesDaPasta.length }}
+                  isExpanded={expandedPastas.has(pasta.id)}
+                  onToggle={() => handleTogglePasta(pasta.id)}
+                  onRename={(nome) => handleRenomearPasta(pasta.id, nome)}
+                  onDelete={() => handleExcluirPasta(pasta.id)}
+                >
+                  <div className="space-y-2">
+                    {palpitesDaPasta.map((palpite, idx) => renderPalpiteCard(palpite, idx))}
                   </div>
-                </CardContent>
-              </Card>
+                </PastaItem>
+              );
+            })}
+
+            {/* Pastas vazias */}
+            {pastas.filter(p => (palpitesPorPasta[p.id] || []).length === 0).map((pasta) => (
+              <PastaItem
+                key={pasta.id}
+                pasta={{ ...pasta, count: 0 }}
+                isExpanded={expandedPastas.has(pasta.id)}
+                onToggle={() => handleTogglePasta(pasta.id)}
+                onRename={(nome) => handleRenomearPasta(pasta.id, nome)}
+                onDelete={() => handleExcluirPasta(pasta.id)}
+              >
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  Pasta vazia
+                </p>
+              </PastaItem>
             ))}
+
+            {/* Palpites sem pasta */}
+            {palpitesPorPasta["sem-pasta"]?.length > 0 && (
+              <div className="space-y-2">
+                <button
+                  onClick={() => handleTogglePasta("sem-pasta")}
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Folder className="h-4 w-4" />
+                  <span>Sem pasta ({palpitesPorPasta["sem-pasta"].length})</span>
+                </button>
+                
+                {expandedPastas.has("sem-pasta") && (
+                  <div className="space-y-2 pl-6">
+                    {palpitesPorPasta["sem-pasta"].map((palpite, idx) => 
+                      renderPalpiteCard(palpite, idx)
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {/* Dialog Nova Pasta */}
+      <NovaPastaDialog
+        open={novaPastaOpen}
+        onOpenChange={setNovaPastaOpen}
+        onConfirm={handleCriarPasta}
+        isLoading={isLoading}
+      />
 
       {/* Dialog de confirmação - Excluir único */}
       <AlertDialog open={!!palpiteToDelete} onOpenChange={() => setPalpiteToDelete(null)}>

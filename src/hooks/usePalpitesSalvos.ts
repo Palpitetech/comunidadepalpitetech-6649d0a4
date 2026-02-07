@@ -14,6 +14,17 @@ export interface PalpiteSalvo {
   concurso_alvo: number | null;
   conferido: boolean;
   acertos: number | null;
+  pasta_id: string | null;
+  estrategia: string | null;
+}
+
+export interface PalpitePasta {
+  id: string;
+  user_id: string;
+  nome: string;
+  cor: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export function usePalpitesSalvos() {
@@ -22,7 +33,9 @@ export function usePalpitesSalvos() {
 
   const salvarPalpites = async (
     palpites: { dezenas: number[] }[],
-    periodoAnalise?: number
+    periodoAnalise?: number,
+    pastaId?: string | null,
+    estrategia?: string
   ): Promise<boolean> => {
     setIsLoading(true);
     try {
@@ -42,6 +55,8 @@ export function usePalpitesSalvos() {
         qtd_dezenas: p.dezenas.length,
         periodo_analise: periodoAnalise || null,
         loteria: "lotofacil",
+        pasta_id: pastaId || null,
+        estrategia: estrategia || null,
       }));
 
       const { error } = await supabase
@@ -131,11 +146,111 @@ export function usePalpitesSalvos() {
     }
   };
 
+  // ========== PASTAS ==========
+  
+  const buscarPastas = async (): Promise<PalpitePasta[]> => {
+    try {
+      const { data, error } = await supabase
+        .from("palpites_pastas")
+        .select("*")
+        .order("nome", { ascending: true });
+
+      if (error) throw error;
+      return (data || []) as PalpitePasta[];
+    } catch (error) {
+      console.error("Erro ao buscar pastas:", error);
+      return [];
+    }
+  };
+
+  const criarPasta = async (nome: string, cor: string): Promise<PalpitePasta | null> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from("palpites_pastas")
+        .insert({ user_id: user.id, nome, cor })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      toast({
+        title: "Pasta criada! 📁",
+        description: `Pasta "${nome}" criada com sucesso.`,
+      });
+      return data as PalpitePasta;
+    } catch (error) {
+      console.error("Erro ao criar pasta:", error);
+      toast({
+        title: "Erro ao criar pasta",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  const renomearPasta = async (id: string, nome: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from("palpites_pastas")
+        .update({ nome })
+        .eq("id", id);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error("Erro ao renomear pasta:", error);
+      return false;
+    }
+  };
+
+  const excluirPasta = async (id: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from("palpites_pastas")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Pasta excluída",
+        description: "A pasta foi removida. Os palpites foram mantidos.",
+      });
+      return true;
+    } catch (error) {
+      console.error("Erro ao excluir pasta:", error);
+      return false;
+    }
+  };
+
+  const moverParaPasta = async (palpiteIds: string[], pastaId: string | null): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from("palpites_salvos")
+        .update({ pasta_id: pastaId })
+        .in("id", palpiteIds);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error("Erro ao mover palpites:", error);
+      return false;
+    }
+  };
+
   return {
     isLoading,
     salvarPalpites,
     buscarPalpites,
     excluirPalpite,
     excluirVarios,
+    buscarPastas,
+    criarPasta,
+    renomearPasta,
+    excluirPasta,
+    moverParaPasta,
   };
 }

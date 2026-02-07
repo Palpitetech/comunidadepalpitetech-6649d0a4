@@ -130,6 +130,13 @@ export function ResultadosSheet({
     });
   };
 
+  // Criar texto resumido da estratégia para salvar
+  const getEstrategiaTexto = () => {
+    if (!estrategia) return undefined;
+    // Usar ferramentas como resumo da estratégia
+    return estrategia.ferramentas.slice(0, 2).join(" + ");
+  };
+
   const handleSalvarSelecionados = async () => {
     if (selected.size === 0) {
       toast({
@@ -141,11 +148,11 @@ export function ResultadosSheet({
     }
 
     const palpitesParaSalvar = jogos.filter((_, i) => selected.has(i));
-    await salvarPalpites(palpitesParaSalvar, periodoAnalise);
+    await salvarPalpites(palpitesParaSalvar, periodoAnalise, null, getEstrategiaTexto());
   };
 
   const handleSalvarTodos = async () => {
-    await salvarPalpites(jogos, periodoAnalise);
+    await salvarPalpites(jogos, periodoAnalise, null, getEstrategiaTexto());
   };
 
   const handleExcluirSelecionados = () => {
