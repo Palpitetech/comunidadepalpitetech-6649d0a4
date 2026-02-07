@@ -152,7 +152,17 @@ export default function AdminBots() {
                               )}
                               {bot.is_result_author && (
                                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                                  Resultados
+                                  🎯 Resultados
+                                </Badge>
+                              )}
+                              {bot.is_strategy_author && (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-blue-500/10 text-blue-600">
+                                  📚 Estratégia
+                                </Badge>
+                              )}
+                              {bot.is_free_tips_author && (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-green-500/10 text-green-600">
+                                  🎁 Palpites
                                 </Badge>
                               )}
                             </div>

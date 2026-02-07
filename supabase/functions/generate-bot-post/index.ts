@@ -60,9 +60,54 @@ serve(async (req) => {
       ? `Último concurso: ${resultados[0].concurso_id} - Dezenas: [${resultados[0].dezenas.join(", ")}]`
       : "Sem dados recentes disponíveis.";
 
+    // Gerar instruções específicas por tipo de post
+    const getInstrucoesTipo = (tipo: string): string => {
+      switch (tipo) {
+        case "estrategia":
+          return `OBJETIVO: Ensinar UMA técnica de análise para a comunidade.
+
+ESTRUTURA DO POST:
+1. Título da técnica (chamativo, ex: "🎯 Técnica: Equilíbrio Pares/Ímpares")
+2. Explicação simples de como funciona
+3. Exemplo prático usando dados reais: ${contexto}
+4. Convite para o usuário tentar por conta própria
+
+TÉCNICAS DISPONÍVEIS (escolha UMA):
+- Análise de dezenas quentes/frias
+- Ciclo de dezenas
+- Equilíbrio pares/ímpares
+- Duplas e trios frequentes
+- Moldura do volante
+- Sequências e saltos
+
+IMPORTANTE: NÃO dê palpites prontos, apenas ensine a técnica.`;
+
+        case "palpite_gratis":
+          return `OBJETIVO: Compartilhar UM palpite grátis para a comunidade.
+
+ESTRUTURA DO POST:
+1. Título chamativo (ex: "🎁 Palpite Grátis do Dia")
+2. Gere EXATAMENTE 15 dezenas únicas de 01 a 25 em ordem crescente
+3. Breve explicação da estratégia usada (1-2 frases)
+4. OBRIGATÓRIO incluir: "⚠️ Loteria é sorte, jogue com responsabilidade!"
+
+REGRAS:
+- Formato das dezenas: separadas por vírgula (01, 02, 03...)
+- Use os dados estatísticos para embasar: ${contexto}
+- Apenas 1 jogo por post (não abuse)
+- Seja criativo na explicação da estratégia`;
+
+        default:
+          return `Crie um post engajante sobre análise da Lotofácil.
+Contexto atual: ${contexto}`;
+      }
+    };
+
     // 3. Gerar post via IA
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurada");
+
+    const instrucoesTipo = getInstrucoesTipo(tipo_post);
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -79,13 +124,13 @@ serve(async (req) => {
             content: `Crie um post para a comunidade Palpite Tech.
 
 TIPO: ${tipo_post}
-CONTEXTO: ${contexto}
-${contexto_extra ? `ADICIONAL: ${contexto_extra}` : ""}
+${instrucoesTipo}
+${contexto_extra ? `CONTEXTO ADICIONAL: ${contexto_extra}` : ""}
 
-INSTRUÇÕES:
+LIMITES:
 - Máximo ${guide.max_chars_post || 400} caracteres no conteúdo
 - Título: máximo 60 caracteres
-- NUNCA prometa resultados
+- NUNCA prometa resultados garantidos
 - Convide à discussão
 
 Responda APENAS no formato JSON:
