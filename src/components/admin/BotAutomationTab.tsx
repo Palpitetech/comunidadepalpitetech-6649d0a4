@@ -138,9 +138,12 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
         <div className="space-y-3">
           <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
             <div>
-              <Label className="text-base">Responder Comentários Automaticamente</Label>
+              <Label className="text-base">Responder Comentários de Clientes</Label>
               <p className="text-sm text-muted-foreground">
-                Bot responde automaticamente a comentários de usuários
+                Bot responde automaticamente a comentários de <strong>usuários humanos</strong>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                ⚠️ Comentários de outros bots são ignorados (evita loops)
               </p>
             </div>
             <Switch checked={autoReply} onCheckedChange={setAutoReply} />
