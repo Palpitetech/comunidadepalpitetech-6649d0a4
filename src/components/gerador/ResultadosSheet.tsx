@@ -164,8 +164,8 @@ export function ResultadosSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="h-full p-0 overflow-y-auto">
         {/* Header fixo no topo */}
-        <div className="sticky top-0 z-10 bg-background">
-          <SheetHeader className="px-4 py-3 border-b flex-row items-center justify-between">
+        <div className="sticky top-0 z-10 bg-background border-b">
+          <SheetHeader className="px-4 py-3 flex-row items-center justify-between">
             <div className="flex items-center gap-3">
               <SheetTitle className="text-lg font-bold">
                 Palpites
@@ -174,49 +174,18 @@ export function ResultadosSheet({
                 {jogos.length} gerados
               </span>
             </div>
-            
-            {/* Dropdown de ações no header */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreHorizontal className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-popover z-50 w-52">
-                <DropdownMenuItem onClick={handleCopiarTodos} className="gap-2">
-                  <Copy className="h-4 w-4" />
-                  Copiar Todos ({jogos.length})
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={handleCopiarSelecionados} 
-                  disabled={selected.size === 0}
-                  className="gap-2"
-                >
-                  <CopyCheck className="h-4 w-4" />
-                  Copiar Selecionados ({selected.size})
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={handleExcluirSelecionados} 
-                  disabled={selected.size === 0}
-                  className="gap-2 text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Excluir Selecionados ({selected.size})
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={handleExcluirTodos}
-                  className="gap-2 text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Limpar Tudo
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </SheetHeader>
+        </div>
 
-          {/* Barra de seleção */}
-          <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
+        {/* Conteúdo com scroll da página toda */}
+        <div className="px-3 py-3 space-y-3">
+          {/* Estratégia de Geração */}
+          {estrategia && (
+            <EstrategiaCard estrategia={estrategia} />
+          )}
+
+          {/* Barra de seleção e ações - Entre estratégia e jogos */}
+          <div className="flex items-center justify-between py-2">
             <Button
               variant={allSelected ? "default" : "outline"}
               size="sm"
@@ -236,20 +205,53 @@ export function ResultadosSheet({
               )}
             </Button>
             
-            {selected.size > 0 && (
-              <span className="text-xs text-muted-foreground">
-                {selected.size} de {jogos.length} selecionados
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {selected.size > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  {selected.size} de {jogos.length}
+                </span>
+              )}
+              
+              {/* Dropdown de ações */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-8 w-8">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-popover z-50 w-52">
+                  <DropdownMenuItem onClick={handleCopiarTodos} className="gap-2">
+                    <Copy className="h-4 w-4" />
+                    Copiar Todos ({jogos.length})
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={handleCopiarSelecionados} 
+                    disabled={selected.size === 0}
+                    className="gap-2"
+                  >
+                    <CopyCheck className="h-4 w-4" />
+                    Copiar Selecionados ({selected.size})
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={handleExcluirSelecionados} 
+                    disabled={selected.size === 0}
+                    className="gap-2 text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Excluir Selecionados ({selected.size})
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={handleExcluirTodos}
+                    className="gap-2 text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Limpar Tudo
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
-        </div>
-
-        {/* Conteúdo com scroll da página toda */}
-        <div className="px-3 py-3 space-y-3">
-          {/* Estratégia de Geração */}
-          {estrategia && (
-            <EstrategiaCard estrategia={estrategia} />
-          )}
 
           {/* Lista de Palpites */}
           <div className="grid gap-2">
@@ -304,7 +306,7 @@ export function ResultadosSheet({
             </div>
           )}
 
-          {/* Espaço extra no final para não ficar cortado */}
+          {/* Espaço extra no final */}
           <div className="h-8" />
         </div>
       </SheetContent>
