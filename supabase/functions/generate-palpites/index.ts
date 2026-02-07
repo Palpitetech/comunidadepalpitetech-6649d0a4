@@ -61,6 +61,7 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const quantidade = Math.min(Math.max(body.quantidade || 1, 1), 250);
     const qtdDezenas = Math.min(Math.max(body.qtdDezenas || 15, 15), 20);
+    const periodoAnalise = Math.min(Math.max(body.periodoAnalise || 50, 1), 100);
 
     // Verificar se é admin (geração infinita)
     const { data: userRole } = await supabaseAdmin
@@ -130,12 +131,12 @@ serve(async (req) => {
       });
     }
 
-    // Buscar últimos 50 resultados para análise
+    // Buscar resultados para análise baseado no período selecionado
     const { data: resultados, error: resultadosError } = await supabaseAdmin
       .from("resultados")
       .select("concurso_id, data_sorteio, dezenas, qtd_pares, qtd_impares, qtd_moldura, qtd_primos, qtd_repetidas, ciclo_numero, dezenas_faltantes_ciclo")
       .order("concurso_id", { ascending: false })
-      .limit(50);
+      .limit(periodoAnalise);
 
     if (resultadosError || !resultados?.length) {
       return new Response(JSON.stringify({ error: "Erro ao buscar resultados" }), {
@@ -175,7 +176,7 @@ serve(async (req) => {
 
     // Montar contexto para a IA
 const contextoEstatistico = `
-ANÁLISE DOS ÚLTIMOS 50 CONCURSOS DA LOTOFÁCIL:
+ANÁLISE DOS ÚLTIMOS ${periodoAnalise} CONCURSOS DA LOTOFÁCIL:
 
 ÚLTIMO RESULTADO (Concurso ${ultimoResultado.concurso_id}):
 - Dezenas sorteadas: ${ultimoResultado.dezenas.map((d: number) => d.toString().padStart(2, '0')).join(', ')}
@@ -184,11 +185,11 @@ ANÁLISE DOS ÚLTIMOS 50 CONCURSOS DA LOTOFÁCIL:
 - Ciclo atual: ${ultimoResultado.ciclo_numero}
 - Dezenas faltantes no ciclo: ${dezenasFaltantesCiclo.length > 0 ? dezenasFaltantesCiclo.map((d: number) => d.toString().padStart(2, '0')).join(', ') : 'Nenhuma (ciclo completo)'}
 
-FREQUÊNCIAS NOS ÚLTIMOS 50 JOGOS:
+FREQUÊNCIAS NOS ÚLTIMOS ${periodoAnalise} JOGOS:
 - Dezenas mais sorteadas: ${dezenasMaisFrequentes.map(d => `${d.toString().padStart(2, '0')} (${frequencias[d]}x)`).join(', ')}
 - Dezenas menos sorteadas: ${dezenasMenosFrequentes.map(d => `${d.toString().padStart(2, '0')} (${frequencias[d]}x)`).join(', ')}
 
-MÉDIAS HISTÓRICAS (50 concursos):
+MÉDIAS HISTÓRICAS (${periodoAnalise} concursos):
 - Média de pares por jogo: ${mediaPares.toFixed(1)}
 - Média de dezenas na moldura: ${mediaMoldura.toFixed(1)}
 - Média de números primos: ${mediaPrimos.toFixed(1)}
@@ -199,6 +200,8 @@ DEFINIÇÕES:
 - Primos: [02, 03, 05, 07, 11, 13, 17, 19, 23]
 - Pares: dezenas divisíveis por 2
 - Repetidas: dezenas que saíram no concurso anterior
+
+PERÍODO DE ANÁLISE: ${periodoAnalise} concurso(s) - ${periodoAnalise <= 5 ? 'Foco em tendências recentes' : periodoAnalise <= 10 ? 'Equilíbrio recente/histórico' : 'Base histórica ampla'}
 `;
 
     const systemPrompt = `Você é um especialista em análise estatística da Lotofácil.

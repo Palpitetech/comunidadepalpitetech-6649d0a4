@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { QuantidadeSelector } from "@/components/gerador/QuantidadeSelector";
 import { DezenasSelector } from "@/components/gerador/DezenasSelector";
+import { PeriodoAnaliseSelector } from "@/components/gerador/PeriodoAnaliseSelector";
 import { ResultadosSheet } from "@/components/gerador/ResultadosSheet";
 import { useGerador } from "@/hooks/useGerador";
 import { useGeradorStatus } from "@/hooks/useGeradorStatus";
@@ -14,6 +15,7 @@ import { Dices, Loader2, Clock, AlertCircle } from "lucide-react";
 export default function Gerador() {
   const [quantidade, setQuantidade] = useState(3);
   const [qtdDezenas, setQtdDezenas] = useState(15);
+  const [periodoAnalise, setPeriodoAnalise] = useState(50);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
   
@@ -40,7 +42,7 @@ export default function Gerador() {
   }, []);
 
   const handleGenerate = () => {
-    generatePalpites(quantidade, qtdDezenas);
+    generatePalpites(quantidade, qtdDezenas, periodoAnalise);
   };
 
   // Abrir sheet quando resultado chegar
@@ -55,6 +57,7 @@ export default function Gerador() {
     reset();
     setQuantidade(3);
     setQtdDezenas(15);
+    setPeriodoAnalise(50);
   };
 
   return (
@@ -86,6 +89,13 @@ export default function Gerador() {
             <DezenasSelector
               value={qtdDezenas}
               onChange={setQtdDezenas}
+              disabled={isLoading || !canGenerate}
+            />
+
+            {/* Seletor de Período de Análise */}
+            <PeriodoAnaliseSelector
+              value={periodoAnalise}
+              onChange={setPeriodoAnalise}
               disabled={isLoading || !canGenerate}
             />
 

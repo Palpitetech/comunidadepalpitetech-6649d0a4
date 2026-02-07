@@ -20,7 +20,7 @@ export function useGerador() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const generatePalpites = async (quantidade: number, qtdDezenas: number = 15) => {
+  const generatePalpites = async (quantidade: number, qtdDezenas: number = 15, periodoAnalise: number = 50) => {
     setIsLoading(true);
     setError(null);
     setResult(null);
@@ -39,7 +39,7 @@ export function useGerador() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${sessionData.session.access_token}`,
           },
-          body: JSON.stringify({ quantidade, qtdDezenas }),
+          body: JSON.stringify({ quantidade, qtdDezenas, periodoAnalise }),
         }
       );
 
