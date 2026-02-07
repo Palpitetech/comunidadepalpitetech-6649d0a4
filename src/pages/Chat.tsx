@@ -100,11 +100,7 @@ export default function Chat() {
             ) : null}
           </div>
 
-          {selectedTopic === "estatisticas" && remainingToday !== null && (
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              Mensagens restantes hoje (estatísticas): <strong>{remainingToday}</strong>
-            </p>
-          )}
+          {/* Contador de mensagens removido - não há mais limite por tema */}
         </header>
 
         {/* Conteúdo */}
