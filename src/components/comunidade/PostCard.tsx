@@ -1,7 +1,5 @@
 import { Heart, MessageCircle, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LoteriaBadge } from "./LoteriaBadge";
-import { GuideBadge } from "./GuideBadge";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -44,7 +42,7 @@ export function PostCard({ post, onClick }: PostCardProps) {
       onClick={onClick}
       className="bg-card border border-border rounded-xl p-3 cursor-pointer hover:bg-muted/30 transition-colors"
     >
-      {/* Header compacto: Avatar + Nome + Badges + Tempo em linha */}
+      {/* Header compacto: Avatar + Nome + Tempo */}
       <div className="flex items-center gap-2 mb-2">
         <Avatar className="h-7 w-7">
           <AvatarImage src={post.perfis?.avatar_url || undefined} />
@@ -52,11 +50,9 @@ export function PostCard({ post, onClick }: PostCardProps) {
             {initials}
           </AvatarFallback>
         </Avatar>
-        <span className="font-medium text-sm text-foreground truncate max-w-[120px]">
+        <span className="font-medium text-sm text-foreground truncate">
           {authorName}
         </span>
-        {post.perfis?.is_bot && <GuideBadge />}
-        {post.loteria_tag && <LoteriaBadge tag={post.loteria_tag} />}
         <span className="text-xs text-muted-foreground ml-auto whitespace-nowrap">
           {timeAgo}
         </span>
