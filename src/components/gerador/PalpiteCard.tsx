@@ -39,7 +39,7 @@ export function PalpiteCard({
           : "border-border bg-card"
       )}
     >
-      {/* Header com checkbox e número */}
+      {/* Header com checkbox e título */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <Checkbox
@@ -48,8 +48,8 @@ export function PalpiteCard({
             className="h-5 w-5 shrink-0"
             onClick={(e) => e.stopPropagation()}
           />
-          <span className="font-bold text-foreground text-sm">
-            #{index + 1}
+          <span className="font-semibold text-foreground text-sm">
+            Jogo {String(index + 1).padStart(2, '0')}
           </span>
         </div>
         {isSelected && (
@@ -59,9 +59,9 @@ export function PalpiteCard({
         )}
       </div>
 
-      {/* Dezenas - Grid compacto de 2 linhas */}
+      {/* Dezenas - Alinhadas à esquerda */}
       <div className="space-y-1 mb-2">
-        <div className="flex justify-center gap-1">
+        <div className="flex flex-wrap gap-1">
           {primeiraLinha.map((dezena) => (
             <span
               key={dezena}
@@ -72,7 +72,7 @@ export function PalpiteCard({
           ))}
         </div>
         {segundaLinha.length > 0 && (
-          <div className="flex justify-center gap-1">
+          <div className="flex flex-wrap gap-1">
             {segundaLinha.map((dezena) => (
               <span
                 key={dezena}
@@ -86,7 +86,7 @@ export function PalpiteCard({
       </div>
 
       {/* Estatísticas - Linha única neutra */}
-      <div className="flex items-center justify-center gap-4 text-[10px] text-muted-foreground border-t border-border/50 pt-2 mt-1">
+      <div className="flex items-center gap-4 text-[10px] text-muted-foreground border-t border-border/50 pt-2 mt-1">
         <span>Ímp <strong className="text-foreground">{impares}</strong></span>
         <span>Mold <strong className="text-foreground">{moldura}</strong></span>
         <span>Rep <strong className="text-foreground">{repetidas}</strong></span>
