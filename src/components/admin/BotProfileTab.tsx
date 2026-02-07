@@ -18,10 +18,7 @@ export function BotProfileTab({ bot, onUpdated }: BotProfileTabProps) {
   const [formData, setFormData] = useState({
     nome: bot.perfis?.nome || "",
     avatar_url: bot.perfis?.avatar_url || "",
-    cargo: bot.cargo,
-    especialidade: bot.especialidade,
     badge_emoji: bot.badge_emoji,
-    estilo_escrita: bot.estilo_escrita,
     ativo: bot.ativo,
     is_result_author: bot.is_result_author,
     is_strategy_author: bot.is_strategy_author ?? false,
@@ -49,10 +46,7 @@ export function BotProfileTab({ bot, onUpdated }: BotProfileTabProps) {
       const { error: guideError } = await supabase
         .from("guide_personas")
         .update({
-          cargo: formData.cargo,
-          especialidade: formData.especialidade,
           badge_emoji: formData.badge_emoji,
-          estilo_escrita: formData.estilo_escrita,
           ativo: formData.ativo,
           is_result_author: formData.is_result_author,
           is_strategy_author: formData.is_strategy_author,
@@ -96,49 +90,15 @@ export function BotProfileTab({ bot, onUpdated }: BotProfileTabProps) {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="cargo">Cargo</Label>
-            <Input
-              id="cargo"
-              value={formData.cargo}
-              onChange={(e) => setFormData((prev) => ({ ...prev, cargo: e.target.value }))}
-              placeholder="Ex: Analista de Dados"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="especialidade">Especialidade</Label>
-            <Input
-              id="especialidade"
-              value={formData.especialidade}
-              onChange={(e) => setFormData((prev) => ({ ...prev, especialidade: e.target.value }))}
-              placeholder="Ex: Estatísticas"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="badge_emoji">Badge Emoji</Label>
-            <Input
-              id="badge_emoji"
-              value={formData.badge_emoji}
-              onChange={(e) => setFormData((prev) => ({ ...prev, badge_emoji: e.target.value }))}
-              placeholder="🛡️"
-              maxLength={4}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="estilo_escrita">Estilo de Escrita</Label>
-            <Input
-              id="estilo_escrita"
-              value={formData.estilo_escrita}
-              onChange={(e) => setFormData((prev) => ({ ...prev, estilo_escrita: e.target.value }))}
-              placeholder="profissional, acolhedor..."
-            />
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="badge_emoji">Badge Emoji</Label>
+          <Input
+            id="badge_emoji"
+            value={formData.badge_emoji}
+            onChange={(e) => setFormData((prev) => ({ ...prev, badge_emoji: e.target.value }))}
+            placeholder="🛡️"
+            maxLength={4}
+          />
         </div>
       </div>
 

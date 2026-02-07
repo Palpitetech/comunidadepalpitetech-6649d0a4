@@ -20,10 +20,7 @@ export function BotForm({ onSaved, onCancel }: BotFormProps) {
   const [formData, setFormData] = useState({
     nome: "",
     avatar_url: "",
-    cargo: "",
-    especialidade: "",
     badge_emoji: "🛡️",
-    estilo_escrita: "profissional",
     system_prompt: "",
     ai_model: "google/gemini-3-flash-preview",
   });
@@ -34,9 +31,6 @@ export function BotForm({ onSaved, onCancel }: BotFormProps) {
       setSelectedTemplate(templateId);
       setFormData((prev) => ({
         ...prev,
-        cargo: template.cargo,
-        especialidade: template.especialidade,
-        estilo_escrita: template.estilo,
         system_prompt: template.prompt,
       }));
     }
@@ -55,7 +49,7 @@ export function BotForm({ onSaved, onCancel }: BotFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.nome || !formData.cargo || !formData.system_prompt) {
+    if (!formData.nome || !formData.system_prompt) {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
@@ -99,10 +93,10 @@ export function BotForm({ onSaved, onCancel }: BotFormProps) {
       // 3. Criar guide_personas
       const { error: guideError } = await supabase.from("guide_personas").insert({
         perfil_id: authData.user.id,
-        cargo: formData.cargo,
-        especialidade: formData.especialidade,
+        cargo: "Especialista", // Default value for DB compatibility
+        especialidade: "Lotofácil", // Default value for DB compatibility
         badge_emoji: formData.badge_emoji,
-        estilo_escrita: formData.estilo_escrita,
+        estilo_escrita: "profissional", // Default value for DB compatibility
         system_prompt: formData.system_prompt,
         ai_model: formData.ai_model,
         ativo: true,
@@ -175,61 +169,16 @@ export function BotForm({ onSaved, onCancel }: BotFormProps) {
         </p>
       </div>
 
-      {/* Cargo e Especialidade */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="cargo">Cargo *</Label>
-          <Input
-            id="cargo"
-            value={formData.cargo}
-            onChange={(e) => setFormData((prev) => ({ ...prev, cargo: e.target.value }))}
-            placeholder="Ex: Analista de Dados"
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="especialidade">Especialidade *</Label>
-          <Input
-            id="especialidade"
-            value={formData.especialidade}
-            onChange={(e) => setFormData((prev) => ({ ...prev, especialidade: e.target.value }))}
-            placeholder="Ex: Estatísticas"
-            required
-          />
-        </div>
-      </div>
-
-      {/* Badge e Estilo */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="badge_emoji">Badge Emoji</Label>
-          <Input
-            id="badge_emoji"
-            value={formData.badge_emoji}
-            onChange={(e) => setFormData((prev) => ({ ...prev, badge_emoji: e.target.value }))}
-            placeholder="🛡️"
-            maxLength={4}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="estilo_escrita">Estilo de Escrita</Label>
-          <Select
-            value={formData.estilo_escrita}
-            onValueChange={(value) => setFormData((prev) => ({ ...prev, estilo_escrita: value }))}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="profissional">Profissional</SelectItem>
-              <SelectItem value="acolhedor">Acolhedor</SelectItem>
-              <SelectItem value="entusiasta">Entusiasta</SelectItem>
-              <SelectItem value="didatico">Didático</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      {/* Badge Emoji */}
+      <div className="space-y-2">
+        <Label htmlFor="badge_emoji">Badge Emoji</Label>
+        <Input
+          id="badge_emoji"
+          value={formData.badge_emoji}
+          onChange={(e) => setFormData((prev) => ({ ...prev, badge_emoji: e.target.value }))}
+          placeholder="🛡️"
+          maxLength={4}
+        />
       </div>
 
       {/* Modelo IA */}
