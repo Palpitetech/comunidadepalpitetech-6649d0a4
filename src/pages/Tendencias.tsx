@@ -1,6 +1,8 @@
 import { useRef } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { TrendingUp } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { SnapshotButton } from "@/components/shared/SnapshotButton";
 import { 
   TabelaEstatisticaGenerica, 
@@ -36,21 +38,28 @@ const configRepetidas: TabelaEstatisticaConfig = {
 };
 
 export default function Tendencias() {
+  const isMobile = useIsMobile();
   const contentRef = useRef<HTMLDivElement>(null);
 
   return (
     <MainLayout>
+      {/* Header mobile minimalista */}
+      {isMobile && <PageHeader title="Tendências" />}
+      
       <div className="container-senior py-6">
-        <div className="flex items-center justify-between gap-3 mb-6">
-          <div className="flex items-center gap-3">
-            <TrendingUp className="h-7 w-7 text-primary" />
-            <h1 className="text-xl font-bold">Tendências</h1>
+        {/* Header desktop */}
+        {!isMobile && (
+          <div className="flex items-center justify-between gap-3 mb-6">
+            <div className="flex items-center gap-3">
+              <TrendingUp className="h-7 w-7 text-primary" />
+              <h1 className="text-xl font-bold">Tendências</h1>
+            </div>
+            <SnapshotButton 
+              targetRef={contentRef} 
+              defaultTitle="Análise de Tendências - Lotofácil"
+            />
           </div>
-          <SnapshotButton 
-            targetRef={contentRef} 
-            defaultTitle="Análise de Tendências - Lotofácil"
-          />
-        </div>
+        )}
 
         <div ref={contentRef} className="space-y-8">
           {/* Tabela de Pares/Ímpares */}
