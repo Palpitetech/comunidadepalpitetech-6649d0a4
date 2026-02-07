@@ -282,22 +282,28 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // 1. Buscar guia ativo que não postou recentemente
+    // 1. Buscar guia ativo que PODE criar posts (correção do bug)
     const { data: guide, error: guideError } = await supabaseAdmin
       .from("guide_personas")
       .select("*, perfis(*)")
       .eq("ativo", true)
+      .eq("can_create_posts", true)
       .order("ultimo_post_em", { ascending: true, nullsFirst: true })
       .limit(1)
       .single();
 
     if (guideError || !guide) {
-      console.log("Nenhum guia ativo encontrado:", guideError?.message);
+      console.log("[generate-guide-post] ❌ Nenhum guia encontrado com permissão:", guideError?.message);
+      console.log("[generate-guide-post] Filtros: ativo=true, can_create_posts=true");
       return new Response(
-        JSON.stringify({ message: "Nenhum guia ativo encontrado" }),
+        JSON.stringify({ message: "Nenhum guia ativo com permissão para criar posts" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Log de aceitação
+    console.log(`[generate-guide-post] ✅ Bot selecionado: ${guide.perfis?.nome || guide.id}`);
+    console.log(`[generate-guide-post] Permissões: ativo=${guide.ativo}, can_create_posts=${guide.can_create_posts}`);
 
     // 2. Buscar últimos resultados para análise enriquecida
     const { data: resultados, error: resultadosError } = await supabaseAdmin
