@@ -6,14 +6,6 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Bot, Sparkles } from "lucide-react";
 
-const DEFAULT_SYSTEM_PROMPT = `Você é um especialista em Lotofácil da comunidade Palpite Tech.
-
-Diretrizes:
-- Seja prestativo e amigável
-- Compartilhe conhecimento de forma clara
-- Reconheça que loteria envolve sorte
-- NUNCA mencione que é IA, bot ou modelo de linguagem`;
-
 interface BotFormProps {
   onSaved: (botId: string) => void;
   onCancel: () => void;
@@ -48,81 +40,25 @@ export function BotForm({ onSaved, onCancel }: BotFormProps) {
     setLoading(true);
 
     try {
-      const email = generateEmail(formData.nome);
-
-      // 1. Criar usuário no auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password: `bot_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-        options: {
-          data: {
-            nome: formData.nome,
-            is_bot: true,
-          },
+      // Chamar edge function que usa Service Role (não afeta sessão)
+      const { data, error } = await supabase.functions.invoke("create-bot", {
+        body: {
+          nome: formData.nome.trim(),
+          avatar_url: formData.avatar_url || null,
+          badge_emoji: formData.badge_emoji || "🛡️",
         },
       });
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("Usuário não criado");
-
-      // 2. Atualizar perfil com is_bot e avatar
-      const { error: perfilError } = await supabase
-        .from("perfis")
-        .update({
-          is_bot: true,
-          avatar_url: formData.avatar_url || null,
-          nome: formData.nome,
-          email,
-        })
-        .eq("id", authData.user.id);
-
-      if (perfilError) {
-        console.error("Erro ao atualizar perfil:", perfilError);
+      if (error) {
+        throw new Error(error.message || "Erro ao criar bot");
       }
 
-      // 3. Criar guide_personas com defaults
-      const { data: guideData, error: guideError } = await supabase
-        .from("guide_personas")
-        .insert({
-          perfil_id: authData.user.id,
-          cargo: "Especialista",
-          especialidade: "Lotofácil",
-          badge_emoji: formData.badge_emoji,
-          estilo_escrita: "profissional",
-          system_prompt: DEFAULT_SYSTEM_PROMPT,
-          ai_model: "google/gemini-3-flash-preview",
-          ativo: false,
-          can_create_posts: false,
-          auto_reply_enabled: false,
-          // Chat settings
-          chat_enabled: false,
-          chat_tags: [],
-          chat_priority: 0,
-          // Safety settings
-          safety_enabled: true,
-          safety_block_pii: false,
-          safety_banned_topics: [],
-          safety_banned_words: [],
-          safety_style: "strict",
-          // Comments
-          can_comment_on_posts: true,
-          max_comments_per_post: 10,
-          // Bot interactions
-          can_respond_to_bot_posts: false,
-          can_reply_own_post_comments: false,
-          is_strategy_author: false,
-          is_free_tips_author: false,
-          // CTA override
-          cta_override_enabled: false,
-          cta_override_buttons: {},
-        })
-        .select("id")
-        .single();
-
-      if (guideError) throw guideError;
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
       toast.success("Bot criado! Configure-o agora.");
-      onSaved(guideData.id);
+      onSaved(data.bot_id);
     } catch (err) {
       console.error("Erro ao criar bot:", err);
       toast.error(err instanceof Error ? err.message : "Erro ao criar bot");
