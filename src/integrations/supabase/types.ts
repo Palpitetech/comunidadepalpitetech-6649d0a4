@@ -109,6 +109,44 @@ export type Database = {
           },
         ]
       }
+      bot_publishing_logs: {
+        Row: {
+          bot_name: string | null
+          created_at: string | null
+          details: Json | null
+          event_type: string
+          guide_persona_id: string
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          bot_name?: string | null
+          created_at?: string | null
+          details?: Json | null
+          event_type: string
+          guide_persona_id: string
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          bot_name?: string | null
+          created_at?: string | null
+          details?: Json | null
+          event_type?: string
+          guide_persona_id?: string
+          id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_publishing_logs_guide_persona_id_fkey"
+            columns: ["guide_persona_id"]
+            isOneToOne: false
+            referencedRelation: "guide_personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_conversations: {
         Row: {
           created_at: string

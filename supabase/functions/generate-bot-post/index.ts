@@ -38,11 +38,31 @@ serve(async (req) => {
     // Validação de permissões com logging detalhado
     if (!guide.ativo) {
       console.log(`[generate-bot-post] ❌ Bot ${guide.perfis?.nome || guide_id} rejeitado: ativo=false`);
+      // Log to database
+      await supabaseAdmin
+        .from("bot_publishing_logs")
+        .insert({
+          guide_persona_id: guide_id,
+          bot_name: guide.perfis?.nome,
+          event_type: "permission_denied",
+          reason: "Bot not active (ativo=false)",
+          details: { tipo_post, ativo: guide.ativo }
+        });
       throw new Error("Bot não está ativo");
     }
 
     if (!guide.can_create_posts) {
       console.log(`[generate-bot-post] ❌ Bot ${guide.perfis?.nome || guide_id} rejeitado: can_create_posts=false`);
+      // Log to database
+      await supabaseAdmin
+        .from("bot_publishing_logs")
+        .insert({
+          guide_persona_id: guide_id,
+          bot_name: guide.perfis?.nome,
+          event_type: "permission_denied",
+          reason: "Bot cannot create posts (can_create_posts=false)",
+          details: { tipo_post, can_create_posts: guide.can_create_posts }
+        });
       throw new Error("Bot não pode criar posts (can_create_posts=false)");
     }
 
@@ -166,6 +186,17 @@ Responda APENAS no formato JSON:
       .single();
 
     if (postError) throw postError;
+
+    // Log success
+    await supabaseAdmin
+      .from("bot_publishing_logs")
+      .insert({
+        guide_persona_id: guide_id,
+        bot_name: guide.perfis?.nome,
+        event_type: "success",
+        reason: "Post created successfully",
+        details: { post_id: newPost.id, tipo_post }
+      });
 
     // 5. Atualizar estatísticas
     await supabaseAdmin
