@@ -567,7 +567,7 @@ export function PastaSheet({
                   onCopy={() => handleCopySingle(palpite)}
                   createdAt={palpite.created_at}
                   acertos={acertosPorPalpite[palpite.id] ?? (palpite.conferido ? palpite.acertos : undefined)}
-                  label={palpite.estrategia ? `🎯 ${palpite.estrategia}` : undefined}
+                  
                   hideVerificar
                 />
               );
