@@ -152,7 +152,6 @@ export function WeeklyBotCalendar() {
                 getBotColor(bot.nome)
               )}
             >
-              <span>{bot.badge_emoji}</span>
               <span>{bot.nome}</span>
             </div>
           ))}

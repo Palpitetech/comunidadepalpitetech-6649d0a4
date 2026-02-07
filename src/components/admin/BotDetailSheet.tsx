@@ -41,7 +41,7 @@ export function BotDetailSheet({ bot, open, onOpenChange, onBotUpdated }: BotDet
             </Avatar>
             <div>
               <SheetTitle className="text-xl flex items-center gap-2">
-                {bot.badge_emoji} {bot.perfis?.nome || "Bot"}
+                {bot.perfis?.nome || "Bot"}
                 {bot.perfis?.is_bot ? (
                   <Bot className="h-5 w-5 text-muted-foreground" />
                 ) : (
