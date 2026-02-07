@@ -23,7 +23,8 @@ import {
   Square,
   MoreHorizontal,
   Save,
-  Bookmark
+  Bookmark,
+  ArrowLeft
 } from "lucide-react";
 
 interface JogoGerado {
@@ -186,11 +187,23 @@ export function ResultadosSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[calc(100%-4rem)] p-0 overflow-y-auto z-40">
+      <SheetContent 
+        side="bottom" 
+        className="h-[calc(100%-4rem)] p-0 overflow-y-auto z-40"
+        onInteractOutside={(e) => e.preventDefault()}
+        hideCloseButton
+        hideOverlay
+      >
         {/* Header fixo no topo */}
         <div className="sticky top-0 z-10 bg-background border-b">
           <SheetHeader className="px-4 py-3 flex-row items-center justify-between">
             <div className="flex items-center gap-3">
+              <button
+                onClick={() => onOpenChange(false)}
+                className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
               <SheetTitle className="text-lg font-bold">
                 Palpites
               </SheetTitle>
