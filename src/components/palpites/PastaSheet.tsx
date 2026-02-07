@@ -448,36 +448,36 @@ export function PastaSheet({
 
           {/* Resumo de Premiações */}
           {resumoPremiacoes && resumoPremiacoes.total > 0 && (
-            <div className="bg-emerald-900/20 border border-emerald-700/30 rounded-xl p-3 animate-fade-in">
+            <div className="bg-emerald-950 border border-emerald-600 rounded-xl p-3 animate-fade-in shadow-lg shadow-emerald-900/30">
               <div className="flex items-center gap-2 mb-2">
-                <Trophy className="h-5 w-5 text-emerald-500" />
-                <span className="font-bold text-emerald-400 text-sm">
+                <Trophy className="h-5 w-5 text-emerald-300" />
+                <span className="font-bold text-emerald-200 text-sm">
                   🎉 {resumoPremiacoes.total} Premiação{resumoPremiacoes.total > 1 ? "ões" : ""}!
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {resumoPremiacoes.contagem[15] > 0 && (
-                  <span className="bg-emerald-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+                  <span className="bg-emerald-500 text-white text-xs font-bold px-2.5 py-1.5 rounded-full animate-pulse shadow-md">
                     🏆 15 pts: {resumoPremiacoes.contagem[15]}
                   </span>
                 )}
                 {resumoPremiacoes.contagem[14] > 0 && (
-                  <span className="bg-emerald-700 text-white text-xs font-bold px-2 py-1 rounded-full">
+                  <span className="bg-emerald-600 text-white text-xs font-bold px-2.5 py-1.5 rounded-full shadow-md">
                     14 pts: {resumoPremiacoes.contagem[14]}
                   </span>
                 )}
                 {resumoPremiacoes.contagem[13] > 0 && (
-                  <span className="bg-emerald-700/80 text-white text-xs font-bold px-2 py-1 rounded-full">
+                  <span className="bg-emerald-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-full shadow-md">
                     13 pts: {resumoPremiacoes.contagem[13]}
                   </span>
                 )}
                 {resumoPremiacoes.contagem[12] > 0 && (
-                  <span className="bg-emerald-800 text-emerald-100 text-xs font-bold px-2 py-1 rounded-full">
+                  <span className="bg-emerald-800 text-emerald-50 text-xs font-bold px-2.5 py-1.5 rounded-full shadow-md">
                     12 pts: {resumoPremiacoes.contagem[12]}
                   </span>
                 )}
                 {resumoPremiacoes.contagem[11] > 0 && (
-                  <span className="bg-emerald-900 text-emerald-200 text-xs font-bold px-2 py-1 rounded-full">
+                  <span className="bg-emerald-900 text-emerald-100 text-xs font-bold px-2.5 py-1.5 rounded-full border border-emerald-700 shadow-md">
                     11 pts: {resumoPremiacoes.contagem[11]}
                   </span>
                 )}
