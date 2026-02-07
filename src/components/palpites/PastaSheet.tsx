@@ -290,20 +290,14 @@ export function PastaSheet({
           <div className="flex items-center justify-between py-2 gap-2">
             <Button
               variant={allSelected ? "default" : "outline"}
-              size="sm"
+              size="icon"
               onClick={handleSelectAll}
-              className="gap-2 text-xs h-8"
+              className="h-8 w-8 shrink-0"
             >
               {allSelected ? (
-                <>
-                  <CheckSquare className="h-4 w-4" />
-                  Todos
-                </>
+                <CheckSquare className="h-4 w-4" />
               ) : (
-                <>
-                  <Square className="h-4 w-4" />
-                  Selecionar
-                </>
+                <Square className="h-4 w-4" />
               )}
             </Button>
             
@@ -313,11 +307,13 @@ export function PastaSheet({
                 <Button 
                   variant={concursoSelecionado ? "default" : "outline"} 
                   size="sm" 
-                  className="gap-2 text-xs h-8"
+                  className="gap-1.5 text-xs h-8 flex-1 max-w-[160px]"
                 >
-                  <Trophy className="h-4 w-4" />
-                  {concursoSelecionado ? `#${concursoSelecionado.concurso_id}` : "Verificar"}
-                  <ChevronDown className="h-3 w-3" />
+                  <Trophy className="h-4 w-4 shrink-0" />
+                  <span className="truncate">
+                    {concursoSelecionado ? `Prêmio #${concursoSelecionado.concurso_id}` : "Verificar Prêmio"}
+                  </span>
+                  <ChevronDown className="h-3 w-3 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
