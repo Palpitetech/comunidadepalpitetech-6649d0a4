@@ -71,6 +71,7 @@ export function PastaSheet({
   const [concursoSelecionado, setConcursoSelecionado] = useState<ConcursoOption | null>(null);
   const [acertosPorPalpite, setAcertosPorPalpite] = useState<Record<string, number>>({});
   const [resumoVisivel, setResumoVisivel] = useState(true);
+  const [estrategiaSelecionada, setEstrategiaSelecionada] = useState<string | null>(null);
 
   // Sincronizar palpites quando props mudam
   useEffect(() => {
@@ -197,6 +198,12 @@ export function PastaSheet({
     const estrategias = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
     return estrategias.length > 0 ? estrategias : null;
   }, [palpites]);
+
+  // Palpites filtrados por estratégia selecionada
+  const palpitesDaEstrategia = useMemo(() => {
+    if (!estrategiaSelecionada) return [];
+    return palpites.filter(p => p.estrategia === estrategiaSelecionada);
+  }, [palpites, estrategiaSelecionada]);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('pt-BR', {
@@ -486,7 +493,11 @@ export function PastaSheet({
                     Estratégias utilizadas
                   </div>
                   {resumoEstrategias.map(([estrategia, count]) => (
-                    <DropdownMenuItem key={estrategia} className="gap-2 cursor-default">
+                    <DropdownMenuItem 
+                      key={estrategia} 
+                      className="gap-2 cursor-pointer"
+                      onClick={() => setEstrategiaSelecionada(estrategia)}
+                    >
                       <span className="flex-1 truncate">{estrategia}</span>
                       <span className="text-xs bg-primary/10 text-primary font-medium px-2 py-0.5 rounded-full">
                         {count}
@@ -613,6 +624,55 @@ export function PastaSheet({
           <div className="h-8" />
         </div>
       </SheetContent>
+
+      {/* Sheet Fullscreen da Estratégia */}
+      <Sheet 
+        open={!!estrategiaSelecionada} 
+        onOpenChange={(open) => !open && setEstrategiaSelecionada(null)}
+      >
+        <SheetContent 
+          side="bottom" 
+          className="h-[100dvh] p-0 overflow-y-auto z-[60]"
+          onInteractOutside={(e) => e.preventDefault()}
+          hideCloseButton
+          hideOverlay
+        >
+          <div className="sticky top-0 z-10 bg-background border-b">
+            <SheetHeader className="px-4 py-3 flex-row items-center gap-3">
+              <button
+                onClick={() => setEstrategiaSelecionada(null)}
+                className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <Dices className="h-5 w-5 text-primary" />
+              <SheetTitle className="text-lg font-bold truncate flex-1">
+                {estrategiaSelecionada}
+              </SheetTitle>
+              <span className="text-xs bg-primary/10 text-primary font-semibold px-2 py-1 rounded-full">
+                {palpitesDaEstrategia.length} palpite{palpitesDaEstrategia.length !== 1 ? "s" : ""}
+              </span>
+            </SheetHeader>
+          </div>
+
+          <div className="px-3 py-3 space-y-2">
+            {palpitesDaEstrategia.map((palpite, idx) => (
+              <PalpiteCard
+                key={palpite.id}
+                index={idx}
+                dezenas={palpite.dezenas}
+                ultimoConcursoDezenas={ultimoConcursoDezenas}
+                hideSelection
+                createdAt={palpite.created_at}
+                acertos={acertosPorPalpite[palpite.id] ?? (palpite.conferido ? palpite.acertos : undefined)}
+                onCopy={() => handleCopySingle(palpite)}
+                hideVerificar
+              />
+            ))}
+            <div className="h-8" />
+          </div>
+        </SheetContent>
+      </Sheet>
     </Sheet>
   );
 }
