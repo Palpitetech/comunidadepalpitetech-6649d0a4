@@ -103,23 +103,30 @@ TÉCNICAS DISPONÍVEIS (escolha UMA):
 IMPORTANTE: NÃO dê palpites prontos, apenas ensine a técnica.`;
 
         case "palpite_gratis":
-          return `OBJETIVO: Mostrar UMA ESTRATÉGIA de análise e informar que os palpites gerados com ela estão disponíveis para clientes VIP.
+          return `OBJETIVO: Mostrar UMA das 5 ESTRATÉGIAS DIÁRIAS do Augusto e informar que os palpites gerados estão disponíveis para clientes VIP.
+
+AS 5 ESTRATÉGIAS BASE DO AUGUSTO (escolha UMA para o post - alterne entre elas):
+1. EQUILÍBRIO PARES/ÍMPARES: Balanceia a quantidade de números pares e ímpares baseado em ciclos históricos
+2. ANÁLISE QUENTES E FRIAS: Identifica dezenas em alta frequência (quentes) vs baixa frequência (frias)
+3. CICLO DE DEZENAS: Rastreia padrões de rotação das dezenas ao longo dos concursos
+4. MOLDURA DO VOLANTE: Analisa números nas extremidades (01-05, 21-25) vs centro (11-15)
+5. SEQUÊNCIAS E SALTOS: Estuda intervalos entre dezenas sorteadas e padrões de continuidade
 
 ESTRUTURA DO POST:
-1. Título chamativo (ex: "🎯 Estratégia do Dia: Ciclo de Alta")
+1. Título chamativo mencionando a estratégia (ex: "🎯 Estratégia do Dia: Equilíbrio Pares/Ímpares")
 2. Gancho: "Analisando a tabela de Tendências do concurso ${resultados?.[0]?.concurso_id || 'atual'}..."
-3. ESTRATÉGIA: Explique a técnica usada (cruzar Tendências + Quentes e Frias, equilibrar pares/ímpares, etc.)
-4. INSIGHT: Mostre o que a análise revelou (ex: "as dezenas 02, 08 e 15 estão em ciclo de alta")
-5. REVELAÇÃO VIP: "Os palpites gerados com essa estratégia estão disponíveis agora no Gerador de Palpites para nossos clientes VIP. O Augusto, há 5 anos no mercado, deixa pelo menos 5 estratégias diferentes por dia!"
+3. ESTRATÉGIA: Explique em detalhes como funciona a estratégia escolhida
+4. INSIGHT: Mostre o que a análise revelou para o concurso atual
+5. REVELAÇÃO VIP: "O Augusto libera 5 estratégias diferentes por dia: Equilíbrio Pares/Ímpares, Quentes e Frias, Ciclo de Dezenas, Moldura do Volante e Sequências e Saltos. Os palpites gerados com essa estratégia estão disponíveis para nossos clientes VIP no Gerador de Palpites!"
 6. CTA: Convide a fazer upgrade
-7. OBRIGATÓRIO incluir: "⚠️ Loteria é sorte, jogue com responsabilidade!"
+7. OBRIGATÓRIO: "⚠️ Loteria é sorte, jogue com responsabilidade!"
 
 REGRAS CRÍTICAS:
 - NUNCA entregue as 15 dezenas prontas - apenas mostre o raciocínio da estratégia
-- Mostre insights da análise (quais dezenas estão em alta, padrões observados)
-- Use os dados estatísticos reais: ${contexto}
-- Menção clara do nome "Augusto" como especialista humano
-- Mencione "5 estratégias diferentes por dia" e "clientes VIP"`;
+- SEMPRE mencione as 5 estratégias completas do Augusto
+- Mostre insights reais da análise
+- Mencione "Augusto" como especialista com 5 anos no mercado
+- Foque em "clientes VIP"`;
 
         case "sistema_vendas":
           return `OBJETIVO: Educar sobre UMA ferramenta específica do Palpite Tech, mostrando como ela ajuda na jornada dos 15 pontos.
