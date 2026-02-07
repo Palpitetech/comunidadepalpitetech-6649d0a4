@@ -14,6 +14,8 @@ const boloesSimulados = [
     cotasVendidas: 17,
     valorCota: 15.00,
     concurso: 3245,
+    qtdPalpites: 8,
+    qtdDezenas: 16,
   },
   {
     id: 2,
@@ -23,6 +25,8 @@ const boloesSimulados = [
     cotasVendidas: 12,
     valorCota: 20.00,
     concurso: 3245,
+    qtdPalpites: 5,
+    qtdDezenas: 17,
   },
   {
     id: 3,
@@ -32,6 +36,8 @@ const boloesSimulados = [
     cotasVendidas: 22,
     valorCota: 12.00,
     concurso: 3245,
+    qtdPalpites: 10,
+    qtdDezenas: 15,
   },
   {
     id: 4,
@@ -41,6 +47,8 @@ const boloesSimulados = [
     cotasVendidas: 8,
     valorCota: 25.00,
     concurso: 3245,
+    qtdPalpites: 6,
+    qtdDezenas: 18,
   },
 ];
 
@@ -116,7 +124,16 @@ const Boloes = () => {
                 </CardHeader>
 
                 <CardContent className="space-y-4">
-                  {/* Descrição/Estratégia */}
+                  {/* Badges de Palpites e Dezenas */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="secondary" className="text-xs">
+                      <Ticket className="h-3 w-3 mr-1" />
+                      {bolao.qtdPalpites} palpites
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {bolao.qtdDezenas} dezenas
+                    </Badge>
+                  </div>
                   <div className="flex items-start gap-2">
                     <TrendingUp className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                     <CardDescription className="text-sm leading-relaxed">
