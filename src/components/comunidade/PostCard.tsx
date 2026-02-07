@@ -2,20 +2,8 @@ import { Heart, MessageCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LoteriaBadge } from "./LoteriaBadge";
 import { GuideBadge } from "./GuideBadge";
-import { BotCta } from "./BotCta";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-interface CtaButton {
-  label: string;
-  action: {
-    type: "navigate" | "open_chat_topic";
-    url?: string;
-    topic?: string;
-    autoSend?: boolean;
-    message?: string;
-  };
-}
 
 interface PostCardProps {
   post: {
@@ -33,10 +21,6 @@ interface PostCardProps {
       avatar_url: string | null;
       is_bot: boolean | null;
     } | null;
-    // CTA data for bots
-    cta_override_enabled?: boolean;
-    cta_override_text?: string | null;
-    cta_override_buttons?: CtaButton[];
   };
   onClick: () => void;
 }
@@ -54,8 +38,6 @@ export function PostCard({ post, onClick }: PostCardProps) {
     addSuffix: true,
     locale: ptBR,
   });
-
-  const showCta = post.perfis?.is_bot && post.cta_override_enabled && post.cta_override_buttons && post.cta_override_buttons.length > 0;
 
   return (
     <article
@@ -126,14 +108,6 @@ export function PostCard({ post, onClick }: PostCardProps) {
           {post.respostas_count || 0}
         </span>
       </div>
-
-      {/* CTA Buttons for Bots */}
-      {showCta && (
-        <BotCta
-          text={post.cta_override_text}
-          buttons={post.cta_override_buttons!}
-        />
-      )}
     </article>
   );
 }
