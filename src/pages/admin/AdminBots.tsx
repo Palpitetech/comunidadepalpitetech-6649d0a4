@@ -12,6 +12,10 @@ import type { BotWithStats } from "@/types/bots";
 
 export default function AdminBots() {
   const { bots, loading, refetch, toggleBotActive } = useBots();
+
+  // Separar bots por categoria
+  const postingBots = bots.filter(b => b.can_create_posts);
+  const chatOnlyBots = bots.filter(b => !b.can_create_posts && b.chat_enabled);
   const [selectedBot, setSelectedBot] = useState<BotWithStats | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [newBotDialogOpen, setNewBotDialogOpen] = useState(false);
@@ -99,7 +103,16 @@ export default function AdminBots() {
         {/* Pasta: Especialistas para Postagens */}
         <BotCategoryFolder
           title="Especialistas para Postagens"
-          bots={bots}
+          bots={postingBots}
+          onBotClick={handleBotClick}
+          onToggleActive={toggleBotActive}
+          defaultOpen={true}
+        />
+
+        {/* Pasta: Especialistas para Chat */}
+        <BotCategoryFolder
+          title="Especialistas para Chat"
+          bots={chatOnlyBots}
           onBotClick={handleBotClick}
           onToggleActive={toggleBotActive}
           defaultOpen={true}
