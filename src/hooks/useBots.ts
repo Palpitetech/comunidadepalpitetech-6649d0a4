@@ -8,7 +8,7 @@ export function useBots() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchBots = useCallback(async () => {
+  const fetchBots = useCallback(async (): Promise<BotWithStats[]> => {
     try {
       setLoading(true);
       setError(null);
@@ -37,10 +37,12 @@ export function useBots() {
       }));
 
       setBots(typedData);
+      return typedData;
     } catch (err) {
       console.error("Erro ao buscar bots:", err);
       setError(err instanceof Error ? err.message : "Erro desconhecido");
       toast.error("Erro ao carregar bots");
+      return [];
     } finally {
       setLoading(false);
     }
