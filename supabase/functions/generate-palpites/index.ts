@@ -252,7 +252,7 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
             type: "function",
             function: {
               name: "generate_palpites",
-              description: "Gera palpites estruturados para a Lotofácil com explicação da estratégia",
+              description: "Gera palpites estruturados para a Lotofácil com explicação detalhada da estratégia",
               parameters: {
                 type: "object",
                 properties: {
@@ -272,8 +272,54 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
                     }
                   },
                   estrategia: {
-                    type: "string",
-                    description: "Explicação detalhada da estratégia utilizada, citando dados específicos"
+                    type: "object",
+                    description: "Detalhes estruturados da estratégia utilizada",
+                    properties: {
+                      ferramentas: {
+                        type: "array",
+                        description: "Lista de ferramentas/metodologias utilizadas (ex: Análise de Frequência, Ciclos, Padrões Históricos)",
+                        items: { type: "string" }
+                      },
+                      dezenas_fixas: {
+                        type: "array",
+                        description: "Dezenas que foram priorizadas na geração e o motivo",
+                        items: {
+                          type: "object",
+                          properties: {
+                            dezenas: { type: "array", items: { type: "integer" } },
+                            motivo: { type: "string" }
+                          }
+                        }
+                      },
+                      dezenas_evitadas: {
+                        type: "array",
+                        description: "Dezenas que foram evitadas e o motivo",
+                        items: {
+                          type: "object",
+                          properties: {
+                            dezenas: { type: "array", items: { type: "integer" } },
+                            motivo: { type: "string" }
+                          }
+                        }
+                      },
+                      filtros_aplicados: {
+                        type: "array",
+                        description: "Filtros de padrões aplicados (ex: equilíbrio par/ímpar, distribuição na moldura)",
+                        items: {
+                          type: "object",
+                          properties: {
+                            filtro: { type: "string" },
+                            valor_alvo: { type: "string" },
+                            motivo: { type: "string" }
+                          }
+                        }
+                      },
+                      conclusao: {
+                        type: "string",
+                        description: "Resumo final da estratégia em 2-3 frases"
+                      }
+                    },
+                    required: ["ferramentas", "filtros_aplicados", "conclusao"]
                   }
                 },
                 required: ["jogos", "estrategia"]

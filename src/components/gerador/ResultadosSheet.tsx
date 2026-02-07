@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PalpiteCard } from "./PalpiteCard";
+import { EstrategiaCard, type EstrategiaData } from "./EstrategiaCard";
 import { formatarDezena } from "@/lib/lotofacil";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -32,6 +33,7 @@ interface ResultadosSheetProps {
   jogos: JogoGerado[];
   ultimoConcursoDezenas?: number[];
   onClearAll: () => void;
+  estrategia?: EstrategiaData;
 }
 
 const ITEMS_PER_PAGE = 12;
@@ -42,6 +44,7 @@ export function ResultadosSheet({
   jogos: jogosIniciais,
   ultimoConcursoDezenas = [],
   onClearAll,
+  estrategia,
 }: ResultadosSheetProps) {
   const { toast } = useToast();
   const [jogos, setJogos] = useState<JogoGerado[]>(jogosIniciais);
@@ -210,6 +213,13 @@ export function ResultadosSheet({
             </DropdownMenuContent>
           </DropdownMenu>
         </SheetHeader>
+
+        {/* Estratégia de Geração */}
+        {estrategia && (
+          <div className="px-3 py-2 shrink-0">
+            <EstrategiaCard estrategia={estrategia} />
+          </div>
+        )}
 
         {/* Barra de seleção fixa */}
         <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30 shrink-0">
