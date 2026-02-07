@@ -65,7 +65,7 @@ serve(async (req) => {
       });
     }
 
-    const { nome, avatar_url, badge_emoji } = await req.json();
+    const { nome, avatar_url } = await req.json();
 
     if (!nome || nome.trim().length === 0) {
       return new Response(JSON.stringify({ error: "Nome é obrigatório" }), {
@@ -135,7 +135,7 @@ serve(async (req) => {
         perfil_id: userId,
         cargo: "Especialista",
         especialidade: "Lotofácil",
-        badge_emoji: badge_emoji || "🛡️",
+        badge_emoji: "🛡️", // Default, hidden from UI
         estilo_escrita: "profissional",
         system_prompt: DEFAULT_SYSTEM_PROMPT,
         ai_model: "google/gemini-3-flash-preview",
