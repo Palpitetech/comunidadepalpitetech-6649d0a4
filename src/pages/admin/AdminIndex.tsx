@@ -3,6 +3,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Users, ArrowRight, Bot } from "lucide-react";
+import { BotHealthWidget } from "@/components/admin/BotHealthWidget";
 
 export default function AdminIndex() {
   return (
@@ -10,7 +11,12 @@ export default function AdminIndex() {
       <div className="container-senior py-8">
         <h1 className="text-3xl font-bold mb-8">Painel Administrativo</h1>
         
-        <div className="grid md:grid-cols-2 gap-6">
+        {/* Bot Health Widget */}
+        <div className="mb-8">
+          <BotHealthWidget />
+        </div>
+        
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Card Planos */}
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
