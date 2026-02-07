@@ -28,7 +28,8 @@ import {
   Trophy,
   ChevronDown,
   Check,
-  X
+  X,
+  Dices
 } from "lucide-react";
 
 interface ConcursoOption {
@@ -472,6 +473,30 @@ export function PastaSheet({
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* Botão Estratégias */}
+            {resumoEstrategias && resumoEstrategias.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-8 w-8 shrink-0">
+                    <Dices className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-popover z-50 w-56">
+                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-b mb-1">
+                    Estratégias utilizadas
+                  </div>
+                  {resumoEstrategias.map(([estrategia, count]) => (
+                    <DropdownMenuItem key={estrategia} className="gap-2 cursor-default">
+                      <span className="flex-1 truncate">{estrategia}</span>
+                      <span className="text-xs bg-primary/10 text-primary font-medium px-2 py-0.5 rounded-full">
+                        {count}
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
             {/* Contador de selecionados */}
             {selected.size > 0 && (
               <span className="text-xs text-muted-foreground ml-auto">
@@ -522,28 +547,6 @@ export function PastaSheet({
                     11 pts: {resumoPremiacoes.contagem[11]}
                   </span>
                 )}
-              </div>
-            </div>
-          )}
-
-          {/* Resumo de Estratégias */}
-          {resumoEstrategias && resumoEstrategias.length > 0 && (
-            <div className="bg-muted/50 border border-border rounded-xl p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-base">🎯</span>
-                <span className="font-semibold text-foreground text-sm">
-                  {resumoEstrategias.length === 1 ? "Estratégia" : "Estratégias"} utilizadas
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {resumoEstrategias.map(([estrategia, count]) => (
-                  <span 
-                    key={estrategia}
-                    className="bg-primary/10 text-primary text-xs font-medium px-2.5 py-1 rounded-full"
-                  >
-                    {estrategia} ({count})
-                  </span>
-                ))}
               </div>
             </div>
           )}
