@@ -65,6 +65,13 @@ export default {
           primo: "hsl(var(--lotofacil-primo))",
           repetida: "hsl(var(--lotofacil-repetida))",
         },
+        // Cores de palpites
+        palpite: {
+          dezena: "hsl(var(--palpite-dezena))",
+          "dezena-foreground": "hsl(var(--palpite-dezena-foreground))",
+          fixa: "hsl(var(--palpite-dezena-fixa))",
+          "fixa-foreground": "hsl(var(--palpite-dezena-fixa-foreground))",
+        },
         // Status Quente/Frio
         status: {
           quente: "hsl(var(--status-quente))",
