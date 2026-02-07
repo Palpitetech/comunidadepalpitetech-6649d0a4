@@ -221,75 +221,80 @@ export default function MeusPalpites() {
             </div>
           )}
 
-          {/* Lista de Pastas */}
-          {!isLoading && palpites.length > 0 && (
-            <div className="divide-y">
-              {/* Pastas com palpites */}
-              {pastas.map((pasta) => {
-                const count = (palpitesPorPasta[pasta.id] || []).length;
-                
-                return (
-                  <button
-                    key={pasta.id}
-                    onClick={() => handleOpenPasta(pasta)}
-                    className="w-full flex items-center gap-4 px-4 py-4 hover:bg-muted/50 transition-colors text-left"
-                  >
-                    <Folder className="h-6 w-6 shrink-0" style={{ color: pasta.cor }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{pasta.nome}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {count} palpite{count !== 1 ? "s" : ""}
-                      </p>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
-                  </button>
-                );
-              })}
+           {/* Lista de Pastas */}
+           {!isLoading && palpites.length > 0 && (
+             <div className="divide-y">
+               {/* Pastas com palpites */}
+               {pastas.map((pasta) => {
+                 const count = (palpitesPorPasta[pasta.id] || []).length;
+                 
+                 return (
+                   <div key={pasta.id}>
+                     <button
+                       onClick={() => handleOpenPasta(pasta)}
+                       className="w-full flex items-center gap-4 px-4 py-4 hover:bg-muted/50 active:bg-muted/75 transition-colors text-left"
+                     >
+                       <Folder className="h-6 w-6 shrink-0" style={{ color: pasta.cor }} />
+                       <div className="flex-1 min-w-0">
+                         <p className="font-medium truncate">{pasta.nome}</p>
+                         <p className="text-sm text-muted-foreground">
+                           {count} palpite{count !== 1 ? "s" : ""}
+                         </p>
+                       </div>
+                       <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+                     </button>
+                   </div>
+                 );
+               })}
 
-              {/* Palpites sem pasta */}
-              {palpitesPorPasta["sem-pasta"]?.length > 0 && (
-                <button
-                  onClick={handleOpenSemPasta}
-                  className="w-full flex items-center gap-4 px-4 py-4 hover:bg-muted/50 transition-colors text-left"
-                >
-                  <Folder className="h-6 w-6 text-muted-foreground shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium">Sem pasta</p>
-                    <p className="text-sm text-muted-foreground">
-                      {palpitesPorPasta["sem-pasta"].length} palpite{palpitesPorPasta["sem-pasta"].length !== 1 ? "s" : ""}
-                    </p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
-                </button>
-              )}
+               {/* Palpites sem pasta */}
+               {palpitesPorPasta["sem-pasta"]?.length > 0 && (
+                 <div>
+                   <button
+                     onClick={handleOpenSemPasta}
+                     className="w-full flex items-center gap-4 px-4 py-4 hover:bg-muted/50 active:bg-muted/75 transition-colors text-left"
+                   >
+                     <Folder className="h-6 w-6 text-muted-foreground shrink-0" />
+                     <div className="flex-1 min-w-0">
+                       <p className="font-medium">Sem pasta</p>
+                       <p className="text-sm text-muted-foreground">
+                         {palpitesPorPasta["sem-pasta"].length} palpite{palpitesPorPasta["sem-pasta"].length !== 1 ? "s" : ""}
+                       </p>
+                     </div>
+                     <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+                   </button>
+                 </div>
+               )}
 
-              {/* Pastas vazias */}
-              {pastas.filter(p => (palpitesPorPasta[p.id] || []).length === 0).length > 0 && (
-                <div className="px-4 py-3">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Pastas vazias</p>
-                  {pastas.filter(p => (palpitesPorPasta[p.id] || []).length === 0).map((pasta) => (
-                    <div
-                      key={pasta.id}
-                      className="flex items-center justify-between py-2"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Folder className="h-5 w-5" style={{ color: pasta.cor }} />
-                        <span className="text-sm text-muted-foreground">{pasta.nome}</span>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleExcluirPasta(pasta.id)}
-                        className="text-xs text-destructive hover:text-destructive"
-                      >
-                        Excluir
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+               {/* Pastas vazias */}
+               {pastas.filter(p => (palpitesPorPasta[p.id] || []).length === 0).length > 0 && (
+                 <div className="px-4 py-3 border-t">
+                   <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3 font-semibold">Pastas vazias</p>
+                   <div className="space-y-2">
+                     {pastas.filter(p => (palpitesPorPasta[p.id] || []).length === 0).map((pasta) => (
+                       <div
+                         key={pasta.id}
+                         className="flex items-center justify-between py-2"
+                       >
+                         <div className="flex items-center gap-3">
+                           <Folder className="h-5 w-5" style={{ color: pasta.cor }} />
+                           <span className="text-sm text-muted-foreground">{pasta.nome}</span>
+                         </div>
+                         <Button
+                           variant="ghost"
+                           size="sm"
+                           onClick={() => handleExcluirPasta(pasta.id)}
+                           className="text-xs text-destructive hover:text-destructive h-8"
+                         >
+                           Excluir
+                         </Button>
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+               )}
+             </div>
+           )}
         </div>
       </div>
 
