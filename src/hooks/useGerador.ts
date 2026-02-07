@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import type { EstrategiaData } from "@/components/gerador/EstrategiaCard";
 
 export interface JogoGerado {
   dezenas: number[];
@@ -8,7 +9,7 @@ export interface JogoGerado {
 
 export interface GeradorResult {
   jogos: JogoGerado[];
-  estrategia: string;
+  estrategia: EstrategiaData;
   remaining_today: number;
   max_per_day: number;
 }
