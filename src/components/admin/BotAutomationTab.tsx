@@ -29,6 +29,7 @@ interface RecentPost {
 export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
   const [loading, setLoading] = useState(false);
   const [autoReply, setAutoReply] = useState(bot.auto_reply_enabled);
+  const [maxCommentsPerPost, setMaxCommentsPerPost] = useState(bot.max_comments_per_post ?? 3);
   const [frequencia, setFrequencia] = useState(bot.frequencia_posts);
   const [schedule, setSchedule] = useState<BotSchedule>(bot.post_schedule);
   const [chatEnabled, setChatEnabled] = useState((bot as any).chat_enabled ?? true);
@@ -37,6 +38,8 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
   const [newHorario, setNewHorario] = useState("");
   const [recentPosts, setRecentPosts] = useState<RecentPost[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
+  
+  const canConfigureSchedule = bot.can_create_posts;
 
   useEffect(() => {
     async function fetchRecentPosts() {
@@ -108,6 +111,7 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
         .from("guide_personas")
         .update({
           auto_reply_enabled: autoReply,
+          max_comments_per_post: maxCommentsPerPost,
           frequencia_posts: frequencia,
           post_schedule: JSON.parse(JSON.stringify(schedule)),
           chat_enabled: chatEnabled,
@@ -131,86 +135,130 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
     <div className="space-y-6">
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Auto-resposta */}
-        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-          <div>
-            <Label className="text-base">Responder Comentários Automaticamente</Label>
-            <p className="text-sm text-muted-foreground">
-              Bot responde automaticamente a comentários de usuários
+        <div className="space-y-3">
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+            <div>
+              <Label className="text-base">Responder Comentários Automaticamente</Label>
+              <p className="text-sm text-muted-foreground">
+                Bot responde automaticamente a comentários de usuários
+              </p>
+            </div>
+            <Switch checked={autoReply} onCheckedChange={setAutoReply} />
+          </div>
+          
+          {autoReply && (
+            <div className="ml-4 p-3 bg-muted/30 rounded-lg border-l-2 border-primary/30">
+              <Label htmlFor="maxComments">Máximo de Respostas por Post</Label>
+              <Input
+                id="maxComments"
+                type="number"
+                value={maxCommentsPerPost}
+                onChange={(e) => setMaxCommentsPerPost(parseInt(e.target.value) || 1)}
+                min={1}
+                max={10}
+                className="w-32 mt-2"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Limite de comentários automáticos por postagem
+              </p>
+            </div>
+          )}
+        </div>
+
+        <Separator />
+
+        {/* Seção de Agenda de Posts */}
+        <div className={`space-y-4 ${!canConfigureSchedule ? 'opacity-60' : ''}`}>
+          <div className="flex items-center justify-between">
+            <Label className="text-base font-medium">📅 Agenda de Posts Automáticos</Label>
+            {!canConfigureSchedule && (
+              <span className="text-xs text-destructive">
+                ⚠️ Ative "Pode Criar Posts" no perfil
+              </span>
+            )}
+          </div>
+
+          {/* Frequência */}
+          <div className="space-y-2">
+            <Label htmlFor="frequencia">Frequência de Posts (por dia)</Label>
+            <Input
+              id="frequencia"
+              type="number"
+              value={frequencia}
+              onChange={(e) => setFrequencia(parseInt(e.target.value) || 1)}
+              min={0}
+              max={10}
+              className="w-32"
+              disabled={!canConfigureSchedule}
+            />
+            <p className="text-xs text-muted-foreground">
+              Máximo de posts automáticos por dia
             </p>
           </div>
-          <Switch checked={autoReply} onCheckedChange={setAutoReply} />
-        </div>
 
-        {/* Frequência */}
-        <div className="space-y-2">
-          <Label htmlFor="frequencia">Frequência de Posts (por dia)</Label>
-          <Input
-            id="frequencia"
-            type="number"
-            value={frequencia}
-            onChange={(e) => setFrequencia(parseInt(e.target.value) || 1)}
-            min={0}
-            max={10}
-            className="w-32"
-          />
-          <p className="text-xs text-muted-foreground">
-            Máximo de posts automáticos por dia
-          </p>
-        </div>
-
-        {/* Dias da Semana */}
-        <div className="space-y-3">
-          <Label>Dias de Postagem</Label>
-          <div className="flex flex-wrap gap-2">
-            {DIAS_SEMANA.map((dia) => (
-              <Button
-                key={dia.value}
-                type="button"
-                variant={schedule.dias.includes(dia.value) ? "default" : "outline"}
-                size="sm"
-                onClick={() => toggleDia(dia.value)}
-              >
-                {dia.label}
-              </Button>
-            ))}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {schedule.dias.length === 0
-              ? "Nenhum dia selecionado"
-              : `Selecionados: ${schedule.dias.map((d) => DIAS_SEMANA[d].label).join(", ")}`}
-          </p>
-        </div>
-
-        {/* Horários */}
-        <div className="space-y-3">
-          <Label>Horários de Postagem</Label>
-          <div className="flex gap-2">
-            <Input
-              type="time"
-              value={newHorario}
-              onChange={(e) => setNewHorario(e.target.value)}
-              className="w-32"
-            />
-            <Button type="button" variant="outline" size="icon" onClick={addHorario}>
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {schedule.horarios.map((horario) => (
-              <Badge key={horario} variant="secondary" className="gap-1 pr-1">
-                {horario}
-                <button
+          {/* Dias da Semana */}
+          <div className="space-y-3">
+            <Label>Dias de Postagem</Label>
+            <div className="flex flex-wrap gap-2">
+              {DIAS_SEMANA.map((dia) => (
+                <Button
+                  key={dia.value}
                   type="button"
-                  onClick={() => removeHorario(horario)}
-                  className="ml-1 hover:text-destructive"
+                  variant={schedule.dias.includes(dia.value) ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => toggleDia(dia.value)}
+                  disabled={!canConfigureSchedule}
                 >
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            ))}
-            {schedule.horarios.length === 0 && (
-              <span className="text-sm text-muted-foreground">Nenhum horário configurado</span>
-            )}
+                  {dia.label}
+                </Button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {schedule.dias.length === 0
+                ? "Nenhum dia selecionado"
+                : `Selecionados: ${schedule.dias.map((d) => DIAS_SEMANA[d].label).join(", ")}`}
+            </p>
+          </div>
+
+          {/* Horários */}
+          <div className="space-y-3">
+            <Label>Horários de Postagem</Label>
+            <div className="flex gap-2">
+              <Input
+                type="time"
+                value={newHorario}
+                onChange={(e) => setNewHorario(e.target.value)}
+                className="w-32"
+                disabled={!canConfigureSchedule}
+              />
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="icon" 
+                onClick={addHorario}
+                disabled={!canConfigureSchedule}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {schedule.horarios.map((horario) => (
+                <Badge key={horario} variant="secondary" className="gap-1 pr-1">
+                  {horario}
+                  <button
+                    type="button"
+                    onClick={() => removeHorario(horario)}
+                    className="ml-1 hover:text-destructive"
+                    disabled={!canConfigureSchedule}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))}
+              {schedule.horarios.length === 0 && (
+                <span className="text-sm text-muted-foreground">Nenhum horário configurado</span>
+              )}
+            </div>
           </div>
         </div>
 
