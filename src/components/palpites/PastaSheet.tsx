@@ -43,6 +43,10 @@ export function PastaSheet({
   const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
   const [acertosPorPalpite, setAcertosPorPalpite] = useState<Record<string, number>>({});
   const [estrategiaSelecionada, setEstrategiaSelecionada] = useState<string | null>(null);
+  
+  // Estados para a visualização de estratégia
+  const [selectedEstrategia, setSelectedEstrategia] = useState<Set<string>>(new Set());
+  const [acertosPorEstrategia, setAcertosPorEstrategia] = useState<Record<string, number>>({});
 
   // Sincronizar palpites quando props mudam
   useEffect(() => {
@@ -51,6 +55,8 @@ export function PastaSheet({
     setCurrentPage(0);
     setAcertosPorPalpite({});
     setEstrategiaSelecionada(null);
+    setSelectedEstrategia(new Set());
+    setAcertosPorEstrategia({});
   }, [palpitesIniciais]);
 
   // Buscar último concurso
@@ -203,6 +209,124 @@ export function PastaSheet({
 
   const handleVerificarTodos = (_concurso: any, novosAcertos: Record<string, number>) => {
     setAcertosPorPalpite(novosAcertos);
+  };
+
+  // ========== Handlers para a visualização de estratégia ==========
+  
+  const handleSelectChangeEstrategia = (id: string, checked: boolean) => {
+    const newSelected = new Set(selectedEstrategia);
+    if (checked) {
+      newSelected.add(id);
+    } else {
+      newSelected.delete(id);
+    }
+    setSelectedEstrategia(newSelected);
+  };
+
+  const handleSelectAllEstrategia = () => {
+    if (selectedEstrategia.size === palpitesDaEstrategia.length) {
+      setSelectedEstrategia(new Set());
+    } else {
+      setSelectedEstrategia(new Set(palpitesDaEstrategia.map((p) => p.id)));
+    }
+  };
+
+  const handleCopiarTodosEstrategia = async () => {
+    const texto = palpitesDaEstrategia.map((p, i) => formatPalpiteParaCopia(p, i)).join("\n");
+    await navigator.clipboard.writeText(texto);
+    toast({
+      title: "Todos copiados! 📋",
+      description: `${palpitesDaEstrategia.length} palpite(s) copiado(s).`,
+    });
+  };
+
+  const handleCopiarSelecionadosEstrategia = async () => {
+    if (selectedEstrategia.size === 0) {
+      toast({
+        title: "Nenhum palpite selecionado",
+        description: "Selecione pelo menos um palpite para copiar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const texto = palpitesDaEstrategia
+      .filter((p) => selectedEstrategia.has(p.id))
+      .map((palpite, i) => formatPalpiteParaCopia(palpite, i))
+      .join("\n");
+
+    await navigator.clipboard.writeText(texto);
+    toast({
+      title: "Copiado! 📋",
+      description: `${selectedEstrategia.size} palpite(s) copiado(s).`,
+    });
+  };
+
+  const handleExcluirSelecionadosEstrategia = async () => {
+    if (selectedEstrategia.size === 0) return;
+    
+    const success = await excluirVarios(Array.from(selectedEstrategia));
+    if (success) {
+      const novosPalpites = palpites.filter((p) => !selectedEstrategia.has(p.id));
+      setPalpites(novosPalpites);
+      onPalpitesChange(novosPalpites);
+      setSelectedEstrategia(new Set());
+      
+      // Fechar se não houver mais palpites da estratégia
+      const restantes = novosPalpites.filter(p => p.estrategia === estrategiaSelecionada);
+      if (restantes.length === 0) {
+        setEstrategiaSelecionada(null);
+      }
+      
+      if (novosPalpites.length === 0) {
+        onOpenChange(false);
+      }
+    }
+  };
+
+  const handleExcluirTodosEstrategia = async () => {
+    if (palpitesDaEstrategia.length === 0) return;
+    
+    const ids = palpitesDaEstrategia.map(p => p.id);
+    const success = await excluirVarios(ids);
+    if (success) {
+      const novosPalpites = palpites.filter((p) => p.estrategia !== estrategiaSelecionada);
+      setPalpites(novosPalpites);
+      onPalpitesChange(novosPalpites);
+      setSelectedEstrategia(new Set());
+      setEstrategiaSelecionada(null);
+      
+      if (novosPalpites.length === 0) {
+        onOpenChange(false);
+      }
+    }
+  };
+
+  const handleDeleteSingleEstrategia = async (id: string) => {
+    const success = await excluirPalpite(id);
+    if (success) {
+      const novosPalpites = palpites.filter((p) => p.id !== id);
+      setPalpites(novosPalpites);
+      onPalpitesChange(novosPalpites);
+      
+      const newSelected = new Set(selectedEstrategia);
+      newSelected.delete(id);
+      setSelectedEstrategia(newSelected);
+      
+      // Fechar se não houver mais palpites da estratégia
+      const restantes = novosPalpites.filter(p => p.estrategia === estrategiaSelecionada);
+      if (restantes.length === 0) {
+        setEstrategiaSelecionada(null);
+      }
+      
+      if (novosPalpites.length === 0) {
+        onOpenChange(false);
+      }
+    }
+  };
+
+  const handleVerificarTodosEstrategia = (_concurso: any, novosAcertos: Record<string, number>) => {
+    setAcertosPorEstrategia(novosAcertos);
   };
 
   return (
@@ -364,6 +488,19 @@ export function PastaSheet({
               </div>
             )}
 
+            {/* Toolbar para palpites da estratégia */}
+            <PalpitesToolbar
+              palpites={palpitesDaEstrategia}
+              selected={selectedEstrategia}
+              onSelectAll={handleSelectAllEstrategia}
+              onCopiarTodos={handleCopiarTodosEstrategia}
+              onCopiarSelecionados={handleCopiarSelecionadosEstrategia}
+              onExcluirSelecionados={handleExcluirSelecionadosEstrategia}
+              onExcluirTodos={handleExcluirTodosEstrategia}
+              onVerificarTodos={handleVerificarTodosEstrategia}
+              hideEstrategias
+            />
+
             {/* Lista de Palpites */}
             <div className="space-y-2">
               {palpitesDaEstrategia.map((palpite, idx) => (
@@ -372,10 +509,12 @@ export function PastaSheet({
                   index={idx}
                   dezenas={palpite.dezenas}
                   ultimoConcursoDezenas={ultimoConcursoDezenas}
-                  hideSelection
-                  createdAt={palpite.created_at}
-                  acertos={acertosPorPalpite[palpite.id] ?? (palpite.conferido ? palpite.acertos : undefined)}
+                  isSelected={selectedEstrategia.has(palpite.id)}
+                  onSelectChange={(checked) => handleSelectChangeEstrategia(palpite.id, checked)}
+                  onDelete={() => handleDeleteSingleEstrategia(palpite.id)}
                   onCopy={() => handleCopySingle(palpite)}
+                  createdAt={palpite.created_at}
+                  acertos={acertosPorEstrategia[palpite.id] ?? (palpite.conferido ? palpite.acertos : undefined)}
                   hideVerificar
                 />
               ))}
