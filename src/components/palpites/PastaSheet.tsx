@@ -287,7 +287,8 @@ export function PastaSheet({
         {/* Conteúdo */}
         <div className="px-3 py-3 space-y-3">
           {/* Barra de seleção e ações */}
-          <div className="flex items-center justify-between py-2 gap-2">
+          <div className="flex items-center gap-2 py-2">
+            {/* Seletor */}
             <Button
               variant={allSelected ? "default" : "outline"}
               size="icon"
@@ -301,23 +302,23 @@ export function PastaSheet({
               )}
             </Button>
             
-            {/* Verificar Prêmios - Dropdown Universal */}
+            {/* Verificar Prêmios */}
             <DropdownMenu onOpenChange={(open) => open && handleLoadConcursos()}>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant={concursoSelecionado ? "default" : "outline"} 
                   size="sm" 
-                  className="gap-1.5 text-xs h-8 flex-1 max-w-[140px]"
+                  className="gap-1.5 text-xs h-8"
                 >
                   <Trophy className="h-4 w-4 shrink-0" />
-                  <span className="truncate">
+                  <span>
                     {concursoSelecionado ? `#${concursoSelecionado.concurso_id}` : "Prêmio"}
                   </span>
                   <ChevronDown className="h-3 w-3 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
-                align="center" 
+                align="start" 
                 className="bg-popover z-50 w-56 max-h-64 overflow-y-auto"
               >
                 <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-b mb-1">
@@ -353,45 +354,45 @@ export function PastaSheet({
               </DropdownMenuContent>
             </DropdownMenu>
             
-            <div className="flex items-center gap-2">
-              {selected.size > 0 && (
-                <span className="text-xs text-muted-foreground">
-                  {selected.size}/{palpites.length}
-                </span>
-              )}
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 gap-2">
-                    <MoreHorizontal className="h-4 w-4" />
-                    Ações
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-popover z-50 w-56">
-                  <DropdownMenuItem onClick={handleCopiarTodos} className="gap-2">
-                    <Copy className="h-4 w-4" />
-                    Copiar Todos ({palpites.length})
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={handleCopiarSelecionados} 
-                    disabled={selected.size === 0}
-                    className="gap-2"
-                  >
-                    <CopyCheck className="h-4 w-4" />
-                    Copiar Selecionados ({selected.size})
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={handleExcluirSelecionados} 
-                    disabled={selected.size === 0}
-                    className="gap-2 text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Excluir Selecionados ({selected.size})
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            {/* Ações */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
+                  <MoreHorizontal className="h-4 w-4" />
+                  Ações
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="bg-popover z-50 w-56">
+                <DropdownMenuItem onClick={handleCopiarTodos} className="gap-2">
+                  <Copy className="h-4 w-4" />
+                  Copiar Todos ({palpites.length})
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={handleCopiarSelecionados} 
+                  disabled={selected.size === 0}
+                  className="gap-2"
+                >
+                  <CopyCheck className="h-4 w-4" />
+                  Copiar Selecionados ({selected.size})
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={handleExcluirSelecionados} 
+                  disabled={selected.size === 0}
+                  className="gap-2 text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Excluir Selecionados ({selected.size})
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Contador de selecionados */}
+            {selected.size > 0 && (
+              <span className="text-xs text-muted-foreground ml-auto">
+                {selected.size}/{palpites.length}
+              </span>
+            )}
           </div>
 
           {/* Lista de Palpites */}
