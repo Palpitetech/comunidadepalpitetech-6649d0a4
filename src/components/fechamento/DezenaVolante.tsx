@@ -15,8 +15,6 @@ export function DezenaVolante({ numero, selecionada, fixa, onClick, disabled }: 
   const moldura = isMoldura(numero);
   const multiploDe3 = isMultiploDe3(numero);
 
-  const isActive = selecionada || fixa;
-
   return (
     <button
       type="button"
@@ -36,26 +34,14 @@ export function DezenaVolante({ numero, selecionada, fixa, onClick, disabled }: 
     >
       {/* Indicador Ímpar - Canto superior esquerdo */}
       {impar && (
-        <span className={cn(
-          "absolute top-0.5 left-0.5 w-4 h-4 flex items-center justify-center",
-          "text-[8px] font-bold rounded-full",
-          isActive 
-            ? "bg-white/20 text-white/90" 
-            : "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
-        )}>
+        <span className="absolute top-0.5 left-1 text-[8px] font-bold text-muted-foreground">
           I
         </span>
       )}
 
       {/* Indicador Par - Canto superior direito */}
       {par && (
-        <span className={cn(
-          "absolute top-0.5 right-0.5 w-4 h-4 flex items-center justify-center",
-          "text-[8px] font-bold rounded-full",
-          isActive 
-            ? "bg-white/20 text-white/90" 
-            : "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-        )}>
+        <span className="absolute top-0.5 right-1 text-[8px] font-bold text-muted-foreground">
           P
         </span>
       )}
@@ -65,26 +51,14 @@ export function DezenaVolante({ numero, selecionada, fixa, onClick, disabled }: 
 
       {/* Indicador Moldura - Canto inferior esquerdo */}
       {moldura && (
-        <span className={cn(
-          "absolute bottom-0.5 left-0.5 w-4 h-4 flex items-center justify-center",
-          "text-[8px] font-bold rounded-full",
-          isActive 
-            ? "bg-white/20 text-white/90" 
-            : "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
-        )}>
+        <span className="absolute bottom-0.5 left-1 text-[8px] font-bold text-muted-foreground">
           M
         </span>
       )}
 
       {/* Indicador Múltiplo de 3 - Canto inferior direito */}
       {multiploDe3 && (
-        <span className={cn(
-          "absolute bottom-0.5 right-0.5 w-5 h-4 flex items-center justify-center",
-          "text-[7px] font-bold rounded-full",
-          isActive 
-            ? "bg-white/20 text-white/90" 
-            : "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
-        )}>
+        <span className="absolute bottom-0.5 right-1 text-[7px] font-bold text-muted-foreground">
           M3
         </span>
       )}
