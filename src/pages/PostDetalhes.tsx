@@ -1,6 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -55,8 +54,7 @@ export default function PostDetalhes() {
 
   if (isLoadingPost) {
     return (
-      <MainLayout>
-        {isMobile && <PageHeader title="Post" />}
+      <MainLayout pageTitle="Post">
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
           <Skeleton className="h-8 w-24" />
           <div className="flex items-center gap-3">
@@ -76,8 +74,7 @@ export default function PostDetalhes() {
 
   if (!post) {
     return (
-      <MainLayout>
-        {isMobile && <PageHeader title="Post" />}
+      <MainLayout pageTitle="Post">
         <div className="max-w-2xl mx-auto px-4 py-6">
           {!isMobile && (
             <Button
@@ -112,8 +109,7 @@ export default function PostDetalhes() {
 
 
   return (
-    <MainLayout>
-      {isMobile && <PageHeader title="Post" />}
+    <MainLayout pageTitle="Post">
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
         {!isMobile && (
           <Button

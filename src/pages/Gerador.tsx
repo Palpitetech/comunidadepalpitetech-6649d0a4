@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -92,10 +91,7 @@ export default function Gerador() {
     pedidoEspecial.trim().length > 0;
 
   return (
-    <MainLayout>
-      {/* Header mobile minimalista */}
-      {isMobile && <PageHeader title="Gerador de Palpites" />}
-      
+    <MainLayout pageTitle="Gerador de Palpites">
       <div className="container-senior py-6 space-y-6 max-w-md mx-auto">
         {/* Header desktop com ícone */}
         {!isMobile && (

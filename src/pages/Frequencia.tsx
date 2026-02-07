@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { SeletorPeriodo } from "@/components/frequencia/SeletorPeriodo";
 import { FiltroStatus, StatusFiltro } from "@/components/frequencia/FiltroStatus";
 import { DezenaCard } from "@/components/frequencia/DezenaCard";
@@ -42,10 +41,7 @@ export default function Frequencia() {
   });
 
   return (
-    <MainLayout>
-      {/* Header mobile minimalista */}
-      {isMobile && <PageHeader title="Análise de Dezenas" />}
-      
+    <MainLayout pageTitle="Análise de Dezenas">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
          {/* Header desktop */}
         {!isMobile && (
@@ -64,6 +60,17 @@ export default function Frequencia() {
                 onChange={setPeriodo}
               />
             </div>
+          </div>
+        )}
+
+        {/* Mobile: Seletor de período */}
+        {isMobile && (
+          <div className="flex justify-end">
+            <SeletorPeriodo
+              periodos={PERIODOS}
+              selecionado={periodo}
+              onChange={setPeriodo}
+            />
           </div>
         )}
 
