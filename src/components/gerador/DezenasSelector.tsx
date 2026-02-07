@@ -15,9 +15,10 @@ export function DezenasSelector({
 }: DezenasSelectorProps) {
   return (
     <div className="space-y-3">
-      <p className="text-center text-muted-foreground">
-        Quantas dezenas por palpite?
-      </p>
+      <div className="text-center">
+        <p className="text-sm font-medium text-foreground mb-1">Dezenas por palpite</p>
+        <p className="text-xs text-muted-foreground">Quantas dezenas em cada jogo?</p>
+      </div>
       <div className="flex flex-wrap justify-center gap-2">
         {DEZENAS_OPTIONS.map((num) => (
           <button
