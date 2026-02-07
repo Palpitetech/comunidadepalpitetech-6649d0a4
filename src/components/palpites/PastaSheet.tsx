@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import confetti from "canvas-confetti";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import {
@@ -120,17 +121,67 @@ export function PastaSheet({
   // Verificar todos os palpites contra um concurso
   const handleVerificarTodos = (concurso: ConcursoOption) => {
     const novosAcertos: Record<string, number> = {};
+    let tem15Acertos = false;
+    
     palpites.forEach(palpite => {
       const acertos = palpite.dezenas.filter(d => concurso.dezenas.includes(d)).length;
       novosAcertos[palpite.id] = acertos;
+      if (acertos === 15) tem15Acertos = true;
     });
+    
     setAcertosPorPalpite(novosAcertos);
     setConcursoSelecionado(concurso);
+    
+    // 🎉 Confetes se tiver 15 acertos!
+    if (tem15Acertos) {
+      const duration = 4000;
+      const end = Date.now() + duration;
+      
+      const frame = () => {
+        confetti({
+          particleCount: 5,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ['#22c55e', '#16a34a', '#15803d', '#fbbf24', '#f59e0b']
+        });
+        confetti({
+          particleCount: 5,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ['#22c55e', '#16a34a', '#15803d', '#fbbf24', '#f59e0b']
+        });
+        
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      };
+      frame();
+    }
+    
     toast({
-      title: "Verificação concluída! 🎯",
-      description: `${palpites.length} palpite(s) verificado(s) contra o concurso #${concurso.concurso_id}`,
+      title: tem15Acertos ? "🎉 PARABÉNS! 15 ACERTOS!" : "Verificação concluída! 🎯",
+      description: tem15Acertos 
+        ? "Você acertou todas as dezenas! Mega prêmio!" 
+        : `${palpites.length} palpite(s) verificado(s) contra o concurso #${concurso.concurso_id}`,
     });
   };
+
+  // Calcular resumo de premiações
+  const resumoPremiacoes = useMemo(() => {
+    if (Object.keys(acertosPorPalpite).length === 0) return null;
+    
+    const contagem = { 11: 0, 12: 0, 13: 0, 14: 0, 15: 0 };
+    Object.values(acertosPorPalpite).forEach(acertos => {
+      if (acertos >= 11 && acertos <= 15) {
+        contagem[acertos as keyof typeof contagem]++;
+      }
+    });
+    
+    const total = contagem[11] + contagem[12] + contagem[13] + contagem[14] + contagem[15];
+    return { contagem, total };
+  }, [acertosPorPalpite]);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('pt-BR', {
@@ -395,6 +446,44 @@ export function PastaSheet({
             )}
           </div>
 
+          {/* Resumo de Premiações */}
+          {resumoPremiacoes && resumoPremiacoes.total > 0 && (
+            <div className="bg-emerald-900/20 border border-emerald-700/30 rounded-xl p-3 animate-fade-in">
+              <div className="flex items-center gap-2 mb-2">
+                <Trophy className="h-5 w-5 text-emerald-500" />
+                <span className="font-bold text-emerald-400 text-sm">
+                  🎉 {resumoPremiacoes.total} Premiação{resumoPremiacoes.total > 1 ? "ões" : ""}!
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {resumoPremiacoes.contagem[15] > 0 && (
+                  <span className="bg-emerald-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+                    🏆 15 pts: {resumoPremiacoes.contagem[15]}
+                  </span>
+                )}
+                {resumoPremiacoes.contagem[14] > 0 && (
+                  <span className="bg-emerald-700 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    14 pts: {resumoPremiacoes.contagem[14]}
+                  </span>
+                )}
+                {resumoPremiacoes.contagem[13] > 0 && (
+                  <span className="bg-emerald-700/80 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    13 pts: {resumoPremiacoes.contagem[13]}
+                  </span>
+                )}
+                {resumoPremiacoes.contagem[12] > 0 && (
+                  <span className="bg-emerald-800 text-emerald-100 text-xs font-bold px-2 py-1 rounded-full">
+                    12 pts: {resumoPremiacoes.contagem[12]}
+                  </span>
+                )}
+                {resumoPremiacoes.contagem[11] > 0 && (
+                  <span className="bg-emerald-900 text-emerald-200 text-xs font-bold px-2 py-1 rounded-full">
+                    11 pts: {resumoPremiacoes.contagem[11]}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
           {/* Lista de Palpites */}
           <div className="grid gap-2">
             {palpitesPaginados.map((palpite, localIndex) => {
