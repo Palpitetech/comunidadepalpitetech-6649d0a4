@@ -7,6 +7,7 @@ import { LoteriaBadge } from "@/components/comunidade/LoteriaBadge";
 import { GuideBadge } from "@/components/comunidade/GuideBadge";
 import { ActionBar } from "@/components/comunidade/ActionBar";
 import { CommentSection } from "@/components/comunidade/CommentSection";
+import { BotCta } from "@/components/comunidade/BotCta";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePostDetails } from "@/hooks/usePostDetails";
 import { usePostActions } from "@/hooks/usePostActions";
@@ -168,6 +169,14 @@ export default function PostDetalhes() {
             <ExternalLink className="h-4 w-4" />
             {post.external_link_text || "Abrir link"}
           </Button>
+        )}
+
+        {/* CTA do Bot - apenas na visualização detalhada */}
+        {post.perfis?.is_bot && post.cta_override_enabled && post.cta_override_buttons && post.cta_override_buttons.length > 0 && (
+          <BotCta
+            text={post.cta_override_text}
+            buttons={post.cta_override_buttons}
+          />
         )}
 
         {/* Barra de ações */}

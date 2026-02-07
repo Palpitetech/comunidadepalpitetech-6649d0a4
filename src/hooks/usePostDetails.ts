@@ -2,6 +2,17 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 
+interface CtaButton {
+  label: string;
+  action: {
+    type: "navigate" | "open_chat_topic";
+    url?: string;
+    topic?: string;
+    autoSend?: boolean;
+    message?: string;
+  };
+}
+
 export interface PostComment {
   id: string;
   conteudo: string;
@@ -35,6 +46,10 @@ export interface PostDetails {
     avatar_url: string | null;
     is_bot: boolean | null;
   } | null;
+  // CTA data for bots
+  cta_override_enabled?: boolean;
+  cta_override_text?: string | null;
+  cta_override_buttons?: CtaButton[];
 }
 
 export function usePostDetails(postId: string) {
@@ -67,7 +82,26 @@ export function usePostDetails(postId: string) {
         .single();
 
       if (error) throw error;
-      return data as PostDetails;
+      
+      // Se o autor é bot, buscar dados de CTA
+      let ctaData = null;
+      if (data.perfis?.is_bot) {
+        const { data: personaData } = await supabase
+          .from("guide_personas")
+          .select("cta_override_enabled, cta_override_text, cta_override_buttons")
+          .eq("perfil_id", data.user_id)
+          .eq("cta_override_enabled", true)
+          .maybeSingle();
+        
+        ctaData = personaData;
+      }
+      
+      return {
+        ...data,
+        cta_override_enabled: ctaData?.cta_override_enabled || false,
+        cta_override_text: ctaData?.cta_override_text || null,
+        cta_override_buttons: (ctaData?.cta_override_buttons as unknown as CtaButton[]) || [],
+      } as PostDetails;
     },
     enabled: !!postId,
   });
