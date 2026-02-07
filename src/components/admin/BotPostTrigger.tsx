@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Loader2, Send, Eye, Users, Megaphone, AlertCircle } from "lucide-react";
+import { Loader2, Send, Eye, Users, Megaphone, AlertCircle, BookOpen, Gift } from "lucide-react";
 import { DezenaCirculoMini } from "@/components/lotofacil/DezenaCirculoMini";
 import type { BotWithStats } from "@/types/bots";
 
@@ -15,7 +15,7 @@ interface BotPostTriggerProps {
   onSuccess: () => void;
 }
 
-type PostType = "pre_sorteio" | "pos_sorteio" | "geral" | "resultado_oficial";
+type PostType = "pre_sorteio" | "pos_sorteio" | "geral" | "resultado_oficial" | "estrategia" | "palpite_gratis";
 
 interface UltimoResultado {
   concurso_id: number;
@@ -45,6 +45,22 @@ export function BotPostTrigger({ bots, onSuccess }: BotPostTriggerProps) {
   const [loadingResultado, setLoadingResultado] = useState(false);
 
   const activeBots = bots.filter((b) => b.ativo && b.can_create_posts);
+
+  // Filtrar bots disponíveis com base no tipo de post
+  const getAvailableBots = () => {
+    switch (postType) {
+      case "resultado_oficial":
+        return bots.filter(b => b.ativo && b.is_result_author);
+      case "estrategia":
+        return bots.filter(b => b.ativo && b.is_strategy_author);
+      case "palpite_gratis":
+        return bots.filter(b => b.ativo && b.is_free_tips_author);
+      default:
+        return activeBots;
+    }
+  };
+
+  const filteredBots = getAvailableBots();
 
   // Buscar último resultado quando selecionar resultado_oficial
   useEffect(() => {
@@ -170,13 +186,18 @@ export function BotPostTrigger({ bots, onSuccess }: BotPostTriggerProps) {
                 Autor dos Resultados (Augusto + Comentários)
               </div>
             </SelectItem>
-            {activeBots.map((bot) => (
+            {filteredBots.map((bot) => (
               <SelectItem key={bot.id} value={bot.id}>
                 <div className="flex items-center gap-2">
                   {bot.badge_emoji} {bot.perfis?.nome}
                 </div>
               </SelectItem>
             ))}
+            {filteredBots.length === 0 && (
+              <div className="px-2 py-4 text-sm text-muted-foreground text-center">
+                Nenhum bot configurado para este tipo de post
+              </div>
+            )}
           </SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground">
@@ -203,11 +224,33 @@ export function BotPostTrigger({ bots, onSuccess }: BotPostTriggerProps) {
                 📢 Resultado Oficial (Plantão)
               </div>
             </SelectItem>
+            <SelectItem value="estrategia">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-blue-500" />
+                📚 Dica de Estratégia
+              </div>
+            </SelectItem>
+            <SelectItem value="palpite_gratis">
+              <div className="flex items-center gap-2">
+                <Gift className="h-4 w-4 text-green-500" />
+                🎁 Palpite Grátis do Dia
+              </div>
+            </SelectItem>
           </SelectContent>
         </Select>
         {postType === "resultado_oficial" && (
           <p className="text-xs text-destructive">
             ⚡ Modo Plantão: Anúncio especial do resultado com formato jornalístico
+          </p>
+        )}
+        {postType === "estrategia" && (
+          <p className="text-xs text-blue-600">
+            📚 Ensina UMA técnica de análise sem dar palpites prontos
+          </p>
+        )}
+        {postType === "palpite_gratis" && (
+          <p className="text-xs text-green-600">
+            🎁 Compartilha UM palpite grátis com explicação da estratégia
           </p>
         )}
       </div>

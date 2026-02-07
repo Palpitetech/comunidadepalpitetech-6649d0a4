@@ -24,6 +24,8 @@ export function BotProfileTab({ bot, onUpdated }: BotProfileTabProps) {
     estilo_escrita: bot.estilo_escrita,
     ativo: bot.ativo,
     is_result_author: bot.is_result_author,
+    is_strategy_author: bot.is_strategy_author ?? false,
+    is_free_tips_author: bot.is_free_tips_author ?? false,
     can_create_posts: bot.can_create_posts,
   });
 
@@ -53,6 +55,8 @@ export function BotProfileTab({ bot, onUpdated }: BotProfileTabProps) {
           estilo_escrita: formData.estilo_escrita,
           ativo: formData.ativo,
           is_result_author: formData.is_result_author,
+          is_strategy_author: formData.is_strategy_author,
+          is_free_tips_author: formData.is_free_tips_author,
           can_create_posts: formData.can_create_posts,
         })
         .eq("id", bot.id);
@@ -159,6 +163,32 @@ export function BotProfileTab({ bot, onUpdated }: BotProfileTabProps) {
             checked={formData.is_result_author}
             onCheckedChange={(checked) =>
               setFormData((prev) => ({ ...prev, is_result_author: checked }))
+            }
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <Label>Autor de Estratégias</Label>
+            <p className="text-sm text-muted-foreground">Publica posts ensinando como montar palpites</p>
+          </div>
+          <Switch
+            checked={formData.is_strategy_author}
+            onCheckedChange={(checked) =>
+              setFormData((prev) => ({ ...prev, is_strategy_author: checked }))
+            }
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <Label>Autor de Palpites Grátis</Label>
+            <p className="text-sm text-muted-foreground">Compartilha palpites gratuitos com explicação</p>
+          </div>
+          <Switch
+            checked={formData.is_free_tips_author}
+            onCheckedChange={(checked) =>
+              setFormData((prev) => ({ ...prev, is_free_tips_author: checked }))
             }
           />
         </div>

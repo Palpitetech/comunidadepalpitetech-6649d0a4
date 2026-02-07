@@ -57,7 +57,17 @@ export function BotDetailSheet({ bot, open, onOpenChange, onBotUpdated }: BotDet
                 )}
                 {bot.is_result_author && (
                   <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30">
-                    Autor dos Resultados
+                    🎯 Resultados
+                  </Badge>
+                )}
+                {bot.is_strategy_author && (
+                  <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/30">
+                    📚 Estratégias
+                  </Badge>
+                )}
+                {bot.is_free_tips_author && (
+                  <Badge className="bg-green-500/10 text-green-600 border-green-500/30">
+                    🎁 Palpites
                   </Badge>
                 )}
                 {!bot.perfis?.is_bot && (
