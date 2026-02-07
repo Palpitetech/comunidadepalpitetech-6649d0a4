@@ -48,7 +48,6 @@ export function BotDetailSheet({ bot, open, onOpenChange, onBotUpdated }: BotDet
                   <User className="h-5 w-5 text-primary" />
                 )}
               </SheetTitle>
-              <p className="text-sm text-muted-foreground">{bot.cargo}</p>
               <div className="flex flex-wrap gap-2 mt-1">
                 {bot.ativo ? (
                   <Badge className="bg-green-500/10 text-green-600">Ativo</Badge>

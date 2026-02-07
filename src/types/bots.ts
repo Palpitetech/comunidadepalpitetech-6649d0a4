@@ -14,10 +14,13 @@ export interface BotProfile {
 export interface GuidePersona {
   id: string;
   perfil_id: string;
+  /** @deprecated Campo apenas visual, não afeta comportamento do bot. Mantido para compatibilidade. */
   cargo: string;
+  /** @deprecated Campo apenas visual, não afeta comportamento do bot. Mantido para compatibilidade. */
   especialidade: string;
   badge_emoji: string;
   system_prompt: string;
+  /** @deprecated Campo apenas visual, não afeta comportamento do bot. Mantido para compatibilidade. */
   estilo_escrita: string;
   frequencia_posts: number;
   ativo: boolean;

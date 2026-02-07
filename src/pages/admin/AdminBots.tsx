@@ -166,9 +166,6 @@ export default function AdminBots() {
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {bot.cargo} · {bot.especialidade}
-                            </p>
                           </div>
                         </div>
                       </TableCell>
