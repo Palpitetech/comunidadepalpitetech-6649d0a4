@@ -23,8 +23,17 @@ import {
   Square,
   MoreHorizontal,
   ArrowLeft,
-  Folder
+  Folder,
+  Trophy,
+  ChevronDown,
+  Check
 } from "lucide-react";
+
+interface ConcursoOption {
+  concurso_id: number;
+  data_sorteio: string;
+  dezenas: number[];
+}
 
 interface PastaSheetProps {
   open: boolean;
@@ -51,12 +60,21 @@ export function PastaSheet({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(0);
   const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
+  
+  // Estado para verificação de prêmios
+  const [concursos, setConcursos] = useState<ConcursoOption[]>([]);
+  const [loadingConcursos, setLoadingConcursos] = useState(false);
+  const [concursosLoaded, setConcursosLoaded] = useState(false);
+  const [concursoSelecionado, setConcursoSelecionado] = useState<ConcursoOption | null>(null);
+  const [acertosPorPalpite, setAcertosPorPalpite] = useState<Record<string, number>>({});
 
   // Sincronizar palpites quando props mudam
   useEffect(() => {
     setPalpites(palpitesIniciais);
     setSelected(new Set());
     setCurrentPage(0);
+    setAcertosPorPalpite({});
+    setConcursoSelecionado(null);
   }, [palpitesIniciais]);
 
   // Buscar último concurso
@@ -75,6 +93,52 @@ export function PastaSheet({
     };
     if (open) fetchUltimoConcurso();
   }, [open]);
+
+  // Carregar concursos quando abrir o dropdown
+  const handleLoadConcursos = async () => {
+    if (concursosLoaded) return;
+    
+    setLoadingConcursos(true);
+    try {
+      const { data } = await supabase
+        .from("resultados")
+        .select("concurso_id, data_sorteio, dezenas")
+        .order("concurso_id", { ascending: false })
+        .limit(30);
+      
+      if (data) {
+        setConcursos(data);
+        setConcursosLoaded(true);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar concursos:", error);
+    } finally {
+      setLoadingConcursos(false);
+    }
+  };
+
+  // Verificar todos os palpites contra um concurso
+  const handleVerificarTodos = (concurso: ConcursoOption) => {
+    const novosAcertos: Record<string, number> = {};
+    palpites.forEach(palpite => {
+      const acertos = palpite.dezenas.filter(d => concurso.dezenas.includes(d)).length;
+      novosAcertos[palpite.id] = acertos;
+    });
+    setAcertosPorPalpite(novosAcertos);
+    setConcursoSelecionado(concurso);
+    toast({
+      title: "Verificação concluída! 🎯",
+      description: `${palpites.length} palpite(s) verificado(s) contra o concurso #${concurso.concurso_id}`,
+    });
+  };
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit'
+    });
+  };
 
   const totalPages = Math.ceil(palpites.length / ITEMS_PER_PAGE);
   
@@ -223,7 +287,7 @@ export function PastaSheet({
         {/* Conteúdo */}
         <div className="px-3 py-3 space-y-3">
           {/* Barra de seleção e ações */}
-          <div className="flex items-center justify-between py-2">
+          <div className="flex items-center justify-between py-2 gap-2">
             <Button
               variant={allSelected ? "default" : "outline"}
               size="sm"
@@ -233,20 +297,70 @@ export function PastaSheet({
               {allSelected ? (
                 <>
                   <CheckSquare className="h-4 w-4" />
-                  Todos selecionados
+                  Todos
                 </>
               ) : (
                 <>
                   <Square className="h-4 w-4" />
-                  Selecionar todos
+                  Selecionar
                 </>
               )}
             </Button>
             
+            {/* Verificar Prêmios - Dropdown Universal */}
+            <DropdownMenu onOpenChange={(open) => open && handleLoadConcursos()}>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant={concursoSelecionado ? "default" : "outline"} 
+                  size="sm" 
+                  className="gap-2 text-xs h-8"
+                >
+                  <Trophy className="h-4 w-4" />
+                  {concursoSelecionado ? `#${concursoSelecionado.concurso_id}` : "Verificar"}
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                align="center" 
+                className="bg-popover z-50 w-56 max-h-64 overflow-y-auto"
+              >
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-b mb-1">
+                  Verificar prêmios
+                </div>
+                {loadingConcursos ? (
+                  <div className="px-2 py-3 text-sm text-muted-foreground text-center">
+                    Carregando...
+                  </div>
+                ) : concursos.length === 0 ? (
+                  <div className="px-2 py-3 text-sm text-muted-foreground text-center">
+                    Nenhum concurso disponível
+                  </div>
+                ) : (
+                  concursos.map((concurso) => (
+                    <DropdownMenuItem
+                      key={concurso.concurso_id}
+                      onClick={() => handleVerificarTodos(concurso)}
+                      className="gap-2 cursor-pointer"
+                    >
+                      <div className="flex-1">
+                        <span className="font-medium">#{concurso.concurso_id}</span>
+                        <span className="text-muted-foreground ml-2 text-xs">
+                          {formatDate(concurso.data_sorteio)}
+                        </span>
+                      </div>
+                      {concursoSelecionado?.concurso_id === concurso.concurso_id && (
+                        <Check className="h-4 w-4 text-primary" />
+                      )}
+                    </DropdownMenuItem>
+                  ))
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
             <div className="flex items-center gap-2">
               {selected.size > 0 && (
                 <span className="text-xs text-muted-foreground">
-                  {selected.size} de {palpites.length}
+                  {selected.size}/{palpites.length}
                 </span>
               )}
               
@@ -299,8 +413,9 @@ export function PastaSheet({
                   onDelete={() => handleDeleteSingle(palpite.id)}
                   onCopy={() => handleCopySingle(palpite)}
                   createdAt={palpite.created_at}
-                  acertos={palpite.conferido ? palpite.acertos : undefined}
+                  acertos={acertosPorPalpite[palpite.id] ?? (palpite.conferido ? palpite.acertos : undefined)}
                   label={palpite.estrategia ? `🎯 ${palpite.estrategia}` : undefined}
+                  hideVerificar
                 />
               );
             })}
