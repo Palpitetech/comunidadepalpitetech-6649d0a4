@@ -76,12 +76,12 @@ export function PalpiteCard({
         )}
       </div>
 
-      {/* Estatísticas - Grid 2x2 para mobile */}
-      <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-        <span>Ímpares: <strong className="text-foreground">{impares}</strong></span>
-        <span>Moldura: <strong className="text-foreground">{moldura}</strong></span>
-        <span>Repetidas: <strong className="text-foreground">{repetidas}</strong></span>
-        <span>Múlt.3: <strong className="text-foreground">{multiplosDe3}</strong></span>
+      {/* Estatísticas - Uma única linha */}
+      <div className="flex items-center justify-between gap-1 text-[10px] text-muted-foreground">
+        <span>Ímp: <strong className="text-foreground">{impares}</strong></span>
+        <span>Mold: <strong className="text-foreground">{moldura}</strong></span>
+        <span>Rep: <strong className="text-foreground">{repetidas}</strong></span>
+        <span>M3: <strong className="text-foreground">{multiplosDe3}</strong></span>
       </div>
     </div>
   );
