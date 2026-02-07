@@ -237,8 +237,11 @@ export function BotAutomationTab({ bot, onUpdated }: BotAutomationTabProps) {
               ⏳ Publicação Condicional
             </p>
             <p className="text-sm text-muted-foreground">
-              Este bot só publica <strong>após o Autor de Resultados</strong> ter postado o resultado do dia.
-              Configure a agenda abaixo para definir quando ele deve verificar.
+              Este bot só publica <strong>após o Autor de Resultados</strong> ter postado (janela de 14h).
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              💡 <strong>Dica:</strong> Configure horários após 23h (ex: 23:30) para postar na noite do resultado,
+              ou pela manhã (ex: 09:00) para engajar no dia seguinte.
             </p>
           </div>
         ) : null}
