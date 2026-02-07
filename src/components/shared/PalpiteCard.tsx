@@ -1,8 +1,22 @@
+import { useState, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { formatarDezena, contarImpares, contarMoldura, contarMultiplosDe3, contarRepetidas } from "@/lib/lotofacil";
 import { cn } from "@/lib/utils";
-import { Trash2, Copy } from "lucide-react";
+import { Trash2, Copy, Trophy, ChevronDown, Check } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface ConcursoOption {
+  concurso_id: number;
+  data_sorteio: string;
+  dezenas: number[];
+}
 
 export interface PalpiteCardProps {
   /** Número do jogo (índice) */
@@ -31,6 +45,10 @@ export interface PalpiteCardProps {
   createdAt?: string;
   /** Quantidade de acertos (se já conferido) */
   acertos?: number | null;
+  /** Callback quando verificar um concurso */
+  onVerificar?: (concursoId: number, acertos: number) => void;
+  /** Esconder botão de verificar */
+  hideVerificar?: boolean;
 }
 
 export function PalpiteCard({
@@ -47,13 +65,59 @@ export function PalpiteCard({
   label,
   createdAt,
   acertos,
+  onVerificar,
+  hideVerificar = false,
 }: PalpiteCardProps) {
+  const [concursos, setConcursos] = useState<ConcursoOption[]>([]);
+  const [loadingConcursos, setLoadingConcursos] = useState(false);
+  const [concursosLoaded, setConcursosLoaded] = useState(false);
+  const [localAcertos, setLocalAcertos] = useState<number | null>(acertos ?? null);
+  const [concursoVerificado, setConcursoVerificado] = useState<number | null>(null);
+
   const impares = contarImpares(dezenas);
   const moldura = contarMoldura(dezenas);
   const multiplosDe3 = contarMultiplosDe3(dezenas);
   const repetidas = ultimoConcursoDezenas.length > 0 
     ? contarRepetidas(dezenas, ultimoConcursoDezenas) 
     : 0;
+
+  // Carregar concursos quando abrir o dropdown
+  const handleLoadConcursos = async () => {
+    if (concursosLoaded) return;
+    
+    setLoadingConcursos(true);
+    try {
+      const { data } = await supabase
+        .from("resultados")
+        .select("concurso_id, data_sorteio, dezenas")
+        .order("concurso_id", { ascending: false })
+        .limit(30);
+      
+      if (data) {
+        setConcursos(data);
+        setConcursosLoaded(true);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar concursos:", error);
+    } finally {
+      setLoadingConcursos(false);
+    }
+  };
+
+  const handleVerificar = (concurso: ConcursoOption) => {
+    const acertosCount = dezenas.filter(d => concurso.dezenas.includes(d)).length;
+    setLocalAcertos(acertosCount);
+    setConcursoVerificado(concurso.concurso_id);
+    onVerificar?.(concurso.concurso_id, acertosCount);
+  };
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit'
+    });
+  };
 
   // Dividir dezenas em 2 linhas equilibradas
   const metade = Math.ceil(dezenas.length / 2);
@@ -103,19 +167,79 @@ export function PalpiteCard({
         </div>
         
         <div className="flex items-center gap-1">
-          {acertos !== undefined && acertos !== null && (
+          {/* Badge de acertos */}
+          {(localAcertos !== null || (acertos !== undefined && acertos !== null)) && (
             <span className={cn(
               "text-[10px] font-bold px-2 py-0.5 rounded-full",
-              acertos >= 11 ? "bg-accent/20 text-accent" : "bg-muted text-muted-foreground"
+              (localAcertos ?? acertos ?? 0) >= 11 
+                ? "bg-accent/20 text-accent-foreground" 
+                : "bg-muted text-muted-foreground"
             )}>
-              {acertos} acertos
+              {localAcertos ?? acertos} acertos
+              {concursoVerificado && (
+                <span className="ml-1 opacity-70">#{concursoVerificado}</span>
+              )}
             </span>
           )}
+          
           {isSelected && !hideSelection && (
             <span className="text-[10px] font-medium text-primary bg-primary/20 px-2 py-0.5 rounded-full">
               Selecionado
             </span>
           )}
+
+          {/* Botão Verificar Prêmios */}
+          {!hideVerificar && (
+            <DropdownMenu onOpenChange={(open) => open && handleLoadConcursos()}>
+              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-primary gap-1"
+                >
+                  <Trophy className="h-3.5 w-3.5" />
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                align="end" 
+                className="bg-popover z-50 w-56 max-h-64 overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-b mb-1">
+                  Verificar prêmio
+                </div>
+                {loadingConcursos ? (
+                  <div className="px-2 py-3 text-sm text-muted-foreground text-center">
+                    Carregando...
+                  </div>
+                ) : concursos.length === 0 ? (
+                  <div className="px-2 py-3 text-sm text-muted-foreground text-center">
+                    Nenhum concurso disponível
+                  </div>
+                ) : (
+                  concursos.map((concurso) => (
+                    <DropdownMenuItem
+                      key={concurso.concurso_id}
+                      onClick={() => handleVerificar(concurso)}
+                      className="gap-2 cursor-pointer"
+                    >
+                      <div className="flex-1">
+                        <span className="font-medium">#{concurso.concurso_id}</span>
+                        <span className="text-muted-foreground ml-2 text-xs">
+                          {formatDate(concurso.data_sorteio)}
+                        </span>
+                      </div>
+                      {concursoVerificado === concurso.concurso_id && (
+                        <Check className="h-4 w-4 text-primary" />
+                      )}
+                    </DropdownMenuItem>
+                  ))
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
           {onCopy && (
             <Button
               variant="ghost"
