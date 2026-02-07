@@ -24,50 +24,59 @@ export function PalpiteCard({
     ? contarRepetidas(dezenas, ultimoConcursoDezenas) 
     : 0;
 
-  // Dividir dezenas em 2 linhas (metade em cada)
+  // Dividir dezenas em 2 linhas equilibradas
   const metade = Math.ceil(dezenas.length / 2);
   const primeiraLinha = dezenas.slice(0, metade);
   const segundaLinha = dezenas.slice(metade);
 
   return (
     <div
+      onClick={() => onSelectChange(!isSelected)}
       className={cn(
-        "rounded-xl border-2 p-3 transition-all",
+        "rounded-xl border p-3 transition-all cursor-pointer active:scale-[0.98]",
         isSelected
-          ? "border-primary bg-primary/5"
-          : "border-border bg-card hover:border-muted-foreground/30"
+          ? "border-primary bg-primary/10 shadow-sm"
+          : "border-border bg-card"
       )}
     >
-      {/* Header com checkbox */}
-      <div className="flex items-center gap-2 mb-2">
-        <Checkbox
-          checked={isSelected}
-          onCheckedChange={onSelectChange}
-          className="h-5 w-5 shrink-0"
-        />
-        <span className="font-semibold text-foreground text-sm">
-          Palpite {index + 1}
-        </span>
+      {/* Header com checkbox e número */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={onSelectChange}
+            className="h-5 w-5 shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <span className="font-bold text-foreground text-sm">
+            #{index + 1}
+          </span>
+        </div>
+        {isSelected && (
+          <span className="text-[10px] font-medium text-primary bg-primary/20 px-2 py-0.5 rounded-full">
+            Selecionado
+          </span>
+        )}
       </div>
 
-      {/* Dezenas - Grid fixo para mobile */}
-      <div className="space-y-1.5 mb-2">
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(28px,1fr))] gap-1 max-w-[320px] mx-auto">
+      {/* Dezenas - Grid compacto de 2 linhas */}
+      <div className="space-y-1 mb-2">
+        <div className="flex justify-center gap-1">
           {primeiraLinha.map((dezena) => (
             <span
               key={dezena}
-              className="aspect-square flex items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs min-w-[28px] max-w-[36px]"
+              className="w-7 h-7 flex items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs"
             >
               {formatarDezena(dezena)}
             </span>
           ))}
         </div>
         {segundaLinha.length > 0 && (
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(28px,1fr))] gap-1 max-w-[320px] mx-auto">
+          <div className="flex justify-center gap-1">
             {segundaLinha.map((dezena) => (
               <span
                 key={dezena}
-                className="aspect-square flex items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs min-w-[28px] max-w-[36px]"
+                className="w-7 h-7 flex items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-xs"
               >
                 {formatarDezena(dezena)}
               </span>
@@ -76,12 +85,24 @@ export function PalpiteCard({
         )}
       </div>
 
-      {/* Estatísticas - Uma única linha */}
-      <div className="flex items-center justify-between gap-1 text-[10px] text-muted-foreground">
-        <span>Ímp: <strong className="text-foreground">{impares}</strong></span>
-        <span>Mold: <strong className="text-foreground">{moldura}</strong></span>
-        <span>Rep: <strong className="text-foreground">{repetidas}</strong></span>
-        <span>M3: <strong className="text-foreground">{multiplosDe3}</strong></span>
+      {/* Estatísticas - Linha única compacta */}
+      <div className="flex items-center justify-center gap-3 text-[10px] text-muted-foreground border-t border-border/50 pt-2 mt-1">
+        <span className="flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+          <strong className="text-foreground">{impares}</strong> ímp
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+          <strong className="text-foreground">{moldura}</strong> mold
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+          <strong className="text-foreground">{repetidas}</strong> rep
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+          <strong className="text-foreground">{multiplosDe3}</strong> m3
+        </span>
       </div>
     </div>
   );

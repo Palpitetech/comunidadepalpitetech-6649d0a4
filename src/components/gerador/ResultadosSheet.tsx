@@ -160,47 +160,28 @@ export function ResultadosSheet({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="h-full flex flex-col p-0">
-        {/* Header compacto */}
-        <SheetHeader className="px-3 py-2 border-b shrink-0 flex-row items-center justify-between">
-          <SheetTitle className="text-base font-semibold">
-            {jogos.length} Palpite{jogos.length !== 1 ? "s" : ""}
-          </SheetTitle>
-        </SheetHeader>
-
-        {/* Barra de Ações compacta */}
-        <div className="flex items-center justify-between gap-2 px-3 py-2 border-b bg-muted/30 shrink-0">
-          {/* Botão de seleção */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSelectAll}
-            className="gap-1.5 text-xs h-8"
-          >
-            {allSelected ? (
-              <>
-                <CheckSquare className="h-3.5 w-3.5" />
-                Desmarcar
-              </>
-            ) : (
-              <>
-                <Square className="h-3.5 w-3.5" />
-                Selecionar
-              </>
-            )}
-          </Button>
-
-          {/* Dropdown de ações */}
+        {/* Header compacto com contador */}
+        <SheetHeader className="px-4 py-3 border-b shrink-0 flex-row items-center justify-between bg-background">
+          <div className="flex items-center gap-3">
+            <SheetTitle className="text-lg font-bold">
+              Palpites
+            </SheetTitle>
+            <span className="text-xs bg-primary/10 text-primary font-semibold px-2 py-1 rounded-full">
+              {jogos.length} gerados
+            </span>
+          </div>
+          
+          {/* Dropdown de ações no header */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8">
-                <MoreHorizontal className="h-3.5 w-3.5" />
-                Ações
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreHorizontal className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-popover z-50 w-48">
+            <DropdownMenuContent align="end" className="bg-popover z-50 w-52">
               <DropdownMenuItem onClick={handleCopiarTodos} className="gap-2">
                 <Copy className="h-4 w-4" />
-                Copiar Todos
+                Copiar Todos ({jogos.length})
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={handleCopiarSelecionados} 
@@ -228,10 +209,38 @@ export function ResultadosSheet({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+        </SheetHeader>
+
+        {/* Barra de seleção fixa */}
+        <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30 shrink-0">
+          <Button
+            variant={allSelected ? "default" : "outline"}
+            size="sm"
+            onClick={handleSelectAll}
+            className="gap-2 text-xs h-8"
+          >
+            {allSelected ? (
+              <>
+                <CheckSquare className="h-4 w-4" />
+                Todos selecionados
+              </>
+            ) : (
+              <>
+                <Square className="h-4 w-4" />
+                Selecionar todos
+              </>
+            )}
+          </Button>
+          
+          {selected.size > 0 && (
+            <span className="text-xs text-muted-foreground">
+              {selected.size} de {jogos.length} selecionados
+            </span>
+          )}
         </div>
 
-        {/* Lista de Palpites */}
-        <div className="flex-1 overflow-y-auto p-3 pb-20">
+        {/* Lista de Palpites com scroll */}
+        <div className="flex-1 overflow-y-auto px-3 py-3 pb-24">
           <div className="grid gap-2">
             {jogosPaginados.map((jogo, localIndex) => {
               const globalIndex = currentPage * ITEMS_PER_PAGE + localIndex;
@@ -251,26 +260,35 @@ export function ResultadosSheet({
 
         {/* Paginação fixa no rodapé */}
         {totalPages > 1 && (
-          <div className="fixed bottom-0 left-0 right-0 flex items-center justify-center gap-4 p-3 border-t bg-background shrink-0 safe-area-bottom">
+          <div className="fixed bottom-0 left-0 right-0 flex items-center justify-between px-4 py-3 border-t bg-background shrink-0 safe-area-bottom">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
               disabled={currentPage === 0}
-              className="h-9 px-4"
+              className="h-10 px-4 gap-1"
             >
               <ChevronLeft className="h-4 w-4" />
+              Anterior
             </Button>
-            <span className="text-sm text-muted-foreground min-w-[100px] text-center">
-              {currentPage + 1} / {totalPages}
-            </span>
+            
+            <div className="flex flex-col items-center">
+              <span className="text-sm font-medium">
+                {currentPage + 1} / {totalPages}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                {currentPage * ITEMS_PER_PAGE + 1}-{Math.min((currentPage + 1) * ITEMS_PER_PAGE, jogos.length)} de {jogos.length}
+              </span>
+            </div>
+            
             <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={currentPage === totalPages - 1}
-              className="h-9 px-4"
+              className="h-10 px-4 gap-1"
             >
+              Próximo
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
