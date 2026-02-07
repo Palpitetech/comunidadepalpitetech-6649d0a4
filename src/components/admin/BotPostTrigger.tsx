@@ -36,7 +36,7 @@ export function BotPostTrigger({ bots, onSuccess }: BotPostTriggerProps) {
   const [previewing, setPreviewing] = useState(false);
   const [preview, setPreview] = useState<{ titulo: string; conteudo: string } | null>(null);
   
-  const [selectedBot, setSelectedBot] = useState<string>("roundtable");
+  const [selectedBot, setSelectedBot] = useState<string>("result_author");
   const [postType, setPostType] = useState<PostType>("geral");
   const [contextoExtra, setContextoExtra] = useState("");
   
@@ -89,8 +89,8 @@ export function BotPostTrigger({ bots, onSuccess }: BotPostTriggerProps) {
       // Simular preview (em produção, chamaria edge function com dry_run=true)
       await new Promise((r) => setTimeout(r, 1500));
 
-      const botName = selectedBot === "roundtable" 
-        ? "Mesa Redonda (Augusto)" 
+      const botName = selectedBot === "result_author" 
+        ? "Autor dos Resultados (Augusto)" 
         : activeBots.find((b) => b.id === selectedBot)?.perfis?.nome || "Bot";
 
       if (postType === "resultado_oficial" && ultimoResultado) {
@@ -115,8 +115,8 @@ export function BotPostTrigger({ bots, onSuccess }: BotPostTriggerProps) {
     setLoading(true);
 
     try {
-      if (selectedBot === "roundtable") {
-        // Chamar edge function do roundtable
+      if (selectedBot === "result_author") {
+        // Chamar edge function de resultado (generate-roundtable-post)
         const { data, error } = await supabase.functions.invoke("generate-roundtable-post", {
           body: { tipo_post: postType, contexto_extra: contextoExtra },
         });
@@ -126,7 +126,7 @@ export function BotPostTrigger({ bots, onSuccess }: BotPostTriggerProps) {
         if (postType === "resultado_oficial") {
           toast.success(`Plantão publicado! Concurso ${data?.concurso_referencia || ultimoResultado?.concurso_id}`);
         } else {
-          toast.success(`Post da mesa redonda criado! ID: ${data?.post_id}`);
+          toast.success(`Post de resultados criado! ID: ${data?.post_id}`);
         }
       } else {
         // Chamar edge function de post individual
@@ -164,10 +164,10 @@ export function BotPostTrigger({ bots, onSuccess }: BotPostTriggerProps) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="roundtable">
+            <SelectItem value="result_author">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                Mesa Redonda (Augusto + Comentários)
+                Autor dos Resultados (Augusto + Comentários)
               </div>
             </SelectItem>
             {activeBots.map((bot) => (
@@ -180,7 +180,7 @@ export function BotPostTrigger({ bots, onSuccess }: BotPostTriggerProps) {
           </SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground">
-          {selectedBot === "roundtable"
+          {selectedBot === "result_author"
             ? "Augusto cria o post, outros bots comentam automaticamente"
             : "Post individual do bot selecionado"}
         </p>

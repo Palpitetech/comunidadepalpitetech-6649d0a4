@@ -55,9 +55,9 @@ export function BotDetailSheet({ bot, open, onOpenChange, onBotUpdated }: BotDet
                 ) : (
                   <Badge variant="secondary">Inativo</Badge>
                 )}
-                {bot.is_roundtable_author && (
+                {bot.is_result_author && (
                   <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30">
-                    Autor Mesa Redonda
+                    Autor dos Resultados
                   </Badge>
                 )}
                 {!bot.perfis?.is_bot && (

@@ -150,9 +150,9 @@ export default function AdminBots() {
                               ) : (
                                 <User className="h-3.5 w-3.5 text-primary shrink-0" />
                               )}
-                              {bot.is_roundtable_author && (
+                              {bot.is_result_author && (
                                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                                  Mesa
+                                  Resultados
                                 </Badge>
                               )}
                             </div>
