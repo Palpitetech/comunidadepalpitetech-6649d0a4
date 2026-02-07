@@ -167,17 +167,20 @@ export function PalpiteCard({
         </div>
         
         <div className="flex items-center gap-1">
-          {/* Badge de acertos */}
+          {/* Badge de acertos - Verde escuro para premiados */}
           {(localAcertos !== null || (acertos !== undefined && acertos !== null)) && (
             <span className={cn(
               "text-[10px] font-bold px-2 py-0.5 rounded-full",
-              (localAcertos ?? acertos ?? 0) >= 11 
-                ? "bg-accent/20 text-accent-foreground" 
-                : "bg-muted text-muted-foreground"
+              (localAcertos ?? acertos ?? 0) === 15 
+                ? "bg-emerald-600 text-white animate-pulse" 
+                : (localAcertos ?? acertos ?? 0) >= 11 
+                  ? "bg-emerald-700 text-white" 
+                  : "bg-muted text-muted-foreground"
             )}>
+              {(localAcertos ?? acertos ?? 0) === 15 ? "🏆 " : ""}
               {localAcertos ?? acertos} acertos
               {concursoVerificado && (
-                <span className="ml-1 opacity-70">#{concursoVerificado}</span>
+                <span className="ml-1 opacity-80">#{concursoVerificado}</span>
               )}
             </span>
           )}
