@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PalpiteCard } from "./PalpiteCard";
+import { PalpiteCard } from "@/components/shared/PalpiteCard";
 import { EstrategiaCard, type EstrategiaData } from "./EstrategiaCard";
 import { formatarDezena } from "@/lib/lotofacil";
 import { useToast } from "@/hooks/use-toast";
@@ -183,6 +183,31 @@ export function ResultadosSheet({
     onOpenChange(false);
   };
 
+  const handleDeleteSingle = (index: number) => {
+    const novosJogos = jogos.filter((_, i) => i !== index);
+    setJogos(novosJogos);
+    
+    // Atualizar seleção removendo índices inválidos
+    const newSelected = new Set<number>();
+    selected.forEach((i) => {
+      if (i < index) newSelected.add(i);
+      else if (i > index) newSelected.add(i - 1);
+    });
+    setSelected(newSelected);
+    
+    // Ajustar página se necessário
+    const newTotalPages = Math.ceil(novosJogos.length / ITEMS_PER_PAGE);
+    if (currentPage >= newTotalPages && newTotalPages > 0) {
+      setCurrentPage(newTotalPages - 1);
+    }
+
+    // Se não sobrou nenhum jogo, fechar o sheet
+    if (novosJogos.length === 0) {
+      onClearAll();
+      onOpenChange(false);
+    }
+  };
+
   const allSelected = selected.size === jogos.length && jogos.length > 0;
 
   return (
@@ -321,6 +346,7 @@ export function ResultadosSheet({
                   ultimoConcursoDezenas={ultimoConcursoDezenas}
                   isSelected={selected.has(globalIndex)}
                   onSelectChange={(checked) => handleSelectChange(globalIndex, checked)}
+                  onDelete={() => handleDeleteSingle(globalIndex)}
                 />
               );
             })}
