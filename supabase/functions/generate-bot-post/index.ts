@@ -103,19 +103,22 @@ TÉCNICAS DISPONÍVEIS (escolha UMA):
 IMPORTANTE: NÃO dê palpites prontos, apenas ensine a técnica.`;
 
         case "palpite_gratis":
-          return `OBJETIVO: Compartilhar UM palpite grátis para a comunidade.
+           return `OBJETIVO: Compartilhar UM palpite grátis para a comunidade como amostra do trabalho do especialista.
 
 ESTRUTURA DO POST:
 1. Título chamativo (ex: "🎁 Palpite Grátis do Dia")
-2. Gere EXATAMENTE 15 dezenas únicas de 01 a 25 em ordem crescente
-3. Breve explicação da estratégia usada (1-2 frases)
-4. OBRIGATÓRIO incluir: "⚠️ Loteria é sorte, jogue com responsabilidade!"
+2. Gancho: "Analisando a tabela de Tendências..." (mostre análise real: Tendências + Quentes e Frias)
+3. Gere EXATAMENTE 15 dezenas únicas de 01 a 25 em ordem crescente
+4. Breve explicação da estratégia (como chegou no resultado usando as ferramentas)
+5. Revelação: "Isso é o que o Augusto, há 5 anos no mercado com dezena de 14 pontos entrega para vocês no Gerador de Palpites. É só clicar e gerar seus palpites. Augusto deixa pelo menos 5 estratégias diferentes por dia!"
+6. OBRIGATÓRIO incluir: "⚠️ Loteria é sorte, jogue com responsabilidade!"
 
 REGRAS:
 - Formato das dezenas: separadas por vírgula (01, 02, 03...)
 - Use os dados estatísticos para embasar: ${contexto}
-- Apenas 1 jogo por post (não abuse)
-- Seja criativo na explicação da estratégia`;
+- Menção clara do nome "Augusto" como especialista humano
+- Mencione "5 estratégias diferentes por dia"
+- Apenas 1 jogo por post (não abuse)`;
 
         default:
           return `Crie um post engajante sobre análise da Lotofácil.
