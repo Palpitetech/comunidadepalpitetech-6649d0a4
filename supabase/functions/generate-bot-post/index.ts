@@ -120,6 +120,30 @@ REGRAS:
 - Mencione "5 estratégias diferentes por dia"
 - Apenas 1 jogo por post (não abuse)`;
 
+        case "sistema_vendas":
+          return `OBJETIVO: Educar sobre UMA ferramenta específica do Palpite Tech, mostrando como ela ajuda na jornada dos 15 pontos.
+
+ABORDAGEM OBRIGATÓRIA:
+"Os 15 pontos só serão possíveis com sorte OU se você tiver análise precisa dos dados. Planilhas e sistemas genéricos não vão te fazer chegar nem nos 12 pontos - afinal, você está aí tentando os 11 pontos. No caos, você precisa de informações concretas, não de números e mais números. Para ter algo bom, você precisaria ser expert em análise de dados - e é isso que fazemos: facilitamos sua vida."
+
+ESTRUTURA DO POST:
+1. GANCHO: Questione a abordagem atual (planilhas, números aleatórios, sistemas genéricos)
+2. DOR: Mostre a frustração de quem tenta sem método
+3. FERRAMENTA DO DIA: Escolha UMA e explique em detalhes:
+   - TENDÊNCIAS: Padrões estatísticos, ciclos, comportamento histórico
+   - QUENTES E FRIAS: Frequência por período, dezenas em alta/baixa
+   - GERADOR DE PALPITES: 5 estratégias do Augusto (expert com 5 anos)
+   - CHAT: Tire dúvidas com especialistas
+   - RESULTADOS: Histórico, premiações, estatísticas
+4. BENEFÍCIO: Antes/depois - como era vs como fica com a ferramenta
+5. CONVITE: Experimente, sem prometer resultados
+
+REGRAS:
+- TOM: Didático, empático, entendendo a frustração
+- NUNCA prometa prêmios ou resultados garantidos
+- Foque na EXPERIÊNCIA e nos BENEFÍCIOS reais
+- Mostre que você conhece cada detalhe do sistema`;
+
         default:
           return `Crie um post engajante sobre análise da Lotofácil.
 Contexto atual: ${contexto}`;
