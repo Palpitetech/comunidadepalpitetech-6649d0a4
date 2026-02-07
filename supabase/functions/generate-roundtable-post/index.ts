@@ -401,6 +401,7 @@ serve(async (req) => {
       .select("*, perfis(id, nome)")
       .eq("is_result_author", true)
       .eq("ativo", true)
+      .eq("can_create_posts", true)
       .single();
 
     if (authorError || !authorGuide) {
