@@ -219,3 +219,33 @@ export function formatarDezena(dezena: number): string {
 export function ordenarDezenas(dezenas: number[]): number[] {
   return [...dezenas].sort((a, b) => a - b);
 }
+
+// =============================================================================
+// MÚLTIPLOS DE 3
+// =============================================================================
+
+/**
+ * Números múltiplos de 3 dentro do universo Lotofácil (1-25)
+ */
+export const MULTIPLOS_DE_3_LOTOFACIL: number[] = [3, 6, 9, 12, 15, 18, 21, 24];
+
+/**
+ * Verifica se um número é múltiplo de 3
+ */
+export function isMultiploDe3(numero: number): boolean {
+  return numero % 3 === 0;
+}
+
+/**
+ * Conta quantas dezenas são múltiplos de 3
+ */
+export function contarMultiplosDe3(dezenas: number[]): number {
+  return dezenas.filter(isMultiploDe3).length;
+}
+
+/**
+ * Retorna quais dezenas são múltiplos de 3
+ */
+export function getMultiplosDe3(dezenas: number[]): number[] {
+  return dezenas.filter(isMultiploDe3);
+}
