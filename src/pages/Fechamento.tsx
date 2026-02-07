@@ -1,17 +1,36 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Trash2, Sparkles } from "lucide-react";
 import { TipoFechamentoSelector, TIPOS_FECHAMENTO } from "@/components/fechamento/TipoFechamentoSelector";
 import { GridDezenasVolante } from "@/components/fechamento/GridDezenasVolante";
-import { isImpar, isMoldura, isMultiploDe3 } from "@/lib/lotofacil";
+import { isImpar, isMoldura, isMultiploDe3, contarRepetidas } from "@/lib/lotofacil";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Fechamento() {
   const [tipoFechamento, setTipoFechamento] = useState("18-14");
   const [modo, setModo] = useState<"selecionar" | "fixar">("selecionar");
   const [selecionadas, setSelecionadas] = useState<number[]>([]);
   const [fixas, setFixas] = useState<number[]>([]);
+  const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
+
+  // Buscar dezenas do último concurso para indicador de repetidas
+  useEffect(() => {
+    const fetchUltimoConcurso = async () => {
+      const { data } = await supabase
+        .from("resultados")
+        .select("dezenas")
+        .order("concurso_id", { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (data?.dezenas) {
+        setUltimoConcursoDezenas(data.dezenas);
+      }
+    };
+    fetchUltimoConcurso();
+  }, []);
 
   // Obtém os dados do tipo de fechamento selecionado
   const tipoAtual = useMemo(() => 
@@ -30,8 +49,11 @@ export default function Fechamento() {
     const impares = todasSelecionadas.filter(isImpar).length;
     const moldura = todasSelecionadas.filter(isMoldura).length;
     const multiplosDe3 = todasSelecionadas.filter(isMultiploDe3).length;
-    return { impares, moldura, multiplosDe3 };
-  }, [todasSelecionadas]);
+    const repetidas = ultimoConcursoDezenas.length > 0 
+      ? contarRepetidas(todasSelecionadas, ultimoConcursoDezenas)
+      : 0;
+    return { impares, moldura, multiplosDe3, repetidas };
+  }, [todasSelecionadas, ultimoConcursoDezenas]);
 
   const totalSelecionadas = todasSelecionadas.length;
   const podeGerar = totalSelecionadas >= tipoAtual.dezenas;
@@ -111,7 +133,7 @@ export default function Fechamento() {
               className={cn(
                 "px-4 py-2 rounded-md text-sm font-medium transition-colors",
                 modo === "fixar" 
-                  ? "bg-amber-100 text-amber-700 shadow-sm dark:bg-amber-900/50 dark:text-amber-300" 
+                  ? "bg-palpite-fixa text-palpite-fixa-foreground shadow-sm" 
                   : "text-muted-foreground hover:text-foreground"
               )}
               onClick={() => setModo("fixar")}
@@ -150,6 +172,7 @@ export default function Fechamento() {
           <GridDezenasVolante
             selecionadas={selecionadas}
             fixas={fixas}
+            repetidas={ultimoConcursoDezenas}
             modo={modo}
             onToggle={handleToggle}
           />
@@ -160,6 +183,7 @@ export default function Fechamento() {
           <span>Ímpar: <strong className="text-foreground">{estatisticas.impares}</strong></span>
           <span>Moldura: <strong className="text-foreground">{estatisticas.moldura}</strong></span>
           <span>Múltiplo 3: <strong className="text-foreground">{estatisticas.multiplosDe3}</strong></span>
+          <span>Repetidas: <strong className="text-foreground">{estatisticas.repetidas}</strong></span>
           <span>Total: <strong className={cn(
             podeGerar ? "text-primary" : "text-foreground"
           )}>{totalSelecionadas}/{tipoAtual.dezenas}</strong></span>

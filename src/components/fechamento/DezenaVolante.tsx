@@ -1,16 +1,16 @@
 import { cn } from "@/lib/utils";
-import { formatarDezena, isPar, isImpar, isMoldura, isMultiploDe3 } from "@/lib/lotofacil";
+import { formatarDezena, isImpar, isMoldura, isMultiploDe3 } from "@/lib/lotofacil";
 
 interface DezenaVolanteProps {
   numero: number;
   selecionada: boolean;
   fixa: boolean;
+  isRepetida?: boolean;
   onClick: () => void;
   disabled?: boolean;
 }
 
-export function DezenaVolante({ numero, selecionada, fixa, onClick, disabled }: DezenaVolanteProps) {
-  const par = isPar(numero);
+export function DezenaVolante({ numero, selecionada, fixa, isRepetida, onClick, disabled }: DezenaVolanteProps) {
   const impar = isImpar(numero);
   const moldura = isMoldura(numero);
   const multiploDe3 = isMultiploDe3(numero);
@@ -39,10 +39,10 @@ export function DezenaVolante({ numero, selecionada, fixa, onClick, disabled }: 
         </span>
       )}
 
-      {/* Indicador Par - Canto superior direito */}
-      {par && (
+      {/* Indicador Repetida - Canto superior direito */}
+      {isRepetida && (
         <span className="absolute top-0.5 right-1 text-[8px] font-bold text-muted-foreground">
-          P
+          R
         </span>
       )}
 

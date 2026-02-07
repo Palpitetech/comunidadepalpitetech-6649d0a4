@@ -3,6 +3,7 @@ import { DezenaVolante } from "./DezenaVolante";
 interface GridDezenasVolanteProps {
   selecionadas: number[];
   fixas: number[];
+  repetidas?: number[];
   modo: "selecionar" | "fixar";
   onToggle: (numero: number) => void;
 }
@@ -10,6 +11,7 @@ interface GridDezenasVolanteProps {
 export function GridDezenasVolante({
   selecionadas,
   fixas,
+  repetidas = [],
   modo,
   onToggle,
 }: GridDezenasVolanteProps) {
@@ -28,6 +30,7 @@ export function GridDezenasVolante({
           numero={numero}
           selecionada={selecionadas.includes(numero)}
           fixa={fixas.includes(numero)}
+          isRepetida={repetidas.includes(numero)}
           onClick={() => handleClick(numero)}
         />
       ))}
