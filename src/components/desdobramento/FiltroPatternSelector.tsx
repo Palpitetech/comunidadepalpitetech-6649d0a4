@@ -1,10 +1,20 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { ChevronDown, Check } from "lucide-react";
 
 interface PatternOption {
   valor: number;
   ocorrencias: number;
+  ranking?: number;
 }
 
 interface FiltroPatternSelectorProps {
@@ -14,6 +24,8 @@ interface FiltroPatternSelectorProps {
   valoresSelecionados: number[];
   onChange: (valores: number[]) => void;
   autoTop3: number[];
+  disabled?: boolean;
+  onDisabledChange?: (disabled: boolean) => void;
 }
 
 export function FiltroPatternSelector({
@@ -23,6 +35,8 @@ export function FiltroPatternSelector({
   valoresSelecionados,
   onChange,
   autoTop3,
+  disabled = false,
+  onDisabledChange,
 }: FiltroPatternSelectorProps) {
   const [modoManual, setModoManual] = useState(false);
 
@@ -35,7 +49,10 @@ export function FiltroPatternSelector({
   };
 
   const handleToggleValor = (valor: number) => {
-    if (!modoManual) return;
+    if (!modoManual) {
+      // Se estava em auto, muda para manual ao clicar
+      setModoManual(true);
+    }
     
     if (valoresSelecionados.includes(valor)) {
       // Não permite desmarcar se for o último
@@ -48,52 +65,118 @@ export function FiltroPatternSelector({
   };
 
   const valoresAtivos = modoManual ? valoresSelecionados : autoTop3;
+  
+  // Ordenar opções por ocorrência (ranking)
+  const opcoesOrdenadas = [...opcoes].sort((a, b) => b.ocorrencias - a.ocorrencias);
+
+  const resumoTexto = disabled 
+    ? "Desativado" 
+    : valoresAtivos.length > 3 
+      ? `${valoresAtivos.length} valores`
+      : valoresAtivos.join(", ");
 
   return (
-    <div className="p-3 bg-muted/30 rounded-lg space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="text-xs text-muted-foreground flex items-center gap-1">
-          {emoji} {label}
+    <div className={cn(
+      "p-3 rounded-lg border transition-all",
+      disabled ? "bg-muted/20 opacity-60" : "bg-card"
+    )}>
+      {/* Header com label e switch de ativar/desativar */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-1.5 text-sm font-medium">
+          <span>{emoji}</span>
+          <span>{label}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted-foreground">
-            {modoManual ? "Manual" : "Auto"}
-          </span>
+        {onDisabledChange && (
           <Switch
-            checked={modoManual}
-            onCheckedChange={handleToggleManual}
+            checked={!disabled}
+            onCheckedChange={(checked) => onDisabledChange(!checked)}
             className="scale-75"
           />
-        </div>
+        )}
       </div>
-      
-      <div className="flex flex-wrap gap-1">
-        {opcoes.map((opt) => {
-          const isAtivo = valoresAtivos.includes(opt.valor);
-          const isTop3 = autoTop3.includes(opt.valor);
-          
-          return (
-            <button
-              key={opt.valor}
-              type="button"
-              onClick={() => handleToggleValor(opt.valor)}
-              disabled={!modoManual}
-              className={cn(
-                "px-2 py-0.5 rounded text-xs font-medium transition-all",
-                "border",
-                isAtivo
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-background text-muted-foreground border-border",
-                modoManual && "cursor-pointer hover:border-primary/50",
-                !modoManual && "cursor-default opacity-80",
-                !modoManual && isTop3 && "ring-1 ring-primary/30"
+
+      {/* Dropdown de seleção */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild disabled={disabled}>
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn(
+              "w-full justify-between h-9 text-xs",
+              disabled && "pointer-events-none"
+            )}
+          >
+            <span className="flex items-center gap-1.5">
+              {!modoManual && !disabled && (
+                <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                  Auto
+                </span>
               )}
-            >
-              {opt.valor}
-            </button>
-          );
-        })}
-      </div>
+              <span className={cn(disabled && "text-muted-foreground")}>
+                {resumoTexto}
+              </span>
+            </span>
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+          </Button>
+        </DropdownMenuTrigger>
+        
+        <DropdownMenuContent 
+          align="start" 
+          className="w-56 bg-popover border shadow-lg z-50 p-2"
+        >
+          {/* Toggle Auto/Manual */}
+          <div className="flex items-center justify-between px-2 py-1.5 mb-1">
+            <span className="text-xs text-muted-foreground">Modo automático (Top 3)</span>
+            <Switch
+              checked={!modoManual}
+              onCheckedChange={(checked) => handleToggleManual(!checked)}
+              className="scale-75"
+            />
+          </div>
+          
+          <DropdownMenuSeparator />
+          
+          {/* Lista de opções com checkbox */}
+          <div className="max-h-48 overflow-y-auto py-1 space-y-0.5">
+            {opcoesOrdenadas.map((opt, index) => {
+              const isAtivo = valoresAtivos.includes(opt.valor);
+              const isTop3 = autoTop3.includes(opt.valor);
+              
+              return (
+                <button
+                  key={opt.valor}
+                  type="button"
+                  onClick={() => handleToggleValor(opt.valor)}
+                  className={cn(
+                    "w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm",
+                    "hover:bg-accent transition-colors",
+                    isAtivo && "bg-primary/5"
+                  )}
+                >
+                  <Checkbox 
+                    checked={isAtivo} 
+                    className="pointer-events-none"
+                  />
+                  <span className="flex-1 text-left font-medium">
+                    {opt.valor}
+                  </span>
+                  <span className={cn(
+                    "text-[10px] px-1.5 py-0.5 rounded-full",
+                    index < 3 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    {opt.ocorrencias}x
+                  </span>
+                  {isTop3 && !modoManual && (
+                    <Check className="h-3 w-3 text-primary" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

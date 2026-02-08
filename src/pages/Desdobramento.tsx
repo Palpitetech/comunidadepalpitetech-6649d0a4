@@ -49,6 +49,12 @@ export default function Desdobramento() {
   const [filtroPrimos, setFiltroPrimos] = useState<number[]>([]);
   const [filtroMoldura, setFiltroMoldura] = useState<number[]>([]);
   
+  // Estado de ativação dos filtros
+  const [filtroImparesAtivo, setFiltroImparesAtivo] = useState(true);
+  const [filtroRepetidasAtivo, setFiltroRepetidasAtivo] = useState(true);
+  const [filtroPrimosAtivo, setFiltroPrimosAtivo] = useState(true);
+  const [filtroMolduraAtivo, setFiltroMolduraAtivo] = useState(true);
+  
   // Inicializar filtros quando dados carregarem
   useEffect(() => {
     if (autoTop3Impares.length > 0 && filtroImpares.length === 0) {
@@ -123,18 +129,27 @@ export default function Desdobramento() {
   const filtrosValidos = (!linhas || somaLinhas === qtdDezenas) && (!colunas || somaColunas === qtdDezenas);
 
   // Montar objeto de filtros com valores selecionados (manuais ou auto)
+  // Se filtro desativado, passa array vazio que será ignorado na validação
   const filtros: FiltrosDesdobramento = useMemo(() => ({
-    qtdImpares: filtroImpares.length > 0 ? filtroImpares : autoTop3Impares,
-    qtdRepetidas: filtroRepetidas.length > 0 ? filtroRepetidas : autoTop3Repetidas,
-    qtdPrimos: filtroPrimos.length > 0 ? filtroPrimos : autoTop3Primos,
-    qtdMoldura: filtroMoldura.length > 0 ? filtroMoldura : autoTop3Moldura,
+    qtdImpares: filtroImparesAtivo 
+      ? (filtroImpares.length > 0 ? filtroImpares : autoTop3Impares) 
+      : null,
+    qtdRepetidas: filtroRepetidasAtivo 
+      ? (filtroRepetidas.length > 0 ? filtroRepetidas : autoTop3Repetidas) 
+      : null,
+    qtdPrimos: filtroPrimosAtivo 
+      ? (filtroPrimos.length > 0 ? filtroPrimos : autoTop3Primos) 
+      : null,
+    qtdMoldura: filtroMolduraAtivo 
+      ? (filtroMoldura.length > 0 ? filtroMoldura : autoTop3Moldura) 
+      : null,
     linhas,
     colunas,
     qtdDezenas,
     dezenasUltimoSorteio: ultimoSorteio,
     dezenasFixas,
     dezenasExcluidas,
-  }), [filtroImpares, filtroRepetidas, filtroPrimos, filtroMoldura, autoTop3Impares, autoTop3Repetidas, autoTop3Primos, autoTop3Moldura, linhas, colunas, qtdDezenas, ultimoSorteio, dezenasFixas, dezenasExcluidas]);
+  }), [filtroImpares, filtroRepetidas, filtroPrimos, filtroMoldura, filtroImparesAtivo, filtroRepetidasAtivo, filtroPrimosAtivo, filtroMolduraAtivo, autoTop3Impares, autoTop3Repetidas, autoTop3Primos, autoTop3Moldura, linhas, colunas, qtdDezenas, ultimoSorteio, dezenasFixas, dezenasExcluidas]);
 
   // Estimar combinações (com debounce)
   const [estimativa, setEstimativa] = useState<number | null>(null);
@@ -255,6 +270,8 @@ export default function Desdobramento() {
                   valoresSelecionados={filtroImpares}
                   onChange={setFiltroImpares}
                   autoTop3={autoTop3Impares}
+                  disabled={!filtroImparesAtivo}
+                  onDisabledChange={setFiltroImparesAtivo}
                 />
                 <FiltroPatternSelector
                   label="Repetidas"
@@ -263,6 +280,8 @@ export default function Desdobramento() {
                   valoresSelecionados={filtroRepetidas}
                   onChange={setFiltroRepetidas}
                   autoTop3={autoTop3Repetidas}
+                  disabled={!filtroRepetidasAtivo}
+                  onDisabledChange={setFiltroRepetidasAtivo}
                 />
                 <FiltroPatternSelector
                   label="Primos"
@@ -271,6 +290,8 @@ export default function Desdobramento() {
                   valoresSelecionados={filtroPrimos}
                   onChange={setFiltroPrimos}
                   autoTop3={autoTop3Primos}
+                  disabled={!filtroPrimosAtivo}
+                  onDisabledChange={setFiltroPrimosAtivo}
                 />
                 <FiltroPatternSelector
                   label="Moldura"
@@ -279,6 +300,8 @@ export default function Desdobramento() {
                   valoresSelecionados={filtroMoldura}
                   onChange={setFiltroMoldura}
                   autoTop3={autoTop3Moldura}
+                  disabled={!filtroMolduraAtivo}
+                  onDisabledChange={setFiltroMolduraAtivo}
                 />
               </div>
             </CardContent>

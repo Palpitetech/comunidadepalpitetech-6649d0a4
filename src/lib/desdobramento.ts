@@ -7,10 +7,10 @@ import {
 } from "./lotofacil";
 
 export interface FiltrosDesdobramento {
-  qtdImpares: number[];  // Array com os 3 valores aceitos
-  qtdRepetidas: number[]; // Array com os 3 valores aceitos
-  qtdPrimos: number[];   // Array com os 3 valores aceitos
-  qtdMoldura: number[];  // Array com os 3 valores aceitos
+  qtdImpares: number[] | null;  // Array com valores aceitos ou null = desativado
+  qtdRepetidas: number[] | null; // Array com valores aceitos ou null = desativado
+  qtdPrimos: number[] | null;   // Array com valores aceitos ou null = desativado
+  qtdMoldura: number[] | null;  // Array com valores aceitos ou null = desativado
   linhas: number[] | null; // null = ignorar (aleatório)
   colunas: number[] | null; // null = ignorar (aleatório)
   qtdDezenas: number;
@@ -58,20 +58,26 @@ export function validarFiltros(
     }
   }
 
-  // Validar quantidade de ímpares (aceita qualquer valor do array)
-  const qtdImpares = dezenas.filter(d => d % 2 !== 0).length;
-  if (!filtros.qtdImpares.includes(qtdImpares)) return false;
+  // Validar quantidade de ímpares (aceita qualquer valor do array, ignora se null)
+  if (filtros.qtdImpares !== null) {
+    const qtdImpares = dezenas.filter(d => d % 2 !== 0).length;
+    if (!filtros.qtdImpares.includes(qtdImpares)) return false;
+  }
 
-  // Validar quantidade de primos
-  const qtdPrimos = dezenas.filter(d => isPrimo(d)).length;
-  if (!filtros.qtdPrimos.includes(qtdPrimos)) return false;
+  // Validar quantidade de primos (ignora se null)
+  if (filtros.qtdPrimos !== null) {
+    const qtdPrimos = dezenas.filter(d => isPrimo(d)).length;
+    if (!filtros.qtdPrimos.includes(qtdPrimos)) return false;
+  }
 
-  // Validar quantidade de moldura
-  const qtdMoldura = dezenas.filter(d => isMoldura(d)).length;
-  if (!filtros.qtdMoldura.includes(qtdMoldura)) return false;
+  // Validar quantidade de moldura (ignora se null)
+  if (filtros.qtdMoldura !== null) {
+    const qtdMoldura = dezenas.filter(d => isMoldura(d)).length;
+    if (!filtros.qtdMoldura.includes(qtdMoldura)) return false;
+  }
 
-  // Validar repetidas (se houver último sorteio)
-  if (filtros.dezenasUltimoSorteio && filtros.dezenasUltimoSorteio.length > 0) {
+  // Validar repetidas (se houver último sorteio e filtro ativo)
+  if (filtros.qtdRepetidas !== null && filtros.dezenasUltimoSorteio && filtros.dezenasUltimoSorteio.length > 0) {
     const qtdRepetidas = dezenas.filter(d => 
       filtros.dezenasUltimoSorteio!.includes(d)
     ).length;
