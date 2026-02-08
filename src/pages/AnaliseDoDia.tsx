@@ -292,6 +292,18 @@ export default function AnaliseDoDia() {
   return (
     <MainLayout pageTitle="Análise do Dia">
       <div className="container-senior py-3 space-y-3 max-w-lg mx-auto">
+        {/* Instruções */}
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+          <div className="flex items-start gap-2">
+            <Target className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs leading-relaxed text-foreground">
+                <span className="font-semibold">Análise do Dia</span> — Reunimos os principais dados estatísticos. Clique nos dados para levar diretamente ao desdobramento e facilitar sua fézinha.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Header com período */}
         <div className="flex items-center justify-end">
           <SeletorPeriodo
