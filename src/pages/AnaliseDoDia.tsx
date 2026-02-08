@@ -634,6 +634,13 @@ export default function AnaliseDoDia() {
         selectedGrupoDezenas={addedGroups.grupos ? selectedGrupoDezenas : []}
         selectedGrupoLabel={addedGroups.grupos && selectedGrupo ? selectedGrupo.charAt(0).toUpperCase() + selectedGrupo.slice(1) : undefined}
         onNavigate={handleUsarFiltros}
+        onRemoveFiltros={() => setAddedGroups(prev => ({ ...prev, filtros: false }))}
+        onRemoveFixas={() => setAddedGroups(prev => ({ ...prev, fixas: false }))}
+        onRemoveExcluidas={() => setAddedGroups(prev => ({ ...prev, excluidas: false }))}
+        onRemoveGrupo={() => {
+          setAddedGroups(prev => ({ ...prev, grupos: false }));
+          setSelectedGrupo(null);
+        }}
       />
     </MainLayout>
   );
