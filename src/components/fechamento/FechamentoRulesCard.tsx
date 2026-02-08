@@ -16,7 +16,7 @@ export function FechamentoRulesCard({ estrategia }: FechamentoRulesCardProps) {
       </p>
       
       <ol className="space-y-2 text-sm text-foreground list-decimal list-inside leading-relaxed">
-        <li>Selecione {estrategia.dezenas} dezenas</li>
+        <li>Selecione <strong>{estrategia.dezenas} dezenas</strong></li>
         <li>
           {temFixas 
             ? `Fixe ${qtdFixas} dezenas`
