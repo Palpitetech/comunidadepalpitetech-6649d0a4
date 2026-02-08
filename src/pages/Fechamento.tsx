@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Wand2, Loader2 } from "lucide-react";
+import { Wand2, Loader2, Info } from "lucide-react";
 import { useAutoFillFechamento } from "@/hooks/useAutoFillFechamento";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { EstrategiaFechamentoSelector, ESTRATEGIAS_FECHAMENTO } from "@/components/fechamento/EstrategiaFechamentoSelector";
 import { FechamentoRulesCard } from "@/components/fechamento/FechamentoRulesCard";
 import { FechamentoStatusBar } from "@/components/fechamento/FechamentoStatusBar";
@@ -137,6 +138,14 @@ export default function Fechamento() {
   return (
     <MainLayout pageTitle="Gerador de Fechamento">
       <div className="container-senior py-4 space-y-5">
+        {/* Aviso de precisão */}
+        <Alert className="border-muted bg-muted/30">
+          <Info className="h-4 w-4 text-muted-foreground" />
+          <AlertDescription className="text-xs text-muted-foreground">
+            O fechamento pode ter inconsistências leves devido às muitas variantes. Acerto de 99%.
+          </AlertDescription>
+        </Alert>
+
         {/* 1. Seletor de Garantia */}
         <EstrategiaFechamentoSelector
           value={estrategiaId}
