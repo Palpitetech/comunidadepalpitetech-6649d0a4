@@ -69,6 +69,10 @@
     --status-frio-foreground: 215 15% 30%;
     --status-frio-bg: 215 15% 95%;
 
+    /* Botão de destaque (CTA verde) */
+    --highlight: 152 60% 52%;
+    --highlight-foreground: 0 0% 100%;
+
     /* Sidebar */
     --sidebar-background: 215 50% 20%;
     --sidebar-foreground: 0 0% 95%;
@@ -117,6 +121,10 @@
     --sidebar-accent-foreground: 210 20% 95%;
     --sidebar-border: 215 40% 15%;
     --sidebar-ring: 142 70% 50%;
+
+    /* Botão de destaque (CTA verde) - Dark Mode */
+    --highlight: 152 55% 48%;
+    --highlight-foreground: 0 0% 100%;
 
     /* Status Quente/Frio - Dark Mode */
     --status-quente: 142 70% 50%;

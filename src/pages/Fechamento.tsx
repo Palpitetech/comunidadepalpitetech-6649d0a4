@@ -213,11 +213,10 @@ export default function Fechamento() {
           <div className="flex items-center gap-2">
             <ModoSeletorFixas modo={modo} onChange={setModo} />
             <Button
-              variant="outline"
               size="sm"
               onClick={handleAutoFill}
               disabled={isAutoFilling || !canUse}
-              className="gap-1 shrink-0 px-2 text-xs sm:text-sm sm:px-3"
+              className="gap-1 shrink-0 px-2 text-xs sm:text-sm sm:px-3 bg-highlight hover:bg-highlight/90 text-highlight-foreground border-0"
             >
               {isAutoFilling ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />

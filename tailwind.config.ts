@@ -81,6 +81,11 @@ export default {
           "frio-foreground": "hsl(var(--status-frio-foreground))",
           "frio-bg": "hsl(var(--status-frio-bg))",
         },
+        // Botão de destaque (CTA verde claro)
+        highlight: {
+          DEFAULT: "hsl(var(--highlight))",
+          foreground: "hsl(var(--highlight-foreground))",
+        },
       },
       fontSize: {
         // Tipografia otimizada para idosos
