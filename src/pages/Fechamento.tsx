@@ -95,6 +95,7 @@ export default function Fechamento() {
           <ResultadosFechamento 
             jogos={resultado.jogos}
             fixas={fixas}
+            estrategiaId={estrategiaId}
             onNovoFechamento={handleNovoFechamento}
           />
         </div>
