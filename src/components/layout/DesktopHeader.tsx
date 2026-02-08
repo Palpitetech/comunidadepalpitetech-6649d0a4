@@ -13,7 +13,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
-import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot, Dices, Shuffle, Ticket, LayoutGrid, Target } from "lucide-react";
+import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot, Dices, Shuffle, Ticket, LayoutGrid, Target, Table2 } from "lucide-react";
 
 export function DesktopHeader() {
   const { isAuthenticated, profile, signOut } = useAuthContext();
@@ -107,6 +107,12 @@ export function DesktopHeader() {
                     <Link to="/linhas-colunas">
                       <LayoutGrid className="h-4 w-4" />
                       Linhas e Colunas
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                    <Link to="/tabela-movimentacao">
+                      <Table2 className="h-4 w-4" />
+                      Tabela de Movimentação
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
