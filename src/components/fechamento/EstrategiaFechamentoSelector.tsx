@@ -14,6 +14,7 @@ export interface EstrategiaFechamento {
   jogos: number;
   label: string;
   descricao: string;
+  condicao: string;
 }
 
 export const ESTRATEGIAS_FECHAMENTO: EstrategiaFechamento[] = [
@@ -22,40 +23,45 @@ export const ESTRATEGIAS_FECHAMENTO: EstrategiaFechamento[] = [
     dezenas: 16, 
     garantia: 14, 
     jogos: 4,
-    label: "Estratégia Econômica: 16 Dezenas",
-    descricao: "Garantia 14 pontos - 4 Jogos"
+    label: "16 Dezenas → 4 Jogos",
+    descricao: "Garantia 14 pontos",
+    condicao: "Se acertar 15 dos 16 números"
   },
   { 
     id: "17-14-8", 
     dezenas: 17, 
     garantia: 14, 
     jogos: 8,
-    label: "17 Dezenas",
-    descricao: "Garantia 14 pontos - 8 Jogos"
+    label: "17 Dezenas → 8 Jogos",
+    descricao: "Garantia 14 pontos",
+    condicao: "Se acertar 15 dos 17 números"
   },
   { 
     id: "18-14-16", 
     dezenas: 18, 
     garantia: 14, 
     jogos: 16,
-    label: "18 Dezenas",
-    descricao: "Garantia 14 pontos - 16 Jogos"
+    label: "18 Dezenas → 16 Jogos",
+    descricao: "Garantia 14 pontos",
+    condicao: "Se acertar 15 dos 18 números"
   },
   { 
     id: "19-14-24", 
     dezenas: 19, 
     garantia: 14, 
     jogos: 24,
-    label: "19 Dezenas",
-    descricao: "Garantia 14 pontos - 24 Jogos"
+    label: "19 Dezenas → 24 Jogos",
+    descricao: "Garantia 14 pontos",
+    condicao: "Se acertar 15 dos 19 números"
   },
   { 
     id: "20-14-32", 
     dezenas: 20, 
     garantia: 14, 
     jogos: 32,
-    label: "20 Dezenas",
-    descricao: "Garantia 14 pontos - 32 Jogos"
+    label: "20 Dezenas → 32 Jogos",
+    descricao: "Garantia 14 pontos",
+    condicao: "Se acertar 15 dos 20 números"
   },
 ];
 
@@ -70,11 +76,11 @@ export function EstrategiaFechamentoSelector({ value, onChange }: EstrategiaFech
   return (
     <div className="space-y-2">
       <Label htmlFor="estrategia-fechamento" className="text-base font-medium">
-        Estratégia de Fechamento
+        Escolha sua garantia
       </Label>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger id="estrategia-fechamento" className="w-full bg-background h-auto py-3">
-          <SelectValue placeholder="Selecione a estratégia">
+          <SelectValue placeholder="Selecione a garantia">
             {estrategiaAtual && (
               <div className="text-left">
                 <div className="font-medium">{estrategiaAtual.label}</div>
