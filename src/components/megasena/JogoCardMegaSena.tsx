@@ -60,27 +60,57 @@ export function JogoCardMegaSena({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 p-2 rounded-lg border bg-card transition-all",
+        "flex flex-col gap-1.5 p-2 rounded-lg border bg-card transition-all",
         getAcertosStyle(),
         isSelected && "border-megasena-primary/50 bg-megasena-primary/5"
       )}
     >
-      {/* Checkbox */}
-      {showCheckbox && onSelectChange && (
-        <Checkbox
-          checked={isSelected}
-          onCheckedChange={onSelectChange}
-          className="shrink-0"
-        />
-      )}
-
-      {/* Número do jogo */}
-      <span className="text-xs text-muted-foreground font-medium min-w-[2rem]">
-        #{index + 1}
-      </span>
+      {/* Linha superior: checkbox, número do jogo, acertos, copiar */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          {showCheckbox && onSelectChange && (
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={onSelectChange}
+              className="shrink-0"
+            />
+          )}
+          <span className="text-xs text-muted-foreground font-medium">
+            Jogo #{index + 1}
+          </span>
+        </div>
+        
+        <div className="flex items-center gap-1.5">
+          {acertos !== null && acertos !== undefined && (
+            <span
+              className={cn(
+                "text-xs font-bold px-2 py-0.5 rounded-full shrink-0",
+                acertos >= 6 && "bg-amber-500 text-white",
+                acertos === 5 && "bg-emerald-500 text-white",
+                acertos === 4 && "bg-blue-500 text-white",
+                acertos < 4 && "bg-muted text-muted-foreground"
+              )}
+            >
+              {acertos}pt
+            </span>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleCopy}
+            className="h-7 w-7 shrink-0"
+          >
+            {copied ? (
+              <Check className="h-3.5 w-3.5 text-megasena-primary" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
+          </Button>
+        </div>
+      </div>
 
       {/* Dezenas em linha */}
-      <div className="flex items-center gap-1 flex-1">
+      <div className="flex items-center gap-1">
         {dezenas.map((dezena) => {
           const isFixa = dezenasFixes.includes(dezena);
           return (
@@ -88,9 +118,7 @@ export function JogoCardMegaSena({
               key={dezena}
               className={cn(
                 "inline-flex items-center justify-center font-bold transition-all",
-                compact 
-                  ? "w-7 h-7 text-xs rounded-full" 
-                  : "w-8 h-8 text-sm rounded-full",
+                "w-6 h-6 text-[10px] rounded-full",
                 isFixa
                   ? "bg-palpite-fixa text-palpite-fixa-foreground"
                   : "bg-megasena-primary text-megasena-primary-foreground"
@@ -101,35 +129,6 @@ export function JogoCardMegaSena({
           );
         })}
       </div>
-
-      {/* Acertos badge */}
-      {acertos !== null && acertos !== undefined && (
-        <span
-          className={cn(
-            "text-xs font-bold px-2 py-1 rounded-full shrink-0",
-            acertos >= 6 && "bg-amber-500 text-white",
-            acertos === 5 && "bg-emerald-500 text-white",
-            acertos === 4 && "bg-blue-500 text-white",
-            acertos < 4 && "bg-muted text-muted-foreground"
-          )}
-        >
-          {acertos}pt
-        </span>
-      )}
-
-      {/* Botão copiar */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={handleCopy}
-        className="h-8 w-8 shrink-0"
-      >
-        {copied ? (
-          <Check className="h-4 w-4 text-megasena-primary" />
-        ) : (
-          <Copy className="h-4 w-4" />
-        )}
-      </Button>
     </div>
   );
 }
