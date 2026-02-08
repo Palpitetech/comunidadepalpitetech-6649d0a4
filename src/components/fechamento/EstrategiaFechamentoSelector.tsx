@@ -6,14 +6,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { getMatrizesAtivas } from "@/lib/fechamento";
-import { 
-  matrizParaUI, 
-  CATEGORIA_LABELS, 
-  CATEGORIA_STYLES,
-  type EstrategiaFechamentoUI 
-} from "@/types/fechamento";
+import { matrizParaUI, type EstrategiaFechamentoUI } from "@/types/fechamento";
 
 // Re-export do tipo para compatibilidade
 export type EstrategiaFechamento = EstrategiaFechamentoUI;
@@ -36,14 +30,6 @@ export function EstrategiaFechamentoSelector({ value, onChange }: EstrategiaFech
     linha2: `${e.dezenas} dezenas → ${e.jogos} jogos`,
   });
 
-  // Agrupa estratégias por categoria para melhor organização
-  const estrategiasPorCategoria = ESTRATEGIAS_FECHAMENTO.reduce((acc, estrategia) => {
-    const categoria = estrategia.categoria;
-    if (!acc[categoria]) acc[categoria] = [];
-    acc[categoria].push(estrategia);
-    return acc;
-  }, {} as Record<string, EstrategiaFechamentoUI[]>);
-
   return (
     <div className="space-y-2">
       <Label htmlFor="estrategia-fechamento" className="text-base font-medium">
@@ -53,43 +39,29 @@ export function EstrategiaFechamentoSelector({ value, onChange }: EstrategiaFech
         <SelectTrigger id="estrategia-fechamento" className="w-full bg-background h-auto py-3">
           <SelectValue placeholder="Selecione a garantia">
             {estrategiaAtual && (
-              <div className="flex items-center gap-2 text-left">
-                <div className="flex-1">
-                  <div className="font-medium">{formatarEstrategia(estrategiaAtual).linha1}</div>
-                  <div className="text-xs text-muted-foreground">{formatarEstrategia(estrategiaAtual).linha2}</div>
-                </div>
+              <div className="text-left">
+                <div className="font-medium">{formatarEstrategia(estrategiaAtual).linha1}</div>
+                <div className="text-xs text-muted-foreground">{formatarEstrategia(estrategiaAtual).linha2}</div>
               </div>
             )}
           </SelectValue>
         </SelectTrigger>
         <SelectContent className="bg-card border-border shadow-lg z-50">
-          {Object.entries(estrategiasPorCategoria).map(([categoria, estrategias]) => (
-            <div key={categoria}>
-              {/* Header da categoria */}
-              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide border-b border-border/50 bg-muted/30">
-                {CATEGORIA_LABELS[categoria as keyof typeof CATEGORIA_LABELS]}
-              </div>
-              
-              {/* Itens da categoria */}
-              {estrategias.map((estrategia) => {
-                const fmt = formatarEstrategia(estrategia);
-                return (
-                  <SelectItem 
-                    key={estrategia.id} 
-                    value={estrategia.id} 
-                    className="py-3 cursor-pointer hover:bg-muted focus:bg-muted"
-                  >
-                    <div className="flex items-center gap-2 w-full">
-                      <div className="flex-1">
-                        <div className="font-medium text-foreground">{fmt.linha1}</div>
-                        <div className="text-xs text-muted-foreground">{fmt.linha2}</div>
-                      </div>
-                    </div>
-                  </SelectItem>
-                );
-              })}
-            </div>
-          ))}
+          {ESTRATEGIAS_FECHAMENTO.map((estrategia) => {
+            const fmt = formatarEstrategia(estrategia);
+            return (
+              <SelectItem 
+                key={estrategia.id} 
+                value={estrategia.id} 
+                className="py-3 cursor-pointer hover:bg-muted focus:bg-muted"
+              >
+                <div>
+                  <div className="font-medium text-foreground">{fmt.linha1}</div>
+                  <div className="text-xs text-muted-foreground">{fmt.linha2}</div>
+                </div>
+              </SelectItem>
+            );
+          })}
           
           {/* Mensagem se não houver estratégias */}
           {ESTRATEGIAS_FECHAMENTO.length === 0 && (
