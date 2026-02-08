@@ -1,7 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ConfigGeracaoBarProps {
   qtdDezenas: number;
@@ -108,30 +114,40 @@ export function ConfigGeracaoBar({
       {/* Divisor */}
       <div className="h-16 w-px bg-border/60" />
 
-      {/* Lado direito - Dezenas */}
+      {/* Lado direito - Dezenas (Dropdown) */}
       <div className="flex flex-col items-center gap-2">
         <span className="text-xs font-medium text-muted-foreground">
-          Qtd. Dezenas
+          Dezenas
         </span>
         
-        <div className="flex items-center gap-1">
-          {[15, 16, 17, 18, 19, 20].map((num) => (
-            <button
-              key={num}
-              type="button"
-              onClick={() => onQtdDezenasChange(num)}
-              disabled={disabled}
-              className={cn(
-                "h-9 w-9 rounded-lg text-sm font-semibold transition-all",
-                qtdDezenas === num
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "bg-muted/60 text-muted-foreground hover:bg-muted"
-              )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild disabled={disabled}>
+            <Button
+              variant="outline"
+              className="h-12 px-4 gap-2 text-lg font-bold border-2"
             >
-              {num}
-            </button>
-          ))}
-        </div>
+              {qtdDezenas}
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent 
+            align="center" 
+            className="min-w-[80px] bg-background border shadow-lg z-50"
+          >
+            {[15, 16, 17, 18, 19, 20].map((num) => (
+              <DropdownMenuItem
+                key={num}
+                onClick={() => onQtdDezenasChange(num)}
+                className={cn(
+                  "justify-center text-base font-medium cursor-pointer",
+                  qtdDezenas === num && "bg-primary/10 text-primary"
+                )}
+              >
+                {num} dezenas
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
