@@ -7,12 +7,12 @@ import {
 } from "./lotofacil";
 
 export interface FiltrosDesdobramento {
-  qtdImpares: number;
-  qtdRepetidas: number;
-  qtdPrimos: number;
-  qtdMoldura: number;
-  linhas: number[];
-  colunas: number[];
+  qtdImpares: number[];  // Array com os 3 valores aceitos
+  qtdRepetidas: number[]; // Array com os 3 valores aceitos
+  qtdPrimos: number[];   // Array com os 3 valores aceitos
+  qtdMoldura: number[];  // Array com os 3 valores aceitos
+  linhas: number[] | null; // null = ignorar (aleatório)
+  colunas: number[] | null; // null = ignorar (aleatório)
   qtdDezenas: number;
   dezenasUltimoSorteio?: number[];
   dezenasFixas?: number[];
@@ -58,36 +58,40 @@ export function validarFiltros(
     }
   }
 
-  // Validar quantidade de ímpares
+  // Validar quantidade de ímpares (aceita qualquer valor do array)
   const qtdImpares = dezenas.filter(d => d % 2 !== 0).length;
-  if (qtdImpares !== filtros.qtdImpares) return false;
+  if (!filtros.qtdImpares.includes(qtdImpares)) return false;
 
   // Validar quantidade de primos
   const qtdPrimos = dezenas.filter(d => isPrimo(d)).length;
-  if (qtdPrimos !== filtros.qtdPrimos) return false;
+  if (!filtros.qtdPrimos.includes(qtdPrimos)) return false;
 
   // Validar quantidade de moldura
   const qtdMoldura = dezenas.filter(d => isMoldura(d)).length;
-  if (qtdMoldura !== filtros.qtdMoldura) return false;
+  if (!filtros.qtdMoldura.includes(qtdMoldura)) return false;
 
   // Validar repetidas (se houver último sorteio)
   if (filtros.dezenasUltimoSorteio && filtros.dezenasUltimoSorteio.length > 0) {
     const qtdRepetidas = dezenas.filter(d => 
       filtros.dezenasUltimoSorteio!.includes(d)
     ).length;
-    if (qtdRepetidas !== filtros.qtdRepetidas) return false;
+    if (!filtros.qtdRepetidas.includes(qtdRepetidas)) return false;
   }
 
-  // Validar linhas
-  for (let linha = 1; linha <= 5; linha++) {
-    const dezenasNaLinha = dezenas.filter(d => getLinha(d) === linha).length;
-    if (dezenasNaLinha !== filtros.linhas[linha - 1]) return false;
+  // Validar linhas (apenas se configurado - não null)
+  if (filtros.linhas !== null) {
+    for (let linha = 1; linha <= 5; linha++) {
+      const dezenasNaLinha = dezenas.filter(d => getLinha(d) === linha).length;
+      if (dezenasNaLinha !== filtros.linhas[linha - 1]) return false;
+    }
   }
 
-  // Validar colunas
-  for (let coluna = 1; coluna <= 5; coluna++) {
-    const dezenasNaColuna = dezenas.filter(d => getColuna(d) === coluna).length;
-    if (dezenasNaColuna !== filtros.colunas[coluna - 1]) return false;
+  // Validar colunas (apenas se configurado - não null)
+  if (filtros.colunas !== null) {
+    for (let coluna = 1; coluna <= 5; coluna++) {
+      const dezenasNaColuna = dezenas.filter(d => getColuna(d) === coluna).length;
+      if (dezenasNaColuna !== filtros.colunas[coluna - 1]) return false;
+    }
   }
 
   return true;
