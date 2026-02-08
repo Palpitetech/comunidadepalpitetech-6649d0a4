@@ -260,11 +260,16 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                             Tendências
                           </div>
                         </Link>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </div>
+                        <Link to="/megasena/frequencia" onClick={closeAndNavigate}>
+                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
+                            Quentes e Frias
+                          </div>
+                        </Link>
+                       </div>
+                     </AccordionContent>
+                   </AccordionItem>
+                 </Accordion>
+               </div>
             </>
           ) : (
             /* Conteúdo Admin - Estilo com Destaque Vermelho */
