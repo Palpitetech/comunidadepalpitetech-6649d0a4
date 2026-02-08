@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sparkles, CheckCircle2, XCircle, Filter, Lightbulb, Copy, Check } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Sparkles, CheckCircle2, XCircle, Filter, Lightbulb, Copy, Check, ChevronDown } from "lucide-react";
 import type { EstrategiaMegaSena } from "@/hooks/useAutoFillMegaSena";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -10,11 +11,13 @@ import { useToast } from "@/hooks/use-toast";
 interface EstrategiaCardMegaSenaProps {
   estrategia: EstrategiaMegaSena;
   onClose?: () => void;
+  defaultOpen?: boolean;
 }
 
-export function EstrategiaCardMegaSena({ estrategia, onClose }: EstrategiaCardMegaSenaProps) {
+export function EstrategiaCardMegaSena({ estrategia, onClose, defaultOpen = false }: EstrategiaCardMegaSenaProps) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   const formatDezena = (n: number) => n.toString().padStart(2, "0");
 
@@ -85,146 +88,184 @@ export function EstrategiaCardMegaSena({ estrategia, onClose }: EstrategiaCardMe
     }
   };
 
+  // Resumo compacto das dezenas
+  const dezenasResumo = estrategia.dezenas_justificadas
+    ?.map((item) => formatDezena(item.dezena))
+    .join(" • ") || "";
+
   return (
-    <Card className="border-megasena-primary/30 bg-megasena-primary/5 animate-fade-in">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-megasena-primary text-base">
-            <Sparkles className="h-5 w-5" />
-            Estratégia da IA
-          </CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopiar}
-            className="h-8 text-xs gap-1.5 border-megasena-primary/30 hover:bg-megasena-primary/10"
-          >
-            {copied ? (
-              <>
-                <Check className="h-3.5 w-3.5 text-megasena-primary" />
-                Copiado
-              </>
-            ) : (
-              <>
-                <Copy className="h-3.5 w-3.5" />
-                Copiar
-              </>
-            )}
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Ferramentas utilizadas */}
-        <div>
-          <p className="text-xs text-muted-foreground mb-2">Ferramentas de Análise:</p>
-          <div className="flex flex-wrap gap-1">
-            {estrategia.ferramentas.map((ferramenta, i) => (
-              <Badge key={i} variant="secondary" className="text-xs">
-                {ferramenta}
-              </Badge>
-            ))}
-          </div>
-        </div>
-
-        {/* Dezenas justificadas - Nova visualização */}
-        {estrategia.dezenas_justificadas?.length > 0 && (
-          <div>
-            <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1">
-              <CheckCircle2 className="h-3 w-3 text-megasena-primary" />
-              Dezenas Selecionadas ({estrategia.dezenas_justificadas.length}):
-            </p>
-            
-            {/* Grid de dezenas com justificativas */}
-            <div className="grid gap-2">
-              {estrategia.dezenas_justificadas.map((item, i) => (
-                <div 
-                  key={i} 
-                  className={cn(
-                    "flex items-center gap-3 p-2 rounded-lg border transition-all",
-                    "bg-card hover:bg-megasena-primary/5 border-border hover:border-megasena-primary/30"
-                  )}
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Card className="border-megasena-primary/30 bg-megasena-primary/5 animate-fade-in">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="flex items-center gap-2 text-megasena-primary text-base">
+              <Sparkles className="h-5 w-5" />
+              Estratégia da IA
+            </CardTitle>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopiar}
+                className="h-7 text-xs gap-1 border-megasena-primary/30 hover:bg-megasena-primary/10"
+              >
+                {copied ? (
+                  <Check className="h-3 w-3 text-megasena-primary" />
+                ) : (
+                  <Copy className="h-3 w-3" />
+                )}
+              </Button>
+              <CollapsibleTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground"
                 >
-                  {/* Número da dezena */}
-                  <div className={cn(
-                    "flex items-center justify-center w-10 h-10 rounded-full font-bold text-sm shrink-0",
-                    "bg-megasena-primary text-megasena-primary-foreground shadow-sm"
-                  )}>
+                  {isOpen ? "Menos" : "Ver mais"}
+                  <ChevronDown className={cn(
+                    "h-3.5 w-3.5 transition-transform duration-200",
+                    isOpen && "rotate-180"
+                  )} />
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+          </div>
+          
+          {/* Resumo compacto quando fechado */}
+          {!isOpen && (
+            <div className="mt-2 space-y-2">
+              {/* Dezenas em linha */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {estrategia.dezenas_justificadas?.map((item, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-megasena-primary text-megasena-primary-foreground"
+                  >
                     {formatDezena(item.dezena)}
-                  </div>
-                  
-                  {/* Justificativa */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground leading-relaxed">
-                      {item.motivo}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                  </span>
+                ))}
+              </div>
+              {/* Ferramentas resumidas */}
+              <p className="text-xs text-muted-foreground line-clamp-1">
+                {estrategia.ferramentas.slice(0, 3).join(" • ")}
+                {estrategia.ferramentas.length > 3 && ` +${estrategia.ferramentas.length - 3}`}
+              </p>
             </div>
-          </div>
-        )}
-
-        {/* Dezenas evitadas */}
-        {estrategia.dezenas_evitadas && estrategia.dezenas_evitadas.length > 0 && (
-          <div>
-            <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-              <XCircle className="h-3 w-3 text-destructive" />
-              Dezenas Evitadas:
-            </p>
-            <div className="space-y-1.5">
-              {estrategia.dezenas_evitadas.map((item, i) => (
-                <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-destructive/5 border border-destructive/20">
-                  <div className="flex flex-wrap gap-1">
-                    {item.dezenas.map((d) => (
-                      <span 
-                        key={d}
-                        className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-destructive/20 text-destructive"
-                      >
-                        {formatDezena(d)}
-                      </span>
-                    ))}
-                  </div>
-                  <span className="text-xs text-muted-foreground flex-1">{item.motivo}</span>
-                </div>
-              ))}
+          )}
+        </CardHeader>
+        
+        <CollapsibleContent>
+          <CardContent className="space-y-4 pt-2">
+            {/* Ferramentas utilizadas */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">Ferramentas de Análise:</p>
+              <div className="flex flex-wrap gap-1">
+                {estrategia.ferramentas.map((ferramenta, i) => (
+                  <Badge key={i} variant="secondary" className="text-xs">
+                    {ferramenta}
+                  </Badge>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
 
-        {/* Filtros aplicados */}
-        {estrategia.filtros_aplicados?.length > 0 && (
-          <div>
-            <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-              <Filter className="h-3 w-3" />
-              Filtros Aplicados:
-            </p>
-            <div className="space-y-1">
-              {estrategia.filtros_aplicados.map((filtro, i) => (
-                <div key={i} className="text-xs text-muted-foreground p-2 rounded bg-muted/30">
-                  <span className="font-medium text-foreground">{filtro.filtro}</span>
-                  {filtro.valor_alvo && (
-                    <Badge variant="outline" className="ml-2 text-xs h-5">
-                      {filtro.valor_alvo}
-                    </Badge>
-                  )}
-                  <span className="block mt-0.5">{filtro.motivo}</span>
+            {/* Dezenas justificadas */}
+            {estrategia.dezenas_justificadas?.length > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3 text-megasena-primary" />
+                  Dezenas Selecionadas ({estrategia.dezenas_justificadas.length}):
+                </p>
+                
+                <div className="grid gap-2">
+                  {estrategia.dezenas_justificadas.map((item, i) => (
+                    <div 
+                      key={i} 
+                      className={cn(
+                        "flex items-center gap-3 p-2 rounded-lg border transition-all",
+                        "bg-card hover:bg-megasena-primary/5 border-border hover:border-megasena-primary/30"
+                      )}
+                    >
+                      <div className={cn(
+                        "flex items-center justify-center w-10 h-10 rounded-full font-bold text-sm shrink-0",
+                        "bg-megasena-primary text-megasena-primary-foreground shadow-sm"
+                      )}>
+                        {formatDezena(item.dezena)}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground leading-relaxed">
+                          {item.motivo}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              </div>
+            )}
 
-        {/* Conclusão */}
-        <div className="pt-2 border-t border-border">
-          <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-            <Lightbulb className="h-3 w-3 text-amber-500" />
-            Conclusão:
-          </p>
-          <p className="text-sm text-foreground bg-amber-500/5 p-2 rounded-lg border border-amber-500/20">
-            {estrategia.conclusao}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+            {/* Dezenas evitadas */}
+            {estrategia.dezenas_evitadas && estrategia.dezenas_evitadas.length > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                  <XCircle className="h-3 w-3 text-destructive" />
+                  Dezenas Evitadas:
+                </p>
+                <div className="space-y-1.5">
+                  {estrategia.dezenas_evitadas.map((item, i) => (
+                    <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-destructive/5 border border-destructive/20">
+                      <div className="flex flex-wrap gap-1">
+                        {item.dezenas.map((d) => (
+                          <span 
+                            key={d}
+                            className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-destructive/20 text-destructive"
+                          >
+                            {formatDezena(d)}
+                          </span>
+                        ))}
+                      </div>
+                      <span className="text-xs text-muted-foreground flex-1">{item.motivo}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Filtros aplicados */}
+            {estrategia.filtros_aplicados?.length > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                  <Filter className="h-3 w-3" />
+                  Filtros Aplicados:
+                </p>
+                <div className="space-y-1">
+                  {estrategia.filtros_aplicados.map((filtro, i) => (
+                    <div key={i} className="text-xs text-muted-foreground p-2 rounded bg-muted/30">
+                      <span className="font-medium text-foreground">{filtro.filtro}</span>
+                      {filtro.valor_alvo && (
+                        <Badge variant="outline" className="ml-2 text-xs h-5">
+                          {filtro.valor_alvo}
+                        </Badge>
+                      )}
+                      <span className="block mt-0.5">{filtro.motivo}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Conclusão */}
+            <div className="pt-2 border-t border-border">
+              <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                <Lightbulb className="h-3 w-3 text-amber-500" />
+                Conclusão:
+              </p>
+              <p className="text-sm text-foreground bg-amber-500/5 p-2 rounded-lg border border-amber-500/20">
+                {estrategia.conclusao}
+              </p>
+            </div>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 }
