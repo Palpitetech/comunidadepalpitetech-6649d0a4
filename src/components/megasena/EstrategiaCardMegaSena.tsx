@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, CheckCircle2, XCircle, Filter, Lightbulb } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sparkles, CheckCircle2, XCircle, Filter, Lightbulb, Copy, Check } from "lucide-react";
 import type { EstrategiaMegaSena } from "@/hooks/useAutoFillMegaSena";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface EstrategiaCardMegaSenaProps {
   estrategia: EstrategiaMegaSena;
@@ -10,15 +13,105 @@ interface EstrategiaCardMegaSenaProps {
 }
 
 export function EstrategiaCardMegaSena({ estrategia, onClose }: EstrategiaCardMegaSenaProps) {
+  const { toast } = useToast();
+  const [copied, setCopied] = useState(false);
+
   const formatDezena = (n: number) => n.toString().padStart(2, "0");
 
+  const gerarTextoEstrategia = () => {
+    let texto = "🎯 ESTRATÉGIA MEGA SENA - PALPITE TECH\n";
+    texto += "═══════════════════════════════════════\n\n";
+
+    // Ferramentas
+    texto += "📊 FERRAMENTAS UTILIZADAS:\n";
+    estrategia.ferramentas.forEach((f) => {
+      texto += `   • ${f}\n`;
+    });
+    texto += "\n";
+
+    // Dezenas com justificativas
+    if (estrategia.dezenas_justificadas?.length > 0) {
+      texto += "🔢 DEZENAS SELECIONADAS:\n";
+      estrategia.dezenas_justificadas.forEach((item) => {
+        texto += `   ${formatDezena(item.dezena)} → ${item.motivo}\n`;
+      });
+      texto += "\n";
+    }
+
+    // Dezenas evitadas
+    if (estrategia.dezenas_evitadas && estrategia.dezenas_evitadas.length > 0) {
+      texto += "⛔ DEZENAS EVITADAS:\n";
+      estrategia.dezenas_evitadas.forEach((item) => {
+        texto += `   ${item.dezenas.map(formatDezena).join(", ")} → ${item.motivo}\n`;
+      });
+      texto += "\n";
+    }
+
+    // Filtros
+    if (estrategia.filtros_aplicados?.length > 0) {
+      texto += "🔍 FILTROS APLICADOS:\n";
+      estrategia.filtros_aplicados.forEach((f) => {
+        texto += `   • ${f.filtro}${f.valor_alvo ? ` (${f.valor_alvo})` : ""}: ${f.motivo}\n`;
+      });
+      texto += "\n";
+    }
+
+    // Conclusão
+    texto += "💡 CONCLUSÃO:\n";
+    texto += `   ${estrategia.conclusao}\n\n`;
+
+    texto += "═══════════════════════════════════════\n";
+    texto += "Gerado por Palpite Tech 🍀";
+
+    return texto;
+  };
+
+  const handleCopiar = async () => {
+    try {
+      const texto = gerarTextoEstrategia();
+      await navigator.clipboard.writeText(texto);
+      setCopied(true);
+      toast({
+        title: "Copiado!",
+        description: "Estratégia copiada para a área de transferência.",
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar a estratégia.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
-    <Card className="border-megasena-primary/30 bg-megasena-primary/5">
+    <Card className="border-megasena-primary/30 bg-megasena-primary/5 animate-fade-in">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-megasena-primary text-base">
-          <Sparkles className="h-5 w-5" />
-          Estratégia da IA
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-megasena-primary text-base">
+            <Sparkles className="h-5 w-5" />
+            Estratégia da IA
+          </CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCopiar}
+            className="h-8 text-xs gap-1.5 border-megasena-primary/30 hover:bg-megasena-primary/10"
+          >
+            {copied ? (
+              <>
+                <Check className="h-3.5 w-3.5 text-megasena-primary" />
+                Copiado
+              </>
+            ) : (
+              <>
+                <Copy className="h-3.5 w-3.5" />
+                Copiar
+              </>
+            )}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Ferramentas utilizadas */}
@@ -33,25 +126,38 @@ export function EstrategiaCardMegaSena({ estrategia, onClose }: EstrategiaCardMe
           </div>
         </div>
 
-        {/* Dezenas justificadas */}
+        {/* Dezenas justificadas - Nova visualização */}
         {estrategia.dezenas_justificadas?.length > 0 && (
           <div>
-            <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+            <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3 text-megasena-primary" />
-              Dezenas Selecionadas:
+              Dezenas Selecionadas ({estrategia.dezenas_justificadas.length}):
             </p>
-            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+            
+            {/* Grid de dezenas com justificativas */}
+            <div className="grid gap-2">
               {estrategia.dezenas_justificadas.map((item, i) => (
-                <div key={i} className="flex items-start gap-2 text-sm">
-                  <span className={cn(
-                    "inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold shrink-0",
-                    "bg-megasena-primary text-megasena-primary-foreground"
+                <div 
+                  key={i} 
+                  className={cn(
+                    "flex items-center gap-3 p-2 rounded-lg border transition-all",
+                    "bg-card hover:bg-megasena-primary/5 border-border hover:border-megasena-primary/30"
+                  )}
+                >
+                  {/* Número da dezena */}
+                  <div className={cn(
+                    "flex items-center justify-center w-10 h-10 rounded-full font-bold text-sm shrink-0",
+                    "bg-megasena-primary text-megasena-primary-foreground shadow-sm"
                   )}>
                     {formatDezena(item.dezena)}
-                  </span>
-                  <span className="text-muted-foreground text-xs leading-relaxed pt-1">
-                    {item.motivo}
-                  </span>
+                  </div>
+                  
+                  {/* Justificativa */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-foreground leading-relaxed">
+                      {item.motivo}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -65,13 +171,20 @@ export function EstrategiaCardMegaSena({ estrategia, onClose }: EstrategiaCardMe
               <XCircle className="h-3 w-3 text-destructive" />
               Dezenas Evitadas:
             </p>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               {estrategia.dezenas_evitadas.map((item, i) => (
-                <div key={i} className="text-xs text-muted-foreground">
-                  <span className="font-medium text-destructive">
-                    {item.dezenas.map(formatDezena).join(", ")}
-                  </span>
-                  {" - "}{item.motivo}
+                <div key={i} className="flex items-start gap-2 p-2 rounded-lg bg-destructive/5 border border-destructive/20">
+                  <div className="flex flex-wrap gap-1">
+                    {item.dezenas.map((d) => (
+                      <span 
+                        key={d}
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold bg-destructive/20 text-destructive"
+                      >
+                        {formatDezena(d)}
+                      </span>
+                    ))}
+                  </div>
+                  <span className="text-xs text-muted-foreground flex-1">{item.motivo}</span>
                 </div>
               ))}
             </div>
@@ -87,10 +200,14 @@ export function EstrategiaCardMegaSena({ estrategia, onClose }: EstrategiaCardMe
             </p>
             <div className="space-y-1">
               {estrategia.filtros_aplicados.map((filtro, i) => (
-                <div key={i} className="text-xs text-muted-foreground">
+                <div key={i} className="text-xs text-muted-foreground p-2 rounded bg-muted/30">
                   <span className="font-medium text-foreground">{filtro.filtro}</span>
-                  {filtro.valor_alvo && ` (${filtro.valor_alvo})`}
-                  {" - "}{filtro.motivo}
+                  {filtro.valor_alvo && (
+                    <Badge variant="outline" className="ml-2 text-xs h-5">
+                      {filtro.valor_alvo}
+                    </Badge>
+                  )}
+                  <span className="block mt-0.5">{filtro.motivo}</span>
                 </div>
               ))}
             </div>
@@ -103,7 +220,9 @@ export function EstrategiaCardMegaSena({ estrategia, onClose }: EstrategiaCardMe
             <Lightbulb className="h-3 w-3 text-amber-500" />
             Conclusão:
           </p>
-          <p className="text-sm text-foreground">{estrategia.conclusao}</p>
+          <p className="text-sm text-foreground bg-amber-500/5 p-2 rounded-lg border border-amber-500/20">
+            {estrategia.conclusao}
+          </p>
         </div>
       </CardContent>
     </Card>
