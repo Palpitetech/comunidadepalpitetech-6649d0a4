@@ -8,7 +8,6 @@ import {
   Users,
   CheckCircle2
 } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useTendenciasDia } from "@/hooks/useTendenciasDia";
 import { SeletorPeriodo } from "@/components/frequencia/SeletorPeriodo";
 import { DezenaCirculoMini } from "@/components/lotofacil/DezenaCirculoMini";
@@ -94,7 +93,6 @@ function GrupoRow({ label, grupo, onFixar }: GrupoRowProps) {
 }
 
 export default function AnaliseDoDia() {
-  const isMobile = useIsMobile();
   const [periodo, setPeriodo] = useState(10);
   const { data: tendencias, isLoading } = useTendenciasDia(periodo);
 
@@ -110,13 +108,7 @@ export default function AnaliseDoDia() {
     <MainLayout pageTitle="Análise do Dia">
       <div className="container-senior py-3 space-y-3 max-w-lg mx-auto">
         {/* Header com período */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {!isMobile && <Target className="h-5 w-5 text-primary" />}
-            <span className="text-xs text-muted-foreground">
-              Baseado nos últimos {periodo} concursos
-            </span>
-          </div>
+        <div className="flex items-center justify-end">
           <SeletorPeriodo
             periodos={[5, 10, 15, 20, 25, 50]}
             selecionado={periodo}
