@@ -123,6 +123,7 @@ export default function Fechamento() {
             estrategiaId={estrategiaId}
             dezenasSelecionadas={[...new Set([...selecionadas, ...fixas])]}
             onNovoFechamento={handleNovoFechamento}
+            estrategiaIA={estrategiaIA}
           />
         </div>
       </MainLayout>
