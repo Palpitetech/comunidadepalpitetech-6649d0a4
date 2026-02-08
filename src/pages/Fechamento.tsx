@@ -161,10 +161,9 @@ export default function Fechamento() {
         <Button
           onClick={handleGerarFechamento}
           disabled={!podeGerar}
-          className="w-full gap-2"
+          className="w-full"
           size="lg"
         >
-          <Sparkles className="h-5 w-5" />
           Gerar Palpites
         </Button>
       </div>
