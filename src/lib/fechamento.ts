@@ -114,11 +114,11 @@ export const MATRIZES_FECHAMENTO: MatrizFechamento[] = [
   // FC04 importado de arquivo separado (7 jogos, 100% garantia matemática)
   FC04,
 
-  // FC06 importado de arquivo separado (24 jogos, 100% garantia matemática)
-  FC06,
-
   // FC05 importado de arquivo separado (350 jogos)
   FC05,
+
+  // FC06 importado de arquivo separado (24 jogos, 100% garantia matemática)
+  FC06,
 ];
 
 /**
