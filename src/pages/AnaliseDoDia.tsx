@@ -53,9 +53,9 @@ function FiltroRow({ label, filtroKey, top3, ultimoValor, selectedValues, onTogg
               key={t.valor}
               onClick={() => onToggleValue(filtroKey, t.valor)}
               className={`
-                px-2.5 py-1 rounded text-xs font-semibold transition-all
+                px-2.5 py-1 rounded text-xs font-semibold transition-all cursor-pointer
                 ${isSelected 
-                  ? "bg-primary text-primary-foreground ring-2 ring-primary/50" 
+                  ? "bg-highlight text-highlight-foreground ring-2 ring-highlight/50" 
                   : t.valor === ultimoValor 
                     ? "bg-foreground text-background hover:ring-2 hover:ring-foreground/30" 
                     : "bg-muted text-muted-foreground hover:bg-muted/80"
