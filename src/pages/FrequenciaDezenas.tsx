@@ -103,9 +103,6 @@ export default function FrequenciaDezenas() {
               <BarChart3 className="h-7 w-7 text-primary" />
               <h1 className="text-2xl font-bold">Frequência das Dezenas</h1>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Lotofácil • Últimos {periodo} Concursos
-            </p>
           </div>
 
           {/* Controles */}
