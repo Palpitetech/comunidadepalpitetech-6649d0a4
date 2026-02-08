@@ -223,19 +223,19 @@ export default function AnaliseDoDia() {
                   <span className="text-xs font-semibold">Dezenas para Fixar</span>
                   <span className="text-[10px] text-muted-foreground">≥70%</span>
                 </div>
-                <div className="flex flex-wrap gap-1">
+                <div className="grid grid-cols-4 gap-1.5">
                   {tendencias.fixas.length > 0 ? (
                     tendencias.fixas.map((d) => (
                       <span
                         key={d.dezena}
-                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-status-quente/20 text-status-quente text-xs font-bold"
+                        className="inline-flex items-center justify-center gap-0.5 px-1.5 py-1 rounded bg-foreground text-background text-xs font-bold"
                       >
                         {formatarDezena(d.dezena)}
                         <span className="text-[9px] opacity-70">{d.frequencia}%</span>
                       </span>
                     ))
                   ) : (
-                    <span className="text-[11px] text-muted-foreground">Nenhuma dezena com ≥70% de frequência</span>
+                    <span className="col-span-4 text-[11px] text-muted-foreground">Nenhuma dezena com ≥70% de frequência</span>
                   )}
                 </div>
               </div>
@@ -245,23 +245,23 @@ export default function AnaliseDoDia() {
               {/* Excluir */}
               <div>
                 <div className="flex items-center gap-1.5 mb-2">
-                  <TrendingDown className="h-4 w-4 text-status-frio" />
+                  <TrendingDown className="h-4 w-4 text-destructive" />
                   <span className="text-xs font-semibold">Dezenas para Excluir</span>
                   <span className="text-[10px] text-muted-foreground">≤30%</span>
                 </div>
-                <div className="flex flex-wrap gap-1">
+                <div className="grid grid-cols-4 gap-1.5">
                   {tendencias.excluidas.length > 0 ? (
                     tendencias.excluidas.map((d) => (
                       <span
                         key={d.dezena}
-                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-status-frio/20 text-status-frio text-xs font-bold"
+                        className="inline-flex items-center justify-center gap-0.5 px-1.5 py-1 rounded bg-destructive/15 text-destructive border border-destructive/30 text-xs font-bold"
                       >
                         {formatarDezena(d.dezena)}
                         <span className="text-[9px] opacity-70">{d.frequencia}%</span>
                       </span>
                     ))
                   ) : (
-                    <span className="text-[11px] text-muted-foreground">Nenhuma dezena com ≤30% de frequência</span>
+                    <span className="col-span-4 text-[11px] text-muted-foreground">Nenhuma dezena com ≤30% de frequência</span>
                   )}
                 </div>
               </div>
