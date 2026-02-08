@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.validate-fechamento-guarantee]
 verify_jwt = false
+
+[functions.validate-all-strategies]
+verify_jwt = false
