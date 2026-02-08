@@ -53,7 +53,7 @@ export const MATRIZES_FECHAMENTO: MatrizFechamento[] = [
   },
 
   // ═══════════════════════════════════════════════════════════════════
-  // FC02 - 17 DEZENAS (INTERMEDIÁRIO) - 8 JOGOS
+  // FC02 - 17 DEZENAS - 8 JOGOS
   // Matriz fornecida convertida para remoções
   // ═══════════════════════════════════════════════════════════════════
   {
@@ -76,6 +76,33 @@ export const MATRIZES_FECHAMENTO: MatrizFechamento[] = [
       [4, 5],    // Jogo 6: remove índices 4 e 5
       [1, 2],    // Jogo 7: remove índices 1 e 2
       [0, 14],   // Jogo 8: remove índices 0 e 14
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FC03 - 19 DEZENAS (13 FIXAS + 6 VARIÁVEIS) - 6 JOGOS
+  // Lógica circular: 13 fixas sempre presentes + pares de variáveis
+  // ═══════════════════════════════════════════════════════════════════
+  {
+    id: "19-14-6",
+    nome: "FC03",
+    descricao: "13 fixas + 6 variáveis em pares circulares",
+    dezenas: 19,
+    garantia: 14,
+    dezenasPorJogo: 15,
+    condicao: "Se acertar 15 dos 19 números",
+    fixasObrigatorias: 13,
+    categoria: "avancado",
+    ativo: true,
+    // Variáveis são índices 13-18. Cada jogo usa 2 variáveis (remove 4)
+    // Pares: [0,1], [1,2], [2,3], [3,4], [4,5], [5,0]
+    matrizRemocoes: [
+      [15, 16, 17, 18],  // Jogo 1: usa var[0,1] → remove var[2,3,4,5]
+      [13, 16, 17, 18],  // Jogo 2: usa var[1,2] → remove var[0,3,4,5]
+      [13, 14, 17, 18],  // Jogo 3: usa var[2,3] → remove var[0,1,4,5]
+      [13, 14, 15, 18],  // Jogo 4: usa var[3,4] → remove var[0,1,2,5]
+      [13, 14, 15, 16],  // Jogo 5: usa var[4,5] → remove var[0,1,2,3]
+      [14, 15, 16, 17],  // Jogo 6: usa var[5,0] → remove var[1,2,3,4]
     ],
   },
 
