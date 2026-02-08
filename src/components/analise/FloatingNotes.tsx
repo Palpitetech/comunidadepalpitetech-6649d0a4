@@ -11,6 +11,8 @@ interface SelectedFilters {
   m3: number[];
 }
 
+type FilterKey = keyof SelectedFilters;
+
 interface FloatingNotesProps {
   selectedFilters: SelectedFilters;
   selectedFixas: number[];
@@ -22,6 +24,11 @@ interface FloatingNotesProps {
   onRemoveFixas?: () => void;
   onRemoveExcluidas?: () => void;
   onRemoveGrupo?: () => void;
+  // Callbacks para remoção individual
+  onRemoveSingleFilter?: (key: FilterKey, value: number) => void;
+  onRemoveSingleFixa?: (dezena: number) => void;
+  onRemoveSingleExcluida?: (dezena: number) => void;
+  onRemoveSingleGrupo?: (dezena: number) => void;
 }
 
 const FILTER_LABELS: Record<keyof SelectedFilters, string> = {
@@ -43,6 +50,10 @@ export function FloatingNotes({
   onRemoveFixas,
   onRemoveExcluidas,
   onRemoveGrupo,
+  onRemoveSingleFilter,
+  onRemoveSingleFixa,
+  onRemoveSingleExcluida,
+  onRemoveSingleGrupo,
 }: FloatingNotesProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -99,13 +110,13 @@ export function FloatingNotes({
                 <button
                   onClick={onRemoveFiltros}
                   className="p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                  title="Remover filtros"
+                  title="Remover todos os filtros"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
-            {(Object.keys(selectedFilters) as (keyof SelectedFilters)[]).map((key) => {
+            {(Object.keys(selectedFilters) as FilterKey[]).map((key) => {
               const values = selectedFilters[key];
               if (values.length === 0) return null;
               
@@ -118,9 +129,20 @@ export function FloatingNotes({
                     {values.map((v) => (
                       <span
                         key={v}
-                        className="px-2 py-0.5 rounded text-xs font-semibold bg-highlight text-highlight-foreground"
+                        className="group px-2 py-0.5 rounded text-xs font-semibold bg-highlight text-highlight-foreground flex items-center gap-1"
                       >
                         {v}
+                        {onRemoveSingleFilter && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onRemoveSingleFilter(key, v);
+                            }}
+                            className="opacity-60 hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
                       </span>
                     ))}
                   </div>
@@ -139,7 +161,7 @@ export function FloatingNotes({
                 <button
                   onClick={onRemoveFixas}
                   className="p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                  title="Remover fixas"
+                  title="Remover todas as fixas"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -149,9 +171,20 @@ export function FloatingNotes({
               {selectedFixas.map((d) => (
                 <span
                   key={d}
-                  className="px-2 py-0.5 rounded text-xs font-semibold bg-foreground text-background"
+                  className="group px-2 py-0.5 rounded text-xs font-semibold bg-foreground text-background flex items-center gap-1"
                 >
                   {formatarDezena(d)}
+                  {onRemoveSingleFixa && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveSingleFixa(d);
+                      }}
+                      className="opacity-60 hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
                 </span>
               ))}
             </div>
@@ -167,7 +200,7 @@ export function FloatingNotes({
                 <button
                   onClick={onRemoveExcluidas}
                   className="p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                  title="Remover excluídas"
+                  title="Remover todas as excluídas"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -177,9 +210,20 @@ export function FloatingNotes({
               {selectedExcluidas.map((d) => (
                 <span
                   key={d}
-                  className="px-2 py-0.5 rounded text-xs font-semibold bg-foreground text-background"
+                  className="group px-2 py-0.5 rounded text-xs font-semibold bg-foreground text-background flex items-center gap-1"
                 >
                   {formatarDezena(d)}
+                  {onRemoveSingleExcluida && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveSingleExcluida(d);
+                      }}
+                      className="opacity-60 hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
                 </span>
               ))}
             </div>
@@ -207,9 +251,20 @@ export function FloatingNotes({
               {selectedGrupoDezenas.map((d) => (
                 <span
                   key={d}
-                  className="px-2 py-0.5 rounded text-xs font-semibold bg-primary text-primary-foreground"
+                  className="group px-2 py-0.5 rounded text-xs font-semibold bg-primary text-primary-foreground flex items-center gap-1"
                 >
                   {formatarDezena(d)}
+                  {onRemoveSingleGrupo && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveSingleGrupo(d);
+                      }}
+                      className="opacity-60 hover:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
                 </span>
               ))}
             </div>
