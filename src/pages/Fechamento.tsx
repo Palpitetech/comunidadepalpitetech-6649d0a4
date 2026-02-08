@@ -94,6 +94,7 @@ export default function Fechamento() {
         <div className="container-senior py-4">
           <ResultadosFechamento 
             jogos={resultado.jogos}
+            fixas={fixas}
             onNovoFechamento={handleNovoFechamento}
           />
         </div>

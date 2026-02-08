@@ -1,18 +1,38 @@
-import { Copy, Check, RotateCcw } from "lucide-react";
+import { Copy, Check, RotateCcw, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { JogoCard } from "./JogoCard";
+import { PalpiteCard } from "@/components/shared/PalpiteCard";
 import { formatarDezena } from "@/lib/lotofacil";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ResultadosFechamentoProps {
   jogos: number[][];
+  fixas?: number[];
   onNovoFechamento: () => void;
 }
 
-export function ResultadosFechamento({ jogos, onNovoFechamento }: ResultadosFechamentoProps) {
+export function ResultadosFechamento({ jogos, fixas = [], onNovoFechamento }: ResultadosFechamentoProps) {
   const [copiado, setCopiado] = useState(false);
+  const [ultimoConcurso, setUltimoConcurso] = useState<number[]>([]);
   const { toast } = useToast();
+
+  // Carregar último concurso para estatísticas de repetidas
+  useEffect(() => {
+    const carregarUltimoConcurso = async () => {
+      const { data } = await supabase
+        .from("resultados")
+        .select("dezenas")
+        .order("concurso_id", { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (data?.dezenas) {
+        setUltimoConcurso(data.dezenas);
+      }
+    };
+    carregarUltimoConcurso();
+  }, []);
 
   const handleCopiarTodos = async () => {
     const texto = jogos
@@ -34,6 +54,25 @@ export function ResultadosFechamento({ jogos, onNovoFechamento }: ResultadosFech
       toast({
         title: "Erro ao copiar",
         description: "Não foi possível copiar os jogos.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCopiarJogo = async (jogo: number[], index: number) => {
+    const dezenasOrdenadas = [...jogo].sort((a, b) => a - b);
+    const texto = dezenasOrdenadas.map(formatarDezena).join(" - ");
+
+    try {
+      await navigator.clipboard.writeText(texto);
+      toast({
+        title: `Jogo ${index + 1} copiado!`,
+        description: texto,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar o jogo.",
         variant: "destructive",
       });
     }
@@ -71,11 +110,24 @@ export function ResultadosFechamento({ jogos, onNovoFechamento }: ResultadosFech
         </div>
       </div>
 
-      {/* Lista de jogos */}
+      {/* Lista de jogos usando PalpiteCard universal */}
       <div className="grid gap-3">
-        {jogos.map((jogo, index) => (
-          <JogoCard key={index} jogo={jogo} index={index} />
-        ))}
+        {jogos.map((jogo, index) => {
+          // Ordena as dezenas para exibição
+          const dezenasOrdenadas = [...jogo].sort((a, b) => a - b);
+          
+          return (
+            <PalpiteCard
+              key={index}
+              index={index}
+              dezenas={dezenasOrdenadas}
+              dezenasFixes={fixas}
+              ultimoConcursoDezenas={ultimoConcurso}
+              hideSelection
+              onCopy={() => handleCopiarJogo(jogo, index)}
+            />
+          );
+        })}
       </div>
 
       {/* Botão de novo fechamento */}
