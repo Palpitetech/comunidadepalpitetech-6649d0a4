@@ -30,6 +30,7 @@ import AdminPlanos from "./pages/admin/AdminPlanos";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminBots from "./pages/admin/AdminBots";
 import AnaliseDoDia from "./pages/AnaliseDoDia";
+import TabelaCiclos from "./pages/TabelaCiclos";
 import NotFound from "./pages/NotFound";
 import ResultadosMegaSena from "./pages/megasena/ResultadosMegaSena";
 import TendenciasMegaSena from "./pages/megasena/TendenciasMegaSena";
@@ -69,6 +70,7 @@ const App = () => (
             <Route path="/meus-palpites" element={<ProtectedRoute><MeusPalpites /></ProtectedRoute>} />
             <Route path="/boloes" element={<ProtectedRoute><Boloes /></ProtectedRoute>} />
             <Route path="/analise-do-dia" element={<ProtectedRoute><AnaliseDoDia /></ProtectedRoute>} />
+            <Route path="/tabela-ciclos" element={<ProtectedRoute><TabelaCiclos /></ProtectedRoute>} />
             <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
             <Route path="/criar-post" element={<ProtectedRoute><CriarPost /></ProtectedRoute>} />
             <Route path="/comunidade/post/:id" element={<ProtectedRoute><PostDetalhes /></ProtectedRoute>} />
