@@ -132,6 +132,55 @@ export const MATRIZES_FECHAMENTO: MatrizFechamento[] = [
       [14, 15, 16, 17, 18, 19],  // Jogo 7: usa var[6]
     ],
   },
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FC06 - 18 DEZENAS - 24 JOGOS
+  // Design de cobertura: remove 3 por jogo, cobertura balanceada de pares
+  // Cada número é removido exatamente 4 vezes (24×3/18 = 4)
+  // ═══════════════════════════════════════════════════════════════════
+  {
+    id: "18-14-24",
+    nome: "FC06",
+    descricao: "Fechamento de 18 dezenas com 24 jogos",
+    dezenas: 18,
+    garantia: 14,
+    dezenasPorJogo: 15,
+    condicao: "Se acertar 15 dos 18 números",
+    fixasObrigatorias: 0,
+    categoria: "intermediario",
+    ativo: true,
+    // Cada jogo remove 3 índices (0-17), design balanceado em blocos
+    matrizRemocoes: [
+      // Bloco 1: Trios consecutivos
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [9, 10, 11],
+      [12, 13, 14],
+      [15, 16, 17],
+      // Bloco 2: Trios com salto 3 (grid 6×3 colunas)
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [9, 12, 15],
+      [10, 13, 16],
+      [11, 14, 17],
+      // Bloco 3: Diagonais do grid
+      [0, 4, 8],
+      [1, 5, 6],
+      [2, 3, 7],
+      [9, 13, 17],
+      [10, 14, 15],
+      [11, 12, 16],
+      // Bloco 4: Anti-diagonais do grid
+      [0, 5, 7],
+      [1, 3, 8],
+      [2, 4, 6],
+      [9, 14, 16],
+      [10, 12, 17],
+      [11, 13, 15],
+    ],
+  },
 ];
 
 /**
