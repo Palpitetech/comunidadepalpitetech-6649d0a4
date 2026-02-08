@@ -53,24 +53,31 @@ export const MATRIZES_FECHAMENTO: MatrizFechamento[] = [
   },
 
   // ═══════════════════════════════════════════════════════════════════
-  // FC02 - 17 DEZENAS (INTERMEDIÁRIO)
+  // FC02 - 17 DEZENAS (INTERMEDIÁRIO) - 8 JOGOS
+  // Matriz fornecida convertida para remoções
   // ═══════════════════════════════════════════════════════════════════
-  // TODO: Adicionar matriz FC02
-  // {
-  //   id: "17-14-X",
-  //   nome: "FC02",
-  //   descricao: "Fechamento intermediário de 17 dezenas",
-  //   dezenas: 17,
-  //   garantia: 14,
-  //   dezenasPorJogo: 15,
-  //   condicao: "Se acertar 15 dos 17 números",
-  //   fixasObrigatorias: 0,
-  //   categoria: "intermediario",
-  //   ativo: false,
-  //   matrizRemocoes: [
-  //     // Cada jogo remove 2 dezenas (17 - 15 = 2)
-  //   ],
-  // },
+  {
+    id: "17-14-8",
+    nome: "FC02",
+    descricao: "Fechamento de 17 dezenas com 8 jogos",
+    dezenas: 17,
+    garantia: 14,
+    dezenasPorJogo: 15,
+    condicao: "Se acertar 15 dos 17 números",
+    fixasObrigatorias: 0,
+    categoria: "intermediario",
+    ativo: true,
+    matrizRemocoes: [
+      [15, 16],  // Jogo 1: remove índices 15 e 16
+      [13, 14],  // Jogo 2: remove índices 13 e 14
+      [10, 12],  // Jogo 3: remove índices 10 e 12
+      [8, 9],    // Jogo 4: remove índices 8 e 9
+      [6, 7],    // Jogo 5: remove índices 6 e 7
+      [4, 5],    // Jogo 6: remove índices 4 e 5
+      [1, 2],    // Jogo 7: remove índices 1 e 2
+      [0, 14],   // Jogo 8: remove índices 0 e 14
+    ],
+  },
 
   // ═══════════════════════════════════════════════════════════════════
   // FC03 - 18 DEZENAS (INTERMEDIÁRIO)
