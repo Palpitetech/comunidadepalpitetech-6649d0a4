@@ -206,7 +206,7 @@ export default function MeusPalpites() {
                   <p className="text-muted-foreground mb-8 max-w-sm">
                     Gere palpites no Gerador e salve seus favoritos para acessar aqui
                   </p>
-                  <Link to="/gerador">
+                  <Link to="/smart-gerador">
                     <Button size="lg" className="gap-2">
                       <Dices className="h-5 w-5" />
                       Ir para o Gerador

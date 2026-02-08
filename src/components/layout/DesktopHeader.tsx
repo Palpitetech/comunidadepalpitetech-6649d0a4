@@ -99,7 +99,7 @@ export function DesktopHeader() {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                      <Link to="/gerador">
+                      <Link to="/smart-gerador">
                         <Dices className="h-5 w-5" />
                         Gerador de Palpites
                       </Link>
@@ -159,7 +159,7 @@ export function DesktopHeader() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                    <Link to="/gerador">
+                    <Link to="/smart-gerador">
                       <Dices className="h-5 w-5" />
                       Gerador de Palpites
                     </Link>
