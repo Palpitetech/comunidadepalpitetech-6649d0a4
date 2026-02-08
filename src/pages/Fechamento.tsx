@@ -137,10 +137,10 @@ export default function Fechamento() {
                     "active:scale-95",
                     "disabled:opacity-40 disabled:cursor-not-allowed",
                     estaFixa
-                      ? "bg-foreground text-background border-foreground"
+                      ? "bg-palpite-fixa text-palpite-fixa-foreground border-palpite-fixa"
                       : estaSelecionada 
-                        ? "bg-primary text-primary-foreground border-primary shadow-lg scale-105" 
-                        : "bg-card border-border text-foreground hover:border-primary/50 hover:shadow-md"
+                        ? "bg-palpite-dezena text-palpite-dezena-foreground border-palpite-dezena shadow-lg scale-105" 
+                        : "bg-card border-border text-foreground hover:border-palpite-dezena/50 hover:shadow-md"
                   )}
                 >
                   {formatarDezena(numero)}
