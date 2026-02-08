@@ -277,17 +277,13 @@ export default function Desdobramento() {
           />
         )}
 
-        <Separator />
-
-        {/* Quantidade de Dezenas */}
-        <Card>
-          <CardContent className="pt-4">
-            <QuantidadeDezenasInput
-              value={qtdDezenas}
-              onChange={setQtdDezenas}
-            />
-          </CardContent>
-        </Card>
+        {/* Quantidade de Dezenas - Sempre visível */}
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm p-4 -mx-4 border-b">
+          <QuantidadeDezenasInput
+            value={qtdDezenas}
+            onChange={setQtdDezenas}
+          />
+        </div>
 
         {/* Estimativa de combinações */}
         {filtrosValidos && estimativa !== null && (
