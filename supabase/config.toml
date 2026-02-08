@@ -38,3 +38,9 @@ verify_jwt = false
 
 [functions.validate-all-strategies]
 verify_jwt = false
+
+[functions.sync-megasena]
+verify_jwt = false
+
+[functions.sync-duplasena]
+verify_jwt = false

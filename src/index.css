@@ -67,6 +67,12 @@
      --megasena-excluida: 0 70% 50%;
      --megasena-excluida-foreground: 0 0% 100%;
 
+     /* Cores específicas da Dupla Sena (Laranja/Vermelho) */
+     --duplasena-primary: 25 90% 50%;
+     --duplasena-primary-foreground: 0 0% 100%;
+     --duplasena-secondary: 0 75% 55%;
+     --duplasena-secondary-foreground: 0 0% 100%;
+
     /* Status Quente/Frio */
     --status-quente: 142 70% 45%;
     --status-quente-foreground: 0 0% 100%;

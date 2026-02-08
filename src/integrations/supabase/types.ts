@@ -1072,6 +1072,81 @@ export type Database = {
         }
         Relationships: []
       }
+      resultados_duplasena: {
+        Row: {
+          acumulou: boolean | null
+          concurso_id: number
+          created_at: string | null
+          data_sorteio: string
+          dezenas_sorteio1: number[]
+          dezenas_sorteio2: number[]
+          id: string
+          locais_ganhadores: Json | null
+          local_sorteio: string | null
+          premiacao_json: Json | null
+          qtd_impares_s1: number | null
+          qtd_impares_s2: number | null
+          qtd_moldura_s1: number | null
+          qtd_moldura_s2: number | null
+          qtd_pares_s1: number | null
+          qtd_pares_s2: number | null
+          qtd_primos_s1: number | null
+          qtd_primos_s2: number | null
+          qtd_repetidas_s1: number | null
+          qtd_repetidas_s2: number | null
+          valor_acumulado: number | null
+          valor_estimado_proximo: number | null
+        }
+        Insert: {
+          acumulou?: boolean | null
+          concurso_id: number
+          created_at?: string | null
+          data_sorteio: string
+          dezenas_sorteio1: number[]
+          dezenas_sorteio2: number[]
+          id?: string
+          locais_ganhadores?: Json | null
+          local_sorteio?: string | null
+          premiacao_json?: Json | null
+          qtd_impares_s1?: number | null
+          qtd_impares_s2?: number | null
+          qtd_moldura_s1?: number | null
+          qtd_moldura_s2?: number | null
+          qtd_pares_s1?: number | null
+          qtd_pares_s2?: number | null
+          qtd_primos_s1?: number | null
+          qtd_primos_s2?: number | null
+          qtd_repetidas_s1?: number | null
+          qtd_repetidas_s2?: number | null
+          valor_acumulado?: number | null
+          valor_estimado_proximo?: number | null
+        }
+        Update: {
+          acumulou?: boolean | null
+          concurso_id?: number
+          created_at?: string | null
+          data_sorteio?: string
+          dezenas_sorteio1?: number[]
+          dezenas_sorteio2?: number[]
+          id?: string
+          locais_ganhadores?: Json | null
+          local_sorteio?: string | null
+          premiacao_json?: Json | null
+          qtd_impares_s1?: number | null
+          qtd_impares_s2?: number | null
+          qtd_moldura_s1?: number | null
+          qtd_moldura_s2?: number | null
+          qtd_pares_s1?: number | null
+          qtd_pares_s2?: number | null
+          qtd_primos_s1?: number | null
+          qtd_primos_s2?: number | null
+          qtd_repetidas_s1?: number | null
+          qtd_repetidas_s2?: number | null
+          valor_acumulado?: number | null
+          valor_estimado_proximo?: number | null
+        }
+        Relationships: []
+      }
       resultados_megasena: {
         Row: {
           acumulou: boolean | null
