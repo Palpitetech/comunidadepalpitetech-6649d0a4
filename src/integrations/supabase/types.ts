@@ -1072,6 +1072,63 @@ export type Database = {
         }
         Relationships: []
       }
+      resultados_megasena: {
+        Row: {
+          acumulou: boolean | null
+          concurso_id: number
+          created_at: string
+          data_sorteio: string
+          dezenas: number[]
+          id: string
+          locais_ganhadores: Json | null
+          local_sorteio: string | null
+          premiacao_json: Json | null
+          qtd_impares: number | null
+          qtd_moldura: number | null
+          qtd_pares: number | null
+          qtd_primos: number | null
+          qtd_repetidas: number | null
+          valor_acumulado: number | null
+          valor_estimado_proximo: number | null
+        }
+        Insert: {
+          acumulou?: boolean | null
+          concurso_id: number
+          created_at?: string
+          data_sorteio: string
+          dezenas: number[]
+          id?: string
+          locais_ganhadores?: Json | null
+          local_sorteio?: string | null
+          premiacao_json?: Json | null
+          qtd_impares?: number | null
+          qtd_moldura?: number | null
+          qtd_pares?: number | null
+          qtd_primos?: number | null
+          qtd_repetidas?: number | null
+          valor_acumulado?: number | null
+          valor_estimado_proximo?: number | null
+        }
+        Update: {
+          acumulou?: boolean | null
+          concurso_id?: number
+          created_at?: string
+          data_sorteio?: string
+          dezenas?: number[]
+          id?: string
+          locais_ganhadores?: Json | null
+          local_sorteio?: string | null
+          premiacao_json?: Json | null
+          qtd_impares?: number | null
+          qtd_moldura?: number | null
+          qtd_pares?: number | null
+          qtd_primos?: number | null
+          qtd_repetidas?: number | null
+          valor_acumulado?: number | null
+          valor_estimado_proximo?: number | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
