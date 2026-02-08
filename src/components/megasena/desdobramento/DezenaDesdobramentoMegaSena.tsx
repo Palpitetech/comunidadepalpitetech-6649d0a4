@@ -40,7 +40,7 @@ export function DezenaDesdobramentoMegaSena({
       onClick={onClick}
       className={cn(
         "relative aspect-square flex items-center justify-center",
-        "text-2xl font-bold rounded-lg border-2 transition-all duration-150",
+        "text-lg font-bold rounded-lg border-2 transition-all duration-150",
         "active:scale-95",
         getClasses()
       )}
