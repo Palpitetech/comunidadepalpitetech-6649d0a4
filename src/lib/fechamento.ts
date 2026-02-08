@@ -127,6 +127,55 @@ export function gerarFechamento(
 }
 
 /**
+ * Interface para o resultado de uma simulação de garantia
+ */
+export interface ResultadoSimulacao {
+  resultadoSimulado: number[];
+  acertosPorJogo: number[];
+  contagem: Record<number, number>;
+  garantiaCumprida: boolean;
+  garantiaAlvo: number;
+}
+
+/**
+ * Simula um sorteio com 15 dezenas aleatórias das dezenas selecionadas
+ * e verifica se a garantia matemática do fechamento é cumprida
+ */
+export function simularGarantia(
+  dezenasSelecionadas: number[],
+  jogos: number[][],
+  garantia: number
+): ResultadoSimulacao {
+  // Sorteia 15 dezenas aleatórias das selecionadas (simulando o resultado)
+  const dezenasEmbaralhadas = [...dezenasSelecionadas].sort(() => Math.random() - 0.5);
+  const resultadoSimulado = dezenasEmbaralhadas.slice(0, 15).sort((a, b) => a - b);
+
+  // Calcula acertos de cada jogo
+  const acertosPorJogo = jogos.map((jogo) => {
+    return jogo.filter((dezena) => resultadoSimulado.includes(dezena)).length;
+  });
+
+  // Conta quantos jogos têm cada quantidade de acertos (11-15)
+  const contagem: Record<number, number> = { 15: 0, 14: 0, 13: 0, 12: 0, 11: 0 };
+  acertosPorJogo.forEach((acertos) => {
+    if (acertos >= 11 && acertos <= 15) {
+      contagem[acertos]++;
+    }
+  });
+
+  // Verifica se a garantia foi cumprida (pelo menos 1 jogo com >= garantia pontos)
+  const garantiaCumprida = acertosPorJogo.some((acertos) => acertos >= garantia);
+
+  return {
+    resultadoSimulado,
+    acertosPorJogo,
+    contagem,
+    garantiaCumprida,
+    garantiaAlvo: garantia,
+  };
+}
+
+/**
  * Função legada para compatibilidade com testes existentes
  * @deprecated Use gerarFechamento("16-14-4", dezenas) em vez disso
  */

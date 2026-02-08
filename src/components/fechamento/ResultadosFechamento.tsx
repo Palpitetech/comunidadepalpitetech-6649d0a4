@@ -1,4 +1,4 @@
-import { RotateCcw } from "lucide-react";
+import { FlaskConical, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PalpiteCard } from "@/components/shared/PalpiteCard";
 import { PalpitesToolbar, usePalpitesToolbar } from "@/components/palpites/PalpitesToolbar";
@@ -10,11 +10,15 @@ import { SelecionarPastaDialog } from "@/components/palpites/SelecionarPastaDial
 import { NovaPastaDialog } from "@/components/palpites/NovaPastaDialog";
 import { useAuth } from "@/hooks/useAuth";
 import type { Pasta } from "@/components/palpites/PastaItem";
+import { simularGarantia, buscarMatriz, type ResultadoSimulacao } from "@/lib/fechamento";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 interface ResultadosFechamentoProps {
   jogos: number[][];
   fixas?: number[];
   estrategiaId?: string;
+  dezenasSelecionadas: number[];
   onNovoFechamento: () => void;
 }
 
@@ -32,6 +36,7 @@ export function ResultadosFechamento({
   jogos, 
   fixas = [], 
   estrategiaId,
+  dezenasSelecionadas,
   onNovoFechamento 
 }: ResultadosFechamentoProps) {
   const { toast } = useToast();
@@ -43,6 +48,10 @@ export function ResultadosFechamento({
   const [loadingPastas, setLoadingPastas] = useState(false);
   const [palpitesParaSalvar, setPalpitesParaSalvar] = useState<number[][]>([]);
   const [acertosPorPalpite, setAcertosPorPalpite] = useState<Record<string, number>>({});
+  const [simulacao, setSimulacao] = useState<ResultadoSimulacao | null>(null);
+
+  // Obtém a matriz para saber a garantia alvo
+  const matriz = estrategiaId ? buscarMatriz(estrategiaId) : null;
 
   // Converter jogos para formato compatível com a toolbar
   const palpites: PalpiteFechamento[] = useMemo(() => 
@@ -268,6 +277,12 @@ export function ResultadosFechamento({
     setAcertosPorPalpite(acertos);
   };
 
+  const handleTestarGarantia = () => {
+    if (!matriz) return;
+    const resultado = simularGarantia(dezenasSelecionadas, jogos, matriz.garantia);
+    setSimulacao(resultado);
+  };
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -310,11 +325,101 @@ export function ResultadosFechamento({
         ))}
       </div>
 
-      {/* Botão de novo fechamento */}
+      {/* Botão Testar Garantia */}
       <Button
         variant="outline"
-        onClick={onNovoFechamento}
+        onClick={handleTestarGarantia}
         className="w-full gap-2"
+      >
+        <FlaskConical className="h-4 w-4" />
+        Testar Garantia
+      </Button>
+
+      {/* Tabela de Resultados da Simulação */}
+      {simulacao && (
+        <div className="rounded-lg border bg-card p-4 space-y-4">
+          <div>
+            <h4 className="text-sm font-medium text-muted-foreground mb-2">Resultado Simulado</h4>
+            <div className="flex flex-wrap gap-1.5">
+              {simulacao.resultadoSimulado.map((dezena) => (
+                <span
+                  key={dezena}
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
+                >
+                  {formatarDezena(dezena)}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h4 className="text-sm font-medium text-muted-foreground mb-2">Premiações</h4>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Pontos</TableHead>
+                  <TableHead className="text-right">Jogos</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[15, 14, 13, 12, 11].map((pontos) => {
+                  const count = simulacao.contagem[pontos] || 0;
+                  const isGarantia = pontos === simulacao.garantiaAlvo;
+                  const cumpriuGarantia = isGarantia && count > 0;
+                  
+                  return (
+                    <TableRow 
+                      key={pontos}
+                      className={cumpriuGarantia ? "bg-emerald-950/30" : ""}
+                    >
+                      <TableCell className="font-medium">
+                        {pontos} pontos
+                        {isGarantia && (
+                          <Badge 
+                            variant={cumpriuGarantia ? "default" : "outline"} 
+                            className={`ml-2 ${cumpriuGarantia ? "bg-emerald-600" : ""}`}
+                          >
+                            Garantia
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">{count} jogo(s)</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Indicador de Garantia */}
+          <div className={`p-3 rounded-lg text-sm font-medium text-center ${
+            simulacao.garantiaCumprida 
+              ? "bg-emerald-950/50 text-emerald-400 border border-emerald-800" 
+              : "bg-destructive/20 text-destructive border border-destructive/50"
+          }`}>
+            {simulacao.garantiaCumprida 
+              ? `✓ Garantia cumprida! Pelo menos 1 jogo com ${simulacao.garantiaAlvo}+ pontos`
+              : `✗ Garantia não cumprida nesta simulação`
+            }
+          </div>
+
+          <Button
+            variant="ghost"
+            onClick={handleTestarGarantia}
+            className="w-full gap-2"
+            size="sm"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Nova Simulação
+          </Button>
+        </div>
+      )}
+
+      {/* Botão Novo Fechamento */}
+      <Button
+        variant="ghost"
+        onClick={onNovoFechamento}
+        className="w-full gap-2 text-muted-foreground"
       >
         <RotateCcw className="h-4 w-4" />
         Novo Fechamento

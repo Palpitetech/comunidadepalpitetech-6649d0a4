@@ -96,6 +96,7 @@ export default function Fechamento() {
             jogos={resultado.jogos}
             fixas={fixas}
             estrategiaId={estrategiaId}
+            dezenasSelecionadas={[...new Set([...selecionadas, ...fixas])]}
             onNovoFechamento={handleNovoFechamento}
           />
         </div>
