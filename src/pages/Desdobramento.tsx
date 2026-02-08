@@ -237,16 +237,17 @@ export default function Desdobramento() {
           </div>
         )}
 
-        {/* Botão para abrir filtros de padrões */}
-        {/* Info sobre Filtros de Padrões automáticos */}
+        {/* Botão para abrir filtros de jogos */}
         <button
           type="button"
           onClick={() => setFiltrosPadroesAbertos(!filtrosPadroesAbertos)}
           className="w-full flex items-center justify-between py-3 px-4 text-sm font-medium bg-card border rounded-lg hover:bg-muted/50 transition-colors"
         >
           <span className="flex items-center gap-2">
-            🎯 Filtros de Padrões
-            <Badge variant="secondary" className="text-[10px]">Auto Top 3</Badge>
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>
+            </svg>
+            Filtros de Jogos
           </span>
           {filtrosPadroesAbertos ? (
             <ChevronUp className="h-4 w-4" />
@@ -255,17 +256,46 @@ export default function Desdobramento() {
           )}
         </button>
 
-        {/* Seletores de padrões com modo auto/manual */}
+        {/* Seletores de padrões */}
         {filtrosPadroesAbertos && (
           <Card>
-            <CardContent className="pt-4 space-y-3">
-              <p className="text-xs text-muted-foreground text-center mb-2">
-                Por padrão usa os Top 3 mais frequentes. Ative "Manual" para personalizar.
-              </p>
-              <div className="grid grid-cols-2 gap-3">
+            <CardContent className="pt-4 pb-2">
+              {/* Botões de ação global */}
+              <div className="space-y-2 mb-4">
+                <Button
+                  variant="outline"
+                  className="w-full h-10"
+                  onClick={() => {
+                    setFiltroImparesAtivo(false);
+                    setFiltroRepetidasAtivo(false);
+                    setFiltroPrimosAtivo(false);
+                    setFiltroMolduraAtivo(false);
+                  }}
+                >
+                  Desabilitar Todos
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full h-10"
+                  onClick={() => {
+                    setFiltroImparesAtivo(true);
+                    setFiltroRepetidasAtivo(true);
+                    setFiltroPrimosAtivo(true);
+                    setFiltroMolduraAtivo(true);
+                    setFiltroImpares(autoTop3Impares);
+                    setFiltroRepetidas(autoTop3Repetidas);
+                    setFiltroPrimos(autoTop3Primos);
+                    setFiltroMoldura(autoTop3Moldura);
+                  }}
+                >
+                  Habilitar c/ Ref.
+                </Button>
+              </div>
+
+              {/* Lista de filtros */}
+              <div className="divide-y">
                 <FiltroPatternSelector
                   label="Ímpares"
-                  emoji="🔢"
                   opcoes={impares}
                   valoresSelecionados={filtroImpares}
                   onChange={setFiltroImpares}
@@ -274,18 +304,7 @@ export default function Desdobramento() {
                   onDisabledChange={setFiltroImparesAtivo}
                 />
                 <FiltroPatternSelector
-                  label="Repetidas"
-                  emoji="🔄"
-                  opcoes={repetidas}
-                  valoresSelecionados={filtroRepetidas}
-                  onChange={setFiltroRepetidas}
-                  autoTop3={autoTop3Repetidas}
-                  disabled={!filtroRepetidasAtivo}
-                  onDisabledChange={setFiltroRepetidasAtivo}
-                />
-                <FiltroPatternSelector
                   label="Primos"
-                  emoji="✨"
                   opcoes={primos}
                   valoresSelecionados={filtroPrimos}
                   onChange={setFiltroPrimos}
@@ -294,8 +313,17 @@ export default function Desdobramento() {
                   onDisabledChange={setFiltroPrimosAtivo}
                 />
                 <FiltroPatternSelector
+                  label="Repetidas"
+                  opcoes={repetidas}
+                  valoresSelecionados={filtroRepetidas}
+                  onChange={setFiltroRepetidas}
+                  autoTop3={autoTop3Repetidas}
+                  disabled={!filtroRepetidasAtivo}
+                  onDisabledChange={setFiltroRepetidasAtivo}
+                  subtexto={ultimoSorteio.length > 0 ? `Baseado no concurso mais recente` : undefined}
+                />
+                <FiltroPatternSelector
                   label="Moldura"
-                  emoji="🖼️"
                   opcoes={moldura}
                   valoresSelecionados={filtroMoldura}
                   onChange={setFiltroMoldura}
