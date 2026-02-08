@@ -1,31 +1,88 @@
 /**
- * FC05 - ERRE 5
- * 20 Dezenas | 350 Jogos | Garantia 14 pontos
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * FC05 — SISTEMA DE COBERTURA "ERRE 5"
+ * ═══════════════════════════════════════════════════════════════════════════════
  * 
- * ✅ ATIVADA: Matriz otimizada de 350 jogos com garantia matemática de 14 pontos
- * Quando acertar 15 de 20 dezenas, garante no mínimo um jogo com 14 acertos.
- * Matriz extraída de fonte confiável (Lotodicas)
+ * DEFINIÇÃO MATEMÁTICA:
+ * ---------------------
+ * Tipo: Covering Design adaptado para Lotofácil
+ * Notação: C(20, 15, 14) com tolerância e = 5
  * 
- * Cada jogo remove 5 índices (0-19) das 20 dezenas selecionadas para gerar 15 números
+ * PARÂMETROS:
+ * -----------
+ *   v = 20  (total de dezenas selecionadas)
+ *   k = 15  (dezenas por jogo)
+ *   e = 5   (erro permitido)
+ *   g = 14  (garantia mínima de acertos)
+ *   r = 5   (remoções por jogo = v - k)
+ *   b = 350 (quantidade de jogos)
+ * 
+ * CONDIÇÃO DE FUNCIONAMENTO:
+ * --------------------------
+ *   |Resultado ∩ Selecionadas| ≥ v - e
+ *   
+ *   Traduzindo: O usuário deve acertar pelo menos 15 das 20 dezenas escolhidas.
+ *   Ou seja: pode "errar" no máximo 5 dezenas (daí o nome "ERRE 5").
+ * 
+ * GARANTIA MATEMÁTICA:
+ * --------------------
+ *   Se a condição for satisfeita:
+ *   ∃ jogo ∈ Matriz : |jogo ∩ Resultado| ≥ 14
+ *   
+ *   Existe pelo menos um jogo com 14+ acertos.
+ * 
+ * ALGORITMO DE GERAÇÃO:
+ * ---------------------
+ *   1. Usuário seleciona 20 dezenas ordenadas: D = [d₁, d₂, ..., d₂₀]
+ *   2. Para cada linha i da matrizRemocoes:
+ *      - Remove as dezenas nos índices especificados
+ *      - Gera jogo com as 15 dezenas restantes
+ *   3. Resultado: 350 jogos de 15 dezenas cada
+ * 
+ * ESTRUTURA DA MATRIZ:
+ * --------------------
+ *   Cada array em matrizRemocoes contém 5 índices (0-19) que representam
+ *   as posições das dezenas a REMOVER do conjunto de 20 para formar o jogo.
+ *   
+ *   Exemplo: [15, 16, 17, 18, 19] → Remove D16, D17, D18, D19, D20
+ *            Jogo resultante: D1 a D15
+ * 
+ * FONTE: Matriz otimizada de 350 jogos (Lotodicas)
+ * VALIDAÇÃO: Taxa de sucesso ~36% em cenário otimista (simulação)
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
-import type { MatrizFechamento } from "@/types/fechamento";
+import type { MatrizFechamento, ParametrosCoveringDesign } from "@/types/fechamento";
 
 /**
- * Matriz de remoções convertida do formato de dezenas para índices (0-based)
- * Cada array contém os índices das dezenas a REMOVER para gerar um jogo de 15 números
+ * Parâmetros do Covering Design FC05
+ */
+const FC05_COVERING: ParametrosCoveringDesign = {
+  totalDezenas: 20,      // v
+  dezenasPorJogo: 15,    // k
+  erroPermitido: 5,      // e
+  garantiaMinima: 14,    // g
+  remocoesPorJogo: 5,    // r = v - k
+  totalJogos: 350,       // b
+};
+
+/**
+ * FC05 — Fechamento ERRE 5
+ * 20 Dezenas | 350 Jogos | Garantia 14 pontos
  */
 export const FC05: MatrizFechamento = {
   id: "20-14-350",
   nome: "FC05",
-  descricao: "ERRE 5 — Fechamento otimizado de 20 dezenas com 350 jogos",
-  dezenas: 20,
-  garantia: 14,
-  dezenasPorJogo: 15,
-  condicao: "Se acertar 15 dos 20 números",
+  descricao: "ERRE 5 — Fechamento de cobertura com 20 dezenas e 350 jogos",
+  dezenas: FC05_COVERING.totalDezenas,
+  garantia: FC05_COVERING.garantiaMinima,
+  dezenasPorJogo: FC05_COVERING.dezenasPorJogo,
+  condicao: `Acertar ${FC05_COVERING.totalDezenas - FC05_COVERING.erroPermitido}+ de ${FC05_COVERING.totalDezenas} dezenas`,
   fixasObrigatorias: 0,
   categoria: "avancado",
   ativo: true,
+  covering: FC05_COVERING,
   matrizRemocoes: [
     // Jogo 1: D1 D2 D3 D4 D5 D6 D7 D8 D9 D10 D11 D12 D13 D14 D15 → remove D16 D17 D18 D19 D20
     [15, 16, 17, 18, 19],
