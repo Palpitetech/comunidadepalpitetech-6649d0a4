@@ -24,8 +24,11 @@ export function PageHeader({ title, breadcrumb, onBack, rightContent, hideBackBu
   const handleBack = () => {
     if (onBack) {
       onBack();
-    } else {
+    } else if (window.history.length > 1) {
       navigate(-1);
+    } else {
+      // Fallback para a página inicial se não houver histórico
+      navigate("/comunidade");
     }
   };
 
