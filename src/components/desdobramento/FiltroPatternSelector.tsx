@@ -105,7 +105,7 @@ export function FiltroPatternSelector({
           {onDisabledChange && (
             <Switch
               checked={!disabled}
-              onCheckedChange={(checked) => onDisabledChange(!checked)}
+              onCheckedChange={(checked) => onDisabledChange(checked)}
             />
           )}
           
