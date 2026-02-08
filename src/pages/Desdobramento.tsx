@@ -362,10 +362,7 @@ export default function Desdobramento() {
           </DropdownMenu>
         </div>
 
-        {/* Mensagem de limite */}
-        <p className="text-xs text-muted-foreground text-center">
-          Limite de 250 palpites
-        </p>
+        <p className="text-[10px] text-muted-foreground text-center -mt-2 mb-1">Limite de 250 palpites</p>
 
         {/* Botões de Ação */}
         <div className="flex gap-2">
