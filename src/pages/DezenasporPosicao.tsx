@@ -113,7 +113,7 @@ export default function DezenasporPosicao() {
             <Card className="border-primary/30">
               <CardHeader className="py-3 bg-primary/10">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Trophy className="h-5 w-5 text-amber-500" />
+                  <Trophy className="h-5 w-5 text-primary" />
                   Top 3 da Posição {String(posicaoData.posicao).padStart(2, "0")}
                 </CardTitle>
               </CardHeader>
@@ -123,17 +123,17 @@ export default function DezenasporPosicao() {
                     key={dezena.dezena}
                     className={cn(
                       "flex items-center gap-3 p-3 rounded-lg border",
-                      idx === 0 && "bg-amber-500/10 border-amber-500/30",
-                      idx === 1 && "bg-slate-400/10 border-slate-400/30",
-                      idx === 2 && "bg-orange-700/10 border-orange-700/30"
+                      idx === 0 && "bg-primary/10 border-primary/30",
+                      idx === 1 && "bg-muted/50 border-border",
+                      idx === 2 && "bg-muted/30 border-border/50"
                     )}
                   >
                     {/* Ranking Badge */}
                     <div className={cn(
                       "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
-                      idx === 0 && "bg-amber-500 text-white",
-                      idx === 1 && "bg-slate-400 text-white",
-                      idx === 2 && "bg-orange-700 text-white"
+                      idx === 0 && "bg-primary text-primary-foreground",
+                      idx === 1 && "bg-muted-foreground/70 text-background",
+                      idx === 2 && "bg-muted-foreground/50 text-background"
                     )}>
                       {idx + 1}º
                     </div>
@@ -189,15 +189,15 @@ export default function DezenasporPosicao() {
             <CardContent className="py-2.5">
               <div className="flex items-center justify-center gap-4 text-xs flex-wrap">
                 <div className="flex items-center gap-1.5 whitespace-nowrap">
-                  <span className="w-4 h-4 rounded-full bg-amber-500"></span>
+                  <span className="w-4 h-4 rounded-full bg-primary"></span>
                   <span>1º Lugar</span>
                 </div>
                 <div className="flex items-center gap-1.5 whitespace-nowrap">
-                  <span className="w-4 h-4 rounded-full bg-slate-400"></span>
+                  <span className="w-4 h-4 rounded-full bg-muted-foreground/70"></span>
                   <span>2º Lugar</span>
                 </div>
                 <div className="flex items-center gap-1.5 whitespace-nowrap">
-                  <span className="w-4 h-4 rounded-full bg-orange-700"></span>
+                  <span className="w-4 h-4 rounded-full bg-muted-foreground/50"></span>
                   <span>3º Lugar</span>
                 </div>
               </div>
