@@ -188,6 +188,12 @@ export function DesktopHeader() {
                      </Link>
                    </DropdownMenuItem>
                    <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                     <Link to="/megasena/dezenas-por-posicao">
+                       <Target className="h-4 w-4" />
+                       Dezenas por Posição
+                     </Link>
+                   </DropdownMenuItem>
+                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                      <Link to="/megasena/linhas-colunas">
                       <LayoutGrid className="h-4 w-4" />
                       Linhas e Colunas
