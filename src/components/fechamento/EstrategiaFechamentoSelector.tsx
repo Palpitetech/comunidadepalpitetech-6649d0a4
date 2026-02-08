@@ -60,13 +60,17 @@ export function EstrategiaFechamentoSelector({ value, onChange }: EstrategiaFech
             )}
           </SelectValue>
         </SelectTrigger>
-        <SelectContent className="bg-background z-50">
+        <SelectContent className="bg-card border-border shadow-lg z-50">
           {ESTRATEGIAS_FECHAMENTO.map((estrategia) => {
             const fmt = formatarEstrategia(estrategia);
             return (
-              <SelectItem key={estrategia.id} value={estrategia.id} className="py-3">
+              <SelectItem 
+                key={estrategia.id} 
+                value={estrategia.id} 
+                className="py-3 cursor-pointer hover:bg-muted focus:bg-muted"
+              >
                 <div>
-                  <div className="font-medium">{fmt.linha1}</div>
+                  <div className="font-medium text-foreground">{fmt.linha1}</div>
                   <div className="text-xs text-muted-foreground">{fmt.linha2}</div>
                 </div>
               </SelectItem>
