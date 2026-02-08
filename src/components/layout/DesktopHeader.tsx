@@ -9,7 +9,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuLabel,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot, Dices, Shuffle, Ticket } from "lucide-react";
 
@@ -59,7 +61,7 @@ export function DesktopHeader() {
             </Button>
           </Link>
 
-          {/* Loterias Dropdown - Consolidado */}
+          {/* Loterias Dropdown com Submenus */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="gap-1.5 h-10 px-3 text-sm">
@@ -68,90 +70,100 @@ export function DesktopHeader() {
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="w-64 p-2 bg-popover z-50">
-              {/* Lotofácil Section */}
-              <DropdownMenuLabel className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                🍀 Lotofácil
-              </DropdownMenuLabel>
-              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                <Link to="/resultados">
-                  <BarChart3 className="h-4 w-4" />
-                  Resultados
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                <Link to="/tendencias">
-                  <TrendingUp className="h-4 w-4" />
-                  Tendências
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                <Link to="/frequencia">
-                  <Flame className="h-4 w-4" />
-                  Quentes e Frias
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                <Link to="/smart-gerador">
-                  <Dices className="h-4 w-4" />
-                  Gerador
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                <Link to="/desdobramento">
-                  <Shuffle className="h-4 w-4" />
-                  Desdobramento
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                <Link to="/fechamento">
-                  <Wrench className="h-4 w-4" />
-                  Fechamento
-                </Link>
-              </DropdownMenuItem>
+            <DropdownMenuContent align="center" className="w-48 p-1 bg-popover z-50">
+              {/* Lotofácil Submenu */}
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="gap-2 py-2 cursor-pointer">
+                  <span className="text-base">🍀</span>
+                  Lotofácil
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-48 bg-popover z-50">
+                  <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                    <Link to="/resultados">
+                      <BarChart3 className="h-4 w-4" />
+                      Resultados
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                    <Link to="/tendencias">
+                      <TrendingUp className="h-4 w-4" />
+                      Tendências
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                    <Link to="/frequencia">
+                      <Flame className="h-4 w-4" />
+                      Quentes e Frias
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                    <Link to="/smart-gerador">
+                      <Dices className="h-4 w-4" />
+                      Gerador
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                    <Link to="/desdobramento">
+                      <Shuffle className="h-4 w-4" />
+                      Desdobramento
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                    <Link to="/fechamento">
+                      <Wrench className="h-4 w-4" />
+                      Fechamento
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
 
-              <DropdownMenuSeparator />
-
-              {/* Mega Sena Section */}
-              <DropdownMenuLabel className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                🎱 Mega Sena
-              </DropdownMenuLabel>
-              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                <Link to="/megasena/resultados">
-                  <BarChart3 className="h-4 w-4" />
-                  Resultados
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                <Link to="/megasena/tendencias">
-                  <TrendingUp className="h-4 w-4" />
-                  Tendências
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                <Link to="/megasena/frequencia">
-                  <Flame className="h-4 w-4" />
-                  Quentes e Frias
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                <Link to="/megasena/gerador">
-                  <Dices className="h-4 w-4" />
-                  Gerador
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                <Link to="/megasena/desdobramento">
-                  <Shuffle className="h-4 w-4" />
-                  Desdobramento
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                <Link to="/megasena/fechamento">
-                  <Wrench className="h-4 w-4" />
-                  Fechamento
-                </Link>
-              </DropdownMenuItem>
+              {/* Mega Sena Submenu */}
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="gap-2 py-2 cursor-pointer">
+                  <span className="text-base">🎱</span>
+                  Mega Sena
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-48 bg-popover z-50">
+                  <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                    <Link to="/megasena/resultados">
+                      <BarChart3 className="h-4 w-4" />
+                      Resultados
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                    <Link to="/megasena/tendencias">
+                      <TrendingUp className="h-4 w-4" />
+                      Tendências
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                    <Link to="/megasena/frequencia">
+                      <Flame className="h-4 w-4" />
+                      Quentes e Frias
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                    <Link to="/megasena/gerador">
+                      <Dices className="h-4 w-4" />
+                      Gerador
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                    <Link to="/megasena/desdobramento">
+                      <Shuffle className="h-4 w-4" />
+                      Desdobramento
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                    <Link to="/megasena/fechamento">
+                      <Wrench className="h-4 w-4" />
+                      Fechamento
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
             </DropdownMenuContent>
           </DropdownMenu>
 
