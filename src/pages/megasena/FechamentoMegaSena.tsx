@@ -128,7 +128,7 @@ export default function FechamentoMegaSena() {
           onChange={handleMudarEstrategia}
         />
 
-        {/* 2. Card de Regras */}
+        {/* 2. Seção de Regras Detalhadas */}
         <FechamentoRulesCardMegaSena estrategia={estrategiaAtual} />
 
         {/* 3. Seletor de Modo */}
@@ -159,8 +159,8 @@ export default function FechamentoMegaSena() {
                     estaFixa
                       ? "bg-palpite-fixa text-palpite-fixa-foreground border-palpite-fixa"
                       : estaSelecionada 
-                        ? "bg-emerald-600 text-white border-emerald-600 shadow-lg scale-105" 
-                        : "bg-card border-border text-foreground hover:border-emerald-500/50 hover:shadow-md"
+                        ? "bg-primary text-primary-foreground border-primary shadow-lg scale-105" 
+                        : "bg-card border-border text-foreground hover:border-primary/50 hover:shadow-md"
                   )}
                 >
                   {formatarDezenaMegaSena(numero)}
@@ -181,7 +181,7 @@ export default function FechamentoMegaSena() {
         <Button
           onClick={handleGerarFechamento}
           disabled={!podeGerar}
-          className="w-full bg-emerald-600 hover:bg-emerald-700"
+          className="w-full bg-primary hover:bg-primary/90"
           size="lg"
         >
           Gerar Palpites
