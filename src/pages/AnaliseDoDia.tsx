@@ -641,6 +641,18 @@ export default function AnaliseDoDia() {
           setAddedGroups(prev => ({ ...prev, grupos: false }));
           setSelectedGrupo(null);
         }}
+        onRemoveSingleFilter={(key, value) => {
+          setSelectedFilters(prev => ({
+            ...prev,
+            [key]: prev[key].filter(v => v !== value)
+          }));
+        }}
+        onRemoveSingleFixa={(dezena) => {
+          setSelectedFixas(prev => prev.filter(d => d !== dezena));
+        }}
+        onRemoveSingleExcluida={(dezena) => {
+          setSelectedExcluidas(prev => prev.filter(d => d !== dezena));
+        }}
       />
     </MainLayout>
   );
