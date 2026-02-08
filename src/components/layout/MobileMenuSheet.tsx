@@ -15,7 +15,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sparkles, Target } from "lucide-react";
+import { Sparkles, Target, Table2 } from "lucide-react";
 import {
   ArrowLeft,
   Home,
@@ -213,6 +213,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
                             <LayoutGrid className="h-4 w-4" />
                             Linhas e Colunas
+                          </div>
+                        </Link>
+                        <Link to="/tabela-movimentacao" onClick={closeAndNavigate}>
+                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                            <Table2 className="h-4 w-4" />
+                            Tabela de Movimentação
                           </div>
                         </Link>
                         <Link to="/smart-gerador" onClick={closeAndNavigate}>
