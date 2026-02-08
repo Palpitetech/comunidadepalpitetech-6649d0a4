@@ -122,22 +122,22 @@ serve(async (req) => {
 
     const systemPrompt = `Você é um especialista em análise estatística da Lotofácil.
 
-TAREFA: Analisar os últimos 4 concursos e sugerir ${totalDezenas} dezenas para um fechamento.
+TAREFA: Analisar os últimos 4 concursos e sugerir ${totalDezenas} dezenas para um fechamento, explicando sua estratégia.
 
 REGRAS DO FECHAMENTO:
 - A Lotofácil tem números de 01 a 25
 - Você DEVE selecionar EXATAMENTE ${totalDezenas} dezenas
 - As dezenas devem estar entre 1 e 25
-- Retorne APENAS um array JSON com os números, exemplo: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
 
 CRITÉRIOS DE ANÁLISE:
 1. Frequência: Dê preferência às dezenas que apareceram mais nos últimos concursos
 2. Equilíbrio Par/Ímpar: Mantenha proporção próxima de 8/7 ou 7/8
-3. Moldura: Inclua algumas dezenas da moldura (bordas do volante)
+3. Moldura: Inclua algumas dezenas da moldura (bordas do volante: 01-05, 06, 10, 11, 15, 16, 20, 21-25)
 4. Primos: Inclua alguns números primos (02, 03, 05, 07, 11, 13, 17, 19, 23)
 5. Repetidas: Considere as dezenas que se repetiram entre concursos
 
-Responda APENAS com o array JSON, sem explicações.`;
+NÚMEROS PRIMOS da Lotofácil: 02, 03, 05, 07, 11, 13, 17, 19, 23
+NÚMEROS DA MOLDURA: 01, 02, 03, 04, 05, 06, 10, 11, 15, 16, 20, 21, 22, 23, 24, 25`;
 
     const userPrompt = `Últimos 4 concursos da Lotofácil:
 
@@ -146,8 +146,9 @@ ${contexto.map(c => `Concurso ${c.concurso}: ${c.dezenas.map((d: number) => d.to
   - Primos: ${c.primos}, Moldura: ${c.moldura}
   - Repetidas do anterior: ${c.repetidas}`).join('\n\n')}
 
-Selecione EXATAMENTE ${totalDezenas} dezenas para o fechamento.`;
+Selecione EXATAMENTE ${totalDezenas} dezenas para o fechamento e explique a estratégia utilizada.`;
 
+    // Usar tool calling para obter resposta estruturada
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -161,6 +162,79 @@ Selecione EXATAMENTE ${totalDezenas} dezenas para o fechamento.`;
           { role: "user", content: userPrompt },
         ],
         temperature: 0.3,
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "sugerir_dezenas_fechamento",
+              description: "Retorna as dezenas sugeridas para o fechamento com a estratégia utilizada",
+              parameters: {
+                type: "object",
+                properties: {
+                  dezenas: {
+                    type: "array",
+                    items: { type: "number" },
+                    description: "Array com as dezenas selecionadas (entre 1 e 25)"
+                  },
+                  estrategia: {
+                    type: "object",
+                    properties: {
+                      ferramentas: {
+                        type: "array",
+                        items: { type: "string" },
+                        description: "Ferramentas/técnicas de análise utilizadas (ex: 'Frequência 4 concursos', 'Equilíbrio Par/Ímpar')"
+                      },
+                      dezenas_priorizadas: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            dezenas: { type: "array", items: { type: "number" } },
+                            motivo: { type: "string" }
+                          },
+                          required: ["dezenas", "motivo"]
+                        },
+                        description: "Dezenas que foram priorizadas e o motivo"
+                      },
+                      dezenas_evitadas: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            dezenas: { type: "array", items: { type: "number" } },
+                            motivo: { type: "string" }
+                          },
+                          required: ["dezenas", "motivo"]
+                        },
+                        description: "Dezenas que foram evitadas e o motivo"
+                      },
+                      filtros_aplicados: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            filtro: { type: "string" },
+                            valor_alvo: { type: "string" },
+                            motivo: { type: "string" }
+                          },
+                          required: ["filtro", "motivo"]
+                        },
+                        description: "Filtros estatísticos aplicados"
+                      },
+                      conclusao: {
+                        type: "string",
+                        description: "Resumo da estratégia em 1-2 frases"
+                      }
+                    },
+                    required: ["ferramentas", "filtros_aplicados", "conclusao"]
+                  }
+                },
+                required: ["dezenas", "estrategia"]
+              }
+            }
+          }
+        ],
+        tool_choice: { type: "function", function: { name: "sugerir_dezenas_fechamento" } }
       }),
     });
 
@@ -188,18 +262,37 @@ Selecione EXATAMENTE ${totalDezenas} dezenas para o fechamento.`;
     }
 
     const aiData = await aiResponse.json();
-    const content = aiData.choices?.[0]?.message?.content || "";
-
-    // Extrair array de dezenas da resposta
+    
+    // Extrair dados do tool call
     let dezenas: number[] = [];
+    let estrategia = null;
+    
     try {
-      // Tentar encontrar array na resposta
+      const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+      if (toolCall?.function?.arguments) {
+        const args = JSON.parse(toolCall.function.arguments);
+        dezenas = args.dezenas || [];
+        
+        // Converter para formato EstrategiaData
+        if (args.estrategia) {
+          estrategia = {
+            ferramentas: args.estrategia.ferramentas || [],
+            dezenas_fixas: args.estrategia.dezenas_priorizadas || [],
+            dezenas_evitadas: args.estrategia.dezenas_evitadas || [],
+            filtros_aplicados: args.estrategia.filtros_aplicados || [],
+            conclusao: args.estrategia.conclusao || "Análise baseada nos últimos 4 concursos."
+          };
+        }
+      }
+    } catch (e) {
+      console.error("Erro ao parsear resposta da IA:", e);
+      
+      // Fallback: tentar extrair do content se tool call falhar
+      const content = aiData.choices?.[0]?.message?.content || "";
       const match = content.match(/\[[\d,\s]+\]/);
       if (match) {
         dezenas = JSON.parse(match[0]);
       }
-    } catch (e) {
-      console.error("Erro ao parsear resposta da IA:", e, content);
     }
 
     // Validar dezenas
@@ -221,6 +314,23 @@ Selecione EXATAMENTE ${totalDezenas} dezenas para o fechamento.`;
 
     // Ordenar
     dezenas.sort((a, b) => a - b);
+
+    // Garantir estratégia mínima se não veio da IA
+    if (!estrategia) {
+      estrategia = {
+        ferramentas: ["Frequência (4 concursos)", "Equilíbrio Par/Ímpar"],
+        dezenas_fixas: [],
+        dezenas_evitadas: [],
+        filtros_aplicados: [
+          {
+            filtro: "Análise de Frequência",
+            valor_alvo: "4 concursos",
+            motivo: "Baseado nos resultados mais recentes"
+          }
+        ],
+        conclusao: "Seleção baseada na análise estatística dos últimos 4 concursos da Lotofácil."
+      };
+    }
 
     // Registrar uso (não admins)
     if (!isAdmin) {
@@ -245,7 +355,7 @@ Selecione EXATAMENTE ${totalDezenas} dezenas para o fechamento.`;
     }
 
     return new Response(
-      JSON.stringify({ dezenas, analise: contexto }),
+      JSON.stringify({ dezenas, estrategia, analise: contexto }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
