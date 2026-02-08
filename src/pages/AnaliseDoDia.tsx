@@ -74,14 +74,14 @@ function GrupoRow({ label, grupo, onFixar }: GrupoRowProps) {
   if (!grupo) return null;
   
   return (
-    <div className="flex items-center gap-2 p-2 rounded bg-muted/30">
-      <span className="text-[10px] font-medium text-muted-foreground uppercase shrink-0">{label}</span>
+    <div className="flex items-center gap-2 py-1.5 border-b border-border/50 last:border-b-0">
+      <span className="text-xs font-medium text-muted-foreground uppercase w-14 shrink-0">{label}</span>
       <div className="flex items-center gap-1 flex-1">
         {grupo.dezenas.map((d) => (
           <DezenaCirculoMini key={d} dezena={d} />
         ))}
       </div>
-      <span className="text-[10px] text-muted-foreground shrink-0">
+      <span className="text-xs text-muted-foreground shrink-0">
         {grupo.ocorrencias}x
       </span>
       {onFixar && (
@@ -90,7 +90,7 @@ function GrupoRow({ label, grupo, onFixar }: GrupoRowProps) {
           className="text-primary hover:text-primary/80 transition-colors shrink-0"
           title="Fixar no gerador"
         >
-          <Target className="h-3.5 w-3.5" />
+          <Target className="h-4 w-4" />
         </button>
       )}
     </div>
@@ -272,7 +272,7 @@ export default function AnaliseDoDia() {
                 <span className="text-sm font-semibold">Grupos Perfeitos</span>
               </div>
               
-              <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-0">
                 <GrupoRow 
                   label="Par" 
                   grupo={tendencias.grupos.par}
