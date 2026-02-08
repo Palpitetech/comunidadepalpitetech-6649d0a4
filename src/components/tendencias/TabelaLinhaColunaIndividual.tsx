@@ -162,27 +162,27 @@ export function TabelaLinhaColunaIndividual({ tipo, indice }: Props) {
                 key={item.qtdDezenas}
                 className="border-b border-border/30 hover:bg-muted/30"
               >
-                <TableCell>
-                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                <TableCell className="px-2 py-2">
+                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary font-bold text-xs">
                     {item.qtdDezenas}
                   </span>
                 </TableCell>
-                <TableCell>
+                <TableCell className="px-2 py-2">
                   <span
                     className={cn(
-                      "inline-flex items-center justify-center rounded-lg px-3 py-1 text-sm font-semibold min-w-[50px]",
+                      "inline-flex items-center justify-center rounded-lg px-2 py-0.5 text-xs font-semibold min-w-[45px]",
                       getOcorrenciaBadgeColor(item.ranking)
                     )}
                   >
                     {item.ocorrencias}
                   </span>
                 </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1.5">
+                <TableCell className="px-2 py-2">
+                  <div className="flex items-center gap-1">
                     {getTrendIcon(item.atrasoAtual, item.mediaOcorrencia)}
                     <span
                       className={cn(
-                        "text-sm font-medium",
+                        "text-xs font-medium",
                         item.atrasoAtual >= item.mediaOcorrencia && "text-green-600"
                       )}
                     >
@@ -190,13 +190,13 @@ export function TabelaLinhaColunaIndividual({ tipo, indice }: Props) {
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
+                <TableCell className="px-2 py-2 text-xs text-muted-foreground">
                   {formatMedia(item.mediaOcorrencia)}
                 </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
+                <TableCell className="px-2 py-2 text-xs text-muted-foreground">
                   {item.ultimaOcorrencia > 0 ? `#${item.ultimaOcorrencia}` : "-"}
                 </TableCell>
-                <TableCell className="text-sm font-medium">
+                <TableCell className="px-2 py-2 text-xs font-medium">
                   {item.porcentagem.toFixed(1)}%
                 </TableCell>
               </TableRow>
