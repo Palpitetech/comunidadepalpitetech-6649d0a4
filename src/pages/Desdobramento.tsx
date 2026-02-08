@@ -371,52 +371,50 @@ export default function Desdobramento() {
 
         <p className="text-[10px] text-muted-foreground text-center -mt-2 mb-1">Limite de 250 palpites</p>
 
-        {/* Grid de Dezenas - Fixo acima do botão */}
-        <Card>
-          <CardContent className="pt-4 space-y-3">
-            <ModoSeletorDesdobramento modo={modoGrid} onChange={setModoGrid} />
-            <GridDesdobramento
-              selecionadas={[]}
-              fixas={dezenasFixas}
-              excluidas={dezenasExcluidas}
-              repetidas={ultimoSorteio}
-              modo={modoGrid}
-              onToggle={(numero) => {
-                if (modoGrid === "fixar") {
-                  if (dezenasExcluidas.includes(numero)) {
-                    setDezenasExcluidas(prev => prev.filter(d => d !== numero));
-                  }
-                  if (dezenasFixas.includes(numero)) {
-                    setDezenasFixas(prev => prev.filter(d => d !== numero));
-                  } else {
-                    setDezenasFixas(prev => [...prev, numero].sort((a, b) => a - b));
-                  }
-                } else if (modoGrid === "excluir") {
-                  if (dezenasFixas.includes(numero)) {
-                    setDezenasFixas(prev => prev.filter(d => d !== numero));
-                  }
-                  if (dezenasExcluidas.includes(numero)) {
-                    setDezenasExcluidas(prev => prev.filter(d => d !== numero));
-                  } else {
-                    setDezenasExcluidas(prev => [...prev, numero].sort((a, b) => a - b));
-                  }
+        {/* Grid de Dezenas - Fullscreen style */}
+        <div className="space-y-3">
+          <ModoSeletorDesdobramento modo={modoGrid} onChange={setModoGrid} />
+          <GridDesdobramento
+            selecionadas={[]}
+            fixas={dezenasFixas}
+            excluidas={dezenasExcluidas}
+            repetidas={ultimoSorteio}
+            modo={modoGrid}
+            onToggle={(numero) => {
+              if (modoGrid === "fixar") {
+                if (dezenasExcluidas.includes(numero)) {
+                  setDezenasExcluidas(prev => prev.filter(d => d !== numero));
                 }
-              }}
-            />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Fixas: {dezenasFixas.length} | Excluídas: {dezenasExcluidas.length}</span>
-              {(dezenasFixas.length > 0 || dezenasExcluidas.length > 0) && (
-                <button 
-                  type="button"
-                  onClick={() => { setDezenasFixas([]); setDezenasExcluidas([]); }}
-                  className="text-destructive hover:underline"
-                >
-                  Limpar
-                </button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                if (dezenasFixas.includes(numero)) {
+                  setDezenasFixas(prev => prev.filter(d => d !== numero));
+                } else {
+                  setDezenasFixas(prev => [...prev, numero].sort((a, b) => a - b));
+                }
+              } else if (modoGrid === "excluir") {
+                if (dezenasFixas.includes(numero)) {
+                  setDezenasFixas(prev => prev.filter(d => d !== numero));
+                }
+                if (dezenasExcluidas.includes(numero)) {
+                  setDezenasExcluidas(prev => prev.filter(d => d !== numero));
+                } else {
+                  setDezenasExcluidas(prev => [...prev, numero].sort((a, b) => a - b));
+                }
+              }
+            }}
+          />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>Fixas: {dezenasFixas.length} | Excluídas: {dezenasExcluidas.length}</span>
+            {(dezenasFixas.length > 0 || dezenasExcluidas.length > 0) && (
+              <button 
+                type="button"
+                onClick={() => { setDezenasFixas([]); setDezenasExcluidas([]); }}
+                className="text-destructive hover:underline"
+              >
+                Limpar
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* Botões de Ação */}
         <div className="flex gap-2">
