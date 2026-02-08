@@ -42,8 +42,7 @@ export function DezenaDesdobramentoMegaSena({
         "relative aspect-square flex items-center justify-center",
         "text-xl font-bold rounded-lg border-2 transition-all duration-150",
         "active:scale-95",
-        getClasses(),
-        isRepetida && !fixa && !excluida && !selecionada && "ring-2 ring-amber-400 ring-offset-1"
+        getClasses()
       )}
     >
       {formatNum(numero)}
