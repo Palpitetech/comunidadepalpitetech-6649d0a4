@@ -7,6 +7,7 @@ import {
   TabelaEstatisticaGenerica, 
   TabelaEstatisticaConfig 
 } from "@/components/tendencias/TabelaEstatisticaGenerica";
+import { TabelaLinhasColunas } from "@/components/tendencias/TabelaLinhasColunas";
 
 const configParesImpares: TabelaEstatisticaConfig = {
   queryKey: "estatisticas-pares-impares",
@@ -60,12 +61,12 @@ export default function Tendencias() {
         <div ref={contentRef} className="space-y-8">
           {/* Tabela de Pares/Ímpares */}
           <section>
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <span className="text-2xl">🎯</span>
-            Combinações de Pares e Ímpares
-          </h2>
-          <TabelaEstatisticaGenerica config={configParesImpares} />
-        </section>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <span className="text-2xl">🎯</span>
+              Combinações de Pares e Ímpares
+            </h2>
+            <TabelaEstatisticaGenerica config={configParesImpares} />
+          </section>
 
           {/* Tabela de Moldura */}
           <section>
@@ -92,6 +93,24 @@ export default function Tendencias() {
               Combinações de Repetidas e Novas
             </h2>
             <TabelaEstatisticaGenerica config={configRepetidas} />
+          </section>
+
+          {/* Tabela de Linhas */}
+          <section>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <span className="text-2xl">📊</span>
+              Distribuição por Linhas
+            </h2>
+            <TabelaLinhasColunas tipo="linhas" />
+          </section>
+
+          {/* Tabela de Colunas */}
+          <section>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <span className="text-2xl">📈</span>
+              Distribuição por Colunas
+            </h2>
+            <TabelaLinhasColunas tipo="colunas" />
           </section>
         </div>
       </div>

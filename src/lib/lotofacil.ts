@@ -249,3 +249,67 @@ export function contarMultiplosDe3(dezenas: number[]): number {
 export function getMultiplosDe3(dezenas: number[]): number[] {
   return dezenas.filter(isMultiploDe3);
 }
+
+// =============================================================================
+// LINHAS E COLUNAS
+// =============================================================================
+
+/**
+ * Estrutura do volante 5x5:
+ * Linha 1: 01-05 | Linha 2: 06-10 | Linha 3: 11-15 | Linha 4: 16-20 | Linha 5: 21-25
+ * Coluna 1: 01, 06, 11, 16, 21 | Coluna 2: 02, 07, 12, 17, 22 | etc.
+ */
+
+/**
+ * Retorna a linha de uma dezena (1-5)
+ */
+export function getLinha(dezena: number): number {
+  return Math.ceil(dezena / 5);
+}
+
+/**
+ * Retorna a coluna de uma dezena (1-5)
+ */
+export function getColuna(dezena: number): number {
+  return ((dezena - 1) % 5) + 1;
+}
+
+/**
+ * Conta quantas dezenas estão em cada linha
+ * Retorna um array [linha1, linha2, linha3, linha4, linha5]
+ */
+export function contarPorLinha(dezenas: number[]): number[] {
+  const contagem = [0, 0, 0, 0, 0];
+  dezenas.forEach((d) => {
+    const linha = getLinha(d);
+    contagem[linha - 1]++;
+  });
+  return contagem;
+}
+
+/**
+ * Conta quantas dezenas estão em cada coluna
+ * Retorna um array [col1, col2, col3, col4, col5]
+ */
+export function contarPorColuna(dezenas: number[]): number[] {
+  const contagem = [0, 0, 0, 0, 0];
+  dezenas.forEach((d) => {
+    const coluna = getColuna(d);
+    contagem[coluna - 1]++;
+  });
+  return contagem;
+}
+
+/**
+ * Gera a chave de distribuição por linhas (ex: "3-3-3-3-3")
+ */
+export function getDistribuicaoLinhas(dezenas: number[]): string {
+  return contarPorLinha(dezenas).join("-");
+}
+
+/**
+ * Gera a chave de distribuição por colunas (ex: "3-3-3-3-3")
+ */
+export function getDistribuicaoColunas(dezenas: number[]): string {
+  return contarPorColuna(dezenas).join("-");
+}
