@@ -1,127 +1,95 @@
 
-# Plano: Novo Layout do Gerador de Fechamento
+# Plano: Testar Garantia do Fechamento
 
-## Visao Geral
+## Objetivo
+Criar um sistema de simulação que testa a garantia matemática do fechamento, sorteando 15 dezenas aleatórias dentre as selecionadas e mostrando quantos prêmios seriam ganhos com os jogos gerados.
 
-Reorganizar completamente a estrutura visual da pagina `/fechamento` para uma experiencia mais clara e intuitiva, seguindo a nova hierarquia de informacoes solicitada.
+---
 
-## Novo Layout Proposto
+## O que será feito
+
+### 1. Remover botão "Novo Fechamento"
+O botão atual será substituído pelo novo botão de teste.
+
+### 2. Adicionar botão "Testar Garantia"
+- Ícone de teste/simulação (FlaskConical ou Dice)
+- Ao clicar, simula um sorteio com 15 dezenas
+- Mostra os resultados em uma tabela
+
+### 3. Lógica de Simulação
+A simulação irá:
+1. Pegar as dezenas originais selecionadas (ex: 16 para FC01)
+2. Sortear aleatoriamente 15 delas (simulando o resultado da Lotofácil)
+3. Comparar cada jogo gerado contra o "resultado simulado"
+4. Contar quantos acertos cada jogo teve
+5. Agrupar por faixa de premiação (15, 14, 13, 12, 11 pontos)
+
+### 4. Tabela de Resultados
+Exibir após a simulação:
 
 ```text
-+-----------------------------------------------+
-|                    Header                      |
-+-----------------------------------------------+
-|         Escolha sua garantia aqui             |
-|            [Dropdown Select]                  |
-+-----------------------------------------------+
-|                                               |
-|  O fechamento "16-14-4" tem as regras:        |
-|                                               |
-|  1) Selecione 16 numeros + Fixas (opcional)   |
-|  2) Clique em Gerar                           |
-|  3) Garantia: 14 pontos                       |
-|  4) Condicao: Se acertar 15 dos 16            |
-|                                               |
-+-----------------------------------------------+
-|                                               |
-|         Grid 5x5 (DezenaVolante)              |
-|                                               |
-+-----------------------------------------------+
-|  Total: 16 | Selecionados: 12 | Fixos: 2     |
-+-----------------------------------------------+
-|            [Gerar Palpites]                   |
-+-----------------------------------------------+
+┌─────────────────────────────────────────────┐
+│ Resultado Simulado                          │
+│ 01 - 03 - 05 - 07 - 09 - 10 - 11 - 12 - 14 │
+│ 15 - 17 - 18 - 20 - 22 - 25                │
+├─────────────────────────────────────────────┤
+│ Premiações                                  │
+├──────────────┬──────────────────────────────┤
+│ 15 pontos    │ 0 jogo(s)                    │
+│ 14 pontos    │ 1 jogo(s) ✓ Garantia        │
+│ 13 pontos    │ 3 jogo(s)                    │
+│ 12 pontos    │ 0 jogo(s)                    │
+│ 11 pontos    │ 0 jogo(s)                    │
+└──────────────┴──────────────────────────────┘
 ```
 
-## Componentes a Criar/Modificar
+### 5. Indicador de Garantia Cumprida
+- Destacar visualmente quando a garantia é atingida
+- Badge verde ao lado da faixa que cumpre a garantia
+- Mensagem de sucesso ou falha
 
-### 1. Novo Componente: `FechamentoRulesCard`
+---
 
-Card informativo que exibe as regras dinamicas do fechamento selecionado:
+## Arquivos a modificar
 
-- Recebe a estrategia atual como prop
-- Exibe as 4 regras em lista numerada
-- Design clean com icones para cada regra
-- Atualiza automaticamente quando muda a estrategia
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/lib/fechamento.ts` | Adicionar função `simularGarantia()` |
+| `src/components/fechamento/ResultadosFechamento.tsx` | Remover "Novo Fechamento", adicionar "Testar Garantia" + tabela de resultados |
 
-### 2. Novo Componente: `FechamentoStatusBar`
+---
 
-Barra de status compacta que mostra:
+## Detalhes Técnicos
 
-- **Total**: Quantidade necessaria para a estrategia (ex: 16)
-- **Selecionados**: Quantidade atual de dezenas selecionadas
-- **Fixos**: Quantidade de dezenas fixas (se houver)
-- Visual clean com separadores
-
-### 3. Modificar: `EstrategiaFechamentoSelector`
-
-Simplificar para exibir apenas:
-
-- Label "Escolha sua garantia"
-- Dropdown com opcoes mais descritivas
-- Adicionar campo `condicao` na interface para explicar quando a garantia se aplica
-
-### 4. Modificar: `Fechamento.tsx` (Pagina Principal)
-
-Reorganizar a estrutura:
-
-1. Remover contador flutuante sticky
-2. Mover dropdown para o topo
-3. Adicionar card de regras abaixo do dropdown
-4. Manter Grid 5x5 centralizado
-5. Adicionar status bar antes do botao
-6. Botao "Gerar Palpites" no final
-
-### 5. Estender Interface de Estrategia
-
-Adicionar novos campos ao tipo `EstrategiaFechamento`:
+### Nova função em `fechamento.ts`
 
 ```typescript
-interface EstrategiaFechamento {
-  // ... campos existentes
-  identificacao: string; // ex: "16-14-4"
-  condicao: string; // ex: "Se acertar 15 dos 16 numeros"
+interface ResultadoSimulacao {
+  resultadoSimulado: number[];
+  acertosPorJogo: number[];
+  contagem: Record<number, number>; // { 15: 0, 14: 1, 13: 2, ... }
+  garantiaCumprida: boolean;
 }
+
+function simularGarantia(
+  dezenasSelecionadas: number[],
+  jogos: number[][],
+  garantia: number
+): ResultadoSimulacao
 ```
 
-## Detalhes Tecnicos
+### Componente de Tabela
+- Usar componentes `Table` existentes do shadcn/ui
+- Estilo compacto e legível
+- Highlight especial na linha da garantia
 
-### Arquivos a Criar
+---
 
-| Arquivo | Descricao |
-|---------|-----------|
-| `src/components/fechamento/FechamentoRulesCard.tsx` | Card com regras dinamicas |
-| `src/components/fechamento/FechamentoStatusBar.tsx` | Barra de status compacta |
+## Fluxo do Usuário
 
-### Arquivos a Modificar
-
-| Arquivo | Mudancas |
-|---------|----------|
-| `src/pages/Fechamento.tsx` | Reorganizar layout completo |
-| `src/components/fechamento/EstrategiaFechamentoSelector.tsx` | Simplificar label e adicionar condicao |
-
-### Logica de Fixas
-
-O layout prepara espaco para "Fixas" (dezenas obrigatorias):
-
-- Estado `fixas` ja existe no componente `GridDezenasVolante`
-- A contagem de fixas sera exibida na status bar
-- Por enquanto, fixas = 0 (funcionalidade futura)
-
-### Responsividade
-
-- Grid mantem `max-w-sm mx-auto` para centralizacao
-- Status bar usa flex com justify-between
-- Cards usam padding responsivo
-
-## Resultado Esperado
-
-O usuario vera:
-
-1. Dropdown claro no topo para escolher garantia
-2. Card explicativo com as regras do fechamento
-3. Grid 5x5 para selecionar numeros
-4. Barra de status mostrando progresso
-5. Botao de acao no final
-
-A experiencia sera mais intuitiva, especialmente para usuarios seniors, pois as regras ficam visiveis antes da interacao com o grid.
+1. Usuário gera o fechamento normalmente
+2. Vê os jogos gerados com a toolbar de ações
+3. Clica em "Testar Garantia"
+4. Sistema sorteia 15 números das dezenas originais
+5. Tabela aparece mostrando o resultado simulado e a contagem de prêmios
+6. Usuário pode clicar novamente para nova simulação
