@@ -40,6 +40,7 @@ import FechamentoMegaSena from "./pages/megasena/FechamentoMegaSena";
 import DesdobramentoMegaSena from "./pages/megasena/DesdobramentoMegaSena";
 import LinhasColunasMegaSena from "./pages/megasena/LinhasColunasMegaSena";
 import AnaliseDoDiaMegaSena from "./pages/megasena/AnaliseDoDiaMegaSena";
+import TabelaMovimentacaoMegaSena from "./pages/megasena/TabelaMovimentacaoMegaSena";
 
 const queryClient = new QueryClient();
 
@@ -85,6 +86,7 @@ const App = () => (
             <Route path="/megasena/desdobramento" element={<ProtectedRoute><DesdobramentoMegaSena /></ProtectedRoute>} />
             <Route path="/megasena/linhas-colunas" element={<ProtectedRoute><LinhasColunasMegaSena /></ProtectedRoute>} />
             <Route path="/megasena/analise-do-dia" element={<ProtectedRoute><AnaliseDoDiaMegaSena /></ProtectedRoute>} />
+            <Route path="/megasena/tabela-movimentacao" element={<ProtectedRoute><TabelaMovimentacaoMegaSena /></ProtectedRoute>} />
             
             {/* Rotas Admin */}
             <Route path="/admin" element={<AdminRoute><AdminIndex /></AdminRoute>} />
