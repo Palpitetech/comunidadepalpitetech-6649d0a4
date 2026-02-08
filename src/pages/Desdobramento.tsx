@@ -2,10 +2,10 @@ import { useState, useEffect, useMemo } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FiltroLinhasColunas } from "@/components/desdobramento/FiltroLinhasColunas";
+import { FiltroPatternSelector } from "@/components/desdobramento/FiltroPatternSelector";
 import { GridDesdobramento } from "@/components/desdobramento/GridDesdobramento";
 import { ModoSeletorDesdobramento } from "@/components/desdobramento/ModoSeletorDesdobramento";
 import {
@@ -22,7 +22,6 @@ import {
   contarCombinacoes,
   FiltrosDesdobramento 
 } from "@/lib/desdobramento";
-import { formatarDezena } from "@/lib/lotofacil";
 import { DezenaCirculoMini } from "@/components/lotofacil/DezenaCirculoMini";
 import { cn } from "@/lib/utils";
 import { 
@@ -31,13 +30,49 @@ import {
   AlertCircle, 
   ChevronDown, 
   ChevronUp,
-  RotateCcw,
-  Info
+  RotateCcw
 } from "lucide-react";
 
 export default function Desdobramento() {
   const isMobile = useIsMobile();
   const { repetidas, impares, primos, moldura, isLoading: statsLoading } = useDesdobramentoStats();
+  
+  // Auto top 3 para cada padrão
+  const autoTop3Impares = useMemo(() => impares.slice(0, 3).map(i => i.valor), [impares]);
+  const autoTop3Repetidas = useMemo(() => repetidas.slice(0, 3).map(r => r.valor), [repetidas]);
+  const autoTop3Primos = useMemo(() => primos.slice(0, 3).map(p => p.valor), [primos]);
+  const autoTop3Moldura = useMemo(() => moldura.slice(0, 3).map(m => m.valor), [moldura]);
+  
+  // Estado dos filtros de padrões (inicializa com top 3)
+  const [filtroImpares, setFiltroImpares] = useState<number[]>([]);
+  const [filtroRepetidas, setFiltroRepetidas] = useState<number[]>([]);
+  const [filtroPrimos, setFiltroPrimos] = useState<number[]>([]);
+  const [filtroMoldura, setFiltroMoldura] = useState<number[]>([]);
+  
+  // Inicializar filtros quando dados carregarem
+  useEffect(() => {
+    if (autoTop3Impares.length > 0 && filtroImpares.length === 0) {
+      setFiltroImpares(autoTop3Impares);
+    }
+  }, [autoTop3Impares]);
+  
+  useEffect(() => {
+    if (autoTop3Repetidas.length > 0 && filtroRepetidas.length === 0) {
+      setFiltroRepetidas(autoTop3Repetidas);
+    }
+  }, [autoTop3Repetidas]);
+  
+  useEffect(() => {
+    if (autoTop3Primos.length > 0 && filtroPrimos.length === 0) {
+      setFiltroPrimos(autoTop3Primos);
+    }
+  }, [autoTop3Primos]);
+  
+  useEffect(() => {
+    if (autoTop3Moldura.length > 0 && filtroMoldura.length === 0) {
+      setFiltroMoldura(autoTop3Moldura);
+    }
+  }, [autoTop3Moldura]);
   
   // Estado dos filtros de linhas e colunas (null = não configurado = aleatório)
   const [linhas, setLinhas] = useState<number[] | null>(null);
@@ -58,7 +93,6 @@ export default function Desdobramento() {
   // Controle de expansão dos filtros
   const [filtrosPadroesAbertos, setFiltrosPadroesAbertos] = useState(false);
   const [filtrosAvancadosAbertos, setFiltrosAvancadosAbertos] = useState(false);
-  const [gridAberto, setGridAberto] = useState(false);
   
   // Estado do grid de dezenas
   const [modoGrid, setModoGrid] = useState<"fixar" | "excluir">("fixar");
@@ -88,19 +122,19 @@ export default function Desdobramento() {
   const somaColunas = colunas ? colunas.reduce((a, b) => a + b, 0) : qtdDezenas;
   const filtrosValidos = (!linhas || somaLinhas === qtdDezenas) && (!colunas || somaColunas === qtdDezenas);
 
-  // Montar objeto de filtros com top 3 de cada padrão
+  // Montar objeto de filtros com valores selecionados (manuais ou auto)
   const filtros: FiltrosDesdobramento = useMemo(() => ({
-    qtdImpares: impares.slice(0, 3).map(i => i.valor),
-    qtdRepetidas: repetidas.slice(0, 3).map(r => r.valor),
-    qtdPrimos: primos.slice(0, 3).map(p => p.valor),
-    qtdMoldura: moldura.slice(0, 3).map(m => m.valor),
+    qtdImpares: filtroImpares.length > 0 ? filtroImpares : autoTop3Impares,
+    qtdRepetidas: filtroRepetidas.length > 0 ? filtroRepetidas : autoTop3Repetidas,
+    qtdPrimos: filtroPrimos.length > 0 ? filtroPrimos : autoTop3Primos,
+    qtdMoldura: filtroMoldura.length > 0 ? filtroMoldura : autoTop3Moldura,
     linhas,
     colunas,
     qtdDezenas,
     dezenasUltimoSorteio: ultimoSorteio,
     dezenasFixas,
     dezenasExcluidas,
-  }), [impares, repetidas, primos, moldura, linhas, colunas, qtdDezenas, ultimoSorteio, dezenasFixas, dezenasExcluidas]);
+  }), [filtroImpares, filtroRepetidas, filtroPrimos, filtroMoldura, autoTop3Impares, autoTop3Repetidas, autoTop3Primos, autoTop3Moldura, linhas, colunas, qtdDezenas, ultimoSorteio, dezenasFixas, dezenasExcluidas]);
 
   // Estimar combinações (com debounce)
   const [estimativa, setEstimativa] = useState<number | null>(null);
@@ -153,6 +187,11 @@ export default function Desdobramento() {
     setDezenasFixas([]);
     setDezenasExcluidas([]);
     setQtdDezenas(15);
+    // Resetar filtros para automático (top 3)
+    setFiltroImpares(autoTop3Impares);
+    setFiltroRepetidas(autoTop3Repetidas);
+    setFiltroPrimos(autoTop3Primos);
+    setFiltroMoldura(autoTop3Moldura);
   };
 
   if (statsLoading) {
@@ -201,46 +240,46 @@ export default function Desdobramento() {
           )}
         </button>
 
-        {/* Exibição dos Top 3 padrões aceitos */}
+        {/* Seletores de padrões com modo auto/manual */}
         {filtrosPadroesAbertos && (
           <Card>
             <CardContent className="pt-4 space-y-3">
               <p className="text-xs text-muted-foreground text-center mb-2">
-                Aceita automaticamente os 3 valores mais frequentes de cada padrão
+                Por padrão usa os Top 3 mais frequentes. Ative "Manual" para personalizar.
               </p>
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-2 bg-muted/30 rounded-lg">
-                  <div className="text-xs text-muted-foreground mb-1">🔢 Ímpares</div>
-                  <div className="flex gap-1">
-                    {impares.slice(0, 3).map(i => (
-                      <Badge key={i.valor} variant="outline" className="text-xs">{i.valor}</Badge>
-                    ))}
-                  </div>
-                </div>
-                <div className="p-2 bg-muted/30 rounded-lg">
-                  <div className="text-xs text-muted-foreground mb-1">🔄 Repetidas</div>
-                  <div className="flex gap-1">
-                    {repetidas.slice(0, 3).map(r => (
-                      <Badge key={r.valor} variant="outline" className="text-xs">{r.valor}</Badge>
-                    ))}
-                  </div>
-                </div>
-                <div className="p-2 bg-muted/30 rounded-lg">
-                  <div className="text-xs text-muted-foreground mb-1">✨ Primos</div>
-                  <div className="flex gap-1">
-                    {primos.slice(0, 3).map(p => (
-                      <Badge key={p.valor} variant="outline" className="text-xs">{p.valor}</Badge>
-                    ))}
-                  </div>
-                </div>
-                <div className="p-2 bg-muted/30 rounded-lg">
-                  <div className="text-xs text-muted-foreground mb-1">🖼️ Moldura</div>
-                  <div className="flex gap-1">
-                    {moldura.slice(0, 3).map(m => (
-                      <Badge key={m.valor} variant="outline" className="text-xs">{m.valor}</Badge>
-                    ))}
-                  </div>
-                </div>
+                <FiltroPatternSelector
+                  label="Ímpares"
+                  emoji="🔢"
+                  opcoes={impares}
+                  valoresSelecionados={filtroImpares}
+                  onChange={setFiltroImpares}
+                  autoTop3={autoTop3Impares}
+                />
+                <FiltroPatternSelector
+                  label="Repetidas"
+                  emoji="🔄"
+                  opcoes={repetidas}
+                  valoresSelecionados={filtroRepetidas}
+                  onChange={setFiltroRepetidas}
+                  autoTop3={autoTop3Repetidas}
+                />
+                <FiltroPatternSelector
+                  label="Primos"
+                  emoji="✨"
+                  opcoes={primos}
+                  valoresSelecionados={filtroPrimos}
+                  onChange={setFiltroPrimos}
+                  autoTop3={autoTop3Primos}
+                />
+                <FiltroPatternSelector
+                  label="Moldura"
+                  emoji="🖼️"
+                  opcoes={moldura}
+                  valoresSelecionados={filtroMoldura}
+                  onChange={setFiltroMoldura}
+                  autoTop3={autoTop3Moldura}
+                />
               </div>
             </CardContent>
           </Card>
