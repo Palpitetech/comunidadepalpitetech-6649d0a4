@@ -257,16 +257,49 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                 </Accordion>
               </div>
 
-              {/* Accordion de Mega Sena */}
-              <div className="px-4">
-                <Accordion type="single" collapsible>
-                  <AccordionItem value="megasena" className="border-none">
-                    <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
-                      <div className="flex items-center gap-3">
-                        <BarChart3 className="h-5 w-5 stroke-[1.5]" />
-                        <span>Mega Sena</span>
-                      </div>
-                    </AccordionTrigger>
+               {/* Accordion de Dupla Sena */}
+               <div className="px-4">
+                 <Accordion type="single" collapsible>
+                   <AccordionItem value="duplasena" className="border-none">
+                     <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
+                       <div className="flex items-center gap-3">
+                         <BarChart3 className="h-5 w-5 stroke-[1.5]" />
+                         <span>Dupla Sena</span>
+                       </div>
+                     </AccordionTrigger>
+                     <AccordionContent className="pb-0">
+                       <div className="pl-8 space-y-0">
+                         <Link to="/duplasena/resultados" onClick={closeAndNavigate}>
+                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
+                             Resultados
+                           </div>
+                         </Link>
+                         <Link to="/duplasena/tendencias" onClick={closeAndNavigate}>
+                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
+                             Tendências
+                           </div>
+                         </Link>
+                         <Link to="/duplasena/frequencia" onClick={closeAndNavigate}>
+                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
+                             Quentes e Frias
+                           </div>
+                         </Link>
+                       </div>
+                     </AccordionContent>
+                   </AccordionItem>
+                 </Accordion>
+               </div>
+
+               {/* Accordion de Mega Sena */}
+               <div className="px-4">
+                 <Accordion type="single" collapsible>
+                   <AccordionItem value="megasena" className="border-none">
+                     <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
+                       <div className="flex items-center gap-3">
+                         <BarChart3 className="h-5 w-5 stroke-[1.5]" />
+                         <span>Mega Sena</span>
+                       </div>
+                     </AccordionTrigger>
                     <AccordionContent className="pb-0">
                        <div className="pl-8 space-y-0">
                          <Link to="/megasena/analise-do-dia" onClick={closeAndNavigate}>
