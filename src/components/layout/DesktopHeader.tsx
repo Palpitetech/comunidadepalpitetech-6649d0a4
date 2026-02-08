@@ -10,8 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot, Dices, Sparkles, Shuffle } from "lucide-react";
+import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot, Dices, Shuffle } from "lucide-react";
 
 export function DesktopHeader() {
   const { isAuthenticated, profile, signOut } = useAuthContext();
@@ -58,122 +57,142 @@ export function DesktopHeader() {
               Comunidade
             </Button>
           </Link>
+          {/* Lotofácil Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="text-senior-base gap-2 h-12">
-                <Wrench className="h-5 w-5" />
-                Ferramentas
+                🍀
+                Lotofácil
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="w-64 p-2">
-              {isAdmin ? (
-                <Tabs defaultValue="ferramentas" className="w-full">
-                  <TabsList className="w-full mb-2">
-                    <TabsTrigger value="ferramentas" className="flex-1 text-sm">Ferramentas</TabsTrigger>
-                    <TabsTrigger value="admin" className="flex-1 text-sm">Admin</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="ferramentas" className="mt-0 space-y-1">
-                    <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                      <Link to="/palpite-do-dia">
-                        <Sparkles className="h-5 w-5" />
-                        Análise do Dia
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                      <Link to="/resultados">
-                        <BarChart3 className="h-5 w-5" />
-                        Resultados
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                      <Link to="/tendencias">
-                        <TrendingUp className="h-5 w-5" />
-                        Tendências
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                      <Link to="/frequencia">
-                        <Flame className="h-5 w-5" />
-                        Quentes e Frias
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                      <Link to="/smart-gerador">
-                        <Dices className="h-5 w-5" />
-                        Gerador de Palpites
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                      <Link to="/desdobramento">
-                        <Shuffle className="h-5 w-5" />
-                        Desdobramento
-                      </Link>
-                    </DropdownMenuItem>
-                  </TabsContent>
-                  <TabsContent value="admin" className="mt-0 space-y-1">
-                    <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                      <Link to="/admin">
-                        <UserCog className="h-5 w-5" />
-                        Painel Admin
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                      <Link to="/admin/planos">
-                        <FileText className="h-5 w-5" />
-                        Planos
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                      <Link to="/admin/usuarios">
-                        <Users className="h-5 w-5" />
-                        Usuários
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                      <Link to="/admin/bots">
-                        <Bot className="h-5 w-5" />
-                        Bots
-                      </Link>
-                    </DropdownMenuItem>
-                  </TabsContent>
-                </Tabs>
-              ) : (
-                <>
-                  <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                    <Link to="/palpite-do-dia">
-                      <Sparkles className="h-5 w-5" />
-                      Análise do Dia
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                    <Link to="/resultados">
-                      <BarChart3 className="h-5 w-5" />
-                      Resultados
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                    <Link to="/tendencias">
-                      <TrendingUp className="h-5 w-5" />
-                      Tendências
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                    <Link to="/frequencia">
-                      <Flame className="h-5 w-5" />
-                      Quentes e Frias
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
-                    <Link to="/smart-gerador">
-                      <Dices className="h-5 w-5" />
-                      Gerador de Palpites
-                    </Link>
-                  </DropdownMenuItem>
-                </>
-              )}
+            <DropdownMenuContent align="center" className="w-56 p-2">
+              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                <Link to="/resultados">
+                  <BarChart3 className="h-5 w-5" />
+                  Resultados
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                <Link to="/tendencias">
+                  <TrendingUp className="h-5 w-5" />
+                  Tendências
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                <Link to="/frequencia">
+                  <Flame className="h-5 w-5" />
+                  Quentes e Frias
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                <Link to="/smart-gerador">
+                  <Dices className="h-5 w-5" />
+                  Gerador de Palpites
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                <Link to="/desdobramento">
+                  <Shuffle className="h-5 w-5" />
+                  Desdobramento
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                <Link to="/fechamento">
+                  <Wrench className="h-5 w-5" />
+                  Fechamento
+                </Link>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Mega Sena Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="text-senior-base gap-2 h-12">
+                🎱
+                Mega Sena
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-56 p-2">
+              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                <Link to="/megasena/resultados">
+                  <BarChart3 className="h-5 w-5" />
+                  Resultados
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                <Link to="/megasena/tendencias">
+                  <TrendingUp className="h-5 w-5" />
+                  Tendências
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                <Link to="/megasena/frequencia">
+                  <Flame className="h-5 w-5" />
+                  Quentes e Frias
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                <Link to="/megasena/gerador">
+                  <Dices className="h-5 w-5" />
+                  Gerador de Palpites
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                <Link to="/megasena/desdobramento">
+                  <Shuffle className="h-5 w-5" />
+                  Desdobramento
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                <Link to="/megasena/fechamento">
+                  <Wrench className="h-5 w-5" />
+                  Fechamento
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Admin Dropdown - apenas para admins */}
+          {isAdmin && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="text-senior-base gap-2 h-12">
+                  <UserCog className="h-5 w-5" />
+                  Admin
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-56 p-2">
+                <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                  <Link to="/admin">
+                    <UserCog className="h-5 w-5" />
+                    Painel Admin
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                  <Link to="/admin/planos">
+                    <FileText className="h-5 w-5" />
+                    Planos
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                  <Link to="/admin/usuarios">
+                    <Users className="h-5 w-5" />
+                    Usuários
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                  <Link to="/admin/bots">
+                    <Bot className="h-5 w-5" />
+                    Bots
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </nav>
 
         {/* User Actions */}
