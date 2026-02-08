@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { formatarDezena, isImpar, isMoldura, isMultiploDe3 } from "@/lib/lotofacil";
+import { formatarDezena } from "@/lib/lotofacil";
 
 interface DezenaDesdobramentoProps {
   numero: number;
@@ -15,13 +15,8 @@ export function DezenaDesdobramento({
   selecionada, 
   fixa, 
   excluida,
-  isRepetida, 
   onClick 
 }: DezenaDesdobramentoProps) {
-  const impar = isImpar(numero);
-  const moldura = isMoldura(numero);
-  const multiploDe3 = isMultiploDe3(numero);
-
   return (
     <button
       type="button"
@@ -39,36 +34,7 @@ export function DezenaDesdobramento({
         !selecionada && !fixa && !excluida && "bg-card border-border text-foreground hover:border-primary/50 hover:shadow-sm"
       )}
     >
-      {/* Indicador Ímpar - Canto superior esquerdo */}
-      {impar && (
-        <span className="absolute top-0.5 left-1 text-[8px] font-bold text-muted-foreground">
-          I
-        </span>
-      )}
-
-      {/* Indicador Repetida - Canto superior direito */}
-      {isRepetida && (
-        <span className="absolute top-0.5 right-1 text-[8px] font-bold text-muted-foreground">
-          R
-        </span>
-      )}
-
-      {/* Número central */}
       {formatarDezena(numero)}
-
-      {/* Indicador Moldura - Canto inferior esquerdo */}
-      {moldura && (
-        <span className="absolute bottom-0.5 left-1 text-[8px] font-bold text-muted-foreground">
-          M
-        </span>
-      )}
-
-      {/* Indicador Múltiplo de 3 - Canto inferior direito */}
-      {multiploDe3 && (
-        <span className="absolute bottom-0.5 right-1 text-[7px] font-bold text-muted-foreground">
-          M3
-        </span>
-      )}
     </button>
   );
 }
