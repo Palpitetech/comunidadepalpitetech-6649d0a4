@@ -1,5 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Shield } from "lucide-react";
 import type { EstrategiaFechamentoMegaSenaUI } from "@/lib/fechamentoMegaSena";
 
 interface FechamentoRulesCardMegaSenaProps {
@@ -7,36 +5,57 @@ interface FechamentoRulesCardMegaSenaProps {
 }
 
 export function FechamentoRulesCardMegaSena({ estrategia }: FechamentoRulesCardMegaSenaProps) {
-  // Texto dinâmico baseado na garantia
-  const getTextoGarantia = () => {
-    const pontos = estrategia.garantia;
-    const dezenas = estrategia.dezenas;
+  const temFixas = estrategia.fixasObrigatorias > 0;
+  const qtdFixas = estrategia.fixasObrigatorias;
+  const totalVariaveis = estrategia.dezenas - qtdFixas;
+  
+  // Variáveis usadas por jogo = 6 (Mega Sena sempre tem 6 números por jogo)
+  const variaveisNoJogo = 6 - qtdFixas;
+
+  // Descrição customizada da garantia por estratégia
+  const renderGarantia = () => {
+    // Estratégias com fixas (quando houver no futuro)
+    if (temFixas) {
+      return (
+        <>
+          Você vai ter <strong>garantia de {estrategia.garantia} pontos</strong> caso venha acertar{" "}
+          <strong>{variaveisNoJogo} de {totalVariaveis} variáveis</strong> +{" "}
+          <strong>{qtdFixas} das {qtdFixas} fixas</strong>
+        </>
+      );
+    }
     
-    if (pontos === 6) {
-      return `Garantia de SENA caso acerte as ${dezenas} dezenas sorteadas!`;
-    }
-    if (pontos === 5) {
-      return `Garantia de QUINA caso 6 das ${dezenas} dezenas sejam sorteadas`;
-    }
-    if (pontos === 4) {
-      return `Garantia de QUADRA caso 5 das ${dezenas} dezenas sejam sorteadas`;
-    }
-    return estrategia.condicao;
+    // Estratégias sem fixas
+    const nomeGarantia = 
+      estrategia.garantia === 6 ? "SENA" : 
+      estrategia.garantia === 5 ? "QUINA" : 
+      "QUADRA";
+    
+    return (
+      <>
+        Você vai ter <strong>garantia de {nomeGarantia}</strong>{" "}
+        caso venha acertar <strong>{estrategia.condicao.toLowerCase()}</strong>
+      </>
+    );
   };
 
   return (
-    <Card className="border-emerald-500/30 bg-emerald-950/20">
-      <CardContent className="py-4 flex items-start gap-3">
-        <Shield className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
-        <div className="space-y-1">
-          <h4 className="text-sm font-semibold text-emerald-400">
-            {estrategia.nome} - {estrategia.jogos} jogos
-          </h4>
-          <p className="text-xs text-muted-foreground">
-            {getTextoGarantia()}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground uppercase tracking-wide">
+        O <strong className="text-foreground font-semibold">{estrategia.nome}</strong> tem as seguintes regras:
+      </p>
+      
+      <ol className="space-y-2 text-sm text-foreground list-decimal list-inside leading-relaxed">
+        <li>Selecione <strong>{estrategia.dezenas} dezenas</strong></li>
+        <li>
+          {temFixas 
+            ? <>Fixe <strong>{qtdFixas} dezena{qtdFixas > 1 ? "s" : ""}</strong> obrigatoriamente</>
+            : <>Não temos fixas obrigatórias no {estrategia.nome}</>
+          }
+        </li>
+        <li>{renderGarantia()}</li>
+        <li>Serão gerados <strong>{estrategia.jogos} jogos</strong> de 6 dezenas</li>
+      </ol>
+    </div>
   );
 }
