@@ -1,12 +1,9 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { 
   Target, 
   TrendingUp, 
   TrendingDown, 
-  Sparkles, 
-  ArrowRight,
   Filter,
   Users,
   CheckCircle2
@@ -16,7 +13,6 @@ import { useTendenciasDia } from "@/hooks/useTendenciasDia";
 import { SeletorPeriodo } from "@/components/frequencia/SeletorPeriodo";
 import { DezenaCirculoMini } from "@/components/lotofacil/DezenaCirculoMini";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import { formatarDezena } from "@/lib/lotofacil";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -295,15 +291,6 @@ export default function AnaliseDoDia() {
                 />
               </div>
             </div>
-
-            {/* CTA GERADOR */}
-            <Link to={geradorFixasUrl} className="block">
-              <Button className="w-full gap-2 bg-highlight hover:bg-highlight/90 text-highlight-foreground font-semibold h-10">
-                <Sparkles className="h-4 w-4" />
-                Usar Fixas no Gerador
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
           </div>
         ) : null}
       </div>
