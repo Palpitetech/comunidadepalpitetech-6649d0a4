@@ -92,8 +92,7 @@ export function TabelaLinhaColunaIndividual({ tipo, indice }: Props) {
         .map((item, index) => ({
           ...item,
           ranking: index + 1,
-        }))
-        .sort((a, b) => a.qtdDezenas - b.qtdDezenas); // Ordenar por quantidade
+        }));
 
       return resultado;
     },
