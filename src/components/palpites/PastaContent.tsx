@@ -1,7 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { PalpiteCard } from "@/components/shared/PalpiteCard";
+import { JogoCardMegaSena } from "@/components/megasena/JogoCardMegaSena";
 import { EstrategiaCard } from "@/components/gerador/EstrategiaCard";
+import { EstrategiaCardMegaSena } from "@/components/megasena/EstrategiaCardMegaSena";
 import { PalpitesToolbar } from "./PalpitesToolbar";
 import { formatarDezena } from "@/lib/lotofacil";
 import { useToast } from "@/hooks/use-toast";
@@ -54,11 +56,20 @@ export function PastaContent({
     setAcertosPorEstrategia({});
   }, [palpitesIniciais]);
 
-  // Buscar último concurso
+  // Detectar loteria predominante
+  const loteriaAtual = useMemo(() => {
+    if (palpites.length === 0) return "lotofacil";
+    return palpites[0]?.loteria || "lotofacil";
+  }, [palpites]);
+
+  const isMegaSena = loteriaAtual === "megasena";
+
+  // Buscar último concurso baseado na loteria
   useEffect(() => {
     const fetchUltimoConcurso = async () => {
+      const tabela = isMegaSena ? "resultados_megasena" : "resultados";
       const { data } = await supabase
-        .from("resultados")
+        .from(tabela)
         .select("dezenas")
         .order("concurso_id", { ascending: false })
         .limit(1)
@@ -69,7 +80,7 @@ export function PastaContent({
       }
     };
     fetchUltimoConcurso();
-  }, []);
+  }, [isMegaSena]);
 
   // Palpites filtrados por estratégia selecionada
   const palpitesDaEstrategia = useMemo(() => {
@@ -328,14 +339,34 @@ export function PastaContent({
   if (estrategiaSelecionada) {
     return (
       <div className="px-3 py-3 space-y-3">
-        {/* Card da Estratégia Completa */}
+        {/* Card da Estratégia Completa - usa o card correto baseado na loteria */}
         {palpitesDaEstrategia[0]?.estrategia_data ? (
-          <EstrategiaCard estrategia={palpitesDaEstrategia[0].estrategia_data} />
+          isMegaSena && 'dezenas_justificadas' in palpitesDaEstrategia[0].estrategia_data ? (
+            <EstrategiaCardMegaSena estrategia={palpitesDaEstrategia[0].estrategia_data as any} />
+          ) : !isMegaSena && 'dezenas_fixas' in palpitesDaEstrategia[0].estrategia_data ? (
+            <EstrategiaCard estrategia={palpitesDaEstrategia[0].estrategia_data} />
+          ) : (
+            <div className={`${isMegaSena ? "bg-megasena-primary/5 border-megasena-primary/20" : "bg-primary/5 border-primary/20"} border rounded-xl p-4`}>
+              <div className="flex items-start gap-3">
+                <div className={`h-10 w-10 rounded-full ${isMegaSena ? "bg-megasena-primary/10" : "bg-primary/10"} flex items-center justify-center shrink-0`}>
+                  <Dices className={`h-5 w-5 ${isMegaSena ? "text-megasena-primary" : "text-primary"}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-foreground text-base mb-1">
+                    {estrategiaSelecionada}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Estratégia: {palpitesDaEstrategia.length} jogo{palpitesDaEstrategia.length !== 1 ? "s" : ""} salvos.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )
         ) : (
-          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
+          <div className={`${isMegaSena ? "bg-megasena-primary/5 border-megasena-primary/20" : "bg-primary/5 border-primary/20"} border rounded-xl p-4`}>
             <div className="flex items-start gap-3">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <Dices className="h-5 w-5 text-primary" />
+              <div className={`h-10 w-10 rounded-full ${isMegaSena ? "bg-megasena-primary/10" : "bg-primary/10"} flex items-center justify-center shrink-0`}>
+                <Dices className={`h-5 w-5 ${isMegaSena ? "text-megasena-primary" : "text-primary"}`} />
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-foreground text-base mb-1">
@@ -361,22 +392,34 @@ export function PastaContent({
           onVerificarTodos={handleVerificarTodosEstrategia}
         />
 
-        {/* Lista de Palpites da estratégia */}
+        {/* Lista de Palpites da estratégia - usa o card correto baseado na loteria */}
         <div className="grid gap-2">
           {palpitesDaEstrategia.map((palpite, localIndex) => (
-            <PalpiteCard
-              key={palpite.id}
-              index={localIndex}
-              dezenas={palpite.dezenas}
-              ultimoConcursoDezenas={ultimoConcursoDezenas}
-              isSelected={selectedEstrategia.has(palpite.id)}
-              onSelectChange={(checked) => handleSelectChangeEstrategia(palpite.id, checked)}
-              onDelete={() => handleDeleteSingleEstrategia(palpite.id)}
-              onCopy={() => handleCopySingle(palpite)}
-              createdAt={palpite.created_at}
-              acertos={acertosPorEstrategia[palpite.id] ?? (palpite.conferido ? palpite.acertos : undefined)}
-              hideVerificar
-            />
+            isMegaSena ? (
+              <JogoCardMegaSena
+                key={palpite.id}
+                index={localIndex}
+                dezenas={palpite.dezenas}
+                isSelected={selectedEstrategia.has(palpite.id)}
+                onSelectChange={(checked) => handleSelectChangeEstrategia(palpite.id, checked)}
+                acertos={acertosPorEstrategia[palpite.id] ?? (palpite.conferido ? palpite.acertos : undefined)}
+                ultimoConcursoDezenas={ultimoConcursoDezenas}
+              />
+            ) : (
+              <PalpiteCard
+                key={palpite.id}
+                index={localIndex}
+                dezenas={palpite.dezenas}
+                ultimoConcursoDezenas={ultimoConcursoDezenas}
+                isSelected={selectedEstrategia.has(palpite.id)}
+                onSelectChange={(checked) => handleSelectChangeEstrategia(palpite.id, checked)}
+                onDelete={() => handleDeleteSingleEstrategia(palpite.id)}
+                onCopy={() => handleCopySingle(palpite)}
+                createdAt={palpite.created_at}
+                acertos={acertosPorEstrategia[palpite.id] ?? (palpite.conferido ? palpite.acertos : undefined)}
+                hideVerificar
+              />
+            )
           ))}
         </div>
 
@@ -409,10 +452,25 @@ export function PastaContent({
         onEstrategiaClick={setEstrategiaSelecionada}
       />
 
-      {/* Lista de Palpites */}
+      {/* Lista de Palpites - usa o card correto baseado na loteria */}
       <div className="grid gap-2">
         {palpitesPaginados.map((palpite, localIndex) => {
           const globalIndex = currentPage * ITEMS_PER_PAGE + localIndex;
+          
+          if (isMegaSena) {
+            return (
+              <JogoCardMegaSena
+                key={palpite.id}
+                index={globalIndex}
+                dezenas={palpite.dezenas}
+                isSelected={selected.has(palpite.id)}
+                onSelectChange={(checked) => handleSelectChange(palpite.id, checked)}
+                acertos={acertosPorPalpite[palpite.id] ?? (palpite.conferido ? palpite.acertos : undefined)}
+                ultimoConcursoDezenas={ultimoConcursoDezenas}
+              />
+            );
+          }
+          
           return (
             <PalpiteCard
               key={palpite.id}
