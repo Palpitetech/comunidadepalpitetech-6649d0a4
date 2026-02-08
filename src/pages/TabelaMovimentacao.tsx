@@ -328,8 +328,8 @@ export default function TabelaMovimentacao() {
                                           : isDestacada && destaque === "atrasadas"
                                           ? "bg-amber-500 text-white ring-2 ring-amber-300"
                                           : isDestacada && destaque === "ausentes"
-                                          ? "bg-primary text-primary-foreground ring-2 ring-primary/50"
-                                          : "bg-primary/80 text-primary-foreground"
+                                          ? "bg-palpite-dezena text-palpite-dezena-foreground ring-2 ring-palpite-dezena/50"
+                                          : "bg-palpite-dezena text-palpite-dezena-foreground"
                                       )}
                                     >
                                       {String(dezena).padStart(2, "0")}
@@ -629,14 +629,14 @@ export default function TabelaMovimentacao() {
                                   {porcentagem.toFixed(1)}%
                                 </td>
                                 <td className="py-2 px-3">
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex-1 h-4 bg-muted/50 rounded-full overflow-hidden">
-                                      <div
-                                        className="h-full bg-primary transition-all duration-500"
-                                        style={{ width: `${(quantidade / maximo) * 100}%` }}
-                                      />
-                                    </div>
-                                  </div>
+                      <div className="flex items-center gap-2">
+                    <div className="flex-1 h-4 bg-muted/50 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-palpite-dezena transition-all duration-500"
+                        style={{ width: `${(quantidade / maximo) * 100}%` }}
+                      />
+                    </div>
+                  </div>
                                 </td>
                               </tr>
                             ))}
@@ -653,9 +653,9 @@ export default function TabelaMovimentacao() {
           {/* Legenda */}
           <Card className="bg-muted/30">
             <CardContent className="py-3">
-              <div className="flex flex-wrap items-center gap-4 text-xs justify-center">
+                <div className="flex flex-wrap items-center gap-4 text-xs justify-center">
                 <div className="flex items-center gap-1.5">
-                  <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-primary/80 text-primary-foreground text-[9px] font-bold">01</span>
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-palpite-dezena text-palpite-dezena-foreground text-[9px] font-bold">01</span>
                   <span className="text-muted-foreground">Sorteada</span>
                 </div>
                 <div className="flex items-center gap-1.5">
