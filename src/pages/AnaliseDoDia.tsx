@@ -128,6 +128,26 @@ export default function AnaliseDoDia() {
     m3: [],
   });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  
+  // Estados para dezenas fixas e excluídas selecionadas
+  const [selectedFixas, setSelectedFixas] = useState<number[]>([]);
+  const [selectedExcluidas, setSelectedExcluidas] = useState<number[]>([]);
+
+  const toggleFixa = (dezena: number) => {
+    setSelectedFixas(prev => 
+      prev.includes(dezena) 
+        ? prev.filter(d => d !== dezena)
+        : [...prev, dezena]
+    );
+  };
+
+  const toggleExcluida = (dezena: number) => {
+    setSelectedExcluidas(prev => 
+      prev.includes(dezena) 
+        ? prev.filter(d => d !== dezena)
+        : [...prev, dezena]
+    );
+  };
 
   const toggleFilterValue = (key: FiltroKey, value: number) => {
     setSelectedFilters(prev => {
@@ -160,10 +180,11 @@ export default function AnaliseDoDia() {
     });
   };
 
-  // Conta total de valores selecionados
-  const totalSelectedValues = Object.values(selectedFilters).reduce(
-    (acc, arr) => acc + arr.length, 0
-  );
+  // Conta total de valores selecionados (filtros + fixas + excluídas)
+  const totalSelectedValues = 
+    Object.values(selectedFilters).reduce((acc, arr) => acc + arr.length, 0) +
+    selectedFixas.length +
+    selectedExcluidas.length;
 
   // Construir URL do desdobramento com filtros selecionados
   const buildDesdobramentoUrl = () => {
@@ -177,6 +198,14 @@ export default function AnaliseDoDia() {
         params.set(key, values.join(","));
       }
     });
+
+    // Adicionar dezenas fixas e excluídas
+    if (selectedFixas.length > 0) {
+      params.set("fixas", selectedFixas.join(","));
+    }
+    if (selectedExcluidas.length > 0) {
+      params.set("excluidas", selectedExcluidas.join(","));
+    }
     
     return `/desdobramento?${params.toString()}`;
   };
@@ -337,15 +366,23 @@ export default function AnaliseDoDia() {
                 </div>
                 <div className="grid grid-cols-4 gap-1.5">
                   {tendencias.fixas.length > 0 ? (
-                    tendencias.fixas.map((d) => (
-                      <span
-                        key={d.dezena}
-                        className="inline-flex items-center justify-center gap-0.5 px-1.5 py-1 rounded bg-status-quente/20 text-status-quente text-xs font-bold"
-                      >
-                        {formatarDezena(d.dezena)}
-                        <span className="text-[9px] opacity-70">{d.frequencia}%</span>
-                      </span>
-                    ))
+                    tendencias.fixas.map((d) => {
+                      const isSelected = selectedFixas.includes(d.dezena);
+                      return (
+                        <button
+                          key={d.dezena}
+                          onClick={() => toggleFixa(d.dezena)}
+                          className={`inline-flex items-center justify-center gap-0.5 px-1.5 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-foreground text-background ring-2 ring-foreground/50"
+                              : "bg-status-quente/20 text-status-quente hover:bg-status-quente/30"
+                          }`}
+                        >
+                          {formatarDezena(d.dezena)}
+                          <span className="text-[9px] opacity-70">{d.frequencia}%</span>
+                        </button>
+                      );
+                    })
                   ) : (
                     <span className="col-span-4 text-[11px] text-muted-foreground">Nenhuma dezena com ≥70% de frequência</span>
                   )}
@@ -363,15 +400,23 @@ export default function AnaliseDoDia() {
                 </div>
                 <div className="grid grid-cols-4 gap-1.5">
                   {tendencias.excluidas.length > 0 ? (
-                    tendencias.excluidas.map((d) => (
-                      <span
-                        key={d.dezena}
-                        className="inline-flex items-center justify-center gap-0.5 px-1.5 py-1 rounded bg-destructive/15 text-destructive border border-destructive/30 text-xs font-bold"
-                      >
-                        {formatarDezena(d.dezena)}
-                        <span className="text-[9px] opacity-70">{d.frequencia}%</span>
-                      </span>
-                    ))
+                    tendencias.excluidas.map((d) => {
+                      const isSelected = selectedExcluidas.includes(d.dezena);
+                      return (
+                        <button
+                          key={d.dezena}
+                          onClick={() => toggleExcluida(d.dezena)}
+                          className={`inline-flex items-center justify-center gap-0.5 px-1.5 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-foreground text-background ring-2 ring-foreground/50"
+                              : "bg-destructive/15 text-destructive border border-destructive/30 hover:bg-destructive/25"
+                          }`}
+                        >
+                          {formatarDezena(d.dezena)}
+                          <span className="text-[9px] opacity-70">{d.frequencia}%</span>
+                        </button>
+                      );
+                    })
                   ) : (
                     <span className="col-span-4 text-[11px] text-muted-foreground">Nenhuma dezena com ≤30% de frequência</span>
                   )}
@@ -421,7 +466,11 @@ export default function AnaliseDoDia() {
       />
 
       {/* FAB de filtros selecionados */}
-      <FloatingNotes selectedFilters={selectedFilters} />
+      <FloatingNotes 
+        selectedFilters={selectedFilters} 
+        selectedFixas={selectedFixas}
+        selectedExcluidas={selectedExcluidas}
+      />
     </MainLayout>
   );
 }
