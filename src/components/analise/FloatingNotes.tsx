@@ -15,6 +15,8 @@ interface FloatingNotesProps {
   selectedFilters: SelectedFilters;
   selectedFixas: number[];
   selectedExcluidas: number[];
+  selectedGrupoDezenas?: number[];
+  selectedGrupoLabel?: string;
   onNavigate?: () => void;
 }
 
@@ -26,14 +28,21 @@ const FILTER_LABELS: Record<keyof SelectedFilters, string> = {
   m3: "Múlt. 3",
 };
 
-export function FloatingNotes({ selectedFilters, selectedFixas, selectedExcluidas, onNavigate }: FloatingNotesProps) {
+export function FloatingNotes({ 
+  selectedFilters, 
+  selectedFixas, 
+  selectedExcluidas, 
+  selectedGrupoDezenas = [],
+  selectedGrupoLabel,
+  onNavigate 
+}: FloatingNotesProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   // Conta total de valores selecionados
   const totalFilters = Object.values(selectedFilters).reduce(
     (acc, arr) => acc + arr.length, 0
   );
-  const totalSelected = totalFilters + selectedFixas.length + selectedExcluidas.length;
+  const totalSelected = totalFilters + selectedFixas.length + selectedExcluidas.length + selectedGrupoDezenas.length;
 
   // Não mostra se não tiver nada selecionado
   if (totalSelected === 0) return null;
@@ -128,6 +137,25 @@ export function FloatingNotes({ selectedFilters, selectedFixas, selectedExcluida
                 <span
                   key={d}
                   className="px-2 py-0.5 rounded text-xs font-semibold bg-foreground text-background"
+                >
+                  {formatarDezena(d)}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Grupo Perfeito */}
+        {selectedGrupoDezenas.length > 0 && selectedGrupoLabel && (
+          <div className="space-y-1">
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase">
+              Grupo {selectedGrupoLabel}
+            </span>
+            <div className="flex flex-wrap gap-1">
+              {selectedGrupoDezenas.map((d) => (
+                <span
+                  key={d}
+                  className="px-2 py-0.5 rounded text-xs font-semibold bg-primary text-primary-foreground"
                 >
                   {formatarDezena(d)}
                 </span>
