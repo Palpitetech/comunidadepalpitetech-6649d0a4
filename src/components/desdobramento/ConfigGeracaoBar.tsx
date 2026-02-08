@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, Dices, Hash } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ConfigGeracaoBarProps {
@@ -17,9 +17,9 @@ interface StepperInputProps {
   min: number;
   max: number;
   label: string;
-  sublabel?: string;
+  icon: React.ReactNode;
   disabled?: boolean;
-  size?: "sm" | "lg";
+  highlight?: boolean;
 }
 
 function StepperInput({
@@ -28,9 +28,9 @@ function StepperInput({
   min,
   max,
   label,
-  sublabel,
+  icon,
   disabled = false,
-  size = "sm",
+  highlight = false,
 }: StepperInputProps) {
   const [inputValue, setInputValue] = useState(value.toString());
 
@@ -74,23 +74,43 @@ function StepperInput({
   const isAtMax = value >= max;
 
   return (
-    <div className="flex flex-col items-center gap-1.5">
-      {/* Label */}
-      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-        {label}
-      </span>
+    <div
+      className={cn(
+        "flex flex-col items-center gap-2 p-4 rounded-xl transition-all",
+        highlight
+          ? "bg-primary/10 border-2 border-primary/30"
+          : "bg-muted/50 border border-border/50"
+      )}
+    >
+      {/* Header com ícone e label */}
+      <div className="flex items-center gap-1.5">
+        <span className={cn(
+          "p-1 rounded-md",
+          highlight ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+        )}>
+          {icon}
+        </span>
+        <span className={cn(
+          "text-xs font-semibold uppercase tracking-wider",
+          highlight ? "text-primary" : "text-muted-foreground"
+        )}>
+          {label}
+        </span>
+      </div>
 
       {/* Stepper */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           size="icon"
           onClick={handleDecrement}
           disabled={disabled || isAtMin}
           className={cn(
-            "h-9 w-9 rounded-full shrink-0 transition-all",
-            isAtMin && "opacity-30"
+            "h-10 w-10 rounded-full shrink-0 transition-all border",
+            isAtMin 
+              ? "opacity-30 border-transparent" 
+              : "border-border hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive"
           )}
         >
           <Minus className="h-4 w-4" />
@@ -104,32 +124,34 @@ function StepperInput({
           onBlur={handleBlur}
           disabled={disabled}
           className={cn(
-            "bg-transparent text-center font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-lg transition-all",
-            size === "lg" ? "w-16 text-2xl h-12" : "w-12 text-xl h-10"
+            "bg-background text-center font-bold focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-xl transition-all border-2",
+            highlight
+              ? "w-20 text-3xl h-14 border-primary/20 text-primary"
+              : "w-16 text-2xl h-12 border-border/50"
           )}
         />
 
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           size="icon"
           onClick={handleIncrement}
           disabled={disabled || isAtMax}
           className={cn(
-            "h-9 w-9 rounded-full shrink-0 transition-all",
-            isAtMax && "opacity-30"
+            "h-10 w-10 rounded-full shrink-0 transition-all border",
+            isAtMax 
+              ? "opacity-30 border-transparent" 
+              : "border-border hover:bg-primary/10 hover:border-primary/50 hover:text-primary"
           )}
         >
           <Plus className="h-4 w-4" />
         </Button>
       </div>
 
-      {/* Sublabel com range */}
-      {sublabel && (
-        <span className="text-[10px] text-muted-foreground/70">
-          {sublabel}
-        </span>
-      )}
+      {/* Range hint */}
+      <span className="text-[10px] text-muted-foreground/60 font-medium">
+        {min} – {max}
+      </span>
     </div>
   );
 }
@@ -142,7 +164,7 @@ export function ConfigGeracaoBar({
   disabled = false,
 }: ConfigGeracaoBarProps) {
   return (
-    <div className="flex items-center justify-center gap-8 py-4 px-2">
+    <div className="flex items-stretch justify-center gap-3 py-4 px-3">
       {/* Dezenas por palpite */}
       <StepperInput
         value={qtdDezenas}
@@ -150,25 +172,20 @@ export function ConfigGeracaoBar({
         min={15}
         max={20}
         label="Dezenas"
-        sublabel="15 a 20"
+        icon={<Hash className="h-3.5 w-3.5" />}
         disabled={disabled}
       />
 
-      {/* Divisor visual */}
-      <div className="flex flex-col items-center gap-1">
-        <span className="text-2xl font-light text-muted-foreground/50">×</span>
-      </div>
-
-      {/* Quantidade de palpites */}
+      {/* Quantidade de palpites - destacado */}
       <StepperInput
         value={qtdPalpites}
         onChange={onQtdPalpitesChange}
         min={1}
         max={250}
         label="Palpites"
-        sublabel="máx 250"
+        icon={<Dices className="h-3.5 w-3.5" />}
         disabled={disabled}
-        size="lg"
+        highlight
       />
     </div>
   );
