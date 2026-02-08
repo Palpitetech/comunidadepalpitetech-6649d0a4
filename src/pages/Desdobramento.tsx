@@ -68,7 +68,7 @@ export default function Desdobramento() {
   const [gridAberto, setGridAberto] = useState(false);
   
   // Estado do grid de dezenas
-  const [modoGrid, setModoGrid] = useState<"selecionar" | "fixar" | "excluir">("selecionar");
+  const [modoGrid, setModoGrid] = useState<"fixar" | "excluir">("fixar");
   const [dezenasFixas, setDezenasFixas] = useState<number[]>([]);
   const [dezenasExcluidas, setDezenasExcluidas] = useState<number[]>([]);
 
