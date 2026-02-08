@@ -369,7 +369,6 @@ export default function Desdobramento() {
           </DropdownMenu>
         </div>
 
-        <p className="text-[10px] text-muted-foreground text-center -mt-2 mb-1">Limite de 250 palpites</p>
 
         {/* Grid de Dezenas - Fullscreen style */}
         <div className="space-y-3">
