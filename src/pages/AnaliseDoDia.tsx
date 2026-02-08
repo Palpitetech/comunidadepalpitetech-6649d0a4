@@ -7,7 +7,8 @@ import {
   Filter,
   Users,
   CheckCircle2,
-  Sparkles
+  Sparkles,
+  NotebookPen
 } from "lucide-react";
 import { useTendenciasDia } from "@/hooks/useTendenciasDia";
 import { SeletorPeriodo } from "@/components/frequencia/SeletorPeriodo";
@@ -388,9 +389,11 @@ export default function AnaliseDoDia() {
               
               {/* Indicador de que foi adicionado */}
               {addedGroups.filtros && totalFilterValues > 0 && (
-                <div className="flex items-center justify-center gap-2 mt-3 text-xs text-highlight font-medium">
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>{totalFilterValues} filtro{totalFilterValues > 1 ? "s" : ""} adicionado{totalFilterValues > 1 ? "s" : ""}</span>
+                <div className="flex items-center justify-center gap-1.5 mt-3 py-1.5 px-2 rounded bg-amber-500/10 border border-amber-500/30">
+                  <NotebookPen className="h-3.5 w-3.5 text-amber-600" />
+                  <span className="text-[11px] text-amber-700 font-medium">
+                    {totalFilterValues} filtro{totalFilterValues > 1 ? "s" : ""} no bloco de notas
+                  </span>
                 </div>
               )}
             </div>
@@ -441,9 +444,9 @@ export default function AnaliseDoDia() {
                 )}
                 
                 {addedGroups.fixas && selectedFixas.length > 0 && (
-                  <div className="flex items-center justify-center gap-1.5 mt-2 text-[11px] text-highlight font-medium">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    <span>Adicionado</span>
+                  <div className="flex items-center justify-center gap-1.5 mt-2 py-1.5 px-2 rounded bg-amber-500/10 border border-amber-500/30">
+                    <NotebookPen className="h-3.5 w-3.5 text-amber-600" />
+                    <span className="text-[11px] text-amber-700 font-medium">No bloco de notas</span>
                   </div>
                 )}
               </div>
@@ -494,9 +497,9 @@ export default function AnaliseDoDia() {
                 )}
                 
                 {addedGroups.excluidas && selectedExcluidas.length > 0 && (
-                  <div className="flex items-center justify-center gap-1.5 mt-2 text-[11px] text-highlight font-medium">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    <span>Adicionado</span>
+                  <div className="flex items-center justify-center gap-1.5 mt-2 py-1.5 px-2 rounded bg-amber-500/10 border border-amber-500/30">
+                    <NotebookPen className="h-3.5 w-3.5 text-amber-600" />
+                    <span className="text-[11px] text-amber-700 font-medium">No bloco de notas</span>
                   </div>
                 )}
               </div>
