@@ -149,7 +149,7 @@ export function TabelaEstatisticaGenerica({ config }: Props) {
     className?: string;
   }) => (
     <TableHead 
-      className={cn("cursor-pointer hover:bg-muted/50 select-none", className)}
+      className={cn("cursor-pointer hover:bg-muted/50 select-none px-2 text-xs", className)}
       onClick={() => handleSort(column)}
     >
       <div className="flex items-center gap-1">
@@ -186,16 +186,16 @@ export function TabelaEstatisticaGenerica({ config }: Props) {
           <TableHeader>
             <TableRow className="bg-muted/50 hover:bg-muted/50">
               <SortableHeader column="valorPrincipal">
-                {config.labelColunaPrincipal}
+                Princ.
               </SortableHeader>
-              <TableHead>{config.labelColunaComplementar}</TableHead>
-              <SortableHeader column="ocorrencias">Ocorrências</SortableHeader>
+              <TableHead className="px-2 text-xs">Compl.</TableHead>
+              <SortableHeader column="ocorrencias">Ocorr.</SortableHeader>
               <SortableHeader column="atrasoAtual">Atraso</SortableHeader>
+              <TableHead className="px-2 text-xs whitespace-nowrap">Freq.</TableHead>
+              <TableHead className="px-2 text-xs">Última</TableHead>
               <SortableHeader column="porcentagem" className="hidden md:table-cell">
                 %
               </SortableHeader>
-              <TableHead>Frequência</TableHead>
-              <TableHead>Última</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -204,41 +204,45 @@ export function TabelaEstatisticaGenerica({ config }: Props) {
                 key={item.valorPrincipal}
                 className="border-b border-border/30 hover:bg-muted/30"
               >
-                <TableCell className="text-base font-medium">
-                  {item.valorPrincipal}
+                <TableCell className="px-2 py-2">
+                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary font-bold text-xs">
+                    {item.valorPrincipal}
+                  </span>
                 </TableCell>
-                <TableCell className="text-base font-medium">
-                  {item.valorComplementar}
+                <TableCell className="px-2 py-2">
+                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-muted text-muted-foreground font-medium text-xs">
+                    {item.valorComplementar}
+                  </span>
                 </TableCell>
-                <TableCell>
+                <TableCell className="px-2 py-2">
                   <span
                     className={cn(
-                      "inline-flex items-center justify-center rounded-lg px-3 py-1 text-base font-semibold min-w-[50px]",
+                      "inline-flex items-center justify-center rounded-lg px-2 py-0.5 text-xs font-semibold min-w-[45px]",
                       getOcorrenciaBadgeColor(item.ranking)
                     )}
                   >
                     {item.ocorrencias}
                   </span>
                 </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1.5">
+                <TableCell className="px-2 py-2">
+                  <div className="flex items-center gap-1">
                     {getTrendIcon(item.atrasoAtual, item.mediaOcorrencia)}
                     <span className={cn(
-                      "text-base font-medium",
+                      "text-xs font-medium",
                       item.atrasoAtual >= item.mediaOcorrencia && "text-green-600"
                     )}>
                       {item.atrasoAtual}
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="hidden md:table-cell text-base text-muted-foreground">
-                  {item.porcentagem.toFixed(2)}%
-                </TableCell>
-                <TableCell className="text-base text-muted-foreground">
+                <TableCell className="px-2 py-2 text-xs text-muted-foreground whitespace-nowrap">
                   {formatMedia(item.mediaOcorrencia)}
                 </TableCell>
-                <TableCell className="text-base text-muted-foreground">
+                <TableCell className="px-2 py-2 text-xs text-muted-foreground">
                   #{item.ultimaOcorrencia}
+                </TableCell>
+                <TableCell className="hidden md:table-cell px-2 py-2 text-xs font-medium">
+                  {item.porcentagem.toFixed(1)}%
                 </TableCell>
               </TableRow>
             ))}

@@ -60,36 +60,44 @@ export default function Tendencias() {
         <div ref={contentRef} className="space-y-8">
           {/* Tabela de Pares/Ímpares */}
           <section>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <span className="text-2xl">🎯</span>
-              Combinações de Pares e Ímpares
+            <h2 className="text-base font-semibold mb-3 flex items-center gap-2 whitespace-nowrap">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10 text-base">
+                🎯
+              </span>
+              Pares e Ímpares
             </h2>
             <TabelaEstatisticaGenerica config={configParesImpares} />
           </section>
 
           {/* Tabela de Moldura */}
           <section>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <span className="text-2xl">🖼️</span>
-              Combinações de Moldura e Miolo
+            <h2 className="text-base font-semibold mb-3 flex items-center gap-2 whitespace-nowrap">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10 text-base">
+                🖼️
+              </span>
+              Moldura e Miolo
             </h2>
             <TabelaEstatisticaGenerica config={configMoldura} />
           </section>
 
           {/* Tabela de Primos */}
           <section>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <span className="text-2xl">🔢</span>
-              Combinações de Primos e Não Primos
+            <h2 className="text-base font-semibold mb-3 flex items-center gap-2 whitespace-nowrap">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10 text-base">
+                🔢
+              </span>
+              Primos e Não Primos
             </h2>
             <TabelaEstatisticaGenerica config={configPrimos} />
           </section>
 
           {/* Tabela de Repetidas */}
           <section>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <span className="text-2xl">🔄</span>
-              Combinações de Repetidas e Novas
+            <h2 className="text-base font-semibold mb-3 flex items-center gap-2 whitespace-nowrap">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10 text-base">
+                🔄
+              </span>
+              Repetidas e Novas
             </h2>
             <TabelaEstatisticaGenerica config={configRepetidas} />
           </section>
