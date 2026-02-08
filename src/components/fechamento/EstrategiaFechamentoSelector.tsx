@@ -6,6 +6,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { MATRIZES_FECHAMENTO, MatrizFechamento } from "@/lib/fechamento";
 
 export interface EstrategiaFechamento {
   id: string;
@@ -18,18 +19,21 @@ export interface EstrategiaFechamento {
   condicao: string;
 }
 
-export const ESTRATEGIAS_FECHAMENTO: EstrategiaFechamento[] = [
-  { 
-    id: "16-14-4", 
-    nome: "FC01",
-    dezenas: 16, 
-    garantia: 14, 
-    jogos: 4,
-    label: "FC01 — 16 Dezenas → 4 Jogos",
-    descricao: "Garantia 14 pontos",
-    condicao: "Se acertar 15 dos 16 números"
-  },
-];
+/**
+ * Converte as matrizes universais para o formato de exibição do seletor
+ */
+export const ESTRATEGIAS_FECHAMENTO: EstrategiaFechamento[] = MATRIZES_FECHAMENTO.map(
+  (matriz) => ({
+    id: matriz.id,
+    nome: matriz.nome,
+    dezenas: matriz.dezenas,
+    garantia: matriz.garantia,
+    jogos: matriz.matrizRemocoes.length,
+    label: `${matriz.nome} — ${matriz.dezenas} Dezenas → ${matriz.matrizRemocoes.length} Jogos`,
+    descricao: `Garantia ${matriz.garantia} pontos`,
+    condicao: matriz.condicao,
+  })
+);
 
 interface EstrategiaFechamentoSelectorProps {
   value: string;
