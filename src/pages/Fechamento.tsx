@@ -165,12 +165,6 @@ export default function Fechamento() {
     <MainLayout pageTitle="Gerador de Fechamento">
       <div className="container-senior py-4 space-y-5">
         {/* Aviso de precisão */}
-        <Alert className="border-muted bg-muted/30">
-          <Info className="h-4 w-4 text-muted-foreground" />
-          <AlertDescription className="text-xs text-muted-foreground">
-            O fechamento pode ter inconsistências leves devido às muitas variantes. Acerto de 99%.
-          </AlertDescription>
-        </Alert>
 
         {/* 1. Seletor de Garantia */}
         <EstrategiaFechamentoSelector
@@ -270,6 +264,11 @@ export default function Fechamento() {
         >
           Gerar Palpites
         </Button>
+
+        {/* Aviso de acurácia */}
+        <p className="text-center text-xs text-muted-foreground">
+          O fechamento pode ter inconsistências leves devido às muitas variantes. Acerto de 99%.
+        </p>
       </div>
     </MainLayout>
   );
