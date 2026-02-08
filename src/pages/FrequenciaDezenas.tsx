@@ -248,20 +248,20 @@ export default function FrequenciaDezenas() {
             </CardContent>
           </Card>
 
-          {/* Legenda */}
+          {/* Legenda - Linha Única */}
           <Card className="bg-muted/30">
-            <CardContent className="py-3">
-              <div className="flex flex-wrap items-center gap-4 text-xs justify-center">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded bg-emerald-500"></span>
+            <CardContent className="py-2.5">
+              <div className="flex items-center justify-center gap-4 text-xs">
+                <div className="flex items-center gap-1.5 whitespace-nowrap">
+                  <span className="w-4 h-4 rounded bg-emerald-500"></span>
                   <span>Forte (≥{limiteForte.toFixed(0)}%)</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded bg-muted border"></span>
+                <div className="flex items-center gap-1.5 whitespace-nowrap">
+                  <span className="w-4 h-4 rounded bg-muted border"></span>
                   <span>Neutra</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-5 h-5 rounded bg-red-500"></span>
+                <div className="flex items-center gap-1.5 whitespace-nowrap">
+                  <span className="w-4 h-4 rounded bg-red-500"></span>
                   <span>Fraca (≤{limiteFraca.toFixed(0)}%)</span>
                 </div>
               </div>
