@@ -155,6 +155,16 @@ export default function Fechamento() {
         {/* 2. Card de Regras */}
         <FechamentoRulesCard estrategia={estrategiaAtual} />
 
+        {/* Aviso especial para FC03 */}
+        {estrategiaAtual.fixasObrigatorias > 0 && (
+          <Alert className="border-primary/30 bg-primary/5">
+            <Info className="h-4 w-4 text-primary" />
+            <AlertDescription className="text-sm">
+              Selecione {estrategiaAtual.dezenas} números: Os primeiros <strong>{estrategiaAtual.fixasObrigatorias} serão FIXOS</strong> e os últimos <strong>{estrategiaAtual.dezenas - estrategiaAtual.fixasObrigatorias} serão VARIÁVEIS</strong>.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* 3. Seletor de Modo + Auto Preencher */}
         <div className="flex items-center gap-2">
           <ModoSeletorFixas modo={modo} onChange={setModo} />
