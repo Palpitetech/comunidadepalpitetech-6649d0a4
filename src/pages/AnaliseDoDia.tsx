@@ -128,7 +128,6 @@ export default function AnaliseDoDia() {
     m3: [],
   });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [showNotes, setShowNotes] = useState(false);
 
   const toggleFilterValue = (key: FiltroKey, value: number) => {
     setSelectedFilters(prev => {
@@ -187,9 +186,6 @@ export default function AnaliseDoDia() {
     setShowConfirmDialog(true);
   };
 
-  const handleContinueAnalysis = () => {
-    setShowNotes(true);
-  };
 
   const buildGrupoUrl = (dezenas: number[]) => 
     `/smart-gerador?fixas=${dezenas.join(",")}`;
@@ -422,14 +418,10 @@ export default function AnaliseDoDia() {
         isOpen={showConfirmDialog}
         onOpenChange={setShowConfirmDialog}
         desdobramentoUrl={buildDesdobramentoUrl()}
-        onContinueAnalysis={handleContinueAnalysis}
       />
 
-      {/* Bloco de notas flutuante */}
-      <FloatingNotes
-        isOpen={showNotes}
-        onClose={() => setShowNotes(false)}
-      />
+      {/* FAB de filtros selecionados */}
+      <FloatingNotes selectedFilters={selectedFilters} />
     </MainLayout>
   );
 }
