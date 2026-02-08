@@ -7,7 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FiltroPatternSelector } from "@/components/desdobramento/FiltroPatternSelector";
 import { FiltroLinhasColunas } from "@/components/desdobramento/FiltroLinhasColunas";
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useDesdobramentoStats } from "@/hooks/useDesdobramentoStats";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +23,7 @@ import {
 } from "@/lib/desdobramento";
 import { formatarDezena } from "@/lib/lotofacil";
 import { DezenaCirculoMini } from "@/components/lotofacil/DezenaCirculoMini";
+import { cn } from "@/lib/utils";
 import { 
   Shuffle, 
   Loader2, 
@@ -297,6 +303,64 @@ export default function Desdobramento() {
             <p className="text-sm">{error}</p>
           </div>
         )}
+
+        {/* Controles de Quantidade */}
+        <div className="flex items-center gap-3">
+          {/* Input de quantidade de palpites */}
+          <div className="flex items-center gap-2 flex-1">
+            <span className="text-sm text-muted-foreground whitespace-nowrap">Gerar</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={qtdPalpites}
+              onChange={(e) => {
+                const val = parseInt(e.target.value.replace(/\D/g, ""), 10);
+                if (!isNaN(val) && val >= 1 && val <= 250) {
+                  setQtdPalpites(val);
+                } else if (e.target.value === "") {
+                  setQtdPalpites(1);
+                }
+              }}
+              onBlur={(e) => {
+                const val = parseInt(e.target.value, 10);
+                if (isNaN(val) || val < 1) setQtdPalpites(1);
+                else if (val > 250) setQtdPalpites(250);
+              }}
+              className="w-16 h-10 bg-background text-center text-base font-semibold rounded-lg border border-input focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            />
+            <span className="text-sm text-muted-foreground">palpites de</span>
+          </div>
+
+          {/* Dropdown de quantidade de dezenas */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="h-10 px-3 gap-1.5 font-semibold"
+              >
+                {qtdDezenas}
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent 
+              align="end" 
+              className="min-w-[100px] bg-background border shadow-lg z-50"
+            >
+              {[15, 16, 17, 18, 19, 20].map((num) => (
+                <DropdownMenuItem
+                  key={num}
+                  onClick={() => setQtdDezenas(num)}
+                  className={cn(
+                    "justify-center text-sm font-medium cursor-pointer",
+                    qtdDezenas === num && "bg-primary/10 text-primary"
+                  )}
+                >
+                  {num} dezenas
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
         {/* Botões de Ação */}
         <div className="flex gap-2">
