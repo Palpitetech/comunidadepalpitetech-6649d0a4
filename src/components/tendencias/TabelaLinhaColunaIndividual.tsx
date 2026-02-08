@@ -148,12 +148,12 @@ export function TabelaLinhaColunaIndividual({ tipo, indice }: Props) {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50 hover:bg-muted/50">
-              <TableHead className="w-24">Qtd Dezenas</TableHead>
-              <TableHead>Ocorrência</TableHead>
-              <TableHead>Atraso</TableHead>
-              <TableHead>Frequência</TableHead>
-              <TableHead>Última</TableHead>
-              <TableHead>%</TableHead>
+              <TableHead className="w-14 px-2 text-xs">Qtd</TableHead>
+              <TableHead className="px-2 text-xs">Ocorr.</TableHead>
+              <TableHead className="px-2 text-xs">Atraso</TableHead>
+              <TableHead className="px-2 text-xs">Freq.</TableHead>
+              <TableHead className="px-2 text-xs">Última</TableHead>
+              <TableHead className="px-2 text-xs">%</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
