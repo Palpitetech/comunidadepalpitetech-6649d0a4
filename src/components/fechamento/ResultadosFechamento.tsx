@@ -291,7 +291,12 @@ export function ResultadosFechamento({
 
   const handleTestarGarantia = () => {
     if (!matriz) return;
-    const resultado = simularGarantia(dezenasSelecionadas, jogos, matriz.garantia);
+    const resultado = simularGarantia(
+      dezenasSelecionadas, 
+      jogos, 
+      matriz.garantia,
+      matriz.fixasObrigatorias
+    );
     setSimulacao(resultado);
   };
 
