@@ -3,15 +3,18 @@ import { cn } from "@/lib/utils";
 interface DezenaCirculoMiniProps {
   dezena: number;
   className?: string;
+  isSelected?: boolean;
 }
 
-export function DezenaCirculoMini({ dezena, className }: DezenaCirculoMiniProps) {
+export function DezenaCirculoMini({ dezena, className, isSelected }: DezenaCirculoMiniProps) {
   return (
     <div
       className={cn(
         "w-[30px] h-[30px] rounded-full flex items-center justify-center",
-        "bg-primary/10 text-primary",
         "text-sm font-semibold",
+        isSelected 
+          ? "bg-foreground text-background" 
+          : "bg-[hsl(var(--megasena-primary))]/10 text-[hsl(var(--megasena-primary))]",
         className
       )}
     >
