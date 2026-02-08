@@ -358,62 +358,49 @@ export function ResultadosFechamento({
             </div>
           </div>
 
-          {/* Seção: Premiações */}
-          <div className="p-4">
-            <h4 className="text-sm font-semibold text-foreground mb-3">Premiações</h4>
-            <div className="space-y-2">
+          {/* Seção: Premiações - Layout minimalista em linha */}
+          <div className="px-4 py-3">
+            <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+              <span>Premiações</span>
+              <span>Jogos</span>
+            </div>
+            <div className="divide-y divide-border/30">
               {[15, 14, 13, 12, 11].map((pontos) => {
                 const count = simulacao.contagem[pontos] || 0;
                 const isGarantia = pontos === simulacao.garantiaAlvo;
                 const cumpriuGarantia = isGarantia && count > 0;
                 const hasWinner = count > 0;
 
-                // Medalhas para 15, 14 e 13 pontos
-                const medalhas: Record<number, string> = {
-                  15: "🥇",
-                  14: "🥈",
-                  13: "🥉",
-                };
+                const medalhas: Record<number, string> = { 15: "🥇", 14: "🥈", 13: "🥉" };
                 const medalha = medalhas[pontos];
-
-                // Borda verde apenas para 14 e 15 pontos com premiação
                 const hasBordaVerde = hasWinner && (pontos === 15 || pontos === 14);
 
                 return (
                   <div
                     key={pontos}
-                    className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
-                      hasBordaVerde
-                        ? "border-emerald-500 bg-muted/30"
-                        : "border-border/50 bg-muted/20"
+                    className={`flex items-center justify-between py-2 px-2 -mx-2 rounded ${
+                      hasBordaVerde ? "bg-emerald-950/30" : ""
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      {medalha && hasWinner ? (
-                        <span className="text-xl">{medalha}</span>
-                      ) : (
-                        <span className="text-muted-foreground text-sm w-6 text-center">—</span>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <span className={`font-medium ${hasWinner ? "text-foreground" : "text-muted-foreground"}`}>
-                          {pontos} pontos
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 text-center text-sm">{medalha && hasWinner ? medalha : ""}</span>
+                      <span className={`text-xs ${hasWinner ? "text-foreground" : "text-muted-foreground"}`}>
+                        {pontos}pts
+                      </span>
+                      {isGarantia && (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                          cumpriuGarantia 
+                            ? "bg-emerald-600 text-white" 
+                            : "bg-muted text-muted-foreground"
+                        }`}>
+                          garantia
                         </span>
-                        {isGarantia && (
-                          <Badge
-                            variant="outline"
-                            className={`text-xs ${
-                              cumpriuGarantia
-                                ? "bg-emerald-600 text-white border-emerald-600"
-                                : "border-muted-foreground/50 text-muted-foreground"
-                            }`}
-                          >
-                            Garantia
-                          </Badge>
-                        )}
-                      </div>
+                      )}
                     </div>
-                    <span className={`text-sm ${hasWinner ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-                      {hasWinner ? `${count} ${count === 1 ? "jogo" : "jogos"}` : "—"}
+                    <span className={`text-xs tabular-nums ${
+                      hasWinner ? "text-foreground font-medium" : "text-muted-foreground"
+                    }`}>
+                      {count}
                     </span>
                   </div>
                 );
