@@ -51,7 +51,7 @@ export default function Fechamento() {
 
   const handleToggle = (numero: number) => {
     if (modo === "selecionar") {
-      // Não permite selecionar número que já está fixado
+      // Se está fixado, não permite selecionar (precisa desfixar primeiro)
       if (fixas.includes(numero)) return;
       
       setSelecionadas(prev => {
@@ -65,8 +65,18 @@ export default function Fechamento() {
       });
     } else {
       // Modo fixar
-      // Não permite fixar número que já está selecionado
-      if (selecionadas.includes(numero)) return;
+      // Se já está selecionado, converte para fixa (sobrepõe)
+      if (selecionadas.includes(numero)) {
+        // Remove das selecionadas e adiciona nas fixas
+        setSelecionadas(prev => prev.filter(n => n !== numero));
+        setFixas(prev => {
+          if ((selecionadas.length - 1 + prev.length) >= estrategiaAtual.dezenas) {
+            return prev;
+          }
+          return [...prev, numero];
+        });
+        return;
+      }
       
       setFixas(prev => {
         if (prev.includes(numero)) {
