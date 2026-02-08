@@ -83,18 +83,31 @@ function FiltroRow({ label, filtroKey, top3, ultimoValor, selectedValues, onTogg
   );
 }
 
+type GrupoKey = "par" | "trio" | "quadra" | "quina";
+
 interface GrupoRowProps {
   label: string;
+  grupoKey: GrupoKey;
   grupo: { dezenas: number[]; ocorrencias: number; porcentagem: number } | null;
-  onFixar?: () => void;
+  isSelected: boolean;
+  onToggle: (key: GrupoKey) => void;
 }
 
-function GrupoRow({ label, grupo, onFixar }: GrupoRowProps) {
+function GrupoRow({ label, grupoKey, grupo, isSelected, onToggle }: GrupoRowProps) {
   if (!grupo) return null;
   
   return (
-    <div className="flex items-center gap-2 py-1.5 border-b border-border/50 last:border-b-0">
-      <span className="text-xs font-medium text-muted-foreground uppercase w-14 shrink-0">{label}</span>
+    <button
+      onClick={() => onToggle(grupoKey)}
+      className={`flex items-center gap-2 py-1.5 px-2 -mx-2 rounded border-b border-border/50 last:border-b-0 w-full transition-all ${
+        isSelected 
+          ? "bg-foreground/10 ring-2 ring-foreground/30" 
+          : "hover:bg-muted/50"
+      }`}
+    >
+      <span className={`text-xs font-medium uppercase w-14 shrink-0 text-left ${
+        isSelected ? "text-foreground" : "text-muted-foreground"
+      }`}>{label}</span>
       <div className="flex items-center gap-1 flex-1">
         {grupo.dezenas.map((d) => (
           <DezenaCirculoMini key={d} dezena={d} />
@@ -103,16 +116,10 @@ function GrupoRow({ label, grupo, onFixar }: GrupoRowProps) {
       <span className="text-xs text-muted-foreground shrink-0">
         {grupo.ocorrencias}x
       </span>
-      {onFixar && (
-        <button 
-          onClick={onFixar}
-          className="text-primary hover:text-primary/80 transition-colors shrink-0"
-          title="Fixar no gerador"
-        >
-          <Target className="h-4 w-4" />
-        </button>
+      {isSelected && (
+        <CheckCircle2 className="h-4 w-4 text-foreground shrink-0" />
       )}
-    </div>
+    </button>
   );
 }
 
@@ -139,11 +146,24 @@ export default function AnaliseDoDia() {
     filtros: boolean;
     fixas: boolean;
     excluidas: boolean;
+    grupos: boolean;
   }>({
     filtros: false,
     fixas: false,
     excluidas: false,
+    grupos: false,
   });
+
+  // Estado para grupo selecionado (apenas um por vez)
+  const [selectedGrupo, setSelectedGrupo] = useState<GrupoKey | null>(null);
+
+  const toggleGrupo = (key: GrupoKey) => {
+    setSelectedGrupo(prev => prev === key ? null : key);
+  };
+
+  const handleAddGrupos = () => {
+    setAddedGroups(prev => ({ ...prev, grupos: true }));
+  };
 
   const toggleFixa = (dezena: number) => {
     setSelectedFixas(prev => 
@@ -195,11 +215,20 @@ export default function AnaliseDoDia() {
   // Conta total de valores selecionados por grupo
   const totalFilterValues = Object.values(selectedFilters).reduce((acc, arr) => acc + arr.length, 0);
   
+  // Pega as dezenas do grupo selecionado
+  const getSelectedGrupoDezenas = (): number[] => {
+    if (!selectedGrupo || !tendencias) return [];
+    const grupo = tendencias.grupos[selectedGrupo];
+    return grupo ? grupo.dezenas : [];
+  };
+  const selectedGrupoDezenas = getSelectedGrupoDezenas();
+  
   // Conta apenas os que foram adicionados
   const totalAddedValues = 
     (addedGroups.filtros ? totalFilterValues : 0) +
     (addedGroups.fixas ? selectedFixas.length : 0) +
-    (addedGroups.excluidas ? selectedExcluidas.length : 0);
+    (addedGroups.excluidas ? selectedExcluidas.length : 0) +
+    (addedGroups.grupos ? selectedGrupoDezenas.length : 0);
 
   // Funções para adicionar cada grupo
   const handleAddFiltros = () => {
@@ -239,6 +268,18 @@ export default function AnaliseDoDia() {
     if (addedGroups.excluidas && selectedExcluidas.length > 0) {
       params.set("excluidas", selectedExcluidas.join(","));
     }
+
+    // Só inclui grupos se foram adicionados (como fixas extras)
+    if (addedGroups.grupos && selectedGrupoDezenas.length > 0) {
+      // Combina com fixas existentes se houver
+      const currentFixas = params.get("fixas");
+      const grupoDezenas = selectedGrupoDezenas.join(",");
+      if (currentFixas) {
+        params.set("fixas", `${currentFixas},${grupoDezenas}`);
+      } else {
+        params.set("fixas", grupoDezenas);
+      }
+    }
     
     return `/desdobramento?${params.toString()}`;
   };
@@ -247,10 +288,6 @@ export default function AnaliseDoDia() {
     if (totalAddedValues === 0) return;
     setShowConfirmDialog(true);
   };
-
-
-  const buildGrupoUrl = (dezenas: number[]) => 
-    `/smart-gerador?fixas=${dezenas.join(",")}`;
 
   return (
     <MainLayout pageTitle="Análise do Dia">
@@ -515,25 +552,54 @@ export default function AnaliseDoDia() {
               <div className="space-y-0">
                 <GrupoRow 
                   label="Par" 
+                  grupoKey="par"
                   grupo={tendencias.grupos.par}
-                  onFixar={tendencias.grupos.par ? () => window.location.href = buildGrupoUrl(tendencias.grupos.par!.dezenas) : undefined}
+                  isSelected={selectedGrupo === "par"}
+                  onToggle={toggleGrupo}
                 />
                 <GrupoRow 
                   label="Trio" 
+                  grupoKey="trio"
                   grupo={tendencias.grupos.trio}
-                  onFixar={tendencias.grupos.trio ? () => window.location.href = buildGrupoUrl(tendencias.grupos.trio!.dezenas) : undefined}
+                  isSelected={selectedGrupo === "trio"}
+                  onToggle={toggleGrupo}
                 />
                 <GrupoRow 
                   label="Quadra" 
+                  grupoKey="quadra"
                   grupo={tendencias.grupos.quadra}
-                  onFixar={tendencias.grupos.quadra ? () => window.location.href = buildGrupoUrl(tendencias.grupos.quadra!.dezenas) : undefined}
+                  isSelected={selectedGrupo === "quadra"}
+                  onToggle={toggleGrupo}
                 />
                 <GrupoRow 
                   label="Quina" 
+                  grupoKey="quina"
                   grupo={tendencias.grupos.quina}
-                  onFixar={tendencias.grupos.quina ? () => window.location.href = buildGrupoUrl(tendencias.grupos.quina!.dezenas) : undefined}
+                  isSelected={selectedGrupo === "quina"}
+                  onToggle={toggleGrupo}
                 />
               </div>
+
+              {/* Botão de adicionar grupo */}
+              {selectedGrupo && !addedGroups.grupos && (
+                <Button 
+                  onClick={handleAddGrupos}
+                  size="sm"
+                  className="w-full mt-3 gap-2 bg-highlight hover:bg-highlight/90 text-highlight-foreground font-semibold h-8 text-xs"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  Adicionar {selectedGrupo.charAt(0).toUpperCase() + selectedGrupo.slice(1)} ({selectedGrupoDezenas.length} dezenas)
+                </Button>
+              )}
+              
+              {addedGroups.grupos && selectedGrupo && (
+                <div className="flex items-center justify-center gap-1.5 mt-3 py-1.5 px-2 rounded bg-amber-500/10 border border-amber-500/30">
+                  <NotebookPen className="h-3.5 w-3.5 text-amber-600" />
+                  <span className="text-[11px] text-amber-700 font-medium">
+                    {selectedGrupo.charAt(0).toUpperCase() + selectedGrupo.slice(1)} no bloco de notas
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         ) : null}
@@ -553,6 +619,8 @@ export default function AnaliseDoDia() {
         selectedFilters={addedGroups.filtros ? selectedFilters : { impares: [], repetidas: [], moldura: [], primos: [], m3: [] }} 
         selectedFixas={addedGroups.fixas ? selectedFixas : []}
         selectedExcluidas={addedGroups.excluidas ? selectedExcluidas : []}
+        selectedGrupoDezenas={addedGroups.grupos ? selectedGrupoDezenas : []}
+        selectedGrupoLabel={addedGroups.grupos && selectedGrupo ? selectedGrupo.charAt(0).toUpperCase() + selectedGrupo.slice(1) : undefined}
         onNavigate={handleUsarFiltros}
       />
     </MainLayout>
