@@ -135,6 +135,7 @@ export default function FechamentoMegaSena() {
             estrategiaId={estrategiaId}
             dezenasSelecionadas={[...new Set([...fixas, ...selecionadas])]}
             onNovoFechamento={handleNovoFechamento}
+            estrategiaIA={estrategiaIA}
           />
         </div>
       </MainLayout>
