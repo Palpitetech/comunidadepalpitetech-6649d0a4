@@ -59,7 +59,7 @@ export function ConfigGeracaoBar({
   };
 
   return (
-    <div className="flex items-center gap-4 p-4">
+    <div className="flex items-center justify-between gap-3 py-3">
       {/* Lado esquerdo - Palpites */}
       <div className="flex-1 flex flex-col gap-3">
         <span className="text-sm font-medium text-foreground">
