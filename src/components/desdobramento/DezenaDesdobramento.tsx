@@ -29,8 +29,9 @@ export function DezenaDesdobramento({
       className={cn(
         "relative aspect-square rounded-xl border-2 transition-all duration-200",
         "flex items-center justify-center",
-        "text-xl font-bold",
+        "text-2xl font-bold",
         "active:scale-95",
+        "min-h-[56px]",
         // Estados visuais - ordem de prioridade: excluída > fixa > selecionada > neutro
         excluida && "bg-destructive text-destructive-foreground border-destructive shadow-md",
         fixa && !excluida && "bg-palpite-fixa text-palpite-fixa-foreground border-palpite-fixa shadow-md",

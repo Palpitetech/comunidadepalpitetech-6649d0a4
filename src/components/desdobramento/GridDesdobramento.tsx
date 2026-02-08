@@ -5,7 +5,7 @@ interface GridDesdobramentoProps {
   fixas: number[];
   excluidas: number[];
   repetidas?: number[];
-  modo: "selecionar" | "fixar" | "excluir";
+  modo: "fixar" | "excluir";
   onToggle: (numero: number) => void;
 }
 
@@ -21,7 +21,7 @@ export function GridDesdobramento({
   const dezenas = Array.from({ length: 25 }, (_, i) => i + 1);
 
   return (
-    <div className="grid grid-cols-5 gap-2">
+    <div className="grid grid-cols-5 gap-2.5">
       {dezenas.map((numero) => (
         <DezenaDesdobramento
           key={numero}
