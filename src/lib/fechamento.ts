@@ -157,6 +157,10 @@ export function buscarMatrizPorNome(nome: string): MatrizFechamento | undefined 
 
 /**
  * Função genérica que aplica uma matriz de fechamento às dezenas selecionadas
+ * 
+ * IMPORTANTE: Para matrizes com fixas obrigatórias, a ordem das dezenas É IMPORTANTE!
+ * As primeiras N dezenas (fixasObrigatorias) são tratadas como fixas.
+ * NÃO devemos ordenar as dezenas se houver fixas obrigatórias.
  */
 export function aplicarMatriz(
   dezenasSelecionadas: number[],
@@ -168,12 +172,15 @@ export function aplicarMatriz(
     );
   }
 
-  // Ordena as dezenas para garantir consistência
-  const dezenasOrdenadas = [...dezenasSelecionadas].sort((a, b) => a - b);
+  // Se a matriz tem fixas obrigatórias, NÃO ordenamos as dezenas
+  // pois a ordem define quais são fixas (primeiras) e variáveis (últimas)
+  const dezenas = matriz.fixasObrigatorias > 0 
+    ? [...dezenasSelecionadas] 
+    : [...dezenasSelecionadas].sort((a, b) => a - b);
 
   // Aplica cada linha da matriz de remoções
   const jogos: number[][] = matriz.matrizRemocoes.map((indicesRemover) => {
-    return dezenasOrdenadas.filter((_, index) => !indicesRemover.includes(index));
+    return dezenas.filter((_, index) => !indicesRemover.includes(index));
   });
 
   return jogos;
