@@ -84,3 +84,46 @@ describe("gerarFechamento (função principal)", () => {
     expect(() => gerarFechamento("invalido", dezenas)).toThrow();
   });
 });
+
+/**
+ * NOTA: FC05 (ERRE 5) está desativado porque a matriz original de 365 jogos
+ * NÃO cumpre a garantia matemática de 14 pontos. Os testes abaixo documentam
+ * os requisitos para uma implementação válida futura.
+ * 
+ * Para garantir 14 pontos com 20 dezenas (acertando 15), é necessário um
+ * "covering design" C(20, 15, 5) que requer muito mais que 365 jogos.
+ */
+describe.skip("FC05 - ERRE 5 (20-14-365) - DESATIVADO", () => {
+  const dezenas20 = Array.from({ length: 20 }, (_, i) => i + 1);
+
+  it("deve gerar jogos com cobertura completa para garantia 14", () => {
+    const resultado = gerarFechamento("20-14-365", dezenas20);
+    expect(resultado.jogos.length).toBeGreaterThan(0);
+    expect(resultado.garantia).toBe(14);
+  });
+
+  it("cada jogo deve ter 15 dezenas", () => {
+    const resultado = gerarFechamento("20-14-365", dezenas20);
+    resultado.jogos.forEach((jogo) => {
+      expect(jogo).toHaveLength(15);
+    });
+  });
+
+  it("deve garantir 14 pontos quando acertar 15 das 20 dezenas", () => {
+    const resultado = gerarFechamento("20-14-365", dezenas20);
+    const jogos = resultado.jogos;
+    
+    // Testa 100 cenários aleatórios
+    for (let cenario = 0; cenario < 100; cenario++) {
+      const embaralhadas = [...dezenas20].sort(() => Math.random() - 0.5);
+      const resultadoSorteio = embaralhadas.slice(0, 15);
+      
+      const acertosPorJogo = jogos.map(jogo => 
+        jogo.filter(d => resultadoSorteio.includes(d)).length
+      );
+      
+      const melhorAcerto = Math.max(...acertosPorJogo);
+      expect(melhorAcerto).toBeGreaterThanOrEqual(14);
+    }
+  });
+});
