@@ -320,7 +320,6 @@ export default function Desdobramento() {
                   autoTop3={autoTop3Repetidas}
                   disabled={!filtroRepetidasAtivo}
                   onDisabledChange={setFiltroRepetidasAtivo}
-                  subtexto={ultimoSorteio.length > 0 ? `Baseado no concurso mais recente` : undefined}
                 />
                 <FiltroPatternSelector
                   label="Moldura"
