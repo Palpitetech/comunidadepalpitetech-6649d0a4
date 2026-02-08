@@ -165,7 +165,7 @@ export default function Fechamento() {
           size="lg"
         >
           <Sparkles className="h-5 w-5" />
-          Gerar {estrategiaAtual.jogos} Jogos
+          Gerar Palpites
         </Button>
       </div>
     </MainLayout>
