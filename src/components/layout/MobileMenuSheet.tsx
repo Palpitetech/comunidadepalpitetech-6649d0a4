@@ -15,7 +15,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sparkles, Target, Table2 } from "lucide-react";
+import { Sparkles, Target, Table2, Flame } from "lucide-react";
 import {
   ArrowLeft,
   Home,
@@ -213,6 +213,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
                              <BarChart3 className="h-4 w-4" />
                              Frequência das Dezenas
+                           </div>
+                         </Link>
+                         <Link to="/dezenas-por-posicao" onClick={closeAndNavigate}>
+                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                             <Target className="h-4 w-4" />
+                             Dezenas por Posição
                            </div>
                          </Link>
                          <Link to="/linhas-colunas" onClick={closeAndNavigate}>

@@ -1,0 +1,210 @@
+import { useState } from "react";
+import { MainLayout } from "@/components/layout/MainLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useDezenasporPosicao } from "@/hooks/useDezenasporPosicao";
+import { cn } from "@/lib/utils";
+import { Target, Hash, ChevronRight, Trophy } from "lucide-react";
+
+export default function DezenasporPosicao() {
+  const [periodo, setPeriodo] = useState<number>(100);
+  const [posicaoSelecionada, setPosicaoSelecionada] = useState<number | null>(null);
+  const { data, isLoading, error } = useDezenasporPosicao(periodo);
+
+  if (isLoading) {
+    return (
+      <MainLayout pageTitle="Dezenas por Posição">
+        <div className="px-4 py-6 space-y-4">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-80 w-full" />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <MainLayout pageTitle="Dezenas por Posição">
+        <div className="px-4 py-6">
+          <Card className="bg-destructive/10 border-destructive/30">
+            <CardContent className="py-8 text-center text-destructive">
+              Erro ao carregar dados.
+            </CardContent>
+          </Card>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  const posicaoData = posicaoSelecionada 
+    ? data.find(p => p.posicao === posicaoSelecionada) 
+    : null;
+
+  return (
+    <MainLayout pageTitle="Dezenas por Posição">
+      <div className="min-h-screen bg-background">
+        <div className="px-4 py-6 space-y-4 max-w-2xl mx-auto">
+          {/* Controles */}
+          <Card>
+            <CardContent className="py-4">
+              <div className="flex flex-wrap items-center gap-4 justify-center">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Período:</span>
+                  <Select value={String(periodo)} onValueChange={(v) => setPeriodo(Number(v))}>
+                    <SelectTrigger className="w-[150px] h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10 concursos</SelectItem>
+                      <SelectItem value="15">15 concursos</SelectItem>
+                      <SelectItem value="20">20 concursos</SelectItem>
+                      <SelectItem value="25">25 concursos</SelectItem>
+                      <SelectItem value="30">30 concursos</SelectItem>
+                      <SelectItem value="50">50 concursos</SelectItem>
+                      <SelectItem value="100">100 concursos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Grid de Posições 5x3 */}
+          <Card>
+            <CardHeader className="py-3 bg-primary/10">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Target className="h-5 w-5 text-primary" />
+                Selecione uma Posição
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              <div className="grid grid-cols-5 gap-2">
+                {data.map((posData) => (
+                  <button
+                    key={posData.posicao}
+                    onClick={() => setPosicaoSelecionada(posData.posicao)}
+                    className={cn(
+                      "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all hover:scale-105",
+                      posicaoSelecionada === posData.posicao
+                        ? "bg-primary text-primary-foreground border-primary shadow-lg"
+                        : "bg-muted/50 text-foreground border-border hover:border-primary/50"
+                    )}
+                  >
+                    <Hash className="h-3 w-3 opacity-60 mb-0.5" />
+                    <span className="text-lg font-bold">
+                      {String(posData.posicao).padStart(2, "0")}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Detalhes da Posição Selecionada */}
+          {posicaoData && (
+            <Card className="border-primary/30">
+              <CardHeader className="py-3 bg-primary/10">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-amber-500" />
+                  Top 3 da Posição {String(posicaoData.posicao).padStart(2, "0")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 space-y-3">
+                {posicaoData.top3.map((dezena, idx) => (
+                  <div 
+                    key={dezena.dezena}
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-lg border",
+                      idx === 0 && "bg-amber-500/10 border-amber-500/30",
+                      idx === 1 && "bg-slate-400/10 border-slate-400/30",
+                      idx === 2 && "bg-orange-700/10 border-orange-700/30"
+                    )}
+                  >
+                    {/* Ranking Badge */}
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
+                      idx === 0 && "bg-amber-500 text-white",
+                      idx === 1 && "bg-slate-400 text-white",
+                      idx === 2 && "bg-orange-700 text-white"
+                    )}>
+                      {idx + 1}º
+                    </div>
+
+                    {/* Dezena */}
+                    <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold text-xl">
+                      {String(dezena.dezena).padStart(2, "0")}
+                    </div>
+
+                    {/* Stats */}
+                    <div className="flex-1 flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="text-sm text-muted-foreground">Frequência</div>
+                        <div className="text-lg font-bold">{dezena.frequencia}%</div>
+                      </div>
+                      <div className="text-right space-y-0.5">
+                        <div className="text-sm text-muted-foreground">Ocorrências</div>
+                        <div className="text-lg font-bold">{dezena.quantidade}x</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Insight */}
+                <div className="mt-4 p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
+                  <p>
+                    Na <strong>posição {posicaoData.posicao}</strong>, a dezena{" "}
+                    <strong className="text-primary">
+                      {String(posicaoData.top3[0]?.dezena).padStart(2, "0")}
+                    </strong>{" "}
+                    apareceu em <strong>{posicaoData.top3[0]?.frequencia}%</strong> dos últimos{" "}
+                    {periodo} concursos.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Instrução inicial */}
+          {!posicaoSelecionada && (
+            <Card className="bg-muted/30">
+              <CardContent className="py-6 text-center">
+                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                  <ChevronRight className="h-8 w-8" />
+                  <p>Clique em uma posição para ver as dezenas mais frequentes</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Legenda */}
+          <Card className="bg-muted/30">
+            <CardContent className="py-2.5">
+              <div className="flex items-center justify-center gap-4 text-xs flex-wrap">
+                <div className="flex items-center gap-1.5 whitespace-nowrap">
+                  <span className="w-4 h-4 rounded-full bg-amber-500"></span>
+                  <span>1º Lugar</span>
+                </div>
+                <div className="flex items-center gap-1.5 whitespace-nowrap">
+                  <span className="w-4 h-4 rounded-full bg-slate-400"></span>
+                  <span>2º Lugar</span>
+                </div>
+                <div className="flex items-center gap-1.5 whitespace-nowrap">
+                  <span className="w-4 h-4 rounded-full bg-orange-700"></span>
+                  <span>3º Lugar</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </MainLayout>
+  );
+}
