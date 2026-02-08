@@ -31,6 +31,8 @@ import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminBots from "./pages/admin/AdminBots";
 import PalpiteDoDia from "./pages/PalpiteDoDia";
 import NotFound from "./pages/NotFound";
+import ResultadosMegaSena from "./pages/megasena/ResultadosMegaSena";
+import TendenciasMegaSena from "./pages/megasena/TendenciasMegaSena";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +67,10 @@ const App = () => (
             <Route path="/criar-post" element={<ProtectedRoute><CriarPost /></ProtectedRoute>} />
             <Route path="/comunidade/post/:id" element={<ProtectedRoute><PostDetalhes /></ProtectedRoute>} />
             <Route path="/bloqueado" element={<Bloqueado />} />
+            
+            {/* Rotas Mega Sena */}
+            <Route path="/megasena/resultados" element={<ProtectedRoute><ResultadosMegaSena /></ProtectedRoute>} />
+            <Route path="/megasena/tendencias" element={<ProtectedRoute><TendenciasMegaSena /></ProtectedRoute>} />
             
             {/* Rotas Admin */}
             <Route path="/admin" element={<AdminRoute><AdminIndex /></AdminRoute>} />
