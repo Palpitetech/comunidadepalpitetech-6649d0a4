@@ -19,7 +19,9 @@ import {
   Snowflake, 
   TrendingUp, 
   Timer, 
-  BarChart3
+  BarChart3,
+  Target,
+  Shuffle
 } from "lucide-react";
 
 // Grid 6x10 para Mega Sena
@@ -91,7 +93,7 @@ export default function TabelaMovimentacaoMegaSena() {
     );
   }
 
-  const { resultados, dezenaStats, ultimoConcurso } = data;
+  const { resultados, dezenaStats, ciclos, cicloAtual, ultimoConcurso } = data;
 
   return (
     <MainLayout pageTitle="Movimentação Mega Sena">
@@ -155,6 +157,37 @@ export default function TabelaMovimentacaoMegaSena() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Painel Ausentes do Ciclo Atual */}
+          {cicloAtual.ausentes.length > 0 && (
+            <Card className="border-megasena-primary/30 bg-megasena-primary/5">
+              <CardContent className="py-3">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-megasena-primary" />
+                    <span className="font-medium text-sm">
+                      Ciclo {cicloAtual.numero} – Ausentes ({cicloAtual.ausentes.length}):
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {cicloAtual.ausentes.slice(0, 20).map((d) => (
+                      <span
+                        key={d}
+                        className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-megasena-primary text-megasena-primary-foreground font-bold text-xs"
+                      >
+                        {String(d).padStart(2, "0")}
+                      </span>
+                    ))}
+                    {cicloAtual.ausentes.length > 20 && (
+                      <span className="text-sm text-muted-foreground ml-2">
+                        +{cicloAtual.ausentes.length - 20} mais...
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Grade Principal */}
           <Card className="overflow-hidden">
@@ -412,6 +445,96 @@ export default function TabelaMovimentacaoMegaSena() {
               </table>
             </CardContent>
           </Card>
+
+          {/* Painel Distribuição de Duração dos Ciclos */}
+          {ciclos.length > 0 && (
+            <Card>
+              <CardHeader className="py-3 bg-megasena-primary/10">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Shuffle className="h-5 w-5 text-megasena-primary" />
+                  Média de Concursos por Ciclo
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                {(() => {
+                  // Calcular distribuição de duração dos ciclos
+                  const distribuicao = new Map<number, number>();
+                  ciclos.forEach(c => {
+                    const duracao = c.duracao;
+                    distribuicao.set(duracao, (distribuicao.get(duracao) ?? 0) + 1);
+                  });
+
+                  // Ordenar por duração
+                  const listaOrdenada = Array.from(distribuicao.entries())
+                    .sort((a, b) => a[0] - b[0])
+                    .map(([duracao, quantidade]) => ({
+                      duracao,
+                      quantidade,
+                      porcentagem: (quantidade / ciclos.length) * 100,
+                    }));
+
+                  const totalCiclos = ciclos.length;
+                  const mediaDuracao = ciclos.reduce((acc, c) => acc + c.duracao, 0) / totalCiclos;
+                  const maximo = Math.max(...listaOrdenada.map(x => x.quantidade));
+
+                  return (
+                    <div className="space-y-4">
+                      {/* Resumo Geral */}
+                      <div className="flex flex-wrap gap-4 justify-center text-sm">
+                        <Badge variant="outline" className="px-3 py-1">
+                          Total de Ciclos: <span className="font-bold ml-1">{totalCiclos}</span>
+                        </Badge>
+                        <Badge variant="outline" className="px-3 py-1">
+                          Média Geral: <span className="font-bold ml-1">{mediaDuracao.toFixed(1)} concursos</span>
+                        </Badge>
+                      </div>
+
+                      {/* Tabela de Distribuição */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted/50">
+                            <tr className="border-b border-border">
+                              <th className="text-left py-2 px-3 font-medium">Concursos</th>
+                              <th className="text-center py-2 px-3 font-medium">Quantidade</th>
+                              <th className="text-center py-2 px-3 font-medium">%</th>
+                              <th className="text-left py-2 px-3 font-medium w-1/2">Distribuição</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {listaOrdenada.map(({ duracao, quantidade, porcentagem }) => (
+                              <tr key={duracao} className="border-b border-border/30 hover:bg-muted/30">
+                                <td className="py-2 px-3 font-medium">
+                                  <Badge variant="secondary" className="font-bold">
+                                    {duracao} concursos
+                                  </Badge>
+                                </td>
+                                <td className="text-center py-2 px-3 font-bold text-megasena-primary">
+                                  {quantidade}
+                                </td>
+                                <td className="text-center py-2 px-3 font-medium text-muted-foreground">
+                                  {porcentagem.toFixed(1)}%
+                                </td>
+                                <td className="py-2 px-3">
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex-1 h-4 bg-muted/50 rounded-full overflow-hidden">
+                                      <div
+                                        className="h-full bg-megasena-primary transition-all duration-500"
+                                        style={{ width: `${(quantidade / maximo) * 100}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Legenda */}
           <Card>

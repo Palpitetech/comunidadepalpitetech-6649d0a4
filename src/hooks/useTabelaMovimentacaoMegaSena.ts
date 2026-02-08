@@ -21,9 +21,20 @@ interface DezenaStats {
   status: "quente" | "media" | "fria";
 }
 
+interface CicloBloco {
+  cicloNumero: number;
+  duracao: number;
+  fechouEm: number;
+}
+
 interface TabelaMovimentacaoMegaSenaData {
   resultados: ResultadoRow[];
   dezenaStats: DezenaStats[];
+  ciclos: CicloBloco[];
+  cicloAtual: {
+    ausentes: number[];
+    numero: number;
+  };
   ultimoConcurso: number;
 }
 
@@ -31,17 +42,20 @@ export function useTabelaMovimentacaoMegaSena(limiteConcursos = 50) {
   return useQuery({
     queryKey: ["tabela-movimentacao-megasena", limiteConcursos],
     queryFn: async (): Promise<TabelaMovimentacaoMegaSenaData> => {
+      // Buscar mais resultados para calcular ciclos históricos
       const { data, error } = await supabase
         .from("resultados_megasena")
         .select("concurso_id, data_sorteio, dezenas, qtd_impares, qtd_primos, qtd_moldura, qtd_repetidas")
         .order("concurso_id", { ascending: false })
-        .limit(limiteConcursos);
+        .limit(Math.max(limiteConcursos, 200)); // Buscar mais para calcular ciclos
 
       if (error) throw error;
       if (!data || data.length === 0) {
         return {
           resultados: [],
           dezenaStats: [],
+          ciclos: [],
+          cicloAtual: { ausentes: [], numero: 1 },
           ultimoConcurso: 0,
         };
       }
@@ -50,11 +64,16 @@ export function useTabelaMovimentacaoMegaSena(limiteConcursos = 50) {
       const resultadosOrdenados = [...data].sort((a, b) => a.concurso_id - b.concurso_id);
 
       // Calcular estatísticas por dezena (60 dezenas)
-      const dezenaStats = calcularEstatisticasDezenas(resultadosOrdenados);
+      const dezenaStats = calcularEstatisticasDezenas(resultadosOrdenados.slice(-limiteConcursos));
+
+      // Calcular ciclos (quando todas as 60 dezenas aparecem)
+      const { ciclos, cicloAtual } = calcularCiclos(resultadosOrdenados);
 
       return {
-        resultados: resultadosOrdenados,
+        resultados: resultadosOrdenados.slice(-limiteConcursos),
         dezenaStats,
+        ciclos,
+        cicloAtual,
         ultimoConcurso: data[0]?.concurso_id ?? 0,
       };
     },
@@ -123,4 +142,45 @@ function calcularEstatisticasDezenas(resultados: ResultadoRow[]): DezenaStats[] 
   }
 
   return stats;
+}
+
+function calcularCiclos(resultados: ResultadoRow[]): { ciclos: CicloBloco[]; cicloAtual: { ausentes: number[]; numero: number } } {
+  const ciclos: CicloBloco[] = [];
+  const todasDezenas = new Set(Array.from({ length: 60 }, (_, i) => i + 1));
+  
+  let dezenasVistas = new Set<number>();
+  let concursosNoCiclo = 0;
+  let cicloNumero = 1;
+  let inicioCiclo = resultados[0]?.concurso_id ?? 0;
+
+  for (const resultado of resultados) {
+    resultado.dezenas.forEach(d => dezenasVistas.add(d));
+    concursosNoCiclo++;
+
+    // Verificar se todas as 60 dezenas apareceram
+    if (dezenasVistas.size === 60) {
+      ciclos.push({
+        cicloNumero,
+        duracao: concursosNoCiclo,
+        fechouEm: resultado.concurso_id,
+      });
+      
+      // Resetar para próximo ciclo
+      dezenasVistas = new Set<number>();
+      concursosNoCiclo = 0;
+      cicloNumero++;
+      inicioCiclo = resultado.concurso_id;
+    }
+  }
+
+  // Calcular ausentes do ciclo atual
+  const ausentes = Array.from(todasDezenas).filter(d => !dezenasVistas.has(d)).sort((a, b) => a - b);
+
+  return {
+    ciclos,
+    cicloAtual: {
+      ausentes,
+      numero: cicloNumero,
+    },
+  };
 }
