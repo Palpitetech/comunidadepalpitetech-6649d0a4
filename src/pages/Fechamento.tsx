@@ -1,7 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Wand2, Loader2 } from "lucide-react";
+import { useAutoFillFechamento } from "@/hooks/useAutoFillFechamento";
+import { useUserRole } from "@/hooks/useUserRole";
+import { Badge } from "@/components/ui/badge";
 import { EstrategiaFechamentoSelector, ESTRATEGIAS_FECHAMENTO } from "@/components/fechamento/EstrategiaFechamentoSelector";
 import { FechamentoRulesCard } from "@/components/fechamento/FechamentoRulesCard";
 import { FechamentoStatusBar } from "@/components/fechamento/FechamentoStatusBar";
@@ -17,6 +20,14 @@ export default function Fechamento() {
   const [fixas, setFixas] = useState<number[]>([]);
   const [modo, setModo] = useState<"selecionar" | "fixar">("selecionar");
   const [resultado, setResultado] = useState<ResultadoFechamento | null>(null);
+
+  const { isLoading: isAutoFilling, canUse, usageCount, autoFill, checkUsage } = useAutoFillFechamento();
+  const { isAdmin } = useUserRole();
+
+  // Verificar uso ao carregar
+  useEffect(() => {
+    checkUsage();
+  }, []);
 
   // Obtém os dados da estratégia selecionada
   const estrategiaAtual = useMemo(() => 
@@ -87,6 +98,15 @@ export default function Fechamento() {
     setFixas([]);
   };
 
+  const handleAutoFill = async () => {
+    const dezenas = await autoFill(estrategiaId, estrategiaAtual.dezenas);
+    if (dezenas) {
+      setSelecionadas(dezenas);
+      setFixas([]);
+      setModo("selecionar");
+    }
+  };
+
   // Se tem resultado, mostra a tela de resultados
   if (resultado) {
     return (
@@ -116,8 +136,29 @@ export default function Fechamento() {
         {/* 2. Card de Regras */}
         <FechamentoRulesCard estrategia={estrategiaAtual} />
 
-        {/* 3. Seletor de Modo */}
-        <ModoSeletorFixas modo={modo} onChange={setModo} />
+        {/* 3. Seletor de Modo + Auto Preencher */}
+        <div className="flex items-center gap-2">
+          <ModoSeletorFixas modo={modo} onChange={setModo} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleAutoFill}
+            disabled={isAutoFilling || !canUse}
+            className="gap-1.5 shrink-0"
+          >
+            {isAutoFilling ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Wand2 className="h-4 w-4" />
+            )}
+            <span className="hidden sm:inline">Auto Preencher</span>
+            {!isAdmin && (
+              <Badge variant={canUse ? "secondary" : "outline"} className="ml-1 text-xs">
+                {usageCount}/1
+              </Badge>
+            )}
+          </Button>
+        </div>
 
         {/* 4. Grid de Números (Volante) */}
         <div className="max-w-sm mx-auto">

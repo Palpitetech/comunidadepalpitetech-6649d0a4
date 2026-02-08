@@ -285,6 +285,33 @@ export type Database = {
         }
         Relationships: []
       }
+      fechamento_auto_usage: {
+        Row: {
+          count: number
+          created_at: string
+          day: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          created_at?: string
+          day?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          created_at?: string
+          day?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       gerador_daily_usage: {
         Row: {
           count: number
