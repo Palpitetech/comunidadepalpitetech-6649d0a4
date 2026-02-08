@@ -5,6 +5,7 @@ import { Sparkles } from "lucide-react";
 import { EstrategiaFechamentoSelector, ESTRATEGIAS_FECHAMENTO } from "@/components/fechamento/EstrategiaFechamentoSelector";
 import { FechamentoRulesCard } from "@/components/fechamento/FechamentoRulesCard";
 import { FechamentoStatusBar } from "@/components/fechamento/FechamentoStatusBar";
+import { ModoSeletorFixas } from "@/components/fechamento/ModoSeletorFixas";
 import { ResultadosFechamento } from "@/components/fechamento/ResultadosFechamento";
 import { cn } from "@/lib/utils";
 import { formatarDezena } from "@/lib/lotofacil";
@@ -13,7 +14,8 @@ import { gerarFechamento, ResultadoFechamento } from "@/lib/fechamento";
 export default function Fechamento() {
   const [estrategiaId, setEstrategiaId] = useState("16-14-4");
   const [selecionadas, setSelecionadas] = useState<number[]>([]);
-  const [fixas, setFixas] = useState<number[]>([]); // Preparado para funcionalidade futura
+  const [fixas, setFixas] = useState<number[]>([]);
+  const [modo, setModo] = useState<"selecionar" | "fixar">("selecionar");
   const [resultado, setResultado] = useState<ResultadoFechamento | null>(null);
 
   // Obtém os dados da estratégia selecionada
@@ -30,16 +32,34 @@ export default function Fechamento() {
   const dezenas = Array.from({ length: 25 }, (_, i) => i + 1);
 
   const handleToggle = (numero: number) => {
-    setSelecionadas(prev => {
-      if (prev.includes(numero)) {
-        return prev.filter(n => n !== numero);
-      }
-      // Não permite selecionar mais que o necessário
-      if ((prev.length + fixas.length) >= estrategiaAtual.dezenas) {
-        return prev;
-      }
-      return [...prev, numero];
-    });
+    if (modo === "selecionar") {
+      // Não permite selecionar número que já está fixado
+      if (fixas.includes(numero)) return;
+      
+      setSelecionadas(prev => {
+        if (prev.includes(numero)) {
+          return prev.filter(n => n !== numero);
+        }
+        if ((prev.length + fixas.length) >= estrategiaAtual.dezenas) {
+          return prev;
+        }
+        return [...prev, numero];
+      });
+    } else {
+      // Modo fixar
+      // Não permite fixar número que já está selecionado
+      if (selecionadas.includes(numero)) return;
+      
+      setFixas(prev => {
+        if (prev.includes(numero)) {
+          return prev.filter(n => n !== numero);
+        }
+        if ((selecionadas.length + prev.length) >= estrategiaAtual.dezenas) {
+          return prev;
+        }
+        return [...prev, numero];
+      });
+    }
   };
 
   const handleGerarFechamento = () => {
@@ -93,7 +113,10 @@ export default function Fechamento() {
         {/* 2. Card de Regras */}
         <FechamentoRulesCard estrategia={estrategiaAtual} />
 
-        {/* 3. Grid de Números (Volante) */}
+        {/* 3. Seletor de Modo */}
+        <ModoSeletorFixas modo={modo} onChange={setModo} />
+
+        {/* 4. Grid de Números (Volante) */}
         <div className="max-w-sm mx-auto">
           <div className="grid grid-cols-5 gap-2">
             {dezenas.map((numero) => {
