@@ -132,8 +132,8 @@ export default function DezenasporPosicao() {
                     <div className={cn(
                       "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
                       idx === 0 && "bg-primary text-primary-foreground",
-                      idx === 1 && "bg-muted-foreground/70 text-background",
-                      idx === 2 && "bg-muted-foreground/50 text-background"
+                      idx === 1 && "bg-primary/60 text-primary-foreground",
+                      idx === 2 && "bg-primary/40 text-primary-foreground"
                     )}>
                       {idx + 1}º
                     </div>
@@ -193,11 +193,11 @@ export default function DezenasporPosicao() {
                   <span>1º Lugar</span>
                 </div>
                 <div className="flex items-center gap-1.5 whitespace-nowrap">
-                  <span className="w-4 h-4 rounded-full bg-muted-foreground/70"></span>
+                  <span className="w-4 h-4 rounded-full bg-primary/60"></span>
                   <span>2º Lugar</span>
                 </div>
                 <div className="flex items-center gap-1.5 whitespace-nowrap">
-                  <span className="w-4 h-4 rounded-full bg-muted-foreground/50"></span>
+                  <span className="w-4 h-4 rounded-full bg-primary/40"></span>
                   <span>3º Lugar</span>
                 </div>
               </div>
