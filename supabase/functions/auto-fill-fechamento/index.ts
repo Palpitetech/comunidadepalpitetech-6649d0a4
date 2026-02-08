@@ -79,6 +79,16 @@ serve(async (req) => {
       );
     }
 
+    // Definir regras de fixas por estratégia
+    const estrategiaConfig: Record<string, { fixas: number; variaveis: number; descricao: string }> = {
+      "16-14-4": { fixas: 0, variaveis: 16, descricao: "Selecione 16 dezenas sem ordem específica" },
+      "17-14-8": { fixas: 0, variaveis: 17, descricao: "Selecione 17 dezenas sem ordem específica" },
+      "19-14-6": { fixas: 13, variaveis: 6, descricao: "As PRIMEIRAS 13 dezenas serão FIXAS e as ÚLTIMAS 6 serão VARIÁVEIS" },
+      "21-14-7": { fixas: 14, variaveis: 7, descricao: "As PRIMEIRAS 14 dezenas serão FIXAS e as ÚLTIMAS 7 serão VARIÁVEIS" },
+    };
+
+    const config = estrategiaConfig[estrategiaId] || { fixas: 0, variaveis: totalDezenas, descricao: "Selecione as dezenas" };
+
     // Buscar últimos 4 concursos
     const { data: resultados, error: resultadosError } = await supabase
       .from("resultados")
@@ -120,33 +130,59 @@ serve(async (req) => {
       );
     }
 
-    const systemPrompt = `Você é um especialista em análise estatística da Lotofácil.
+    // Sistema de prompt diferenciado por estratégia
+    let systemPrompt = `Você é um especialista em análise estatística da Lotofácil.
 
-TAREFA: Analisar os últimos 4 concursos e sugerir ${totalDezenas} dezenas para um fechamento, explicando sua estratégia.
+TAREFA: Analisar os últimos 4 concursos e sugerir ${totalDezenas} dezenas para um fechamento.
 
 REGRAS DO FECHAMENTO:
 - A Lotofácil tem números de 01 a 25
 - Você DEVE selecionar EXATAMENTE ${totalDezenas} dezenas
-- As dezenas devem estar entre 1 e 25
+- As dezenas devem estar entre 1 e 25`;
+
+    // Adicionar regras específicas para estratégias com fixas
+    if (config.fixas > 0) {
+      systemPrompt += `
+
+⚠️ REGRA CRÍTICA DE ORDENAÇÃO:
+- ${config.descricao}
+- PRIMEIRO: Escolha as ${config.fixas} dezenas que você considera mais FORTES/CONFIÁVEIS (apareceram mais, são mais equilibradas, etc)
+- DEPOIS: Escolha as ${config.variaveis} dezenas que são boas opções mas com menor certeza
+- A ORDEM NO ARRAY IMPORTA: posições 0-${config.fixas - 1} = FIXAS, posições ${config.fixas}-${totalDezenas - 1} = VARIÁVEIS
+- As FIXAS aparecerão em TODOS os jogos gerados
+- As VARIÁVEIS serão distribuídas entre os jogos
+- NÃO ORDENE NUMERICAMENTE! Organize por prioridade: FIXAS primeiro, VARIÁVEIS depois`;
+    }
+
+    systemPrompt += `
 
 CRITÉRIOS DE ANÁLISE:
 1. Frequência: Dê preferência às dezenas que apareceram mais nos últimos concursos
 2. Equilíbrio Par/Ímpar: Mantenha proporção próxima de 8/7 ou 7/8
-3. Moldura: Inclua algumas dezenas da moldura (bordas do volante: 01-05, 06, 10, 11, 15, 16, 20, 21-25)
+3. Moldura: Inclua algumas dezenas da moldura (bordas do volante)
 4. Primos: Inclua alguns números primos (02, 03, 05, 07, 11, 13, 17, 19, 23)
 5. Repetidas: Considere as dezenas que se repetiram entre concursos
 
 NÚMEROS PRIMOS da Lotofácil: 02, 03, 05, 07, 11, 13, 17, 19, 23
 NÚMEROS DA MOLDURA: 01, 02, 03, 04, 05, 06, 10, 11, 15, 16, 20, 21, 22, 23, 24, 25`;
 
-    const userPrompt = `Últimos 4 concursos da Lotofácil:
+    let userPrompt = `Últimos 4 concursos da Lotofácil:
 
 ${contexto.map(c => `Concurso ${c.concurso}: ${c.dezenas.map((d: number) => d.toString().padStart(2, '0')).join(', ')}
   - Pares: ${c.pares}, Ímpares: ${c.impares}
   - Primos: ${c.primos}, Moldura: ${c.moldura}
   - Repetidas do anterior: ${c.repetidas}`).join('\n\n')}
 
-Selecione EXATAMENTE ${totalDezenas} dezenas para o fechamento e explique a estratégia utilizada.`;
+Selecione EXATAMENTE ${totalDezenas} dezenas para o fechamento.`;
+
+    if (config.fixas > 0) {
+      userPrompt += `
+
+IMPORTANTE: Organize as dezenas assim no array de resposta:
+- Primeiras ${config.fixas} posições: suas dezenas MAIS FORTES (serão FIXAS em todos os jogos)
+- Últimas ${config.variaveis} posições: dezenas complementares (serão VARIÁVEIS)
+- NÃO ordene numericamente, ordene por PRIORIDADE/CONFIANÇA!`;
+    }
 
     // Usar tool calling para obter resposta estruturada
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -167,14 +203,18 @@ Selecione EXATAMENTE ${totalDezenas} dezenas para o fechamento e explique a estr
             type: "function",
             function: {
               name: "sugerir_dezenas_fechamento",
-              description: "Retorna as dezenas sugeridas para o fechamento com a estratégia utilizada",
+              description: config.fixas > 0 
+                ? `Retorna as dezenas sugeridas para o fechamento. IMPORTANTE: As primeiras ${config.fixas} dezenas do array serão FIXAS, as últimas ${config.variaveis} serão VARIÁVEIS. NÃO ordene numericamente!`
+                : "Retorna as dezenas sugeridas para o fechamento com a estratégia utilizada",
               parameters: {
                 type: "object",
                 properties: {
                   dezenas: {
                     type: "array",
                     items: { type: "number" },
-                    description: "Array com as dezenas selecionadas (entre 1 e 25)"
+                    description: config.fixas > 0
+                      ? `Array com ${totalDezenas} dezenas. ORDEM IMPORTA: primeiras ${config.fixas} são FIXAS (mais fortes), últimas ${config.variaveis} são VARIÁVEIS`
+                      : "Array com as dezenas selecionadas (entre 1 e 25)"
                   },
                   estrategia: {
                     type: "object",
@@ -182,7 +222,7 @@ Selecione EXATAMENTE ${totalDezenas} dezenas para o fechamento e explique a estr
                       ferramentas: {
                         type: "array",
                         items: { type: "string" },
-                        description: "Ferramentas/técnicas de análise utilizadas (ex: 'Frequência 4 concursos', 'Equilíbrio Par/Ímpar')"
+                        description: "Ferramentas/técnicas de análise utilizadas"
                       },
                       dezenas_priorizadas: {
                         type: "array",
@@ -194,7 +234,7 @@ Selecione EXATAMENTE ${totalDezenas} dezenas para o fechamento e explique a estr
                           },
                           required: ["dezenas", "motivo"]
                         },
-                        description: "Dezenas que foram priorizadas e o motivo"
+                        description: config.fixas > 0 ? "Dezenas escolhidas como FIXAS e o motivo" : "Dezenas priorizadas e o motivo"
                       },
                       dezenas_evitadas: {
                         type: "array",
@@ -295,12 +335,16 @@ Selecione EXATAMENTE ${totalDezenas} dezenas para o fechamento e explique a estr
       }
     }
 
-    // Validar dezenas
-    dezenas = dezenas
-      .filter((d: number) => typeof d === 'number' && d >= 1 && d <= 25)
-      .slice(0, totalDezenas);
+    // Validar dezenas (manter ordem original se tem fixas!)
+    dezenas = dezenas.filter((d: number) => typeof d === 'number' && d >= 1 && d <= 25);
+    
+    // Remover duplicatas mantendo ordem
+    dezenas = [...new Set(dezenas)];
+    
+    // Limitar ao total necessário
+    dezenas = dezenas.slice(0, totalDezenas);
 
-    // Se não tiver dezenas suficientes, completar aleatoriamente
+    // Se não tiver dezenas suficientes, completar
     if (dezenas.length < totalDezenas) {
       const faltando = totalDezenas - dezenas.length;
       const disponiveis = Array.from({ length: 25 }, (_, i) => i + 1)
@@ -312,8 +356,11 @@ Selecione EXATAMENTE ${totalDezenas} dezenas para o fechamento e explique a estr
       }
     }
 
-    // Ordenar
-    dezenas.sort((a, b) => a - b);
+    // IMPORTANTE: Só ordenar se NÃO tiver fixas (FC01, FC02)
+    // Para FC03 e FC04, manter a ordem que a IA retornou (fixas primeiro, variáveis depois)
+    if (config.fixas === 0) {
+      dezenas.sort((a, b) => a - b);
+    }
 
     // Garantir estratégia mínima se não veio da IA
     if (!estrategia) {
@@ -328,7 +375,9 @@ Selecione EXATAMENTE ${totalDezenas} dezenas para o fechamento e explique a estr
             motivo: "Baseado nos resultados mais recentes"
           }
         ],
-        conclusao: "Seleção baseada na análise estatística dos últimos 4 concursos da Lotofácil."
+        conclusao: config.fixas > 0 
+          ? `Seleção com ${config.fixas} dezenas fixas (mais frequentes) e ${config.variaveis} variáveis.`
+          : "Seleção baseada na análise estatística dos últimos 4 concursos da Lotofácil."
       };
     }
 
@@ -354,8 +403,15 @@ Selecione EXATAMENTE ${totalDezenas} dezenas para o fechamento e explique a estr
       }
     }
 
+    console.log(`[auto-fill-fechamento] Estratégia: ${estrategiaId}, Fixas: ${config.fixas}, Dezenas geradas:`, dezenas);
+
     return new Response(
-      JSON.stringify({ dezenas, estrategia, analise: contexto }),
+      JSON.stringify({ 
+        dezenas, 
+        estrategia, 
+        analise: contexto,
+        config: { fixas: config.fixas, variaveis: config.variaveis }
+      }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
