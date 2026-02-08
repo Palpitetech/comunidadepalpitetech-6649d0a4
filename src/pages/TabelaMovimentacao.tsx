@@ -42,7 +42,7 @@ type DestaqueTipo = "todas" | "quentes" | "frias" | "atrasadas" | "ausentes";
 
 export default function TabelaMovimentacao() {
   const isMobile = useIsMobile();
-  const [periodo, setPeriodo] = useState<number>(30);
+  const [periodo, setPeriodo] = useState<number>(10);
   const [destaque, setDestaque] = useState<DestaqueTipo>("todas");
   const [mostrarEstatisticas, setMostrarEstatisticas] = useState(true);
 
@@ -137,7 +137,12 @@ export default function TabelaMovimentacao() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
+                        {[...Array(10)].map((_, i) => (
+                          <SelectItem key={i + 1} value={String(i + 1)}>{i + 1} {i === 0 ? "concurso" : "concursos"}</SelectItem>
+                        ))}
                         <SelectItem value="15">15 concursos</SelectItem>
+                        <SelectItem value="20">20 concursos</SelectItem>
+                        <SelectItem value="25">25 concursos</SelectItem>
                         <SelectItem value="30">30 concursos</SelectItem>
                         <SelectItem value="50">50 concursos</SelectItem>
                         <SelectItem value="100">100 concursos</SelectItem>
