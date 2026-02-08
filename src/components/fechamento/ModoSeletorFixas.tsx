@@ -14,7 +14,7 @@ export function ModoSeletorFixas({ modo, onChange }: ModoSeletorFixasProps) {
         className={cn(
           "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all",
           modo === "selecionar"
-            ? "bg-primary text-primary-foreground shadow-sm"
+            ? "bg-palpite-dezena text-palpite-dezena-foreground shadow-sm"
             : "text-muted-foreground hover:text-foreground"
         )}
       >
@@ -26,7 +26,7 @@ export function ModoSeletorFixas({ modo, onChange }: ModoSeletorFixasProps) {
         className={cn(
           "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all",
           modo === "fixar"
-            ? "bg-foreground text-background shadow-sm"
+            ? "bg-palpite-fixa text-palpite-fixa-foreground shadow-sm"
             : "text-muted-foreground hover:text-foreground"
         )}
       >
