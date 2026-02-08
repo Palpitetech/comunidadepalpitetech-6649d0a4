@@ -80,7 +80,7 @@ export function useTabelaMovimentacao(limiteConcursos = 50) {
       };
 
       return {
-        resultados: [...data].sort((a, b) => b.concurso_id - a.concurso_id), // Mais recente primeiro
+        resultados: [...data].sort((a, b) => a.concurso_id - b.concurso_id), // Mais antigo primeiro, mais novo embaixo
         ciclos,
         dezenaStats,
         cicloAtual,
