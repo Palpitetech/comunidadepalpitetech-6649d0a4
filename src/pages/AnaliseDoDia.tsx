@@ -14,7 +14,6 @@ import { SeletorPeriodo } from "@/components/frequencia/SeletorPeriodo";
 import { DezenaCirculoMini } from "@/components/lotofacil/DezenaCirculoMini";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { formatarDezena } from "@/lib/lotofacil";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -23,46 +22,50 @@ import { ConfirmNavigationDialog } from "@/components/analise/ConfirmNavigationD
 
 type FiltroKey = "impares" | "repetidas" | "moldura" | "primos" | "m3";
 
+interface SelectedFilters {
+  impares: number[];
+  repetidas: number[];
+  moldura: number[];
+  primos: number[];
+  m3: number[];
+}
+
 interface FiltroRowProps {
   label: string;
   filtroKey: FiltroKey;
   top3: { valor: number; ocorrencias: number; porcentagem: number }[];
   ultimoValor: number;
-  isSelected: boolean;
-  onToggle: (key: FiltroKey) => void;
+  selectedValues: number[];
+  onToggleValue: (key: FiltroKey, value: number) => void;
 }
 
-function FiltroRow({ label, filtroKey, top3, ultimoValor, isSelected, onToggle }: FiltroRowProps) {
+function FiltroRow({ label, filtroKey, top3, ultimoValor, selectedValues, onToggleValue }: FiltroRowProps) {
   const isUltimoNoTop3 = top3.some((t) => t.valor === ultimoValor);
   
   return (
-    <div 
-      className={`flex items-center gap-2 py-2 border-b border-border/50 last:border-b-0 cursor-pointer transition-colors ${
-        isSelected ? "bg-primary/5" : "hover:bg-muted/30"
-      }`}
-      onClick={() => onToggle(filtroKey)}
-    >
-      <Checkbox 
-        checked={isSelected} 
-        onCheckedChange={() => onToggle(filtroKey)}
-        className="shrink-0"
-      />
+    <div className="flex items-center gap-2 py-2 border-b border-border/50 last:border-b-0">
       <span className="text-xs font-medium text-muted-foreground w-16">{label}</span>
       <div className="flex items-center gap-1.5 flex-1 justify-center">
-        {top3.map((t) => (
-          <span
-            key={t.valor}
-            className={`
-              px-2 py-0.5 rounded text-xs font-semibold
-              ${t.valor === ultimoValor 
-                ? "bg-foreground text-background" 
-                : "bg-muted text-muted-foreground"
-              }
-            `}
-          >
-            {t.valor}
-          </span>
-        ))}
+        {top3.map((t) => {
+          const isSelected = selectedValues.includes(t.valor);
+          return (
+            <button
+              key={t.valor}
+              onClick={() => onToggleValue(filtroKey, t.valor)}
+              className={`
+                px-2.5 py-1 rounded text-xs font-semibold transition-all
+                ${isSelected 
+                  ? "bg-primary text-primary-foreground ring-2 ring-primary/50" 
+                  : t.valor === ultimoValor 
+                    ? "bg-foreground text-background hover:ring-2 hover:ring-foreground/30" 
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }
+              `}
+            >
+              {t.valor}
+            </button>
+          );
+        })}
       </div>
       <div className="w-12 flex justify-end">
         <span className={`
@@ -116,42 +119,63 @@ export default function AnaliseDoDia() {
   const [periodo, setPeriodo] = useState(10);
   const { data: tendencias, isLoading } = useTendenciasDia(periodo);
   
-  // Estados para filtros selecionados
-  const [selectedFilters, setSelectedFilters] = useState<Set<FiltroKey>>(new Set());
+  // Estados para filtros selecionados (agora por valor individual)
+  const [selectedFilters, setSelectedFilters] = useState<SelectedFilters>({
+    impares: [],
+    repetidas: [],
+    moldura: [],
+    primos: [],
+    m3: [],
+  });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
 
-  const toggleFilter = (key: FiltroKey) => {
+  const toggleFilterValue = (key: FiltroKey, value: number) => {
     setSelectedFilters(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(key)) {
-        newSet.delete(key);
-      } else {
-        newSet.add(key);
-      }
-      return newSet;
+      const currentValues = prev[key];
+      const newValues = currentValues.includes(value)
+        ? currentValues.filter(v => v !== value)
+        : [...currentValues, value];
+      return { ...prev, [key]: newValues };
     });
   };
 
   const selectAllFilters = () => {
-    setSelectedFilters(new Set(["impares", "repetidas", "moldura", "primos", "m3"]));
+    if (!tendencias) return;
+    setSelectedFilters({
+      impares: tendencias.filtros.impares.top3.map(t => t.valor),
+      repetidas: tendencias.filtros.repetidas.top3.map(t => t.valor),
+      moldura: tendencias.filtros.moldura.top3.map(t => t.valor),
+      primos: tendencias.filtros.primos.top3.map(t => t.valor),
+      m3: tendencias.filtros.m3.top3.map(t => t.valor),
+    });
   };
 
   const clearAllFilters = () => {
-    setSelectedFilters(new Set());
+    setSelectedFilters({
+      impares: [],
+      repetidas: [],
+      moldura: [],
+      primos: [],
+      m3: [],
+    });
   };
+
+  // Conta total de valores selecionados
+  const totalSelectedValues = Object.values(selectedFilters).reduce(
+    (acc, arr) => acc + arr.length, 0
+  );
 
   // Construir URL do desdobramento com filtros selecionados
   const buildDesdobramentoUrl = () => {
-    if (!tendencias || selectedFilters.size === 0) return "/desdobramento";
+    if (!tendencias || totalSelectedValues === 0) return "/desdobramento";
     
     const params = new URLSearchParams();
     
-    selectedFilters.forEach(key => {
-      const filtro = tendencias.filtros[key];
-      if (filtro) {
-        const top3Values = filtro.top3.map(t => t.valor).join(",");
-        params.set(key, top3Values);
+    (Object.keys(selectedFilters) as FiltroKey[]).forEach(key => {
+      const values = selectedFilters[key];
+      if (values.length > 0) {
+        params.set(key, values.join(","));
       }
     });
     
@@ -159,7 +183,7 @@ export default function AnaliseDoDia() {
   };
 
   const handleUsarFiltros = () => {
-    if (selectedFilters.size === 0) return;
+    if (totalSelectedValues === 0) return;
     setShowConfirmDialog(true);
   };
 
@@ -257,51 +281,51 @@ export default function AnaliseDoDia() {
                   filtroKey="impares"
                   top3={tendencias.filtros.impares.top3} 
                   ultimoValor={tendencias.filtros.impares.ultimoConcurso}
-                  isSelected={selectedFilters.has("impares")}
-                  onToggle={toggleFilter}
+                  selectedValues={selectedFilters.impares}
+                  onToggleValue={toggleFilterValue}
                 />
                 <FiltroRow 
                   label="Repetidas" 
                   filtroKey="repetidas"
                   top3={tendencias.filtros.repetidas.top3} 
                   ultimoValor={tendencias.filtros.repetidas.ultimoConcurso}
-                  isSelected={selectedFilters.has("repetidas")}
-                  onToggle={toggleFilter}
+                  selectedValues={selectedFilters.repetidas}
+                  onToggleValue={toggleFilterValue}
                 />
                 <FiltroRow 
                   label="Moldura" 
                   filtroKey="moldura"
                   top3={tendencias.filtros.moldura.top3} 
                   ultimoValor={tendencias.filtros.moldura.ultimoConcurso}
-                  isSelected={selectedFilters.has("moldura")}
-                  onToggle={toggleFilter}
+                  selectedValues={selectedFilters.moldura}
+                  onToggleValue={toggleFilterValue}
                 />
                 <FiltroRow 
                   label="Primos" 
                   filtroKey="primos"
                   top3={tendencias.filtros.primos.top3} 
                   ultimoValor={tendencias.filtros.primos.ultimoConcurso}
-                  isSelected={selectedFilters.has("primos")}
-                  onToggle={toggleFilter}
+                  selectedValues={selectedFilters.primos}
+                  onToggleValue={toggleFilterValue}
                 />
                 <FiltroRow 
                   label="Múlt. 3" 
                   filtroKey="m3"
                   top3={tendencias.filtros.m3.top3} 
                   ultimoValor={tendencias.filtros.m3.ultimoConcurso}
-                  isSelected={selectedFilters.has("m3")}
-                  onToggle={toggleFilter}
+                  selectedValues={selectedFilters.m3}
+                  onToggleValue={toggleFilterValue}
                 />
               </div>
 
               {/* CTA para usar filtros */}
-              {selectedFilters.size > 0 && (
+              {totalSelectedValues > 0 && (
                 <Button 
                   onClick={handleUsarFiltros}
                   className="w-full mt-3 gap-2 bg-highlight hover:bg-highlight/90 text-highlight-foreground font-semibold h-9"
                 >
                   <Sparkles className="h-4 w-4" />
-                  Usar {selectedFilters.size} filtro{selectedFilters.size > 1 ? "s" : ""} no Desdobramento
+                  Usar {totalSelectedValues} valor{totalSelectedValues > 1 ? "es" : ""} no Desdobramento
                 </Button>
               )}
             </div>
