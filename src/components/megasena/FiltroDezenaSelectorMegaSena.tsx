@@ -125,9 +125,9 @@ export function FiltroDezenaSelectorMegaSena({
                     "h-8 w-full rounded text-xs font-bold transition-all",
                     isSelected
                       ? tipo === "fixas"
-                        ? "bg-foreground text-background"
-                        : "bg-destructive text-destructive-foreground"
-                      : "bg-card border border-border hover:border-primary/50",
+                        ? "bg-megasena-primary text-megasena-primary-foreground"
+                        : "bg-megasena-excluida text-megasena-excluida-foreground"
+                      : "bg-card border border-border hover:border-megasena-primary/50",
                     disabled && "opacity-50 cursor-not-allowed",
                     !isSelected && dezenasSelecionadas.length >= maxDezenas && "opacity-40"
                   )}
@@ -147,8 +147,8 @@ export function FiltroDezenaSelectorMegaSena({
                   className={cn(
                     "px-2 py-0.5 rounded text-xs font-bold",
                     tipo === "fixas"
-                      ? "bg-foreground text-background"
-                      : "bg-destructive text-destructive-foreground"
+                      ? "bg-megasena-primary text-megasena-primary-foreground"
+                      : "bg-megasena-excluida text-megasena-excluida-foreground"
                   )}
                 >
                   {formatDezena(d)}

@@ -72,6 +72,13 @@ export default {
           fixa: "hsl(var(--palpite-dezena-fixa))",
           "fixa-foreground": "hsl(var(--palpite-dezena-fixa-foreground))",
         },
+        // Cores específicas da Mega Sena
+        megasena: {
+          primary: "hsl(var(--megasena-primary))",
+          "primary-foreground": "hsl(var(--megasena-primary-foreground))",
+          excluida: "hsl(var(--megasena-excluida))",
+          "excluida-foreground": "hsl(var(--megasena-excluida-foreground))",
+        },
         // Status Quente/Frio
         status: {
           quente: "hsl(var(--status-quente))",
