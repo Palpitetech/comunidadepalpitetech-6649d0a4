@@ -279,14 +279,12 @@ export default function Desdobramento() {
         )}
 
         {/* Configuração de Geração - Sempre visível */}
-        <div className="bg-muted/30 rounded-lg border">
-          <ConfigGeracaoBar
-            qtdDezenas={qtdDezenas}
-            onQtdDezenasChange={setQtdDezenas}
-            qtdPalpites={qtdPalpites}
-            onQtdPalpitesChange={setQtdPalpites}
-          />
-        </div>
+        <ConfigGeracaoBar
+          qtdDezenas={qtdDezenas}
+          onQtdDezenasChange={setQtdDezenas}
+          qtdPalpites={qtdPalpites}
+          onQtdPalpitesChange={setQtdPalpites}
+        />
 
 
         {/* Erro de validação */}
