@@ -7,14 +7,13 @@ import { Separator } from "@/components/ui/separator";
 import { QuantidadeSelector } from "@/components/gerador/QuantidadeSelector";
 import { PeriodoAnaliseSelector } from "@/components/gerador/PeriodoAnaliseSelector";
 import { PedidoEspecialInput } from "@/components/gerador/PedidoEspecialInput";
-import { DezenasGridMegaSena } from "@/components/megasena/DezenasGridMegaSena";
+import { FiltroDezenaSelectorMegaSena } from "@/components/megasena/FiltroDezenaSelectorMegaSena";
 import { ResultadosSheetMegaSena } from "@/components/megasena/ResultadosSheetMegaSena";
 import { useGeradorMegaSena } from "@/hooks/useGeradorMegaSena";
 import { useGeradorStatus } from "@/hooks/useGeradorStatus";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { Dices, Loader2, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export default function GeradorMegaSena() {
   const isMobile = useIsMobile();
@@ -23,10 +22,11 @@ export default function GeradorMegaSena() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
   
-  // Filtros
+  // Filtros - Mesmo padrão da Lotofácil
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
-  const [modoGrid, setModoGrid] = useState<"fixar" | "excluir">("fixar");
-  const [dezenasFiexas, setDezenasFiexas] = useState<number[]>([]);
+  const [dezenasFiexasOpcao, setDezenasFiexasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
+  const [dezenasFixas, setDezenasFixas] = useState<number[]>([]);
+  const [dezenasExcluidasOpcao, setDezenasExcluidasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
   const [dezenasExcluidas, setDezenasExcluidas] = useState<number[]>([]);
   const [pedidoEspecial, setPedidoEspecial] = useState("");
   
@@ -52,36 +52,10 @@ export default function GeradorMegaSena() {
     fetchUltimoConcurso();
   }, []);
 
-  const handleToggleDezena = (dezena: number) => {
-    if (modoGrid === "fixar") {
-      // Remove de excluídas se existir
-      if (dezenasExcluidas.includes(dezena)) {
-        setDezenasExcluidas(prev => prev.filter(d => d !== dezena));
-      }
-      // Toggle em fixas
-      if (dezenasFiexas.includes(dezena)) {
-        setDezenasFiexas(prev => prev.filter(d => d !== dezena));
-      } else if (dezenasFiexas.length < 5) {
-        setDezenasFiexas(prev => [...prev, dezena]);
-      }
-    } else {
-      // Remove de fixas se existir
-      if (dezenasFiexas.includes(dezena)) {
-        setDezenasFiexas(prev => prev.filter(d => d !== dezena));
-      }
-      // Toggle em excluídas
-      if (dezenasExcluidas.includes(dezena)) {
-        setDezenasExcluidas(prev => prev.filter(d => d !== dezena));
-      } else if (dezenasExcluidas.length < 10) {
-        setDezenasExcluidas(prev => [...prev, dezena]);
-      }
-    }
-  };
-
   const handleGenerate = () => {
     const filtros = {
-      dezenasFiexas: dezenasFiexas.length > 0 ? dezenasFiexas : [],
-      dezenasExcluidas: dezenasExcluidas.length > 0 ? dezenasExcluidas : [],
+      dezenasFiexas: dezenasFiexasOpcao === "sim" ? dezenasFixas : [],
+      dezenasExcluidas: dezenasExcluidasOpcao === "sim" ? dezenasExcluidas : [],
       pedidoEspecial: pedidoEspecial.trim() || undefined,
     };
     
@@ -99,14 +73,16 @@ export default function GeradorMegaSena() {
     reset();
     setQuantidade(3);
     setPeriodoAnalise(50);
-    setDezenasFiexas([]);
+    setDezenasFiexasOpcao("padrao");
+    setDezenasFixas([]);
+    setDezenasExcluidasOpcao("padrao");
     setDezenasExcluidas([]);
     setPedidoEspecial("");
   };
 
   const temFiltrosAtivos = 
-    dezenasFiexas.length > 0 || 
-    dezenasExcluidas.length > 0 || 
+    dezenasFiexasOpcao !== "padrao" || 
+    dezenasExcluidasOpcao !== "padrao" || 
     pedidoEspecial.trim().length > 0;
 
   return (
@@ -149,7 +125,7 @@ export default function GeradorMegaSena() {
               <span className="flex items-center gap-2">
                 Filtros Avançados
                 {temFiltrosAtivos && (
-                  <span className="px-1.5 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-600 rounded-full">
+                  <span className="px-1.5 py-0.5 text-[10px] bg-primary/10 text-primary rounded-full">
                     Ativos
                   </span>
                 )}
@@ -161,38 +137,33 @@ export default function GeradorMegaSena() {
               )}
             </button>
 
+            {/* Filtros Avançados - Mesmo padrão da Lotofácil */}
             {filtrosAbertos && (
-              <div className="space-y-4 pt-2">
-                {/* Toggle de Modo */}
-                <div className="space-y-2">
-                  <ToggleGroup
-                    type="single"
-                    value={modoGrid}
-                    onValueChange={(v) => v && setModoGrid(v as "fixar" | "excluir")}
-                    className="w-full"
-                  >
-                    <ToggleGroupItem value="fixar" className="flex-1">
-                      Fixar ({dezenasFiexas.length}/5)
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="excluir" className="flex-1">
-                      Excluir ({dezenasExcluidas.length}/10)
-                    </ToggleGroupItem>
-                  </ToggleGroup>
-                  <p className="text-xs text-muted-foreground text-center">
-                    {modoGrid === "fixar" 
-                      ? "Toque para incluir dezenas obrigatórias" 
-                      : "Toque para excluir dezenas indesejadas"}
-                  </p>
-                </div>
-
-                {/* Grid de Dezenas */}
-                <DezenasGridMegaSena
-                  dezenasFiexas={dezenasFiexas}
-                  dezenasExcluidas={dezenasExcluidas}
-                  onToggleDezena={handleToggleDezena}
-                  modo={modoGrid}
+              <div className="space-y-6 pt-2">
+                {/* Dezenas Fixas */}
+                <FiltroDezenaSelectorMegaSena
+                  label="Dezenas Fixas"
+                  description="Forçar dezenas específicas em todos os jogos"
+                  value={dezenasFiexasOpcao}
+                  onChange={setDezenasFiexasOpcao}
+                  dezenasSelecionadas={dezenasFixas}
+                  onDezenasChange={setDezenasFixas}
                   disabled={isLoading || !canGenerate}
-                  ultimoConcursoDezenas={ultimoConcursoDezenas}
+                  tipo="fixas"
+                  maxDezenas={5}
+                />
+
+                {/* Dezenas Excluídas */}
+                <FiltroDezenaSelectorMegaSena
+                  label="Dezenas Excluídas"
+                  description="Evitar dezenas específicas nos jogos"
+                  value={dezenasExcluidasOpcao}
+                  onChange={setDezenasExcluidasOpcao}
+                  dezenasSelecionadas={dezenasExcluidas}
+                  onDezenasChange={setDezenasExcluidas}
+                  disabled={isLoading || !canGenerate}
+                  tipo="excluidas"
+                  maxDezenas={10}
                 />
 
                 {/* Pedido Especial */}
@@ -214,7 +185,7 @@ export default function GeradorMegaSena() {
             <Button
               onClick={handleGenerate}
               disabled={isLoading || !canGenerate}
-              className="w-full h-14 text-lg gap-2 bg-emerald-600 hover:bg-emerald-700"
+              className="w-full h-14 text-lg gap-2"
               size="lg"
             >
               {isLoading ? (
@@ -275,7 +246,7 @@ export default function GeradorMegaSena() {
             onClearAll={handleClearAll}
             estrategia={result.estrategia}
             periodoAnalise={periodoAnalise}
-            dezenasFixes={dezenasFiexas.length > 0 ? dezenasFiexas : undefined}
+            dezenasFixes={dezenasFiexasOpcao === "sim" ? dezenasFixas : undefined}
           />
         )}
       </div>
