@@ -228,7 +228,7 @@ export default function AnaliseDoDia() {
                     tendencias.fixas.map((d) => (
                       <span
                         key={d.dezena}
-                        className="inline-flex items-center justify-center gap-0.5 px-1.5 py-1 rounded bg-foreground text-background text-xs font-bold"
+                        className="inline-flex items-center justify-center gap-0.5 px-1.5 py-1 rounded bg-status-quente/20 text-status-quente text-xs font-bold"
                       >
                         {formatarDezena(d.dezena)}
                         <span className="text-[9px] opacity-70">{d.frequencia}%</span>
