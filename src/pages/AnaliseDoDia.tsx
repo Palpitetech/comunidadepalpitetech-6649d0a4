@@ -149,7 +149,10 @@ export default function AnaliseDoDia() {
                     #{tendencias.ultimoConcurso.id}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {format(new Date(tendencias.ultimoConcurso.data), "dd/MM", { locale: ptBR })}
+                    {(() => {
+                      const [year, month, day] = tendencias.ultimoConcurso.data.split("-").map(Number);
+                      return format(new Date(year, month - 1, day), "dd/MM", { locale: ptBR });
+                    })()}
                   </span>
                 </div>
               </div>
