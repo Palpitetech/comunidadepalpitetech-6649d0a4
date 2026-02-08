@@ -215,17 +215,50 @@ export function gerarFechamento(
 }
 
 /**
- * Simula um sorteio com 15 dezenas aleatórias das dezenas selecionadas
- * e verifica se a garantia matemática do fechamento é cumprida
+ * Simula um sorteio com 15 dezenas e verifica se a garantia matemática é cumprida
+ * 
+ * Para matrizes com fixas obrigatórias (FC03, FC04):
+ * - Sorteia (fixas - 1) das fixas (rotacionando qual fica de fora)
+ * - Complementa com variáveis até chegar em 15
+ * 
+ * Para matrizes sem fixas:
+ * - Sorteia 15 dezenas aleatórias das selecionadas
  */
 export function simularGarantia(
   dezenasSelecionadas: number[],
   jogos: number[][],
-  garantia: number
+  garantia: number,
+  fixasObrigatorias: number = 0
 ): ResultadoSimulacao {
-  // Sorteia 15 dezenas aleatórias das selecionadas (simulando o resultado)
-  const dezenasEmbaralhadas = [...dezenasSelecionadas].sort(() => Math.random() - 0.5);
-  const resultadoSimulado = dezenasEmbaralhadas.slice(0, 15).sort((a, b) => a - b);
+  let resultadoSimulado: number[];
+
+  if (fixasObrigatorias > 0) {
+    // Matrizes com fixas obrigatórias (FC03, FC04)
+    // As primeiras N posições são fixas, o resto são variáveis
+    const fixas = dezenasSelecionadas.slice(0, fixasObrigatorias);
+    const variaveis = dezenasSelecionadas.slice(fixasObrigatorias);
+    
+    // Quantas fixas precisamos acertar para a garantia funcionar
+    // Se cada jogo tem 15 dezenas = fixas + 1 variável, 
+    // para garantir X pontos, precisamos de (X - 1) fixas + pelo menos 1 variável
+    const fixasNecessarias = fixasObrigatorias - 1; // Remove 1 fixa (rotaciona)
+    const variaveisNecessarias = 15 - fixasNecessarias;
+    
+    // Sorteia quais fixas entram (remove 1 aleatória)
+    const fixasEmbaralhadas = [...fixas].sort(() => Math.random() - 0.5);
+    const fixasSorteadas = fixasEmbaralhadas.slice(0, fixasNecessarias);
+    
+    // Sorteia quais variáveis entram
+    const variaveisEmbaralhadas = [...variaveis].sort(() => Math.random() - 0.5);
+    const variaveisSorteadas = variaveisEmbaralhadas.slice(0, Math.min(variaveisNecessarias, variaveis.length));
+    
+    // Combina e ordena
+    resultadoSimulado = [...fixasSorteadas, ...variaveisSorteadas].sort((a, b) => a - b);
+  } else {
+    // Matrizes sem fixas - sorteia 15 aleatórias
+    const dezenasEmbaralhadas = [...dezenasSelecionadas].sort(() => Math.random() - 0.5);
+    resultadoSimulado = dezenasEmbaralhadas.slice(0, 15).sort((a, b) => a - b);
+  }
 
   // Calcula acertos de cada jogo
   const acertosPorJogo = jogos.map((jogo) => {
