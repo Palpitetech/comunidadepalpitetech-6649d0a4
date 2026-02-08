@@ -79,6 +79,11 @@ interface EstrategiaFechamentoSelectorProps {
 export function EstrategiaFechamentoSelector({ value, onChange }: EstrategiaFechamentoSelectorProps) {
   const estrategiaAtual = ESTRATEGIAS_FECHAMENTO.find(e => e.id === value);
 
+  const formatarEstrategia = (e: EstrategiaFechamento) => ({
+    linha1: `${e.nome} — Garantia ${e.garantia} pontos`,
+    linha2: `${e.jogos} jogos, 15 dezenas por jogo`,
+  });
+
   return (
     <div className="space-y-2">
       <Label htmlFor="estrategia-fechamento" className="text-base font-medium">
@@ -89,21 +94,24 @@ export function EstrategiaFechamentoSelector({ value, onChange }: EstrategiaFech
           <SelectValue placeholder="Selecione a garantia">
             {estrategiaAtual && (
               <div className="text-left">
-                <div className="font-medium">{estrategiaAtual.label}</div>
-                <div className="text-xs text-muted-foreground">{estrategiaAtual.descricao}</div>
+                <div className="font-medium">{formatarEstrategia(estrategiaAtual).linha1}</div>
+                <div className="text-xs text-muted-foreground">{formatarEstrategia(estrategiaAtual).linha2}</div>
               </div>
             )}
           </SelectValue>
         </SelectTrigger>
         <SelectContent className="bg-background z-50">
-          {ESTRATEGIAS_FECHAMENTO.map((estrategia) => (
-            <SelectItem key={estrategia.id} value={estrategia.id} className="py-3">
-              <div>
-                <div className="font-medium">{estrategia.label}</div>
-                <div className="text-xs text-muted-foreground">{estrategia.descricao}</div>
-              </div>
-            </SelectItem>
-          ))}
+          {ESTRATEGIAS_FECHAMENTO.map((estrategia) => {
+            const fmt = formatarEstrategia(estrategia);
+            return (
+              <SelectItem key={estrategia.id} value={estrategia.id} className="py-3">
+                <div>
+                  <div className="font-medium">{fmt.linha1}</div>
+                  <div className="text-xs text-muted-foreground">{fmt.linha2}</div>
+                </div>
+              </SelectItem>
+            );
+          })}
         </SelectContent>
       </Select>
     </div>
