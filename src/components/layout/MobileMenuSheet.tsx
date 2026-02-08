@@ -30,6 +30,7 @@ import {
   Grid3X3,
   Ticket,
   Bookmark,
+  Shuffle,
 } from "lucide-react";
 
 interface MobileMenuSheetProps {
@@ -216,6 +217,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
                              <Grid3X3 className="h-4 w-4" />
                              Gerador de Fechamento
+                           </div>
+                         </Link>
+                         <Link to="/desdobramento" onClick={closeAndNavigate}>
+                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                             <Shuffle className="h-4 w-4" />
+                             Desdobramento
                            </div>
                          </Link>
                       </div>

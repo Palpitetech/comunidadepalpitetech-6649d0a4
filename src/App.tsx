@@ -16,6 +16,7 @@ import Resultados from "./pages/Resultados";
 import Tendencias from "./pages/Tendencias";
 import Frequencia from "./pages/Frequencia";
 import Gerador from "./pages/Gerador";
+import Desdobramento from "./pages/Desdobramento";
 import Fechamento from "./pages/Fechamento";
 import MeusPalpites from "./pages/MeusPalpites";
 import Boloes from "./pages/Boloes";
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/tendencias" element={<ProtectedRoute><Tendencias /></ProtectedRoute>} />
             <Route path="/frequencia" element={<ProtectedRoute><Frequencia /></ProtectedRoute>} />
             <Route path="/smart-gerador" element={<ProtectedRoute><Gerador /></ProtectedRoute>} />
+            <Route path="/desdobramento" element={<ProtectedRoute><Desdobramento /></ProtectedRoute>} />
             <Route path="/fechamento" element={<ProtectedRoute><Fechamento /></ProtectedRoute>} />
             <Route path="/meus-palpites" element={<ProtectedRoute><MeusPalpites /></ProtectedRoute>} />
             <Route path="/boloes" element={<ProtectedRoute><Boloes /></ProtectedRoute>} />
