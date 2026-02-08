@@ -199,80 +199,6 @@ export default function Desdobramento() {
           </div>
         )}
 
-        {/* Botão para abrir Grid de Dezenas */}
-        <button
-          type="button"
-          onClick={() => setGridAberto(!gridAberto)}
-          className="w-full flex items-center justify-between py-3 px-4 text-sm font-medium bg-card border rounded-lg hover:bg-muted/50 transition-colors"
-        >
-          <span className="flex items-center gap-2">
-            🎲 Dezenas Fixas e Excluídas
-            {(dezenasFixas.length > 0 || dezenasExcluidas.length > 0) && (
-              <Badge variant="secondary" className="text-[10px]">
-                {dezenasFixas.length}F / {dezenasExcluidas.length}E
-              </Badge>
-            )}
-          </span>
-          {gridAberto ? (
-            <ChevronUp className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
-          )}
-        </button>
-
-        {/* Grid de Dezenas */}
-        {gridAberto && (
-          <Card>
-            <CardContent className="pt-4 space-y-3">
-              <ModoSeletorDesdobramento modo={modoGrid} onChange={setModoGrid} />
-              <GridDesdobramento
-                selecionadas={[]}
-                fixas={dezenasFixas}
-                excluidas={dezenasExcluidas}
-                repetidas={ultimoSorteio}
-                modo={modoGrid}
-                onToggle={(numero) => {
-                  if (modoGrid === "fixar") {
-                    // Se já está excluída, remove de excluídas primeiro
-                    if (dezenasExcluidas.includes(numero)) {
-                      setDezenasExcluidas(prev => prev.filter(d => d !== numero));
-                    }
-                    // Toggle fixa
-                    if (dezenasFixas.includes(numero)) {
-                      setDezenasFixas(prev => prev.filter(d => d !== numero));
-                    } else {
-                      setDezenasFixas(prev => [...prev, numero].sort((a, b) => a - b));
-                    }
-                  } else if (modoGrid === "excluir") {
-                    // Se já está fixa, remove de fixas primeiro
-                    if (dezenasFixas.includes(numero)) {
-                      setDezenasFixas(prev => prev.filter(d => d !== numero));
-                    }
-                    // Toggle excluída
-                    if (dezenasExcluidas.includes(numero)) {
-                      setDezenasExcluidas(prev => prev.filter(d => d !== numero));
-                    } else {
-                      setDezenasExcluidas(prev => [...prev, numero].sort((a, b) => a - b));
-                    }
-                  }
-                }}
-              />
-              <div className="flex justify-between text-xs text-muted-foreground pt-1">
-                <span>Fixas: {dezenasFixas.length} | Excluídas: {dezenasExcluidas.length}</span>
-                {(dezenasFixas.length > 0 || dezenasExcluidas.length > 0) && (
-                  <button 
-                    type="button"
-                    onClick={() => { setDezenasFixas([]); setDezenasExcluidas([]); }}
-                    className="text-destructive hover:underline"
-                  >
-                    Limpar
-                  </button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Botão para abrir filtros de padrões */}
         <button
           type="button"
@@ -367,7 +293,6 @@ export default function Desdobramento() {
         )}
 
 
-
         {/* Erro de validação */}
         {!filtrosValidos && (somaLinhas > 0 || somaColunas > 0) && (
           <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-lg text-destructive">
@@ -445,6 +370,53 @@ export default function Desdobramento() {
         </div>
 
         <p className="text-[10px] text-muted-foreground text-center -mt-2 mb-1">Limite de 250 palpites</p>
+
+        {/* Grid de Dezenas - Fixo acima do botão */}
+        <Card>
+          <CardContent className="pt-4 space-y-3">
+            <ModoSeletorDesdobramento modo={modoGrid} onChange={setModoGrid} />
+            <GridDesdobramento
+              selecionadas={[]}
+              fixas={dezenasFixas}
+              excluidas={dezenasExcluidas}
+              repetidas={ultimoSorteio}
+              modo={modoGrid}
+              onToggle={(numero) => {
+                if (modoGrid === "fixar") {
+                  if (dezenasExcluidas.includes(numero)) {
+                    setDezenasExcluidas(prev => prev.filter(d => d !== numero));
+                  }
+                  if (dezenasFixas.includes(numero)) {
+                    setDezenasFixas(prev => prev.filter(d => d !== numero));
+                  } else {
+                    setDezenasFixas(prev => [...prev, numero].sort((a, b) => a - b));
+                  }
+                } else if (modoGrid === "excluir") {
+                  if (dezenasFixas.includes(numero)) {
+                    setDezenasFixas(prev => prev.filter(d => d !== numero));
+                  }
+                  if (dezenasExcluidas.includes(numero)) {
+                    setDezenasExcluidas(prev => prev.filter(d => d !== numero));
+                  } else {
+                    setDezenasExcluidas(prev => [...prev, numero].sort((a, b) => a - b));
+                  }
+                }
+              }}
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Fixas: {dezenasFixas.length} | Excluídas: {dezenasExcluidas.length}</span>
+              {(dezenasFixas.length > 0 || dezenasExcluidas.length > 0) && (
+                <button 
+                  type="button"
+                  onClick={() => { setDezenasFixas([]); setDezenasExcluidas([]); }}
+                  className="text-destructive hover:underline"
+                >
+                  Limpar
+                </button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Botões de Ação */}
         <div className="flex gap-2">
