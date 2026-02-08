@@ -250,8 +250,15 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="pb-0">
-                      <div className="pl-8 space-y-0">
-                        <Link to="/megasena/resultados" onClick={closeAndNavigate}>
+                       <div className="pl-8 space-y-0">
+                         <Link to="/megasena/analise-do-dia" onClick={closeAndNavigate}>
+                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                             <Target className="h-4 w-4" />
+                             Análise do Dia
+                           </div>
+                         </Link>
+                         <div className="border-t border-border/50 my-1" />
+                         <Link to="/megasena/resultados" onClick={closeAndNavigate}>
                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
                             Resultados
                           </div>
