@@ -268,6 +268,9 @@ export function ResultadosFechamento({
           title: "Pasta criada!",
           description: `Pasta "${nome}" criada com sucesso.`,
         });
+        
+        // Salvar palpites na nova pasta criada
+        await handleSelecionarPasta(data.id);
       }
       setShowNovaPastaDialog(false);
     } catch (error) {
