@@ -109,8 +109,8 @@ export default function TabelaMovimentacao() {
 
   return (
     <MainLayout pageTitle="Tabela de Movimentação">
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-        <div className="container-senior py-4 space-y-4 max-w-7xl mx-auto">
+      <div className="min-h-screen bg-background">
+        <div className="px-2 py-3 space-y-3 w-full max-w-full">
           {/* Header */}
           <div className="space-y-3">
             {!isMobile && (
@@ -126,7 +126,7 @@ export default function TabelaMovimentacao() {
             )}
 
             {/* Controles */}
-            <Card className="bg-card/80 backdrop-blur">
+            <Card className="bg-card">
               <CardContent className="py-3">
                 <div className="flex flex-wrap items-center gap-4 justify-center">
                   {/* Período */}
@@ -289,7 +289,10 @@ export default function TabelaMovimentacao() {
                             isEven ? "bg-background" : "bg-muted/20"
                           )}
                         >
-                          <td className="py-1.5 px-2 font-medium sticky left-0 bg-inherit z-10 border-r border-border/50">
+                          <td className={cn(
+                            "py-1.5 px-2 font-medium sticky left-0 z-10 border-r border-border/50",
+                            isEven ? "bg-background" : "bg-muted"
+                          )}>
                             <div className="flex flex-col">
                               <span className="font-bold">{resultado.concurso_id}</span>
                               <span className="text-[9px] text-muted-foreground">
