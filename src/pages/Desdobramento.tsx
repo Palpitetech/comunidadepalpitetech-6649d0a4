@@ -288,21 +288,6 @@ export default function Desdobramento() {
           />
         </div>
 
-        {/* Estimativa de combinações */}
-        {filtrosValidos && estimativa !== null && (
-          <div className="flex items-center justify-center gap-2 p-3 bg-muted/50 rounded-lg">
-            <Info className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">
-              {estimativa === -1 ? (
-                "Muitas combinações possíveis (>100k)"
-              ) : estimativa === 0 ? (
-                <span className="text-destructive">Nenhuma combinação encontrada</span>
-              ) : (
-                <>Aproximadamente <strong>{estimativa}</strong> combinação(ões)</>
-              )}
-            </span>
-          </div>
-        )}
 
         {/* Erro de validação */}
         {!filtrosValidos && (somaLinhas > 0 || somaColunas > 0) && (

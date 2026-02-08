@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
-import { Minus, Plus, Dices, Hash } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ConfigGeracaoBarProps {
@@ -11,151 +11,6 @@ interface ConfigGeracaoBarProps {
   disabled?: boolean;
 }
 
-interface StepperInputProps {
-  value: number;
-  onChange: (value: number) => void;
-  min: number;
-  max: number;
-  label: string;
-  icon: React.ReactNode;
-  disabled?: boolean;
-  highlight?: boolean;
-}
-
-function StepperInput({
-  value,
-  onChange,
-  min,
-  max,
-  label,
-  icon,
-  disabled = false,
-  highlight = false,
-}: StepperInputProps) {
-  const [inputValue, setInputValue] = useState(value.toString());
-
-  useEffect(() => {
-    setInputValue(value.toString());
-  }, [value]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/\D/g, "");
-    setInputValue(rawValue);
-    const numValue = parseInt(rawValue, 10);
-    if (!isNaN(numValue) && numValue >= min && numValue <= max) {
-      onChange(numValue);
-    }
-  };
-
-  const handleBlur = () => {
-    const numValue = parseInt(inputValue, 10);
-    if (isNaN(numValue) || numValue < min) {
-      setInputValue(min.toString());
-      onChange(min);
-    } else if (numValue > max) {
-      setInputValue(max.toString());
-      onChange(max);
-    }
-  };
-
-  const handleDecrement = () => {
-    if (value > min) {
-      onChange(value - 1);
-    }
-  };
-
-  const handleIncrement = () => {
-    if (value < max) {
-      onChange(value + 1);
-    }
-  };
-
-  const isAtMin = value <= min;
-  const isAtMax = value >= max;
-
-  return (
-    <div
-      className={cn(
-        "flex flex-col items-center gap-2 p-4 rounded-xl transition-all",
-        highlight
-          ? "bg-primary/10 border-2 border-primary/30"
-          : "bg-muted/50 border border-border/50"
-      )}
-    >
-      {/* Header com ícone e label */}
-      <div className="flex items-center gap-1.5">
-        <span className={cn(
-          "p-1 rounded-md",
-          highlight ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
-        )}>
-          {icon}
-        </span>
-        <span className={cn(
-          "text-xs font-semibold uppercase tracking-wider",
-          highlight ? "text-primary" : "text-muted-foreground"
-        )}>
-          {label}
-        </span>
-      </div>
-
-      {/* Stepper */}
-      <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={handleDecrement}
-          disabled={disabled || isAtMin}
-          className={cn(
-            "h-10 w-10 rounded-full shrink-0 transition-all border",
-            isAtMin 
-              ? "opacity-30 border-transparent" 
-              : "border-border hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive"
-          )}
-        >
-          <Minus className="h-4 w-4" />
-        </Button>
-
-        <input
-          type="text"
-          inputMode="numeric"
-          value={inputValue}
-          onChange={handleInputChange}
-          onBlur={handleBlur}
-          disabled={disabled}
-          className={cn(
-            "bg-background text-center font-bold focus:outline-none focus:ring-2 focus:ring-primary/30 rounded-xl transition-all border-2",
-            highlight
-              ? "w-20 text-3xl h-14 border-primary/20 text-primary"
-              : "w-16 text-2xl h-12 border-border/50"
-          )}
-        />
-
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={handleIncrement}
-          disabled={disabled || isAtMax}
-          className={cn(
-            "h-10 w-10 rounded-full shrink-0 transition-all border",
-            isAtMax 
-              ? "opacity-30 border-transparent" 
-              : "border-border hover:bg-primary/10 hover:border-primary/50 hover:text-primary"
-          )}
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {/* Range hint */}
-      <span className="text-[10px] text-muted-foreground/60 font-medium">
-        {min} – {max}
-      </span>
-    </div>
-  );
-}
-
 export function ConfigGeracaoBar({
   qtdDezenas,
   onQtdDezenasChange,
@@ -163,30 +18,121 @@ export function ConfigGeracaoBar({
   onQtdPalpitesChange,
   disabled = false,
 }: ConfigGeracaoBarProps) {
-  return (
-    <div className="flex items-stretch justify-center gap-3 py-4 px-3">
-      {/* Dezenas por palpite */}
-      <StepperInput
-        value={qtdDezenas}
-        onChange={onQtdDezenasChange}
-        min={15}
-        max={20}
-        label="Dezenas"
-        icon={<Hash className="h-3.5 w-3.5" />}
-        disabled={disabled}
-      />
+  const [palpitesInput, setPalpitesInput] = useState(qtdPalpites.toString());
 
-      {/* Quantidade de palpites - destacado */}
-      <StepperInput
-        value={qtdPalpites}
-        onChange={onQtdPalpitesChange}
-        min={1}
-        max={250}
-        label="Palpites"
-        icon={<Dices className="h-3.5 w-3.5" />}
-        disabled={disabled}
-        highlight
-      />
+  useEffect(() => {
+    setPalpitesInput(qtdPalpites.toString());
+  }, [qtdPalpites]);
+
+  const handlePalpitesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(/\D/g, "");
+    setPalpitesInput(rawValue);
+    const numValue = parseInt(rawValue, 10);
+    if (!isNaN(numValue) && numValue >= 1 && numValue <= 250) {
+      onQtdPalpitesChange(numValue);
+    }
+  };
+
+  const handlePalpitesBlur = () => {
+    const numValue = parseInt(palpitesInput, 10);
+    if (isNaN(numValue) || numValue < 1) {
+      setPalpitesInput("1");
+      onQtdPalpitesChange(1);
+    } else if (numValue > 250) {
+      setPalpitesInput("250");
+      onQtdPalpitesChange(250);
+    }
+  };
+
+  const decrementPalpites = () => {
+    if (qtdPalpites > 1) onQtdPalpitesChange(qtdPalpites - 1);
+  };
+
+  const incrementPalpites = () => {
+    if (qtdPalpites < 250) onQtdPalpitesChange(qtdPalpites + 1);
+  };
+
+  return (
+    <div className="flex items-center gap-4 p-4">
+      {/* Lado esquerdo - Palpites */}
+      <div className="flex-1 flex flex-col gap-3">
+        <span className="text-sm font-medium text-foreground">
+          Quantos palpites vamos gerar?
+        </span>
+        
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={decrementPalpites}
+            disabled={disabled || qtdPalpites <= 1}
+            className={cn(
+              "h-10 w-10 rounded-full shrink-0",
+              qtdPalpites <= 1 && "opacity-40"
+            )}
+          >
+            <Minus className="h-4 w-4" />
+          </Button>
+
+          <input
+            type="text"
+            inputMode="numeric"
+            value={palpitesInput}
+            onChange={handlePalpitesChange}
+            onBlur={handlePalpitesBlur}
+            disabled={disabled}
+            className="w-20 h-12 bg-background text-center text-2xl font-bold rounded-xl border-2 border-primary/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+          />
+
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={incrementPalpites}
+            disabled={disabled || qtdPalpites >= 250}
+            className={cn(
+              "h-10 w-10 rounded-full shrink-0",
+              qtdPalpites >= 250 && "opacity-40"
+            )}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+          
+          <span className="text-xs text-muted-foreground ml-1">
+            máx 250
+          </span>
+        </div>
+      </div>
+
+      {/* Divisor */}
+      <div className="h-16 w-px bg-border/60" />
+
+      {/* Lado direito - Dezenas */}
+      <div className="flex flex-col items-center gap-2">
+        <span className="text-xs font-medium text-muted-foreground">
+          Qtd. Dezenas
+        </span>
+        
+        <div className="flex items-center gap-1">
+          {[15, 16, 17, 18, 19, 20].map((num) => (
+            <button
+              key={num}
+              type="button"
+              onClick={() => onQtdDezenasChange(num)}
+              disabled={disabled}
+              className={cn(
+                "h-9 w-9 rounded-lg text-sm font-semibold transition-all",
+                qtdDezenas === num
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "bg-muted/60 text-muted-foreground hover:bg-muted"
+              )}
+            >
+              {num}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
