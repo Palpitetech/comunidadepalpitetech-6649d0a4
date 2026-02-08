@@ -110,7 +110,7 @@ function GrupoRow({ label, grupoKey, grupo, isSelected, onToggle }: GrupoRowProp
       }`}>{label}</span>
       <div className="flex items-center gap-1 flex-1">
         {grupo.dezenas.map((d) => (
-          <DezenaCirculoMini key={d} dezena={d} />
+          <DezenaCirculoMini key={d} dezena={d} isSelected={isSelected} />
         ))}
       </div>
       <span className="text-xs text-muted-foreground shrink-0">
