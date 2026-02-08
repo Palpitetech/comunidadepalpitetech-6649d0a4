@@ -268,7 +268,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                        </div>
                      </AccordionTrigger>
                      <AccordionContent className="pb-0">
-                       <div className="pl-8 space-y-0">
+                      <div className="pl-8 space-y-0">
                          <Link to="/duplasena/resultados" onClick={closeAndNavigate}>
                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
                              Resultados
@@ -282,6 +282,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                          <Link to="/duplasena/frequencia" onClick={closeAndNavigate}>
                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
                              Quentes e Frias
+                           </div>
+                         </Link>
+                         <Link to="/duplasena/dezenas-por-posicao" onClick={closeAndNavigate}>
+                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                             <Target className="h-4 w-4" />
+                             Dezenas por Posição
                            </div>
                          </Link>
                        </div>
