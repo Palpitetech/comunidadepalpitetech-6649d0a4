@@ -26,8 +26,8 @@ export function EstrategiaFechamentoSelector({ value, onChange }: EstrategiaFech
   const estrategiaAtual = ESTRATEGIAS_FECHAMENTO.find(e => e.id === value);
 
   const formatarEstrategia = (e: EstrategiaFechamentoUI) => ({
-    linha1: `${e.nome} — Garantia ${e.garantia} pontos`,
-    linha2: `${e.dezenas} dezenas → ${e.jogos} jogos`,
+    linha1: `${e.nome} - Garantia ${e.garantia}pts`,
+    linha2: `${e.dezenas} dezenas - ${e.jogos} jogos de 15 dezenas`,
   });
 
   return (
