@@ -15,6 +15,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Sparkles } from "lucide-react";
 import {
   ArrowLeft,
   Home,
@@ -184,6 +185,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                     </AccordionTrigger>
                     <AccordionContent className="pb-0">
                       <div className="pl-8 space-y-0">
+                        <Link to="/palpite-do-dia" onClick={closeAndNavigate}>
+                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                            <Sparkles className="h-4 w-4" />
+                            Análise do Dia
+                          </div>
+                        </Link>
                         <Link to="/resultados" onClick={closeAndNavigate}>
                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
                             Resultados
