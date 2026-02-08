@@ -18,6 +18,10 @@ interface FloatingNotesProps {
   selectedGrupoDezenas?: number[];
   selectedGrupoLabel?: string;
   onNavigate?: () => void;
+  onRemoveFiltros?: () => void;
+  onRemoveFixas?: () => void;
+  onRemoveExcluidas?: () => void;
+  onRemoveGrupo?: () => void;
 }
 
 const FILTER_LABELS: Record<keyof SelectedFilters, string> = {
@@ -34,7 +38,11 @@ export function FloatingNotes({
   selectedExcluidas, 
   selectedGrupoDezenas = [],
   selectedGrupoLabel,
-  onNavigate 
+  onNavigate,
+  onRemoveFiltros,
+  onRemoveFixas,
+  onRemoveExcluidas,
+  onRemoveGrupo,
 }: FloatingNotesProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -85,7 +93,18 @@ export function FloatingNotes({
         {/* Filtros de padrões */}
         {totalFilters > 0 && (
           <div className="space-y-2">
-            <span className="text-[10px] font-semibold text-muted-foreground uppercase">Filtros</span>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase">Filtros</span>
+              {onRemoveFiltros && (
+                <button
+                  onClick={onRemoveFiltros}
+                  className="p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                  title="Remover filtros"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
             {(Object.keys(selectedFilters) as (keyof SelectedFilters)[]).map((key) => {
               const values = selectedFilters[key];
               if (values.length === 0) return null;
@@ -114,7 +133,18 @@ export function FloatingNotes({
         {/* Dezenas Fixas */}
         {selectedFixas.length > 0 && (
           <div className="space-y-1">
-            <span className="text-[10px] font-semibold text-muted-foreground uppercase">Dezenas Fixas</span>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase">Dezenas Fixas</span>
+              {onRemoveFixas && (
+                <button
+                  onClick={onRemoveFixas}
+                  className="p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                  title="Remover fixas"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
             <div className="flex flex-wrap gap-1">
               {selectedFixas.map((d) => (
                 <span
@@ -131,7 +161,18 @@ export function FloatingNotes({
         {/* Dezenas Excluídas */}
         {selectedExcluidas.length > 0 && (
           <div className="space-y-1">
-            <span className="text-[10px] font-semibold text-muted-foreground uppercase">Dezenas Excluídas</span>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase">Dezenas Excluídas</span>
+              {onRemoveExcluidas && (
+                <button
+                  onClick={onRemoveExcluidas}
+                  className="p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                  title="Remover excluídas"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
             <div className="flex flex-wrap gap-1">
               {selectedExcluidas.map((d) => (
                 <span
@@ -148,9 +189,20 @@ export function FloatingNotes({
         {/* Grupo Perfeito */}
         {selectedGrupoDezenas.length > 0 && selectedGrupoLabel && (
           <div className="space-y-1">
-            <span className="text-[10px] font-semibold text-muted-foreground uppercase">
-              Grupo {selectedGrupoLabel}
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase">
+                Grupo {selectedGrupoLabel}
+              </span>
+              {onRemoveGrupo && (
+                <button
+                  onClick={onRemoveGrupo}
+                  className="p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                  title="Remover grupo"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
             <div className="flex flex-wrap gap-1">
               {selectedGrupoDezenas.map((d) => (
                 <span
