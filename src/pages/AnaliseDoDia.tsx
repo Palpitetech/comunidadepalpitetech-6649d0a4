@@ -6,28 +6,48 @@ import {
   TrendingDown, 
   Filter,
   Users,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles
 } from "lucide-react";
 import { useTendenciasDia } from "@/hooks/useTendenciasDia";
 import { SeletorPeriodo } from "@/components/frequencia/SeletorPeriodo";
 import { DezenaCirculoMini } from "@/components/lotofacil/DezenaCirculoMini";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { formatarDezena } from "@/lib/lotofacil";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { FloatingNotes } from "@/components/analise/FloatingNotes";
+import { ConfirmNavigationDialog } from "@/components/analise/ConfirmNavigationDialog";
+
+type FiltroKey = "impares" | "repetidas" | "moldura" | "primos" | "m3";
 
 interface FiltroRowProps {
   label: string;
+  filtroKey: FiltroKey;
   top3: { valor: number; ocorrencias: number; porcentagem: number }[];
   ultimoValor: number;
+  isSelected: boolean;
+  onToggle: (key: FiltroKey) => void;
 }
 
-function FiltroRow({ label, top3, ultimoValor }: FiltroRowProps) {
+function FiltroRow({ label, filtroKey, top3, ultimoValor, isSelected, onToggle }: FiltroRowProps) {
   const isUltimoNoTop3 = top3.some((t) => t.valor === ultimoValor);
   
   return (
-    <div className="flex items-center justify-between py-2 border-b border-border/50 last:border-b-0">
-      <span className="text-xs font-medium text-muted-foreground w-20">{label}</span>
+    <div 
+      className={`flex items-center gap-2 py-2 border-b border-border/50 last:border-b-0 cursor-pointer transition-colors ${
+        isSelected ? "bg-primary/5" : "hover:bg-muted/30"
+      }`}
+      onClick={() => onToggle(filtroKey)}
+    >
+      <Checkbox 
+        checked={isSelected} 
+        onCheckedChange={() => onToggle(filtroKey)}
+        className="shrink-0"
+      />
+      <span className="text-xs font-medium text-muted-foreground w-16">{label}</span>
       <div className="flex items-center gap-1.5 flex-1 justify-center">
         {top3.map((t) => (
           <span
@@ -44,7 +64,7 @@ function FiltroRow({ label, top3, ultimoValor }: FiltroRowProps) {
           </span>
         ))}
       </div>
-      <div className="w-16 flex justify-end">
+      <div className="w-12 flex justify-end">
         <span className={`
           text-xs font-bold px-1.5 py-0.5 rounded
           ${isUltimoNoTop3 
@@ -95,11 +115,57 @@ function GrupoRow({ label, grupo, onFixar }: GrupoRowProps) {
 export default function AnaliseDoDia() {
   const [periodo, setPeriodo] = useState(10);
   const { data: tendencias, isLoading } = useTendenciasDia(periodo);
+  
+  // Estados para filtros selecionados
+  const [selectedFilters, setSelectedFilters] = useState<Set<FiltroKey>>(new Set());
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
 
-  // URLs para o gerador
-  const geradorFixasUrl = tendencias?.fixas.length
-    ? `/smart-gerador?fixas=${tendencias.fixas.map((f) => f.dezena).join(",")}`
-    : "/smart-gerador";
+  const toggleFilter = (key: FiltroKey) => {
+    setSelectedFilters(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(key)) {
+        newSet.delete(key);
+      } else {
+        newSet.add(key);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllFilters = () => {
+    setSelectedFilters(new Set(["impares", "repetidas", "moldura", "primos", "m3"]));
+  };
+
+  const clearAllFilters = () => {
+    setSelectedFilters(new Set());
+  };
+
+  // Construir URL do desdobramento com filtros selecionados
+  const buildDesdobramentoUrl = () => {
+    if (!tendencias || selectedFilters.size === 0) return "/desdobramento";
+    
+    const params = new URLSearchParams();
+    
+    selectedFilters.forEach(key => {
+      const filtro = tendencias.filtros[key];
+      if (filtro) {
+        const top3Values = filtro.top3.map(t => t.valor).join(",");
+        params.set(key, top3Values);
+      }
+    });
+    
+    return `/desdobramento?${params.toString()}`;
+  };
+
+  const handleUsarFiltros = () => {
+    if (selectedFilters.size === 0) return;
+    setShowConfirmDialog(true);
+  };
+
+  const handleContinueAnalysis = () => {
+    setShowNotes(true);
+  };
 
   const buildGrupoUrl = (dezenas: number[]) => 
     `/smart-gerador?fixas=${dezenas.join(",")}`;
@@ -168,36 +234,76 @@ export default function AnaliseDoDia() {
               <div className="flex items-center gap-2 mb-2">
                 <Filter className="h-4 w-4 text-primary" />
                 <span className="text-sm font-semibold">Estratégia de Filtros</span>
-                <span className="text-[10px] text-muted-foreground ml-auto">Top 3 | Último</span>
+                <div className="flex items-center gap-1 ml-auto">
+                  <button 
+                    onClick={selectAllFilters}
+                    className="text-[10px] text-primary hover:underline"
+                  >
+                    Todos
+                  </button>
+                  <span className="text-[10px] text-muted-foreground">|</span>
+                  <button 
+                    onClick={clearAllFilters}
+                    className="text-[10px] text-muted-foreground hover:underline"
+                  >
+                    Limpar
+                  </button>
+                </div>
               </div>
               
               <div className="space-y-0">
                 <FiltroRow 
                   label="Ímpares" 
+                  filtroKey="impares"
                   top3={tendencias.filtros.impares.top3} 
-                  ultimoValor={tendencias.filtros.impares.ultimoConcurso} 
+                  ultimoValor={tendencias.filtros.impares.ultimoConcurso}
+                  isSelected={selectedFilters.has("impares")}
+                  onToggle={toggleFilter}
                 />
                 <FiltroRow 
                   label="Repetidas" 
+                  filtroKey="repetidas"
                   top3={tendencias.filtros.repetidas.top3} 
-                  ultimoValor={tendencias.filtros.repetidas.ultimoConcurso} 
+                  ultimoValor={tendencias.filtros.repetidas.ultimoConcurso}
+                  isSelected={selectedFilters.has("repetidas")}
+                  onToggle={toggleFilter}
                 />
                 <FiltroRow 
                   label="Moldura" 
+                  filtroKey="moldura"
                   top3={tendencias.filtros.moldura.top3} 
-                  ultimoValor={tendencias.filtros.moldura.ultimoConcurso} 
+                  ultimoValor={tendencias.filtros.moldura.ultimoConcurso}
+                  isSelected={selectedFilters.has("moldura")}
+                  onToggle={toggleFilter}
                 />
                 <FiltroRow 
                   label="Primos" 
+                  filtroKey="primos"
                   top3={tendencias.filtros.primos.top3} 
-                  ultimoValor={tendencias.filtros.primos.ultimoConcurso} 
+                  ultimoValor={tendencias.filtros.primos.ultimoConcurso}
+                  isSelected={selectedFilters.has("primos")}
+                  onToggle={toggleFilter}
                 />
                 <FiltroRow 
                   label="Múlt. 3" 
+                  filtroKey="m3"
                   top3={tendencias.filtros.m3.top3} 
-                  ultimoValor={tendencias.filtros.m3.ultimoConcurso} 
+                  ultimoValor={tendencias.filtros.m3.ultimoConcurso}
+                  isSelected={selectedFilters.has("m3")}
+                  onToggle={toggleFilter}
                 />
               </div>
+
+              {/* CTA para usar filtros */}
+              {selectedFilters.size > 0 && (
+                <Button 
+                  onClick={handleUsarFiltros}
+                  className="w-full mt-3 gap-2 bg-highlight hover:bg-highlight/90 text-highlight-foreground font-semibold h-9"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Usar {selectedFilters.size} filtro{selectedFilters.size > 1 ? "s" : ""} no Desdobramento
+                </Button>
+              )}
             </div>
 
             {/* DEZENAS FIXAR / EXCLUIR */}
@@ -286,6 +392,20 @@ export default function AnaliseDoDia() {
           </div>
         ) : null}
       </div>
+
+      {/* Dialog de confirmação */}
+      <ConfirmNavigationDialog
+        isOpen={showConfirmDialog}
+        onOpenChange={setShowConfirmDialog}
+        desdobramentoUrl={buildDesdobramentoUrl()}
+        onContinueAnalysis={handleContinueAnalysis}
+      />
+
+      {/* Bloco de notas flutuante */}
+      <FloatingNotes
+        isOpen={showNotes}
+        onClose={() => setShowNotes(false)}
+      />
     </MainLayout>
   );
 }
