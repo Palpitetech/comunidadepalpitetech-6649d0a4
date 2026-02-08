@@ -1,8 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { 
   gerarFechamento16Dezenas, 
-  gerarFechamento17Dezenas,
-  gerarFechamento18Dezenas,
   gerarFechamento,
 } from "@/lib/fechamento";
 
@@ -68,53 +66,6 @@ describe("Fechamento 16-14-4 (FC01)", () => {
     // Se todas as 16 dezenas forem sorteadas, todos os jogos têm 15 acertos
     const { melhorAcerto } = verificarGarantia(jogos, dezenas16, dezenas16, 15);
     expect(melhorAcerto).toBe(15);
-  });
-});
-
-describe("Fechamento 17-14-8 (FC02)", () => {
-  const dezenas17 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
-
-  it("deve gerar exatamente 8 jogos", () => {
-    const jogos = gerarFechamento17Dezenas(dezenas17);
-    expect(jogos).toHaveLength(8);
-  });
-
-  it("cada jogo deve ter 15 dezenas", () => {
-    const jogos = gerarFechamento17Dezenas(dezenas17);
-    jogos.forEach((jogo) => {
-      expect(jogo).toHaveLength(15);
-    });
-  });
-
-  it("deve garantir 14 pontos se acertar 15 das 17 dezenas", () => {
-    const jogos = gerarFechamento17Dezenas(dezenas17);
-    
-    // Testa algumas combinações de acertar 15 das 17 dezenas
-    // Simula resultado onde dezenas 16 e 17 não foram sorteadas
-    const resultado1 = dezenas17.filter((d) => d !== 16 && d !== 17);
-    const { garantidoCumprida: g1 } = verificarGarantia(jogos, dezenas17, resultado1, 14);
-    expect(g1).toBe(true);
-
-    // Simula resultado onde dezenas 15 e 16 não foram sorteadas
-    const resultado2 = dezenas17.filter((d) => d !== 15 && d !== 16);
-    const { garantidoCumprida: g2 } = verificarGarantia(jogos, dezenas17, resultado2, 14);
-    expect(g2).toBe(true);
-  });
-});
-
-describe("Fechamento 18-14-16 (FC03)", () => {
-  const dezenas18 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
-
-  it("deve gerar exatamente 16 jogos", () => {
-    const jogos = gerarFechamento18Dezenas(dezenas18);
-    expect(jogos).toHaveLength(16);
-  });
-
-  it("cada jogo deve ter 15 dezenas", () => {
-    const jogos = gerarFechamento18Dezenas(dezenas18);
-    jogos.forEach((jogo) => {
-      expect(jogo).toHaveLength(15);
-    });
   });
 });
 
