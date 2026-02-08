@@ -83,6 +83,8 @@ export default function Desdobramento() {
   // Estado dos filtros de linhas e colunas (null = não configurado = aleatório)
   const [linhas, setLinhas] = useState<number[] | null>(null);
   const [colunas, setColunas] = useState<number[] | null>(null);
+  const [linhasAtivo, setLinhasAtivo] = useState(false);
+  const [colunasAtivo, setColunasAtivo] = useState(false);
   
   // Quantidade de dezenas e palpites
   const [qtdDezenas, setQtdDezenas] = useState(15);
@@ -123,10 +125,10 @@ export default function Desdobramento() {
   }, []);
 
 
-  // Validação das somas (apenas se linhas/colunas foram configuradas)
+  // Validação das somas (apenas se linhas/colunas estão ativas e configuradas)
   const somaLinhas = linhas ? linhas.reduce((a, b) => a + b, 0) : qtdDezenas;
   const somaColunas = colunas ? colunas.reduce((a, b) => a + b, 0) : qtdDezenas;
-  const filtrosValidos = (!linhas || somaLinhas === qtdDezenas) && (!colunas || somaColunas === qtdDezenas);
+  const filtrosValidos = (!linhasAtivo || !linhas || somaLinhas === qtdDezenas) && (!colunasAtivo || !colunas || somaColunas === qtdDezenas);
 
   // Montar objeto de filtros com valores selecionados (manuais ou auto)
   // Se filtro desativado, passa array vazio que será ignorado na validação
@@ -143,8 +145,8 @@ export default function Desdobramento() {
     qtdMoldura: filtroMolduraAtivo 
       ? (filtroMoldura.length > 0 ? filtroMoldura : autoTop3Moldura) 
       : null,
-    linhas,
-    colunas,
+    linhas: linhasAtivo ? linhas : null,
+    colunas: colunasAtivo ? colunas : null,
     qtdDezenas,
     dezenasUltimoSorteio: ultimoSorteio,
     dezenasFixas,
@@ -342,8 +344,11 @@ export default function Desdobramento() {
           className="w-full flex items-center justify-between py-3 px-4 text-sm font-medium bg-card border rounded-lg hover:bg-muted/50 transition-colors"
         >
           <span className="flex items-center gap-2">
-            📐 Filtros de Linhas e Colunas
-            {!filtrosValidos && (somaLinhas > 0 || somaColunas > 0) && (
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>
+            </svg>
+            Filtros de Linhas e Colunas
+            {!filtrosValidos && (
               <Badge variant="destructive" className="text-[10px]">
                 Ajustar
               </Badge>
@@ -358,13 +363,21 @@ export default function Desdobramento() {
 
         {/* Filtros de Linhas e Colunas */}
         {filtrosAvancadosAbertos && (
-          <FiltroLinhasColunas
-            linhas={linhas}
-            colunas={colunas}
-            onLinhasChange={setLinhas}
-            onColunasChange={setColunas}
-            qtdDezenas={qtdDezenas}
-          />
+          <Card>
+            <CardContent className="pt-4 pb-2">
+              <FiltroLinhasColunas
+                linhas={linhas}
+                colunas={colunas}
+                onLinhasChange={setLinhas}
+                onColunasChange={setColunas}
+                qtdDezenas={qtdDezenas}
+                linhasAtivo={linhasAtivo}
+                colunasAtivo={colunasAtivo}
+                onLinhasAtivoChange={setLinhasAtivo}
+                onColunasAtivoChange={setColunasAtivo}
+              />
+            </CardContent>
+          </Card>
         )}
 
 
