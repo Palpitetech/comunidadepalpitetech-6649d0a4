@@ -211,6 +211,33 @@ export default function Desdobramento() {
     setFiltroMoldura(autoTop3Moldura);
   };
 
+  // Preparar dados de filtros para exibição nos resultados
+  const filtrosResumo = useMemo(() => ({
+    impares: filtroImparesAtivo ? (filtroImpares.length > 0 ? filtroImpares : autoTop3Impares) : null,
+    imparesEhPadrao: filtroImparesAtivo && (filtroImpares.length === 0 || 
+      (filtroImpares.length === autoTop3Impares.length && 
+       filtroImpares.every(v => autoTop3Impares.includes(v)))),
+    repetidas: filtroRepetidasAtivo ? (filtroRepetidas.length > 0 ? filtroRepetidas : autoTop3Repetidas) : null,
+    repetidasEhPadrao: filtroRepetidasAtivo && (filtroRepetidas.length === 0 || 
+      (filtroRepetidas.length === autoTop3Repetidas.length && 
+       filtroRepetidas.every(v => autoTop3Repetidas.includes(v)))),
+    primos: filtroPrimosAtivo ? (filtroPrimos.length > 0 ? filtroPrimos : autoTop3Primos) : null,
+    primosEhPadrao: filtroPrimosAtivo && (filtroPrimos.length === 0 || 
+      (filtroPrimos.length === autoTop3Primos.length && 
+       filtroPrimos.every(v => autoTop3Primos.includes(v)))),
+    moldura: filtroMolduraAtivo ? (filtroMoldura.length > 0 ? filtroMoldura : autoTop3Moldura) : null,
+    molduraEhPadrao: filtroMolduraAtivo && (filtroMoldura.length === 0 || 
+      (filtroMoldura.length === autoTop3Moldura.length && 
+       filtroMoldura.every(v => autoTop3Moldura.includes(v)))),
+    linhas: linhasAtivo ? linhas : null,
+    colunas: colunasAtivo ? colunas : null,
+  }), [
+    filtroImpares, filtroRepetidas, filtroPrimos, filtroMoldura,
+    filtroImparesAtivo, filtroRepetidasAtivo, filtroPrimosAtivo, filtroMolduraAtivo,
+    autoTop3Impares, autoTop3Repetidas, autoTop3Primos, autoTop3Moldura,
+    linhas, colunas, linhasAtivo, colunasAtivo
+  ]);
+
   // Se há jogos gerados, mostrar tela fullscreen de resultados
   if (jogosGerados && jogosGerados.length > 0) {
     return (
@@ -220,6 +247,7 @@ export default function Desdobramento() {
         ultimoConcursoDezenas={ultimoSorteio}
         qtdDezenas={qtdDezenas}
         onVoltar={handleLimpar}
+        filtrosResumo={filtrosResumo}
       />
     );
   }

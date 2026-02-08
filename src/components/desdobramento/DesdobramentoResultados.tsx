@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { PalpiteCard } from "@/components/shared/PalpiteCard";
 import { PalpitesToolbar, usePalpitesToolbar } from "@/components/palpites/PalpitesToolbar";
 import { SelecionarPastaDialog } from "@/components/palpites/SelecionarPastaDialog";
@@ -7,11 +8,25 @@ import { NovaPastaDialog } from "@/components/palpites/NovaPastaDialog";
 import { formatarDezena } from "@/lib/lotofacil";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, ChevronDown, ChevronUp } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { Pasta } from "@/components/palpites/PastaItem";
 
 interface JogoGerado {
   dezenas: number[];
+}
+
+interface FiltrosResumo {
+  impares: number[] | null;
+  imparesEhPadrao: boolean;
+  repetidas: number[] | null;
+  repetidasEhPadrao: boolean;
+  primos: number[] | null;
+  primosEhPadrao: boolean;
+  moldura: number[] | null;
+  molduraEhPadrao: boolean;
+  linhas: number[] | null;
+  colunas: number[] | null;
 }
 
 interface DesdobramentoResultadosProps {
@@ -20,6 +35,7 @@ interface DesdobramentoResultadosProps {
   ultimoConcursoDezenas?: number[];
   qtdDezenas: number;
   onVoltar: () => void;
+  filtrosResumo?: FiltrosResumo;
 }
 
 export function DesdobramentoResultados({
@@ -28,6 +44,7 @@ export function DesdobramentoResultados({
   ultimoConcursoDezenas = [],
   qtdDezenas,
   onVoltar,
+  filtrosResumo,
 }: DesdobramentoResultadosProps) {
   const { toast } = useToast();
   const [salvandoPasta, setSalvandoPasta] = useState(false);
@@ -35,6 +52,7 @@ export function DesdobramentoResultados({
   const [dialogNovaPastaAberto, setDialogNovaPastaAberto] = useState(false);
   const [palpitesParaSalvar, setPalpitesParaSalvar] = useState<JogoGerado[]>([]);
   const [pastas, setPastas] = useState<Pasta[]>([]);
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false);
   
   // Buscar pastas do usuário
   useEffect(() => {
@@ -210,6 +228,91 @@ export function DesdobramentoResultados({
           </div>
         </div>
       </div>
+
+      {/* Resumo de Filtros */}
+      {filtrosResumo && (
+        <div className="container max-w-lg mx-auto px-4 pt-3">
+          <button
+            type="button"
+            onClick={() => setFiltrosAbertos(!filtrosAbertos)}
+            className="w-full flex items-center justify-between py-2.5 px-3 text-sm bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+          >
+            <span className="font-medium text-muted-foreground">Filtros utilizados</span>
+            {filtrosAbertos ? (
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            )}
+          </button>
+          
+          {filtrosAbertos && (
+            <div className="mt-2 p-3 bg-muted/30 rounded-lg space-y-2">
+              {/* Filtros de Padrões */}
+              <div className="flex flex-wrap gap-1.5">
+                {filtrosResumo.impares && (
+                  <Badge variant="outline" className="text-xs gap-1">
+                    Ímp: {filtrosResumo.impares.join(", ")}
+                    {filtrosResumo.imparesEhPadrao && (
+                      <span className="text-primary font-semibold">Padrão</span>
+                    )}
+                  </Badge>
+                )}
+                {filtrosResumo.repetidas && (
+                  <Badge variant="outline" className="text-xs gap-1">
+                    Rep: {filtrosResumo.repetidas.join(", ")}
+                    {filtrosResumo.repetidasEhPadrao && (
+                      <span className="text-primary font-semibold">Padrão</span>
+                    )}
+                  </Badge>
+                )}
+                {filtrosResumo.primos && (
+                  <Badge variant="outline" className="text-xs gap-1">
+                    Primos: {filtrosResumo.primos.join(", ")}
+                    {filtrosResumo.primosEhPadrao && (
+                      <span className="text-primary font-semibold">Padrão</span>
+                    )}
+                  </Badge>
+                )}
+                {filtrosResumo.moldura && (
+                  <Badge variant="outline" className="text-xs gap-1">
+                    Mold: {filtrosResumo.moldura.join(", ")}
+                    {filtrosResumo.molduraEhPadrao && (
+                      <span className="text-primary font-semibold">Padrão</span>
+                    )}
+                  </Badge>
+                )}
+              </div>
+              
+              {/* Filtros de Linhas e Colunas */}
+              {(filtrosResumo.linhas || filtrosResumo.colunas) && (
+                <div className="flex flex-wrap gap-1.5 pt-1 border-t border-border/50">
+                  {filtrosResumo.linhas && (
+                    <Badge variant="outline" className="text-xs">
+                      Linhas: {filtrosResumo.linhas.join("-")}
+                    </Badge>
+                  )}
+                  {filtrosResumo.colunas && (
+                    <Badge variant="outline" className="text-xs">
+                      Colunas: {filtrosResumo.colunas.join("-")}
+                    </Badge>
+                  )}
+                </div>
+              )}
+              
+              {/* Dezenas Fixas e Excluídas */}
+              {(dezenasFixes.length > 0 || ultimoConcursoDezenas.length > 0) && (
+                <div className="flex flex-wrap gap-1.5 pt-1 border-t border-border/50">
+                  {dezenasFixes.length > 0 && (
+                    <Badge variant="secondary" className="text-xs bg-palpite-fixa text-palpite-fixa-foreground">
+                      Fixas: {dezenasFixes.map(d => formatarDezena(d)).join(", ")}
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Toolbar */}
       <div className="container max-w-lg mx-auto px-4 pt-3">
