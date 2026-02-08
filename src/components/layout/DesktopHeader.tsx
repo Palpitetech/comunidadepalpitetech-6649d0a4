@@ -169,14 +169,20 @@ export function DesktopHeader() {
                       Tendências
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                    <Link to="/megasena/frequencia">
-                      <Flame className="h-4 w-4" />
-                      Quentes e Frias
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                    <Link to="/megasena/linhas-colunas">
+                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                     <Link to="/megasena/frequencia">
+                       <Flame className="h-4 w-4" />
+                       Quentes e Frias
+                     </Link>
+                   </DropdownMenuItem>
+                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                     <Link to="/megasena/frequencia-dezenas">
+                       <BarChart3 className="h-4 w-4" />
+                       Frequência das Dezenas
+                     </Link>
+                   </DropdownMenuItem>
+                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                     <Link to="/megasena/linhas-colunas">
                       <LayoutGrid className="h-4 w-4" />
                       Linhas e Colunas
                     </Link>
