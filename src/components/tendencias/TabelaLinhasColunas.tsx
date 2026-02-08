@@ -204,11 +204,9 @@ export function TabelaLinhasColunas({ tipo }: Props) {
                 </TableHead>
               ))}
               <SortableHeader column="ocorrencias">Ocorr.</SortableHeader>
+              <SortableHeader column="porcentagem">Freq. %</SortableHeader>
               <SortableHeader column="atrasoAtual">Atraso</SortableHeader>
-              <SortableHeader column="porcentagem" className="hidden md:table-cell">
-                %
-              </SortableHeader>
-              <TableHead>Freq.</TableHead>
+              <TableHead className="hidden md:table-cell">Média</TableHead>
               <TableHead>Última</TableHead>
             </TableRow>
           </TableHeader>
@@ -248,6 +246,9 @@ export function TabelaLinhasColunas({ tipo }: Props) {
                     {item.ocorrencias}
                   </span>
                 </TableCell>
+                <TableCell className="text-sm font-medium">
+                  {item.porcentagem.toFixed(1)}%
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
                     {getTrendIcon(item.atrasoAtual, item.mediaOcorrencia)}
@@ -262,9 +263,6 @@ export function TabelaLinhasColunas({ tipo }: Props) {
                   </div>
                 </TableCell>
                 <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                  {item.porcentagem.toFixed(2)}%
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
                   {formatMedia(item.mediaOcorrencia)}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
