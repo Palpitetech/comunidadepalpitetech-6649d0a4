@@ -7,7 +7,6 @@ import {
   TabelaEstatisticaGenerica, 
   TabelaEstatisticaConfig 
 } from "@/components/tendencias/TabelaEstatisticaGenerica";
-import { TabelaLinhasColunas } from "@/components/tendencias/TabelaLinhasColunas";
 
 const configParesImpares: TabelaEstatisticaConfig = {
   queryKey: "estatisticas-pares-impares",
@@ -95,23 +94,6 @@ export default function Tendencias() {
             <TabelaEstatisticaGenerica config={configRepetidas} />
           </section>
 
-          {/* Tabela de Linhas */}
-          <section>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <span className="text-2xl">📊</span>
-              Distribuição por Linhas
-            </h2>
-            <TabelaLinhasColunas tipo="linhas" />
-          </section>
-
-          {/* Tabela de Colunas */}
-          <section>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <span className="text-2xl">📈</span>
-              Distribuição por Colunas
-            </h2>
-            <TabelaLinhasColunas tipo="colunas" />
-          </section>
         </div>
       </div>
     </MainLayout>
