@@ -27,6 +27,7 @@ import AdminIndex from "./pages/admin/AdminIndex";
 import AdminPlanos from "./pages/admin/AdminPlanos";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminBots from "./pages/admin/AdminBots";
+import PalpiteDoDia from "./pages/PalpiteDoDia";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,6 +56,7 @@ const App = () => (
             <Route path="/fechamento" element={<ProtectedRoute><Fechamento /></ProtectedRoute>} />
             <Route path="/meus-palpites" element={<ProtectedRoute><MeusPalpites /></ProtectedRoute>} />
             <Route path="/boloes" element={<ProtectedRoute><Boloes /></ProtectedRoute>} />
+            <Route path="/palpite-do-dia" element={<ProtectedRoute><PalpiteDoDia /></ProtectedRoute>} />
             <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
             <Route path="/criar-post" element={<ProtectedRoute><CriarPost /></ProtectedRoute>} />
             <Route path="/comunidade/post/:id" element={<ProtectedRoute><PostDetalhes /></ProtectedRoute>} />
