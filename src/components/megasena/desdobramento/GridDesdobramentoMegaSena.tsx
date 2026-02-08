@@ -21,7 +21,7 @@ export function GridDesdobramentoMegaSena({
   const dezenas = Array.from({ length: 60 }, (_, i) => i + 1);
 
   return (
-    <div className="grid grid-cols-10 gap-1.5">
+    <div className="grid grid-cols-10 gap-1">
       {dezenas.map((numero) => (
         <DezenaDesdobramentoMegaSena
           key={numero}
