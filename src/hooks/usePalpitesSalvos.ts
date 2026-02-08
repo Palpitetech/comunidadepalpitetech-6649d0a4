@@ -38,7 +38,8 @@ export function usePalpitesSalvos() {
     periodoAnalise?: number,
     pastaId?: string | null,
     estrategia?: string,
-    estrategiaData?: EstrategiaData | null
+    estrategiaData?: EstrategiaData | null,
+    loteria: string = "lotofacil"
   ): Promise<boolean> => {
     setIsLoading(true);
     try {
@@ -57,7 +58,7 @@ export function usePalpitesSalvos() {
         dezenas: p.dezenas,
         qtd_dezenas: p.dezenas.length,
         periodo_analise: periodoAnalise || null,
-        loteria: "lotofacil",
+        loteria: loteria,
         pasta_id: pastaId || null,
         estrategia: estrategia || null,
         estrategia_data: estrategiaData ? JSON.parse(JSON.stringify(estrategiaData)) : null,
