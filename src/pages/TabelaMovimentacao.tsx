@@ -44,7 +44,7 @@ export default function TabelaMovimentacao() {
   const isMobile = useIsMobile();
   const [periodo, setPeriodo] = useState<number>(10);
   const [destaque, setDestaque] = useState<DestaqueTipo>("todas");
-  const [mostrarEstatisticas, setMostrarEstatisticas] = useState(true);
+  
 
   const { data, isLoading, error } = useTabelaMovimentacao(periodo);
 
@@ -128,12 +128,12 @@ export default function TabelaMovimentacao() {
             {/* Controles */}
             <Card className="bg-card/80 backdrop-blur">
               <CardContent className="py-3">
-                <div className="flex flex-wrap items-center gap-3 justify-between">
+                <div className="flex flex-wrap items-center gap-4 justify-center">
                   {/* Período */}
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">Período:</span>
                     <Select value={String(periodo)} onValueChange={(v) => setPeriodo(Number(v))}>
-                      <SelectTrigger className="w-[120px] h-9">
+                      <SelectTrigger className="w-[140px] h-9">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -154,7 +154,7 @@ export default function TabelaMovimentacao() {
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">Destacar:</span>
                     <Select value={destaque} onValueChange={(v) => setDestaque(v as DestaqueTipo)}>
-                      <SelectTrigger className="w-[140px] h-9">
+                      <SelectTrigger className="w-[180px] h-9">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -166,17 +166,6 @@ export default function TabelaMovimentacao() {
                       </SelectContent>
                     </Select>
                   </div>
-
-                  {/* Toggle Estatísticas */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setMostrarEstatisticas(!mostrarEstatisticas)}
-                    className="gap-1.5"
-                  >
-                    <BarChart3 className="h-4 w-4" />
-                    {mostrarEstatisticas ? "Ocultar" : "Mostrar"} Estatísticas
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -330,9 +319,11 @@ export default function TabelaMovimentacao() {
                                           ? "bg-orange-500 text-white ring-2 ring-orange-300"
                                           : isDestacada && destaque === "frias"
                                           ? "bg-blue-500 text-white ring-2 ring-blue-300"
-                                        : isDestacada && destaque === "atrasadas"
+                                          : isDestacada && destaque === "atrasadas"
                                           ? "bg-amber-500 text-white ring-2 ring-amber-300"
-                                          : "bg-palpite-dezena text-palpite-dezena-foreground ring-2 ring-palpite-dezena/50"
+                                          : isDestacada && destaque === "ausentes"
+                                          ? "bg-palpite-dezena text-palpite-dezena-foreground ring-2 ring-yellow-400"
+                                          : "bg-palpite-dezena text-palpite-dezena-foreground"
                                       )}
                                     >
                                       {String(dezena).padStart(2, "0")}
@@ -371,7 +362,7 @@ export default function TabelaMovimentacao() {
           </Card>
 
           {/* Painel Estatístico */}
-          {mostrarEstatisticas && (
+          {(
             <Card>
               <CardHeader className="py-3 bg-muted/50">
                 <CardTitle className="text-base flex items-center gap-2">
@@ -564,7 +555,7 @@ export default function TabelaMovimentacao() {
           )}
 
           {/* Painel Distribuição de Duração dos Ciclos */}
-          {mostrarEstatisticas && ciclos.length > 0 && (
+          {ciclos.length > 0 && (
             <Card>
               <CardHeader className="py-3 bg-muted/50">
                 <CardTitle className="text-base flex items-center gap-2">
