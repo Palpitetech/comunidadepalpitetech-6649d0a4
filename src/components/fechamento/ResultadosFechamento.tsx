@@ -361,32 +361,37 @@ export function ResultadosFechamento({
 
       {/* Paginação */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between py-2 px-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className="gap-1"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Anterior
-          </Button>
-          
-          <span className="text-sm text-muted-foreground">
-            Página {currentPage} de {totalPages}
-          </span>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            className="gap-1"
-          >
-            Próxima
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+        <div className="space-y-2">
+          <div className="text-sm text-muted-foreground text-center">
+            Mostrando {palpitesPaginados.length} palpites de {palpites.length}
+          </div>
+          <div className="flex items-center justify-between py-2 px-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="gap-1"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Anterior
+            </Button>
+            
+            <span className="text-sm text-muted-foreground">
+              Página {currentPage} de {totalPages}
+            </span>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="gap-1"
+            >
+              Próxima
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       )}
 
