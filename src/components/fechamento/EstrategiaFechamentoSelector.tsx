@@ -29,46 +29,6 @@ export const ESTRATEGIAS_FECHAMENTO: EstrategiaFechamento[] = [
     descricao: "Garantia 14 pontos",
     condicao: "Se acertar 15 dos 16 números"
   },
-  { 
-    id: "17-14-8", 
-    nome: "FC02",
-    dezenas: 17, 
-    garantia: 14, 
-    jogos: 8,
-    label: "FC02 — 17 Dezenas → 8 Jogos",
-    descricao: "Garantia 14 pontos",
-    condicao: "Se acertar 15 dos 17 números"
-  },
-  { 
-    id: "18-14-16", 
-    nome: "FC03",
-    dezenas: 18, 
-    garantia: 14, 
-    jogos: 16,
-    label: "FC03 — 18 Dezenas → 16 Jogos",
-    descricao: "Garantia 14 pontos",
-    condicao: "Se acertar 15 dos 18 números"
-  },
-  { 
-    id: "19-14-24", 
-    nome: "FC04",
-    dezenas: 19, 
-    garantia: 14, 
-    jogos: 24,
-    label: "FC04 — 19 Dezenas → 24 Jogos",
-    descricao: "Garantia 14 pontos",
-    condicao: "Se acertar 15 dos 19 números"
-  },
-  { 
-    id: "20-14-32", 
-    nome: "FC05",
-    dezenas: 20, 
-    garantia: 14, 
-    jogos: 32,
-    label: "FC05 — 20 Dezenas → 32 Jogos",
-    descricao: "Garantia 14 pontos",
-    condicao: "Se acertar 15 dos 20 números"
-  },
 ];
 
 interface EstrategiaFechamentoSelectorProps {
