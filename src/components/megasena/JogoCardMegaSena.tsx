@@ -80,7 +80,7 @@ export function JogoCardMegaSena({
       </span>
 
       {/* Dezenas em linha */}
-      <div className="flex items-center gap-1 flex-1 flex-wrap">
+      <div className="flex items-center gap-1 flex-1 overflow-x-auto">
         {dezenas.map((dezena) => {
           const isFixa = dezenasFixes.includes(dezena);
           return (
