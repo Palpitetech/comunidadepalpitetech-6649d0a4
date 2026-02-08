@@ -79,6 +79,13 @@ export default {
           excluida: "hsl(var(--megasena-excluida))",
           "excluida-foreground": "hsl(var(--megasena-excluida-foreground))",
         },
+        // Cores específicas da Dupla Sena
+        duplasena: {
+          primary: "hsl(var(--duplasena-primary))",
+          "primary-foreground": "hsl(var(--duplasena-primary-foreground))",
+          secondary: "hsl(var(--duplasena-secondary))",
+          "secondary-foreground": "hsl(var(--duplasena-secondary-foreground))",
+        },
         // Status Quente/Frio
         status: {
           quente: "hsl(var(--status-quente))",
