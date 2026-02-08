@@ -59,6 +59,11 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const API_TOKEN = Deno.env.get("LOTOFACIL_API_TOKEN");
+    if (!API_TOKEN) {
+      throw new Error("LOTOFACIL_API_TOKEN não configurado");
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -66,23 +71,76 @@ Deno.serve(async (req) => {
     // Parse body para opções
     let fromLatest = false;
     let limit = 50;
+    let concursoEspecifico: number | null = null;
     try {
       const body = await req.json();
       fromLatest = body.from_latest === true;
       limit = body.limit || 50;
+      concursoEspecifico = body.concurso || null;
     } catch {
       // Sem body, usar defaults
     }
 
-    // Buscar último resultado da API
-    const apiResponse = await fetch("https://loteriascaixa-api.herokuapp.com/api/megasena/latest");
+    // Buscar último resultado da API (para saber o concurso mais recente)
+    const latestUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=megasena&token=${API_TOKEN}&concurso=ultimos1`;
+    console.log("Buscando último concurso da API...");
+    
+    const apiResponse = await fetch(latestUrl);
     if (!apiResponse.ok) {
       throw new Error(`Erro ao buscar API: ${apiResponse.status}`);
     }
 
     const ultimoResultado = await apiResponse.json();
-    const ultimoConcursoAPI = ultimoResultado.concurso;
+    const ultimoConcursoAPI = ultimoResultado.numero_concurso;
     console.log("Último concurso API:", ultimoConcursoAPI);
+
+    // Se um concurso específico foi solicitado
+    if (concursoEspecifico) {
+      const concursoUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=megasena&token=${API_TOKEN}&concurso=${concursoEspecifico}`;
+      const res = await fetch(concursoUrl);
+      if (!res.ok) {
+        throw new Error(`Erro ao buscar concurso ${concursoEspecifico}: ${res.status}`);
+      }
+      
+      const resultado = await res.json();
+      const dezenas = resultado.dezenas.map((d: string) => parseInt(d, 10)).sort((a: number, b: number) => a - b);
+      
+      // Buscar dezenas do concurso anterior
+      const { data: anterior } = await supabase
+        .from("resultados_megasena")
+        .select("dezenas")
+        .eq("concurso_id", concursoEspecifico - 1)
+        .maybeSingle();
+      
+      const indicadores = calcularIndicadores(dezenas, anterior?.dezenas || []);
+      const dataSorteio = converterDataBR(resultado.data_concurso);
+
+      const registro = {
+        concurso_id: resultado.numero_concurso,
+        data_sorteio: dataSorteio,
+        dezenas,
+        acumulou: resultado.acumulou,
+        valor_acumulado: resultado.valor_acumulado || null,
+        valor_estimado_proximo: resultado.valor_estimado_proximo || null,
+        local_sorteio: resultado.local_sorteio || null,
+        premiacao_json: resultado.premiacao || null,
+        locais_ganhadores: resultado.ganhadores || null,
+        ...indicadores,
+      };
+
+      const { error } = await supabase
+        .from("resultados_megasena")
+        .upsert(registro, { onConflict: "concurso_id" });
+
+      if (error) {
+        throw new Error(`Erro ao inserir: ${error.message}`);
+      }
+
+      return new Response(
+        JSON.stringify({ message: "Concurso sincronizado", concurso: concursoEspecifico }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Definir quais concursos buscar
     let concursosParaBuscar: number[] = [];
@@ -90,7 +148,6 @@ Deno.serve(async (req) => {
     if (fromLatest) {
       // Buscar os últimos X concursos a partir do mais recente
       for (let i = ultimoConcursoAPI; i > ultimoConcursoAPI - limit && i > 0; i--) {
-        // Verificar se já existe no banco
         const { data: existe } = await supabase
           .from("resultados_megasena")
           .select("concurso_id")
@@ -136,9 +193,7 @@ Deno.serve(async (req) => {
 
     console.log(`Buscando ${concursosParaBuscar.length} concursos...`);
 
-    console.log(`Buscando ${concursosParaBuscar.length} concursos...`);
-
-    // Buscar todos os resultados históricos para calcular repetidas
+    // Buscar histórico para calcular repetidas
     const { data: historico } = await supabase
       .from("resultados_megasena")
       .select("concurso_id, dezenas")
@@ -157,8 +212,12 @@ Deno.serve(async (req) => {
         if (concursoId === ultimoConcursoAPI) {
           resultado = ultimoResultado;
         } else {
-          const res = await fetch(`https://loteriascaixa-api.herokuapp.com/api/megasena/${concursoId}`);
-          if (!res.ok) continue;
+          const concursoUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=megasena&token=${API_TOKEN}&concurso=${concursoId}`;
+          const res = await fetch(concursoUrl);
+          if (!res.ok) {
+            console.error(`Erro ao buscar concurso ${concursoId}: ${res.status}`);
+            continue;
+          }
           resultado = await res.json();
         }
 
@@ -168,20 +227,18 @@ Deno.serve(async (req) => {
         const dezenasAnteriores = historicoMap.get(concursoId - 1) || [];
         
         const indicadores = calcularIndicadores(dezenas, dezenasAnteriores);
-
-        // Converter data para formato ISO
-        const dataSorteio = converterDataBR(resultado.data);
+        const dataSorteio = converterDataBR(resultado.data_concurso);
 
         resultadosParaInserir.push({
-          concurso_id: resultado.concurso,
+          concurso_id: resultado.numero_concurso,
           data_sorteio: dataSorteio,
           dezenas,
           acumulou: resultado.acumulou,
-          valor_acumulado: resultado.valorAcumuladoProximoConcurso,
-          valor_estimado_proximo: resultado.valorEstimadoProximoConcurso,
-          local_sorteio: resultado.localSorteio,
-          premiacao_json: resultado.premiacoes,
-          locais_ganhadores: resultado.localGanhadores,
+          valor_acumulado: resultado.valor_acumulado || null,
+          valor_estimado_proximo: resultado.valor_estimado_proximo || null,
+          local_sorteio: resultado.local_sorteio || null,
+          premiacao_json: resultado.premiacao || null,
+          locais_ganhadores: resultado.ganhadores || null,
           ...indicadores,
         });
 
@@ -189,7 +246,7 @@ Deno.serve(async (req) => {
         historicoMap.set(concursoId, dezenas);
 
         // Delay para não sobrecarregar API
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 300));
       } catch (err) {
         console.error(`Erro ao buscar concurso ${concursoId}:`, err);
       }
@@ -205,11 +262,16 @@ Deno.serve(async (req) => {
       }
     }
 
+    const ultimoConcursoInserido = resultadosParaInserir.length > 0 
+      ? resultadosParaInserir[resultadosParaInserir.length - 1]?.concurso_id 
+      : ultimoConcursoAPI;
+
     return new Response(
       JSON.stringify({
         message: "Sincronização concluída",
+        api: "apiloterias.com.br",
         inseridos: resultadosParaInserir.length,
-        ultimo_concurso: resultadosParaInserir[resultadosParaInserir.length - 1]?.concurso_id || ultimoConcursoLocal,
+        ultimo_concurso: ultimoConcursoInserido,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
