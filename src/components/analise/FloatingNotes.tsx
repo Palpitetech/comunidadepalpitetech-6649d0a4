@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, NotebookPen } from "lucide-react";
+import { X, NotebookPen, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatarDezena } from "@/lib/lotofacil";
 
@@ -15,6 +15,7 @@ interface FloatingNotesProps {
   selectedFilters: SelectedFilters;
   selectedFixas: number[];
   selectedExcluidas: number[];
+  onNavigate?: () => void;
 }
 
 const FILTER_LABELS: Record<keyof SelectedFilters, string> = {
@@ -25,7 +26,7 @@ const FILTER_LABELS: Record<keyof SelectedFilters, string> = {
   m3: "Múlt. 3",
 };
 
-export function FloatingNotes({ selectedFilters, selectedFixas, selectedExcluidas }: FloatingNotesProps) {
+export function FloatingNotes({ selectedFilters, selectedFixas, selectedExcluidas, onNavigate }: FloatingNotesProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   // Conta total de valores selecionados
@@ -135,6 +136,19 @@ export function FloatingNotes({ selectedFilters, selectedFixas, selectedExcluida
           </div>
         )}
       </div>
+
+      {/* Botão de usar no desdobramento */}
+      {onNavigate && (
+        <div className="p-3 border-t">
+          <Button 
+            onClick={onNavigate}
+            className="w-full gap-2 bg-highlight hover:bg-highlight/90 text-highlight-foreground font-semibold h-9"
+          >
+            <Sparkles className="h-4 w-4" />
+            Usar no Desdobramento
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

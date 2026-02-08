@@ -133,6 +133,17 @@ export default function AnaliseDoDia() {
   const [selectedFixas, setSelectedFixas] = useState<number[]>([]);
   const [selectedExcluidas, setSelectedExcluidas] = useState<number[]>([]);
 
+  // Estados para controlar quais grupos já foram adicionados
+  const [addedGroups, setAddedGroups] = useState<{
+    filtros: boolean;
+    fixas: boolean;
+    excluidas: boolean;
+  }>({
+    filtros: false,
+    fixas: false,
+    excluidas: false,
+  });
+
   const toggleFixa = (dezena: number) => {
     setSelectedFixas(prev => 
       prev.includes(dezena) 
@@ -180,30 +191,51 @@ export default function AnaliseDoDia() {
     });
   };
 
-  // Conta total de valores selecionados (filtros + fixas + excluídas)
-  const totalSelectedValues = 
-    Object.values(selectedFilters).reduce((acc, arr) => acc + arr.length, 0) +
-    selectedFixas.length +
-    selectedExcluidas.length;
+  // Conta total de valores selecionados por grupo
+  const totalFilterValues = Object.values(selectedFilters).reduce((acc, arr) => acc + arr.length, 0);
+  
+  // Conta apenas os que foram adicionados
+  const totalAddedValues = 
+    (addedGroups.filtros ? totalFilterValues : 0) +
+    (addedGroups.fixas ? selectedFixas.length : 0) +
+    (addedGroups.excluidas ? selectedExcluidas.length : 0);
 
-  // Construir URL do desdobramento com filtros selecionados
+  // Funções para adicionar cada grupo
+  const handleAddFiltros = () => {
+    setAddedGroups(prev => ({ ...prev, filtros: true }));
+  };
+
+  const handleAddFixas = () => {
+    setAddedGroups(prev => ({ ...prev, fixas: true }));
+  };
+
+  const handleAddExcluidas = () => {
+    setAddedGroups(prev => ({ ...prev, excluidas: true }));
+  };
+
+  // Construir URL do desdobramento com filtros adicionados
   const buildDesdobramentoUrl = () => {
-    if (!tendencias || totalSelectedValues === 0) return "/desdobramento";
+    if (totalAddedValues === 0) return "/desdobramento";
     
     const params = new URLSearchParams();
     
-    (Object.keys(selectedFilters) as FiltroKey[]).forEach(key => {
-      const values = selectedFilters[key];
-      if (values.length > 0) {
-        params.set(key, values.join(","));
-      }
-    });
+    // Só inclui filtros se foram adicionados
+    if (addedGroups.filtros) {
+      (Object.keys(selectedFilters) as FiltroKey[]).forEach(key => {
+        const values = selectedFilters[key];
+        if (values.length > 0) {
+          params.set(key, values.join(","));
+        }
+      });
+    }
 
-    // Adicionar dezenas fixas e excluídas
-    if (selectedFixas.length > 0) {
+    // Só inclui fixas se foram adicionadas
+    if (addedGroups.fixas && selectedFixas.length > 0) {
       params.set("fixas", selectedFixas.join(","));
     }
-    if (selectedExcluidas.length > 0) {
+    
+    // Só inclui excluídas se foram adicionadas
+    if (addedGroups.excluidas && selectedExcluidas.length > 0) {
       params.set("excluidas", selectedExcluidas.join(","));
     }
     
@@ -211,7 +243,7 @@ export default function AnaliseDoDia() {
   };
 
   const handleUsarFiltros = () => {
-    if (totalSelectedValues === 0) return;
+    if (totalAddedValues === 0) return;
     setShowConfirmDialog(true);
   };
 
@@ -343,15 +375,23 @@ export default function AnaliseDoDia() {
                 />
               </div>
 
-              {/* CTA para usar filtros */}
-              {totalSelectedValues > 0 && (
+              {/* Botão de adicionar filtros - só aparece se há seleções e não foi adicionado */}
+              {totalFilterValues > 0 && !addedGroups.filtros && (
                 <Button 
-                  onClick={handleUsarFiltros}
+                  onClick={handleAddFiltros}
                   className="w-full mt-3 gap-2 bg-highlight hover:bg-highlight/90 text-highlight-foreground font-semibold h-9"
                 >
                   <Sparkles className="h-4 w-4" />
-                  Usar {totalSelectedValues} valor{totalSelectedValues > 1 ? "es" : ""} no Desdobramento
+                  Adicionar {totalFilterValues} filtro{totalFilterValues > 1 ? "s" : ""}
                 </Button>
+              )}
+              
+              {/* Indicador de que foi adicionado */}
+              {addedGroups.filtros && totalFilterValues > 0 && (
+                <div className="flex items-center justify-center gap-2 mt-3 text-xs text-highlight font-medium">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>{totalFilterValues} filtro{totalFilterValues > 1 ? "s" : ""} adicionado{totalFilterValues > 1 ? "s" : ""}</span>
+                </div>
               )}
             </div>
 
@@ -387,6 +427,25 @@ export default function AnaliseDoDia() {
                     <span className="col-span-4 text-[11px] text-muted-foreground">Nenhuma dezena com ≥70% de frequência</span>
                   )}
                 </div>
+                
+                {/* Botão de adicionar fixas */}
+                {selectedFixas.length > 0 && !addedGroups.fixas && (
+                  <Button 
+                    onClick={handleAddFixas}
+                    size="sm"
+                    className="w-full mt-2 gap-2 bg-highlight hover:bg-highlight/90 text-highlight-foreground font-semibold h-8 text-xs"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    Adicionar {selectedFixas.length} fixa{selectedFixas.length > 1 ? "s" : ""}
+                  </Button>
+                )}
+                
+                {addedGroups.fixas && selectedFixas.length > 0 && (
+                  <div className="flex items-center justify-center gap-1.5 mt-2 text-[11px] text-highlight font-medium">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>Adicionado</span>
+                  </div>
+                )}
               </div>
 
               <div className="border-t border-border/50" />
@@ -421,6 +480,25 @@ export default function AnaliseDoDia() {
                     <span className="col-span-4 text-[11px] text-muted-foreground">Nenhuma dezena com ≤30% de frequência</span>
                   )}
                 </div>
+                
+                {/* Botão de adicionar excluídas */}
+                {selectedExcluidas.length > 0 && !addedGroups.excluidas && (
+                  <Button 
+                    onClick={handleAddExcluidas}
+                    size="sm"
+                    className="w-full mt-2 gap-2 bg-highlight hover:bg-highlight/90 text-highlight-foreground font-semibold h-8 text-xs"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    Adicionar {selectedExcluidas.length} excluída{selectedExcluidas.length > 1 ? "s" : ""}
+                  </Button>
+                )}
+                
+                {addedGroups.excluidas && selectedExcluidas.length > 0 && (
+                  <div className="flex items-center justify-center gap-1.5 mt-2 text-[11px] text-highlight font-medium">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>Adicionado</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -458,18 +536,21 @@ export default function AnaliseDoDia() {
         ) : null}
       </div>
 
-      {/* Dialog de confirmação */}
-      <ConfirmNavigationDialog
-        isOpen={showConfirmDialog}
-        onOpenChange={setShowConfirmDialog}
-        desdobramentoUrl={buildDesdobramentoUrl()}
-      />
+      {/* Dialog de confirmação - só aparece se há algo adicionado */}
+      {totalAddedValues > 0 && (
+        <ConfirmNavigationDialog
+          isOpen={showConfirmDialog}
+          onOpenChange={setShowConfirmDialog}
+          desdobramentoUrl={buildDesdobramentoUrl()}
+        />
+      )}
 
-      {/* FAB de filtros selecionados */}
+      {/* FAB de filtros selecionados - mostra apenas os adicionados */}
       <FloatingNotes 
-        selectedFilters={selectedFilters} 
-        selectedFixas={selectedFixas}
-        selectedExcluidas={selectedExcluidas}
+        selectedFilters={addedGroups.filtros ? selectedFilters : { impares: [], repetidas: [], moldura: [], primos: [], m3: [] }} 
+        selectedFixas={addedGroups.fixas ? selectedFixas : []}
+        selectedExcluidas={addedGroups.excluidas ? selectedExcluidas : []}
+        onNavigate={handleUsarFiltros}
       />
     </MainLayout>
   );
