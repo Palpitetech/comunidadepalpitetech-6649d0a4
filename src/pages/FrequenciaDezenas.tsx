@@ -97,15 +97,6 @@ export default function FrequenciaDezenas() {
     <MainLayout pageTitle="Frequência das Dezenas">
       <div className="min-h-screen bg-background">
         <div className="px-4 py-6 space-y-4 max-w-2xl mx-auto">
-          {/* Header */}
-          <div className="text-center space-y-2">
-            <div className="flex items-center justify-center gap-2">
-              <BarChart3 className="h-7 w-7 text-primary" />
-              <h1 className="text-2xl font-bold">Frequência das Dezenas</h1>
-            </div>
-          </div>
-
-          {/* Controles */}
           <Card>
             <CardContent className="py-4">
               <div className="flex flex-wrap items-center gap-4 justify-center">
