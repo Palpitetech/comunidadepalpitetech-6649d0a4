@@ -14,6 +14,7 @@ import Chat from "./pages/Chat";
 import Notificacoes from "./pages/Notificacoes";
 import Resultados from "./pages/Resultados";
 import Tendencias from "./pages/Tendencias";
+import LinhasColunas from "./pages/LinhasColunas";
 import Frequencia from "./pages/Frequencia";
 import Gerador from "./pages/Gerador";
 import Desdobramento from "./pages/Desdobramento";
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/notificacoes" element={<ProtectedRoute><Notificacoes /></ProtectedRoute>} />
             <Route path="/resultados" element={<ProtectedRoute><Resultados /></ProtectedRoute>} />
             <Route path="/tendencias" element={<ProtectedRoute><Tendencias /></ProtectedRoute>} />
+            <Route path="/linhas-colunas" element={<ProtectedRoute><LinhasColunas /></ProtectedRoute>} />
             <Route path="/frequencia" element={<ProtectedRoute><Frequencia /></ProtectedRoute>} />
             <Route path="/smart-gerador" element={<ProtectedRoute><Gerador /></ProtectedRoute>} />
             <Route path="/desdobramento" element={<ProtectedRoute><Desdobramento /></ProtectedRoute>} />
