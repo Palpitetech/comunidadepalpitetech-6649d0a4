@@ -46,6 +46,8 @@ import TabelaMovimentacaoMegaSena from "./pages/megasena/TabelaMovimentacaoMegaS
 import FrequenciaDecenasMegaSena from "./pages/megasena/FrequenciaDecenasMegaSena";
 import DezenasporPosicaoMegaSena from "./pages/megasena/DezenasporPosicaoMegaSena";
 import ResultadosDuplaSena from "./pages/duplasena/ResultadosDuplaSena";
+import TendenciasDuplaSena from "./pages/duplasena/TendenciasDuplaSena";
+import FrequenciaDuplaSena from "./pages/duplasena/FrequenciaDuplaSena";
 
 const queryClient = new QueryClient();
 
@@ -99,6 +101,8 @@ const App = () => (
             
             {/* Rotas Dupla Sena */}
             <Route path="/duplasena/resultados" element={<ProtectedRoute><ResultadosDuplaSena /></ProtectedRoute>} />
+            <Route path="/duplasena/tendencias" element={<ProtectedRoute><TendenciasDuplaSena /></ProtectedRoute>} />
+            <Route path="/duplasena/frequencia" element={<ProtectedRoute><FrequenciaDuplaSena /></ProtectedRoute>} />
             
             {/* Rotas Admin */}
             <Route path="/admin" element={<AdminRoute><AdminIndex /></AdminRoute>} />
