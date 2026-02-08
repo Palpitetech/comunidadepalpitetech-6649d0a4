@@ -1,5 +1,5 @@
 import { ArrowLeft, ChevronRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ReactNode } from "react";
 
 interface BreadcrumbItem {
@@ -18,17 +18,33 @@ interface PageHeaderProps {
   hideBackButton?: boolean;
 }
 
+// Mapeamento de rotas para navegação de retorno
+const getParentRoute = (pathname: string): string => {
+  // Rotas da Mega Sena
+  if (pathname.startsWith("/megasena/")) {
+    return "/megasena/resultados";
+  }
+  // Rotas de ferramentas da Lotofácil
+  if (["/desdobramento", "/fechamento", "/gerador", "/tendencias", "/frequencia"].includes(pathname)) {
+    return "/resultados";
+  }
+  // Fallback padrão
+  return "/comunidade";
+};
+
 export function PageHeader({ title, breadcrumb, onBack, rightContent, hideBackButton }: PageHeaderProps) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleBack = () => {
     if (onBack) {
       onBack();
-    } else if (window.history.length > 1) {
+    } else if (window.history.length > 2) {
+      // Só usa navigate(-1) se houver histórico real (> 2 para evitar problemas)
       navigate(-1);
     } else {
-      // Fallback para a página inicial se não houver histórico
-      navigate("/comunidade");
+      // Navega para a rota pai baseada no contexto atual
+      navigate(getParentRoute(location.pathname));
     }
   };
 
