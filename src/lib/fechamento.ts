@@ -17,6 +17,7 @@ import { FC03 } from "@/lib/matrizes/fc03";
 import { FC04 } from "@/lib/matrizes/fc04";
 import { FC05 } from "@/lib/matrizes/fc05";
 import { FC06 } from "@/lib/matrizes/fc06";
+import { FC07 } from "@/lib/matrizes/fc07";
 
 // Re-export dos tipos para compatibilidade
 export type { MatrizFechamento, ResultadoFechamento, ResultadoSimulacao };
@@ -96,6 +97,9 @@ export const MATRIZES_FECHAMENTO: MatrizFechamento[] = [
 
   // FC06 importado de arquivo separado (24 jogos, 100% garantia matemática)
   FC06,
+
+  // FC07 importado de arquivo separado (11 jogos, 100% garantia matemática - 15 PONTOS)
+  FC07,
 ];
 
 /**
