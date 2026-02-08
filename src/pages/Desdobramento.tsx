@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FiltroPatternSelector } from "@/components/desdobramento/FiltroPatternSelector";
 import { FiltroLinhasColunas } from "@/components/desdobramento/FiltroLinhasColunas";
-import { ConfigGeracaoBar } from "@/components/desdobramento/ConfigGeracaoBar";
+
 import { useDesdobramentoStats } from "@/hooks/useDesdobramentoStats";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
