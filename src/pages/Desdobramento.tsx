@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FiltroPatternSelector } from "@/components/desdobramento/FiltroPatternSelector";
 import { FiltroLinhasColunas } from "@/components/desdobramento/FiltroLinhasColunas";
 import { GridDesdobramento } from "@/components/desdobramento/GridDesdobramento";
 import { ModoSeletorDesdobramento } from "@/components/desdobramento/ModoSeletorDesdobramento";
@@ -40,15 +39,9 @@ export default function Desdobramento() {
   const isMobile = useIsMobile();
   const { repetidas, impares, primos, moldura, isLoading: statsLoading } = useDesdobramentoStats();
   
-  // Estado dos filtros de padrões
-  const [qtdImpares, setQtdImpares] = useState(8);
-  const [qtdRepetidas, setQtdRepetidas] = useState(7);
-  const [qtdPrimos, setQtdPrimos] = useState(5);
-  const [qtdMoldura, setQtdMoldura] = useState(10);
-  
-  // Estado dos filtros de linhas e colunas
-  const [linhas, setLinhas] = useState([3, 3, 3, 3, 3]);
-  const [colunas, setColunas] = useState([3, 3, 3, 3, 3]);
+  // Estado dos filtros de linhas e colunas (null = não configurado = aleatório)
+  const [linhas, setLinhas] = useState<number[] | null>(null);
+  const [colunas, setColunas] = useState<number[] | null>(null);
   
   // Quantidade de dezenas e palpites
   const [qtdDezenas, setQtdDezenas] = useState(15);
@@ -89,34 +82,25 @@ export default function Desdobramento() {
     fetchUltimoSorteio();
   }, []);
 
-  // Inicializar filtros com os valores mais frequentes quando os dados carregarem
-  useEffect(() => {
-    if (!statsLoading) {
-      if (impares.length > 0) setQtdImpares(impares[0].valor);
-      if (repetidas.length > 0) setQtdRepetidas(repetidas[0].valor);
-      if (primos.length > 0) setQtdPrimos(primos[0].valor);
-      if (moldura.length > 0) setQtdMoldura(moldura[0].valor);
-    }
-  }, [statsLoading, impares, repetidas, primos, moldura]);
 
-  // Validação das somas
-  const somaLinhas = linhas.reduce((a, b) => a + b, 0);
-  const somaColunas = colunas.reduce((a, b) => a + b, 0);
-  const filtrosValidos = somaLinhas === qtdDezenas && somaColunas === qtdDezenas;
+  // Validação das somas (apenas se linhas/colunas foram configuradas)
+  const somaLinhas = linhas ? linhas.reduce((a, b) => a + b, 0) : qtdDezenas;
+  const somaColunas = colunas ? colunas.reduce((a, b) => a + b, 0) : qtdDezenas;
+  const filtrosValidos = (!linhas || somaLinhas === qtdDezenas) && (!colunas || somaColunas === qtdDezenas);
 
-  // Montar objeto de filtros
+  // Montar objeto de filtros com top 3 de cada padrão
   const filtros: FiltrosDesdobramento = useMemo(() => ({
-    qtdImpares,
-    qtdRepetidas,
-    qtdPrimos,
-    qtdMoldura,
+    qtdImpares: impares.slice(0, 3).map(i => i.valor),
+    qtdRepetidas: repetidas.slice(0, 3).map(r => r.valor),
+    qtdPrimos: primos.slice(0, 3).map(p => p.valor),
+    qtdMoldura: moldura.slice(0, 3).map(m => m.valor),
     linhas,
     colunas,
     qtdDezenas,
     dezenasUltimoSorteio: ultimoSorteio,
     dezenasFixas,
     dezenasExcluidas,
-  }), [qtdImpares, qtdRepetidas, qtdPrimos, qtdMoldura, linhas, colunas, qtdDezenas, ultimoSorteio, dezenasFixas, dezenasExcluidas]);
+  }), [impares, repetidas, primos, moldura, linhas, colunas, qtdDezenas, ultimoSorteio, dezenasFixas, dezenasExcluidas]);
 
   // Estimar combinações (com debounce)
   const [estimativa, setEstimativa] = useState<number | null>(null);
@@ -163,13 +147,11 @@ export default function Desdobramento() {
   const handleLimpar = () => {
     setJogosGerados(null);
     setError(null);
-    // Resetar para valores padrão
-    if (impares.length > 0) setQtdImpares(impares[0].valor);
-    if (repetidas.length > 0) setQtdRepetidas(repetidas[0].valor);
-    if (primos.length > 0) setQtdPrimos(primos[0].valor);
-    if (moldura.length > 0) setQtdMoldura(moldura[0].valor);
-    setLinhas([3, 3, 3, 3, 3]);
-    setColunas([3, 3, 3, 3, 3]);
+    // Resetar linhas/colunas para não configurado
+    setLinhas(null);
+    setColunas(null);
+    setDezenasFixas([]);
+    setDezenasExcluidas([]);
     setQtdDezenas(15);
   };
 
@@ -202,6 +184,7 @@ export default function Desdobramento() {
         )}
 
         {/* Botão para abrir filtros de padrões */}
+        {/* Info sobre Filtros de Padrões automáticos */}
         <button
           type="button"
           onClick={() => setFiltrosPadroesAbertos(!filtrosPadroesAbertos)}
@@ -209,6 +192,7 @@ export default function Desdobramento() {
         >
           <span className="flex items-center gap-2">
             🎯 Filtros de Padrões
+            <Badge variant="secondary" className="text-[10px]">Auto Top 3</Badge>
           </span>
           {filtrosPadroesAbertos ? (
             <ChevronUp className="h-4 w-4" />
@@ -217,46 +201,46 @@ export default function Desdobramento() {
           )}
         </button>
 
-        {/* Filtros de Padrões */}
+        {/* Exibição dos Top 3 padrões aceitos */}
         {filtrosPadroesAbertos && (
           <Card>
-            <CardContent className="pt-4 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FiltroPatternSelector
-                  label="Ímpares"
-                  emoji="🔢"
-                  value={qtdImpares}
-                  onChange={setQtdImpares}
-                  options={impares}
-                  complementLabel="pares"
-                />
-                
-                <FiltroPatternSelector
-                  label="Repetidas"
-                  emoji="🔄"
-                  value={qtdRepetidas}
-                  onChange={setQtdRepetidas}
-                  options={repetidas}
-                  complementLabel="novas"
-                />
-                
-                <FiltroPatternSelector
-                  label="Primos"
-                  emoji="✨"
-                  value={qtdPrimos}
-                  onChange={setQtdPrimos}
-                  options={primos}
-                  complementLabel="não primos"
-                />
-                
-                <FiltroPatternSelector
-                  label="Moldura"
-                  emoji="🖼️"
-                  value={qtdMoldura}
-                  onChange={setQtdMoldura}
-                  options={moldura}
-                  complementLabel="miolo"
-                />
+            <CardContent className="pt-4 space-y-3">
+              <p className="text-xs text-muted-foreground text-center mb-2">
+                Aceita automaticamente os 3 valores mais frequentes de cada padrão
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-2 bg-muted/30 rounded-lg">
+                  <div className="text-xs text-muted-foreground mb-1">🔢 Ímpares</div>
+                  <div className="flex gap-1">
+                    {impares.slice(0, 3).map(i => (
+                      <Badge key={i.valor} variant="outline" className="text-xs">{i.valor}</Badge>
+                    ))}
+                  </div>
+                </div>
+                <div className="p-2 bg-muted/30 rounded-lg">
+                  <div className="text-xs text-muted-foreground mb-1">🔄 Repetidas</div>
+                  <div className="flex gap-1">
+                    {repetidas.slice(0, 3).map(r => (
+                      <Badge key={r.valor} variant="outline" className="text-xs">{r.valor}</Badge>
+                    ))}
+                  </div>
+                </div>
+                <div className="p-2 bg-muted/30 rounded-lg">
+                  <div className="text-xs text-muted-foreground mb-1">✨ Primos</div>
+                  <div className="flex gap-1">
+                    {primos.slice(0, 3).map(p => (
+                      <Badge key={p.valor} variant="outline" className="text-xs">{p.valor}</Badge>
+                    ))}
+                  </div>
+                </div>
+                <div className="p-2 bg-muted/30 rounded-lg">
+                  <div className="text-xs text-muted-foreground mb-1">🖼️ Moldura</div>
+                  <div className="flex gap-1">
+                    {moldura.slice(0, 3).map(m => (
+                      <Badge key={m.valor} variant="outline" className="text-xs">{m.valor}</Badge>
+                    ))}
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

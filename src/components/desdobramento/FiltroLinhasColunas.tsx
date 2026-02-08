@@ -9,8 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Rows3, Columns3 } from "lucide-react";
 
 interface FiltroLinhaColunaProps {
-  linhas: number[];
-  colunas: number[];
+  linhas: number[] | null;
+  colunas: number[] | null;
   onLinhasChange: (linhas: number[]) => void;
   onColunasChange: (colunas: number[]) => void;
   qtdDezenas: number;
@@ -28,20 +28,24 @@ export function FiltroLinhasColunas({
   qtdDezenas,
   disabled = false,
 }: FiltroLinhaColunaProps) {
+  // Valores padrão se não configurado
+  const linhasEfetivas = linhas ?? [3, 3, 3, 3, 3];
+  const colunasEfetivas = colunas ?? [3, 3, 3, 3, 3];
+
   const handleLinhaChange = (index: number, value: number) => {
-    const novasLinhas = [...linhas];
+    const novasLinhas = [...linhasEfetivas];
     novasLinhas[index] = value;
     onLinhasChange(novasLinhas);
   };
 
   const handleColunaChange = (index: number, value: number) => {
-    const novasColunas = [...colunas];
+    const novasColunas = [...colunasEfetivas];
     novasColunas[index] = value;
     onColunasChange(novasColunas);
   };
 
-  const somaLinhas = linhas.reduce((a, b) => a + b, 0);
-  const somaColunas = colunas.reduce((a, b) => a + b, 0);
+  const somaLinhas = linhasEfetivas.reduce((a, b) => a + b, 0);
+  const somaColunas = colunasEfetivas.reduce((a, b) => a + b, 0);
 
   return (
     <div className="space-y-4">
@@ -64,7 +68,7 @@ export function FiltroLinhasColunas({
                   L{linha}
                 </label>
                 <Select
-                  value={linhas[index].toString()}
+                  value={linhasEfetivas[index].toString()}
                   onValueChange={(v) => handleLinhaChange(index, parseInt(v, 10))}
                   disabled={disabled}
                 >
@@ -104,7 +108,7 @@ export function FiltroLinhasColunas({
                   C{coluna}
                 </label>
                 <Select
-                  value={colunas[index].toString()}
+                  value={colunasEfetivas[index].toString()}
                   onValueChange={(v) => handleColunaChange(index, parseInt(v, 10))}
                   disabled={disabled}
                 >
