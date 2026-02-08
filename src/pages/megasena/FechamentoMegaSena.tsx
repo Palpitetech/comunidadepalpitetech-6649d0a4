@@ -10,6 +10,7 @@ import {
 import { FechamentoRulesCardMegaSena } from "@/components/megasena/FechamentoRulesCardMegaSena";
 import { FechamentoStatusBarMegaSena } from "@/components/megasena/FechamentoStatusBarMegaSena";
 import { ModoSeletorFixasMegaSena } from "@/components/megasena/ModoSeletorFixasMegaSena";
+import { LoadingPalpiteIA } from "@/components/megasena/LoadingPalpiteIA";
 import { ResultadosFechamentoMegaSena } from "@/components/megasena/ResultadosFechamentoMegaSena";
 import { EstrategiaCardMegaSena } from "@/components/megasena/EstrategiaCardMegaSena";
 import { useAutoFillMegaSena, type EstrategiaMegaSena } from "@/hooks/useAutoFillMegaSena";
@@ -175,7 +176,10 @@ export default function FechamentoMegaSena() {
           </Button>
         </div>
 
-        {/* 3.1 Card de Estratégia da IA (se disponível) */}
+        {/* 3.1 Loading com mensagens motivacionais */}
+        <LoadingPalpiteIA isLoading={isAutoFilling} />
+
+        {/* 3.2 Card de Estratégia da IA (se disponível) */}
         {estrategiaIA && (
           <EstrategiaCardMegaSena estrategia={estrategiaIA} />
         )}
