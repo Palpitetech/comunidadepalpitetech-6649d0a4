@@ -107,64 +107,31 @@ export const MATRIZES_FECHAMENTO: MatrizFechamento[] = [
   },
 
   // ═══════════════════════════════════════════════════════════════════
-  // FC03 - 18 DEZENAS (INTERMEDIÁRIO)
+  // FC04 - 21 DEZENAS (14 FIXAS + 7 VARIÁVEIS) - 7 JOGOS
+  // Rotação simples: 14 fixas + 1 variável por jogo
   // ═══════════════════════════════════════════════════════════════════
-  // TODO: Adicionar matriz FC03
-  // {
-  //   id: "18-14-X",
-  //   nome: "FC03",
-  //   descricao: "Fechamento intermediário de 18 dezenas",
-  //   dezenas: 18,
-  //   garantia: 14,
-  //   dezenasPorJogo: 15,
-  //   condicao: "Se acertar 15 dos 18 números",
-  //   fixasObrigatorias: 0,
-  //   categoria: "intermediario",
-  //   ativo: false,
-  //   matrizRemocoes: [
-  //     // Cada jogo remove 3 dezenas (18 - 15 = 3)
-  //   ],
-  // },
-
-  // ═══════════════════════════════════════════════════════════════════
-  // FC04 - 19 DEZENAS (AVANÇADO)
-  // ═══════════════════════════════════════════════════════════════════
-  // TODO: Adicionar matriz FC04
-  // {
-  //   id: "19-14-X",
-  //   nome: "FC04",
-  //   descricao: "Fechamento avançado de 19 dezenas",
-  //   dezenas: 19,
-  //   garantia: 14,
-  //   dezenasPorJogo: 15,
-  //   condicao: "Se acertar 15 dos 19 números",
-  //   fixasObrigatorias: 0,
-  //   categoria: "avancado",
-  //   ativo: false,
-  //   matrizRemocoes: [
-  //     // Cada jogo remove 4 dezenas (19 - 15 = 4)
-  //   ],
-  // },
-
-  // ═══════════════════════════════════════════════════════════════════
-  // FC05 - 20 DEZENAS (AVANÇADO)
-  // ═══════════════════════════════════════════════════════════════════
-  // TODO: Adicionar matriz FC05
-  // {
-  //   id: "20-14-X",
-  //   nome: "FC05",
-  //   descricao: "Fechamento avançado de 20 dezenas",
-  //   dezenas: 20,
-  //   garantia: 14,
-  //   dezenasPorJogo: 15,
-  //   condicao: "Se acertar 15 dos 20 números",
-  //   fixasObrigatorias: 0,
-  //   categoria: "avancado",
-  //   ativo: false,
-  //   matrizRemocoes: [
-  //     // Cada jogo remove 5 dezenas (20 - 15 = 5)
-  //   ],
-  // },
+  {
+    id: "21-14-7",
+    nome: "FC04",
+    descricao: "14 fixas + 7 variáveis em rotação simples",
+    dezenas: 21,
+    garantia: 14,
+    dezenasPorJogo: 15,
+    condicao: "Se acertar 15 dos 21 números",
+    fixasObrigatorias: 14,
+    categoria: "avancado",
+    ativo: true,
+    // Variáveis são índices 14-20. Cada jogo usa 1 variável (remove 6)
+    matrizRemocoes: [
+      [15, 16, 17, 18, 19, 20],  // Jogo 1: usa var[0]
+      [14, 16, 17, 18, 19, 20],  // Jogo 2: usa var[1]
+      [14, 15, 17, 18, 19, 20],  // Jogo 3: usa var[2]
+      [14, 15, 16, 18, 19, 20],  // Jogo 4: usa var[3]
+      [14, 15, 16, 17, 19, 20],  // Jogo 5: usa var[4]
+      [14, 15, 16, 17, 18, 20],  // Jogo 6: usa var[5]
+      [14, 15, 16, 17, 18, 19],  // Jogo 7: usa var[6]
+    ],
+  },
 ];
 
 /**
