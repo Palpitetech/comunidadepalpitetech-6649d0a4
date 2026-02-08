@@ -1,8 +1,8 @@
 import { FlaskConical, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PalpiteCard } from "@/components/shared/PalpiteCard";
 import { PalpitesToolbar, usePalpitesToolbar } from "@/components/palpites/PalpitesToolbar";
-import { EstrategiaCard, type EstrategiaData } from "@/components/gerador/EstrategiaCard";
+import { EstrategiaCardMegaSena } from "@/components/megasena/EstrategiaCardMegaSena";
+import { JogoCardMegaSena } from "@/components/megasena/JogoCardMegaSena";
 import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import { SelecionarPastaDialog } from "@/components/palpites/SelecionarPastaDial
 import { NovaPastaDialog } from "@/components/palpites/NovaPastaDialog";
 import { useAuth } from "@/hooks/useAuth";
 import type { Pasta } from "@/components/palpites/PastaItem";
+import type { EstrategiaMegaSena } from "@/hooks/useAutoFillMegaSena";
 import { 
   buscarMatrizMegaSena, 
   simularGarantiaMegaSena,
@@ -24,14 +25,14 @@ interface ResultadosFechamentoMegaSenaProps {
   estrategiaId?: string;
   dezenasSelecionadas: number[];
   onNovoFechamento: () => void;
-  estrategiaIA?: EstrategiaData | null;
+  estrategiaIA?: EstrategiaMegaSena | null;
 }
 
 interface PalpiteFechamento {
   id: string;
   dezenas: number[];
   estrategia?: string | null;
-  estrategia_data?: EstrategiaData | null;
+  estrategia_data?: EstrategiaMegaSena | null;
   qtd_dezenas?: number;
   periodo_analise?: number | null;
 }
@@ -313,7 +314,7 @@ export function ResultadosFechamentoMegaSena({
       </div>
 
       {estrategiaIA && (
-        <EstrategiaCard estrategia={estrategiaIA} />
+        <EstrategiaCardMegaSena estrategia={estrategiaIA} />
       )}
 
       <PalpitesToolbar
@@ -329,21 +330,18 @@ export function ResultadosFechamentoMegaSena({
         hideEstrategias
       />
 
-      <div className="grid gap-3">
+      <div className="grid gap-2">
         {palpitesPaginados.map((palpite) => {
           const realIndex = parseInt(palpite.id.replace("jogo-", ""));
           return (
-            <PalpiteCard
+            <JogoCardMegaSena
               key={palpite.id}
               index={realIndex}
               dezenas={palpite.dezenas}
               dezenasFixes={fixas}
-              ultimoConcursoDezenas={ultimoConcurso}
               isSelected={selected.has(palpite.id)}
               onSelectChange={(checked) => handleSelectChange(palpite.id, checked)}
-              onCopy={() => handleCopiarJogo(jogos[realIndex], realIndex)}
               acertos={acertosPorPalpite[palpite.id] ?? null}
-              hideVerificar
             />
           );
         })}
