@@ -34,16 +34,14 @@ function FiltroRow({ label, top3, ultimoValor }: FiltroRowProps) {
     <div className="flex items-center justify-between py-2 border-b border-border/50 last:border-b-0">
       <span className="text-xs font-medium text-muted-foreground w-20">{label}</span>
       <div className="flex items-center gap-1.5 flex-1 justify-center">
-        {top3.map((t, i) => (
+        {top3.map((t) => (
           <span
             key={t.valor}
             className={`
               px-2 py-0.5 rounded text-xs font-semibold
               ${t.valor === ultimoValor 
-                ? "bg-primary text-primary-foreground" 
-                : i === 0 
-                  ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                  : "bg-muted text-muted-foreground"
+                ? "bg-foreground text-background" 
+                : "bg-muted text-muted-foreground"
               }
             `}
           >
@@ -55,8 +53,8 @@ function FiltroRow({ label, top3, ultimoValor }: FiltroRowProps) {
         <span className={`
           text-xs font-bold px-1.5 py-0.5 rounded
           ${isUltimoNoTop3 
-            ? "text-emerald-600 dark:text-emerald-400" 
-            : "text-amber-600 dark:text-amber-400"
+            ? "text-foreground" 
+            : "text-muted-foreground"
           }
         `}>
           {isUltimoNoTop3 ? "✓" : ""} {ultimoValor}
@@ -157,10 +155,15 @@ export default function AnaliseDoDia() {
                 </div>
               </div>
               
-              {/* Dezenas em linha */}
+              {/* Dezenas em linha - Roxo Lotofácil */}
               <div className="flex flex-wrap gap-1 mb-2">
                 {tendencias.ultimoConcurso.dezenas.map((d) => (
-                  <DezenaCirculoMini key={d} dezena={d} />
+                  <div
+                    key={d}
+                    className="w-[30px] h-[30px] rounded-full flex items-center justify-center bg-[hsl(var(--palpite-dezena))] text-[hsl(var(--palpite-dezena-foreground))] text-sm font-semibold"
+                  >
+                    {d.toString().padStart(2, "0")}
+                  </div>
                 ))}
               </div>
               
