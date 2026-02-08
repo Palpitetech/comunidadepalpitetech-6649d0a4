@@ -212,17 +212,17 @@ export default function AnaliseDoDia() {
             </div>
 
             {/* DEZENAS FIXAR / EXCLUIR */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-lg border bg-card p-3 space-y-3">
               {/* Fixar */}
-              <div className="rounded-lg border bg-card p-3">
+              <div>
                 <div className="flex items-center gap-1.5 mb-2">
                   <TrendingUp className="h-4 w-4 text-status-quente" />
-                  <span className="text-xs font-semibold">Fixar</span>
+                  <span className="text-xs font-semibold">Dezenas para Fixar</span>
                   <span className="text-[10px] text-muted-foreground">≥70%</span>
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {tendencias.fixas.length > 0 ? (
-                    tendencias.fixas.slice(0, 6).map((d) => (
+                    tendencias.fixas.map((d) => (
                       <span
                         key={d.dezena}
                         className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-status-quente/20 text-status-quente text-xs font-bold"
@@ -232,21 +232,23 @@ export default function AnaliseDoDia() {
                       </span>
                     ))
                   ) : (
-                    <span className="text-[11px] text-muted-foreground">Nenhuma</span>
+                    <span className="text-[11px] text-muted-foreground">Nenhuma dezena com ≥70% de frequência</span>
                   )}
                 </div>
               </div>
 
+              <div className="border-t border-border/50" />
+
               {/* Excluir */}
-              <div className="rounded-lg border bg-card p-3">
+              <div>
                 <div className="flex items-center gap-1.5 mb-2">
                   <TrendingDown className="h-4 w-4 text-status-frio" />
-                  <span className="text-xs font-semibold">Excluir</span>
+                  <span className="text-xs font-semibold">Dezenas para Excluir</span>
                   <span className="text-[10px] text-muted-foreground">≤30%</span>
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {tendencias.excluidas.length > 0 ? (
-                    tendencias.excluidas.slice(0, 6).map((d) => (
+                    tendencias.excluidas.map((d) => (
                       <span
                         key={d.dezena}
                         className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-status-frio/20 text-status-frio text-xs font-bold"
@@ -256,7 +258,7 @@ export default function AnaliseDoDia() {
                       </span>
                     ))
                   ) : (
-                    <span className="text-[11px] text-muted-foreground">Nenhuma</span>
+                    <span className="text-[11px] text-muted-foreground">Nenhuma dezena com ≤30% de frequência</span>
                   )}
                 </div>
               </div>
