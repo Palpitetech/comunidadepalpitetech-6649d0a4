@@ -12,6 +12,9 @@ import type {
   ResultadoSimulacao 
 } from "@/types/fechamento";
 
+// Importar matrizes grandes de arquivos separados
+import { FC05 } from "@/lib/matrizes/fc05";
+
 // Re-export dos tipos para compatibilidade
 export type { MatrizFechamento, ResultadoFechamento, ResultadoSimulacao };
 
@@ -181,6 +184,9 @@ export const MATRIZES_FECHAMENTO: MatrizFechamento[] = [
       [11, 13, 15],
     ],
   },
+
+  // FC05 importado de arquivo separado (365 jogos)
+  FC05,
 ];
 
 /**
