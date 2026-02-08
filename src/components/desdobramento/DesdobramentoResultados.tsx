@@ -159,7 +159,7 @@ export function DesdobramentoResultados({
     }
   };
 
-  // Criar nova pasta
+  // Criar nova pasta e salvar palpites nela
   const handleCriarPasta = async (nome: string, cor: string) => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -184,6 +184,11 @@ export function DesdobramentoResultados({
         title: "Pasta criada! 📁",
         description: `Pasta "${nome}" criada com sucesso`,
       });
+
+      // Salvar automaticamente os palpites na nova pasta criada
+      if (palpitesParaSalvar.length > 0) {
+        await handleSalvarNaPasta(data.id);
+      }
     } catch (err) {
       console.error(err);
       toast({
