@@ -5,17 +5,26 @@ interface FechamentoRulesCardProps {
 }
 
 export function FechamentoRulesCard({ estrategia }: FechamentoRulesCardProps) {
+  // Por enquanto, nenhum fechamento tem fixas obrigatórias
+  const temFixas = false;
+  const qtdFixas = 0;
+
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground uppercase tracking-wide">
-        O fechamento <strong className="text-foreground font-semibold">{estrategia.nome}</strong> tem as seguintes regras:
+        O <strong className="text-foreground font-semibold">{estrategia.nome}</strong> tem as seguintes regras:
       </p>
       
       <ol className="space-y-2 text-sm text-foreground list-decimal list-inside leading-relaxed">
-        <li>Selecione {estrategia.dezenas} números + Fixas (opcional)</li>
-        <li>Clique em Gerar</li>
-        <li>Garantia: {estrategia.garantia} pontos</li>
-        <li>{estrategia.condicao}</li>
+        <li>Selecione {estrategia.dezenas} dezenas</li>
+        <li>
+          {temFixas 
+            ? `Fixe ${qtdFixas} dezenas`
+            : `Não temos fixas no ${estrategia.nome}`
+          }
+        </li>
+        <li>Você vai ter garantia de {estrategia.garantia} pontos caso venha acertar {estrategia.condicao.toLowerCase()}</li>
+        <li>Clique em "Gerar Fechamento"</li>
       </ol>
     </div>
   );
