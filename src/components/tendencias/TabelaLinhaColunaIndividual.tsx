@@ -190,7 +190,7 @@ export function TabelaLinhaColunaIndividual({ tipo, indice }: Props) {
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="px-2 py-2 text-xs text-muted-foreground">
+                <TableCell className="px-2 py-2 text-xs text-muted-foreground whitespace-nowrap">
                   {formatMedia(item.mediaOcorrencia)}
                 </TableCell>
                 <TableCell className="px-2 py-2 text-xs text-muted-foreground">
