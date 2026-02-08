@@ -159,8 +159,8 @@ export default function FechamentoMegaSena() {
                     estaFixa
                       ? "bg-palpite-fixa text-palpite-fixa-foreground border-palpite-fixa"
                       : estaSelecionada 
-                        ? "bg-primary text-primary-foreground border-primary shadow-lg scale-105" 
-                        : "bg-card border-border text-foreground hover:border-primary/50 hover:shadow-md"
+                        ? "bg-megasena-primary text-megasena-primary-foreground border-megasena-primary shadow-lg scale-105" 
+                        : "bg-card border-border text-foreground hover:border-megasena-primary/50 hover:shadow-md"
                   )}
                 >
                   {formatarDezenaMegaSena(numero)}
@@ -181,7 +181,7 @@ export default function FechamentoMegaSena() {
         <Button
           onClick={handleGerarFechamento}
           disabled={!podeGerar}
-          className="w-full bg-primary hover:bg-primary/90"
+          className="w-full bg-megasena-primary hover:bg-megasena-primary/90"
           size="lg"
         >
           Gerar Palpites
