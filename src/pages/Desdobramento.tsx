@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FiltroPatternSelector } from "@/components/desdobramento/FiltroPatternSelector";
 import { FiltroLinhasColunas } from "@/components/desdobramento/FiltroLinhasColunas";
-import { QuantidadeDezenasInput } from "@/components/desdobramento/QuantidadeDezenasInput";
+import { ConfigGeracaoBar } from "@/components/desdobramento/ConfigGeracaoBar";
 import { useDesdobramentoStats } from "@/hooks/useDesdobramentoStats";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,8 +42,9 @@ export default function Desdobramento() {
   const [linhas, setLinhas] = useState([3, 3, 3, 3, 3]);
   const [colunas, setColunas] = useState([3, 3, 3, 3, 3]);
   
-  // Quantidade de dezenas
+  // Quantidade de dezenas e palpites
   const [qtdDezenas, setQtdDezenas] = useState(15);
+  const [qtdPalpites, setQtdPalpites] = useState(10);
   
   // Estado para último sorteio (repetidas)
   const [ultimoSorteio, setUltimoSorteio] = useState<number[]>([]);
@@ -127,7 +128,7 @@ export default function Desdobramento() {
     // Usar setTimeout para não bloquear a UI
     setTimeout(() => {
       try {
-        const jogos = gerarDesdobramento(filtros, 500);
+        const jogos = gerarDesdobramento(filtros, qtdPalpites);
         
         if (jogos.length === 0) {
           setError("Nenhuma combinação encontrada com esses filtros. Tente ajustar os parâmetros.");
@@ -277,11 +278,13 @@ export default function Desdobramento() {
           />
         )}
 
-        {/* Quantidade de Dezenas - Sempre visível */}
-        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm p-4 -mx-4 border-b">
-          <QuantidadeDezenasInput
-            value={qtdDezenas}
-            onChange={setQtdDezenas}
+        {/* Configuração de Geração - Sempre visível */}
+        <div className="bg-muted/30 rounded-lg border">
+          <ConfigGeracaoBar
+            qtdDezenas={qtdDezenas}
+            onQtdDezenasChange={setQtdDezenas}
+            qtdPalpites={qtdPalpites}
+            onQtdPalpitesChange={setQtdPalpites}
           />
         </div>
 
