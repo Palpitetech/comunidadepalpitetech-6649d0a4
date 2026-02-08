@@ -1,11 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Wand2, Loader2, Info } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useAutoFillFechamento } from "@/hooks/useAutoFillFechamento";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { EstrategiaFechamentoSelector, ESTRATEGIAS_FECHAMENTO } from "@/components/fechamento/EstrategiaFechamentoSelector";
 import { FechamentoRulesCard } from "@/components/fechamento/FechamentoRulesCard";
 import { FechamentoStatusBar } from "@/components/fechamento/FechamentoStatusBar";
@@ -16,6 +15,13 @@ import { cn } from "@/lib/utils";
 import { formatarDezena } from "@/lib/lotofacil";
 import { gerarFechamento, ResultadoFechamento } from "@/lib/fechamento";
 
+const LOADING_MESSAGES = [
+  "Analisando suas ferramentas...",
+  "Agora alinhando as melhores dezenas...",
+  "Uau, você vai ter muitas chances!",
+  "Ansioso para te entregar sua estratégia...",
+];
+
 export default function Fechamento() {
   const [estrategiaId, setEstrategiaId] = useState("16-14-4");
   const [selecionadas, setSelecionadas] = useState<number[]>([]);
@@ -23,6 +29,8 @@ export default function Fechamento() {
   const [modo, setModo] = useState<"selecionar" | "fixar">("selecionar");
   const [resultado, setResultado] = useState<ResultadoFechamento | null>(null);
   const [estrategiaIA, setEstrategiaIA] = useState<EstrategiaData | null>(null);
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  const loadingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const { isLoading: isAutoFilling, canUse, usageCount, autoFill, checkUsage } = useAutoFillFechamento();
   const { isAdmin } = useUserRole();
@@ -118,7 +126,20 @@ export default function Fechamento() {
   };
 
   const handleAutoFill = async () => {
+    // Inicia animação de mensagens
+    setLoadingMessageIndex(0);
+    loadingIntervalRef.current = setInterval(() => {
+      setLoadingMessageIndex(prev => (prev + 1) % LOADING_MESSAGES.length);
+    }, 2000);
+
     const result = await autoFill(estrategiaId, estrategiaAtual.dezenas);
+    
+    // Para a animação
+    if (loadingIntervalRef.current) {
+      clearInterval(loadingIntervalRef.current);
+      loadingIntervalRef.current = null;
+    }
+
     if (result) {
       // Para estratégias com fixas obrigatórias, separar as dezenas
       if (estrategiaAtual.fixasObrigatorias > 0) {
@@ -138,6 +159,15 @@ export default function Fechamento() {
       setEstrategiaIA(result.estrategia);
     }
   };
+
+  // Cleanup do interval ao desmontar
+  useEffect(() => {
+    return () => {
+      if (loadingIntervalRef.current) {
+        clearInterval(loadingIntervalRef.current);
+      }
+    };
+  }, []);
 
   // Se tem resultado, mostra a tela de resultados
   if (resultado) {
@@ -176,7 +206,7 @@ export default function Fechamento() {
         <FechamentoRulesCard estrategia={estrategiaAtual} />
 
 
-        {/* 3. Seletor de Modo + Auto Preencher */}
+        {/* 3. Seletor de Modo + Quero uma Estratégia */}
         <div className="flex items-center gap-2">
           <ModoSeletorFixas modo={modo} onChange={setModo} />
           <Button
@@ -188,10 +218,8 @@ export default function Fechamento() {
           >
             {isAutoFilling ? (
               <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Wand2 className="h-4 w-4" />
-            )}
-            <span className="hidden sm:inline">Auto Preencher</span>
+            ) : null}
+            <span>Quero uma Estratégia</span>
             {!isAdmin && (
               <Badge variant={canUse ? "secondary" : "outline"} className="ml-1 text-xs">
                 {usageCount}/1
@@ -199,6 +227,15 @@ export default function Fechamento() {
             )}
           </Button>
         </div>
+
+        {/* Loading message durante auto-fill */}
+        {isAutoFilling && (
+          <div className="text-center py-3 px-4 bg-primary/5 rounded-lg border border-primary/20">
+            <p className="text-sm text-primary font-medium animate-pulse">
+              {LOADING_MESSAGES[loadingMessageIndex]}
+            </p>
+          </div>
+        )}
 
         {/* Card de Estratégia IA (quando preenchido automaticamente) */}
         {estrategiaIA && (
