@@ -58,12 +58,6 @@ export function EstrategiaFechamentoSelector({ value, onChange }: EstrategiaFech
                   <div className="font-medium">{formatarEstrategia(estrategiaAtual).linha1}</div>
                   <div className="text-xs text-muted-foreground">{formatarEstrategia(estrategiaAtual).linha2}</div>
                 </div>
-                <Badge 
-                  variant="secondary" 
-                  className={`text-[10px] px-1.5 py-0.5 ${CATEGORIA_STYLES[estrategiaAtual.categoria]}`}
-                >
-                  {CATEGORIA_LABELS[estrategiaAtual.categoria]}
-                </Badge>
               </div>
             )}
           </SelectValue>
