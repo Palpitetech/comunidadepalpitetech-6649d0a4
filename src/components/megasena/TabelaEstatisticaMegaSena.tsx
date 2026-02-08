@@ -118,8 +118,8 @@ export function TabelaEstatisticaMegaSena({ config }: Props) {
   });
 
   const getOcorrenciaBadgeColor = (ranking: number) => {
-    if (ranking <= 3) return "bg-primary text-primary-foreground";
-    if (ranking <= 5) return "bg-secondary text-secondary-foreground";
+    if (ranking <= 3) return "bg-emerald-500 text-white";
+    if (ranking <= 5) return "bg-amber-500 text-white";
     return "bg-muted text-muted-foreground";
   };
 
