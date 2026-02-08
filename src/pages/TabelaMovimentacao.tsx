@@ -325,11 +325,9 @@ export default function TabelaMovimentacao() {
                                           ? "bg-orange-500 text-white ring-2 ring-orange-300"
                                           : isDestacada && destaque === "frias"
                                           ? "bg-blue-500 text-white ring-2 ring-blue-300"
-                                          : isDestacada && destaque === "atrasadas"
+                                        : isDestacada && destaque === "atrasadas"
                                           ? "bg-amber-500 text-white ring-2 ring-amber-300"
-                                          : isDestacada && destaque === "ausentes"
-                                          ? "bg-palpite-dezena text-palpite-dezena-foreground ring-2 ring-palpite-dezena/50"
-                                          : "bg-palpite-dezena text-palpite-dezena-foreground"
+                                          : "bg-palpite-dezena text-palpite-dezena-foreground ring-2 ring-palpite-dezena/50"
                                       )}
                                     >
                                       {String(dezena).padStart(2, "0")}
