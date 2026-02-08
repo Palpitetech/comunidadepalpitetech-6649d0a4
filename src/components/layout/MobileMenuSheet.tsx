@@ -265,6 +265,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                             Quentes e Frias
                           </div>
                         </Link>
+                        <Link to="/megasena/linhas-colunas" onClick={closeAndNavigate}>
+                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                            <LayoutGrid className="h-4 w-4" />
+                            Linhas e Colunas
+                          </div>
+                        </Link>
                         <Link to="/megasena/gerador" onClick={closeAndNavigate}>
                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
                             <Dices className="h-4 w-4" />
