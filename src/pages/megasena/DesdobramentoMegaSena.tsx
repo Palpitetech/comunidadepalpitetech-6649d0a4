@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FiltroPatternSelector } from "@/components/desdobramento/FiltroPatternSelector";
 import { GridDesdobramentoMegaSena } from "@/components/megasena/desdobramento/GridDesdobramentoMegaSena";
 import { ModoSeletorDesdobramentoMegaSena } from "@/components/megasena/desdobramento/ModoSeletorDesdobramentoMegaSena";
-import { FiltroLinhasColunasMegaSena } from "@/components/megasena/desdobramento/FiltroLinhasColunasMegaSena";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -89,11 +89,6 @@ export default function DesdobramentoMegaSena() {
     }
   }, [autoTop3M3]);
   
-  // Estado dos filtros de linhas e colunas
-  const [linhas, setLinhas] = useState<number[] | null>(null);
-  const [colunas, setColunas] = useState<number[] | null>(null);
-  const [linhasAtivo, setLinhasAtivo] = useState(false);
-  const [colunasAtivo, setColunasAtivo] = useState(false);
   
   // Quantidade de dezenas e palpites
   const [qtdDezenas, setQtdDezenas] = useState(6);
@@ -109,7 +104,6 @@ export default function DesdobramentoMegaSena() {
   
   // Controle de expansão dos filtros
   const [filtrosPadroesAbertos, setFiltrosPadroesAbertos] = useState(false);
-  const [filtrosAvancadosAbertos, setFiltrosAvancadosAbertos] = useState(false);
   
   // Estado do grid de dezenas
   const [modoGrid, setModoGrid] = useState<"fixar" | "excluir">("fixar");
@@ -133,10 +127,8 @@ export default function DesdobramentoMegaSena() {
     fetchUltimoSorteio();
   }, []);
 
-  // Validação das somas
-  const somaLinhas = linhas ? linhas.reduce((a, b) => a + b, 0) : qtdDezenas;
-  const somaColunas = colunas ? colunas.reduce((a, b) => a + b, 0) : qtdDezenas;
-  const filtrosValidos = (!linhasAtivo || !linhas || somaLinhas === qtdDezenas) && (!colunasAtivo || !colunas || somaColunas === qtdDezenas);
+  // Validação sempre válida (sem filtros de linhas/colunas)
+  const filtrosValidos = true;
 
   // Montar objeto de filtros
   const filtros: FiltrosDesdobramentoMegaSena = useMemo(() => ({
@@ -155,8 +147,8 @@ export default function DesdobramentoMegaSena() {
     qtdMultiplosDe3: filtroM3Ativo
       ? (filtroM3.length > 0 ? filtroM3 : autoTop3M3)
       : null,
-    linhas: linhasAtivo ? linhas : null,
-    colunas: colunasAtivo ? colunas : null,
+    linhas: null,
+    colunas: null,
     qtdDezenas,
     dezenasUltimoSorteio: ultimoSorteio,
     dezenasFixas,
@@ -165,8 +157,7 @@ export default function DesdobramentoMegaSena() {
     filtroImpares, filtroRepetidas, filtroPrimos, filtroMoldura, filtroM3,
     filtroImparesAtivo, filtroRepetidasAtivo, filtroPrimosAtivo, filtroMolduraAtivo, filtroM3Ativo,
     autoTop3Impares, autoTop3Repetidas, autoTop3Primos, autoTop3Moldura, autoTop3M3,
-    linhas, colunas, qtdDezenas, ultimoSorteio, dezenasFixas, dezenasExcluidas,
-    linhasAtivo, colunasAtivo
+    qtdDezenas, ultimoSorteio, dezenasFixas, dezenasExcluidas
   ]);
 
   // Estimar combinações
@@ -213,8 +204,6 @@ export default function DesdobramentoMegaSena() {
   const handleLimpar = () => {
     setJogosGerados(null);
     setError(null);
-    setLinhas(null);
-    setColunas(null);
     setDezenasFixas([]);
     setDezenasExcluidas([]);
     setQtdDezenas(6);
@@ -247,13 +236,12 @@ export default function DesdobramentoMegaSena() {
     m3EhPadrao: filtroM3Ativo && (filtroM3.length === 0 || 
       (filtroM3.length === autoTop3M3.length && 
        filtroM3.every(v => autoTop3M3.includes(v)))),
-    linhas: linhasAtivo ? linhas : null,
-    colunas: colunasAtivo ? colunas : null,
+    linhas: null,
+    colunas: null,
   }), [
     filtroImpares, filtroRepetidas, filtroPrimos, filtroMoldura, filtroM3,
     filtroImparesAtivo, filtroRepetidasAtivo, filtroPrimosAtivo, filtroMolduraAtivo, filtroM3Ativo,
-    autoTop3Impares, autoTop3Repetidas, autoTop3Primos, autoTop3Moldura, autoTop3M3,
-    linhas, colunas, linhasAtivo, colunasAtivo
+    autoTop3Impares, autoTop3Repetidas, autoTop3Primos, autoTop3Moldura, autoTop3M3
   ]);
 
   // Se há jogos gerados, mostrar tela fullscreen de resultados
@@ -332,8 +320,6 @@ export default function DesdobramentoMegaSena() {
                     setFiltroPrimosAtivo(false);
                     setFiltroMolduraAtivo(false);
                     setFiltroM3Ativo(false);
-                    setLinhasAtivo(false);
-                    setColunasAtivo(false);
                   }}
                 >
                   Desabilitar Todos
@@ -347,8 +333,6 @@ export default function DesdobramentoMegaSena() {
                     setFiltroPrimosAtivo(true);
                     setFiltroMolduraAtivo(true);
                     setFiltroM3Ativo(true);
-                    setLinhasAtivo(true);
-                    setColunasAtivo(true);
                     setFiltroImpares(autoTop3Impares);
                     setFiltroRepetidas(autoTop3Repetidas);
                     setFiltroPrimos(autoTop3Primos);
@@ -412,58 +396,6 @@ export default function DesdobramentoMegaSena() {
           </Card>
         )}
 
-        {/* Botão para abrir filtros de Linhas/Colunas */}
-        <button
-          type="button"
-          onClick={() => setFiltrosAvancadosAbertos(!filtrosAvancadosAbertos)}
-          className="w-full flex items-center justify-between py-3 px-4 text-sm font-medium bg-card border rounded-lg hover:bg-muted/50 transition-colors"
-        >
-          <span className="flex items-center gap-2">
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>
-            </svg>
-            Filtros de Linhas e Colunas
-            {!filtrosValidos && (
-              <Badge variant="destructive" className="text-[10px]">
-                Ajustar
-              </Badge>
-            )}
-          </span>
-          {filtrosAvancadosAbertos ? (
-            <ChevronUp className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
-          )}
-        </button>
-
-        {/* Filtros de Linhas e Colunas */}
-        {filtrosAvancadosAbertos && (
-          <Card>
-            <CardContent className="pt-4 pb-2">
-              <FiltroLinhasColunasMegaSena
-                linhas={linhas}
-                colunas={colunas}
-                onLinhasChange={setLinhas}
-                onColunasChange={setColunas}
-                qtdDezenas={qtdDezenas}
-                linhasAtivo={linhasAtivo}
-                colunasAtivo={colunasAtivo}
-                onLinhasAtivoChange={setLinhasAtivo}
-                onColunasAtivoChange={setColunasAtivo}
-              />
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Erro de validação */}
-        {!filtrosValidos && (somaLinhas > 0 || somaColunas > 0) && (
-          <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-lg text-destructive">
-            <AlertCircle className="h-5 w-5 shrink-0" />
-            <p className="text-sm">
-              A soma das linhas ({somaLinhas}) e colunas ({somaColunas}) deve ser igual a {qtdDezenas}.
-            </p>
-          </div>
-        )}
 
         {/* Erro de geração */}
         {error && (
