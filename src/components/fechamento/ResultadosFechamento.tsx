@@ -1,4 +1,4 @@
-import { FlaskConical, RotateCcw } from "lucide-react";
+import { FlaskConical, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PalpiteCard } from "@/components/shared/PalpiteCard";
 import { PalpitesToolbar, usePalpitesToolbar } from "@/components/palpites/PalpitesToolbar";
@@ -14,6 +14,7 @@ import type { Pasta } from "@/components/palpites/PastaItem";
 import { simularGarantia, buscarMatriz, type ResultadoSimulacao } from "@/lib/fechamento";
 import { DezenaCirculoMini } from "@/components/lotofacil/DezenaCirculoMini";
 
+const ITEMS_PER_PAGE = 12;
 interface ResultadosFechamentoProps {
   jogos: number[][];
   fixas?: number[];
@@ -51,6 +52,7 @@ export function ResultadosFechamento({
   const [palpitesParaSalvar, setPalpitesParaSalvar] = useState<number[][]>([]);
   const [acertosPorPalpite, setAcertosPorPalpite] = useState<Record<string, number>>({});
   const [simulacao, setSimulacao] = useState<ResultadoSimulacao | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Obtém a matriz para saber a garantia alvo
   const matriz = estrategiaId ? buscarMatriz(estrategiaId) : null;
@@ -67,6 +69,12 @@ export function ResultadosFechamento({
     })),
     [jogos, estrategiaId, matriz]
   );
+
+  // Paginação
+  const totalPages = Math.ceil(palpites.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const palpitesPaginados = palpites.slice(startIndex, endIndex);
 
   const {
     selected,
@@ -331,21 +339,56 @@ export function ResultadosFechamento({
 
       {/* Lista de jogos usando PalpiteCard universal */}
       <div className="grid gap-3">
-        {palpites.map((palpite, index) => (
-          <PalpiteCard
-            key={palpite.id}
-            index={index}
-            dezenas={palpite.dezenas}
-            dezenasFixes={fixas}
-            ultimoConcursoDezenas={ultimoConcurso}
-            isSelected={selected.has(palpite.id)}
-            onSelectChange={(checked) => handleSelectChange(palpite.id, checked)}
-            onCopy={() => handleCopiarJogo(jogos[index], index)}
-            acertos={acertosPorPalpite[palpite.id] ?? null}
-            hideVerificar
-          />
-        ))}
+        {palpitesPaginados.map((palpite) => {
+          // Calcula o índice real baseado no ID do palpite
+          const realIndex = parseInt(palpite.id.replace("jogo-", ""));
+          return (
+            <PalpiteCard
+              key={palpite.id}
+              index={realIndex}
+              dezenas={palpite.dezenas}
+              dezenasFixes={fixas}
+              ultimoConcursoDezenas={ultimoConcurso}
+              isSelected={selected.has(palpite.id)}
+              onSelectChange={(checked) => handleSelectChange(palpite.id, checked)}
+              onCopy={() => handleCopiarJogo(jogos[realIndex], realIndex)}
+              acertos={acertosPorPalpite[palpite.id] ?? null}
+              hideVerificar
+            />
+          );
+        })}
       </div>
+
+      {/* Paginação */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between py-2 px-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="gap-1"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Anterior
+          </Button>
+          
+          <span className="text-sm text-muted-foreground">
+            Página {currentPage} de {totalPages}
+          </span>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="gap-1"
+          >
+            Próxima
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       {/* Botão Testar Garantia */}
       <Button
