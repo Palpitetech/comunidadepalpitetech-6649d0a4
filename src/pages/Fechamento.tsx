@@ -106,9 +106,21 @@ export default function Fechamento() {
   const handleAutoFill = async () => {
     const result = await autoFill(estrategiaId, estrategiaAtual.dezenas);
     if (result) {
-      setSelecionadas(result.dezenas);
-      setFixas([]);
-      setModo("selecionar");
+      // Para estratégias com fixas obrigatórias, separar as dezenas
+      if (estrategiaAtual.fixasObrigatorias > 0) {
+        // Primeiras N dezenas são fixas, restante são variáveis (selecionadas)
+        const fixasGeradas = result.dezenas.slice(0, estrategiaAtual.fixasObrigatorias);
+        const variaveisGeradas = result.dezenas.slice(estrategiaAtual.fixasObrigatorias);
+        
+        setFixas(fixasGeradas);
+        setSelecionadas(variaveisGeradas);
+        setModo("fixar"); // Mudar para modo fixar para mostrar as fixas
+      } else {
+        // Estratégias sem fixas: todas vão para selecionadas
+        setSelecionadas(result.dezenas);
+        setFixas([]);
+        setModo("selecionar");
+      }
       setEstrategiaIA(result.estrategia);
     }
   };
