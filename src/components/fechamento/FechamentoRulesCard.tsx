@@ -6,12 +6,12 @@ interface FechamentoRulesCardProps {
 
 export function FechamentoRulesCard({ estrategia }: FechamentoRulesCardProps) {
   return (
-    <div className="space-y-2">
-      <p className="text-sm text-muted-foreground">
-        O fechamento <strong className="text-foreground">"{estrategia.id}"</strong> tem as seguintes regras:
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground uppercase tracking-wide">
+        O fechamento <strong className="text-foreground font-semibold">"{estrategia.id}"</strong> tem as seguintes regras:
       </p>
       
-      <ol className="space-y-1 text-sm text-foreground list-decimal list-inside">
+      <ol className="space-y-2 text-sm text-foreground list-decimal list-inside leading-relaxed">
         <li>Selecione {estrategia.dezenas} números + Fixas (opcional)</li>
         <li>Clique em Gerar</li>
         <li>Garantia: {estrategia.garantia} pontos</li>
