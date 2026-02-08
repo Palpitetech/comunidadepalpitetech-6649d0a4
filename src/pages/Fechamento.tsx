@@ -1,204 +1,172 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Trash2, Sparkles } from "lucide-react";
-import { TipoFechamentoSelector, TIPOS_FECHAMENTO } from "@/components/fechamento/TipoFechamentoSelector";
-import { GridDezenasVolante } from "@/components/fechamento/GridDezenasVolante";
-import { isImpar, isMoldura, isMultiploDe3, contarRepetidas } from "@/lib/lotofacil";
+import { EstrategiaFechamentoSelector, ESTRATEGIAS_FECHAMENTO } from "@/components/fechamento/EstrategiaFechamentoSelector";
+import { ResultadosFechamento } from "@/components/fechamento/ResultadosFechamento";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
+import { formatarDezena } from "@/lib/lotofacil";
+import { gerarFechamento, ResultadoFechamento } from "@/lib/fechamento";
 
 export default function Fechamento() {
-  const [tipoFechamento, setTipoFechamento] = useState("18-14");
-  const [modo, setModo] = useState<"selecionar" | "fixar">("selecionar");
+  const [estrategiaId, setEstrategiaId] = useState("16-14-4");
   const [selecionadas, setSelecionadas] = useState<number[]>([]);
-  const [fixas, setFixas] = useState<number[]>([]);
-  const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
+  const [resultado, setResultado] = useState<ResultadoFechamento | null>(null);
 
-  // Buscar dezenas do último concurso para indicador de repetidas
-  useEffect(() => {
-    const fetchUltimoConcurso = async () => {
-      const { data } = await supabase
-        .from("resultados")
-        .select("dezenas")
-        .order("concurso_id", { ascending: false })
-        .limit(1)
-        .single();
-      
-      if (data?.dezenas) {
-        setUltimoConcursoDezenas(data.dezenas);
-      }
-    };
-    fetchUltimoConcurso();
-  }, []);
-
-  // Obtém os dados do tipo de fechamento selecionado
-  const tipoAtual = useMemo(() => 
-    TIPOS_FECHAMENTO.find(t => t.id === tipoFechamento) || TIPOS_FECHAMENTO[0],
-    [tipoFechamento]
+  // Obtém os dados da estratégia selecionada
+  const estrategiaAtual = useMemo(() => 
+    ESTRATEGIAS_FECHAMENTO.find(e => e.id === estrategiaId) || ESTRATEGIAS_FECHAMENTO[0],
+    [estrategiaId]
   );
 
-  // Todas as dezenas selecionadas (selecionadas + fixas)
-  const todasSelecionadas = useMemo(() => 
-    [...new Set([...selecionadas, ...fixas])],
-    [selecionadas, fixas]
-  );
+  const totalSelecionadas = selecionadas.length;
+  const podeGerar = totalSelecionadas === estrategiaAtual.dezenas;
 
-  // Calcula estatísticas das dezenas selecionadas
-  const estatisticas = useMemo(() => {
-    const impares = todasSelecionadas.filter(isImpar).length;
-    const moldura = todasSelecionadas.filter(isMoldura).length;
-    const multiplosDe3 = todasSelecionadas.filter(isMultiploDe3).length;
-    const repetidas = ultimoConcursoDezenas.length > 0 
-      ? contarRepetidas(todasSelecionadas, ultimoConcursoDezenas)
-      : 0;
-    return { impares, moldura, multiplosDe3, repetidas };
-  }, [todasSelecionadas, ultimoConcursoDezenas]);
-
-  const totalSelecionadas = todasSelecionadas.length;
-  const podeGerar = totalSelecionadas >= tipoAtual.dezenas;
+  // Gera os números de 1 a 25
+  const dezenas = Array.from({ length: 25 }, (_, i) => i + 1);
 
   const handleToggle = (numero: number) => {
-    if (modo === "selecionar") {
-      // Se já está fixa, remove das fixas
-      if (fixas.includes(numero)) {
-        setFixas(prev => prev.filter(n => n !== numero));
-        return;
+    setSelecionadas(prev => {
+      if (prev.includes(numero)) {
+        return prev.filter(n => n !== numero);
       }
-      
-      setSelecionadas(prev => 
-        prev.includes(numero) 
-          ? prev.filter(n => n !== numero)
-          : [...prev, numero]
-      );
-    } else {
-      // Modo fixar
-      if (selecionadas.includes(numero)) {
-        setSelecionadas(prev => prev.filter(n => n !== numero));
-        setFixas(prev => [...prev, numero]);
-        return;
+      // Não permite selecionar mais que o necessário
+      if (prev.length >= estrategiaAtual.dezenas) {
+        return prev;
       }
-      
-      setFixas(prev => 
-        prev.includes(numero) 
-          ? prev.filter(n => n !== numero)
-          : [...prev, numero]
-      );
-    }
-  };
-
-  const handleLimparSelecionadas = () => {
-    setSelecionadas([]);
+      return [...prev, numero];
+    });
   };
 
   const handleLimparTudo = () => {
     setSelecionadas([]);
-    setFixas([]);
   };
 
   const handleGerarFechamento = () => {
-    console.log("Gerar fechamento com:", {
-      tipo: tipoAtual,
-      selecionadas,
-      fixas,
-      total: todasSelecionadas
-    });
+    if (!podeGerar) return;
+    
+    try {
+      const resultadoGerado = gerarFechamento(estrategiaId, selecionadas);
+      setResultado(resultadoGerado);
+    } catch (error) {
+      console.error("Erro ao gerar fechamento:", error);
+    }
   };
+
+  const handleNovoFechamento = () => {
+    setResultado(null);
+    setSelecionadas([]);
+  };
+
+  // Se tem resultado, mostra a tela de resultados
+  if (resultado) {
+    return (
+      <MainLayout pageTitle="Gerador de Fechamento">
+        <div className="container-senior py-4">
+          <ResultadosFechamento 
+            jogos={resultado.jogos}
+            onNovoFechamento={handleNovoFechamento}
+          />
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout pageTitle="Gerador de Fechamento">
-      <div className="container-senior py-4 space-y-4">
-        {/* Tipo de Fechamento */}
-        <TipoFechamentoSelector
-          value={tipoFechamento}
-          onChange={setTipoFechamento}
+      <div className="container-senior py-4 space-y-6">
+        {/* Seletor de Estratégia */}
+        <EstrategiaFechamentoSelector
+          value={estrategiaId}
+          onChange={(value) => {
+            setEstrategiaId(value);
+            setSelecionadas([]);
+          }}
         />
 
-        {/* Barra de Ações: Modo + Limpeza */}
-        <div className="flex items-center justify-between gap-2">
-          {/* Toggle Selecionar/Fixar */}
-          <div className="flex rounded-lg p-1 bg-muted/50">
-            <button
-              className={cn(
-                "px-4 py-2 rounded-md text-sm font-medium transition-colors",
-                modo === "selecionar" 
-                  ? "bg-background shadow-sm text-foreground" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-              onClick={() => setModo("selecionar")}
-            >
-              Selecionar
-            </button>
-            <button
-              className={cn(
-                "px-4 py-2 rounded-md text-sm font-medium transition-colors",
-                modo === "fixar" 
-                  ? "bg-palpite-fixa text-palpite-fixa-foreground shadow-sm" 
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-              onClick={() => setModo("fixar")}
-            >
-              Fixar
-            </button>
-          </div>
-
-          {/* Botões de Limpeza */}
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLimparSelecionadas}
-              disabled={selecionadas.length === 0}
-              className="text-muted-foreground"
-            >
-              <Trash2 className="h-4 w-4" />
-              <span className="hidden sm:inline ml-1">Seleção</span>
-            </Button>
+        {/* Contador Flutuante */}
+        <div className="sticky top-0 z-10 py-2 bg-background/95 backdrop-blur-sm border-b border-border -mx-4 px-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className={cn(
+                "text-2xl font-bold",
+                podeGerar ? "text-primary" : "text-foreground"
+              )}>
+                {totalSelecionadas}
+              </span>
+              <span className="text-muted-foreground">
+                / {estrategiaAtual.dezenas} números
+              </span>
+            </div>
+            
             <Button
               variant="ghost"
               size="sm"
               onClick={handleLimparTudo}
               disabled={totalSelecionadas === 0}
-              className="text-destructive"
+              className="text-destructive hover:text-destructive"
             >
-              <Trash2 className="h-4 w-4" />
-              <span className="hidden sm:inline ml-1">Tudo</span>
+              <Trash2 className="h-4 w-4 mr-1" />
+              Limpar
             </Button>
           </div>
-        </div>
-
-        {/* Grid de Dezenas */}
-        <div className="max-w-xs mx-auto">
-          <GridDezenasVolante
-            selecionadas={selecionadas}
-            fixas={fixas}
-            repetidas={ultimoConcursoDezenas}
-            modo={modo}
-            onToggle={handleToggle}
-          />
-        </div>
-
-        {/* Estatísticas */}
-        <div className="space-y-1 text-sm text-center">
-          {/* Linha 1: Indicadores - sempre em linha única */}
-          <div className="flex justify-center gap-x-3 text-muted-foreground whitespace-nowrap text-xs sm:text-sm">
-            <span>Ímpar: <strong className="text-foreground">{estatisticas.impares}</strong></span>
-            <span>Moldura: <strong className="text-foreground">{estatisticas.moldura}</strong></span>
-            <span>M3: <strong className="text-foreground">{estatisticas.multiplosDe3}</strong></span>
-            <span>Repetidas: <strong className="text-foreground">{estatisticas.repetidas}</strong></span>
-          </div>
           
-          {/* Linha 2: Contadores */}
-          <div className="flex flex-wrap justify-center gap-x-3 text-muted-foreground">
-            <span>Total: <strong className={cn(
-              podeGerar ? "text-primary" : "text-foreground"
-            )}>{totalSelecionadas}/{tipoAtual.dezenas}</strong></span>
-            <span>/</span>
-            <span>Fixas: <strong className="text-foreground">{fixas.length}</strong></span>
-            <span>/</span>
-            <span>Selecionadas: <strong className="text-foreground">{selecionadas.length}</strong></span>
+          {podeGerar && (
+            <p className="text-sm text-primary font-medium mt-1">
+              ✓ Pronto para gerar {estrategiaAtual.jogos} jogos!
+            </p>
+          )}
+        </div>
+
+        {/* Grid de Números (Volante) */}
+        <div className="max-w-sm mx-auto">
+          <div className="grid grid-cols-5 gap-2">
+            {dezenas.map((numero) => {
+              const estaSelecionada = selecionadas.includes(numero);
+              const podeConcorrer = selecionadas.length < estrategiaAtual.dezenas;
+
+              return (
+                <button
+                  key={numero}
+                  type="button"
+                  onClick={() => handleToggle(numero)}
+                  disabled={!estaSelecionada && !podeConcorrer}
+                  className={cn(
+                    "aspect-square rounded-full border-2 transition-all duration-200",
+                    "flex items-center justify-center",
+                    "text-lg font-bold",
+                    "active:scale-95",
+                    "disabled:opacity-40 disabled:cursor-not-allowed",
+                    estaSelecionada 
+                      ? "bg-primary text-primary-foreground border-primary shadow-lg scale-105" 
+                      : "bg-card border-border text-foreground hover:border-primary/50 hover:shadow-md"
+                  )}
+                >
+                  {formatarDezena(numero)}
+                </button>
+              );
+            })}
           </div>
         </div>
+
+        {/* Números Selecionados (Preview) */}
+        {totalSelecionadas > 0 && (
+          <div className="bg-muted/50 rounded-xl p-4 space-y-2">
+            <span className="text-sm font-medium text-muted-foreground">
+              Números selecionados:
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {[...selecionadas].sort((a, b) => a - b).map((numero) => (
+                <span
+                  key={numero}
+                  className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold"
+                >
+                  {formatarDezena(numero)}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Botão Gerar */}
         <Button
@@ -208,8 +176,18 @@ export default function Fechamento() {
           size="lg"
         >
           <Sparkles className="h-5 w-5" />
-          Gerar Fechamento
+          Gerar {estrategiaAtual.jogos} Jogos
         </Button>
+
+        {/* Informações da Estratégia */}
+        <div className="bg-muted/30 rounded-xl p-4 text-center space-y-1">
+          <p className="text-sm text-muted-foreground">
+            Selecione exatamente <strong className="text-foreground">{estrategiaAtual.dezenas} números</strong> para gerar
+          </p>
+          <p className="text-sm text-muted-foreground">
+            <strong className="text-foreground">{estrategiaAtual.jogos} jogos</strong> com garantia de <strong className="text-foreground">{estrategiaAtual.garantia} pontos</strong>
+          </p>
+        </div>
       </div>
     </MainLayout>
   );
