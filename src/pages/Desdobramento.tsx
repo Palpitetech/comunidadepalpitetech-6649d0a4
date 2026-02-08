@@ -8,6 +8,7 @@ import { FiltroLinhasColunas } from "@/components/desdobramento/FiltroLinhasColu
 import { FiltroPatternSelector } from "@/components/desdobramento/FiltroPatternSelector";
 import { GridDesdobramento } from "@/components/desdobramento/GridDesdobramento";
 import { ModoSeletorDesdobramento } from "@/components/desdobramento/ModoSeletorDesdobramento";
+import { DesdobramentoResultados } from "@/components/desdobramento/DesdobramentoResultados";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +23,6 @@ import {
   contarCombinacoes,
   FiltrosDesdobramento 
 } from "@/lib/desdobramento";
-import { DezenaCirculoMini } from "@/components/lotofacil/DezenaCirculoMini";
 import { cn } from "@/lib/utils";
 import { 
   Shuffle, 
@@ -210,6 +210,19 @@ export default function Desdobramento() {
     setFiltroPrimos(autoTop3Primos);
     setFiltroMoldura(autoTop3Moldura);
   };
+
+  // Se há jogos gerados, mostrar tela fullscreen de resultados
+  if (jogosGerados && jogosGerados.length > 0) {
+    return (
+      <DesdobramentoResultados
+        jogos={jogosGerados}
+        dezenasFixes={dezenasFixas}
+        ultimoConcursoDezenas={ultimoSorteio}
+        qtdDezenas={qtdDezenas}
+        onVoltar={handleLimpar}
+      />
+    );
+  }
 
   if (statsLoading) {
     return (
@@ -540,39 +553,6 @@ export default function Desdobramento() {
           )}
         </div>
 
-        {/* Resultados */}
-        {jogosGerados && jogosGerados.length > 0 && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-medium flex items-center justify-between">
-                <span>🎲 Palpites Gerados</span>
-                <Badge variant="secondary">{jogosGerados.length} jogos</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 max-h-96 overflow-y-auto">
-              {jogosGerados.slice(0, 50).map((jogo, index) => (
-                <div key={index} className="p-3 bg-muted/30 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs font-medium text-muted-foreground">
-                      Jogo {index + 1}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {jogo.dezenas.map((dezena) => (
-                      <DezenaCirculoMini key={dezena} dezena={dezena} />
-                    ))}
-                  </div>
-                </div>
-              ))}
-              
-              {jogosGerados.length > 50 && (
-                <p className="text-center text-sm text-muted-foreground py-2">
-                  Exibindo 50 de {jogosGerados.length} jogos
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        )}
       </div>
     </MainLayout>
   );
