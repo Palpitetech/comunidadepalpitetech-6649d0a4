@@ -10,12 +10,10 @@ interface FechamentoRulesCardProps {
 export function FechamentoRulesCard({ estrategia }: FechamentoRulesCardProps) {
   const temFixas = estrategia.fixasObrigatorias > 0;
   const qtdFixas = estrategia.fixasObrigatorias;
-  const qtdVariaveis = estrategia.dezenas - qtdFixas;
+  const totalVariaveis = estrategia.dezenas - qtdFixas;
   
-  // Para garantia, precisamos acertar 15 números (dezenasPorJogo)
-  // Se tem fixas: precisa acertar X das variáveis + todas as fixas
-  const acertosNecessarios = 15; // dezenas por jogo
-  const acertosVariaveis = acertosNecessarios - qtdFixas;
+  // Variáveis usadas por jogo = dezenas por jogo - fixas
+  const variaveisNoJogo = 15 - qtdFixas; // 15 é dezenasPorJogo
 
   return (
     <div className="space-y-3">
@@ -35,8 +33,8 @@ export function FechamentoRulesCard({ estrategia }: FechamentoRulesCardProps) {
           {temFixas ? (
             <>
               Você vai ter <strong>garantia de {estrategia.garantia} pontos</strong> caso venha acertar{" "}
-              <strong>{acertosNecessarios} números</strong> de{" "}
-              <strong>{acertosVariaveis} variáveis</strong> + <strong>{qtdFixas} fixas</strong> das {qtdFixas} fixas
+              <strong>{variaveisNoJogo} de {totalVariaveis} variáveis</strong> +{" "}
+              <strong>{qtdFixas} das {qtdFixas} fixas</strong>
             </>
           ) : (
             <>
