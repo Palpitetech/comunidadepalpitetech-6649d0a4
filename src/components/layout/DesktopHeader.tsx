@@ -9,8 +9,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot, Dices, Shuffle } from "lucide-react";
+import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot, Dices, Shuffle, Ticket } from "lucide-react";
 
 export function DesktopHeader() {
   const { isAuthenticated, profile, signOut } = useAuthContext();
@@ -35,120 +36,119 @@ export function DesktopHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      <div className="container-senior flex items-center justify-between py-4">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-3 no-underline">
-          <span className="text-3xl">🍀</span>
-          <span className="text-senior-xl font-bold text-primary">Palpite Tech</span>
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 overflow-x-hidden">
+      <div className="container-senior flex items-center justify-between py-3 gap-2">
+        {/* Logo - Compacto */}
+        <Link to="/" className="flex items-center gap-2 no-underline shrink-0">
+          <span className="text-2xl">🍀</span>
+          <span className="text-lg font-bold text-primary hidden sm:inline">Palpite Tech</span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="flex items-center gap-2">
+        {/* Desktop Navigation - Compacto */}
+        <nav className="flex items-center gap-1">
           <Link to="/">
-            <Button variant="ghost" className="text-senior-base gap-2 h-12">
-              <Home className="h-5 w-5" />
-              Início
+            <Button variant="ghost" className="gap-1.5 h-10 px-3 text-sm">
+              <Home className="h-4 w-4" />
+              <span className="hidden lg:inline">Início</span>
             </Button>
           </Link>
           <Link to="/comunidade">
-            <Button variant="ghost" className="text-senior-base gap-2 h-12">
-              <Users className="h-5 w-5" />
-              Comunidade
+            <Button variant="ghost" className="gap-1.5 h-10 px-3 text-sm">
+              <Users className="h-4 w-4" />
+              <span className="hidden lg:inline">Comunidade</span>
             </Button>
           </Link>
-          {/* Lotofácil Dropdown */}
+
+          {/* Loterias Dropdown - Consolidado */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="text-senior-base gap-2 h-12">
-                🍀
-                Lotofácil
-                <ChevronDown className="h-4 w-4" />
+              <Button variant="ghost" className="gap-1.5 h-10 px-3 text-sm">
+                <Ticket className="h-4 w-4" />
+                Loterias
+                <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="w-56 p-2">
-              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+            <DropdownMenuContent align="center" className="w-64 p-2 bg-popover z-50">
+              {/* Lotofácil Section */}
+              <DropdownMenuLabel className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                🍀 Lotofácil
+              </DropdownMenuLabel>
+              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                 <Link to="/resultados">
-                  <BarChart3 className="h-5 w-5" />
+                  <BarChart3 className="h-4 w-4" />
                   Resultados
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                 <Link to="/tendencias">
-                  <TrendingUp className="h-5 w-5" />
+                  <TrendingUp className="h-4 w-4" />
                   Tendências
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                 <Link to="/frequencia">
-                  <Flame className="h-5 w-5" />
+                  <Flame className="h-4 w-4" />
                   Quentes e Frias
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                 <Link to="/smart-gerador">
-                  <Dices className="h-5 w-5" />
-                  Gerador de Palpites
+                  <Dices className="h-4 w-4" />
+                  Gerador
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                 <Link to="/desdobramento">
-                  <Shuffle className="h-5 w-5" />
+                  <Shuffle className="h-4 w-4" />
                   Desdobramento
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                 <Link to="/fechamento">
-                  <Wrench className="h-5 w-5" />
+                  <Wrench className="h-4 w-4" />
                   Fechamento
                 </Link>
               </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
 
-          {/* Mega Sena Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="text-senior-base gap-2 h-12">
-                🎱
-                Mega Sena
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="w-56 p-2">
-              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+              <DropdownMenuSeparator />
+
+              {/* Mega Sena Section */}
+              <DropdownMenuLabel className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                🎱 Mega Sena
+              </DropdownMenuLabel>
+              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                 <Link to="/megasena/resultados">
-                  <BarChart3 className="h-5 w-5" />
+                  <BarChart3 className="h-4 w-4" />
                   Resultados
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                 <Link to="/megasena/tendencias">
-                  <TrendingUp className="h-5 w-5" />
+                  <TrendingUp className="h-4 w-4" />
                   Tendências
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                 <Link to="/megasena/frequencia">
-                  <Flame className="h-5 w-5" />
+                  <Flame className="h-4 w-4" />
                   Quentes e Frias
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                 <Link to="/megasena/gerador">
-                  <Dices className="h-5 w-5" />
-                  Gerador de Palpites
+                  <Dices className="h-4 w-4" />
+                  Gerador
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                 <Link to="/megasena/desdobramento">
-                  <Shuffle className="h-5 w-5" />
+                  <Shuffle className="h-4 w-4" />
                   Desdobramento
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                 <Link to="/megasena/fechamento">
-                  <Wrench className="h-5 w-5" />
+                  <Wrench className="h-4 w-4" />
                   Fechamento
                 </Link>
               </DropdownMenuItem>
@@ -159,34 +159,34 @@ export function DesktopHeader() {
           {isAdmin && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-senior-base gap-2 h-12">
-                  <UserCog className="h-5 w-5" />
-                  Admin
-                  <ChevronDown className="h-4 w-4" />
+                <Button variant="ghost" className="gap-1.5 h-10 px-3 text-sm">
+                  <UserCog className="h-4 w-4" />
+                  <span className="hidden lg:inline">Admin</span>
+                  <ChevronDown className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-56 p-2">
-                <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+              <DropdownMenuContent align="center" className="w-48 p-2 bg-popover z-50">
+                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                   <Link to="/admin">
-                    <UserCog className="h-5 w-5" />
-                    Painel Admin
+                    <UserCog className="h-4 w-4" />
+                    Painel
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                   <Link to="/admin/planos">
-                    <FileText className="h-5 w-5" />
+                    <FileText className="h-4 w-4" />
                     Planos
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                   <Link to="/admin/usuarios">
-                    <Users className="h-5 w-5" />
+                    <Users className="h-4 w-4" />
                     Usuários
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild className="text-senior-base gap-3 py-3 cursor-pointer">
+                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                   <Link to="/admin/bots">
-                    <Bot className="h-5 w-5" />
+                    <Bot className="h-4 w-4" />
                     Bots
                   </Link>
                 </DropdownMenuItem>
@@ -195,57 +195,57 @@ export function DesktopHeader() {
           )}
         </nav>
 
-        {/* User Actions */}
-        <div className="flex items-center gap-3">
+        {/* User Actions - Compacto */}
+        <div className="flex items-center gap-2 shrink-0">
           {isAuthenticated ? (
             <>
               {/* Criar Post */}
               <Link to="/criar-post">
-                <Button className="h-12 gap-2 bg-accent hover:bg-accent/90 text-accent-foreground">
-                  <PlusCircle className="h-5 w-5" />
-                  Criar Post
+                <Button className="h-10 gap-1.5 px-3 bg-accent hover:bg-accent/90 text-accent-foreground text-sm">
+                  <PlusCircle className="h-4 w-4" />
+                  <span className="hidden md:inline">Criar Post</span>
                 </Button>
               </Link>
 
               {/* Notificações */}
               <Link to="/notificacoes">
-                <Button variant="ghost" size="icon" className="h-12 w-12">
-                  <Bell className="h-6 w-6" />
+                <Button variant="ghost" size="icon" className="h-10 w-10">
+                  <Bell className="h-5 w-5" />
                 </Button>
               </Link>
 
               {/* Avatar Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-12 w-12 rounded-full">
-                    <Avatar className="h-12 w-12">
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
+                    <Avatar className="h-10 w-10">
                       <AvatarImage src={profile?.avatar_url || undefined} />
-                      <AvatarFallback className="bg-primary text-primary-foreground text-senior-base">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                         {getInitials(profile?.nome)}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-56 bg-popover z-50">
                   <div className="px-3 py-2">
-                    <p className="text-senior-base font-medium">{profile?.nome || "Usuário"}</p>
-                    <p className="text-sm text-muted-foreground truncate">
+                    <p className="text-sm font-medium">{profile?.nome || "Usuário"}</p>
+                    <p className="text-xs text-muted-foreground truncate">
                       {profile?.celular || "Sem celular"}
                     </p>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild className="text-senior-base gap-2 py-3 cursor-pointer">
+                  <DropdownMenuItem asChild className="gap-2 py-2 cursor-pointer">
                     <Link to="/perfil">
-                      <User className="h-5 w-5" />
+                      <User className="h-4 w-4" />
                       Meu Perfil
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    className="text-senior-base gap-2 py-3 cursor-pointer text-destructive focus:text-destructive"
+                    className="gap-2 py-2 cursor-pointer text-destructive focus:text-destructive"
                     onClick={handleSignOut}
                   >
-                    <LogOut className="h-5 w-5" />
+                    <LogOut className="h-4 w-4" />
                     Sair
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -253,7 +253,7 @@ export function DesktopHeader() {
             </>
           ) : (
             <Link to="/login">
-              <Button className="btn-senior bg-accent hover:bg-accent/90 text-accent-foreground">
+              <Button className="h-10 px-4 bg-accent hover:bg-accent/90 text-accent-foreground text-sm">
                 Entrar
               </Button>
             </Link>
