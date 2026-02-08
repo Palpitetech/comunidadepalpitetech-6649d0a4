@@ -207,35 +207,37 @@ export default function Fechamento() {
 
 
         {/* 3. Seletor de Modo + Quero uma Estratégia */}
-        <div className="flex items-center gap-2">
-          <ModoSeletorFixas modo={modo} onChange={setModo} />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleAutoFill}
-            disabled={isAutoFilling || !canUse}
-            className="gap-1.5 shrink-0"
-          >
-            {isAutoFilling ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : null}
-            <span>Quero uma Estratégia</span>
-            {!isAdmin && (
-              <Badge variant={canUse ? "secondary" : "outline"} className="ml-1 text-xs">
-                {usageCount}/1
-              </Badge>
-            )}
-          </Button>
-        </div>
-
-        {/* Loading message durante auto-fill */}
-        {isAutoFilling && (
-          <div className="text-center py-3 px-4 bg-primary/5 rounded-lg border border-primary/20">
-            <p className="text-sm text-primary font-medium animate-pulse">
-              {LOADING_MESSAGES[loadingMessageIndex]}
-            </p>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <ModoSeletorFixas modo={modo} onChange={setModo} />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleAutoFill}
+              disabled={isAutoFilling || !canUse}
+              className="gap-1 shrink-0 px-2 text-xs sm:text-sm sm:px-3"
+            >
+              {isAutoFilling ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : null}
+              <span className="whitespace-nowrap">Quero Estratégia</span>
+              {!isAdmin && (
+                <Badge variant={canUse ? "secondary" : "outline"} className="text-[10px] px-1">
+                  {usageCount}/1
+                </Badge>
+              )}
+            </Button>
           </div>
-        )}
+
+          {/* Loading message durante auto-fill */}
+          {isAutoFilling && (
+            <div className="text-center py-2 px-3 bg-primary/5 rounded-lg border border-primary/20">
+              <p className="text-xs text-primary font-medium animate-pulse">
+                {LOADING_MESSAGES[loadingMessageIndex]}
+              </p>
+            </div>
+          )}
+        </div>
 
         {/* Card de Estratégia IA (quando preenchido automaticamente) */}
         {estrategiaIA && (
