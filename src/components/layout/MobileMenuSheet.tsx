@@ -175,16 +175,16 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                 </Link>
               </nav>
 
-              {/* Accordion de Ferramentas de Análise */}
-              <div className="px-4">
-                <Accordion type="single" collapsible>
-                  <AccordionItem value="ferramentas" className="border-none">
-                    <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
-                      <div className="flex items-center gap-3">
-                        <BarChart3 className="h-5 w-5 stroke-[1.5]" />
-                        <span>Ferramentas de Análise</span>
-                      </div>
-                    </AccordionTrigger>
+               {/* Accordion de Lotofácil */}
+               <div className="px-4">
+                 <Accordion type="single" collapsible>
+                   <AccordionItem value="ferramentas" className="border-none">
+                     <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
+                       <div className="flex items-center gap-3">
+                         <BarChart3 className="h-5 w-5 stroke-[1.5]" />
+                         <span>Lotofácil</span>
+                       </div>
+                     </AccordionTrigger>
                     <AccordionContent className="pb-0">
                       <div className="pl-8 space-y-0">
                         <Link to="/palpite-do-dia" onClick={closeAndNavigate}>
