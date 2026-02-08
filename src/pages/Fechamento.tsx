@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Wand2, Loader2 } from "lucide-react";
+import { Wand2, Loader2 } from "lucide-react";
 import { useAutoFillFechamento } from "@/hooks/useAutoFillFechamento";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { FechamentoRulesCard } from "@/components/fechamento/FechamentoRulesCard
 import { FechamentoStatusBar } from "@/components/fechamento/FechamentoStatusBar";
 import { ModoSeletorFixas } from "@/components/fechamento/ModoSeletorFixas";
 import { ResultadosFechamento } from "@/components/fechamento/ResultadosFechamento";
+import { EstrategiaCard, type EstrategiaData } from "@/components/gerador/EstrategiaCard";
 import { cn } from "@/lib/utils";
 import { formatarDezena } from "@/lib/lotofacil";
 import { gerarFechamento, ResultadoFechamento } from "@/lib/fechamento";
@@ -20,6 +21,7 @@ export default function Fechamento() {
   const [fixas, setFixas] = useState<number[]>([]);
   const [modo, setModo] = useState<"selecionar" | "fixar">("selecionar");
   const [resultado, setResultado] = useState<ResultadoFechamento | null>(null);
+  const [estrategiaIA, setEstrategiaIA] = useState<EstrategiaData | null>(null);
 
   const { isLoading: isAutoFilling, canUse, usageCount, autoFill, checkUsage } = useAutoFillFechamento();
   const { isAdmin } = useUserRole();
@@ -90,20 +92,23 @@ export default function Fechamento() {
     setResultado(null);
     setSelecionadas([]);
     setFixas([]);
+    setEstrategiaIA(null);
   };
 
   const handleMudarEstrategia = (value: string) => {
     setEstrategiaId(value);
     setSelecionadas([]);
     setFixas([]);
+    setEstrategiaIA(null);
   };
 
   const handleAutoFill = async () => {
-    const dezenas = await autoFill(estrategiaId, estrategiaAtual.dezenas);
-    if (dezenas) {
-      setSelecionadas(dezenas);
+    const result = await autoFill(estrategiaId, estrategiaAtual.dezenas);
+    if (result) {
+      setSelecionadas(result.dezenas);
       setFixas([]);
       setModo("selecionar");
+      setEstrategiaIA(result.estrategia);
     }
   };
 
@@ -159,6 +164,11 @@ export default function Fechamento() {
             )}
           </Button>
         </div>
+
+        {/* Card de Estratégia IA (quando preenchido automaticamente) */}
+        {estrategiaIA && (
+          <EstrategiaCard estrategia={estrategiaIA} />
+        )}
 
         {/* 4. Grid de Números (Volante) */}
         <div className="max-w-sm mx-auto">

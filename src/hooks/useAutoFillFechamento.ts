@@ -3,12 +3,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
+import type { EstrategiaData } from "@/components/gerador/EstrategiaCard";
+
+interface AutoFillResult {
+  dezenas: number[];
+  estrategia: EstrategiaData | null;
+}
 
 interface UseAutoFillFechamentoResult {
   isLoading: boolean;
   canUse: boolean;
   usageCount: number;
-  autoFill: (estrategiaId: string, totalDezenas: number) => Promise<number[] | null>;
+  autoFill: (estrategiaId: string, totalDezenas: number) => Promise<AutoFillResult | null>;
   checkUsage: () => Promise<void>;
 }
 
@@ -38,7 +44,7 @@ export function useAutoFillFechamento(): UseAutoFillFechamentoResult {
   const autoFill = async (
     estrategiaId: string,
     totalDezenas: number
-  ): Promise<number[] | null> => {
+  ): Promise<AutoFillResult | null> => {
     if (!user) {
       toast({
         title: "Faça login",
@@ -89,7 +95,10 @@ export function useAutoFillFechamento(): UseAutoFillFechamentoResult {
         description: `A IA analisou os últimos 4 concursos e sugeriu ${data.dezenas.length} dezenas.`,
       });
 
-      return data.dezenas;
+      return {
+        dezenas: data.dezenas,
+        estrategia: data.estrategia || null,
+      };
     } catch (error) {
       console.error("Erro no auto-fill:", error);
       toast({
