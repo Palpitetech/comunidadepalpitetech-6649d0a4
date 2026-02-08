@@ -114,7 +114,9 @@ export default function Desdobramento() {
     colunas,
     qtdDezenas,
     dezenasUltimoSorteio: ultimoSorteio,
-  }), [qtdImpares, qtdRepetidas, qtdPrimos, qtdMoldura, linhas, colunas, qtdDezenas, ultimoSorteio]);
+    dezenasFixas,
+    dezenasExcluidas,
+  }), [qtdImpares, qtdRepetidas, qtdPrimos, qtdMoldura, linhas, colunas, qtdDezenas, ultimoSorteio, dezenasFixas, dezenasExcluidas]);
 
   // Estimar combinações (com debounce)
   const [estimativa, setEstimativa] = useState<number | null>(null);

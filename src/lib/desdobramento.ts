@@ -15,6 +15,8 @@ export interface FiltrosDesdobramento {
   colunas: number[];
   qtdDezenas: number;
   dezenasUltimoSorteio?: number[];
+  dezenasFixas?: number[];
+  dezenasExcluidas?: number[];
 }
 
 export interface JogoDesdobramento {
@@ -42,6 +44,20 @@ export function validarFiltros(
   dezenas: number[],
   filtros: FiltrosDesdobramento
 ): boolean {
+  // Validar dezenas fixas - todas devem estar presentes
+  if (filtros.dezenasFixas && filtros.dezenasFixas.length > 0) {
+    for (const fixa of filtros.dezenasFixas) {
+      if (!dezenas.includes(fixa)) return false;
+    }
+  }
+
+  // Validar dezenas excluídas - nenhuma pode estar presente
+  if (filtros.dezenasExcluidas && filtros.dezenasExcluidas.length > 0) {
+    for (const excluida of filtros.dezenasExcluidas) {
+      if (dezenas.includes(excluida)) return false;
+    }
+  }
+
   // Validar quantidade de ímpares
   const qtdImpares = dezenas.filter(d => d % 2 !== 0).length;
   if (qtdImpares !== filtros.qtdImpares) return false;
@@ -106,16 +122,44 @@ export function gerarDesdobramento(
   filtros: FiltrosDesdobramento,
   maxJogos: number = 1000
 ): JogoDesdobramento[] {
-  const dezenas = Array.from({ length: 25 }, (_, i) => i + 1);
-  const jogosValidos: JogoDesdobramento[] = [];
+  // Começar com todas as dezenas disponíveis
+  let dezenasDisponiveis = Array.from({ length: 25 }, (_, i) => i + 1);
   
-  // Gerar combinações e filtrar
-  let count = 0;
-  for (const combo of combinations(dezenas, filtros.qtdDezenas)) {
-    if (validarFiltros(combo, filtros)) {
-      jogosValidos.push({ dezenas: combo.sort((a, b) => a - b) });
-      count++;
-      if (count >= maxJogos) break;
+  // Remover dezenas excluídas do pool (otimização)
+  if (filtros.dezenasExcluidas && filtros.dezenasExcluidas.length > 0) {
+    dezenasDisponiveis = dezenasDisponiveis.filter(
+      d => !filtros.dezenasExcluidas!.includes(d)
+    );
+  }
+  
+  const jogosValidos: JogoDesdobramento[] = [];
+  const fixas = filtros.dezenasFixas || [];
+  const qtdVariaveis = filtros.qtdDezenas - fixas.length;
+  
+  // Se tiver fixas, gerar combinações apenas com as variáveis
+  if (fixas.length > 0) {
+    // Remover fixas do pool de variáveis
+    const dezenasVariaveis = dezenasDisponiveis.filter(d => !fixas.includes(d));
+    
+    // Gerar combinações das variáveis e adicionar as fixas
+    let count = 0;
+    for (const combo of combinations(dezenasVariaveis, qtdVariaveis)) {
+      const jogoCompleto = [...fixas, ...combo].sort((a, b) => a - b);
+      if (validarFiltros(jogoCompleto, filtros)) {
+        jogosValidos.push({ dezenas: jogoCompleto });
+        count++;
+        if (count >= maxJogos) break;
+      }
+    }
+  } else {
+    // Sem fixas, gerar normalmente
+    let count = 0;
+    for (const combo of combinations(dezenasDisponiveis, filtros.qtdDezenas)) {
+      if (validarFiltros(combo, filtros)) {
+        jogosValidos.push({ dezenas: combo.sort((a, b) => a - b) });
+        count++;
+        if (count >= maxJogos) break;
+      }
     }
   }
   
