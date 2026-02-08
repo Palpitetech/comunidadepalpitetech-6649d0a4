@@ -63,7 +63,7 @@ export default function Desdobramento() {
   const [error, setError] = useState<string | null>(null);
   
   // Controle de expansão dos filtros
-  const [filtrosPadroesAbertos, setFiltrosPadroesAbertos] = useState(true);
+  const [filtrosPadroesAbertos, setFiltrosPadroesAbertos] = useState(false);
   const [filtrosAvancadosAbertos, setFiltrosAvancadosAbertos] = useState(false);
   const [gridAberto, setGridAberto] = useState(false);
   
