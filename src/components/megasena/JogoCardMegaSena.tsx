@@ -2,8 +2,14 @@ import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Copy, Check } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  contarImpares, 
+  contarMoldura, 
+  contarPrimos, 
+  contarMultiplosDe3 
+} from "@/lib/megasena";
 
 interface JogoCardMegaSenaProps {
   index: number;
@@ -14,6 +20,7 @@ interface JogoCardMegaSenaProps {
   acertos?: number | null;
   showCheckbox?: boolean;
   compact?: boolean;
+  ultimoConcursoDezenas?: number[];
 }
 
 export function JogoCardMegaSena({
@@ -25,11 +32,25 @@ export function JogoCardMegaSena({
   acertos,
   showCheckbox = true,
   compact = false,
+  ultimoConcursoDezenas = [],
 }: JogoCardMegaSenaProps) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
   const formatDezena = (n: number) => n.toString().padStart(2, "0");
+
+  // Calcular padrões
+  const padroes = useMemo(() => {
+    const impares = contarImpares(dezenas);
+    const moldura = contarMoldura(dezenas);
+    const primos = contarPrimos(dezenas);
+    const m3 = contarMultiplosDe3(dezenas);
+    const repetidas = ultimoConcursoDezenas.length > 0 
+      ? dezenas.filter(d => ultimoConcursoDezenas.includes(d)).length 
+      : null;
+    
+    return { impares, moldura, primos, m3, repetidas };
+  }, [dezenas, ultimoConcursoDezenas]);
 
   const handleCopy = async () => {
     const texto = dezenas.map(formatDezena).join(" - ");
@@ -128,6 +149,17 @@ export function JogoCardMegaSena({
             </span>
           );
         })}
+      </div>
+
+      {/* Padrões estatísticos */}
+      <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+        <span>Ímp: <strong className="text-foreground">{padroes.impares}</strong></span>
+        {padroes.repetidas !== null && (
+          <span>Rep: <strong className="text-foreground">{padroes.repetidas}</strong></span>
+        )}
+        <span>Mol: <strong className="text-foreground">{padroes.moldura}</strong></span>
+        <span>Pri: <strong className="text-foreground">{padroes.primos}</strong></span>
+        <span>M3: <strong className="text-foreground">{padroes.m3}</strong></span>
       </div>
     </div>
   );
