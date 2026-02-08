@@ -23,7 +23,7 @@ export function FechamentoRulesCard({ estrategia }: FechamentoRulesCardProps) {
             : `Não temos fixas no ${estrategia.nome}`
           }
         </li>
-        <li>Você vai ter garantia de {estrategia.garantia} pontos caso venha acertar {estrategia.condicao.toLowerCase()}</li>
+        <li>Você vai ter <strong>garantia de {estrategia.garantia} pontos</strong> caso venha acertar {estrategia.condicao.toLowerCase()}</li>
         <li>Clique em "Gerar Fechamento"</li>
       </ol>
     </div>
