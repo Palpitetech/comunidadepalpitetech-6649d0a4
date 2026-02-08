@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FiltroPatternSelector } from "@/components/desdobramento/FiltroPatternSelector";
 import { FiltroLinhasColunas } from "@/components/desdobramento/FiltroLinhasColunas";
+import { GridDesdobramento } from "@/components/desdobramento/GridDesdobramento";
+import { ModoSeletorDesdobramento } from "@/components/desdobramento/ModoSeletorDesdobramento";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,6 +65,12 @@ export default function Desdobramento() {
   // Controle de expansão dos filtros
   const [filtrosPadroesAbertos, setFiltrosPadroesAbertos] = useState(true);
   const [filtrosAvancadosAbertos, setFiltrosAvancadosAbertos] = useState(false);
+  const [gridAberto, setGridAberto] = useState(false);
+  
+  // Estado do grid de dezenas
+  const [modoGrid, setModoGrid] = useState<"selecionar" | "fixar" | "excluir">("selecionar");
+  const [dezenasFixas, setDezenasFixas] = useState<number[]>([]);
+  const [dezenasExcluidas, setDezenasExcluidas] = useState<number[]>([]);
 
   // Buscar último sorteio
   useEffect(() => {
@@ -189,6 +197,80 @@ export default function Desdobramento() {
               Gere palpites com filtros estatísticos personalizados
             </p>
           </div>
+        )}
+
+        {/* Botão para abrir Grid de Dezenas */}
+        <button
+          type="button"
+          onClick={() => setGridAberto(!gridAberto)}
+          className="w-full flex items-center justify-between py-3 px-4 text-sm font-medium bg-card border rounded-lg hover:bg-muted/50 transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            🎲 Dezenas Fixas e Excluídas
+            {(dezenasFixas.length > 0 || dezenasExcluidas.length > 0) && (
+              <Badge variant="secondary" className="text-[10px]">
+                {dezenasFixas.length}F / {dezenasExcluidas.length}E
+              </Badge>
+            )}
+          </span>
+          {gridAberto ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </button>
+
+        {/* Grid de Dezenas */}
+        {gridAberto && (
+          <Card>
+            <CardContent className="pt-4 space-y-3">
+              <ModoSeletorDesdobramento modo={modoGrid} onChange={setModoGrid} />
+              <GridDesdobramento
+                selecionadas={[]}
+                fixas={dezenasFixas}
+                excluidas={dezenasExcluidas}
+                repetidas={ultimoSorteio}
+                modo={modoGrid}
+                onToggle={(numero) => {
+                  if (modoGrid === "fixar") {
+                    // Se já está excluída, remove de excluídas primeiro
+                    if (dezenasExcluidas.includes(numero)) {
+                      setDezenasExcluidas(prev => prev.filter(d => d !== numero));
+                    }
+                    // Toggle fixa
+                    if (dezenasFixas.includes(numero)) {
+                      setDezenasFixas(prev => prev.filter(d => d !== numero));
+                    } else {
+                      setDezenasFixas(prev => [...prev, numero].sort((a, b) => a - b));
+                    }
+                  } else if (modoGrid === "excluir") {
+                    // Se já está fixa, remove de fixas primeiro
+                    if (dezenasFixas.includes(numero)) {
+                      setDezenasFixas(prev => prev.filter(d => d !== numero));
+                    }
+                    // Toggle excluída
+                    if (dezenasExcluidas.includes(numero)) {
+                      setDezenasExcluidas(prev => prev.filter(d => d !== numero));
+                    } else {
+                      setDezenasExcluidas(prev => [...prev, numero].sort((a, b) => a - b));
+                    }
+                  }
+                }}
+              />
+              <div className="flex justify-between text-xs text-muted-foreground pt-1">
+                <span>Fixas: {dezenasFixas.length} | Excluídas: {dezenasExcluidas.length}</span>
+                {(dezenasFixas.length > 0 || dezenasExcluidas.length > 0) && (
+                  <button 
+                    type="button"
+                    onClick={() => { setDezenasFixas([]); setDezenasExcluidas([]); }}
+                    className="text-destructive hover:underline"
+                  >
+                    Limpar
+                  </button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Botão para abrir filtros de padrões */}
