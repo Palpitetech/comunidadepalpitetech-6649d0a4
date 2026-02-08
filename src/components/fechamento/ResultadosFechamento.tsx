@@ -2,6 +2,7 @@ import { FlaskConical, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PalpiteCard } from "@/components/shared/PalpiteCard";
 import { PalpitesToolbar, usePalpitesToolbar } from "@/components/palpites/PalpitesToolbar";
+import { EstrategiaCard, type EstrategiaData } from "@/components/gerador/EstrategiaCard";
 import { formatarDezena } from "@/lib/lotofacil";
 import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -11,8 +12,6 @@ import { NovaPastaDialog } from "@/components/palpites/NovaPastaDialog";
 import { useAuth } from "@/hooks/useAuth";
 import type { Pasta } from "@/components/palpites/PastaItem";
 import { simularGarantia, buscarMatriz, type ResultadoSimulacao } from "@/lib/fechamento";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { DezenaCirculoMini } from "@/components/lotofacil/DezenaCirculoMini";
 
 interface ResultadosFechamentoProps {
@@ -21,6 +20,7 @@ interface ResultadosFechamentoProps {
   estrategiaId?: string;
   dezenasSelecionadas: number[];
   onNovoFechamento: () => void;
+  estrategiaIA?: EstrategiaData | null;
 }
 
 // Interface para compatibilidade com a toolbar
@@ -28,7 +28,7 @@ interface PalpiteFechamento {
   id: string;
   dezenas: number[];
   estrategia?: string | null;
-  estrategia_data?: null;
+  estrategia_data?: EstrategiaData | null;
   qtd_dezenas?: number;
   periodo_analise?: number | null;
 }
@@ -38,7 +38,8 @@ export function ResultadosFechamento({
   fixas = [], 
   estrategiaId,
   dezenasSelecionadas,
-  onNovoFechamento 
+  onNovoFechamento,
+  estrategiaIA,
 }: ResultadosFechamentoProps) {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -215,7 +216,12 @@ export function ResultadosFechamento({
         user_id: user.id,
         dezenas: [...dezenas].sort((a, b) => a - b),
         qtd_dezenas: dezenas.length,
-        estrategia: estrategiaId ? `Fechamento ${estrategiaId}` : null,
+        estrategia: estrategiaIA 
+          ? `IA: ${estrategiaIA.ferramentas.slice(0, 2).join(" + ")}`
+          : estrategiaId 
+            ? `Fechamento ${estrategiaId}` 
+            : null,
+        estrategia_data: estrategiaIA ? JSON.parse(JSON.stringify(estrategiaIA)) : null,
         pasta_id: pastaId,
       }));
 
@@ -293,6 +299,11 @@ export function ResultadosFechamento({
           {jogos.length} jogos prontos para apostar
         </p>
       </div>
+
+      {/* Card de Estratégia IA (se preenchido automaticamente) */}
+      {estrategiaIA && (
+        <EstrategiaCard estrategia={estrategiaIA} />
+      )}
 
       {/* Toolbar universal */}
       <PalpitesToolbar
