@@ -408,17 +408,22 @@ export function ResultadosFechamento({
             </div>
           </div>
 
-          {/* Indicador de Garantia */}
+          {/* Indicador de Garantia - Flutuante */}
           <div
-            className={`mx-4 p-3 rounded-lg text-sm font-semibold text-center border-2 ${
+            className={`mx-4 p-4 rounded-xl text-sm text-center shadow-lg border ${
               simulacao.garantiaCumprida
-                ? "bg-emerald-950/40 border-emerald-600 text-emerald-400"
-                : "bg-destructive/10 border-destructive/30 text-destructive"
+                ? "bg-card border-border text-foreground"
+                : "bg-card border-border text-muted-foreground"
             }`}
           >
-            {simulacao.garantiaCumprida
-              ? `✓ Garantia cumprida! Pelo menos 1 jogo com ${simulacao.garantiaAlvo}+ pontos`
-              : `✗ Garantia não cumprida nesta simulação`}
+            <span className={simulacao.garantiaCumprida ? "text-emerald-500" : "text-muted-foreground"}>
+              {simulacao.garantiaCumprida ? "✓" : "✗"}
+            </span>
+            <span className="ml-2">
+              {simulacao.garantiaCumprida
+                ? `Garantia cumprida! Pelo menos 1 jogo com ${simulacao.garantiaAlvo}+ pontos`
+                : `Garantia não cumprida nesta simulação`}
+            </span>
           </div>
 
           {/* Botão Nova Simulação */}
