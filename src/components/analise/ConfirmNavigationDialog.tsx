@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, StickyNote } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,14 +15,12 @@ interface ConfirmNavigationDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   desdobramentoUrl: string;
-  onContinueAnalysis: () => void;
 }
 
 export function ConfirmNavigationDialog({
   isOpen,
   onOpenChange,
   desdobramentoUrl,
-  onContinueAnalysis,
 }: ConfirmNavigationDialogProps) {
   const navigate = useNavigate();
 
@@ -31,18 +29,13 @@ export function ConfirmNavigationDialog({
     navigate(desdobramentoUrl);
   };
 
-  const handleContinueAnalysis = () => {
-    onOpenChange(false);
-    onContinueAnalysis();
-  };
-
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent className="max-w-sm">
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-base">O que deseja fazer?</AlertDialogTitle>
+          <AlertDialogTitle className="text-base">Ir para o Desdobramento?</AlertDialogTitle>
           <AlertDialogDescription className="text-xs">
-            Você pode ir ao gerador com os filtros selecionados ou continuar analisando.
+            Os filtros selecionados serão aplicados automaticamente no gerador.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
@@ -53,12 +46,9 @@ export function ConfirmNavigationDialog({
             <ArrowRight className="h-4 w-4" />
             Ir para o Desdobramento
           </AlertDialogAction>
-          <AlertDialogCancel
-            onClick={handleContinueAnalysis}
-            className="w-full gap-2"
-          >
-            <StickyNote className="h-4 w-4" />
-            Continuar Análise
+          <AlertDialogCancel className="w-full gap-2">
+            <X className="h-4 w-4" />
+            Cancelar
           </AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>

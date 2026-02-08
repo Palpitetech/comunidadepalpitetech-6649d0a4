@@ -1,70 +1,95 @@
 import { useState } from "react";
-import { X, StickyNote, Minimize2, Maximize2 } from "lucide-react";
+import { X, NotebookPen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 
-interface FloatingNotesProps {
-  isOpen: boolean;
-  onClose: () => void;
-  initialContent?: string;
+interface SelectedFilters {
+  impares: number[];
+  repetidas: number[];
+  moldura: number[];
+  primos: number[];
+  m3: number[];
 }
 
-export function FloatingNotes({ isOpen, onClose, initialContent = "" }: FloatingNotesProps) {
-  const [content, setContent] = useState(initialContent);
-  const [isMinimized, setIsMinimized] = useState(false);
+interface FloatingNotesProps {
+  selectedFilters: SelectedFilters;
+}
 
-  if (!isOpen) return null;
+const FILTER_LABELS: Record<keyof SelectedFilters, string> = {
+  impares: "Ímpares",
+  repetidas: "Repetidas",
+  moldura: "Moldura",
+  primos: "Primos",
+  m3: "Múlt. 3",
+};
 
-  if (isMinimized) {
+export function FloatingNotes({ selectedFilters }: FloatingNotesProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Conta total de valores selecionados
+  const totalSelected = Object.values(selectedFilters).reduce(
+    (acc, arr) => acc + arr.length, 0
+  );
+
+  // Não mostra se não tiver filtros selecionados
+  if (totalSelected === 0) return null;
+
+  // FAB fechado
+  if (!isOpen) {
     return (
-      <div className="fixed bottom-4 right-4 z-50">
-        <Button
-          size="sm"
-          variant="default"
-          className="gap-2 shadow-lg"
-          onClick={() => setIsMinimized(false)}
-        >
-          <StickyNote className="h-4 w-4" />
-          Notas
-          <Maximize2 className="h-3 w-3" />
-        </Button>
-      </div>
+      <button
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full bg-orange-500 hover:bg-orange-600 text-white shadow-lg flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+      >
+        <NotebookPen className="h-6 w-6" />
+        {/* Badge com contador */}
+        <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-foreground text-background text-xs font-bold flex items-center justify-center">
+          {totalSelected}
+        </span>
+      </button>
     );
   }
 
+  // Painel aberto
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-72 rounded-lg border bg-card shadow-xl">
-      <div className="flex items-center justify-between p-2 border-b bg-muted/50 rounded-t-lg">
+    <div className="fixed bottom-20 right-4 z-50 w-72 rounded-lg border bg-card shadow-xl animate-in slide-in-from-bottom-2 duration-200">
+      <div className="flex items-center justify-between p-3 border-b bg-orange-500 rounded-t-lg">
         <div className="flex items-center gap-2">
-          <StickyNote className="h-4 w-4 text-primary" />
-          <span className="text-xs font-semibold">Bloco de Notas</span>
+          <NotebookPen className="h-4 w-4 text-white" />
+          <span className="text-sm font-semibold text-white">Filtros Selecionados</span>
         </div>
-        <div className="flex items-center gap-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-6 w-6"
-            onClick={() => setIsMinimized(true)}
-          >
-            <Minimize2 className="h-3 w-3" />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-6 w-6"
-            onClick={onClose}
-          >
-            <X className="h-3 w-3" />
-          </Button>
-        </div>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-6 w-6 text-white hover:bg-orange-600 hover:text-white"
+          onClick={() => setIsOpen(false)}
+        >
+          <X className="h-4 w-4" />
+        </Button>
       </div>
-      <div className="p-2">
-        <Textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Anote suas observações sobre a análise..."
-          className="min-h-[120px] text-xs resize-none border-0 focus-visible:ring-0 bg-transparent"
-        />
+      
+      <div className="p-3 space-y-2 max-h-64 overflow-y-auto">
+        {(Object.keys(selectedFilters) as (keyof SelectedFilters)[]).map((key) => {
+          const values = selectedFilters[key];
+          if (values.length === 0) return null;
+          
+          return (
+            <div key={key} className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground w-16">
+                {FILTER_LABELS[key]}
+              </span>
+              <div className="flex flex-wrap gap-1">
+                {values.map((v) => (
+                  <span
+                    key={v}
+                    className="px-2 py-0.5 rounded text-xs font-semibold bg-highlight text-highlight-foreground"
+                  >
+                    {v}
+                  </span>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
