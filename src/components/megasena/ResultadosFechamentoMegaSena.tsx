@@ -342,6 +342,7 @@ export function ResultadosFechamentoMegaSena({
               isSelected={selected.has(palpite.id)}
               onSelectChange={(checked) => handleSelectChange(palpite.id, checked)}
               acertos={acertosPorPalpite[palpite.id] ?? null}
+              ultimoConcursoDezenas={ultimoConcurso}
             />
           );
         })}
