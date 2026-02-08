@@ -272,6 +272,8 @@ export default function Desdobramento() {
                     setFiltroRepetidasAtivo(false);
                     setFiltroPrimosAtivo(false);
                     setFiltroMolduraAtivo(false);
+                    setLinhasAtivo(false);
+                    setColunasAtivo(false);
                   }}
                 >
                   Desabilitar Todos
@@ -284,6 +286,8 @@ export default function Desdobramento() {
                     setFiltroRepetidasAtivo(true);
                     setFiltroPrimosAtivo(true);
                     setFiltroMolduraAtivo(true);
+                    setLinhasAtivo(true);
+                    setColunasAtivo(true);
                     setFiltroImpares(autoTop3Impares);
                     setFiltroRepetidas(autoTop3Repetidas);
                     setFiltroPrimos(autoTop3Primos);
