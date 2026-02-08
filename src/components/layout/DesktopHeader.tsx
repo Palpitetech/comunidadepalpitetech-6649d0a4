@@ -131,15 +131,22 @@ export function DesktopHeader() {
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
 
-              {/* Mega Sena Submenu */}
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="gap-2 py-2 cursor-pointer">
-                  <span className="text-base">🎱</span>
-                  Mega Sena
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="w-48 bg-popover z-50">
-                  <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                    <Link to="/megasena/resultados">
+               {/* Mega Sena Submenu */}
+               <DropdownMenuSub>
+                 <DropdownMenuSubTrigger className="gap-2 py-2 cursor-pointer">
+                   <span className="text-base">🎱</span>
+                   Mega Sena
+                 </DropdownMenuSubTrigger>
+                 <DropdownMenuSubContent className="w-48 bg-popover z-50">
+                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                     <Link to="/megasena/analise-do-dia">
+                       <Target className="h-4 w-4" />
+                       Análise do Dia
+                     </Link>
+                   </DropdownMenuItem>
+                   <DropdownMenuSeparator />
+                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                     <Link to="/megasena/resultados">
                       <BarChart3 className="h-4 w-4" />
                       Resultados
                     </Link>
