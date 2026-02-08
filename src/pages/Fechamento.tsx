@@ -40,7 +40,11 @@ export default function Fechamento() {
 
   const totalSelecionadas = selecionadas.length;
   const totalFixas = fixas.length;
-  const podeGerar = (totalSelecionadas + totalFixas) === estrategiaAtual.dezenas;
+  
+  // Validação para gerar: total de dezenas correto E fixas obrigatórias cumpridas
+  const totalDezenasCorreto = (totalSelecionadas + totalFixas) === estrategiaAtual.dezenas;
+  const fixasObrigatoriasCumpridas = estrategiaAtual.fixasObrigatorias === 0 || totalFixas === estrategiaAtual.fixasObrigatorias;
+  const podeGerar = totalDezenasCorreto && fixasObrigatoriasCumpridas;
 
   // Gera os números de 1 a 25
   const dezenas = Array.from({ length: 25 }, (_, i) => i + 1);
