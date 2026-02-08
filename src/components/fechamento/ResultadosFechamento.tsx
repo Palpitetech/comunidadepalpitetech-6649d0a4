@@ -13,6 +13,7 @@ import type { Pasta } from "@/components/palpites/PastaItem";
 import { simularGarantia, buscarMatriz, type ResultadoSimulacao } from "@/lib/fechamento";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { DezenaCirculoMini } from "@/components/lotofacil/DezenaCirculoMini";
 
 interface ResultadosFechamentoProps {
   jogos: number[][];
@@ -337,28 +338,34 @@ export function ResultadosFechamento({
 
       {/* Tabela de Resultados da Simulação */}
       {simulacao && (
-        <div className="rounded-lg border bg-card p-4 space-y-4">
-          <div>
-            <h4 className="text-sm font-medium text-muted-foreground mb-2">Resultado Simulado</h4>
-            <div className="flex flex-wrap gap-1.5">
-              {simulacao.resultadoSimulado.map((dezena) => (
-                <span
-                  key={dezena}
-                  className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
-                >
-                  {formatarDezena(dezena)}
-                </span>
-              ))}
+        <div className="rounded-lg border bg-card space-y-4 overflow-hidden">
+          {/* Seção: Resultado Simulado */}
+          <div className="border-b p-4 bg-muted/30">
+            <h4 className="text-sm font-semibold text-foreground mb-3">Resultado Simulado</h4>
+            <div className="flex flex-col items-start gap-2">
+              {/* Primeira linha: 8 dezenas */}
+              <div className="flex justify-start gap-1.5">
+                {simulacao.resultadoSimulado.slice(0, 8).map((dezena) => (
+                  <DezenaCirculoMini key={dezena} dezena={dezena} />
+                ))}
+              </div>
+              {/* Segunda linha: 7 dezenas */}
+              <div className="flex justify-start gap-1.5">
+                {simulacao.resultadoSimulado.slice(8, 15).map((dezena) => (
+                  <DezenaCirculoMini key={dezena} dezena={dezena} />
+                ))}
+              </div>
             </div>
           </div>
 
-          <div>
-            <h4 className="text-sm font-medium text-muted-foreground mb-2">Premiações</h4>
+          {/* Seção: Premiações */}
+          <div className="p-4">
+            <h4 className="text-sm font-semibold text-foreground mb-3">Premiações</h4>
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Pontos</TableHead>
-                  <TableHead className="text-right">Jogos</TableHead>
+                <TableRow className="border-b border-border/50 hover:bg-transparent">
+                  <TableHead className="text-foreground font-semibold">Pontos</TableHead>
+                  <TableHead className="text-right text-foreground font-semibold">Jogos</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -366,24 +373,38 @@ export function ResultadosFechamento({
                   const count = simulacao.contagem[pontos] || 0;
                   const isGarantia = pontos === simulacao.garantiaAlvo;
                   const cumpriuGarantia = isGarantia && count > 0;
-                  
+
                   return (
-                    <TableRow 
+                    <TableRow
                       key={pontos}
-                      className={cumpriuGarantia ? "bg-emerald-950/30" : ""}
+                      className={`border-b border-border/30 last:border-0 transition-colors ${
+                        cumpriuGarantia ? "bg-emerald-950/50 hover:bg-emerald-950/70" : "hover:bg-muted/40"
+                      }`}
                     >
-                      <TableCell className="font-medium">
-                        {pontos} pontos
-                        {isGarantia && (
-                          <Badge 
-                            variant={cumpriuGarantia ? "default" : "outline"} 
-                            className={`ml-2 ${cumpriuGarantia ? "bg-emerald-600" : ""}`}
-                          >
-                            Garantia
-                          </Badge>
-                        )}
+                      <TableCell className="font-semibold text-foreground py-3">
+                        <div className="flex items-center gap-2">
+                          <span>{pontos} pontos</span>
+                          {isGarantia && (
+                            <Badge
+                              variant={cumpriuGarantia ? "default" : "outline"}
+                              className={`text-xs font-bold ${
+                                cumpriuGarantia
+                                  ? "bg-emerald-600 text-white border-emerald-600"
+                                  : "border-emerald-600/50 text-emerald-600"
+                              }`}
+                            >
+                              Garantia
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
-                      <TableCell className="text-right">{count} jogo(s)</TableCell>
+                      <TableCell
+                        className={`text-right font-bold py-3 ${
+                          cumpriuGarantia ? "text-emerald-500" : "text-foreground"
+                        }`}
+                      >
+                        {count}
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -392,26 +413,30 @@ export function ResultadosFechamento({
           </div>
 
           {/* Indicador de Garantia */}
-          <div className={`p-3 rounded-lg text-sm font-medium text-center ${
-            simulacao.garantiaCumprida 
-              ? "bg-emerald-950/50 text-emerald-400 border border-emerald-800" 
-              : "bg-destructive/20 text-destructive border border-destructive/50"
-          }`}>
-            {simulacao.garantiaCumprida 
+          <div
+            className={`mx-4 p-3 rounded-lg text-sm font-semibold text-center border-2 ${
+              simulacao.garantiaCumprida
+                ? "bg-emerald-950/40 border-emerald-600 text-emerald-400"
+                : "bg-destructive/10 border-destructive/30 text-destructive"
+            }`}
+          >
+            {simulacao.garantiaCumprida
               ? `✓ Garantia cumprida! Pelo menos 1 jogo com ${simulacao.garantiaAlvo}+ pontos`
-              : `✗ Garantia não cumprida nesta simulação`
-            }
+              : `✗ Garantia não cumprida nesta simulação`}
           </div>
 
-          <Button
-            variant="ghost"
-            onClick={handleTestarGarantia}
-            className="w-full gap-2"
-            size="sm"
-          >
-            <RotateCcw className="h-4 w-4" />
-            Nova Simulação
-          </Button>
+          {/* Botão Nova Simulação */}
+          <div className="px-4 pb-4">
+            <Button
+              variant="secondary"
+              onClick={handleTestarGarantia}
+              className="w-full gap-2"
+              size="sm"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Nova Simulação
+            </Button>
+          </div>
         </div>
       )}
 
