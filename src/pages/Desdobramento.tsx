@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { FiltroPatternSelector } from "@/components/desdobramento/FiltroPatternS
 import { GridDesdobramento } from "@/components/desdobramento/GridDesdobramento";
 import { ModoSeletorDesdobramento } from "@/components/desdobramento/ModoSeletorDesdobramento";
 import { DesdobramentoResultados } from "@/components/desdobramento/DesdobramentoResultados";
+import { FloatingNotes } from "@/components/analise/FloatingNotes";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +37,7 @@ import {
 
 export default function Desdobramento() {
   const isMobile = useIsMobile();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { repetidas, impares, primos, moldura, isLoading: statsLoading } = useDesdobramentoStats();
   
   // Auto top 3 para cada padrão
@@ -106,6 +109,120 @@ export default function Desdobramento() {
   const [modoGrid, setModoGrid] = useState<"fixar" | "excluir">("fixar");
   const [dezenasFixas, setDezenasFixas] = useState<number[]>([]);
   const [dezenasExcluidas, setDezenasExcluidas] = useState<number[]>([]);
+
+  // Estado para dados vindos da Análise do Dia (via URL)
+  const [filtrosAnalise, setFiltrosAnalise] = useState<{
+    impares: number[];
+    repetidas: number[];
+    moldura: number[];
+    primos: number[];
+    m3: number[];
+  }>({ impares: [], repetidas: [], moldura: [], primos: [], m3: [] });
+  const [fixasAnalise, setFixasAnalise] = useState<number[]>([]);
+  const [excluidasAnalise, setExcluidasAnalise] = useState<number[]>([]);
+
+  // Processar parâmetros da URL ao carregar
+  useEffect(() => {
+    const fixasParam = searchParams.get("fixas");
+    const excluidasParam = searchParams.get("excluidas");
+    const imparesParam = searchParams.get("impares");
+    const repetidasParam = searchParams.get("repetidas");
+    const molduraParam = searchParams.get("moldura");
+    const primosParam = searchParams.get("primos");
+    const m3Param = searchParams.get("m3");
+
+    // Parse fixas
+    if (fixasParam) {
+      const fixas = fixasParam.split(",").map(Number).filter(n => !isNaN(n) && n >= 1 && n <= 25);
+      if (fixas.length > 0) {
+        setDezenasFixas(fixas);
+        setFixasAnalise(fixas);
+      }
+    }
+
+    // Parse excluidas
+    if (excluidasParam) {
+      const excluidas = excluidasParam.split(",").map(Number).filter(n => !isNaN(n) && n >= 1 && n <= 25);
+      if (excluidas.length > 0) {
+        setDezenasExcluidas(excluidas);
+        setExcluidasAnalise(excluidas);
+      }
+    }
+
+    // Parse filtros de padrões
+    const newFiltrosAnalise = { impares: [] as number[], repetidas: [] as number[], moldura: [] as number[], primos: [] as number[], m3: [] as number[] };
+    
+    if (imparesParam) {
+      const vals = imparesParam.split(",").map(Number).filter(n => !isNaN(n));
+      if (vals.length > 0) {
+        newFiltrosAnalise.impares = vals;
+        setFiltroImpares(vals);
+      }
+    }
+    if (repetidasParam) {
+      const vals = repetidasParam.split(",").map(Number).filter(n => !isNaN(n));
+      if (vals.length > 0) {
+        newFiltrosAnalise.repetidas = vals;
+        setFiltroRepetidas(vals);
+      }
+    }
+    if (molduraParam) {
+      const vals = molduraParam.split(",").map(Number).filter(n => !isNaN(n));
+      if (vals.length > 0) {
+        newFiltrosAnalise.moldura = vals;
+        setFiltroMoldura(vals);
+      }
+    }
+    if (primosParam) {
+      const vals = primosParam.split(",").map(Number).filter(n => !isNaN(n));
+      if (vals.length > 0) {
+        newFiltrosAnalise.primos = vals;
+        setFiltroPrimos(vals);
+      }
+    }
+    if (m3Param) {
+      const vals = m3Param.split(",").map(Number).filter(n => !isNaN(n));
+      if (vals.length > 0) {
+        newFiltrosAnalise.m3 = vals;
+      }
+    }
+
+    if (Object.values(newFiltrosAnalise).some(arr => arr.length > 0)) {
+      setFiltrosAnalise(newFiltrosAnalise);
+    }
+  }, []);
+
+  // Funções para remover dados da Análise
+  const handleRemoveFiltrosAnalise = () => {
+    setFiltrosAnalise({ impares: [], repetidas: [], moldura: [], primos: [], m3: [] });
+    // Limpar params da URL
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("impares");
+    newParams.delete("repetidas");
+    newParams.delete("moldura");
+    newParams.delete("primos");
+    newParams.delete("m3");
+    setSearchParams(newParams, { replace: true });
+  };
+
+  const handleRemoveFixasAnalise = () => {
+    setFixasAnalise([]);
+    setDezenasFixas([]);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("fixas");
+    setSearchParams(newParams, { replace: true });
+  };
+
+  const handleRemoveExcluidasAnalise = () => {
+    setExcluidasAnalise([]);
+    setDezenasExcluidas([]);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("excluidas");
+    setSearchParams(newParams, { replace: true });
+  };
+
+  // Calcular total de dados vindos da Análise
+  const totalAnalise = Object.values(filtrosAnalise).reduce((acc, arr) => acc + arr.length, 0) + fixasAnalise.length + excluidasAnalise.length;
 
   // Buscar último sorteio
   useEffect(() => {
@@ -582,6 +699,18 @@ export default function Desdobramento() {
         </div>
 
       </div>
+
+      {/* FAB com dados vindos da Análise do Dia */}
+      {totalAnalise > 0 && (
+        <FloatingNotes 
+          selectedFilters={filtrosAnalise}
+          selectedFixas={fixasAnalise}
+          selectedExcluidas={excluidasAnalise}
+          onRemoveFiltros={handleRemoveFiltrosAnalise}
+          onRemoveFixas={handleRemoveFixasAnalise}
+          onRemoveExcluidas={handleRemoveExcluidasAnalise}
+        />
+      )}
     </MainLayout>
   );
 }
