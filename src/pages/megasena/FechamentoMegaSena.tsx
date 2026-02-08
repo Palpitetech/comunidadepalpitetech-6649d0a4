@@ -1,7 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Sparkles, Loader2 } from "lucide-react";
 import { 
   EstrategiaFechamentoSelectorMegaSena, 
   ESTRATEGIAS_FECHAMENTO_MEGASENA 
@@ -10,6 +11,8 @@ import { FechamentoRulesCardMegaSena } from "@/components/megasena/FechamentoRul
 import { FechamentoStatusBarMegaSena } from "@/components/megasena/FechamentoStatusBarMegaSena";
 import { ModoSeletorFixasMegaSena } from "@/components/megasena/ModoSeletorFixasMegaSena";
 import { ResultadosFechamentoMegaSena } from "@/components/megasena/ResultadosFechamentoMegaSena";
+import { EstrategiaCardMegaSena } from "@/components/megasena/EstrategiaCardMegaSena";
+import { useAutoFillMegaSena, type EstrategiaMegaSena } from "@/hooks/useAutoFillMegaSena";
 import { 
   gerarFechamentoMegaSena, 
   formatarDezenaMegaSena,
@@ -22,6 +25,13 @@ export default function FechamentoMegaSena() {
   const [fixas, setFixas] = useState<number[]>([]);
   const [modo, setModo] = useState<"selecionar" | "fixar">("selecionar");
   const [resultado, setResultado] = useState<ResultadoFechamentoMegaSena | null>(null);
+  const [estrategiaIA, setEstrategiaIA] = useState<EstrategiaMegaSena | null>(null);
+
+  const { isLoading: isAutoFilling, canUse, autoFill, checkUsage } = useAutoFillMegaSena();
+
+  useEffect(() => {
+    checkUsage();
+  }, []);
 
   const estrategiaAtual = useMemo(() => 
     ESTRATEGIAS_FECHAMENTO_MEGASENA.find(e => e.id === estrategiaId) || ESTRATEGIAS_FECHAMENTO_MEGASENA[0],
@@ -91,12 +101,23 @@ export default function FechamentoMegaSena() {
     setResultado(null);
     setSelecionadas([]);
     setFixas([]);
+    setEstrategiaIA(null);
   };
 
   const handleMudarEstrategia = (value: string) => {
     setEstrategiaId(value);
     setSelecionadas([]);
     setFixas([]);
+    setEstrategiaIA(null);
+  };
+
+  const handleAutoFill = async () => {
+    const result = await autoFill(estrategiaId, estrategiaAtual.dezenas);
+    if (result) {
+      setSelecionadas(result.dezenas);
+      setFixas([]);
+      setEstrategiaIA(result.estrategia);
+    }
   };
 
   if (resultado) {
@@ -131,10 +152,33 @@ export default function FechamentoMegaSena() {
         {/* 2. Seção de Regras Detalhadas */}
         <FechamentoRulesCardMegaSena estrategia={estrategiaAtual} />
 
-        {/* 3. Seletor de Modo */}
+        {/* 3. Seletor de Modo + Botão Quero Palpite */}
         <div className="flex items-center gap-2">
           <ModoSeletorFixasMegaSena modo={modo} onChange={setModo} />
+          <Button
+            onClick={handleAutoFill}
+            disabled={isAutoFilling || !canUse}
+            className="bg-highlight hover:bg-highlight/90 text-highlight-foreground font-semibold whitespace-nowrap"
+            size="default"
+          >
+            {isAutoFilling ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Gerando...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Quero Palpite
+              </>
+            )}
+          </Button>
         </div>
+
+        {/* 3.1 Card de Estratégia da IA (se disponível) */}
+        {estrategiaIA && (
+          <EstrategiaCardMegaSena estrategia={estrategiaIA} />
+        )}
 
         {/* 4. Grid de Números (10x6) */}
         <div className="max-w-md mx-auto">
