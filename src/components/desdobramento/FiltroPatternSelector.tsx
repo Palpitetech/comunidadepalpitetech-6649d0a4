@@ -1,112 +1,99 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useState } from "react";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
-interface EstatisticaItem {
+interface PatternOption {
   valor: number;
   ocorrencias: number;
-  ranking: number;
 }
 
 interface FiltroPatternSelectorProps {
   label: string;
   emoji: string;
-  value: number;
-  onChange: (value: number) => void;
-  options: EstatisticaItem[];
-  disabled?: boolean;
-  complementLabel?: string;
+  opcoes: PatternOption[];
+  valoresSelecionados: number[];
+  onChange: (valores: number[]) => void;
+  autoTop3: number[];
 }
 
 export function FiltroPatternSelector({
   label,
   emoji,
-  value,
+  opcoes,
+  valoresSelecionados,
   onChange,
-  options,
-  disabled = false,
-  complementLabel,
+  autoTop3,
 }: FiltroPatternSelectorProps) {
-  // Ordena as opções: top 3 por ocorrência primeiro, depois as demais por valor
-  const sortedOptions = [...options].sort((a, b) => {
-    // Top 3 vem primeiro
-    if (a.ranking <= 3 && b.ranking > 3) return -1;
-    if (a.ranking > 3 && b.ranking <= 3) return 1;
-    // Dentro do mesmo grupo, ordena por valor
-    return a.valor - b.valor;
-  });
+  const [modoManual, setModoManual] = useState(false);
 
-  const selectedOption = options.find((o) => o.valor === value);
-  const complement = 15 - value;
+  const handleToggleManual = (checked: boolean) => {
+    setModoManual(checked);
+    if (!checked) {
+      // Volta para automático - usa top 3
+      onChange(autoTop3);
+    }
+  };
+
+  const handleToggleValor = (valor: number) => {
+    if (!modoManual) return;
+    
+    if (valoresSelecionados.includes(valor)) {
+      // Não permite desmarcar se for o último
+      if (valoresSelecionados.length > 1) {
+        onChange(valoresSelecionados.filter(v => v !== valor));
+      }
+    } else {
+      onChange([...valoresSelecionados, valor].sort((a, b) => a - b));
+    }
+  };
+
+  const valoresAtivos = modoManual ? valoresSelecionados : autoTop3;
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <span className="text-lg">{emoji}</span>
-        <span className="text-sm font-medium">{label}</span>
+    <div className="p-3 bg-muted/30 rounded-lg space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-muted-foreground flex items-center gap-1">
+          {emoji} {label}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-muted-foreground">
+            {modoManual ? "Manual" : "Auto"}
+          </span>
+          <Switch
+            checked={modoManual}
+            onCheckedChange={handleToggleManual}
+            className="scale-75"
+          />
+        </div>
       </div>
-
-      <Select
-        value={value.toString()}
-        onValueChange={(v) => onChange(parseInt(v, 10))}
-        disabled={disabled}
-      >
-        <SelectTrigger className="w-full h-11 bg-card">
-          <SelectValue>
-            <span className="flex items-center gap-2">
-              <span className="font-semibold">{value}</span>
-              {complementLabel && (
-                <span className="text-muted-foreground text-xs">
-                  ({complement} {complementLabel})
-                </span>
-              )}
-              {selectedOption && selectedOption.ranking <= 3 && (
-                <span className="text-xs text-primary font-medium">★ Top {selectedOption.ranking}</span>
-              )}
-            </span>
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent className="bg-popover z-50">
-          {sortedOptions.map((option) => (
-            <SelectItem
-              key={option.valor}
-              value={option.valor.toString()}
+      
+      <div className="flex flex-wrap gap-1">
+        {opcoes.map((opt) => {
+          const isAtivo = valoresAtivos.includes(opt.valor);
+          const isTop3 = autoTop3.includes(opt.valor);
+          
+          return (
+            <button
+              key={opt.valor}
+              type="button"
+              onClick={() => handleToggleValor(opt.valor)}
+              disabled={!modoManual}
               className={cn(
-                "text-base",
-                option.ranking <= 3 && "bg-primary/5"
+                "px-2 py-0.5 rounded text-xs font-medium transition-all",
+                "border",
+                isAtivo
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background text-muted-foreground border-border",
+                modoManual && "cursor-pointer hover:border-primary/50",
+                !modoManual && "cursor-default opacity-80",
+                !modoManual && isTop3 && "ring-1 ring-primary/30"
               )}
             >
-              <div className="flex items-center justify-between w-full gap-4">
-                <span className="font-medium">
-                  {option.valor} {label.toLowerCase()}
-                  {complementLabel && (
-                    <span className="text-muted-foreground text-xs ml-1">
-                      ({15 - option.valor} {complementLabel})
-                    </span>
-                  )}
-                </span>
-                <span
-                  className={cn(
-                    "text-xs px-2 py-0.5 rounded-full",
-                    option.ranking <= 3
-                      ? "bg-primary text-primary-foreground"
-                      : option.ranking <= 5
-                      ? "bg-accent text-accent-foreground"
-                      : "bg-muted text-muted-foreground"
-                  )}
-                >
-                  {option.ocorrencias}x
-                </span>
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+              {opt.valor}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
