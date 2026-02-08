@@ -214,25 +214,59 @@ export function ResultadosFechamentoMegaSena({
     setShowSalvarDialog(true);
   };
 
+  // Filtra estratégia para conter apenas as dezenas do jogo específico
+  const filtrarEstrategiaParaJogo = (
+    dezenas: number[], 
+    estrategia: EstrategiaMegaSena
+  ): EstrategiaMegaSena => {
+    const dezenasSet = new Set(dezenas);
+    
+    // Filtra apenas as dezenas_justificadas que estão no jogo
+    const dezenas_justificadas = estrategia.dezenas_justificadas
+      ?.filter(item => dezenasSet.has(item.dezena)) || [];
+    
+    // Atualiza os filtros_aplicados para refletir a contagem real do jogo
+    const filtros_aplicados = estrategia.filtros_aplicados?.map(filtro => {
+      // Se o filtro menciona contagens específicas, não precisa alterar
+      // pois a informação original ainda é útil como contexto
+      return filtro;
+    }) || [];
+    
+    return {
+      ...estrategia,
+      dezenas_justificadas,
+      filtros_aplicados,
+    };
+  };
+
   const handleSelecionarPasta = async (pastaId: string | null) => {
     if (!user) return;
 
     try {
-      const palpitesParaInserir = palpitesParaSalvar.map(dezenas => ({
-        user_id: user.id,
-        dezenas: [...dezenas].sort((a, b) => a - b),
-        qtd_dezenas: dezenas.length,
-        loteria: "megasena",
-        estrategia: estrategiaIA 
-          ? `IA: ${estrategiaIA.ferramentas.slice(0, 2).join(" + ")}`
-          : matriz 
-            ? `Fechamento ${matriz.nome}` 
-            : estrategiaId 
-              ? `Fechamento ${estrategiaId}` 
-              : null,
-        estrategia_data: estrategiaIA ? JSON.parse(JSON.stringify(estrategiaIA)) : null,
-        pasta_id: pastaId,
-      }));
+      const palpitesParaInserir = palpitesParaSalvar.map(dezenas => {
+        const dezenasOrdenadas = [...dezenas].sort((a, b) => a - b);
+        
+        // Filtra a estratégia para refletir apenas as dezenas deste jogo específico
+        const estrategiaFiltrada = estrategiaIA 
+          ? filtrarEstrategiaParaJogo(dezenasOrdenadas, estrategiaIA) 
+          : null;
+        
+        return {
+          user_id: user.id,
+          dezenas: dezenasOrdenadas,
+          qtd_dezenas: dezenas.length,
+          loteria: "megasena",
+          estrategia: estrategiaIA 
+            ? `IA: ${estrategiaIA.ferramentas.slice(0, 2).join(" + ")}`
+            : matriz 
+              ? `Fechamento ${matriz.nome}` 
+              : estrategiaId 
+                ? `Fechamento ${estrategiaId}` 
+                : null,
+          estrategia_data: estrategiaFiltrada ? JSON.parse(JSON.stringify(estrategiaFiltrada)) : null,
+          pasta_id: pastaId,
+        };
+      });
 
       const { error } = await supabase
         .from("palpites_salvos")
