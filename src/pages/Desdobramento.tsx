@@ -53,7 +53,8 @@ export default function Desdobramento() {
   const [jogosGerados, setJogosGerados] = useState<{ dezenas: number[] }[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  // Controle de expansão dos filtros avançados
+  // Controle de expansão dos filtros
+  const [filtrosPadroesAbertos, setFiltrosPadroesAbertos] = useState(true);
   const [filtrosAvancadosAbertos, setFiltrosAvancadosAbertos] = useState(false);
 
   // Buscar último sorteio
@@ -183,64 +184,75 @@ export default function Desdobramento() {
           </div>
         )}
 
-        {/* Card de Filtros de Padrões */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-medium flex items-center gap-2">
-              🎯 Filtros de Padrões
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FiltroPatternSelector
-                label="Ímpares"
-                emoji="🔢"
-                value={qtdImpares}
-                onChange={setQtdImpares}
-                options={impares}
-                complementLabel="pares"
-              />
-              
-              <FiltroPatternSelector
-                label="Repetidas"
-                emoji="🔄"
-                value={qtdRepetidas}
-                onChange={setQtdRepetidas}
-                options={repetidas}
-                complementLabel="novas"
-              />
-              
-              <FiltroPatternSelector
-                label="Primos"
-                emoji="✨"
-                value={qtdPrimos}
-                onChange={setQtdPrimos}
-                options={primos}
-                complementLabel="não primos"
-              />
-              
-              <FiltroPatternSelector
-                label="Moldura"
-                emoji="🖼️"
-                value={qtdMoldura}
-                onChange={setQtdMoldura}
-                options={moldura}
-                complementLabel="miolo"
-              />
-            </div>
-          </CardContent>
-        </Card>
+        {/* Botão para abrir filtros de padrões */}
+        <button
+          type="button"
+          onClick={() => setFiltrosPadroesAbertos(!filtrosPadroesAbertos)}
+          className="w-full flex items-center justify-between py-3 px-4 text-sm font-medium bg-card border rounded-lg hover:bg-muted/50 transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            🎯 Filtros de Padrões
+          </span>
+          {filtrosPadroesAbertos ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </button>
 
-        <Separator />
+        {/* Filtros de Padrões */}
+        {filtrosPadroesAbertos && (
+          <Card>
+            <CardContent className="pt-4 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FiltroPatternSelector
+                  label="Ímpares"
+                  emoji="🔢"
+                  value={qtdImpares}
+                  onChange={setQtdImpares}
+                  options={impares}
+                  complementLabel="pares"
+                />
+                
+                <FiltroPatternSelector
+                  label="Repetidas"
+                  emoji="🔄"
+                  value={qtdRepetidas}
+                  onChange={setQtdRepetidas}
+                  options={repetidas}
+                  complementLabel="novas"
+                />
+                
+                <FiltroPatternSelector
+                  label="Primos"
+                  emoji="✨"
+                  value={qtdPrimos}
+                  onChange={setQtdPrimos}
+                  options={primos}
+                  complementLabel="não primos"
+                />
+                
+                <FiltroPatternSelector
+                  label="Moldura"
+                  emoji="🖼️"
+                  value={qtdMoldura}
+                  onChange={setQtdMoldura}
+                  options={moldura}
+                  complementLabel="miolo"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Botão para abrir filtros avançados (Linhas/Colunas) */}
+        {/* Botão para abrir filtros de Linhas/Colunas */}
         <button
           type="button"
           onClick={() => setFiltrosAvancadosAbertos(!filtrosAvancadosAbertos)}
-          className="w-full flex items-center justify-between py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className="w-full flex items-center justify-between py-3 px-4 text-sm font-medium bg-card border rounded-lg hover:bg-muted/50 transition-colors"
         >
           <span className="flex items-center gap-2">
-            Filtros de Linhas e Colunas
+            📐 Filtros de Linhas e Colunas
             {!filtrosValidos && (somaLinhas > 0 || somaColunas > 0) && (
               <Badge variant="destructive" className="text-[10px]">
                 Ajustar
