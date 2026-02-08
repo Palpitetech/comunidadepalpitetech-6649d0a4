@@ -109,6 +109,15 @@ export default function FrequenciaDecenasMegaSena() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="1">1 concurso</SelectItem>
+                      <SelectItem value="2">2 concursos</SelectItem>
+                      <SelectItem value="3">3 concursos</SelectItem>
+                      <SelectItem value="4">4 concursos</SelectItem>
+                      <SelectItem value="5">5 concursos</SelectItem>
+                      <SelectItem value="6">6 concursos</SelectItem>
+                      <SelectItem value="7">7 concursos</SelectItem>
+                      <SelectItem value="8">8 concursos</SelectItem>
+                      <SelectItem value="9">9 concursos</SelectItem>
                       <SelectItem value="10">10 concursos</SelectItem>
                       <SelectItem value="15">15 concursos</SelectItem>
                       <SelectItem value="20">20 concursos</SelectItem>
