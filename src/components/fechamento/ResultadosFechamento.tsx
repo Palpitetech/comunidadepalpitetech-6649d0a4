@@ -216,24 +216,63 @@ export function ResultadosFechamento({
     setShowSalvarDialog(true);
   };
 
+  // Filtra estratégia para conter apenas as dezenas do jogo específico
+  const filtrarEstrategiaParaJogo = (
+    dezenas: number[], 
+    estrategia: EstrategiaData
+  ): EstrategiaData => {
+    const dezenasSet = new Set(dezenas);
+    
+    // Filtra apenas as dezenas_fixas que estão no jogo
+    const dezenas_fixas = estrategia.dezenas_fixas
+      ?.map(item => ({
+        ...item,
+        dezenas: item.dezenas.filter(d => dezenasSet.has(d))
+      }))
+      .filter(item => item.dezenas.length > 0) || [];
+    
+    // Filtra dezenas_evitadas que não estão no jogo (o que é esperado)
+    const dezenas_evitadas = estrategia.dezenas_evitadas
+      ?.map(item => ({
+        ...item,
+        dezenas: item.dezenas.filter(d => !dezenasSet.has(d))
+      }))
+      .filter(item => item.dezenas.length > 0);
+    
+    return {
+      ...estrategia,
+      dezenas_fixas,
+      dezenas_evitadas,
+    };
+  };
+
   const handleSelecionarPasta = async (pastaId: string | null) => {
     if (!user) return;
 
     try {
-      const palpitesParaInserir = palpitesParaSalvar.map(dezenas => ({
-        user_id: user.id,
-        dezenas: [...dezenas].sort((a, b) => a - b),
-        qtd_dezenas: dezenas.length,
-        estrategia: estrategiaIA 
-          ? `IA: ${estrategiaIA.ferramentas.slice(0, 2).join(" + ")}`
-          : matriz 
-            ? `Fechamento ${matriz.nome}` 
-            : estrategiaId 
-              ? `Fechamento ${estrategiaId}` 
-              : null,
-        estrategia_data: estrategiaIA ? JSON.parse(JSON.stringify(estrategiaIA)) : null,
-        pasta_id: pastaId,
-      }));
+      const palpitesParaInserir = palpitesParaSalvar.map(dezenas => {
+        const dezenasOrdenadas = [...dezenas].sort((a, b) => a - b);
+        
+        // Filtra a estratégia para refletir apenas as dezenas deste jogo específico
+        const estrategiaFiltrada = estrategiaIA 
+          ? filtrarEstrategiaParaJogo(dezenasOrdenadas, estrategiaIA) 
+          : null;
+        
+        return {
+          user_id: user.id,
+          dezenas: dezenasOrdenadas,
+          qtd_dezenas: dezenas.length,
+          estrategia: estrategiaIA 
+            ? `IA: ${estrategiaIA.ferramentas.slice(0, 2).join(" + ")}`
+            : matriz 
+              ? `Fechamento ${matriz.nome}` 
+              : estrategiaId 
+                ? `Fechamento ${estrategiaId}` 
+                : null,
+          estrategia_data: estrategiaFiltrada ? JSON.parse(JSON.stringify(estrategiaFiltrada)) : null,
+          pasta_id: pastaId,
+        };
+      });
 
       const { error } = await supabase
         .from("palpites_salvos")
