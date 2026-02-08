@@ -115,7 +115,11 @@ export default function Fechamento() {
   // Se tem resultado, mostra a tela de resultados
   if (resultado) {
     return (
-      <MainLayout pageTitle="Gerador de Fechamento">
+      <MainLayout 
+        pageTitle="Palpites Gerados" 
+        onBack={handleNovoFechamento}
+        breadcrumb={[{ label: "Fechamento", onClick: handleNovoFechamento }]}
+      >
         <div className="container-senior py-4">
           <ResultadosFechamento 
             jogos={resultado.jogos}
