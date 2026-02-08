@@ -13,6 +13,7 @@ import type {
 } from "@/types/fechamento";
 
 // Importar matrizes grandes de arquivos separados
+import { FC04 } from "@/lib/matrizes/fc04";
 import { FC05 } from "@/lib/matrizes/fc05";
 import { FC06 } from "@/lib/matrizes/fc06";
 
@@ -110,32 +111,8 @@ export const MATRIZES_FECHAMENTO: MatrizFechamento[] = [
     ],
   },
 
-  // ═══════════════════════════════════════════════════════════════════
-  // FC04 - 21 DEZENAS (14 FIXAS + 7 VARIÁVEIS) - 7 JOGOS
-  // Rotação simples: 14 fixas + 1 variável por jogo
-  // ═══════════════════════════════════════════════════════════════════
-  {
-    id: "21-14-7",
-    nome: "FC04",
-    descricao: "14 fixas + 7 variáveis em rotação simples",
-    dezenas: 21,
-    garantia: 14,
-    dezenasPorJogo: 15,
-    condicao: "Se acertar 15 dos 21 números",
-    fixasObrigatorias: 14,
-    categoria: "avancado",
-    ativo: true,
-    // Variáveis são índices 14-20. Cada jogo usa 1 variável (remove 6)
-    matrizRemocoes: [
-      [15, 16, 17, 18, 19, 20],  // Jogo 1: usa var[0]
-      [14, 16, 17, 18, 19, 20],  // Jogo 2: usa var[1]
-      [14, 15, 17, 18, 19, 20],  // Jogo 3: usa var[2]
-      [14, 15, 16, 18, 19, 20],  // Jogo 4: usa var[3]
-      [14, 15, 16, 17, 19, 20],  // Jogo 5: usa var[4]
-      [14, 15, 16, 17, 18, 20],  // Jogo 6: usa var[5]
-      [14, 15, 16, 17, 18, 19],  // Jogo 7: usa var[6]
-    ],
-  },
+  // FC04 importado de arquivo separado (7 jogos, 100% garantia matemática)
+  FC04,
 
   // FC06 importado de arquivo separado (24 jogos, 100% garantia matemática)
   FC06,
