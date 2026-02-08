@@ -115,16 +115,17 @@ export default function FrequenciaDezenas() {
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">Período:</span>
                   <Select value={String(periodo)} onValueChange={(v) => setPeriodo(Number(v))}>
-                    <SelectTrigger className="w-[160px] h-9">
+                    <SelectTrigger className="w-[150px] h-9">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="10">10 concursos</SelectItem>
+                      <SelectItem value="15">15 concursos</SelectItem>
+                      <SelectItem value="20">20 concursos</SelectItem>
                       <SelectItem value="25">25 concursos</SelectItem>
+                      <SelectItem value="30">30 concursos</SelectItem>
                       <SelectItem value="50">50 concursos</SelectItem>
                       <SelectItem value="100">100 concursos</SelectItem>
-                      <SelectItem value="200">200 concursos</SelectItem>
-                      <SelectItem value="500">500 concursos</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -132,19 +133,19 @@ export default function FrequenciaDezenas() {
             </CardContent>
           </Card>
 
-          {/* Resumo */}
-          <div className="flex flex-wrap gap-3 justify-center">
-            <Badge variant="outline" className="px-3 py-1.5 gap-2 bg-emerald-500/10 border-emerald-500/30">
-              <TrendingUp className="h-4 w-4 text-emerald-500" />
-              <span>Fortes: <strong>{fortes}</strong></span>
+          {/* Resumo - Linha Única */}
+          <div className="flex items-center justify-center gap-2">
+            <Badge variant="outline" className="px-2 py-1 gap-1.5 bg-emerald-500/10 border-emerald-500/30 whitespace-nowrap">
+              <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
+              <span className="text-xs">Fortes: <strong>{fortes}</strong></span>
             </Badge>
-            <Badge variant="outline" className="px-3 py-1.5 gap-2">
-              <Minus className="h-4 w-4 text-muted-foreground" />
-              <span>Neutras: <strong>{neutras}</strong></span>
+            <Badge variant="outline" className="px-2 py-1 gap-1.5 whitespace-nowrap">
+              <Minus className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs">Neutras: <strong>{neutras}</strong></span>
             </Badge>
-            <Badge variant="outline" className="px-3 py-1.5 gap-2 bg-red-500/10 border-red-500/30">
-              <TrendingDown className="h-4 w-4 text-red-500" />
-              <span>Fracas: <strong>{fracas}</strong></span>
+            <Badge variant="outline" className="px-2 py-1 gap-1.5 bg-red-500/10 border-red-500/30 whitespace-nowrap">
+              <TrendingDown className="h-3.5 w-3.5 text-red-500" />
+              <span className="text-xs">Fracas: <strong>{fracas}</strong></span>
             </Badge>
           </div>
 
