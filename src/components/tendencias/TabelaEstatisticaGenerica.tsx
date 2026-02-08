@@ -117,22 +117,22 @@ export function TabelaEstatisticaGenerica({ config }: Props) {
   });
 
   const getOcorrenciaBadgeColor = (ranking: number) => {
-    if (ranking <= 3) return "bg-[#22C55E] text-white";
-    if (ranking <= 5) return "bg-[#EAB308] text-white";
-    return "bg-slate-400/80 text-white";
+    if (ranking <= 3) return "bg-emerald-500 text-white";
+    if (ranking <= 5) return "bg-amber-500 text-white";
+    return "bg-muted text-muted-foreground";
   };
 
   const getTrendIcon = (atraso: number, media: number) => {
     if (atraso === 0) {
-      return <TrendingDown className="h-4 w-4 text-green-600" />;
+      return <TrendingDown className="h-4 w-4 text-emerald-600" />;
     }
     if (atraso < media / 2) {
-      return <TrendingDown className="h-4 w-4 text-green-600" />;
+      return <TrendingDown className="h-4 w-4 text-emerald-600" />;
     }
     if (atraso > media * 1.5) {
       return <Minus className="h-4 w-4 text-muted-foreground" />;
     }
-    return <TrendingUp className="h-4 w-4 text-orange-500" />;
+    return <TrendingUp className="h-4 w-4 text-amber-500" />;
   };
 
   const formatMedia = (media: number) => {
@@ -229,7 +229,7 @@ export function TabelaEstatisticaGenerica({ config }: Props) {
                     {getTrendIcon(item.atrasoAtual, item.mediaOcorrencia)}
                     <span className={cn(
                       "text-xs font-medium",
-                      item.atrasoAtual >= item.mediaOcorrencia && "text-green-600"
+                      item.atrasoAtual >= item.mediaOcorrencia && "text-emerald-600 font-semibold"
                     )}>
                       {item.atrasoAtual}
                     </span>
