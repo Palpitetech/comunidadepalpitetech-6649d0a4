@@ -8,7 +8,7 @@ import {
 } from "@/components/megasena/EstrategiaFechamentoSelectorMegaSena";
 import { FechamentoRulesCardMegaSena } from "@/components/megasena/FechamentoRulesCardMegaSena";
 import { FechamentoStatusBarMegaSena } from "@/components/megasena/FechamentoStatusBarMegaSena";
-import { ModoSeletorFixas } from "@/components/fechamento/ModoSeletorFixas";
+import { ModoSeletorFixasMegaSena } from "@/components/megasena/ModoSeletorFixasMegaSena";
 import { ResultadosFechamentoMegaSena } from "@/components/megasena/ResultadosFechamentoMegaSena";
 import { 
   gerarFechamentoMegaSena, 
@@ -133,7 +133,7 @@ export default function FechamentoMegaSena() {
 
         {/* 3. Seletor de Modo */}
         <div className="flex items-center gap-2">
-          <ModoSeletorFixas modo={modo} onChange={setModo} />
+          <ModoSeletorFixasMegaSena modo={modo} onChange={setModo} />
         </div>
 
         {/* 4. Grid de Números (10x6) */}
