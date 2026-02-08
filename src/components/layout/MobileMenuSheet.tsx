@@ -297,6 +297,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                              Frequência das Dezenas
                            </div>
                          </Link>
+                         <Link to="/megasena/dezenas-por-posicao" onClick={closeAndNavigate}>
+                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                             <Target className="h-4 w-4" />
+                             Dezenas por Posição
+                           </div>
+                         </Link>
                          <Link to="/megasena/linhas-colunas" onClick={closeAndNavigate}>
                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
                              <LayoutGrid className="h-4 w-4" />
