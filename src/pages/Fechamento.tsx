@@ -264,11 +264,6 @@ export default function Fechamento() {
         >
           Gerar Palpites
         </Button>
-
-        {/* Aviso de acurácia */}
-        <p className="text-center text-xs text-muted-foreground">
-          O fechamento pode ter inconsistências leves devido às muitas variantes. Acerto de 99%.
-        </p>
       </div>
     </MainLayout>
   );
