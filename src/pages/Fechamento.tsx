@@ -102,8 +102,10 @@ export default function Fechamento() {
     if (!podeGerar) return;
     
     try {
-      // Combina selecionadas + fixas para gerar o fechamento
-      const todasDezenas = [...new Set([...selecionadas, ...fixas])];
+      // Combina fixas + selecionadas para gerar o fechamento
+      // IMPORTANTE: A ordem é crítica para matrizes com fixas obrigatórias!
+      // Fixas devem vir PRIMEIRO, variáveis (selecionadas) DEPOIS
+      const todasDezenas = [...new Set([...fixas, ...selecionadas])];
       const resultadoGerado = gerarFechamento(estrategiaId, todasDezenas);
       setResultado(resultadoGerado);
     } catch (error) {
@@ -182,7 +184,7 @@ export default function Fechamento() {
             jogos={resultado.jogos}
             fixas={fixas}
             estrategiaId={estrategiaId}
-            dezenasSelecionadas={[...new Set([...selecionadas, ...fixas])]}
+            dezenasSelecionadas={[...new Set([...fixas, ...selecionadas])]}
             onNovoFechamento={handleNovoFechamento}
             estrategiaIA={estrategiaIA}
           />
