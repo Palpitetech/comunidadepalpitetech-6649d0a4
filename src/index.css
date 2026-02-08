@@ -55,11 +55,17 @@
     --lotofacil-primo: 142 70% 40%;
     --lotofacil-repetida: 0 70% 50%;
     
-    /* Palpites - Roxo Lotofácil como padrão */
-    --palpite-dezena: 270 60% 50%;
-    --palpite-dezena-foreground: 0 0% 100%;
-    --palpite-dezena-fixa: 0 0% 15%;
-    --palpite-dezena-fixa-foreground: 0 0% 100%;
+     /* Palpites - Roxo Lotofácil como padrão */
+     --palpite-dezena: 270 60% 50%;
+     --palpite-dezena-foreground: 0 0% 100%;
+     --palpite-dezena-fixa: 0 0% 15%;
+     --palpite-dezena-fixa-foreground: 0 0% 100%;
+
+     /* Cores específicas da Mega Sena */
+     --megasena-primary: 125 70% 40%;
+     --megasena-primary-foreground: 0 0% 100%;
+     --megasena-excluida: 0 70% 50%;
+     --megasena-excluida-foreground: 0 0% 100%;
 
     /* Status Quente/Frio */
     --status-quente: 142 70% 45%;
