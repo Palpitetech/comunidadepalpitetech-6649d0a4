@@ -1,13 +1,15 @@
-import { EstrategiaFechamento } from "./EstrategiaFechamentoSelector";
+import { type EstrategiaFechamentoUI } from "@/types/fechamento";
+
+// Alias para compatibilidade
+type EstrategiaFechamento = EstrategiaFechamentoUI;
 
 interface FechamentoRulesCardProps {
   estrategia: EstrategiaFechamento;
 }
 
 export function FechamentoRulesCard({ estrategia }: FechamentoRulesCardProps) {
-  // Por enquanto, nenhum fechamento tem fixas obrigatórias
-  const temFixas = false;
-  const qtdFixas = 0;
+  const temFixas = estrategia.fixasObrigatorias > 0;
+  const qtdFixas = estrategia.fixasObrigatorias;
 
   return (
     <div className="space-y-3">
@@ -19,12 +21,15 @@ export function FechamentoRulesCard({ estrategia }: FechamentoRulesCardProps) {
         <li>Selecione <strong>{estrategia.dezenas} dezenas</strong></li>
         <li>
           {temFixas 
-            ? `Fixe ${qtdFixas} dezenas`
-            : `Não temos fixas no ${estrategia.nome}`
+            ? <>Fixe <strong>{qtdFixas} dezena{qtdFixas > 1 ? "s" : ""}</strong> obrigatoriamente</>
+            : <>Não temos fixas obrigatórias no {estrategia.nome}</>
           }
         </li>
-        <li>Você vai ter <strong>garantia de {estrategia.garantia} pontos</strong> caso venha acertar {estrategia.condicao.toLowerCase()}</li>
-        <li>Clique em "Gerar Fechamento"</li>
+        <li>
+          Você vai ter <strong>garantia de {estrategia.garantia} pontos</strong>{" "}
+          caso venha acertar {estrategia.condicao.toLowerCase()}
+        </li>
+        <li>Serão gerados <strong>{estrategia.jogos} jogos</strong> de 15 dezenas</li>
       </ol>
     </div>
   );

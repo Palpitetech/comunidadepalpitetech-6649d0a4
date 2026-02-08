@@ -60,12 +60,12 @@ export function ResultadosFechamento({
     jogos.map((jogo, index) => ({
       id: `jogo-${index}`,
       dezenas: [...jogo].sort((a, b) => a - b),
-      estrategia: estrategiaId ? `Fechamento ${estrategiaId}` : null,
+      estrategia: matriz ? `Fechamento ${matriz.nome}` : estrategiaId ? `Fechamento ${estrategiaId}` : null,
       estrategia_data: null,
       qtd_dezenas: jogo.length,
       periodo_analise: null,
     })),
-    [jogos, estrategiaId]
+    [jogos, estrategiaId, matriz]
   );
 
   const {
@@ -218,9 +218,11 @@ export function ResultadosFechamento({
         qtd_dezenas: dezenas.length,
         estrategia: estrategiaIA 
           ? `IA: ${estrategiaIA.ferramentas.slice(0, 2).join(" + ")}`
-          : estrategiaId 
-            ? `Fechamento ${estrategiaId}` 
-            : null,
+          : matriz 
+            ? `Fechamento ${matriz.nome}` 
+            : estrategiaId 
+              ? `Fechamento ${estrategiaId}` 
+              : null,
         estrategia_data: estrategiaIA ? JSON.parse(JSON.stringify(estrategiaIA)) : null,
         pasta_id: pastaId,
       }));
