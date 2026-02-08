@@ -174,8 +174,14 @@ export function DesktopHeader() {
                       <LayoutGrid className="h-4 w-4" />
                       Linhas e Colunas
                     </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                   </DropdownMenuItem>
+                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                     <Link to="/megasena/tabela-movimentacao">
+                       <Table2 className="h-4 w-4" />
+                       Tabela de Movimentação
+                     </Link>
+                   </DropdownMenuItem>
+                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                     <Link to="/megasena/gerador">
                       <Dices className="h-4 w-4" />
