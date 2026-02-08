@@ -6,12 +6,12 @@ interface FechamentoStatusBarProps {
 
 export function FechamentoStatusBar({ total, selecionados, fixos }: FechamentoStatusBarProps) {
   return (
-    <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
-      <span>Total: <strong className="text-foreground">{total}</strong></span>
-      <span>•</span>
-      <span>Selecionados: <strong className="text-foreground">{selecionados}</strong></span>
-      <span>•</span>
-      <span>Fixos: <strong className="text-foreground">{fixos}</strong></span>
+    <div className="flex items-center justify-center gap-4 text-sm font-medium">
+      <span className="text-muted-foreground">Total: <strong className="text-foreground">{total}</strong></span>
+      <span className="text-border">|</span>
+      <span className="text-muted-foreground">Selecionados: <strong className="text-foreground">{selecionados}</strong></span>
+      <span className="text-border">|</span>
+      <span className="text-muted-foreground">Fixos: <strong className="text-foreground">{fixos}</strong></span>
     </div>
   );
 }
