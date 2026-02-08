@@ -278,13 +278,6 @@ export default function Desdobramento() {
           />
         )}
 
-        {/* Configuração de Geração - Sempre visível */}
-        <ConfigGeracaoBar
-          qtdDezenas={qtdDezenas}
-          onQtdDezenasChange={setQtdDezenas}
-          qtdPalpites={qtdPalpites}
-          onQtdPalpitesChange={setQtdPalpites}
-        />
 
 
         {/* Erro de validação */}
