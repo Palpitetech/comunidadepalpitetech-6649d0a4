@@ -3,9 +3,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button";
 import { EstrategiaCard, type EstrategiaData } from "@/components/gerador/EstrategiaCard";
 import { useToast } from "@/hooks/use-toast";
-import { usePalpitesSalvos, type PalpitePasta } from "@/hooks/usePalpitesSalvos";
-import { NovaPastaDialog } from "@/components/palpites/NovaPastaDialog";
-import { SelecionarPastaDialog } from "@/components/palpites/SelecionarPastaDialog";
+import { usePalpitesSalvos } from "@/hooks/usePalpitesSalvos";
+import { SelecionarSubpastaDialog } from "@/components/palpites/SelecionarSubpastaDialog";
 import { ChevronLeft, ChevronRight, ArrowLeft, Check, Copy, Save, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,14 +36,12 @@ export function ResultadosSheetMegaSena({
   dezenasFixes = [],
 }: ResultadosSheetMegaSenaProps) {
   const { toast } = useToast();
-  const { salvarPalpites, buscarPastas, criarPasta, isLoading: isSaving } = usePalpitesSalvos();
+  const { salvarPalpites, isLoading: isSaving } = usePalpitesSalvos();
   const [jogos, setJogos] = useState<JogoGerado[]>(jogosIniciais);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [currentPage, setCurrentPage] = useState(0);
   
-  const [pastas, setPastas] = useState<PalpitePasta[]>([]);
-  const [selecionarPastaOpen, setSelecionarPastaOpen] = useState(false);
-  const [novaPastaOpen, setNovaPastaOpen] = useState(false);
+  const [selecionarSubpastaOpen, setSelecionarSubpastaOpen] = useState(false);
   const [salvarTodosMode, setSalvarTodosMode] = useState(false);
 
   useEffect(() => {
@@ -52,12 +49,6 @@ export function ResultadosSheetMegaSena({
     setSelected(new Set());
     setCurrentPage(0);
   }, [jogosIniciais]);
-
-  useEffect(() => {
-    if (open) {
-      buscarPastas("megasena").then(setPastas);
-    }
-  }, [open]);
 
   const totalPages = Math.ceil(jogos.length / ITEMS_PER_PAGE);
   
@@ -99,10 +90,10 @@ export function ResultadosSheetMegaSena({
 
   const handleSalvarTodos = () => {
     setSalvarTodosMode(true);
-    setSelecionarPastaOpen(true);
+    setSelecionarSubpastaOpen(true);
   };
 
-  const handleSelecionarPasta = async (pastaId: string | null) => {
+  const handleSelecionarSubpasta = async (pastaId: string) => {
     const palpitesParaSalvar = salvarTodosMode ? jogos : Array.from(selected).map(i => jogos[i]);
     
     const getEstrategiaTexto = () => {
@@ -118,36 +109,7 @@ export function ResultadosSheetMegaSena({
       estrategia,
       "megasena"
     );
-    setSelecionarPastaOpen(false);
-  };
-
-  const handleCriarNovaPasta = () => {
-    setSelecionarPastaOpen(false);
-    setNovaPastaOpen(true);
-  };
-
-  const handleConfirmarNovaPasta = async (nome: string, cor: string, loteria: string) => {
-    const novaPasta = await criarPasta(nome, cor, loteria);
-    if (novaPasta) {
-      setPastas(prev => [...prev, novaPasta]);
-      
-      const palpitesParaSalvar = salvarTodosMode ? jogos : Array.from(selected).map(i => jogos[i]);
-      
-      const getEstrategiaTexto = () => {
-        if (!estrategia) return undefined;
-        return estrategia.ferramentas.slice(0, 2).join(" + ");
-      };
-      
-      await salvarPalpites(
-        palpitesParaSalvar, 
-        periodoAnalise, 
-        novaPasta.id, 
-        getEstrategiaTexto(), 
-        estrategia,
-        "megasena"
-      );
-    }
-    setNovaPastaOpen(false);
+    setSelecionarSubpastaOpen(false);
   };
 
   const handleExcluirTodos = () => {
@@ -343,20 +305,10 @@ export function ResultadosSheetMegaSena({
         </div>
       </SheetContent>
 
-      <SelecionarPastaDialog
-        open={selecionarPastaOpen}
-        onOpenChange={setSelecionarPastaOpen}
-        pastas={pastas.map(p => ({ id: p.id, nome: p.nome, cor: p.cor }))}
-        onSelect={handleSelecionarPasta}
-        onNovaPasta={handleCriarNovaPasta}
-        loteria="megasena"
-        isLoading={isSaving}
-      />
-
-      <NovaPastaDialog
-        open={novaPastaOpen}
-        onOpenChange={setNovaPastaOpen}
-        onConfirm={handleConfirmarNovaPasta}
+      <SelecionarSubpastaDialog
+        open={selecionarSubpastaOpen}
+        onOpenChange={setSelecionarSubpastaOpen}
+        onSelect={handleSelecionarSubpasta}
         loteria="megasena"
         isLoading={isSaving}
       />

@@ -1,16 +1,13 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PalpiteCard } from "@/components/shared/PalpiteCard";
 import { PalpitesToolbar, usePalpitesToolbar } from "@/components/palpites/PalpitesToolbar";
-import { SelecionarPastaDialog } from "@/components/palpites/SelecionarPastaDialog";
-import { NovaPastaDialog } from "@/components/palpites/NovaPastaDialog";
+import { SelecionarSubpastaDialog } from "@/components/palpites/SelecionarSubpastaDialog";
 import { formatarDezena } from "@/lib/lotofacil";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Save, ChevronDown, ChevronUp } from "lucide-react";
-import { cn } from "@/lib/utils";
-import type { Pasta } from "@/components/palpites/PastaItem";
 
 interface JogoGerado {
   dezenas: number[];
@@ -48,35 +45,9 @@ export function DesdobramentoResultados({
 }: DesdobramentoResultadosProps) {
   const { toast } = useToast();
   const [salvandoPasta, setSalvandoPasta] = useState(false);
-  const [dialogPastaAberto, setDialogPastaAberto] = useState(false);
-  const [dialogNovaPastaAberto, setDialogNovaPastaAberto] = useState(false);
+  const [dialogSubpastaAberto, setDialogSubpastaAberto] = useState(false);
   const [palpitesParaSalvar, setPalpitesParaSalvar] = useState<JogoGerado[]>([]);
-  const [pastas, setPastas] = useState<Pasta[]>([]);
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
-  
-  // Buscar pastas do usuário (filtradas por lotofacil)
-  useEffect(() => {
-    const fetchPastas = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) return;
-
-      const { data } = await supabase
-        .from("palpites_pastas")
-        .select("*")
-        .eq("user_id", sessionData.session.user.id)
-        .eq("loteria", "lotofacil")
-        .order("nome");
-      
-      if (data) {
-        setPastas(data.map(p => ({
-          id: p.id,
-          nome: p.nome,
-          cor: p.cor || "#8B5CF6",
-        })));
-      }
-    };
-    fetchPastas();
-  }, []);
   
   // Converter jogos para formato esperado pela toolbar
   const palpitesFormatados = useMemo(() => 
@@ -108,11 +79,11 @@ export function DesdobramentoResultados({
   // Abrir dialog para salvar palpites
   const handleAbrirSalvar = (palpitesASalvar: JogoGerado[]) => {
     setPalpitesParaSalvar(palpitesASalvar);
-    setDialogPastaAberto(true);
+    setDialogSubpastaAberto(true);
   };
 
-  // Salvar palpites na pasta selecionada
-  const handleSalvarNaPasta = async (pastaId: string | null) => {
+  // Salvar palpites na subpasta selecionada
+  const handleSalvarNaSubpasta = async (pastaId: string) => {
     if (palpitesParaSalvar.length === 0) return;
     
     setSalvandoPasta(true);
@@ -133,6 +104,7 @@ export function DesdobramentoResultados({
         qtd_dezenas: qtdDezenas,
         estrategia: "Desdobramento Estatístico",
         pasta_id: pastaId,
+        loteria: "lotofacil",
       }));
 
       const { error } = await supabase
@@ -146,7 +118,7 @@ export function DesdobramentoResultados({
         description: `${palpitesParaSalvar.length} palpite(s) salvo(s) em Meus Palpites`,
       });
 
-      setDialogPastaAberto(false);
+      setDialogSubpastaAberto(false);
       setPalpitesParaSalvar([]);
     } catch (err) {
       console.error(err);
@@ -157,47 +129,6 @@ export function DesdobramentoResultados({
       });
     } finally {
       setSalvandoPasta(false);
-    }
-  };
-
-  // Criar nova pasta e salvar palpites nela
-  const handleCriarPasta = async (nome: string, cor: string, loteria: string) => {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) return;
-
-      const { data, error } = await supabase
-        .from("palpites_pastas")
-        .insert({
-          user_id: sessionData.session.user.id,
-          nome,
-          cor,
-          loteria,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setPastas(prev => [...prev, { id: data.id, nome: data.nome, cor: data.cor || "#8B5CF6" }]);
-      setDialogNovaPastaAberto(false);
-      
-      toast({
-        title: "Pasta criada! 📁",
-        description: `Pasta "${nome}" criada com sucesso`,
-      });
-
-      // Salvar automaticamente os palpites na nova pasta criada
-      if (palpitesParaSalvar.length > 0) {
-        await handleSalvarNaPasta(data.id);
-      }
-    } catch (err) {
-      console.error(err);
-      toast({
-        title: "Erro ao criar pasta",
-        description: "Não foi possível criar a pasta",
-        variant: "destructive",
-      });
     }
   };
 
@@ -367,26 +298,13 @@ export function DesdobramentoResultados({
         })}
       </div>
 
-      {/* Dialog para selecionar pasta */}
-      <SelecionarPastaDialog
-        open={dialogPastaAberto}
-        onOpenChange={setDialogPastaAberto}
-        pastas={pastas}
-        onSelect={handleSalvarNaPasta}
-        onNovaPasta={() => {
-          setDialogPastaAberto(false);
-          setDialogNovaPastaAberto(true);
-        }}
+      {/* Dialog para selecionar subpasta */}
+      <SelecionarSubpastaDialog
+        open={dialogSubpastaAberto}
+        onOpenChange={setDialogSubpastaAberto}
+        onSelect={handleSalvarNaSubpasta}
         loteria="lotofacil"
         isLoading={salvandoPasta}
-      />
-
-      {/* Dialog para criar nova pasta */}
-      <NovaPastaDialog
-        open={dialogNovaPastaAberto}
-        onOpenChange={setDialogNovaPastaAberto}
-        onConfirm={handleCriarPasta}
-        loteria="lotofacil"
       />
     </div>
   );

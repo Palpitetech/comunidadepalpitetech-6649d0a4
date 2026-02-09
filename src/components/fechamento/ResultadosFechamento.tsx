@@ -3,14 +3,12 @@ import { Button } from "@/components/ui/button";
 import { PalpiteCard } from "@/components/shared/PalpiteCard";
 import { PalpitesToolbar, usePalpitesToolbar } from "@/components/palpites/PalpitesToolbar";
 import { EstrategiaCard, type EstrategiaData } from "@/components/gerador/EstrategiaCard";
+import { SelecionarSubpastaDialog } from "@/components/palpites/SelecionarSubpastaDialog";
 import { formatarDezena } from "@/lib/lotofacil";
 import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { SelecionarPastaDialog } from "@/components/palpites/SelecionarPastaDialog";
-import { NovaPastaDialog } from "@/components/palpites/NovaPastaDialog";
 import { useAuth } from "@/hooks/useAuth";
-import type { Pasta } from "@/components/palpites/PastaItem";
 import { simularGarantia, buscarMatriz, type ResultadoSimulacao } from "@/lib/fechamento";
 import { DezenaCirculoMini } from "@/components/lotofacil/DezenaCirculoMini";
 
@@ -45,14 +43,12 @@ export function ResultadosFechamento({
   const { toast } = useToast();
   const { user } = useAuth();
   const [ultimoConcurso, setUltimoConcurso] = useState<number[]>([]);
-  const [showSalvarDialog, setShowSalvarDialog] = useState(false);
-  const [showNovaPastaDialog, setShowNovaPastaDialog] = useState(false);
-  const [pastas, setPastas] = useState<Pasta[]>([]);
-  const [loadingPastas, setLoadingPastas] = useState(false);
+  const [showSubpastaDialog, setShowSubpastaDialog] = useState(false);
   const [palpitesParaSalvar, setPalpitesParaSalvar] = useState<number[][]>([]);
   const [acertosPorPalpite, setAcertosPorPalpite] = useState<Record<string, number>>({});
   const [simulacao, setSimulacao] = useState<ResultadoSimulacao | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [salvando, setSalvando] = useState(false);
 
   // Obtém a matriz para saber a garantia alvo
   const matriz = estrategiaId ? buscarMatriz(estrategiaId) : null;
@@ -98,28 +94,6 @@ export function ResultadosFechamento({
     };
     carregarUltimoConcurso();
   }, []);
-
-  // Carregar pastas do usuário (filtradas por lotofacil)
-  const carregarPastas = async () => {
-    if (!user) return;
-    setLoadingPastas(true);
-    try {
-      const { data } = await supabase
-        .from("palpites_pastas")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("loteria", "lotofacil")
-        .order("nome");
-      
-      if (data) {
-        setPastas(data);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar pastas:", error);
-    } finally {
-      setLoadingPastas(false);
-    }
-  };
 
   const handleCopiarTodos = async () => {
     const texto = jogos
@@ -196,8 +170,7 @@ export function ResultadosFechamento({
       return;
     }
     setPalpitesParaSalvar(jogos);
-    carregarPastas();
-    setShowSalvarDialog(true);
+    setShowSubpastaDialog(true);
   };
 
   const handleSalvarSelecionados = () => {
@@ -213,8 +186,7 @@ export function ResultadosFechamento({
       .filter(p => selected.has(p.id))
       .map(p => p.dezenas);
     setPalpitesParaSalvar(selecionados);
-    carregarPastas();
-    setShowSalvarDialog(true);
+    setShowSubpastaDialog(true);
   };
 
   // Filtra estratégia para conter apenas as dezenas do jogo específico
@@ -247,8 +219,9 @@ export function ResultadosFechamento({
     };
   };
 
-  const handleSelecionarPasta = async (pastaId: string | null) => {
+  const handleSelecionarSubpasta = async (pastaId: string) => {
     if (!user) return;
+    setSalvando(true);
 
     try {
       const palpitesParaInserir = palpitesParaSalvar.map(dezenas => {
@@ -272,6 +245,7 @@ export function ResultadosFechamento({
                 : null,
           estrategia_data: estrategiaFiltrada ? JSON.parse(JSON.stringify(estrategiaFiltrada)) : null,
           pasta_id: pastaId,
+          loteria: "lotofacil",
         };
       });
 
@@ -285,7 +259,7 @@ export function ResultadosFechamento({
         title: "Palpites salvos!",
         description: `${palpitesParaSalvar.length} palpites salvos com sucesso.`,
       });
-      setShowSalvarDialog(false);
+      setShowSubpastaDialog(false);
     } catch (error) {
       console.error("Erro ao salvar palpites:", error);
       toast({
@@ -293,43 +267,8 @@ export function ResultadosFechamento({
         description: "Não foi possível salvar os palpites.",
         variant: "destructive",
       });
-    }
-  };
-
-  const handleNovaPasta = () => {
-    setShowNovaPastaDialog(true);
-  };
-
-  const handleCriarPasta = async (nome: string, cor: string, loteria: string) => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("palpites_pastas")
-        .insert({ user_id: user.id, nome, cor, loteria })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        setPastas(prev => [...prev, data]);
-        toast({
-          title: "Pasta criada!",
-          description: `Pasta "${nome}" criada com sucesso.`,
-        });
-        
-        // Salvar palpites na nova pasta criada
-        await handleSelecionarPasta(data.id);
-      }
-      setShowNovaPastaDialog(false);
-    } catch (error) {
-      console.error("Erro ao criar pasta:", error);
-      toast({
-        title: "Erro ao criar pasta",
-        description: "Não foi possível criar a pasta.",
-        variant: "destructive",
-      });
+    } finally {
+      setSalvando(false);
     }
   };
 
@@ -551,23 +490,13 @@ export function ResultadosFechamento({
         Novo Fechamento
       </Button>
 
-      {/* Dialog para selecionar pasta */}
-      <SelecionarPastaDialog
-        open={showSalvarDialog}
-        onOpenChange={setShowSalvarDialog}
-        pastas={pastas}
-        onSelect={handleSelecionarPasta}
-        onNovaPasta={handleNovaPasta}
+      {/* Dialog para selecionar subpasta */}
+      <SelecionarSubpastaDialog
+        open={showSubpastaDialog}
+        onOpenChange={setShowSubpastaDialog}
+        onSelect={handleSelecionarSubpasta}
         loteria="lotofacil"
-        isLoading={loadingPastas}
-      />
-
-      {/* Dialog para criar nova pasta */}
-      <NovaPastaDialog
-        open={showNovaPastaDialog}
-        onOpenChange={setShowNovaPastaDialog}
-        onConfirm={handleCriarPasta}
-        loteria="lotofacil"
+        isLoading={salvando}
       />
     </div>
   );
