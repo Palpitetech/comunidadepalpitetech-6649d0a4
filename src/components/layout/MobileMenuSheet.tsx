@@ -291,12 +291,6 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                              Quentes e Frias
                            </div>
                          </Link>
-                         <Link to="/duplasena/frequencia-dezenas" onClick={closeAndNavigate}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             <BarChart3 className="h-4 w-4" />
-                             Frequência das Dezenas
-                           </div>
-                         </Link>
                          <Link to="/duplasena/dezenas-por-posicao" onClick={closeAndNavigate}>
                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
                              <Target className="h-4 w-4" />
