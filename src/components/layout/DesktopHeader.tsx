@@ -225,9 +225,49 @@ export function DesktopHeader() {
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuSubContent>
-              </DropdownMenuSub>
-            </DropdownMenuContent>
-          </DropdownMenu>
+               </DropdownMenuSub>
+
+               {/* Dupla Sena Submenu */}
+               <DropdownMenuSub>
+                 <DropdownMenuSubTrigger className="gap-2 py-2 cursor-pointer">
+                   <span className="text-base">🎯</span>
+                   Dupla Sena
+                 </DropdownMenuSubTrigger>
+                 <DropdownMenuSubContent className="w-48 bg-popover z-50">
+                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                     <Link to="/duplasena/resultados">
+                       <BarChart3 className="h-4 w-4" />
+                       Resultados
+                     </Link>
+                   </DropdownMenuItem>
+                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                     <Link to="/duplasena/tendencias">
+                       <TrendingUp className="h-4 w-4" />
+                       Tendências
+                     </Link>
+                   </DropdownMenuItem>
+                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                     <Link to="/duplasena/frequencia">
+                       <Flame className="h-4 w-4" />
+                       Quentes e Frias
+                     </Link>
+                   </DropdownMenuItem>
+                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                     <Link to="/duplasena/dezenas-por-posicao">
+                       <Target className="h-4 w-4" />
+                       Dezenas por Posição
+                     </Link>
+                   </DropdownMenuItem>
+                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                     <Link to="/duplasena/linhas-colunas">
+                       <LayoutGrid className="h-4 w-4" />
+                       Linhas e Colunas
+                     </Link>
+                   </DropdownMenuItem>
+                 </DropdownMenuSubContent>
+               </DropdownMenuSub>
+             </DropdownMenuContent>
+           </DropdownMenu>
 
           {/* Admin Dropdown - apenas para admins */}
           {isAdmin && (
