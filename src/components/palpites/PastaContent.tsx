@@ -448,6 +448,7 @@ export function PastaContent({
             onExcluirSelecionados={handleExcluirSelecionadosEstrategia}
             onExcluirTodos={handleExcluirTodosEstrategia}
             onVerificarTodos={handleVerificarTodosEstrategia}
+            loteria={isMegaSena ? "megasena" : "lotofacil"}
           />
         )}
 
@@ -540,6 +541,7 @@ export function PastaContent({
           onExcluirTodos={handleExcluirTodos}
           onVerificarTodos={handleVerificarTodos}
           onEstrategiaClick={setEstrategiaSelecionada}
+          loteria={isMegaSena ? "megasena" : "lotofacil"}
         />
       )}
 
