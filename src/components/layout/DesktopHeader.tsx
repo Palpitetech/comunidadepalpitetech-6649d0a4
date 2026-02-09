@@ -235,6 +235,13 @@ export function DesktopHeader() {
                  </DropdownMenuSubTrigger>
                  <DropdownMenuSubContent className="w-48 bg-popover z-50">
                    <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                     <Link to="/duplasena/analise-do-dia">
+                       <Target className="h-4 w-4" />
+                       Análise do Dia
+                     </Link>
+                   </DropdownMenuItem>
+                   <DropdownMenuSeparator />
+                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                      <Link to="/duplasena/resultados">
                        <BarChart3 className="h-4 w-4" />
                        Resultados
