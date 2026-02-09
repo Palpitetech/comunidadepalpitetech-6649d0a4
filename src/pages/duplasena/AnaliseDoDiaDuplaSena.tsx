@@ -467,23 +467,25 @@ export default function AnaliseDoDiaDuplaSena() {
                     <span className="text-xs font-medium text-muted-foreground">Fixar</span>
                     <span className="text-[10px] text-muted-foreground">(≥ 15%)</span>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {currentData.fixas.map(({ dezena, frequencia }) => {
+                  <div className="grid grid-cols-6 gap-1">
+                    {currentData.fixas.slice(0, 12).map(({ dezena, frequencia }) => {
                       const isSelected = selectedFixas.includes(dezena);
                       return (
                         <button
                           key={dezena}
                           onClick={() => toggleFixa(dezena)}
                           className={`
-                            relative w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all
+                            w-full aspect-square rounded flex flex-col items-center justify-center gap-0.5 transition-all border-2
                             ${isSelected 
-                              ? "bg-foreground text-background ring-2 ring-highlight" 
-                              : "bg-duplasena-primary/10 text-duplasena-primary hover:bg-duplasena-primary/20"
+                              ? "bg-emerald-500 text-white border-emerald-500 shadow-md" 
+                              : "bg-background border-emerald-500/30 hover:border-emerald-500/60"
                             }
                           `}
                         >
-                          {formatarDezena(dezena)}
-                          <span className="absolute -bottom-0.5 -right-0.5 text-[8px] bg-duplasena-primary text-white px-1 rounded-full">
+                          <span className={`text-sm font-bold ${isSelected ? "text-white" : "text-emerald-600"}`}>
+                            {formatarDezena(dezena)}
+                          </span>
+                          <span className={`text-[9px] ${isSelected ? "text-white/70" : "text-emerald-600/80"}`}>
                             {frequencia}%
                           </span>
                         </button>
@@ -520,23 +522,25 @@ export default function AnaliseDoDiaDuplaSena() {
                     <span className="text-xs font-medium text-muted-foreground">Excluir</span>
                     <span className="text-[10px] text-muted-foreground">(≤ 5%)</span>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {currentData.excluidas.map(({ dezena, frequencia }) => {
+                  <div className="grid grid-cols-6 gap-1">
+                    {currentData.excluidas.slice(0, 12).map(({ dezena, frequencia }) => {
                       const isSelected = selectedExcluidas.includes(dezena);
                       return (
                         <button
                           key={dezena}
                           onClick={() => toggleExcluida(dezena)}
                           className={`
-                            relative w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all
+                            w-full aspect-square rounded flex flex-col items-center justify-center gap-0.5 transition-all border-2
                             ${isSelected 
-                              ? "bg-destructive text-destructive-foreground ring-2 ring-destructive/50" 
-                              : "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                              ? "bg-destructive text-white border-destructive shadow-md" 
+                              : "bg-background border-destructive/30 hover:border-destructive/60"
                             }
                           `}
                         >
-                          {formatarDezena(dezena)}
-                          <span className="absolute -bottom-0.5 -right-0.5 text-[8px] bg-destructive text-destructive-foreground px-1 rounded-full">
+                          <span className={`text-sm font-bold ${isSelected ? "text-white" : "text-destructive"}`}>
+                            {formatarDezena(dezena)}
+                          </span>
+                          <span className={`text-[9px] ${isSelected ? "text-white/70" : "text-destructive/80"}`}>
                             {frequencia}%
                           </span>
                         </button>
