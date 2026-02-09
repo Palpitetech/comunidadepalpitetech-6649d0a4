@@ -7,8 +7,8 @@ import { usePalpitesSalvos, type PalpitePasta } from "@/hooks/usePalpitesSalvos"
 import { NovaPastaDialog } from "@/components/palpites/NovaPastaDialog";
 import { SelecionarPastaDialog } from "@/components/palpites/SelecionarPastaDialog";
 import { JogoCardDuplaSena } from "@/components/duplasena/JogoCardDuplaSena";
-import { ChevronLeft, ChevronRight, ArrowLeft, Check, Copy, Save, Trash2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { PalpitesToolbarDuplaSena } from "@/components/duplasena/PalpitesToolbarDuplaSena";
+import { ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
 
 interface JogoGerado {
   dezenas: number[];
@@ -40,8 +40,9 @@ export function ResultadosSheetDuplaSena({
   const { toast } = useToast();
   const { salvarPalpites, buscarPastas, criarPasta, isLoading: isSaving } = usePalpitesSalvos();
   const [jogos, setJogos] = useState<JogoGerado[]>(jogosIniciais);
-  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(0);
+  const [acertosPorPalpite, setAcertosPorPalpite] = useState<Record<string, { s1: number; s2: number }>>({});
   
   const [pastas, setPastas] = useState<PalpitePasta[]>([]);
   const [selecionarPastaOpen, setSelecionarPastaOpen] = useState(false);
@@ -52,6 +53,7 @@ export function ResultadosSheetDuplaSena({
     setJogos(jogosIniciais);
     setSelected(new Set());
     setCurrentPage(0);
+    setAcertosPorPalpite({});
   }, [jogosIniciais]);
 
   useEffect(() => {
@@ -69,12 +71,19 @@ export function ResultadosSheetDuplaSena({
 
   const formatDezena = (n: number) => n.toString().padStart(2, "0");
 
-  const handleSelectChange = (index: number) => {
+  // Converter jogos para formato de palpite para toolbar
+  const palpitesParaToolbar = jogos.map((jogo, i) => ({
+    id: `gerador-${i}`,
+    dezenas: jogo.dezenas,
+  }));
+
+  const handleSelectChange = (globalIndex: number, checked: boolean) => {
     const newSelected = new Set(selected);
-    if (newSelected.has(index)) {
-      newSelected.delete(index);
+    const id = `gerador-${globalIndex}`;
+    if (checked) {
+      newSelected.add(id);
     } else {
-      newSelected.add(index);
+      newSelected.delete(id);
     }
     setSelected(newSelected);
   };
@@ -83,7 +92,7 @@ export function ResultadosSheetDuplaSena({
     if (selected.size === jogos.length) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(jogos.map((_, i) => i)));
+      setSelected(new Set(jogos.map((_, i) => `gerador-${i}`)));
     }
   };
 
@@ -98,13 +107,60 @@ export function ResultadosSheetDuplaSena({
     });
   };
 
+  const handleCopiarSelecionados = async () => {
+    if (selected.size === 0) {
+      toast({
+        title: "Nenhum palpite selecionado",
+        description: "Selecione pelo menos um palpite para copiar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const indices = Array.from(selected)
+      .map(id => parseInt(id.replace('gerador-', '')))
+      .sort((a, b) => a - b);
+
+    const texto = indices
+      .map((i) => `Jogo ${i + 1}: ${jogos[i].dezenas.map(formatDezena).join(" ")}`)
+      .join("\n");
+
+    await navigator.clipboard.writeText(texto);
+    toast({
+      title: "Copiado! 📋",
+      description: `${selected.size} palpite(s) copiado(s).`,
+    });
+  };
+
+  const handleSalvarSelecionados = () => {
+    if (selected.size === 0) {
+      toast({
+        title: "Nenhum palpite selecionado",
+        description: "Selecione pelo menos um palpite para salvar.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setSalvarTodosMode(false);
+    setSelecionarPastaOpen(true);
+  };
+
   const handleSalvarTodos = () => {
     setSalvarTodosMode(true);
     setSelecionarPastaOpen(true);
   };
 
   const handleSelecionarPasta = async (pastaId: string | null) => {
-    const palpitesParaSalvar = salvarTodosMode ? jogos : Array.from(selected).map(i => jogos[i]);
+    let palpitesParaSalvar: JogoGerado[];
+    
+    if (salvarTodosMode) {
+      palpitesParaSalvar = jogos;
+    } else {
+      const indices = Array.from(selected)
+        .map(id => parseInt(id.replace('gerador-', '')))
+        .sort((a, b) => a - b);
+      palpitesParaSalvar = indices.map(i => jogos[i]);
+    }
     
     const getEstrategiaTexto = () => {
       if (!estrategia) return undefined;
@@ -132,7 +188,16 @@ export function ResultadosSheetDuplaSena({
     if (novaPasta) {
       setPastas(prev => [...prev, novaPasta]);
       
-      const palpitesParaSalvar = salvarTodosMode ? jogos : Array.from(selected).map(i => jogos[i]);
+      let palpitesParaSalvar: JogoGerado[];
+      
+      if (salvarTodosMode) {
+        palpitesParaSalvar = jogos;
+      } else {
+        const indices = Array.from(selected)
+          .map(id => parseInt(id.replace('gerador-', '')))
+          .sort((a, b) => a - b);
+        palpitesParaSalvar = indices.map(i => jogos[i]);
+      }
       
       const getEstrategiaTexto = () => {
         if (!estrategia) return undefined;
@@ -151,6 +216,40 @@ export function ResultadosSheetDuplaSena({
     setNovaPastaOpen(false);
   };
 
+  const handleExcluirSelecionados = () => {
+    if (selected.size === 0) {
+      toast({
+        title: "Nenhum palpite selecionado",
+        description: "Selecione pelo menos um palpite para excluir.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const indices = new Set(
+      Array.from(selected).map(id => parseInt(id.replace('gerador-', '')))
+    );
+    
+    const novosJogos = jogos.filter((_, i) => !indices.has(i));
+    setJogos(novosJogos);
+    setSelected(new Set());
+    
+    const newTotalPages = Math.ceil(novosJogos.length / ITEMS_PER_PAGE);
+    if (currentPage >= newTotalPages && newTotalPages > 0) {
+      setCurrentPage(newTotalPages - 1);
+    }
+
+    toast({
+      title: "Excluído!",
+      description: `${selected.size} palpite(s) removido(s).`,
+    });
+
+    if (novosJogos.length === 0) {
+      onClearAll();
+      onOpenChange(false);
+    }
+  };
+
   const handleExcluirTodos = () => {
     onClearAll();
     onOpenChange(false);
@@ -160,17 +259,35 @@ export function ResultadosSheetDuplaSena({
     const novosJogos = jogos.filter((_, i) => i !== index);
     setJogos(novosJogos);
     
-    const newSelected = new Set<number>();
-    selected.forEach((i) => {
-      if (i < index) newSelected.add(i);
-      else if (i > index) newSelected.add(i - 1);
+    const newSelected = new Set<string>();
+    selected.forEach((id) => {
+      const i = parseInt(id.replace('gerador-', ''));
+      if (i < index) newSelected.add(id);
+      else if (i > index) newSelected.add(`gerador-${i - 1}`);
     });
     setSelected(newSelected);
     
+    const newTotalPages = Math.ceil(novosJogos.length / ITEMS_PER_PAGE);
+    if (currentPage >= newTotalPages && newTotalPages > 0) {
+      setCurrentPage(newTotalPages - 1);
+    }
+
     if (novosJogos.length === 0) {
       onClearAll();
       onOpenChange(false);
     }
+  };
+
+  const handleVerificarTodos = (concurso: any, acertos: Record<string, { s1: number; s2: number }>) => {
+    setAcertosPorPalpite(acertos);
+  };
+
+  // Obter acertos para um jogo específico (maior entre S1 e S2)
+  const getAcertosJogo = (index: number): number | null => {
+    const id = `gerador-${index}`;
+    const acertos = acertosPorPalpite[id];
+    if (!acertos) return null;
+    return Math.max(acertos.s1, acertos.s2);
   };
 
   return (
@@ -205,45 +322,19 @@ export function ResultadosSheetDuplaSena({
             <EstrategiaCard estrategia={estrategia} />
           )}
 
-          {/* Toolbar simplificada */}
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSelectAll}
-              className="gap-1"
-            >
-              <Check className="h-4 w-4" />
-              {selected.size === jogos.length ? "Desmarcar" : "Selecionar"}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopiarTodos}
-              className="gap-1"
-            >
-              <Copy className="h-4 w-4" />
-              Copiar
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSalvarTodos}
-              className="gap-1"
-            >
-              <Save className="h-4 w-4" />
-              Salvar
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExcluirTodos}
-              className="gap-1 text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-              Limpar
-            </Button>
-          </div>
+          {/* Toolbar universal */}
+          <PalpitesToolbarDuplaSena
+            palpites={palpitesParaToolbar}
+            selected={selected}
+            onSelectAll={handleSelectAll}
+            onCopiarTodos={handleCopiarTodos}
+            onCopiarSelecionados={handleCopiarSelecionados}
+            onExcluirSelecionados={handleExcluirSelecionados}
+            onExcluirTodos={handleExcluirTodos}
+            onVerificarTodos={handleVerificarTodos}
+            onSalvarTodos={handleSalvarTodos}
+            onSalvarSelecionados={handleSalvarSelecionados}
+          />
 
           {/* Lista de Palpites */}
           <div className="grid gap-2">
@@ -256,10 +347,11 @@ export function ResultadosSheetDuplaSena({
                   dezenas={jogo.dezenas}
                   dezenasFixes={dezenasFixes}
                   ultimoConcursoDezenas={ultimoConcursoDezenas}
-                  isSelected={selected.has(globalIndex)}
-                  onSelectChange={() => handleSelectChange(globalIndex)}
+                  isSelected={selected.has(`gerador-${globalIndex}`)}
+                  onSelectChange={(checked) => handleSelectChange(globalIndex, checked)}
                   onDelete={() => handleDeleteSingle(globalIndex)}
                   showPatterns={true}
+                  acertos={getAcertosJogo(globalIndex)}
                 />
               );
             })}
@@ -282,6 +374,9 @@ export function ResultadosSheetDuplaSena({
               <div className="flex flex-col items-center">
                 <span className="text-sm font-medium">
                   {currentPage + 1} / {totalPages}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  {currentPage * ITEMS_PER_PAGE + 1}-{Math.min((currentPage + 1) * ITEMS_PER_PAGE, jogos.length)} de {jogos.length}
                 </span>
               </div>
               
