@@ -303,17 +303,23 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                              Linhas e Colunas
                            </div>
                          </Link>
-                         <Link to="/duplasena/gerador" onClick={closeAndNavigate}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             <Dices className="h-4 w-4" />
-                             Gerador de Palpites
-                           </div>
-                         </Link>
-                       </div>
-                     </AccordionContent>
-                   </AccordionItem>
-                 </Accordion>
-               </div>
+                          <Link to="/duplasena/gerador" onClick={closeAndNavigate}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                              <Dices className="h-4 w-4" />
+                              Gerador de Palpites
+                            </div>
+                          </Link>
+                          <Link to="/duplasena/desdobramento" onClick={closeAndNavigate}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                              <Shuffle className="h-4 w-4" />
+                              Desdobramento
+                            </div>
+                          </Link>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </div>
 
                {/* Accordion de Mega Sena */}
                <div className="px-4">
