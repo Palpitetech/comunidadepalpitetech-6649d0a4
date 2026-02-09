@@ -2,9 +2,11 @@ import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { PalpiteCard } from "@/components/shared/PalpiteCard";
 import { JogoCardMegaSena } from "@/components/megasena/JogoCardMegaSena";
+import { JogoCardDuplaSena } from "@/components/duplasena/JogoCardDuplaSena";
 import { EstrategiaCard } from "@/components/gerador/EstrategiaCard";
 import { EstrategiaCardMegaSena } from "@/components/megasena/EstrategiaCardMegaSena";
 import { PalpitesToolbar } from "./PalpitesToolbar";
+import { PalpitesToolbarDuplaSena } from "@/components/duplasena/PalpitesToolbarDuplaSena";
 import { formatarDezena } from "@/lib/lotofacil";
 import { useToast } from "@/hooks/use-toast";
 import { usePalpitesSalvos, type PalpiteSalvo } from "@/hooks/usePalpitesSalvos";
@@ -39,11 +41,13 @@ export function PastaContent({
   const [currentPage, setCurrentPage] = useState(0);
   const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
   const [acertosPorPalpite, setAcertosPorPalpite] = useState<Record<string, number>>({});
+  const [acertosDuplaSena, setAcertosDuplaSena] = useState<Record<string, { s1: number; s2: number }>>({});
   const [estrategiaSelecionada, setEstrategiaSelecionada] = useState<string | null>(null);
   
   // Estados para a visualização de estratégia
   const [selectedEstrategia, setSelectedEstrategia] = useState<Set<string>>(new Set());
   const [acertosPorEstrategia, setAcertosPorEstrategia] = useState<Record<string, number>>({});
+  const [acertosDuplaSenaEstrategia, setAcertosDuplaSenaEstrategia] = useState<Record<string, { s1: number; s2: number }>>({});
 
   // Sincronizar palpites quando props mudam
   useEffect(() => {
@@ -51,9 +55,11 @@ export function PastaContent({
     setSelected(new Set());
     setCurrentPage(0);
     setAcertosPorPalpite({});
+    setAcertosDuplaSena({});
     setEstrategiaSelecionada(null);
     setSelectedEstrategia(new Set());
     setAcertosPorEstrategia({});
+    setAcertosDuplaSenaEstrategia({});
   }, [palpitesIniciais]);
 
   // Detectar loteria predominante
@@ -63,24 +69,40 @@ export function PastaContent({
   }, [palpites]);
 
   const isMegaSena = loteriaAtual === "megasena";
+  const isDuplaSena = loteriaAtual === "duplasena";
 
   // Buscar último concurso baseado na loteria
   useEffect(() => {
     const fetchUltimoConcurso = async () => {
-      const tabela = isMegaSena ? "resultados_megasena" : "resultados";
-      const { data } = await supabase
-        .from(tabela)
-        .select("dezenas")
-        .order("concurso_id", { ascending: false })
-        .limit(1)
-        .single();
-      
-      if (data?.dezenas) {
-        setUltimoConcursoDezenas(data.dezenas);
+      if (isDuplaSena) {
+        // Dupla Sena: combina S1 e S2
+        const { data } = await supabase
+          .from("resultados_duplasena")
+          .select("dezenas_sorteio1, dezenas_sorteio2")
+          .order("concurso_id", { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (data) {
+          const combined = [...(data.dezenas_sorteio1 || []), ...(data.dezenas_sorteio2 || [])];
+          setUltimoConcursoDezenas([...new Set(combined)]);
+        }
+      } else {
+        const tabela = isMegaSena ? "resultados_megasena" : "resultados";
+        const { data } = await supabase
+          .from(tabela)
+          .select("dezenas")
+          .order("concurso_id", { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (data?.dezenas) {
+          setUltimoConcursoDezenas(data.dezenas);
+        }
       }
     };
     fetchUltimoConcurso();
-  }, [isMegaSena]);
+  }, [isMegaSena, isDuplaSena]);
 
   // Palpites filtrados por estratégia selecionada
   const palpitesDaEstrategia = useMemo(() => {
@@ -217,6 +239,10 @@ export function PastaContent({
     setAcertosPorPalpite(novosAcertos);
   };
 
+  const handleVerificarTodosDuplaSena = (_concurso: any, novosAcertos: Record<string, { s1: number; s2: number }>) => {
+    setAcertosDuplaSena(novosAcertos);
+  };
+
   // ========== Handlers para a visualização de estratégia ==========
   
   const handleSelectChangeEstrategia = (id: string, checked: boolean) => {
@@ -335,6 +361,26 @@ export function PastaContent({
     setAcertosPorEstrategia(novosAcertos);
   };
 
+  const handleVerificarTodosEstrategiaDuplaSena = (_concurso: any, novosAcertos: Record<string, { s1: number; s2: number }>) => {
+    setAcertosDuplaSenaEstrategia(novosAcertos);
+  };
+
+  // Helper para obter acertos da Dupla Sena (maior entre S1 e S2)
+  const getAcertosDuplaSena = (id: string, source: 'main' | 'estrategia' = 'main'): number | undefined => {
+    const acertos = source === 'estrategia' ? acertosDuplaSenaEstrategia[id] : acertosDuplaSena[id];
+    if (!acertos) return undefined;
+    return Math.max(acertos.s1, acertos.s2);
+  };
+
+  // Helper para obter estilo de cor baseado na loteria
+  const getLoteriaColorClass = () => {
+    if (isMegaSena) return { bg: "bg-megasena-primary", border: "border-megasena-primary", text: "text-megasena-primary" };
+    if (isDuplaSena) return { bg: "bg-duplasena-primary", border: "border-duplasena-primary", text: "text-duplasena-primary" };
+    return { bg: "bg-primary", border: "border-primary", text: "text-primary" };
+  };
+
+  const loteriaColors = getLoteriaColorClass();
+
   // Se estratégia está selecionada, mostrar conteúdo da estratégia
   if (estrategiaSelecionada) {
     return (
@@ -343,13 +389,13 @@ export function PastaContent({
         {palpitesDaEstrategia[0]?.estrategia_data ? (
           isMegaSena && 'dezenas_justificadas' in palpitesDaEstrategia[0].estrategia_data ? (
             <EstrategiaCardMegaSena estrategia={palpitesDaEstrategia[0].estrategia_data as any} />
-          ) : !isMegaSena && 'dezenas_fixas' in palpitesDaEstrategia[0].estrategia_data ? (
+          ) : !isMegaSena && !isDuplaSena && 'dezenas_fixas' in palpitesDaEstrategia[0].estrategia_data ? (
             <EstrategiaCard estrategia={palpitesDaEstrategia[0].estrategia_data} />
           ) : (
-            <div className={`${isMegaSena ? "bg-megasena-primary/5 border-megasena-primary/20" : "bg-primary/5 border-primary/20"} border rounded-xl p-4`}>
+            <div className={`${loteriaColors.bg}/5 border-${loteriaColors.border}/20 border rounded-xl p-4`}>
               <div className="flex items-start gap-3">
-                <div className={`h-10 w-10 rounded-full ${isMegaSena ? "bg-megasena-primary/10" : "bg-primary/10"} flex items-center justify-center shrink-0`}>
-                  <Dices className={`h-5 w-5 ${isMegaSena ? "text-megasena-primary" : "text-primary"}`} />
+                <div className={`h-10 w-10 rounded-full ${loteriaColors.bg}/10 flex items-center justify-center shrink-0`}>
+                  <Dices className={`h-5 w-5 ${loteriaColors.text}`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-foreground text-base mb-1">
@@ -363,10 +409,10 @@ export function PastaContent({
             </div>
           )
         ) : (
-          <div className={`${isMegaSena ? "bg-megasena-primary/5 border-megasena-primary/20" : "bg-primary/5 border-primary/20"} border rounded-xl p-4`}>
+          <div className={`${isMegaSena ? "bg-megasena-primary/5 border-megasena-primary/20" : isDuplaSena ? "bg-duplasena-primary/5 border-duplasena-primary/20" : "bg-primary/5 border-primary/20"} border rounded-xl p-4`}>
             <div className="flex items-start gap-3">
-              <div className={`h-10 w-10 rounded-full ${isMegaSena ? "bg-megasena-primary/10" : "bg-primary/10"} flex items-center justify-center shrink-0`}>
-                <Dices className={`h-5 w-5 ${isMegaSena ? "text-megasena-primary" : "text-primary"}`} />
+              <div className={`h-10 w-10 rounded-full ${isMegaSena ? "bg-megasena-primary/10" : isDuplaSena ? "bg-duplasena-primary/10" : "bg-primary/10"} flex items-center justify-center shrink-0`}>
+                <Dices className={`h-5 w-5 ${isMegaSena ? "text-megasena-primary" : isDuplaSena ? "text-duplasena-primary" : "text-primary"}`} />
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-foreground text-base mb-1">
@@ -380,32 +426,64 @@ export function PastaContent({
           </div>
         )}
 
-        {/* Toolbar para palpites da estratégia */}
-        <PalpitesToolbar
-          palpites={palpitesDaEstrategia}
-          selected={selectedEstrategia}
-          onSelectAll={handleSelectAllEstrategia}
-          onCopiarTodos={handleCopiarTodosEstrategia}
-          onCopiarSelecionados={handleCopiarSelecionadosEstrategia}
-          onExcluirSelecionados={handleExcluirSelecionadosEstrategia}
-          onExcluirTodos={handleExcluirTodosEstrategia}
-          onVerificarTodos={handleVerificarTodosEstrategia}
-        />
+        {/* Toolbar para palpites da estratégia - usa toolbar correta baseada na loteria */}
+        {isDuplaSena ? (
+          <PalpitesToolbarDuplaSena
+            palpites={palpitesDaEstrategia}
+            selected={selectedEstrategia}
+            onSelectAll={handleSelectAllEstrategia}
+            onCopiarTodos={handleCopiarTodosEstrategia}
+            onCopiarSelecionados={handleCopiarSelecionadosEstrategia}
+            onExcluirSelecionados={handleExcluirSelecionadosEstrategia}
+            onExcluirTodos={handleExcluirTodosEstrategia}
+            onVerificarTodos={handleVerificarTodosEstrategiaDuplaSena}
+          />
+        ) : (
+          <PalpitesToolbar
+            palpites={palpitesDaEstrategia}
+            selected={selectedEstrategia}
+            onSelectAll={handleSelectAllEstrategia}
+            onCopiarTodos={handleCopiarTodosEstrategia}
+            onCopiarSelecionados={handleCopiarSelecionadosEstrategia}
+            onExcluirSelecionados={handleExcluirSelecionadosEstrategia}
+            onExcluirTodos={handleExcluirTodosEstrategia}
+            onVerificarTodos={handleVerificarTodosEstrategia}
+          />
+        )}
 
         {/* Lista de Palpites da estratégia - usa o card correto baseado na loteria */}
         <div className="grid gap-2">
-          {palpitesDaEstrategia.map((palpite, localIndex) => (
-            isMegaSena ? (
-              <JogoCardMegaSena
-                key={palpite.id}
-                index={localIndex}
-                dezenas={palpite.dezenas}
-                isSelected={selectedEstrategia.has(palpite.id)}
-                onSelectChange={(checked) => handleSelectChangeEstrategia(palpite.id, checked)}
-                acertos={acertosPorEstrategia[palpite.id] ?? (palpite.conferido ? palpite.acertos : undefined)}
-                ultimoConcursoDezenas={ultimoConcursoDezenas}
-              />
-            ) : (
+          {palpitesDaEstrategia.map((palpite, localIndex) => {
+            if (isMegaSena) {
+              return (
+                <JogoCardMegaSena
+                  key={palpite.id}
+                  index={localIndex}
+                  dezenas={palpite.dezenas}
+                  isSelected={selectedEstrategia.has(palpite.id)}
+                  onSelectChange={(checked) => handleSelectChangeEstrategia(palpite.id, checked)}
+                  acertos={acertosPorEstrategia[palpite.id] ?? (palpite.conferido ? palpite.acertos : undefined)}
+                  ultimoConcursoDezenas={ultimoConcursoDezenas}
+                />
+              );
+            }
+            
+            if (isDuplaSena) {
+              return (
+                <JogoCardDuplaSena
+                  key={palpite.id}
+                  index={localIndex}
+                  dezenas={palpite.dezenas}
+                  isSelected={selectedEstrategia.has(palpite.id)}
+                  onSelectChange={(checked) => handleSelectChangeEstrategia(palpite.id, checked)}
+                  onDelete={() => handleDeleteSingleEstrategia(palpite.id)}
+                  acertos={getAcertosDuplaSena(palpite.id, 'estrategia') ?? (palpite.conferido ? palpite.acertos : undefined)}
+                  ultimoConcursoDezenas={ultimoConcursoDezenas}
+                />
+              );
+            }
+            
+            return (
               <PalpiteCard
                 key={palpite.id}
                 index={localIndex}
@@ -419,8 +497,8 @@ export function PastaContent({
                 acertos={acertosPorEstrategia[palpite.id] ?? (palpite.conferido ? palpite.acertos : undefined)}
                 hideVerificar
               />
-            )
-          ))}
+            );
+          })}
         </div>
 
         {/* Botão voltar para pasta */}
@@ -439,18 +517,31 @@ export function PastaContent({
 
   return (
     <div className="px-3 py-3 space-y-3">
-      {/* Toolbar Universal */}
-      <PalpitesToolbar
-        palpites={palpites}
-        selected={selected}
-        onSelectAll={handleSelectAll}
-        onCopiarTodos={handleCopiarTodos}
-        onCopiarSelecionados={handleCopiarSelecionados}
-        onExcluirSelecionados={handleExcluirSelecionados}
-        onExcluirTodos={handleExcluirTodos}
-        onVerificarTodos={handleVerificarTodos}
-        onEstrategiaClick={setEstrategiaSelecionada}
-      />
+      {/* Toolbar Universal - usa toolbar correta baseada na loteria */}
+      {isDuplaSena ? (
+        <PalpitesToolbarDuplaSena
+          palpites={palpites}
+          selected={selected}
+          onSelectAll={handleSelectAll}
+          onCopiarTodos={handleCopiarTodos}
+          onCopiarSelecionados={handleCopiarSelecionados}
+          onExcluirSelecionados={handleExcluirSelecionados}
+          onExcluirTodos={handleExcluirTodos}
+          onVerificarTodos={handleVerificarTodosDuplaSena}
+        />
+      ) : (
+        <PalpitesToolbar
+          palpites={palpites}
+          selected={selected}
+          onSelectAll={handleSelectAll}
+          onCopiarTodos={handleCopiarTodos}
+          onCopiarSelecionados={handleCopiarSelecionados}
+          onExcluirSelecionados={handleExcluirSelecionados}
+          onExcluirTodos={handleExcluirTodos}
+          onVerificarTodos={handleVerificarTodos}
+          onEstrategiaClick={setEstrategiaSelecionada}
+        />
+      )}
 
       {/* Lista de Palpites - usa o card correto baseado na loteria */}
       <div className="grid gap-2">
@@ -466,6 +557,21 @@ export function PastaContent({
                 isSelected={selected.has(palpite.id)}
                 onSelectChange={(checked) => handleSelectChange(palpite.id, checked)}
                 acertos={acertosPorPalpite[palpite.id] ?? (palpite.conferido ? palpite.acertos : undefined)}
+                ultimoConcursoDezenas={ultimoConcursoDezenas}
+              />
+            );
+          }
+          
+          if (isDuplaSena) {
+            return (
+              <JogoCardDuplaSena
+                key={palpite.id}
+                index={globalIndex}
+                dezenas={palpite.dezenas}
+                isSelected={selected.has(palpite.id)}
+                onSelectChange={(checked) => handleSelectChange(palpite.id, checked)}
+                onDelete={() => handleDeleteSingle(palpite.id)}
+                acertos={getAcertosDuplaSena(palpite.id) ?? (palpite.conferido ? palpite.acertos : undefined)}
                 ultimoConcursoDezenas={ultimoConcursoDezenas}
               />
             );
