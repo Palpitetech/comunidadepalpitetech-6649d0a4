@@ -108,7 +108,6 @@ const App = () => (
             <Route path="/duplasena/resultados" element={<ProtectedRoute><ResultadosDuplaSena /></ProtectedRoute>} />
             <Route path="/duplasena/tendencias" element={<ProtectedRoute><TendenciasDuplaSena /></ProtectedRoute>} />
             <Route path="/duplasena/frequencia" element={<ProtectedRoute><FrequenciaDuplaSena /></ProtectedRoute>} />
-            <Route path="/duplasena/frequencia-dezenas" element={<ProtectedRoute><FrequenciaDuplaSena /></ProtectedRoute>} />
             <Route path="/duplasena/dezenas-por-posicao" element={<ProtectedRoute><DezenasporPosicaoDuplaSena /></ProtectedRoute>} />
             <Route path="/duplasena/linhas-colunas" element={<ProtectedRoute><LinhasColunasDuplaSena /></ProtectedRoute>} />
             <Route path="/duplasena/analise-do-dia" element={<ProtectedRoute><AnaliseDoDiaDuplaSena /></ProtectedRoute>} />
