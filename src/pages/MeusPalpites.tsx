@@ -16,11 +16,13 @@ import {
 import { usePalpitesSalvos, type PalpiteSalvo, type PalpitePasta } from "@/hooks/usePalpitesSalvos";
 import { NovaPastaDialog } from "@/components/palpites/NovaPastaDialog";
 import { PastaContent } from "@/components/palpites/PastaContent";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Dices,
   Folder,
   ChevronRight,
-  FolderOpen
+  Plus,
+  Loader2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -29,48 +31,59 @@ import { Link } from "react-router-dom";
 const LOTERIAS_CONFIG = {
   lotofacil: {
     nome: "Lotofácil",
-    cor: "#8b5cf6", // roxo
+    cor: "#8b5cf6",
     icone: "🍀",
     bgClass: "bg-purple-500/10",
     borderClass: "border-purple-500/30"
   },
   megasena: {
     nome: "Mega Sena", 
-    cor: "#22c55e", // verde
+    cor: "#22c55e",
     icone: "🎱",
     bgClass: "bg-green-500/10",
     borderClass: "border-green-500/30"
+  },
+  duplasena: {
+    nome: "Dupla Sena", 
+    cor: "#f97316",
+    icone: "🎯",
+    bgClass: "bg-orange-500/10",
+    borderClass: "border-orange-500/30"
   }
 } as const;
 
 type LoteriaKey = keyof typeof LOTERIAS_CONFIG;
 
-// Navegação por níveis: loterias → pastas → palpites
-type ViewLevel = "loterias" | "pastas" | "palpites";
+// Navegação por níveis: loterias → subpastas → palpites
+type ViewLevel = "loterias" | "subpastas" | "palpites";
+
+interface PastaComHierarquia extends PalpitePasta {
+  parent_id?: string | null;
+  is_root?: boolean;
+}
 
 interface NavigationState {
   level: ViewLevel;
   loteria?: LoteriaKey;
-  pasta?: { id: string; nome: string; cor: string };
+  subpasta?: { id: string; nome: string; cor: string };
 }
 
 export default function MeusPalpites() {
   const isMobile = useIsMobile();
   const { 
     buscarPalpites, 
-    buscarPastas,
     excluirVarios,
-    criarPasta,
     excluirPasta,
     isLoading 
   } = usePalpitesSalvos();
   
   const [palpites, setPalpites] = useState<PalpiteSalvo[]>([]);
-  const [pastas, setPastas] = useState<PalpitePasta[]>([]);
+  const [pastas, setPastas] = useState<PastaComHierarquia[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [novaPastaOpen, setNovaPastaOpen] = useState(false);
   const [nav, setNav] = useState<NavigationState>({ level: "loterias" });
+  const [loadingPastas, setLoadingPastas] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -78,81 +91,61 @@ export default function MeusPalpites() {
   }, []);
 
   const loadData = async () => {
-    const [palpitesData, pastasData] = await Promise.all([
-      buscarPalpites(),
-      buscarPastas()
-    ]);
-    setPalpites(palpitesData);
-    setPastas(pastasData);
+    setLoadingPastas(true);
+    try {
+      const palpitesData = await buscarPalpites();
+      setPalpites(palpitesData);
+      
+      // Buscar todas as pastas com hierarquia
+      const { data: pastasData } = await supabase
+        .from("palpites_pastas")
+        .select("*")
+        .order("nome");
+      
+      setPastas((pastasData || []) as PastaComHierarquia[]);
+    } finally {
+      setLoadingPastas(false);
+    }
   };
 
-  // Agrupar palpites por loteria e depois por pasta
-  const palpitesPorLoteriaEPasta = useMemo(() => {
-    const result: Record<string, {
-      semPasta: PalpiteSalvo[];
-      porPasta: Record<string, PalpiteSalvo[]>;
-    }> = {};
-
-    // Inicializar estrutura para cada loteria
-    Object.keys(LOTERIAS_CONFIG).forEach(loteria => {
-      result[loteria] = { semPasta: [], porPasta: {} };
-      pastas.forEach(p => {
-        result[loteria].porPasta[p.id] = [];
-      });
-    });
-
-    // Distribuir palpites
-    palpites.forEach(palpite => {
-      const loteria = (palpite.loteria || "lotofacil") as string;
-      if (!result[loteria]) {
-        result[loteria] = { semPasta: [], porPasta: {} };
-      }
-      
-      if (palpite.pasta_id) {
-        if (!result[loteria].porPasta[palpite.pasta_id]) {
-          result[loteria].porPasta[palpite.pasta_id] = [];
-        }
-        result[loteria].porPasta[palpite.pasta_id].push(palpite);
-      } else {
-        result[loteria].semPasta.push(palpite);
-      }
-    });
-
-    return result;
-  }, [palpites, pastas]);
-
   // Contar palpites por loteria
-  const contarPorLoteria = (loteria: string) => {
-    const data = palpitesPorLoteriaEPasta[loteria];
-    if (!data) return 0;
-    let total = data.semPasta.length;
-    Object.values(data.porPasta).forEach(arr => {
-      total += arr.length;
+  const contarPorLoteria = useMemo(() => {
+    const counts: Record<string, number> = {};
+    palpites.forEach(p => {
+      const lot = p.loteria || "lotofacil";
+      counts[lot] = (counts[lot] || 0) + 1;
     });
-    return total;
+    return counts;
+  }, [palpites]);
+
+  // Obter subpastas de uma loteria
+  const getSubpastas = (loteriaKey: string) => {
+    // Encontrar pasta raiz da loteria
+    const raiz = pastas.find(p => p.loteria === loteriaKey && p.is_root === true);
+    if (!raiz) return [];
+    
+    // Buscar subpastas
+    return pastas.filter(p => p.parent_id === raiz.id);
+  };
+
+  // Contar palpites por subpasta
+  const contarPorSubpasta = (subpastaId: string) => {
+    return palpites.filter(p => p.pasta_id === subpastaId).length;
   };
 
   // Navegação
   const navigateToLoteria = (loteria: LoteriaKey) => {
-    setNav({ level: "pastas", loteria });
+    setNav({ level: "subpastas", loteria });
   };
 
-  const navigateToPasta = (pasta: { id: string; nome: string; cor: string }) => {
-    setNav(prev => ({ ...prev, level: "palpites", pasta }));
-  };
-
-  const navigateToSemPasta = () => {
-    setNav(prev => ({ 
-      ...prev, 
-      level: "palpites", 
-      pasta: { id: "sem-pasta", nome: "Sem pasta", cor: "#6b7280" } 
-    }));
+  const navigateToSubpasta = (subpasta: { id: string; nome: string; cor: string }) => {
+    setNav(prev => ({ ...prev, level: "palpites", subpasta }));
   };
 
   const navigateBack = () => {
     if (nav.level === "palpites") {
-      setNav(prev => ({ level: "pastas", loteria: prev.loteria }));
-    } else if (nav.level === "pastas") {
+      setNav(prev => ({ level: "subpastas", loteria: prev.loteria }));
+    } else if (nav.level === "subpastas") {
       setNav({ level: "loterias" });
     }
   };
@@ -167,38 +160,80 @@ export default function MeusPalpites() {
     setDeleteDialogOpen(false);
   };
 
-  const handleCriarPasta = async (nome: string, cor: string, loteria: string) => {
-    const pasta = await criarPasta(nome, cor, loteria);
-    if (pasta) {
-      setPastas(prev => [...prev, pasta]);
+  const handleCriarSubpasta = async (nome: string, cor: string, loteria: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Buscar ou criar pasta raiz
+      let raiz = pastas.find(p => p.loteria === loteria && p.is_root === true);
+      
+      if (!raiz) {
+        const config = LOTERIAS_CONFIG[loteria as LoteriaKey];
+        const { data } = await supabase
+          .from("palpites_pastas")
+          .insert({
+            user_id: user.id,
+            nome: config?.nome || loteria,
+            cor: config?.cor || "#8b5cf6",
+            loteria: loteria,
+            is_root: true,
+          })
+          .select()
+          .single();
+        
+        if (data) {
+          raiz = data as PastaComHierarquia;
+          setPastas(prev => [...prev, raiz!]);
+        }
+      }
+
+      if (!raiz) return;
+
+      // Criar subpasta
+      const { data: subpasta } = await supabase
+        .from("palpites_pastas")
+        .insert({
+          user_id: user.id,
+          nome: nome,
+          cor: cor,
+          loteria: loteria,
+          parent_id: raiz.id,
+          is_root: false,
+        })
+        .select()
+        .single();
+
+      if (subpasta) {
+        setPastas(prev => [...prev, subpasta as PastaComHierarquia]);
+        toast({
+          title: "Pasta criada! 📁",
+          description: `Pasta "${nome}" criada com sucesso.`,
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao criar subpasta:", error);
+      toast({
+        title: "Erro ao criar pasta",
+        variant: "destructive",
+      });
+    } finally {
+      setNovaPastaOpen(false);
     }
-    setNovaPastaOpen(false);
   };
 
   const handlePalpitesChange = (novosPalpites: PalpiteSalvo[]) => {
-    if (!nav.pasta || !nav.loteria) return;
+    if (!nav.subpasta) return;
     
-    const isLoteriaSemPasta = nav.pasta.id === "sem-pasta";
-    
-    if (isLoteriaSemPasta) {
-      const outrosPalpites = palpites.filter(p => 
-        p.pasta_id !== null || p.loteria !== nav.loteria
-      );
-      setPalpites([...outrosPalpites, ...novosPalpites]);
-    } else {
-      // Filtrar pela pasta E loteria
-      const outrosPalpites = palpites.filter(p => 
-        !(p.pasta_id === nav.pasta!.id && p.loteria === nav.loteria)
-      );
-      setPalpites([...outrosPalpites, ...novosPalpites]);
-    }
+    const outrosPalpites = palpites.filter(p => p.pasta_id !== nav.subpasta!.id);
+    setPalpites([...outrosPalpites, ...novosPalpites]);
     
     if (novosPalpites.length === 0) {
       navigateBack();
     }
   };
 
-  const handleExcluirPasta = async (id: string) => {
+  const handleExcluirSubpasta = async (id: string) => {
     const success = await excluirPasta(id);
     if (success) {
       setPastas(prev => prev.filter(p => p.id !== id));
@@ -206,27 +241,17 @@ export default function MeusPalpites() {
     }
   };
 
-  const getPalpitesDaPasta = () => {
-    if (!nav.pasta || !nav.loteria) return [];
-    
-    if (nav.pasta.id === "sem-pasta") {
-      return palpitesPorLoteriaEPasta[nav.loteria]?.semPasta || [];
-    }
-    
-    return palpitesPorLoteriaEPasta[nav.loteria]?.porPasta[nav.pasta.id] || [];
-  };
-
-  // Verificar se uma pasta tem palpites de uma loteria específica
-  const getPastaCountForLoteria = (pastaId: string, loteria: string) => {
-    return palpitesPorLoteriaEPasta[loteria]?.porPasta[pastaId]?.length || 0;
+  const getPalpitesDaSubpasta = () => {
+    if (!nav.subpasta) return [];
+    return palpites.filter(p => p.pasta_id === nav.subpasta!.id);
   };
 
   // Determinar breadcrumb e título baseado no estado de navegação
   const getPageConfig = () => {
-    if (nav.level === "palpites" && nav.pasta && nav.loteria) {
+    if (nav.level === "palpites" && nav.subpasta && nav.loteria) {
       const loteriaConfig = LOTERIAS_CONFIG[nav.loteria];
       return {
-        title: nav.pasta.nome,
+        title: nav.subpasta.nome,
         breadcrumb: [
           { label: "Meus Palpites", onClick: () => setNav({ level: "loterias" }) },
           { label: loteriaConfig.nome, onClick: navigateBack }
@@ -235,7 +260,7 @@ export default function MeusPalpites() {
       };
     }
     
-    if (nav.level === "pastas" && nav.loteria) {
+    if (nav.level === "subpastas" && nav.loteria) {
       const loteriaConfig = LOTERIAS_CONFIG[nav.loteria];
       return {
         title: loteriaConfig.nome,
@@ -257,195 +282,186 @@ export default function MeusPalpites() {
 
   // ==================== RENDER LEVELS ====================
 
-  // Level 0: Lista de loterias
-  const renderLoteriasLevel = () => (
-    <>
-      {/* Header Fixo - Desktop only */}
-      {!isMobile && (
-        <div className="sticky top-0 z-10 bg-background border-b">
-          <div className="px-4 py-4">
-            <div className="flex items-center gap-3">
-              <Dices className="h-7 w-7 text-primary" />
-              <div>
-                <h1 className="text-xl font-bold">Meus Palpites</h1>
-                <p className="text-sm text-muted-foreground">
-                  {palpites.length} palpite{palpites.length !== 1 ? "s" : ""} salvos
-                </p>
+  // Level 0: Lista de loterias (pastas raiz fixas)
+  const renderLoteriasLevel = () => {
+    const totalPalpites = palpites.length;
+    
+    return (
+      <>
+        {/* Header Fixo - Desktop only */}
+        {!isMobile && (
+          <div className="sticky top-0 z-10 bg-background border-b">
+            <div className="px-4 py-4">
+              <div className="flex items-center gap-3">
+                <Dices className="h-7 w-7 text-primary" />
+                <div>
+                  <h1 className="text-xl font-bold">Meus Palpites</h1>
+                  <p className="text-sm text-muted-foreground">
+                    {totalPalpites} palpite{totalPalpites !== 1 ? "s" : ""} salvos
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Mobile subtitle */}
-      {isMobile && palpites.length > 0 && (
-        <div className="px-4 py-2 border-b">
-          <p className="text-sm text-muted-foreground">
-            {palpites.length} palpite{palpites.length !== 1 ? "s" : ""} salvos
-          </p>
-        </div>
-      )}
-
-      {/* Loading */}
-      {isLoading && (
-        <div className="p-4 space-y-3">
-          {[1, 2].map(i => (
-            <Skeleton key={i} className="h-24 w-full rounded-xl" />
-          ))}
-        </div>
-      )}
-
-      {/* Lista vazia */}
-      {!isLoading && palpites.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-          <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
-            <Dices className="h-10 w-10 text-muted-foreground" />
+        {/* Mobile subtitle */}
+        {isMobile && totalPalpites > 0 && (
+          <div className="px-4 py-2 border-b">
+            <p className="text-sm text-muted-foreground">
+              {totalPalpites} palpite{totalPalpites !== 1 ? "s" : ""} salvos
+            </p>
           </div>
-          <h2 className="text-xl font-semibold mb-2">Nenhum palpite salvo</h2>
-          <p className="text-muted-foreground mb-8 max-w-sm">
-            Gere palpites no Gerador e salve seus favoritos para acessar aqui
-          </p>
-          <Link to="/smart-gerador">
-            <Button size="lg" className="gap-2">
-              <Dices className="h-5 w-5" />
-              Ir para o Gerador
-            </Button>
-          </Link>
-        </div>
-      )}
+        )}
 
-      {/* Cards de Loterias */}
-      {!isLoading && palpites.length > 0 && (
-        <div className="p-4 space-y-3">
-          {(Object.keys(LOTERIAS_CONFIG) as LoteriaKey[]).map((loteriaKey) => {
-            const config = LOTERIAS_CONFIG[loteriaKey];
-            const totalLoteria = contarPorLoteria(loteriaKey);
-            
-            // Contar pastas desta loteria (pela coluna loteria da pasta)
-            const pastasDaLoteria = pastas.filter(p => p.loteria === loteriaKey);
-            const temSemPasta = palpitesPorLoteriaEPasta[loteriaKey]?.semPasta.length > 0;
-            const totalPastas = pastasDaLoteria.length + (temSemPasta ? 1 : 0);
+        {/* Loading */}
+        {(isLoading || loadingPastas) && (
+          <div className="p-4 space-y-3">
+            {[1, 2, 3].map(i => (
+              <Skeleton key={i} className="h-24 w-full rounded-xl" />
+            ))}
+          </div>
+        )}
 
-            return (
-              <button
-                key={loteriaKey}
-                onClick={() => navigateToLoteria(loteriaKey)}
-                className={`w-full p-4 rounded-xl border-2 ${config.bgClass} ${config.borderClass} hover:opacity-90 active:scale-[0.99] transition-all text-left`}
-              >
-                <div className="flex items-center gap-4">
-                  <span className="text-4xl">{config.icone}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-lg" style={{ color: config.cor }}>
-                      {config.nome}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {totalLoteria} palpite{totalLoteria !== 1 ? "s" : ""} • {totalPastas} pasta{totalPastas !== 1 ? "s" : ""}
-                    </p>
+        {/* Lista vazia */}
+        {!isLoading && !loadingPastas && totalPalpites === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-6">
+              <Dices className="h-10 w-10 text-muted-foreground" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Nenhum palpite salvo</h2>
+            <p className="text-muted-foreground mb-8 max-w-sm">
+              Gere palpites no Gerador e salve seus favoritos para acessar aqui
+            </p>
+            <Link to="/smart-gerador">
+              <Button size="lg" className="gap-2">
+                <Dices className="h-5 w-5" />
+                Ir para o Gerador
+              </Button>
+            </Link>
+          </div>
+        )}
+
+        {/* Cards de Loterias (sempre visíveis se há palpites) */}
+        {!isLoading && !loadingPastas && totalPalpites > 0 && (
+          <div className="p-4 space-y-3">
+            {(Object.keys(LOTERIAS_CONFIG) as LoteriaKey[]).map((loteriaKey) => {
+              const config = LOTERIAS_CONFIG[loteriaKey];
+              const totalLoteria = contarPorLoteria[loteriaKey] || 0;
+              const subpastas = getSubpastas(loteriaKey);
+
+              return (
+                <button
+                  key={loteriaKey}
+                  onClick={() => navigateToLoteria(loteriaKey)}
+                  className={`w-full p-4 rounded-xl border-2 ${config.bgClass} ${config.borderClass} hover:opacity-90 active:scale-[0.99] transition-all text-left`}
+                >
+                  <div className="flex items-center gap-4">
+                    <span className="text-4xl">{config.icone}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-lg" style={{ color: config.cor }}>
+                        {config.nome}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {totalLoteria} palpite{totalLoteria !== 1 ? "s" : ""} • {subpastas.length} pasta{subpastas.length !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <ChevronRight className="h-6 w-6 text-muted-foreground" />
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </>
-  );
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </>
+    );
+  };
 
-  // Level 1: Pastas de uma loteria
-  const renderPastasLevel = () => {
+  // Level 1: Subpastas de uma loteria
+  const renderSubpastasLevel = () => {
     if (!nav.loteria) return null;
     
     const config = LOTERIAS_CONFIG[nav.loteria];
-    const loteriaData = palpitesPorLoteriaEPasta[nav.loteria];
-    
-    // Pastas desta loteria (pela coluna loteria)
-    const pastasDaLoteria = pastas.filter(p => p.loteria === nav.loteria);
+    const subpastas = getSubpastas(nav.loteria);
+    const totalLoteria = contarPorLoteria[nav.loteria] || 0;
 
     return (
       <div className="flex-1">
         {/* Header com ícone da loteria */}
-        <div className="px-4 py-3 border-b flex items-center gap-3">
-          <span className="text-2xl">{config.icone}</span>
-          <p className="text-sm text-muted-foreground">
-            {contarPorLoteria(nav.loteria)} palpite{contarPorLoteria(nav.loteria) !== 1 ? "s" : ""}
-          </p>
+        <div className="px-4 py-3 border-b flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{config.icone}</span>
+            <p className="text-sm text-muted-foreground">
+              {totalLoteria} palpite{totalLoteria !== 1 ? "s" : ""}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setNovaPastaOpen(true)}
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Nova Pasta
+          </Button>
         </div>
 
-        <div className="divide-y">
-          {/* Pastas desta loteria */}
-          {pastasDaLoteria.map((pasta) => {
-            const count = getPastaCountForLoteria(pasta.id, nav.loteria!);
-            
-            return (
-              <button
-                key={pasta.id}
-                onClick={() => navigateToPasta(pasta)}
-                className="w-full flex items-center gap-4 px-4 py-4 hover:bg-muted/50 active:bg-muted/75 transition-colors text-left"
-              >
-                <div 
-                  className="w-10 h-10 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: pasta.cor + "20" }}
+        {/* Lista de subpastas */}
+        {subpastas.length > 0 ? (
+          <div className="divide-y">
+            {subpastas.map((pasta) => {
+              const count = contarPorSubpasta(pasta.id);
+              
+              return (
+                <button
+                  key={pasta.id}
+                  onClick={() => navigateToSubpasta(pasta)}
+                  className="w-full flex items-center gap-4 px-4 py-4 hover:bg-muted/50 active:bg-muted/75 transition-colors text-left"
                 >
-                  <Folder className="h-5 w-5" style={{ color: pasta.cor }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold truncate">{pasta.nome}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {count} palpite{count !== 1 ? "s" : ""}
-                  </p>
-                </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
-              </button>
-            );
-          })}
-
-          {/* Sem pasta */}
-          {loteriaData?.semPasta.length > 0 && (
-            <button
-              onClick={navigateToSemPasta}
-              className="w-full flex items-center gap-4 px-4 py-4 hover:bg-muted/50 active:bg-muted/75 transition-colors text-left"
-            >
-              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                <FolderOpen className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold">Sem pasta</p>
-                <p className="text-sm text-muted-foreground">
-                  {loteriaData.semPasta.length} palpite{loteriaData.semPasta.length !== 1 ? "s" : ""}
-                </p>
-              </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
-            </button>
-          )}
-        </div>
-
-        {/* Pastas vazias (só mostra se não há nenhum palpite) */}
-        {pastasDaLoteria.length === 0 && loteriaData?.semPasta.length === 0 && (
+                  <div 
+                    className="w-10 h-10 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: pasta.cor + "20" }}
+                  >
+                    <Folder className="h-5 w-5" style={{ color: pasta.cor }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold truncate">{pasta.nome}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {count} palpite{count !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+                </button>
+              );
+            })}
+          </div>
+        ) : (
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
               <Folder className="h-8 w-8 text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground">
-              Nenhum palpite salvo para {config.nome}
+            <p className="text-muted-foreground mb-4">
+              Nenhuma pasta criada para {config.nome}
             </p>
+            <Button onClick={() => setNovaPastaOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Criar Primeira Pasta
+            </Button>
           </div>
         )}
       </div>
     );
   };
 
-  // Level 2: Palpites de uma pasta
+  // Level 2: Palpites de uma subpasta
   const renderPalpitesLevel = () => {
-    if (!nav.pasta || !nav.loteria) return null;
-    
-    const config = LOTERIAS_CONFIG[nav.loteria];
+    if (!nav.subpasta || !nav.loteria) return null;
     
     return (
       <PastaContent
-        pastaNome={nav.pasta.nome}
-        pastaCor={nav.pasta.id === "sem-pasta" ? config.cor : nav.pasta.cor}
-        palpites={getPalpitesDaPasta()}
+        pastaNome={nav.subpasta.nome}
+        pastaCor={nav.subpasta.cor}
+        palpites={getPalpitesDaSubpasta()}
         onPalpitesChange={handlePalpitesChange}
         onClose={navigateBack}
       />
@@ -460,7 +476,7 @@ export default function MeusPalpites() {
     >
       <div className="flex flex-col min-h-[calc(100vh-4rem)]">
         {nav.level === "loterias" && renderLoteriasLevel()}
-        {nav.level === "pastas" && renderPastasLevel()}
+        {nav.level === "subpastas" && renderSubpastasLevel()}
         {nav.level === "palpites" && renderPalpitesLevel()}
       </div>
 
@@ -468,7 +484,7 @@ export default function MeusPalpites() {
       <NovaPastaDialog
         open={novaPastaOpen}
         onOpenChange={setNovaPastaOpen}
-        onConfirm={handleCriarPasta}
+        onConfirm={handleCriarSubpasta}
         loteria={nav.loteria || "lotofacil"}
         isLoading={isLoading}
       />

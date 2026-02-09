@@ -4,11 +4,10 @@ import { Button } from "@/components/ui/button";
 import { PalpiteCard } from "@/components/shared/PalpiteCard";
 import { EstrategiaCard, type EstrategiaData } from "./EstrategiaCard";
 import { PalpitesToolbar } from "@/components/palpites/PalpitesToolbar";
-import { NovaPastaDialog } from "@/components/palpites/NovaPastaDialog";
-import { SelecionarPastaDialog } from "@/components/palpites/SelecionarPastaDialog";
+import { SelecionarSubpastaDialog } from "@/components/palpites/SelecionarSubpastaDialog";
 import { formatarDezena } from "@/lib/lotofacil";
 import { useToast } from "@/hooks/use-toast";
-import { usePalpitesSalvos, type PalpitePasta } from "@/hooks/usePalpitesSalvos";
+import { usePalpitesSalvos } from "@/hooks/usePalpitesSalvos";
 import { ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
 
 interface JogoGerado {
@@ -39,15 +38,13 @@ export function ResultadosSheet({
   dezenasFixes = [],
 }: ResultadosSheetProps) {
   const { toast } = useToast();
-  const { salvarPalpites, buscarPastas, criarPasta, isLoading: isSaving } = usePalpitesSalvos();
+  const { salvarPalpites, isLoading: isSaving } = usePalpitesSalvos();
   const [jogos, setJogos] = useState<JogoGerado[]>(jogosIniciais);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(0);
   
-  // Estados para dialogs de pasta
-  const [pastas, setPastas] = useState<PalpitePasta[]>([]);
-  const [selecionarPastaOpen, setSelecionarPastaOpen] = useState(false);
-  const [novaPastaOpen, setNovaPastaOpen] = useState(false);
+  // Estados para dialog de subpasta
+  const [selecionarSubpastaOpen, setSelecionarSubpastaOpen] = useState(false);
   const [salvarTodosMode, setSalvarTodosMode] = useState(false);
 
   // Sincronizar jogos quando props mudam
@@ -56,13 +53,6 @@ export function ResultadosSheet({
     setSelected(new Set());
     setCurrentPage(0);
   }, [jogosIniciais]);
-
-  // Carregar pastas quando abrir
-  useEffect(() => {
-    if (open) {
-      buscarPastas("lotofacil").then(setPastas);
-    }
-  }, [open]);
 
   const totalPages = Math.ceil(jogos.length / ITEMS_PER_PAGE);
   
@@ -140,15 +130,15 @@ export function ResultadosSheet({
       return;
     }
     setSalvarTodosMode(false);
-    setSelecionarPastaOpen(true);
+    setSelecionarSubpastaOpen(true);
   };
 
   const handleSalvarTodos = () => {
     setSalvarTodosMode(true);
-    setSelecionarPastaOpen(true);
+    setSelecionarSubpastaOpen(true);
   };
 
-  const handleSelecionarPasta = async (pastaId: string | null) => {
+  const handleSelecionarSubpasta = async (pastaId: string) => {
     let palpitesParaSalvar: JogoGerado[];
     
     if (salvarTodosMode) {
@@ -165,39 +155,8 @@ export function ResultadosSheet({
       return estrategia.ferramentas.slice(0, 2).join(" + ");
     };
     
-    await salvarPalpites(palpitesParaSalvar, periodoAnalise, pastaId, getEstrategiaTexto(), estrategia);
-    setSelecionarPastaOpen(false);
-  };
-
-  const handleCriarNovaPasta = () => {
-    setSelecionarPastaOpen(false);
-    setNovaPastaOpen(true);
-  };
-
-  const handleConfirmarNovaPasta = async (nome: string, cor: string, loteria: string) => {
-    const novaPasta = await criarPasta(nome, cor, loteria);
-    if (novaPasta) {
-      setPastas(prev => [...prev, novaPasta]);
-      
-      let palpitesParaSalvar: JogoGerado[];
-      
-      if (salvarTodosMode) {
-        palpitesParaSalvar = jogos;
-      } else {
-        const indices = Array.from(selected)
-          .map(id => parseInt(id.replace('gerador-', '')))
-          .sort((a, b) => a - b);
-        palpitesParaSalvar = indices.map(i => jogos[i]);
-      }
-      
-      const getEstrategiaTexto = () => {
-        if (!estrategia) return undefined;
-        return estrategia.ferramentas.slice(0, 2).join(" + ");
-      };
-      
-      await salvarPalpites(palpitesParaSalvar, periodoAnalise, novaPasta.id, getEstrategiaTexto(), estrategia, "lotofacil");
-    }
-    setNovaPastaOpen(false);
+    await salvarPalpites(palpitesParaSalvar, periodoAnalise, pastaId, getEstrategiaTexto(), estrategia, "lotofacil");
+    setSelecionarSubpastaOpen(false);
   };
 
   // Funções para excluir
@@ -387,22 +346,11 @@ export function ResultadosSheet({
         </div>
       </SheetContent>
 
-      {/* Dialog Selecionar Pasta */}
-      <SelecionarPastaDialog
-        open={selecionarPastaOpen}
-        onOpenChange={setSelecionarPastaOpen}
-        pastas={pastas.map(p => ({ id: p.id, nome: p.nome, cor: p.cor }))}
-        onSelect={handleSelecionarPasta}
-        onNovaPasta={handleCriarNovaPasta}
-        loteria="lotofacil"
-        isLoading={isSaving}
-      />
-
-      {/* Dialog Nova Pasta */}
-      <NovaPastaDialog
-        open={novaPastaOpen}
-        onOpenChange={setNovaPastaOpen}
-        onConfirm={handleConfirmarNovaPasta}
+      {/* Dialog Selecionar Subpasta */}
+      <SelecionarSubpastaDialog
+        open={selecionarSubpastaOpen}
+        onOpenChange={setSelecionarSubpastaOpen}
+        onSelect={handleSelecionarSubpasta}
         loteria="lotofacil"
         isLoading={isSaving}
       />
