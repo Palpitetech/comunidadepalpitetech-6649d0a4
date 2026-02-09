@@ -85,14 +85,16 @@ export function JogoCardDuplaSena({
           {acertos !== null && acertos !== undefined && (
             <span
               className={cn(
-                "text-xs font-bold px-2 py-0.5 rounded-full",
-                acertos >= 6 && "bg-amber-500 text-white",
-                acertos === 5 && "bg-emerald-500 text-white",
-                acertos === 4 && "bg-blue-500 text-white",
-                acertos < 4 && "bg-muted text-muted-foreground"
+                "text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shrink-0",
+                acertos >= 6 && "bg-orange-500 text-white animate-pulse shadow-lg",
+                acertos === 5 && "bg-orange-600 text-white",
+                acertos === 4 && "bg-orange-700 text-white",
+                acertos === 3 && "bg-orange-800 text-orange-50",
+                acertos < 3 && "bg-muted text-muted-foreground"
               )}
             >
-              {acertos}pt
+              {acertos >= 6 && <span>🏆</span>}
+              <span>{acertos} pts</span>
             </span>
           )}
         </div>

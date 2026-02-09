@@ -105,14 +105,15 @@ export function JogoCardMegaSena({
           {acertos !== null && acertos !== undefined && (
             <span
               className={cn(
-                "text-xs font-bold px-2 py-0.5 rounded-full shrink-0",
-                acertos >= 6 && "bg-amber-500 text-white",
-                acertos === 5 && "bg-emerald-500 text-white",
-                acertos === 4 && "bg-blue-500 text-white",
+                "text-[10px] font-bold px-2 py-1 rounded-full shrink-0 flex items-center gap-1",
+                acertos >= 6 && "bg-green-500 text-white animate-pulse shadow-lg",
+                acertos === 5 && "bg-green-600 text-white",
+                acertos === 4 && "bg-green-700 text-white",
                 acertos < 4 && "bg-muted text-muted-foreground"
               )}
             >
-              {acertos}pt
+              {acertos >= 6 && <span>🏆</span>}
+              <span>{acertos} pts</span>
             </span>
           )}
           <Button

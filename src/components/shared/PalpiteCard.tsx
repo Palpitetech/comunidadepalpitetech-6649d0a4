@@ -167,22 +167,30 @@ export function PalpiteCard({
         </div>
         
         <div className="flex items-center gap-1">
-          {/* Badge de acertos - Verde escuro para premiados */}
+          {/* Badge de acertos - Roxo para Lotofácil */}
           {(localAcertos !== null || (acertos !== undefined && acertos !== null)) && (
-            <span className={cn(
-              "text-[10px] font-bold px-2 py-0.5 rounded-full",
-              (localAcertos ?? acertos ?? 0) === 15 
-                ? "bg-emerald-600 text-white animate-pulse" 
-                : (localAcertos ?? acertos ?? 0) >= 11 
-                  ? "bg-emerald-700 text-white" 
-                  : "bg-muted text-muted-foreground"
-            )}>
-              {(localAcertos ?? acertos ?? 0) === 15 ? "🏆 " : ""}
-              {localAcertos ?? acertos} acertos
-              {concursoVerificado && (
-                <span className="ml-1 opacity-80">#{concursoVerificado}</span>
-              )}
-            </span>
+            (() => {
+              const pts = localAcertos ?? acertos ?? 0;
+              const isPremio = pts >= 11;
+              const isMaximo = pts === 15;
+              
+              return (
+                <span className={cn(
+                  "text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shrink-0",
+                  isMaximo 
+                    ? "bg-purple-500 text-white animate-pulse shadow-lg" 
+                    : isPremio 
+                      ? pts === 14 ? "bg-purple-600 text-white"
+                      : pts === 13 ? "bg-purple-700 text-white"
+                      : pts === 12 ? "bg-purple-800 text-purple-50"
+                      : "bg-purple-900 text-purple-100"
+                    : "bg-muted text-muted-foreground"
+                )}>
+                  {isMaximo && <span>🏆</span>}
+                  <span>{pts} pts</span>
+                </span>
+              );
+            })()
           )}
           
           {isSelected && !hideSelection && (
