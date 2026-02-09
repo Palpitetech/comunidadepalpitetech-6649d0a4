@@ -176,7 +176,7 @@ export function ResultadosSheetDuplaSena({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
         side="bottom" 
-        className="h-[100dvh] p-0 overflow-y-auto z-50"
+        className="h-[100dvh] bottom-0 p-0 overflow-y-auto z-50"
         onInteractOutside={(e) => e.preventDefault()}
         hideCloseButton
       >
