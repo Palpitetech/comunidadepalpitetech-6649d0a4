@@ -368,6 +368,25 @@ export function PalpitesToolbarDuplaSena({
           </div>
         </div>
       )}
+
+      {/* Fallback: Nenhuma premiação */}
+      {!hidePremios && concursoSelecionado && resumoPremiacoes && resumoPremiacoes.total === 0 && resumoVisivel && (
+        <div className="bg-muted/50 border border-border rounded-xl p-3 animate-fade-in relative">
+          <button
+            onClick={() => setResumoVisivel(false)}
+            className="absolute top-2 right-2 text-muted-foreground hover:text-foreground transition-colors p-1"
+            aria-label="Fechar resumo"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <div className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
+              Nenhuma premiação no concurso #{concursoSelecionado.concurso_id}. Continue tentando! 🍀
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
