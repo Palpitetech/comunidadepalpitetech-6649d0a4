@@ -309,6 +309,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                              Linhas e Colunas
                            </div>
                          </Link>
+                         <Link to="/duplasena/tabela-movimentacao" onClick={closeAndNavigate}>
+                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                             <Table2 className="h-4 w-4" />
+                             Tabela de Movimentação
+                           </div>
+                         </Link>
                           <Link to="/duplasena/gerador" onClick={closeAndNavigate}>
                             <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
                               <Dices className="h-4 w-4" />
