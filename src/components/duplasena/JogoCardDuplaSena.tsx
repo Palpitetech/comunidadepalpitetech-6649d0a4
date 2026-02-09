@@ -3,6 +3,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
+// Dupla Sena: 1-50, grid 5x10
+const PRIMOS_DUPLASENA = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47];
+const MOLDURA_DUPLASENA = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, // top row
+  11, 20, // sides row 2
+  21, 30, // sides row 3
+  31, 40, // sides row 4
+  41, 42, 43, 44, 45, 46, 47, 48, 49, 50 // bottom row
+];
+
 interface JogoCardDuplaSenaProps {
   index: number;
   dezenas: number[];
@@ -11,6 +21,7 @@ interface JogoCardDuplaSenaProps {
   isSelected?: boolean;
   onSelectChange?: (checked: boolean) => void;
   acertos?: number | null;
+  showPatterns?: boolean;
 }
 
 export function JogoCardDuplaSena({
@@ -21,8 +32,15 @@ export function JogoCardDuplaSena({
   isSelected = false,
   onSelectChange,
   acertos,
+  showPatterns = true,
 }: JogoCardDuplaSenaProps) {
   const formatNum = (n: number) => n.toString().padStart(2, "0");
+
+  // Calculate patterns
+  const qtdImpares = dezenas.filter(d => d % 2 !== 0).length;
+  const qtdRepetidas = dezenas.filter(d => ultimoConcursoDezenas.includes(d)).length;
+  const qtdMoldura = dezenas.filter(d => MOLDURA_DUPLASENA.includes(d)).length;
+  const qtdPrimos = dezenas.filter(d => PRIMOS_DUPLASENA.includes(d)).length;
 
   return (
     <Card className={cn(
@@ -66,7 +84,6 @@ export function JogoCardDuplaSena({
             <div className="flex flex-wrap gap-1.5">
               {dezenas.map((dezena) => {
                 const isFixa = dezenasFixes.includes(dezena);
-                const isRepetida = ultimoConcursoDezenas.includes(dezena);
                 
                 return (
                   <span
@@ -83,6 +100,24 @@ export function JogoCardDuplaSena({
                 );
               })}
             </div>
+
+            {/* Pattern Statistics */}
+            {showPatterns && (
+              <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-border/50">
+                <span className="text-[10px] text-muted-foreground">
+                  <span className="font-medium">Ímp:</span> {qtdImpares}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  <span className="font-medium">Rep:</span> {qtdRepetidas}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  <span className="font-medium">Mol:</span> {qtdMoldura}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  <span className="font-medium">Pri:</span> {qtdPrimos}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
