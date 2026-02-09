@@ -85,6 +85,8 @@ export default {
           "primary-foreground": "hsl(var(--duplasena-primary-foreground))",
           secondary: "hsl(var(--duplasena-secondary))",
           "secondary-foreground": "hsl(var(--duplasena-secondary-foreground))",
+          excluida: "hsl(var(--duplasena-excluida))",
+          "excluida-foreground": "hsl(var(--duplasena-excluida-foreground))",
         },
         // Status Quente/Frio
         status: {
