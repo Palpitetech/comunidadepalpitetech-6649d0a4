@@ -72,6 +72,8 @@
      --duplasena-primary-foreground: 0 0% 100%;
      --duplasena-secondary: 0 75% 55%;
      --duplasena-secondary-foreground: 0 0% 100%;
+     --duplasena-excluida: 0 70% 50%;
+     --duplasena-excluida-foreground: 0 0% 100%;
 
     /* Status Quente/Frio */
     --status-quente: 142 70% 45%;
