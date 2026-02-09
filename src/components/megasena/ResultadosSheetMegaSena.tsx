@@ -5,8 +5,9 @@ import { EstrategiaCard, type EstrategiaData } from "@/components/gerador/Estrat
 import { useToast } from "@/hooks/use-toast";
 import { usePalpitesSalvos } from "@/hooks/usePalpitesSalvos";
 import { SelecionarSubpastaDialog } from "@/components/palpites/SelecionarSubpastaDialog";
-import { ChevronLeft, ChevronRight, ArrowLeft, Check, Copy, Save, Trash2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { JogoCardMegaSena } from "@/components/megasena/JogoCardMegaSena";
+import { PalpitesToolbar } from "@/components/palpites/PalpitesToolbar";
+import { ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
 
 interface JogoGerado {
   dezenas: number[];
@@ -38,8 +39,9 @@ export function ResultadosSheetMegaSena({
   const { toast } = useToast();
   const { salvarPalpites, isLoading: isSaving } = usePalpitesSalvos();
   const [jogos, setJogos] = useState<JogoGerado[]>(jogosIniciais);
-  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(0);
+  const [acertosPorPalpite, setAcertosPorPalpite] = useState<Record<string, number>>({});
   
   const [selecionarSubpastaOpen, setSelecionarSubpastaOpen] = useState(false);
   const [salvarTodosMode, setSalvarTodosMode] = useState(false);
@@ -48,6 +50,7 @@ export function ResultadosSheetMegaSena({
     setJogos(jogosIniciais);
     setSelected(new Set());
     setCurrentPage(0);
+    setAcertosPorPalpite({});
   }, [jogosIniciais]);
 
   const totalPages = Math.ceil(jogos.length / ITEMS_PER_PAGE);
@@ -59,12 +62,19 @@ export function ResultadosSheetMegaSena({
 
   const formatDezena = (n: number) => n.toString().padStart(2, "0");
 
-  const handleSelectChange = (index: number) => {
+  // Converter jogos para formato de palpite para toolbar
+  const palpitesParaToolbar = jogos.map((jogo, i) => ({
+    id: `gerador-${i}`,
+    dezenas: jogo.dezenas,
+  }));
+
+  const handleSelectChange = (globalIndex: number, checked: boolean) => {
     const newSelected = new Set(selected);
-    if (newSelected.has(index)) {
-      newSelected.delete(index);
+    const id = `gerador-${globalIndex}`;
+    if (checked) {
+      newSelected.add(id);
     } else {
-      newSelected.add(index);
+      newSelected.delete(id);
     }
     setSelected(newSelected);
   };
@@ -73,7 +83,7 @@ export function ResultadosSheetMegaSena({
     if (selected.size === jogos.length) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(jogos.map((_, i) => i)));
+      setSelected(new Set(jogos.map((_, i) => `gerador-${i}`)));
     }
   };
 
@@ -88,50 +98,104 @@ export function ResultadosSheetMegaSena({
     });
   };
 
+  const handleCopiarSelecionados = async () => {
+    if (selected.size === 0) {
+      toast({
+        title: "Nenhum palpite selecionado",
+        description: "Selecione pelo menos um palpite para copiar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const texto = jogos
+      .filter((_, i) => selected.has(`gerador-${i}`))
+      .map((jogo, i) => `Jogo ${i + 1}: ${jogo.dezenas.map(formatDezena).join(" ")}`)
+      .join("\n");
+    await navigator.clipboard.writeText(texto);
+    toast({
+      title: "Copiado! 📋",
+      description: `${selected.size} palpite(s) copiado(s).`,
+    });
+  };
+
   const handleSalvarTodos = () => {
     setSalvarTodosMode(true);
     setSelecionarSubpastaOpen(true);
   };
 
+  const handleSalvarSelecionados = () => {
+    if (selected.size === 0) {
+      toast({
+        title: "Nenhum palpite selecionado",
+        description: "Selecione pelo menos um palpite para salvar.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setSalvarTodosMode(false);
+    setSelecionarSubpastaOpen(true);
+  };
+
   const handleSelecionarSubpasta = async (pastaId: string) => {
-    const palpitesParaSalvar = salvarTodosMode ? jogos : Array.from(selected).map(i => jogos[i]);
+    const jogosParaSalvar = salvarTodosMode 
+      ? jogos 
+      : jogos.filter((_, i) => selected.has(`gerador-${i}`));
     
     const getEstrategiaTexto = () => {
       if (!estrategia) return undefined;
-      return estrategia.ferramentas.slice(0, 2).join(" + ");
+      const partes = [];
+      if ('titulo' in estrategia && estrategia.titulo) partes.push(estrategia.titulo);
+      if ('resumo' in estrategia && estrategia.resumo) partes.push(estrategia.resumo);
+      return partes.join(" - ") || "Estratégia IA";
     };
-    
-    await salvarPalpites(
-      palpitesParaSalvar, 
-      periodoAnalise, 
-      pastaId, 
-      getEstrategiaTexto(), 
+
+    const success = await salvarPalpites(
+      jogosParaSalvar.map(j => ({ dezenas: j.dezenas })),
+      periodoAnalise,
+      pastaId,
+      getEstrategiaTexto(),
       estrategia,
       "megasena"
     );
+
+    if (success) {
+      toast({
+        title: "Palpites salvos! 🎉",
+        description: `${jogosParaSalvar.length} palpite(s) salvo(s) na pasta.`,
+      });
+    }
+    
     setSelecionarSubpastaOpen(false);
   };
 
-  const handleExcluirTodos = () => {
-    onClearAll();
-    onOpenChange(false);
-  };
-
-  const handleDeleteSingle = (index: number) => {
-    const novosJogos = jogos.filter((_, i) => i !== index);
-    setJogos(novosJogos);
+  const handleExcluirSelecionados = () => {
+    if (selected.size === 0) return;
     
-    const newSelected = new Set<number>();
-    selected.forEach((i) => {
-      if (i < index) newSelected.add(i);
-      else if (i > index) newSelected.add(i - 1);
-    });
-    setSelected(newSelected);
+    const novosJogos = jogos.filter((_, i) => !selected.has(`gerador-${i}`));
+    setJogos(novosJogos);
+    setSelected(new Set());
+    
+    const newTotalPages = Math.ceil(novosJogos.length / ITEMS_PER_PAGE);
+    if (currentPage >= newTotalPages && newTotalPages > 0) {
+      setCurrentPage(newTotalPages - 1);
+    }
     
     if (novosJogos.length === 0) {
       onClearAll();
       onOpenChange(false);
     }
+  };
+
+  const handleExcluirTodos = () => {
+    setJogos([]);
+    setSelected(new Set());
+    onClearAll();
+    onOpenChange(false);
+  };
+
+  const handleVerificarTodos = (_concurso: any, novosAcertos: Record<string, number>) => {
+    setAcertosPorPalpite(novosAcertos);
   };
 
   return (
@@ -155,7 +219,7 @@ export function ResultadosSheetMegaSena({
               <SheetTitle className="text-lg font-bold">
                 Palpites Mega Sena
               </SheetTitle>
-              <span className="text-xs bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-semibold px-2 py-1 rounded-full">
+              <span className="text-xs bg-megasena-primary/20 text-megasena-primary font-semibold px-2 py-1 rounded-full">
                 {jogos.length} gerados
               </span>
             </div>
@@ -167,103 +231,38 @@ export function ResultadosSheetMegaSena({
             <EstrategiaCard estrategia={estrategia} />
           )}
 
-          {/* Toolbar simplificada */}
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSelectAll}
-              className="gap-1"
-            >
-              <Check className="h-4 w-4" />
-              {selected.size === jogos.length ? "Desmarcar" : "Selecionar"}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopiarTodos}
-              className="gap-1"
-            >
-              <Copy className="h-4 w-4" />
-              Copiar
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSalvarTodos}
-              className="gap-1"
-            >
-              <Save className="h-4 w-4" />
-              Salvar
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExcluirTodos}
-              className="gap-1 text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-              Limpar
-            </Button>
-          </div>
+          {/* Toolbar com verificação de prêmios */}
+          <PalpitesToolbar
+            palpites={palpitesParaToolbar}
+            selected={selected}
+            onSelectAll={handleSelectAll}
+            onCopiarTodos={handleCopiarTodos}
+            onCopiarSelecionados={handleCopiarSelecionados}
+            onExcluirSelecionados={handleExcluirSelecionados}
+            onExcluirTodos={handleExcluirTodos}
+            onVerificarTodos={handleVerificarTodos}
+            onSalvarTodos={handleSalvarTodos}
+            onSalvarSelecionados={handleSalvarSelecionados}
+            hideEstrategias
+            loteria="megasena"
+          />
 
           {/* Lista de Palpites */}
           <div className="grid gap-2">
             {jogosPaginados.map((jogo, localIndex) => {
               const globalIndex = currentPage * ITEMS_PER_PAGE + localIndex;
+              const id = `gerador-${globalIndex}`;
               return (
-                <div
+                <JogoCardMegaSena
                   key={globalIndex}
-                  className={cn(
-                    "p-3 rounded-lg border transition-colors",
-                    selected.has(globalIndex) 
-                      ? "border-emerald-500 bg-emerald-500/5" 
-                      : "border-border"
-                  )}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleSelectChange(globalIndex)}
-                        className={cn(
-                          "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
-                          selected.has(globalIndex)
-                            ? "bg-emerald-500 border-emerald-500 text-white"
-                            : "border-muted-foreground/30"
-                        )}
-                      >
-                        {selected.has(globalIndex) && <Check className="h-3 w-3" />}
-                      </button>
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Jogo {globalIndex + 1}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteSingle(globalIndex)}
-                      className="text-muted-foreground hover:text-destructive transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-1.5">
-                    {jogo.dezenas.map((dezena) => (
-                      <span
-                        key={dezena}
-                        className={cn(
-                          "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold",
-                          dezenasFixes?.includes(dezena)
-                            ? "bg-foreground text-background"
-                            : ultimoConcursoDezenas.includes(dezena)
-                            ? "bg-emerald-500 text-white"
-                            : "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
-                        )}
-                      >
-                        {formatDezena(dezena)}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+                  index={globalIndex}
+                  dezenas={jogo.dezenas}
+                  dezenasFixes={dezenasFixes}
+                  isSelected={selected.has(id)}
+                  onSelectChange={(checked) => handleSelectChange(globalIndex, checked)}
+                  acertos={acertosPorPalpite[id]}
+                  ultimoConcursoDezenas={ultimoConcursoDezenas}
+                />
               );
             })}
           </div>
@@ -285,6 +284,9 @@ export function ResultadosSheetMegaSena({
               <div className="flex flex-col items-center">
                 <span className="text-sm font-medium">
                   {currentPage + 1} / {totalPages}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  {currentPage * ITEMS_PER_PAGE + 1}-{Math.min((currentPage + 1) * ITEMS_PER_PAGE, jogos.length)} de {jogos.length}
                 </span>
               </div>
               
