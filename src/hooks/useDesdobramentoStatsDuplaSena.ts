@@ -16,18 +16,14 @@ export interface DesdobramentoStatsDuplaSena {
   isLoading: boolean;
 }
 
-type SorteioKey = "sorteio1" | "sorteio2";
-
-export function useDesdobramentoStatsDuplaSena(sorteio: SorteioKey = "sorteio1"): DesdobramentoStatsDuplaSena {
-  const dezenasField = sorteio === "sorteio1" ? "dezenas_sorteio1" : "dezenas_sorteio2";
-  const suffix = sorteio === "sorteio1" ? "_s1" : "_s2";
-
+// Estatísticas combinadas de ambos os sorteios (mesmo jogo vale para S1 e S2)
+export function useDesdobramentoStatsDuplaSena(): DesdobramentoStatsDuplaSena {
   const { data: repetidasData, isLoading: loadingRepetidas } = useQuery({
-    queryKey: ["desdobramento-duplasena-repetidas", sorteio],
+    queryKey: ["desdobramento-duplasena-repetidas-combined"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("resultados_duplasena")
-        .select(`concurso_id, qtd_repetidas${suffix}`)
+        .select("concurso_id, qtd_repetidas_s1, qtd_repetidas_s2")
         .order("concurso_id", { ascending: false });
 
       if (error) throw error;
@@ -35,9 +31,12 @@ export function useDesdobramentoStatsDuplaSena(sorteio: SorteioKey = "sorteio1")
 
       const agrupado = new Map<number, number>();
 
-      data.forEach((r: Record<string, unknown>) => {
-        const qtd = (r[`qtd_repetidas${suffix}`] as number) ?? 0;
-        agrupado.set(qtd, (agrupado.get(qtd) ?? 0) + 1);
+      data.forEach((r) => {
+        // Combinar ocorrências de ambos os sorteios
+        const qtd1 = r.qtd_repetidas_s1 ?? 0;
+        const qtd2 = r.qtd_repetidas_s2 ?? 0;
+        agrupado.set(qtd1, (agrupado.get(qtd1) ?? 0) + 1);
+        agrupado.set(qtd2, (agrupado.get(qtd2) ?? 0) + 1);
       });
 
       return Array.from(agrupado.entries())
@@ -48,11 +47,11 @@ export function useDesdobramentoStatsDuplaSena(sorteio: SorteioKey = "sorteio1")
   });
 
   const { data: imparesData, isLoading: loadingImpares } = useQuery({
-    queryKey: ["desdobramento-duplasena-impares", sorteio],
+    queryKey: ["desdobramento-duplasena-impares-combined"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("resultados_duplasena")
-        .select(`concurso_id, qtd_pares${suffix}`)
+        .select("concurso_id, qtd_pares_s1, qtd_pares_s2")
         .order("concurso_id", { ascending: false });
 
       if (error) throw error;
@@ -60,10 +59,12 @@ export function useDesdobramentoStatsDuplaSena(sorteio: SorteioKey = "sorteio1")
 
       const agrupado = new Map<number, number>();
 
-      data.forEach((r: Record<string, unknown>) => {
-        // 6 dezenas por sorteio
-        const qtdImpares = 6 - ((r[`qtd_pares${suffix}`] as number) ?? 0);
-        agrupado.set(qtdImpares, (agrupado.get(qtdImpares) ?? 0) + 1);
+      data.forEach((r) => {
+        // 6 dezenas por sorteio, combinar ambos
+        const qtdImpares1 = 6 - (r.qtd_pares_s1 ?? 0);
+        const qtdImpares2 = 6 - (r.qtd_pares_s2 ?? 0);
+        agrupado.set(qtdImpares1, (agrupado.get(qtdImpares1) ?? 0) + 1);
+        agrupado.set(qtdImpares2, (agrupado.get(qtdImpares2) ?? 0) + 1);
       });
 
       return Array.from(agrupado.entries())
@@ -74,11 +75,11 @@ export function useDesdobramentoStatsDuplaSena(sorteio: SorteioKey = "sorteio1")
   });
 
   const { data: primosData, isLoading: loadingPrimos } = useQuery({
-    queryKey: ["desdobramento-duplasena-primos", sorteio],
+    queryKey: ["desdobramento-duplasena-primos-combined"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("resultados_duplasena")
-        .select(`concurso_id, qtd_primos${suffix}`)
+        .select("concurso_id, qtd_primos_s1, qtd_primos_s2")
         .order("concurso_id", { ascending: false });
 
       if (error) throw error;
@@ -86,9 +87,11 @@ export function useDesdobramentoStatsDuplaSena(sorteio: SorteioKey = "sorteio1")
 
       const agrupado = new Map<number, number>();
 
-      data.forEach((r: Record<string, unknown>) => {
-        const qtd = (r[`qtd_primos${suffix}`] as number) ?? 0;
-        agrupado.set(qtd, (agrupado.get(qtd) ?? 0) + 1);
+      data.forEach((r) => {
+        const qtd1 = r.qtd_primos_s1 ?? 0;
+        const qtd2 = r.qtd_primos_s2 ?? 0;
+        agrupado.set(qtd1, (agrupado.get(qtd1) ?? 0) + 1);
+        agrupado.set(qtd2, (agrupado.get(qtd2) ?? 0) + 1);
       });
 
       return Array.from(agrupado.entries())
@@ -99,11 +102,11 @@ export function useDesdobramentoStatsDuplaSena(sorteio: SorteioKey = "sorteio1")
   });
 
   const { data: molduraData, isLoading: loadingMoldura } = useQuery({
-    queryKey: ["desdobramento-duplasena-moldura", sorteio],
+    queryKey: ["desdobramento-duplasena-moldura-combined"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("resultados_duplasena")
-        .select(`concurso_id, qtd_moldura${suffix}`)
+        .select("concurso_id, qtd_moldura_s1, qtd_moldura_s2")
         .order("concurso_id", { ascending: false });
 
       if (error) throw error;
@@ -111,9 +114,11 @@ export function useDesdobramentoStatsDuplaSena(sorteio: SorteioKey = "sorteio1")
 
       const agrupado = new Map<number, number>();
 
-      data.forEach((r: Record<string, unknown>) => {
-        const qtd = (r[`qtd_moldura${suffix}`] as number) ?? 0;
-        agrupado.set(qtd, (agrupado.get(qtd) ?? 0) + 1);
+      data.forEach((r) => {
+        const qtd1 = r.qtd_moldura_s1 ?? 0;
+        const qtd2 = r.qtd_moldura_s2 ?? 0;
+        agrupado.set(qtd1, (agrupado.get(qtd1) ?? 0) + 1);
+        agrupado.set(qtd2, (agrupado.get(qtd2) ?? 0) + 1);
       });
 
       return Array.from(agrupado.entries())
@@ -123,13 +128,13 @@ export function useDesdobramentoStatsDuplaSena(sorteio: SorteioKey = "sorteio1")
     },
   });
 
-  // Para múltiplos de 3, calcular manualmente a partir das dezenas
+  // Para múltiplos de 3, calcular manualmente a partir das dezenas de ambos os sorteios
   const { data: multiplosDe3Data, isLoading: loadingM3 } = useQuery({
-    queryKey: ["desdobramento-duplasena-multiplosde3", sorteio],
+    queryKey: ["desdobramento-duplasena-multiplosde3-combined"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("resultados_duplasena")
-        .select(dezenasField)
+        .select("dezenas_sorteio1, dezenas_sorteio2")
         .order("concurso_id", { ascending: false });
 
       if (error) throw error;
@@ -137,10 +142,13 @@ export function useDesdobramentoStatsDuplaSena(sorteio: SorteioKey = "sorteio1")
 
       const agrupado = new Map<number, number>();
 
-      data.forEach((r: Record<string, unknown>) => {
-        const dezenas = (r[dezenasField] as number[]) || [];
-        const qtdM3 = dezenas.filter((d: number) => d % 3 === 0).length;
-        agrupado.set(qtdM3, (agrupado.get(qtdM3) ?? 0) + 1);
+      data.forEach((r) => {
+        const dezenas1 = r.dezenas_sorteio1 || [];
+        const dezenas2 = r.dezenas_sorteio2 || [];
+        const qtdM3_1 = dezenas1.filter((d: number) => d % 3 === 0).length;
+        const qtdM3_2 = dezenas2.filter((d: number) => d % 3 === 0).length;
+        agrupado.set(qtdM3_1, (agrupado.get(qtdM3_1) ?? 0) + 1);
+        agrupado.set(qtdM3_2, (agrupado.get(qtdM3_2) ?? 0) + 1);
       });
 
       return Array.from(agrupado.entries())
