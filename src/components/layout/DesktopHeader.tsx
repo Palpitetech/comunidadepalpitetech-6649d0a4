@@ -272,14 +272,20 @@ export function DesktopHeader() {
                      </Link>
                    </DropdownMenuItem>
                    <DropdownMenuSeparator />
-                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                     <Link to="/duplasena/gerador">
-                       <Dices className="h-4 w-4" />
-                       Gerador
-                     </Link>
-                   </DropdownMenuItem>
-                 </DropdownMenuSubContent>
-               </DropdownMenuSub>
+                    <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                      <Link to="/duplasena/gerador">
+                        <Dices className="h-4 w-4" />
+                        Gerador
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                      <Link to="/duplasena/desdobramento">
+                        <Shuffle className="h-4 w-4" />
+                        Desdobramento
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
              </DropdownMenuContent>
            </DropdownMenu>
 
