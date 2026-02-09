@@ -44,9 +44,12 @@ function FiltroRow({ label, filtroKey, top3, ultimoValor, selectedValues, onTogg
   const isUltimoNoTop3 = top3.some((t) => t.valor === ultimoValor);
   
   return (
-    <div className="flex items-center gap-2 py-2 border-b border-border/50 last:border-b-0">
-      <span className="text-xs font-medium text-muted-foreground w-16">{label}</span>
-      <div className="flex items-center gap-1.5 flex-1 justify-center">
+    <div className="flex items-center gap-3 py-2 border-b border-border/50 last:border-b-0">
+      {/* Label à esquerda */}
+      <span className="text-xs font-medium text-muted-foreground w-16 shrink-0">{label}</span>
+      
+      {/* Top 3 valores - alinhados à esquerda */}
+      <div className="flex items-center gap-1.5">
         {top3.map((t) => {
           const isSelected = selectedValues.includes(t.valor);
           return (
@@ -54,7 +57,7 @@ function FiltroRow({ label, filtroKey, top3, ultimoValor, selectedValues, onTogg
               key={t.valor}
               onClick={() => onToggleValue(filtroKey, t.valor)}
               className={`
-                px-2.5 py-1 rounded text-xs font-semibold transition-all cursor-pointer
+                min-w-[32px] px-2 py-1 rounded text-xs font-semibold transition-all cursor-pointer text-center
                 ${isSelected 
                   ? "bg-highlight text-highlight-foreground ring-2 ring-highlight/50" 
                   : t.valor === ultimoValor 
@@ -68,15 +71,17 @@ function FiltroRow({ label, filtroKey, top3, ultimoValor, selectedValues, onTogg
           );
         })}
       </div>
-      <div className="w-12 flex justify-end">
-        <span className={`
-          text-xs font-bold px-1.5 py-0.5 rounded
-          ${isUltimoNoTop3 
-            ? "text-foreground" 
-            : "text-muted-foreground"
-          }
-        `}>
-          {isUltimoNoTop3 ? "✓" : ""} {ultimoValor}
+      
+      {/* Espaçador flexível */}
+      <div className="flex-1" />
+      
+      {/* Último valor à direita */}
+      <div className="flex items-center gap-1 shrink-0">
+        {isUltimoNoTop3 && (
+          <CheckCircle2 className="h-3 w-3 text-duplasena-primary" />
+        )}
+        <span className="text-xs font-bold text-muted-foreground">
+          {ultimoValor}
         </span>
       </div>
     </div>
