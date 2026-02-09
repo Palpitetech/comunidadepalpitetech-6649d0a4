@@ -464,24 +464,24 @@ export default function AnaliseDoDiaMegaSena() {
                           key={d.dezena}
                           onClick={() => toggleFixa(d.dezena)}
                           className={`
-                            h-9 rounded flex flex-col items-center justify-center transition-all
+                            w-full aspect-square rounded flex flex-col items-center justify-center gap-0.5 transition-all border-2
                             ${isSelected 
-                              ? "bg-foreground text-background ring-2 ring-foreground/30" 
-                              : "bg-[hsl(var(--megasena-primary))]/10 hover:bg-[hsl(var(--megasena-primary))]/20"
+                              ? "bg-megasena-primary text-white border-megasena-primary shadow-md" 
+                              : "bg-background border-megasena-primary/30 hover:border-megasena-primary/60"
                             }
                           `}
                         >
-                          <span className={`text-sm font-bold ${isSelected ? "" : "text-[hsl(var(--megasena-primary))]"}`}>
+                          <span className={`text-sm font-bold ${isSelected ? "text-white" : "text-megasena-primary"}`}>
                             {formatarDezena(d.dezena)}
                           </span>
-                          <span className={`text-[9px] ${isSelected ? "text-background/70" : "text-muted-foreground"}`}>
+                          <span className={`text-[9px] ${isSelected ? "text-white/70" : "text-megasena-primary/80"}`}>
                             {d.frequencia}%
                           </span>
                         </button>
                       );
                     })}
                   </div>
-                  
+
                   {/* Botão de adicionar fixas */}
                   {selectedFixas.length > 0 && !addedGroups.fixas && (
                     <Button 
@@ -503,11 +503,10 @@ export default function AnaliseDoDiaMegaSena() {
                 </div>
               )}
 
-              {/* Excluídas */}
+              {/* Botão de adicionar excluídas */}
               {tendencias.excluidas.length > 0 && (
-                <div>
+                <div className="mb-3">
                   <div className="flex items-center gap-2 mb-2">
-                    <TrendingDown className="h-4 w-4 text-destructive" />
                     <span className="text-xs font-medium text-muted-foreground">Excluir</span>
                     <span className="text-[10px] text-muted-foreground">(≤ 5%)</span>
                   </div>
@@ -519,24 +518,24 @@ export default function AnaliseDoDiaMegaSena() {
                           key={d.dezena}
                           onClick={() => toggleExcluida(d.dezena)}
                           className={`
-                            h-9 rounded flex flex-col items-center justify-center transition-all
+                            w-full aspect-square rounded flex flex-col items-center justify-center gap-0.5 transition-all border-2
                             ${isSelected 
-                              ? "bg-foreground text-background ring-2 ring-foreground/30" 
-                              : "bg-destructive/10 hover:bg-destructive/20"
+                              ? "bg-destructive text-white border-destructive shadow-md" 
+                              : "bg-background border-destructive/30 hover:border-destructive/60"
                             }
                           `}
                         >
-                          <span className={`text-sm font-bold ${isSelected ? "" : "text-destructive"}`}>
+                          <span className={`text-sm font-bold ${isSelected ? "text-white" : "text-destructive"}`}>
                             {formatarDezena(d.dezena)}
                           </span>
-                          <span className={`text-[9px] ${isSelected ? "text-background/70" : "text-muted-foreground"}`}>
+                          <span className={`text-[9px] ${isSelected ? "text-white/70" : "text-destructive/80"}`}>
                             {d.frequencia}%
                           </span>
                         </button>
                       );
                     })}
                   </div>
-                  
+
                   {/* Botão de adicionar excluídas */}
                   {selectedExcluidas.length > 0 && !addedGroups.excluidas && (
                     <Button 
@@ -559,110 +558,95 @@ export default function AnaliseDoDiaMegaSena() {
               )}
             </div>
 
-            {/* GRUPOS PERFEITOS */}
-            <div className="rounded-lg border bg-card p-3">
-              <div className="flex items-center gap-2 mb-3">
-                <Users className="h-4 w-4 text-[hsl(var(--megasena-primary))]" />
-                <span className="text-sm font-semibold">Grupos Perfeitos</span>
-              </div>
-              
-              <p className="text-[10px] text-muted-foreground mb-2">
-                Combinações mais frequentes nos últimos {periodo} concursos
-              </p>
-              
-              <div className="space-y-1">
-                <GrupoRow 
-                  label="Dupla" 
-                  grupoKey="dupla"
-                  grupo={tendencias.grupos.dupla}
-                  isSelected={selectedGrupo === "dupla"}
-                  onToggle={toggleGrupo}
-                />
-                <GrupoRow 
-                  label="Trio" 
-                  grupoKey="trio"
-                  grupo={tendencias.grupos.trio}
-                  isSelected={selectedGrupo === "trio"}
-                  onToggle={toggleGrupo}
-                />
-                <GrupoRow 
-                  label="Quadra" 
-                  grupoKey="quadra"
-                  grupo={tendencias.grupos.quadra}
-                  isSelected={selectedGrupo === "quadra"}
-                  onToggle={toggleGrupo}
-                />
-                <GrupoRow 
-                  label="Quina" 
-                  grupoKey="quina"
-                  grupo={tendencias.grupos.quina}
-                  isSelected={selectedGrupo === "quina"}
-                  onToggle={toggleGrupo}
-                />
-              </div>
-
-              {/* Botão de adicionar grupo */}
-              {selectedGrupo && !addedGroups.grupos && (
-                <Button 
-                  onClick={handleAddGrupos}
-                  size="sm"
-                  className="w-full mt-3 gap-2 bg-highlight hover:bg-highlight/90 text-highlight-foreground font-semibold h-8 text-xs"
-                >
-                  <Sparkles className="h-3 w-3" />
-                  Adicionar {selectedGrupo.charAt(0).toUpperCase() + selectedGrupo.slice(1)} ({selectedGrupoDezenas.length} dezenas)
-                </Button>
-              )}
-              
-              {addedGroups.grupos && selectedGrupo && (
-                <div className="flex items-center justify-center gap-1.5 mt-3 py-1.5 px-2 rounded bg-amber-500/10 border border-amber-500/30">
-                  <NotebookPen className="h-3.5 w-3.5 text-amber-600" />
-                  <span className="text-[11px] text-amber-700 font-medium">
-                    {selectedGrupo.charAt(0).toUpperCase() + selectedGrupo.slice(1)} no bloco de notas
-                  </span>
+            {/* COMBINAÇÕES MAIS FREQUENTES */}
+            {tendencias.grupos && Object.keys(tendencias.grupos).length > 0 && (
+              <div className="rounded-lg border bg-card p-3">
+                <div className="flex items-center gap-2 mb-3">
+                  <Users className="h-4 w-4 text-[hsl(var(--megasena-primary))]" />
+                  <span className="text-sm font-semibold">Combinações mais frequentes nos últimos {periodo} concursos</span>
                 </div>
-              )}
-            </div>
+                
+                <div className="divide-y divide-border/50">
+                  <GrupoRow
+                    label="Dupla"
+                    grupoKey="dupla"
+                    grupo={tendencias.grupos.dupla}
+                    isSelected={selectedGrupo === "dupla"}
+                    onToggle={toggleGrupo}
+                  />
+                  <GrupoRow
+                    label="Trio"
+                    grupoKey="trio"
+                    grupo={tendencias.grupos.trio}
+                    isSelected={selectedGrupo === "trio"}
+                    onToggle={toggleGrupo}
+                  />
+                  <GrupoRow
+                    label="Quadra"
+                    grupoKey="quadra"
+                    grupo={tendencias.grupos.quadra}
+                    isSelected={selectedGrupo === "quadra"}
+                    onToggle={toggleGrupo}
+                  />
+                  <GrupoRow
+                    label="Quina"
+                    grupoKey="quina"
+                    grupo={tendencias.grupos.quina}
+                    isSelected={selectedGrupo === "quina"}
+                    onToggle={toggleGrupo}
+                  />
+                </div>
+
+                {/* Botão de adicionar grupo */}
+                {selectedGrupo && selectedGrupoDezenas.length > 0 && !addedGroups.grupos && (
+                  <Button 
+                    onClick={handleAddGrupos}
+                    size="sm"
+                    className="w-full mt-3 gap-2 bg-highlight hover:bg-highlight/90 text-highlight-foreground font-semibold h-8 text-xs"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    Adicionar {selectedGrupoDezenas.length} dezenas ({selectedGrupo})
+                  </Button>
+                )}
+                
+                {addedGroups.grupos && selectedGrupoDezenas.length > 0 && (
+                  <div className="flex items-center justify-center gap-1.5 mt-3 py-1.5 px-2 rounded bg-amber-500/10 border border-amber-500/30">
+                    <NotebookPen className="h-3.5 w-3.5 text-amber-600" />
+                    <span className="text-[11px] text-amber-700 font-medium">Grupo no bloco de notas</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Botão flutuante de usar no desdobramento */}
+            {totalAddedValues > 0 && (
+              <Button 
+                onClick={handleUsarFiltros}
+                size="lg"
+                className="w-full gap-2 bg-highlight hover:bg-highlight/90 text-highlight-foreground font-semibold"
+              >
+                <Sparkles className="h-4 w-4" />
+                Usar no Desdobramento ({totalAddedValues})
+              </Button>
+            )}
+
+            {/* Floating Notes */}
+            <FloatingNotes
+              selectedFilters={addedGroups.filtros ? selectedFilters : { impares: [], repetidas: [], moldura: [], primos: [], m3: [] }}
+              selectedFixas={addedGroups.fixas ? selectedFixas : []}
+              selectedExcluidas={addedGroups.excluidas ? selectedExcluidas : []}
+              selectedGrupoDezenas={addedGroups.grupos ? selectedGrupoDezenas : []}
+              selectedGrupoLabel={selectedGrupo}
+              onNavigate={() => window.location.href = buildDesdobramentoUrl()}
+              onRemoveFiltros={addedGroups.filtros ? () => { setSelectedFilters({ impares: [], repetidas: [], moldura: [], primos: [], m3: [] }); setAddedGroups(prev => ({ ...prev, filtros: false })); } : undefined}
+              onRemoveFixas={addedGroups.fixas ? () => { setSelectedFixas([]); setAddedGroups(prev => ({ ...prev, fixas: false })); } : undefined}
+              onRemoveExcluidas={addedGroups.excluidas ? () => { setSelectedExcluidas([]); setAddedGroups(prev => ({ ...prev, excluidas: false })); } : undefined}
+              onRemoveGrupo={addedGroups.grupos ? () => { setSelectedGrupo(null); setAddedGroups(prev => ({ ...prev, grupos: false })); } : undefined}
+            />
           </div>
         ) : null}
       </div>
 
-      {/* Dialog de confirmação - só aparece se há algo adicionado */}
-      {totalAddedValues > 0 && (
-        <ConfirmNavigationDialog
-          isOpen={showConfirmDialog}
-          onOpenChange={setShowConfirmDialog}
-          desdobramentoUrl={buildDesdobramentoUrl()}
-        />
-      )}
-
-      {/* FAB de filtros selecionados - mostra apenas os adicionados */}
-      <FloatingNotes 
-        selectedFilters={addedGroups.filtros ? selectedFilters : { impares: [], repetidas: [], moldura: [], primos: [], m3: [] }} 
-        selectedFixas={addedGroups.fixas ? selectedFixas : []}
-        selectedExcluidas={addedGroups.excluidas ? selectedExcluidas : []}
-        selectedGrupoDezenas={addedGroups.grupos ? selectedGrupoDezenas : []}
-        selectedGrupoLabel={addedGroups.grupos && selectedGrupo ? selectedGrupo.charAt(0).toUpperCase() + selectedGrupo.slice(1) : undefined}
-        onNavigate={handleUsarFiltros}
-        onRemoveFiltros={() => setAddedGroups(prev => ({ ...prev, filtros: false }))}
-        onRemoveFixas={() => setAddedGroups(prev => ({ ...prev, fixas: false }))}
-        onRemoveExcluidas={() => setAddedGroups(prev => ({ ...prev, excluidas: false }))}
-        onRemoveGrupo={() => {
-          setAddedGroups(prev => ({ ...prev, grupos: false }));
-          setSelectedGrupo(null);
-        }}
-        onRemoveSingleFilter={(key, value) => {
-          setSelectedFilters(prev => ({
-            ...prev,
-            [key]: prev[key].filter(v => v !== value)
-          }));
-        }}
-        onRemoveSingleFixa={(dezena) => {
-          setSelectedFixas(prev => prev.filter(d => d !== dezena));
-        }}
-        onRemoveSingleExcluida={(dezena) => {
-          setSelectedExcluidas(prev => prev.filter(d => d !== dezena));
-        }}
-      />
     </MainLayout>
   );
 }
