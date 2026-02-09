@@ -163,7 +163,7 @@ export default function FrequenciaDecenasDuplaSena() {
                     <div
                       key={dezena}
                       className={cn(
-                        "flex flex-col items-center justify-center aspect-square rounded-lg border-2 transition-all",
+                        "flex flex-col items-center justify-center rounded-lg border-2 transition-all py-3",
                         getStatusColor(status)
                       )}
                     >
