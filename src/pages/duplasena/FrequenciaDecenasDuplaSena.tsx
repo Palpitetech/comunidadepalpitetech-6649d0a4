@@ -96,7 +96,7 @@ export default function FrequenciaDecenasDuplaSena() {
   return (
     <MainLayout pageTitle="Frequência das Dezenas - Dupla Sena">
       <div className="min-h-screen bg-background">
-        <div className="px-4 py-6 space-y-4 max-w-2xl mx-auto">
+        <div className="px-2 py-4 space-y-3 max-w-4xl mx-auto">
           {/* Período */}
           <Card>
             <CardContent className="py-4">
@@ -145,14 +145,14 @@ export default function FrequenciaDecenasDuplaSena() {
           </div>
 
           {/* Grid 5x10 */}
-          <Card>
-            <CardHeader className="py-3 bg-primary/10">
-              <CardTitle className="text-base flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-primary" />
+          <Card className="overflow-hidden">
+            <CardHeader className="py-2 px-3 bg-primary/10">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-primary" />
                 Grid de Frequência
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4">
+            <CardContent className="p-1.5">
               <div className="grid grid-cols-10 gap-1">
                 {GRID.flat().map((dezena) => {
                   const dezenaData = dados.find((d) => d.dezena === dezena);
