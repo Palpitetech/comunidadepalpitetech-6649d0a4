@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { usePalpitesSalvos, type PalpitePasta } from "@/hooks/usePalpitesSalvos";
 import { NovaPastaDialog } from "@/components/palpites/NovaPastaDialog";
 import { SelecionarPastaDialog } from "@/components/palpites/SelecionarPastaDialog";
+import { JogoCardDuplaSena } from "@/components/duplasena/JogoCardDuplaSena";
 import { ChevronLeft, ChevronRight, ArrowLeft, Check, Copy, Save, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -249,58 +250,17 @@ export function ResultadosSheetDuplaSena({
             {jogosPaginados.map((jogo, localIndex) => {
               const globalIndex = currentPage * ITEMS_PER_PAGE + localIndex;
               return (
-                <div
+                <JogoCardDuplaSena
                   key={globalIndex}
-                  className={cn(
-                    "p-3 rounded-lg border transition-colors",
-                    selected.has(globalIndex) 
-                      ? "border-duplasena-primary bg-duplasena-primary/5" 
-                      : "border-border"
-                  )}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleSelectChange(globalIndex)}
-                        className={cn(
-                          "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
-                          selected.has(globalIndex)
-                            ? "bg-duplasena-primary border-duplasena-primary text-white"
-                            : "border-muted-foreground/30"
-                        )}
-                      >
-                        {selected.has(globalIndex) && <Check className="h-3 w-3" />}
-                      </button>
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Jogo {globalIndex + 1}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteSingle(globalIndex)}
-                      className="text-muted-foreground hover:text-destructive transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-1.5">
-                    {jogo.dezenas.map((dezena) => (
-                      <span
-                        key={dezena}
-                        className={cn(
-                          "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold",
-                          dezenasFixes?.includes(dezena)
-                            ? "bg-foreground text-background"
-                            : ultimoConcursoDezenas.includes(dezena)
-                            ? "bg-duplasena-primary text-white"
-                            : "bg-duplasena-primary/20 text-duplasena-primary"
-                        )}
-                      >
-                        {formatDezena(dezena)}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+                  index={globalIndex}
+                  dezenas={jogo.dezenas}
+                  dezenasFixes={dezenasFixes}
+                  ultimoConcursoDezenas={ultimoConcursoDezenas}
+                  isSelected={selected.has(globalIndex)}
+                  onSelectChange={() => handleSelectChange(globalIndex)}
+                  onDelete={() => handleDeleteSingle(globalIndex)}
+                  showPatterns={true}
+                />
               );
             })}
           </div>
