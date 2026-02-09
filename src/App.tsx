@@ -49,6 +49,7 @@ import ResultadosDuplaSena from "./pages/duplasena/ResultadosDuplaSena";
 import TendenciasDuplaSena from "./pages/duplasena/TendenciasDuplaSena";
 import FrequenciaDuplaSena from "./pages/duplasena/FrequenciaDuplaSena";
 import DezenasporPosicaoDuplaSena from "./pages/duplasena/DezenasporPosicaoDuplaSena";
+import LinhasColunasDuplaSena from "./pages/duplasena/LinhasColunasDuplaSena";
 
 const queryClient = new QueryClient();
 
@@ -105,6 +106,7 @@ const App = () => (
             <Route path="/duplasena/tendencias" element={<ProtectedRoute><TendenciasDuplaSena /></ProtectedRoute>} />
             <Route path="/duplasena/frequencia" element={<ProtectedRoute><FrequenciaDuplaSena /></ProtectedRoute>} />
             <Route path="/duplasena/dezenas-por-posicao" element={<ProtectedRoute><DezenasporPosicaoDuplaSena /></ProtectedRoute>} />
+            <Route path="/duplasena/linhas-colunas" element={<ProtectedRoute><LinhasColunasDuplaSena /></ProtectedRoute>} />
             
             {/* Rotas Admin */}
             <Route path="/admin" element={<AdminRoute><AdminIndex /></AdminRoute>} />
