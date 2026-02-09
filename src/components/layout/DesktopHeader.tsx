@@ -296,6 +296,12 @@ export function DesktopHeader() {
                         Desdobramento
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                      <Link to="/duplasena/fechamento">
+                        <Wrench className="h-4 w-4" />
+                        Fechamento
+                      </Link>
+                    </DropdownMenuItem>
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
              </DropdownMenuContent>
