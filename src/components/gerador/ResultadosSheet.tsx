@@ -174,8 +174,8 @@ export function ResultadosSheet({
     setNovaPastaOpen(true);
   };
 
-  const handleConfirmarNovaPasta = async (nome: string, cor: string) => {
-    const novaPasta = await criarPasta(nome, cor);
+  const handleConfirmarNovaPasta = async (nome: string, cor: string, loteria: string) => {
+    const novaPasta = await criarPasta(nome, cor, loteria);
     if (novaPasta) {
       setPastas(prev => [...prev, novaPasta]);
       
@@ -195,7 +195,7 @@ export function ResultadosSheet({
         return estrategia.ferramentas.slice(0, 2).join(" + ");
       };
       
-      await salvarPalpites(palpitesParaSalvar, periodoAnalise, novaPasta.id, getEstrategiaTexto(), estrategia);
+      await salvarPalpites(palpitesParaSalvar, periodoAnalise, novaPasta.id, getEstrategiaTexto(), estrategia, "lotofacil");
     }
     setNovaPastaOpen(false);
   };
@@ -394,6 +394,7 @@ export function ResultadosSheet({
         pastas={pastas.map(p => ({ id: p.id, nome: p.nome, cor: p.cor }))}
         onSelect={handleSelecionarPasta}
         onNovaPasta={handleCriarNovaPasta}
+        loteria="lotofacil"
         isLoading={isSaving}
       />
 
@@ -402,6 +403,7 @@ export function ResultadosSheet({
         open={novaPastaOpen}
         onOpenChange={setNovaPastaOpen}
         onConfirm={handleConfirmarNovaPasta}
+        loteria="lotofacil"
         isLoading={isSaving}
       />
     </Sheet>

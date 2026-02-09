@@ -24,7 +24,8 @@ const CORES_PASTA = [
 interface NovaPastaDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (nome: string, cor: string) => void;
+  onConfirm: (nome: string, cor: string, loteria: string) => void;
+  loteria: string;
   isLoading?: boolean;
 }
 
@@ -32,6 +33,7 @@ export function NovaPastaDialog({
   open,
   onOpenChange,
   onConfirm,
+  loteria,
   isLoading,
 }: NovaPastaDialogProps) {
   const [nome, setNome] = useState("");
@@ -39,7 +41,7 @@ export function NovaPastaDialog({
 
   const handleConfirm = () => {
     if (nome.trim()) {
-      onConfirm(nome.trim(), cor);
+      onConfirm(nome.trim(), cor, loteria);
       setNome("");
       setCor(CORES_PASTA[0]);
     }

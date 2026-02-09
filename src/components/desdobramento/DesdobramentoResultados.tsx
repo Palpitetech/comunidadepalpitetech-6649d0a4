@@ -160,7 +160,7 @@ export function DesdobramentoResultados({
   };
 
   // Criar nova pasta e salvar palpites nela
-  const handleCriarPasta = async (nome: string, cor: string) => {
+  const handleCriarPasta = async (nome: string, cor: string, loteria: string) => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) return;
@@ -171,6 +171,7 @@ export function DesdobramentoResultados({
           user_id: sessionData.session.user.id,
           nome,
           cor,
+          loteria,
         })
         .select()
         .single();
@@ -375,6 +376,7 @@ export function DesdobramentoResultados({
           setDialogPastaAberto(false);
           setDialogNovaPastaAberto(true);
         }}
+        loteria="lotofacil"
         isLoading={salvandoPasta}
       />
 
@@ -383,6 +385,7 @@ export function DesdobramentoResultados({
         open={dialogNovaPastaAberto}
         onOpenChange={setDialogNovaPastaAberto}
         onConfirm={handleCriarPasta}
+        loteria="lotofacil"
       />
     </div>
   );

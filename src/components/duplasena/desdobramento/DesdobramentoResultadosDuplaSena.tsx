@@ -161,7 +161,7 @@ export function DesdobramentoResultadosDuplaSena({
   };
 
   // Criar nova pasta e salvar palpites nela
-  const handleCriarPasta = async (nome: string, cor: string) => {
+  const handleCriarPasta = async (nome: string, cor: string, loteria: string) => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) return;
@@ -172,6 +172,7 @@ export function DesdobramentoResultadosDuplaSena({
           user_id: sessionData.session.user.id,
           nome,
           cor,
+          loteria,
         })
         .select()
         .single();
@@ -364,6 +365,7 @@ export function DesdobramentoResultadosDuplaSena({
           setDialogPastaAberto(false);
           setDialogNovaPastaAberto(true);
         }}
+        loteria="duplasena"
         isLoading={salvandoPasta}
       />
 
@@ -372,6 +374,7 @@ export function DesdobramentoResultadosDuplaSena({
         open={dialogNovaPastaAberto}
         onOpenChange={setDialogNovaPastaAberto}
         onConfirm={handleCriarPasta}
+        loteria="duplasena"
       />
     </div>
   );

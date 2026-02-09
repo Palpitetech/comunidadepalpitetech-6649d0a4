@@ -183,8 +183,8 @@ export function ResultadosSheetDuplaSena({
     setNovaPastaOpen(true);
   };
 
-  const handleConfirmarNovaPasta = async (nome: string, cor: string) => {
-    const novaPasta = await criarPasta(nome, cor);
+  const handleConfirmarNovaPasta = async (nome: string, cor: string, loteria: string) => {
+    const novaPasta = await criarPasta(nome, cor, loteria);
     if (novaPasta) {
       setPastas(prev => [...prev, novaPasta]);
       
@@ -403,6 +403,7 @@ export function ResultadosSheetDuplaSena({
         pastas={pastas.map(p => ({ id: p.id, nome: p.nome, cor: p.cor }))}
         onSelect={handleSelecionarPasta}
         onNovaPasta={handleCriarNovaPasta}
+        loteria="duplasena"
         isLoading={isSaving}
       />
 
@@ -410,6 +411,7 @@ export function ResultadosSheetDuplaSena({
         open={novaPastaOpen}
         onOpenChange={setNovaPastaOpen}
         onConfirm={handleConfirmarNovaPasta}
+        loteria="duplasena"
         isLoading={isSaving}
       />
     </Sheet>

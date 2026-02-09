@@ -293,13 +293,13 @@ export function ResultadosFechamentoMegaSena({
     setShowNovaPastaDialog(true);
   };
 
-  const handleCriarPasta = async (nome: string, cor: string) => {
+  const handleCriarPasta = async (nome: string, cor: string, loteria: string) => {
     if (!user) return;
 
     try {
       const { data, error } = await supabase
         .from("palpites_pastas")
-        .insert({ user_id: user.id, nome, cor })
+        .insert({ user_id: user.id, nome, cor, loteria })
         .select()
         .single();
 
@@ -521,12 +521,14 @@ export function ResultadosFechamentoMegaSena({
         isLoading={loadingPastas}
         onSelect={handleSelecionarPasta}
         onNovaPasta={handleNovaPasta}
+        loteria="megasena"
       />
 
       <NovaPastaDialog
         open={showNovaPastaDialog}
         onOpenChange={setShowNovaPastaDialog}
         onConfirm={handleCriarPasta}
+        loteria="megasena"
       />
     </div>
   );
