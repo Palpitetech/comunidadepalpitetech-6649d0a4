@@ -130,7 +130,6 @@ function GrupoRow({ label, grupoKey, grupo, isSelected, onToggle }: GrupoRowProp
 
 export default function AnaliseDoDiaDuplaSena() {
   const [periodo, setPeriodo] = useState(10);
-  const [sorteioAtivo, setSorteioAtivo] = useState<"1" | "2">("1");
   const { data: tendencias, isLoading } = useTendenciasDuplaSena(periodo);
   
   // Estados para filtros selecionados
@@ -199,7 +198,7 @@ export default function AnaliseDoDiaDuplaSena() {
 
   const selectAllFilters = () => {
     if (!tendencias) return;
-    const filtros = sorteioAtivo === "1" ? tendencias.filtros_s1 : tendencias.filtros_s2;
+    const filtros = tendencias.filtros_s1;
     setSelectedFilters({
       impares: filtros.impares.top3.map(t => t.valor),
       repetidas: filtros.repetidas.top3.map(t => t.valor),
@@ -224,19 +223,19 @@ export default function AnaliseDoDiaDuplaSena() {
     (acc, arr) => acc + arr.length, 0
   );
 
-  // Obter dados baseados no sorteio ativo
+  // Obter dados do Sorteio 1 (fixo)
   const getCurrentData = () => {
     if (!tendencias) return null;
     return {
-      filtros: sorteioAtivo === "1" ? tendencias.filtros_s1 : tendencias.filtros_s2,
-      fixas: sorteioAtivo === "1" ? tendencias.fixas_s1 : tendencias.fixas_s2,
-      excluidas: sorteioAtivo === "1" ? tendencias.excluidas_s1 : tendencias.excluidas_s2,
-      grupos: sorteioAtivo === "1" ? tendencias.grupos_s1 : tendencias.grupos_s2,
-      dezenas: sorteioAtivo === "1" ? tendencias.ultimoConcurso.dezenas_s1 : tendencias.ultimoConcurso.dezenas_s2,
-      impares: sorteioAtivo === "1" ? tendencias.ultimoConcurso.impares_s1 : tendencias.ultimoConcurso.impares_s2,
-      repetidas: sorteioAtivo === "1" ? tendencias.ultimoConcurso.repetidas_s1 : tendencias.ultimoConcurso.repetidas_s2,
-      moldura: sorteioAtivo === "1" ? tendencias.ultimoConcurso.moldura_s1 : tendencias.ultimoConcurso.moldura_s2,
-      primos: sorteioAtivo === "1" ? tendencias.ultimoConcurso.primos_s1 : tendencias.ultimoConcurso.primos_s2,
+      filtros: tendencias.filtros_s1,
+      fixas: tendencias.fixas_s1,
+      excluidas: tendencias.excluidas_s1,
+      grupos: tendencias.grupos_s1,
+      dezenas: tendencias.ultimoConcurso.dezenas_s1,
+      impares: tendencias.ultimoConcurso.impares_s1,
+      repetidas: tendencias.ultimoConcurso.repetidas_s1,
+      moldura: tendencias.ultimoConcurso.moldura_s1,
+      primos: tendencias.ultimoConcurso.primos_s1,
     };
   };
 
@@ -311,34 +310,10 @@ export default function AnaliseDoDiaDuplaSena() {
             <Target className="h-4 w-4 text-duplasena-primary shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
               <p className="text-xs leading-relaxed text-foreground">
-                <span className="font-semibold">Análise do Dia</span> — Reunimos os principais dados estatísticos da Dupla Sena. Alterne entre Sorteio 1 e 2 para ver análises independentes.
+                <span className="font-semibold">Análise do Dia</span> — Reunimos os principais dados estatísticos da Dupla Sena baseados no Sorteio 1.
               </p>
             </div>
           </div>
-        </div>
-
-        {/* Toggle Sorteio */}
-        <div className="flex rounded-lg p-1 bg-muted/50">
-          <button
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              sorteioAtivo === "1"
-                ? "bg-duplasena-primary text-white shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-            onClick={() => setSorteioAtivo("1")}
-          >
-            Sorteio 1
-          </button>
-          <button
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              sorteioAtivo === "2"
-                ? "bg-duplasena-primary text-white shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-            onClick={() => setSorteioAtivo("2")}
-          >
-            Sorteio 2
-          </button>
         </div>
 
         {/* Header com período */}
@@ -371,9 +346,6 @@ export default function AnaliseDoDiaDuplaSena() {
                       const [year, month, day] = tendencias.ultimoConcurso.data.split("-").map(Number);
                       return format(new Date(year, month - 1, day), "dd/MM", { locale: ptBR });
                     })()}
-                  </span>
-                  <span className="text-[10px] bg-duplasena-primary/10 text-duplasena-primary px-2 py-0.5 rounded-full font-medium">
-                    Sorteio {sorteioAtivo}
                   </span>
                 </div>
               </div>
@@ -423,7 +395,7 @@ export default function AnaliseDoDiaDuplaSena() {
               </div>
               
               <p className="text-[10px] text-muted-foreground mb-2">
-                Top 3 ocorrências nos últimos {periodo} concursos (Sorteio {sorteioAtivo})
+                Top 3 ocorrências nos últimos {periodo} concursos
               </p>
               
               <div className="divide-y divide-border/50">
