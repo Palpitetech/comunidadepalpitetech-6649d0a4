@@ -327,6 +327,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                               Desdobramento
                             </div>
                           </Link>
+                          <Link to="/duplasena/fechamento" onClick={closeAndNavigate}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                              <Grid3X3 className="h-4 w-4" />
+                              Gerador de Fechamento
+                            </div>
+                          </Link>
                         </div>
                       </AccordionContent>
                     </AccordionItem>
