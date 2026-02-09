@@ -619,6 +619,7 @@ export type Database = {
           cor: string | null
           created_at: string
           id: string
+          loteria: string | null
           nome: string
           updated_at: string
           user_id: string
@@ -627,6 +628,7 @@ export type Database = {
           cor?: string | null
           created_at?: string
           id?: string
+          loteria?: string | null
           nome: string
           updated_at?: string
           user_id: string
@@ -635,6 +637,7 @@ export type Database = {
           cor?: string | null
           created_at?: string
           id?: string
+          loteria?: string | null
           nome?: string
           updated_at?: string
           user_id?: string

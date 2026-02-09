@@ -126,8 +126,8 @@ export function ResultadosSheetMegaSena({
     setNovaPastaOpen(true);
   };
 
-  const handleConfirmarNovaPasta = async (nome: string, cor: string) => {
-    const novaPasta = await criarPasta(nome, cor);
+  const handleConfirmarNovaPasta = async (nome: string, cor: string, loteria: string) => {
+    const novaPasta = await criarPasta(nome, cor, loteria);
     if (novaPasta) {
       setPastas(prev => [...prev, novaPasta]);
       
@@ -349,6 +349,7 @@ export function ResultadosSheetMegaSena({
         pastas={pastas.map(p => ({ id: p.id, nome: p.nome, cor: p.cor }))}
         onSelect={handleSelecionarPasta}
         onNovaPasta={handleCriarNovaPasta}
+        loteria="megasena"
         isLoading={isSaving}
       />
 
@@ -356,6 +357,7 @@ export function ResultadosSheetMegaSena({
         open={novaPastaOpen}
         onOpenChange={setNovaPastaOpen}
         onConfirm={handleConfirmarNovaPasta}
+        loteria="megasena"
         isLoading={isSaving}
       />
     </Sheet>

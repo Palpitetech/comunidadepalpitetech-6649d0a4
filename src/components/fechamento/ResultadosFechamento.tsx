@@ -299,13 +299,13 @@ export function ResultadosFechamento({
     setShowNovaPastaDialog(true);
   };
 
-  const handleCriarPasta = async (nome: string, cor: string) => {
+  const handleCriarPasta = async (nome: string, cor: string, loteria: string) => {
     if (!user) return;
 
     try {
       const { data, error } = await supabase
         .from("palpites_pastas")
-        .insert({ user_id: user.id, nome, cor })
+        .insert({ user_id: user.id, nome, cor, loteria })
         .select()
         .single();
 
@@ -557,6 +557,7 @@ export function ResultadosFechamento({
         pastas={pastas}
         onSelect={handleSelecionarPasta}
         onNovaPasta={handleNovaPasta}
+        loteria="lotofacil"
         isLoading={loadingPastas}
       />
 
@@ -565,6 +566,7 @@ export function ResultadosFechamento({
         open={showNovaPastaDialog}
         onOpenChange={setShowNovaPastaDialog}
         onConfirm={handleCriarPasta}
+        loteria="lotofacil"
       />
     </div>
   );

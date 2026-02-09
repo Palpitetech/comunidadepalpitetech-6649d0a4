@@ -14,8 +14,15 @@ interface SelecionarPastaDialogProps {
   pastas: Pasta[];
   onSelect: (pastaId: string | null) => void;
   onNovaPasta: () => void;
+  loteria: string;
   isLoading?: boolean;
 }
+
+const LOTTERY_LABELS: Record<string, string> = {
+  lotofacil: "Lotofácil",
+  megasena: "Mega Sena",
+  duplasena: "Dupla Sena",
+};
 
 export function SelecionarPastaDialog({
   open,
@@ -23,13 +30,16 @@ export function SelecionarPastaDialog({
   pastas,
   onSelect,
   onNovaPasta,
+  loteria,
   isLoading,
 }: SelecionarPastaDialogProps) {
+  const loteriaLabel = LOTTERY_LABELS[loteria] || loteria;
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle>Salvar em qual pasta?</DialogTitle>
+          <DialogTitle>Salvar em qual pasta? ({loteriaLabel})</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-2 py-4 max-h-[300px] overflow-y-auto">

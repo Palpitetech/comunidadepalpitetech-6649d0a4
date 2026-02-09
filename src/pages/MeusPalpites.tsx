@@ -167,8 +167,8 @@ export default function MeusPalpites() {
     setDeleteDialogOpen(false);
   };
 
-  const handleCriarPasta = async (nome: string, cor: string) => {
-    const pasta = await criarPasta(nome, cor);
+  const handleCriarPasta = async (nome: string, cor: string, loteria: string) => {
+    const pasta = await criarPasta(nome, cor, loteria);
     if (pasta) {
       setPastas(prev => [...prev, pasta]);
     }
@@ -321,12 +321,10 @@ export default function MeusPalpites() {
             const config = LOTERIAS_CONFIG[loteriaKey];
             const totalLoteria = contarPorLoteria(loteriaKey);
             
-            // Contar pastas com palpites desta loteria
-            const pastasComPalpites = pastas.filter(p => 
-              getPastaCountForLoteria(p.id, loteriaKey) > 0
-            ).length;
+            // Contar pastas desta loteria (pela coluna loteria da pasta)
+            const pastasDaLoteria = pastas.filter(p => p.loteria === loteriaKey);
             const temSemPasta = palpitesPorLoteriaEPasta[loteriaKey]?.semPasta.length > 0;
-            const totalPastas = pastasComPalpites + (temSemPasta ? 1 : 0);
+            const totalPastas = pastasDaLoteria.length + (temSemPasta ? 1 : 0);
 
             return (
               <button
@@ -361,10 +359,8 @@ export default function MeusPalpites() {
     const config = LOTERIAS_CONFIG[nav.loteria];
     const loteriaData = palpitesPorLoteriaEPasta[nav.loteria];
     
-    // Pastas com palpites desta loteria
-    const pastasComPalpites = pastas.filter(p => 
-      getPastaCountForLoteria(p.id, nav.loteria!) > 0
-    );
+    // Pastas desta loteria (pela coluna loteria)
+    const pastasDaLoteria = pastas.filter(p => p.loteria === nav.loteria);
 
     return (
       <div className="flex-1">
@@ -377,8 +373,8 @@ export default function MeusPalpites() {
         </div>
 
         <div className="divide-y">
-          {/* Pastas com palpites */}
-          {pastasComPalpites.map((pasta) => {
+          {/* Pastas desta loteria */}
+          {pastasDaLoteria.map((pasta) => {
             const count = getPastaCountForLoteria(pasta.id, nav.loteria!);
             
             return (
@@ -425,7 +421,7 @@ export default function MeusPalpites() {
         </div>
 
         {/* Pastas vazias (só mostra se não há nenhum palpite) */}
-        {pastasComPalpites.length === 0 && loteriaData?.semPasta.length === 0 && (
+        {pastasDaLoteria.length === 0 && loteriaData?.semPasta.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
               <Folder className="h-8 w-8 text-muted-foreground" />
@@ -473,6 +469,7 @@ export default function MeusPalpites() {
         open={novaPastaOpen}
         onOpenChange={setNovaPastaOpen}
         onConfirm={handleCriarPasta}
+        loteria={nav.loteria || "lotofacil"}
         isLoading={isLoading}
       />
 

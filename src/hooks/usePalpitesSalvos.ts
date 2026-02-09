@@ -25,6 +25,7 @@ export interface PalpitePasta {
   user_id: string;
   nome: string;
   cor: string;
+  loteria: string;
   created_at: string;
   updated_at: string;
 }
@@ -202,12 +203,18 @@ export function usePalpitesSalvos() {
 
   // ========== PASTAS ==========
   
-  const buscarPastas = async (): Promise<PalpitePasta[]> => {
+  const buscarPastas = async (loteria?: string): Promise<PalpitePasta[]> => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("palpites_pastas")
         .select("*")
         .order("nome", { ascending: true });
+
+      if (loteria) {
+        query = query.eq("loteria", loteria);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return (data || []) as PalpitePasta[];
@@ -217,14 +224,14 @@ export function usePalpitesSalvos() {
     }
   };
 
-  const criarPasta = async (nome: string, cor: string): Promise<PalpitePasta | null> => {
+  const criarPasta = async (nome: string, cor: string, loteria: string = "lotofacil"): Promise<PalpitePasta | null> => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
       const { data, error } = await supabase
         .from("palpites_pastas")
-        .insert({ user_id: user.id, nome, cor })
+        .insert({ user_id: user.id, nome, cor, loteria })
         .select()
         .single();
 
