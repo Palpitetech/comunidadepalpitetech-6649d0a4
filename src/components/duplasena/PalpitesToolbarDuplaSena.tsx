@@ -214,7 +214,7 @@ export function PalpitesToolbarDuplaSena({
             </DropdownMenuTrigger>
             <DropdownMenuContent 
               align="start" 
-              className="bg-popover z-50 w-56 max-h-64 overflow-y-auto"
+              className="bg-popover z-[100] w-56 max-h-64 overflow-y-auto"
             >
               <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-b mb-1">
                 Verificar prêmios
@@ -258,7 +258,7 @@ export function PalpitesToolbarDuplaSena({
               Ações
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="bg-popover z-50 w-56">
+          <DropdownMenuContent align="start" className="bg-popover z-[100] w-56">
             {/* Ações de Salvar */}
             {(onSalvarTodos || onSalvarSelecionados) && (
               <>
