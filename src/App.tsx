@@ -53,6 +53,7 @@ import LinhasColunasDuplaSena from "./pages/duplasena/LinhasColunasDuplaSena";
 import AnaliseDoDiaDuplaSena from "./pages/duplasena/AnaliseDoDiaDuplaSena";
 import GeradorDuplaSena from "./pages/duplasena/GeradorDuplaSena";
 import DesdobramentoDuplaSena from "./pages/duplasena/DesdobramentoDuplaSena";
+import FrequenciaDecenasDuplaSena from "./pages/duplasena/FrequenciaDecenasDuplaSena";
 
 const queryClient = new QueryClient();
 
@@ -113,6 +114,7 @@ const App = () => (
             <Route path="/duplasena/analise-do-dia" element={<ProtectedRoute><AnaliseDoDiaDuplaSena /></ProtectedRoute>} />
             <Route path="/duplasena/gerador" element={<ProtectedRoute><GeradorDuplaSena /></ProtectedRoute>} />
             <Route path="/duplasena/desdobramento" element={<ProtectedRoute><DesdobramentoDuplaSena /></ProtectedRoute>} />
+            <Route path="/duplasena/frequencia-dezenas" element={<ProtectedRoute><FrequenciaDecenasDuplaSena /></ProtectedRoute>} />
             
             {/* Rotas Admin */}
             <Route path="/admin" element={<AdminRoute><AdminIndex /></AdminRoute>} />

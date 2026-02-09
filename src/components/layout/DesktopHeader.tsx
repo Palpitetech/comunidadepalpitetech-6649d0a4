@@ -260,6 +260,12 @@ export function DesktopHeader() {
                      </Link>
                    </DropdownMenuItem>
                    <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                     <Link to="/duplasena/frequencia-dezenas">
+                       <BarChart3 className="h-4 w-4" />
+                       Frequência das Dezenas
+                     </Link>
+                   </DropdownMenuItem>
+                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                      <Link to="/duplasena/dezenas-por-posicao">
                        <Target className="h-4 w-4" />
                        Dezenas por Posição
