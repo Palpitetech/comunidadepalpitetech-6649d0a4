@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState } from "react";
 import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,10 +20,10 @@ import {
   Trophy,
   ChevronDown,
   Check,
-  X,
   Bookmark,
   Save
 } from "lucide-react";
+import { DistribuicaoAcertosTable } from "@/components/shared/DistribuicaoAcertosTable";
 
 interface ConcursoOption {
   concurso_id: number;
@@ -77,23 +77,6 @@ export function PalpitesToolbarDuplaSena({
 
   const allSelected = selected.size === palpites.length && palpites.length > 0;
 
-  // Calcular resumo de premiações - Dupla Sena: 3 a 6 acertos
-  const resumoPremiacoes = useMemo(() => {
-    if (Object.keys(acertosPorPalpite).length === 0) return null;
-    
-    // Dupla Sena premia de 3 a 6 acertos em cada sorteio
-    const contagem = { 3: 0, 4: 0, 5: 0, 6: 0 };
-    Object.values(acertosPorPalpite).forEach(({ s1, s2 }) => {
-      // Maior acerto entre S1 e S2
-      const maior = Math.max(s1, s2);
-      if (maior >= 3 && maior <= 6) {
-        contagem[maior as keyof typeof contagem]++;
-      }
-    });
-    
-    const total = contagem[3] + contagem[4] + contagem[5] + contagem[6];
-    return { contagem, total };
-  }, [acertosPorPalpite]);
 
   const handleLoadConcursos = async () => {
     if (concursosLoaded) return;
@@ -328,64 +311,14 @@ export function PalpitesToolbarDuplaSena({
         )}
       </div>
 
-      {/* Resumo de Premiações */}
-      {!hidePremios && resumoPremiacoes && resumoPremiacoes.total > 0 && resumoVisivel && (
-        <div className="bg-orange-950 border border-orange-600 rounded-xl p-3 animate-fade-in shadow-lg shadow-orange-900/30 relative">
-          <button
-            onClick={() => setResumoVisivel(false)}
-            className="absolute top-2 right-2 text-orange-400 hover:text-white transition-colors p-1"
-            aria-label="Fechar resumo"
-          >
-            <X className="h-4 w-4" />
-          </button>
-          <div className="flex items-center gap-2 mb-2">
-            <Trophy className="h-5 w-5 text-orange-300" />
-            <span className="font-bold text-orange-200 text-sm">
-              🎉 {resumoPremiacoes.total} Premiação{resumoPremiacoes.total > 1 ? "ões" : ""}!
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {resumoPremiacoes.contagem[6] > 0 && (
-              <span className="bg-orange-500 text-white text-xs font-bold px-2.5 py-1.5 rounded-full animate-pulse shadow-md">
-                🏆 SENA: {resumoPremiacoes.contagem[6]}
-              </span>
-            )}
-            {resumoPremiacoes.contagem[5] > 0 && (
-              <span className="bg-orange-600 text-white text-xs font-bold px-2.5 py-1.5 rounded-full shadow-md">
-                QUINA: {resumoPremiacoes.contagem[5]}
-              </span>
-            )}
-            {resumoPremiacoes.contagem[4] > 0 && (
-              <span className="bg-orange-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-full shadow-md">
-                QUADRA: {resumoPremiacoes.contagem[4]}
-              </span>
-            )}
-            {resumoPremiacoes.contagem[3] > 0 && (
-              <span className="bg-orange-800 text-orange-50 text-xs font-bold px-2.5 py-1.5 rounded-full shadow-md">
-                TERNO: {resumoPremiacoes.contagem[3]}
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Fallback: Nenhuma premiação */}
-      {!hidePremios && concursoSelecionado && resumoPremiacoes && resumoPremiacoes.total === 0 && resumoVisivel && (
-        <div className="bg-muted/50 border border-border rounded-xl p-3 animate-fade-in relative">
-          <button
-            onClick={() => setResumoVisivel(false)}
-            className="absolute top-2 right-2 text-muted-foreground hover:text-foreground transition-colors p-1"
-            aria-label="Fechar resumo"
-          >
-            <X className="h-4 w-4" />
-          </button>
-          <div className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">
-              Nenhuma premiação no concurso #{concursoSelecionado.concurso_id}. Continue tentando! 🍀
-            </span>
-          </div>
-        </div>
+      {/* Tabela de Distribuição de Acertos */}
+      {!hidePremios && concursoSelecionado && Object.keys(acertosPorPalpite).length > 0 && resumoVisivel && (
+        <DistribuicaoAcertosTable
+          acertosDuplaSena={acertosPorPalpite}
+          loteria="duplasena"
+          concursoId={concursoSelecionado.concurso_id}
+          onClose={() => setResumoVisivel(false)}
+        />
       )}
     </div>
   );
