@@ -32,7 +32,31 @@ function calcularEstatisticas(
 ): EstatisticaDezena[] {
   const estatisticas = new Map<number, EstatisticaDezena>();
   
-  // Inicializar
+  // Calcular correlações entre duplas
+  const correlacaoDuplas = new Map<string, number>();
+  const correlacaoTrios = new Map<string, number>();
+  
+  resultados.forEach((r) => {
+    const dezenas = r[sorteioKey];
+    // Contar duplas
+    for (let i = 0; i < dezenas.length; i++) {
+      for (let j = i + 1; j < dezenas.length; j++) {
+        const key = [dezenas[i], dezenas[j]].sort((a, b) => a - b).join("-");
+        correlacaoDuplas.set(key, (correlacaoDuplas.get(key) || 0) + 1);
+      }
+    }
+    // Contar trios
+    for (let i = 0; i < dezenas.length; i++) {
+      for (let j = i + 1; j < dezenas.length; j++) {
+        for (let k = j + 1; k < dezenas.length; k++) {
+          const key = [dezenas[i], dezenas[j], dezenas[k]].sort((a, b) => a - b).join("-");
+          correlacaoTrios.set(key, (correlacaoTrios.get(key) || 0) + 1);
+        }
+      }
+    }
+  });
+
+  // Inicializar estatísticas base
   for (let d = 1; d <= TOTAL_DEZENAS_VOLANTE; d++) {
     const atrasoAtual = calcularAtraso(resultados, d, sorteioKey);
     estatisticas.set(d, {
@@ -43,8 +67,52 @@ function calcularEstatisticas(
       frequencia: calcularFrequencia(resultados, d, sorteioKey),
       melhorDupla: 0,
       correlacaoDupla: 0,
+      melhorTrio: [0, 0],
+      correlacaoTrio: 0,
       status: "normal",
     });
+  }
+
+  // Calcular melhor dupla e trio para cada dezena
+  for (let d = 1; d <= TOTAL_DEZENAS_VOLANTE; d++) {
+    const est = estatisticas.get(d)!;
+    
+    // Melhor dupla
+    let melhorDuplaCount = 0;
+    let melhorDuplaNum = 0;
+    for (let other = 1; other <= TOTAL_DEZENAS_VOLANTE; other++) {
+      if (other === d) continue;
+      const key = [d, other].sort((a, b) => a - b).join("-");
+      const count = correlacaoDuplas.get(key) || 0;
+      if (count > melhorDuplaCount) {
+        melhorDuplaCount = count;
+        melhorDuplaNum = other;
+      }
+    }
+    est.melhorDupla = melhorDuplaNum;
+    est.correlacaoDupla = resultados.length > 0 
+      ? Math.round((melhorDuplaCount / resultados.length) * 100) 
+      : 0;
+
+    // Melhor trio
+    let melhorTrioCount = 0;
+    let melhorTrioNums: [number, number] = [0, 0];
+    for (let o1 = 1; o1 <= TOTAL_DEZENAS_VOLANTE; o1++) {
+      if (o1 === d) continue;
+      for (let o2 = o1 + 1; o2 <= TOTAL_DEZENAS_VOLANTE; o2++) {
+        if (o2 === d) continue;
+        const key = [d, o1, o2].sort((a, b) => a - b).join("-");
+        const count = correlacaoTrios.get(key) || 0;
+        if (count > melhorTrioCount) {
+          melhorTrioCount = count;
+          melhorTrioNums = [o1, o2];
+        }
+      }
+    }
+    est.melhorTrio = melhorTrioNums;
+    est.correlacaoTrio = resultados.length > 0 
+      ? Math.round((melhorTrioCount / resultados.length) * 100) 
+      : 0;
   }
 
   // Atualizar status (quente >= 15%, frio <= 5%)
