@@ -1,6 +1,15 @@
 import { cn } from "@/lib/utils";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, Check } from "lucide-react";
+
+// Dupla Sena: 1-50, grid 5x10
+const PRIMOS_DUPLASENA = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47];
+const MOLDURA_DUPLASENA = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, // top row
+  11, 20, // sides row 2
+  21, 30, // sides row 3
+  31, 40, // sides row 4
+  41, 42, 43, 44, 45, 46, 47, 48, 49, 50 // bottom row
+];
 
 interface JogoCardDuplaSenaProps {
   index: number;
@@ -12,6 +21,7 @@ interface JogoCardDuplaSenaProps {
   onDelete?: () => void;
   acertos?: number | null;
   showCheckbox?: boolean;
+  showPatterns?: boolean;
 }
 
 export function JogoCardDuplaSena({
@@ -24,8 +34,17 @@ export function JogoCardDuplaSena({
   onDelete,
   acertos,
   showCheckbox = true,
+  showPatterns = true,
 }: JogoCardDuplaSenaProps) {
   const formatDezena = (n: number) => n.toString().padStart(2, "0");
+
+  // Calcular padrões
+  const qtdImpares = dezenas.filter(d => d % 2 !== 0).length;
+  const qtdRepetidas = ultimoConcursoDezenas.length > 0 
+    ? dezenas.filter(d => ultimoConcursoDezenas.includes(d)).length 
+    : null;
+  const qtdMoldura = dezenas.filter(d => MOLDURA_DUPLASENA.includes(d)).length;
+  const qtdPrimos = dezenas.filter(d => PRIMOS_DUPLASENA.includes(d)).length;
 
   const getAcertosStyle = () => {
     if (acertos === null || acertos === undefined) return "";
@@ -104,6 +123,18 @@ export function JogoCardDuplaSena({
           </span>
         ))}
       </div>
+
+      {/* Padrões estatísticos */}
+      {showPatterns && (
+        <div className="flex items-center gap-3 mt-2 pt-2 border-t border-border/50 text-[10px] text-muted-foreground">
+          <span>Ímp: <strong className="text-foreground">{qtdImpares}</strong></span>
+          {qtdRepetidas !== null && (
+            <span>Rep: <strong className="text-foreground">{qtdRepetidas}</strong></span>
+          )}
+          <span>Mol: <strong className="text-foreground">{qtdMoldura}</strong></span>
+          <span>Pri: <strong className="text-foreground">{qtdPrimos}</strong></span>
+        </div>
+      )}
     </div>
   );
 }
