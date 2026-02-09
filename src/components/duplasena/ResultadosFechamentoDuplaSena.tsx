@@ -1,7 +1,8 @@
-import { FlaskConical, ChevronLeft, ChevronRight } from "lucide-react";
+import { FlaskConical, ChevronLeft, ChevronRight, Sparkles, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PalpitesToolbar, usePalpitesToolbar } from "@/components/palpites/PalpitesToolbar";
 import { EstrategiaCardDuplaSena } from "@/components/duplasena/EstrategiaCardDuplaSena";
+import { cn } from "@/lib/utils";
 import { JogoCardDuplaSena } from "@/components/duplasena/JogoCardDuplaSena";
 import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -200,9 +201,48 @@ export function ResultadosFechamentoDuplaSena({
 
   return (
     <div className="space-y-4">
-      <div>
-        <h3 className="text-lg font-semibold">Jogos Gerados</h3>
-        <p className="text-sm text-muted-foreground">{jogos.length} jogos prontos para apostar</p>
+      {/* Header com dezenas selecionadas */}
+      <div className="rounded-lg border bg-card p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          {estrategiaIA ? (
+            <>
+              <Sparkles className="h-4 w-4 text-duplasena-primary" />
+              <h3 className="text-sm font-semibold">Palpites Gerados por IA</h3>
+            </>
+          ) : (
+            <h3 className="text-sm font-semibold">Seleção Manual</h3>
+          )}
+          <span className="text-xs text-muted-foreground ml-auto">{jogos.length} jogos</span>
+        </div>
+
+        <div className="flex flex-wrap gap-1.5">
+          {dezenasSelecionadas
+            .slice()
+            .sort((a, b) => a - b)
+            .map((dezena) => {
+              const isFixa = fixas.includes(dezena);
+              return (
+                <div
+                  key={dezena}
+                  className={cn(
+                    "w-8 h-8 rounded-full text-xs font-bold flex items-center justify-center border-2",
+                    isFixa
+                      ? "bg-palpite-fixa text-palpite-fixa-foreground border-palpite-fixa"
+                      : "bg-duplasena-primary text-duplasena-primary-foreground border-duplasena-primary"
+                  )}
+                >
+                  {formatarDezenaDuplaSena(dezena)}
+                </div>
+              );
+            })}
+        </div>
+
+        {fixas.length > 0 && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Lock className="h-3 w-3" />
+            <span>{fixas.length} fixa{fixas.length > 1 ? "s" : ""}</span>
+          </div>
+        )}
       </div>
 
       {estrategiaIA && <EstrategiaCardDuplaSena estrategia={estrategiaIA} />}
