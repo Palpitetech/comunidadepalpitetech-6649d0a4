@@ -3,6 +3,7 @@ import type { FeatureKey } from "@/types/plans";
 export type ChatTopicId =
   | "boloes"
   | "estrategias"
+  | "estrategias_duplasena"
   | "conhecer_planos";
 
 export interface ChatTopic {
@@ -30,6 +31,14 @@ export const CHAT_TOPICS: ChatTopic[] = [
     feature: "chat_duvidas_ferramentas",
     botTag: "chat_duvidas_ferramentas",
     starterUserMessage: "Quero aprender estratégias e conhecer as ferramentas.",
+  },
+  {
+    id: "estrategias_duplasena",
+    title: "Dupla Sena - Estratégias",
+    description: "Análises e estratégias exclusivas para a Dupla Sena.",
+    feature: "chat_duvidas_ferramentas",
+    botTag: "chat_duplasena",
+    starterUserMessage: "Quero aprender estratégias específicas para a Dupla Sena.",
   },
   {
     id: "conhecer_planos",
