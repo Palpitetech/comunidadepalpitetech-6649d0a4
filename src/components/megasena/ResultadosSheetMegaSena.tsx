@@ -55,7 +55,7 @@ export function ResultadosSheetMegaSena({
 
   useEffect(() => {
     if (open) {
-      buscarPastas().then(setPastas);
+      buscarPastas("megasena").then(setPastas);
     }
   }, [open]);
 

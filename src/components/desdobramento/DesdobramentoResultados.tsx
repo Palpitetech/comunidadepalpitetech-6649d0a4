@@ -54,7 +54,7 @@ export function DesdobramentoResultados({
   const [pastas, setPastas] = useState<Pasta[]>([]);
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
   
-  // Buscar pastas do usuário
+  // Buscar pastas do usuário (filtradas por lotofacil)
   useEffect(() => {
     const fetchPastas = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -64,6 +64,7 @@ export function DesdobramentoResultados({
         .from("palpites_pastas")
         .select("*")
         .eq("user_id", sessionData.session.user.id)
+        .eq("loteria", "lotofacil")
         .order("nome");
       
       if (data) {

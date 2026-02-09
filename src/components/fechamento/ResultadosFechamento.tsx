@@ -99,7 +99,7 @@ export function ResultadosFechamento({
     carregarUltimoConcurso();
   }, []);
 
-  // Carregar pastas do usuário
+  // Carregar pastas do usuário (filtradas por lotofacil)
   const carregarPastas = async () => {
     if (!user) return;
     setLoadingPastas(true);
@@ -108,6 +108,7 @@ export function ResultadosFechamento({
         .from("palpites_pastas")
         .select("*")
         .eq("user_id", user.id)
+        .eq("loteria", "lotofacil")
         .order("nome");
       
       if (data) {
