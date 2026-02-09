@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Trash2, Check } from "lucide-react";
+import { AcertosBadge } from "@/components/shared/AcertosBadge";
 
 // Dupla Sena: 1-50, grid 5x10
 const PRIMOS_DUPLASENA = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47];
@@ -83,19 +84,7 @@ export function JogoCardDuplaSena({
             Jogo {index + 1}
           </span>
           {acertos !== null && acertos !== undefined && (
-            <span
-              className={cn(
-                "text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shrink-0",
-                acertos >= 6 && "bg-orange-500 text-white animate-pulse shadow-lg",
-                acertos === 5 && "bg-orange-600 text-white",
-                acertos === 4 && "bg-orange-700 text-white",
-                acertos === 3 && "bg-orange-800 text-orange-50",
-                acertos < 3 && "bg-muted text-muted-foreground"
-              )}
-            >
-              {acertos >= 6 && <span>🏆</span>}
-              <span>{acertos} pts</span>
-            </span>
+            <AcertosBadge acertos={acertos} loteria="duplasena" />
           )}
         </div>
         {onDelete && (
