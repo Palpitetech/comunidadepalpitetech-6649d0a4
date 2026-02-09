@@ -53,7 +53,7 @@ export function DesdobramentoResultadosDuplaSena({
   const [pastas, setPastas] = useState<Pasta[]>([]);
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
   
-  // Buscar pastas do usuário
+  // Buscar pastas do usuário (filtradas por duplasena)
   useEffect(() => {
     const fetchPastas = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -63,6 +63,7 @@ export function DesdobramentoResultadosDuplaSena({
         .from("palpites_pastas")
         .select("*")
         .eq("user_id", sessionData.session.user.id)
+        .eq("loteria", "duplasena")
         .order("nome");
       
       if (data) {

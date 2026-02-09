@@ -58,7 +58,7 @@ export function ResultadosSheetDuplaSena({
 
   useEffect(() => {
     if (open) {
-      buscarPastas().then(setPastas);
+      buscarPastas("duplasena").then(setPastas);
     }
   }, [open]);
 

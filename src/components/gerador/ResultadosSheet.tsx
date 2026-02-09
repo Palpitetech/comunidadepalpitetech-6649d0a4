@@ -60,7 +60,7 @@ export function ResultadosSheet({
   // Carregar pastas quando abrir
   useEffect(() => {
     if (open) {
-      buscarPastas().then(setPastas);
+      buscarPastas("lotofacil").then(setPastas);
     }
   }, [open]);
 

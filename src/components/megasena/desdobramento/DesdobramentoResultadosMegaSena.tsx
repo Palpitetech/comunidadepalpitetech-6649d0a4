@@ -55,7 +55,7 @@ export function DesdobramentoResultadosMegaSena({
   const [pastas, setPastas] = useState<Pasta[]>([]);
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
   
-  // Buscar pastas do usuário
+  // Buscar pastas do usuário (filtradas por megasena)
   useEffect(() => {
     const fetchPastas = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -65,6 +65,7 @@ export function DesdobramentoResultadosMegaSena({
         .from("palpites_pastas")
         .select("*")
         .eq("user_id", sessionData.session.user.id)
+        .eq("loteria", "megasena")
         .order("nome");
       
       if (data) {

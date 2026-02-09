@@ -98,6 +98,7 @@ export function ResultadosFechamentoMegaSena({
     carregarUltimoConcurso();
   }, []);
 
+  // Carregar pastas do usuário (filtradas por megasena)
   const carregarPastas = async () => {
     if (!user) return;
     setLoadingPastas(true);
@@ -106,6 +107,7 @@ export function ResultadosFechamentoMegaSena({
         .from("palpites_pastas")
         .select("*")
         .eq("user_id", user.id)
+        .eq("loteria", "megasena")
         .order("nome");
       
       if (data) {
