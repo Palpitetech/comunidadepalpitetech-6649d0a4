@@ -277,6 +277,12 @@ export function DesktopHeader() {
                        Linhas e Colunas
                      </Link>
                    </DropdownMenuItem>
+                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                     <Link to="/duplasena/tabela-movimentacao">
+                       <Table2 className="h-4 w-4" />
+                       Tabela de Movimentação
+                     </Link>
+                   </DropdownMenuItem>
                    <DropdownMenuSeparator />
                     <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                       <Link to="/duplasena/gerador">
