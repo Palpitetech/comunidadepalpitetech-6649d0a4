@@ -1,19 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
-import { Copy, Check } from "lucide-react";
-import { useState, useMemo } from "react";
-import { useToast } from "@/hooks/use-toast";
-
-// Dupla Sena: 1-50, grid 5x10
-const PRIMOS_DUPLASENA = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47];
-const MOLDURA_DUPLASENA = [
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, // top row
-  11, 20, // sides row 2
-  21, 30, // sides row 3
-  31, 40, // sides row 4
-  41, 42, 43, 44, 45, 46, 47, 48, 49, 50 // bottom row
-];
+import { Trash2, Check } from "lucide-react";
 
 interface JogoCardDuplaSenaProps {
   index: number;
@@ -22,10 +9,9 @@ interface JogoCardDuplaSenaProps {
   ultimoConcursoDezenas?: number[];
   isSelected?: boolean;
   onSelectChange?: (checked: boolean) => void;
+  onDelete?: () => void;
   acertos?: number | null;
-  showPatterns?: boolean;
   showCheckbox?: boolean;
-  compact?: boolean;
 }
 
 export function JogoCardDuplaSena({
@@ -35,82 +21,52 @@ export function JogoCardDuplaSena({
   ultimoConcursoDezenas = [],
   isSelected = false,
   onSelectChange,
+  onDelete,
   acertos,
-  showPatterns = true,
   showCheckbox = true,
-  compact = false,
 }: JogoCardDuplaSenaProps) {
-  const { toast } = useToast();
-  const [copied, setCopied] = useState(false);
-  
   const formatDezena = (n: number) => n.toString().padStart(2, "0");
-
-  // Calcular padrões
-  const padroes = useMemo(() => {
-    const impares = dezenas.filter(d => d % 2 !== 0).length;
-    const moldura = dezenas.filter(d => MOLDURA_DUPLASENA.includes(d)).length;
-    const primos = dezenas.filter(d => PRIMOS_DUPLASENA.includes(d)).length;
-    const repetidas = ultimoConcursoDezenas.length > 0 
-      ? dezenas.filter(d => ultimoConcursoDezenas.includes(d)).length 
-      : null;
-    
-    return { impares, moldura, primos, repetidas };
-  }, [dezenas, ultimoConcursoDezenas]);
-
-  const handleCopy = async () => {
-    const texto = dezenas.map(formatDezena).join(" - ");
-    try {
-      await navigator.clipboard.writeText(texto);
-      setCopied(true);
-      toast({
-        title: `Jogo ${index + 1} copiado!`,
-        description: texto,
-      });
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      toast({
-        title: "Erro ao copiar",
-        variant: "destructive",
-      });
-    }
-  };
 
   const getAcertosStyle = () => {
     if (acertos === null || acertos === undefined) return "";
-    if (acertos >= 6) return "ring-2 ring-amber-400 bg-amber-50 dark:bg-amber-950/30";
-    if (acertos >= 5) return "ring-2 ring-emerald-400 bg-emerald-50 dark:bg-emerald-950/30";
-    if (acertos >= 4) return "ring-1 ring-blue-400 bg-blue-50 dark:bg-blue-950/30";
+    if (acertos >= 6) return "border-amber-400 bg-amber-50 dark:bg-amber-950/30";
+    if (acertos >= 5) return "border-emerald-400 bg-emerald-50 dark:bg-emerald-950/30";
+    if (acertos >= 4) return "border-blue-400 bg-blue-50 dark:bg-blue-950/30";
     return "";
   };
 
   return (
     <div
       className={cn(
-        "flex flex-col gap-1.5 p-2 rounded-lg border bg-card transition-all",
+        "p-3 rounded-lg border transition-colors",
         getAcertosStyle(),
-        isSelected && "border-duplasena-primary/50 bg-duplasena-primary/5"
+        isSelected 
+          ? "border-duplasena-primary bg-duplasena-primary/5" 
+          : "border-border"
       )}
     >
-      {/* Linha superior: checkbox, número do jogo, acertos, copiar */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           {showCheckbox && onSelectChange && (
-            <Checkbox
-              checked={isSelected}
-              onCheckedChange={onSelectChange}
-              className="shrink-0 data-[state=checked]:bg-duplasena-primary data-[state=checked]:border-duplasena-primary"
-            />
+            <button
+              onClick={() => onSelectChange(!isSelected)}
+              className={cn(
+                "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
+                isSelected
+                  ? "bg-duplasena-primary border-duplasena-primary text-white"
+                  : "border-muted-foreground/30"
+              )}
+            >
+              {isSelected && <Check className="h-3 w-3" />}
+            </button>
           )}
-          <span className="text-xs text-muted-foreground font-medium">
-            Jogo #{index + 1}
+          <span className="text-sm font-medium text-muted-foreground">
+            Jogo {index + 1}
           </span>
-        </div>
-        
-        <div className="flex items-center gap-1.5">
           {acertos !== null && acertos !== undefined && (
             <span
               className={cn(
-                "text-xs font-bold px-2 py-0.5 rounded-full shrink-0",
+                "text-xs font-bold px-2 py-0.5 rounded-full",
                 acertos >= 6 && "bg-amber-500 text-white",
                 acertos === 5 && "bg-emerald-500 text-white",
                 acertos === 4 && "bg-blue-500 text-white",
@@ -120,53 +76,34 @@ export function JogoCardDuplaSena({
               {acertos}pt
             </span>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleCopy}
-            className="h-7 w-7 shrink-0"
+        </div>
+        {onDelete && (
+          <button
+            onClick={onDelete}
+            className="text-muted-foreground hover:text-destructive transition-colors"
           >
-            {copied ? (
-              <Check className="h-3.5 w-3.5 text-duplasena-primary" />
-            ) : (
-              <Copy className="h-3.5 w-3.5" />
+            <Trash2 className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+      
+      <div className="flex flex-wrap gap-1.5">
+        {dezenas.map((dezena) => (
+          <span
+            key={dezena}
+            className={cn(
+              "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold",
+              dezenasFixes?.includes(dezena)
+                ? "bg-foreground text-background"
+                : ultimoConcursoDezenas.includes(dezena)
+                ? "bg-duplasena-primary text-white"
+                : "bg-duplasena-primary/20 text-duplasena-primary"
             )}
-          </Button>
-        </div>
+          >
+            {formatDezena(dezena)}
+          </span>
+        ))}
       </div>
-
-      {/* Dezenas em linha */}
-      <div className="flex items-center gap-1">
-        {dezenas.map((dezena) => {
-          const isFixa = dezenasFixes.includes(dezena);
-          return (
-            <span
-              key={dezena}
-              className={cn(
-                "inline-flex items-center justify-center font-bold transition-all",
-                "w-6 h-6 text-[10px] rounded-full",
-                isFixa
-                  ? "bg-palpite-fixa text-palpite-fixa-foreground"
-                  : "bg-duplasena-primary text-duplasena-primary-foreground"
-              )}
-            >
-              {formatDezena(dezena)}
-            </span>
-          );
-        })}
-      </div>
-
-      {/* Padrões estatísticos */}
-      {showPatterns && (
-        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-          <span>Ímp: <strong className="text-foreground">{padroes.impares}</strong></span>
-          {padroes.repetidas !== null && (
-            <span>Rep: <strong className="text-foreground">{padroes.repetidas}</strong></span>
-          )}
-          <span>Mol: <strong className="text-foreground">{padroes.moldura}</strong></span>
-          <span>Pri: <strong className="text-foreground">{padroes.primos}</strong></span>
-        </div>
-      )}
     </div>
   );
 }
