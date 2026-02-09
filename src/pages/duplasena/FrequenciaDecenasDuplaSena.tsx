@@ -15,9 +15,9 @@ import { useFrequenciaDuplaSena } from "@/hooks/useFrequenciaDuplaSena";
 import { cn } from "@/lib/utils";
 import { BarChart3, TrendingUp, TrendingDown, Minus } from "lucide-react";
 
-// Grid 5x10 para Dupla Sena (1-50)
-const GRID = Array.from({ length: 10 }, (_, row) =>
-  Array.from({ length: 5 }, (_, col) => row * 5 + col + 1)
+// Grid 10x5 para Dupla Sena (1-50) — consistente com desdobramento
+const GRID = Array.from({ length: 5 }, (_, row) =>
+  Array.from({ length: 10 }, (_, col) => row * 10 + col + 1)
 );
 
 const PERIODOS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30, 50, 100];
@@ -153,7 +153,7 @@ export default function FrequenciaDecenasDuplaSena() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4">
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-10 gap-1">
                 {GRID.flat().map((dezena) => {
                   const dezenaData = dados.find((d) => d.dezena === dezena);
                   const percent = dezenaData?.frequencia ?? 0;
@@ -163,14 +163,14 @@ export default function FrequenciaDecenasDuplaSena() {
                     <div
                       key={dezena}
                       className={cn(
-                        "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all",
+                        "flex flex-col items-center justify-center aspect-square rounded-lg border-2 transition-all",
                         getStatusColor(status)
                       )}
                     >
-                      <span className="text-2xl font-bold">
+                      <span className="text-lg font-bold leading-none">
                         {String(dezena).padStart(2, "0")}
                       </span>
-                      <span className="text-sm font-medium opacity-90">
+                      <span className="text-[10px] font-medium opacity-90 leading-none mt-0.5">
                         {percent}%
                       </span>
                     </div>
