@@ -176,10 +176,9 @@ export function ResultadosSheetDuplaSena({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
         side="bottom" 
-        className="h-[calc(100dvh-4rem-4rem)] p-0 overflow-y-auto z-40"
+        className="h-[100dvh] p-0 overflow-y-auto z-50"
         onInteractOutside={(e) => e.preventDefault()}
         hideCloseButton
-        hideOverlay
       >
         <div className="sticky top-0 z-10 bg-background border-b">
           <SheetHeader className="px-4 py-3 flex-row items-center justify-between">
