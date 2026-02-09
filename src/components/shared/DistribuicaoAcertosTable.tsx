@@ -78,17 +78,13 @@ export function DistribuicaoAcertosTable({
 
   return (
     <div className={cn(
-      "border rounded-xl p-3 animate-fade-in shadow-lg relative",
-      themeColors.container,
+      "bg-card border border-border rounded-xl p-3 animate-fade-in shadow-sm relative",
       className
     )}>
       {onClose && (
         <button
           onClick={onClose}
-          className={cn(
-            "absolute top-2 right-2 transition-colors p-1",
-            themeColors.closeButton
-          )}
+          className="absolute top-2 right-2 text-muted-foreground hover:text-foreground transition-colors p-1"
           aria-label="Fechar tabela"
         >
           <X className="h-4 w-4" />
@@ -97,23 +93,23 @@ export function DistribuicaoAcertosTable({
       
       <div className="flex items-center gap-2 mb-3">
         <Trophy className={cn("h-5 w-5", themeColors.icon)} />
-        <span className={cn("font-bold text-sm", themeColors.title)}>
+        <span className="font-bold text-sm text-foreground">
           Distribuição de Acertos
-          {concursoId && <span className="font-normal opacity-70 ml-1">#{concursoId}</span>}
+          {concursoId && <span className="font-normal text-muted-foreground ml-1">#{concursoId}</span>}
         </span>
       </div>
 
-      <div className="rounded-lg overflow-hidden border border-border/30">
+      <div className="rounded-lg overflow-hidden border border-border">
         <Table>
           <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className={cn("text-xs font-semibold h-8", themeColors.headerText)}>
+            <TableRow className="hover:bg-transparent bg-muted/50">
+              <TableHead className="text-xs font-semibold h-8 text-foreground">
                 Faixa
               </TableHead>
-              <TableHead className={cn("text-xs font-semibold h-8 text-right", themeColors.headerText)}>
+              <TableHead className="text-xs font-semibold h-8 text-right text-foreground">
                 Qtd
               </TableHead>
-              <TableHead className={cn("text-xs font-semibold h-8 text-right", themeColors.headerText)}>
+              <TableHead className="text-xs font-semibold h-8 text-right text-foreground">
                 %
               </TableHead>
             </TableRow>
@@ -127,14 +123,14 @@ export function DistribuicaoAcertosTable({
                 <TableRow 
                   key={faixa.label} 
                   className={cn(
-                    "hover:bg-transparent transition-colors",
-                    count > 0 && faixa.isPremio && themeColors.premioRowBg
+                    "hover:bg-muted/30 transition-colors",
+                    count > 0 && faixa.isPremio && "bg-muted/20"
                   )}
                 >
                   <TableCell className="py-1.5 px-3">
                     <span className={cn(
                       "text-xs font-medium px-2 py-0.5 rounded-full",
-                      count > 0 ? faixa.className : "bg-muted/50 text-muted-foreground"
+                      count > 0 ? faixa.className : "bg-muted text-muted-foreground"
                     )}>
                       {faixa.label}
                     </span>
@@ -145,10 +141,7 @@ export function DistribuicaoAcertosTable({
                   )}>
                     {count}
                   </TableCell>
-                  <TableCell className={cn(
-                    "py-1.5 px-3 text-right text-xs",
-                    count > 0 && faixa.isPremio ? themeColors.premioTextMuted : "text-muted-foreground"
-                  )}>
+                  <TableCell className="py-1.5 px-3 text-right text-xs text-muted-foreground">
                     {percent}%
                   </TableCell>
                 </TableRow>
@@ -158,7 +151,7 @@ export function DistribuicaoAcertosTable({
         </Table>
       </div>
 
-      <div className={cn("mt-2 text-xs text-center", themeColors.footer)}>
+      <div className="mt-2 text-xs text-center text-muted-foreground">
         {totalPalpites} palpite{totalPalpites !== 1 ? "s" : ""} verificado{totalPalpites !== 1 ? "s" : ""}
       </div>
     </div>
@@ -203,39 +196,18 @@ function getThemeColors(loteria: LoteriaType) {
   switch (loteria) {
     case "lotofacil":
       return {
-        container: "bg-purple-950 border-purple-600 shadow-purple-900/30",
-        closeButton: "text-purple-400 hover:text-white",
-        icon: "text-purple-300",
-        title: "text-purple-200",
-        headerText: "text-purple-300",
-        premioRowBg: "bg-purple-900/30",
-        premioText: "text-purple-200",
-        premioTextMuted: "text-purple-300/70",
-        footer: "text-purple-300/70",
+        icon: "text-purple-500",
+        premioText: "text-purple-600 dark:text-purple-400",
       };
     case "megasena":
       return {
-        container: "bg-green-950 border-green-600 shadow-green-900/30",
-        closeButton: "text-green-400 hover:text-white",
-        icon: "text-green-300",
-        title: "text-green-200",
-        headerText: "text-green-300",
-        premioRowBg: "bg-green-900/30",
-        premioText: "text-green-200",
-        premioTextMuted: "text-green-300/70",
-        footer: "text-green-300/70",
+        icon: "text-green-500",
+        premioText: "text-green-600 dark:text-green-400",
       };
     case "duplasena":
       return {
-        container: "bg-orange-950 border-orange-600 shadow-orange-900/30",
-        closeButton: "text-orange-400 hover:text-white",
-        icon: "text-orange-300",
-        title: "text-orange-200",
-        headerText: "text-orange-300",
-        premioRowBg: "bg-orange-900/30",
-        premioText: "text-orange-200",
-        premioTextMuted: "text-orange-300/70",
-        footer: "text-orange-300/70",
+        icon: "text-orange-500",
+        premioText: "text-orange-600 dark:text-orange-400",
       };
   }
 }
