@@ -191,6 +191,11 @@ Para cada dezena, explique brevemente o motivo.`;
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      if (aiResponse.status === 402) {
+        return new Response(JSON.stringify({ error: "Créditos de IA esgotados. Adicione créditos ao workspace para continuar." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       return new Response(JSON.stringify({ error: "Erro ao processar com IA" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
