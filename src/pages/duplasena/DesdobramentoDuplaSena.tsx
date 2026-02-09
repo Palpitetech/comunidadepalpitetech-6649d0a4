@@ -3,9 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FiltroPatternSelector } from "@/components/desdobramento/FiltroPatternSelector";
 import { GridDesdobramentoDuplaSena } from "@/components/duplasena/desdobramento/GridDesdobramentoDuplaSena";
 import { ModoSeletorDesdobramentoDuplaSena } from "@/components/duplasena/desdobramento/ModoSeletorDesdobramentoDuplaSena";
@@ -24,7 +22,6 @@ import {
   estimarCombinacoesValidasDuplaSena,
   FiltrosDesdobramentoDuplaSena 
 } from "@/lib/desdobramentoDuplaSena";
-import { cn } from "@/lib/utils";
 import { 
   Shuffle, 
   Loader2, 
@@ -35,16 +32,12 @@ import {
 } from "lucide-react";
 import { DesdobramentoResultadosDuplaSena } from "@/components/duplasena/desdobramento/DesdobramentoResultadosDuplaSena";
 
-type SorteioKey = "sorteio1" | "sorteio2";
-
 export default function DesdobramentoDuplaSena() {
   const isMobile = useIsMobile();
   const [searchParams, setSearchParams] = useSearchParams();
   
-  // Toggle para sorteio
-  const [sorteioSelecionado, setSorteioSelecionado] = useState<SorteioKey>("sorteio1");
-  
-  const { repetidas, impares, primos, moldura, multiplosDe3, isLoading: statsLoading } = useDesdobramentoStatsDuplaSena(sorteioSelecionado);
+  // Estatísticas combinadas de ambos os sorteios (mesmo jogo vale para S1 e S2)
+  const { repetidas, impares, primos, moldura, multiplosDe3, isLoading: statsLoading } = useDesdobramentoStatsDuplaSena();
   
   // Auto top 3 para cada padrão
   const autoTop3Impares = useMemo(() => impares.slice(0, 3).map(i => i.valor), [impares]);
@@ -118,24 +111,27 @@ export default function DesdobramentoDuplaSena() {
   const [dezenasFixas, setDezenasFixas] = useState<number[]>([]);
   const [dezenasExcluidas, setDezenasExcluidas] = useState<number[]>([]);
 
-  // Buscar último sorteio
+  // Buscar último sorteio (combinar dezenas de S1 e S2 para referência de repetidas)
   useEffect(() => {
     const fetchUltimoSorteio = async () => {
-      const field = sorteioSelecionado === "sorteio1" ? "dezenas_sorteio1" : "dezenas_sorteio2";
       const { data } = await supabase
         .from("resultados_duplasena")
-        .select(field)
+        .select("dezenas_sorteio1, dezenas_sorteio2")
         .order("concurso_id", { ascending: false })
         .limit(1)
         .single();
       
       if (data) {
-        const dezenas = (data as Record<string, number[]>)[field];
-        if (dezenas) setUltimoSorteio(dezenas);
+        // Combinar dezenas únicas de ambos os sorteios
+        const combinadas = [...new Set([
+          ...(data.dezenas_sorteio1 || []),
+          ...(data.dezenas_sorteio2 || [])
+        ])];
+        setUltimoSorteio(combinadas);
       }
     };
     fetchUltimoSorteio();
-  }, [sorteioSelecionado]);
+  }, []);
 
   // Handler para toggle de dezena
   const handleToggleDezena = (numero: number) => {
@@ -309,21 +305,6 @@ export default function DesdobramentoDuplaSena() {
           </div>
         )}
 
-        {/* Toggle Sorteio 1 / Sorteio 2 */}
-        <Tabs 
-          value={sorteioSelecionado} 
-          onValueChange={(v) => setSorteioSelecionado(v as SorteioKey)}
-          className="w-full"
-        >
-          <TabsList className="w-full grid grid-cols-2">
-            <TabsTrigger value="sorteio1" className="data-[state=active]:bg-duplasena-primary data-[state=active]:text-white">
-              Sorteio 1
-            </TabsTrigger>
-            <TabsTrigger value="sorteio2" className="data-[state=active]:bg-duplasena-secondary data-[state=active]:text-white">
-              Sorteio 2
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
 
         {/* Botão para abrir filtros de jogos */}
         <button
