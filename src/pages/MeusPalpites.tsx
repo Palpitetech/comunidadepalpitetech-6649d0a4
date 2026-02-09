@@ -118,14 +118,19 @@ export default function MeusPalpites() {
     return counts;
   }, [palpites]);
 
-  // Obter subpastas de uma loteria
+  // Obter subpastas de uma loteria (incluindo pastas antigas sem parent_id)
   const getSubpastas = (loteriaKey: string) => {
     // Encontrar pasta raiz da loteria
     const raiz = pastas.find(p => p.loteria === loteriaKey && p.is_root === true);
-    if (!raiz) return [];
     
-    // Buscar subpastas
-    return pastas.filter(p => p.parent_id === raiz.id);
+    // Buscar subpastas: 
+    // 1. Pastas com parent_id apontando para a raiz (novo formato)
+    // 2. Pastas da mesma loteria sem parent_id e que não são raiz (formato antigo)
+    return pastas.filter(p => 
+      p.loteria === loteriaKey && 
+      p.is_root !== true && 
+      (p.parent_id === raiz?.id || p.parent_id === null)
+    );
   };
 
   // Contar palpites por subpasta

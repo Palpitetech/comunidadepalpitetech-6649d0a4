@@ -141,13 +141,31 @@ export function usePalpitesSalvos() {
   const buscarPalpites = async (): Promise<PalpiteSalvo[]> => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("palpites_salvos")
-        .select("*")
-        .order("created_at", { ascending: false });
+      // Fetch all palpites with pagination to avoid Supabase 1000 row limit
+      const allData: PalpiteSalvo[] = [];
+      const batchSize = 1000;
+      let offset = 0;
+      let hasMore = true;
 
-      if (error) throw error;
-      return (data || []) as unknown as PalpiteSalvo[];
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from("palpites_salvos")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .range(offset, offset + batchSize - 1);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          allData.push(...(data as unknown as PalpiteSalvo[]));
+          offset += batchSize;
+          hasMore = data.length === batchSize;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return allData;
     } catch (error) {
       console.error("Erro ao buscar palpites:", error);
       return [];
