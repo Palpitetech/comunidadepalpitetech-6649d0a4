@@ -5,8 +5,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { User, Mail, Phone, Lock, CreditCard, Calendar, Sparkles } from "lucide-react";
-import { Link } from "react-router-dom";
+import { User, Mail, Phone, Lock, CreditCard, Calendar, Sparkles, Trash2, Loader2 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -21,6 +32,8 @@ export default function Perfil() {
   const { profile, user } = useAuthContext();
   const { toast } = useToast();
   const [isOpeningCheckout, setIsOpeningCheckout] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const navigate = useNavigate();
   const { isPremium } = useUserRole();
   const { data: subscription } = useMySubscription(user?.id);
 
@@ -60,6 +73,42 @@ export default function Perfil() {
       });
     } finally {
       setIsOpeningCheckout(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    setIsDeletingAccount(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) throw new Error("Sessão expirada");
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Erro ao excluir conta");
+
+      await supabase.auth.signOut();
+      toast({
+        title: "Conta excluída",
+        description: "Sua conta e todos os dados foram removidos com sucesso.",
+      });
+      navigate("/login", { replace: true });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro ao excluir conta";
+      toast({ title: "Erro", description: message, variant: "destructive" });
+    } finally {
+      setIsDeletingAccount(false);
     }
   };
 
@@ -211,6 +260,56 @@ export default function Perfil() {
                 Ver histórico de pagamentos
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Seção 3: Excluir Conta */}
+        <Card className="mt-6 border-destructive/30">
+          <CardHeader>
+            <CardTitle className="text-senior-lg flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              Excluir Conta
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-senior-base text-muted-foreground mb-4">
+              Ao excluir sua conta, todos os seus dados serão removidos permanentemente, 
+              incluindo palpites, postagens e histórico de conversas. Esta ação não pode ser desfeita.
+            </p>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="w-full h-12 text-senior-base gap-2">
+                  <Trash2 className="h-5 w-5" />
+                  Excluir minha conta
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação é irreversível. Todos os seus dados serão excluídos permanentemente, 
+                    incluindo perfil, palpites salvos, postagens e histórico de conversas.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteAccount}
+                    disabled={isDeletingAccount}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {isDeletingAccount ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Excluindo...
+                      </>
+                    ) : (
+                      "Sim, excluir minha conta"
+                    )}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </CardContent>
         </Card>
       </div>

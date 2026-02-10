@@ -31,7 +31,10 @@ export default function Auth() {
         <LoginWizard />
 
         <p className="text-center mt-6 text-muted-foreground text-senior-sm">
-          Ao criar uma conta, você concorda com nossos termos de uso.
+          Ao criar uma conta, você concorda com nossos{" "}
+          <a href="/termos" target="_blank" className="underline text-primary hover:text-primary/80">Termos de Uso</a>
+          {" "}e{" "}
+          <a href="/privacidade" target="_blank" className="underline text-primary hover:text-primary/80">Política de Privacidade</a>.
         </p>
       </div>
     </div>
