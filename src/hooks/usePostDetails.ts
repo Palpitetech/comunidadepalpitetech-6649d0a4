@@ -95,7 +95,7 @@ export function usePostDetails(postId: string) {
       let ctaData = null;
       if (perfis?.is_bot) {
         const { data: personaData } = await supabase
-          .from("guide_personas")
+          .from("guide_personas_publico" as any)
           .select("cta_override_enabled, cta_override_text, cta_override_buttons")
           .eq("perfil_id", postData.user_id)
           .eq("cta_override_enabled", true)

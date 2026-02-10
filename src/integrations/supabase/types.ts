@@ -152,6 +152,13 @@ export type Database = {
             referencedRelation: "guide_personas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bot_publishing_logs_guide_persona_id_fkey"
+            columns: ["guide_persona_id"]
+            isOneToOne: false
+            referencedRelation: "guide_personas_publico"
+            referencedColumns: ["id"]
+          },
         ]
       }
       chat_conversations: {
@@ -245,6 +252,13 @@ export type Database = {
             columns: ["bot_persona_id"]
             isOneToOne: false
             referencedRelation: "guide_personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_bot_persona_id_fkey"
+            columns: ["bot_persona_id"]
+            isOneToOne: false
+            referencedRelation: "guide_personas_publico"
             referencedColumns: ["id"]
           },
           {
@@ -1265,6 +1279,73 @@ export type Database = {
       }
     }
     Views: {
+      guide_personas_publico: {
+        Row: {
+          ativo: boolean | null
+          badge_emoji: string | null
+          cargo: string | null
+          chat_enabled: boolean | null
+          chat_priority: number | null
+          chat_tags: string[] | null
+          cta_override_buttons: Json | null
+          cta_override_enabled: boolean | null
+          cta_override_text: string | null
+          especialidade: string | null
+          id: string | null
+          perfil_id: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          badge_emoji?: string | null
+          cargo?: string | null
+          chat_enabled?: boolean | null
+          chat_priority?: number | null
+          chat_tags?: string[] | null
+          cta_override_buttons?: Json | null
+          cta_override_enabled?: boolean | null
+          cta_override_text?: string | null
+          especialidade?: string | null
+          id?: string | null
+          perfil_id?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          badge_emoji?: string | null
+          cargo?: string | null
+          chat_enabled?: boolean | null
+          chat_priority?: number | null
+          chat_tags?: string[] | null
+          cta_override_buttons?: Json | null
+          cta_override_enabled?: boolean | null
+          cta_override_text?: string | null
+          especialidade?: string | null
+          id?: string | null
+          perfil_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guide_personas_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: true
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guide_personas_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: true
+            referencedRelation: "perfis_publicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guide_personas_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: true
+            referencedRelation: "usuarios_notificaveis_hoje"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       perfis_publicos: {
         Row: {
           avatar_url: string | null
