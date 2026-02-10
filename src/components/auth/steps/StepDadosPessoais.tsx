@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Loader2, ArrowRight, User, Mail, Phone, Lock } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface StepDadosPessoaisProps {
   formData: {
@@ -25,6 +26,7 @@ export function StepDadosPessoais({
 }: StepDadosPessoaisProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [aceitouTermos, setAceitouTermos] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const formatCelular = (value: string) => {
@@ -59,12 +61,16 @@ export function StepDadosPessoais({
 
     if (!formData.password) {
       newErrors.password = "Digite uma senha";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Senha deve ter no mínimo 6 caracteres";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Senha deve ter no mínimo 8 caracteres";
     }
 
     if (formData.password !== confirmPassword) {
       newErrors.confirmPassword = "As senhas não coincidem";
+    }
+
+    if (!aceitouTermos) {
+      newErrors.termos = "Você precisa aceitar os termos para continuar";
     }
 
     setErrors(newErrors);
@@ -199,6 +205,33 @@ export function StepDadosPessoais({
             />
             {errors.confirmPassword && (
               <p className="text-destructive text-senior-sm">{errors.confirmPassword}</p>
+            )}
+          </div>
+
+          {/* Consentimento LGPD */}
+          <div className="space-y-2">
+            <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
+              <Checkbox
+                id="termos"
+                checked={aceitouTermos}
+                onCheckedChange={(checked) => setAceitouTermos(checked === true)}
+                disabled={isLoading}
+                className="mt-0.5"
+              />
+              <label htmlFor="termos" className="text-senior-sm text-muted-foreground cursor-pointer leading-relaxed">
+                Li e aceito os{" "}
+                <a href="/termos" target="_blank" className="underline text-primary hover:text-primary/80">
+                  Termos de Uso
+                </a>
+                {" "}e a{" "}
+                <a href="/privacidade" target="_blank" className="underline text-primary hover:text-primary/80">
+                  Política de Privacidade
+                </a>
+                . Autorizo o uso dos meus dados conforme descrito.
+              </label>
+            </div>
+            {errors.termos && (
+              <p className="text-destructive text-senior-sm">{errors.termos}</p>
             )}
           </div>
 

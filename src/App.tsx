@@ -34,6 +34,8 @@ import TabelaMovimentacao from "./pages/TabelaMovimentacao";
 import FrequenciaDezenas from "./pages/FrequenciaDezenas";
 import DezenasporPosicao from "./pages/DezenasporPosicao";
 import NotFound from "./pages/NotFound";
+import Termos from "./pages/Termos";
+import Privacidade from "./pages/Privacidade";
 import ResultadosMegaSena from "./pages/megasena/ResultadosMegaSena";
 import TendenciasMegaSena from "./pages/megasena/TendenciasMegaSena";
 import FrequenciaMegaSena from "./pages/megasena/FrequenciaMegaSena";
@@ -70,6 +72,8 @@ const App = () => (
             {/* Rotas Públicas */}
             <Route path="/login" element={<Login />} />
             <Route path="/recuperar-senha" element={<RecuperarSenha />} />
+            <Route path="/termos" element={<Termos />} />
+            <Route path="/privacidade" element={<Privacidade />} />
 
             {/* Rotas Protegidas - Requer Login */}
             <Route path="/" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
