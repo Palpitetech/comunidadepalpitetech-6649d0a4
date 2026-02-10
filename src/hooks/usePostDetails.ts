@@ -58,7 +58,7 @@ export function usePostDetails(postId: string) {
   const postQuery = useQuery({
     queryKey: ["post", postId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: postData, error } = await supabase
         .from("postagens")
         .select(
           `
@@ -74,22 +74,30 @@ export function usePostDetails(postId: string) {
           user_id,
           tool_snapshot,
           external_link_url,
-          external_link_text,
-          perfis:user_id (nome, avatar_url, is_bot)
+          external_link_text
         `
         )
         .eq("id", postId)
         .single();
 
       if (error) throw error;
+
+      // Fetch author's public profile (safe view)
+      const { data: profileData } = await supabase
+        .from("perfis_publicos" as any)
+        .select("id, nome, avatar_url, is_bot")
+        .eq("id", postData.user_id)
+        .maybeSingle();
+
+      const perfis = profileData ? { nome: (profileData as any).nome, avatar_url: (profileData as any).avatar_url, is_bot: (profileData as any).is_bot } : null;
       
       // Se o autor é bot, buscar dados de CTA
       let ctaData = null;
-      if (data.perfis?.is_bot) {
+      if (perfis?.is_bot) {
         const { data: personaData } = await supabase
           .from("guide_personas")
           .select("cta_override_enabled, cta_override_text, cta_override_buttons")
-          .eq("perfil_id", data.user_id)
+          .eq("perfil_id", postData.user_id)
           .eq("cta_override_enabled", true)
           .maybeSingle();
         
@@ -97,7 +105,8 @@ export function usePostDetails(postId: string) {
       }
       
       return {
-        ...data,
+        ...postData,
+        perfis,
         cta_override_enabled: ctaData?.cta_override_enabled || false,
         cta_override_text: ctaData?.cta_override_text || null,
         cta_override_buttons: (ctaData?.cta_override_buttons as unknown as CtaButton[]) || [],
@@ -123,12 +132,12 @@ export function usePostDetails(postId: string) {
       // Buscar perfis dos autores
       const userIds = [...new Set(commentsData.map((c) => c.user_id))];
       const { data: profilesData } = await supabase
-        .from("perfis")
+        .from("perfis_publicos" as any)
         .select("id, nome, avatar_url, is_bot")
         .in("id", userIds);
 
       const profilesMap = new Map(
-        profilesData?.map((p) => [p.id, { nome: p.nome, avatar_url: p.avatar_url, is_bot: p.is_bot }]) || []
+        (profilesData as any[])?.map((p: any) => [p.id, { nome: p.nome, avatar_url: p.avatar_url, is_bot: p.is_bot }]) || []
       );
 
       // Separar comentários raiz e respostas
