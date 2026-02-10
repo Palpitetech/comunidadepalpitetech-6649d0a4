@@ -90,6 +90,13 @@ export type Database = {
             foreignKeyName: "bot_post_interactions_bot_fk"
             columns: ["bot_perfil_id"]
             isOneToOne: false
+            referencedRelation: "perfis_publicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bot_post_interactions_bot_fk"
+            columns: ["bot_perfil_id"]
+            isOneToOne: false
             referencedRelation: "usuarios_notificaveis_hoje"
             referencedColumns: ["id"]
           },
@@ -478,6 +485,13 @@ export type Database = {
             columns: ["perfil_id"]
             isOneToOne: true
             referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guide_personas_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: true
+            referencedRelation: "perfis_publicos"
             referencedColumns: ["id"]
           },
           {
@@ -1021,6 +1035,13 @@ export type Database = {
             foreignKeyName: "postagens_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "perfis_publicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "postagens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "usuarios_notificaveis_hoje"
             referencedColumns: ["id"]
           },
@@ -1244,6 +1265,27 @@ export type Database = {
       }
     }
     Views: {
+      perfis_publicos: {
+        Row: {
+          avatar_url: string | null
+          id: string | null
+          is_bot: boolean | null
+          nome: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          id?: string | null
+          is_bot?: boolean | null
+          nome?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          id?: string | null
+          is_bot?: boolean | null
+          nome?: string | null
+        }
+        Relationships: []
+      }
       usuarios_notificaveis_hoje: {
         Row: {
           celular: string | null

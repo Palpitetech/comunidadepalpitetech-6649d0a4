@@ -26,7 +26,7 @@ export function useCommunityPosts() {
   return useQuery({
     queryKey: ["community-posts"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: postsData, error } = await supabase
         .from("postagens")
         .select(
           `
@@ -42,12 +42,30 @@ export function useCommunityPosts() {
           user_id,
           tool_snapshot,
           external_link_url,
-          external_link_text,
-          perfis:user_id (nome, avatar_url, is_bot)
+          external_link_text
         `
         )
         .order("created_at", { ascending: false })
         .limit(50);
+
+      if (error) throw error;
+      if (!postsData || postsData.length === 0) return [];
+
+      // Fetch public profiles separately (uses perfis_publicos view - no sensitive data)
+      const userIds = [...new Set(postsData.map((p) => p.user_id))];
+      const { data: profilesData } = await supabase
+        .from("perfis_publicos" as any)
+        .select("id, nome, avatar_url, is_bot")
+        .in("id", userIds);
+
+      const profilesMap = new Map(
+        profilesData?.map((p: any) => [p.id, { nome: p.nome, avatar_url: p.avatar_url, is_bot: p.is_bot }]) || []
+      );
+
+      const data = postsData.map((post) => ({
+        ...post,
+        perfis: profilesMap.get(post.user_id) || null,
+      }));
 
       if (error) throw error;
       return data as CommunityPost[];
