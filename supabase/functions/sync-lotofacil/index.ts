@@ -72,37 +72,140 @@ async function dispararNotificacaoResultadoNovo(params: {
   }
 }
 
-// Dispara o post de Plantão do resultado oficial na comunidade
-async function dispararPostResultadoOficial(params: {
-  supabaseUrl: string;
-  authBearer: string;
+// Cria o post de resultado oficial diretamente pela Ana (sem depender de outra edge function)
+async function criarPostResultadoOficialAna(params: {
+  supabase: any;
   concurso: number;
+  dezenas: number[];
+  indicadores: { qtd_pares: number; qtd_impares: number; qtd_moldura: number; qtd_primos: number; qtd_repetidas: number };
+  cicloInfo: { ciclo_numero: number; dezenas_faltantes_ciclo: number[] };
+  acumulou: boolean;
 }): Promise<void> {
-  const fnUrl = `${params.supabaseUrl}/functions/v1/generate-roundtable-post`;
-  console.log(`[PLANTAO] Disparando post de resultado oficial para concurso ${params.concurso}`);
-  
+  const { supabase, concurso, dezenas, indicadores, cicloInfo, acumulou } = params;
+
+  console.log(`[ANA-POST] Criando post de resultado para concurso ${concurso}`);
+
   try {
-    const response = await fetch(fnUrl, {
+    // 1. Buscar perfil_id da Ana (is_result_author)
+    const { data: ana, error: anaError } = await supabase
+      .from("guide_personas")
+      .select("id, perfil_id, system_prompt, max_chars_post, ai_model, total_posts")
+      .eq("is_result_author", true)
+      .eq("ativo", true)
+      .eq("can_create_posts", true)
+      .single();
+
+    if (anaError || !ana) {
+      console.error(`[ANA-POST] ❌ Bot Ana não encontrado ou inativo`);
+      return;
+    }
+
+    // 2. Montar contexto do resultado
+    const dezenasFormatadas = dezenas.map(d => d.toString().padStart(2, "0")).join(" - ");
+    const faltantes = cicloInfo.dezenas_faltantes_ciclo.map(d => d.toString().padStart(2, "0")).join(", ");
+
+    const contextoResultado = `RESULTADO OFICIAL CONCURSO ${concurso}:
+Dezenas: **${dezenasFormatadas}**
+Pares: ${indicadores.qtd_pares} | Ímpares: ${indicadores.qtd_impares}
+Moldura: ${indicadores.qtd_moldura} | Primos: ${indicadores.qtd_primos}
+Repetidas: ${indicadores.qtd_repetidas}
+Ciclo: ${cicloInfo.ciclo_numero} | Faltantes: [${faltantes}]${cicloInfo.dezenas_faltantes_ciclo.length <= 3 ? " ⚡ Quase fechando!" : ""}
+${acumulou ? "💰 ACUMULOU!" : ""}`;
+
+    // 3. Gerar post via IA
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      console.error("[ANA-POST] ❌ LOVABLE_API_KEY não configurada");
+      return;
+    }
+
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
-        Authorization: `Bearer ${params.authBearer}`,
       },
       body: JSON.stringify({
-        tipo_post: "resultado_oficial",
-        contexto_extra: `Resultado recém-sincronizado do concurso ${params.concurso}`,
+        model: ana.ai_model || "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: ana.system_prompt },
+          {
+            role: "user",
+            content: `Crie um post de PLANTÃO anunciando o resultado oficial da Lotofácil.
+
+${contextoResultado}
+
+INSTRUÇÕES:
+- Título chamativo com emoji 🚨 (máximo 60 caracteres)
+- Destaque as dezenas sorteadas
+- Raio-X rápido (pares/ímpares, moldura, primos, repetidas, ciclo)
+- Máximo ${ana.max_chars_post || 600} caracteres no conteúdo
+- Finalize convidando à discussão
+
+Responda APENAS no formato JSON:
+{"titulo": "seu título", "conteudo": "seu conteúdo"}`
+          }
+        ]
       }),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[PLANTAO] Erro: ${response.status} - ${errorText}`);
-    } else {
-      const data = await response.json();
-      console.log(`[PLANTAO] Post criado com sucesso: ${data.post_id}`);
+    if (!aiResponse.ok) {
+      console.error(`[ANA-POST] ❌ Erro na IA: ${aiResponse.status}`);
+      return;
     }
+
+    const aiData = await aiResponse.json();
+    const content = aiData.choices?.[0]?.message?.content;
+
+    let parsed;
+    try {
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(jsonMatch?.[0] || content);
+    } catch {
+      console.error("[ANA-POST] ❌ Formato de resposta inválido da IA");
+      return;
+    }
+
+    // 4. Criar post na comunidade
+    const { data: newPost, error: postError } = await supabase
+      .from("postagens")
+      .insert({
+        user_id: ana.perfil_id,
+        titulo: parsed.titulo?.substring(0, 100),
+        conteudo: parsed.conteudo?.substring(0, 1000),
+        loteria_tag: "Lotofácil",
+      })
+      .select("id")
+      .single();
+
+    if (postError) {
+      console.error(`[ANA-POST] ❌ Erro ao criar post:`, postError.message);
+      return;
+    }
+
+    // 5. Atualizar estatísticas da Ana
+    await supabase
+      .from("guide_personas")
+      .update({
+        ultimo_post_em: new Date().toISOString(),
+        total_posts: (ana.total_posts || 0) + 1
+      })
+      .eq("id", ana.id);
+
+    // 6. Log de sucesso
+    await supabase
+      .from("bot_publishing_logs")
+      .insert({
+        guide_persona_id: ana.id,
+        bot_name: "Ana",
+        event_type: "success",
+        reason: "Result post created directly by sync",
+        details: { post_id: newPost.id, concurso }
+      });
+
+    console.log(`[ANA-POST] ✅ Post criado com sucesso: ${newPost.id}`);
   } catch (err) {
-    console.error(`[PLANTAO] Erro ao chamar edge function:`, err);
+    console.error(`[ANA-POST] ❌ Erro geral:`, err);
   }
 }
 
@@ -693,17 +796,19 @@ Deno.serve(async (req) => {
             // Não interrompe sincronização por falha de notificação
           }
 
-          // Dispara post de Plantão na comunidade (resultado oficial)
+          // Cria post da Ana diretamente (sem depender de outra edge function)
           try {
-            await dispararPostResultadoOficial({
-              supabaseUrl,
-              authBearer: supabaseAnonKey,
+            await criarPostResultadoOficialAna({
+              supabase,
               concurso: concurso.numero,
+              dezenas: concurso.dezenas,
+              indicadores,
+              cicloInfo,
+              acumulou,
             });
-          } catch (plantaoErr) {
-            const msg = plantaoErr instanceof Error ? plantaoErr.message : String(plantaoErr);
-            console.error(`[PLANTAO] Falha ao disparar post: ${msg}`);
-            // Não interrompe sincronização por falha do plantão
+          } catch (anaErr) {
+            const msg = anaErr instanceof Error ? anaErr.message : String(anaErr);
+            console.error(`[ANA-POST] Falha ao criar post: ${msg}`);
           }
         } else {
           console.log('[NOTIFY] Disparo desativado (carga histórica ou notify=false).');
