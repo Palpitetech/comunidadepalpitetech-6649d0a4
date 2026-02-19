@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.bot-interact-with-post]
 verify_jwt = false
+
+[functions.import-csv-users]
+verify_jwt = false
