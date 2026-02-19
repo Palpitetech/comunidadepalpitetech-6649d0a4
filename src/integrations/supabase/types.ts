@@ -1390,6 +1390,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      process_pending_bot_replies: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "user" | "premium" | "moderator" | "admin"
