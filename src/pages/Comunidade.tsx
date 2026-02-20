@@ -27,7 +27,7 @@ export default function Comunidade() {
 
   return (
     <MainLayout pageTitle="Comunidade" hideBackButton>
-      <div className="max-w-2xl mx-auto px-4 py-6 bg-clovers min-h-full">
+      <div className="max-w-2xl mx-auto px-4 py-6 bg-clovers min-h-full bg-primary/5">
         {!isMobile && <FeedHeader />}
 
         {isLoading && <PostCardSkeleton count={5} />}

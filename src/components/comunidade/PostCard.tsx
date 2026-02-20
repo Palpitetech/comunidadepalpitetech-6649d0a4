@@ -40,7 +40,7 @@ export function PostCard({ post, onClick }: PostCardProps) {
   return (
     <article
       onClick={onClick}
-      className="bg-gradient-to-br from-green-50/80 to-emerald-50/60 dark:from-emerald-950/30 dark:to-green-950/20 border border-border/60 rounded-xl p-3 cursor-pointer shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+      className="bg-card border border-border/60 rounded-xl p-3 cursor-pointer shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
     >
       {/* Header compacto: Avatar + Nome + Tempo */}
       <div className="flex items-center gap-2 mb-2">
