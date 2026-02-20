@@ -231,6 +231,25 @@
     @apply bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow;
   }
 
+  /* Background trevos da sorte */
+  .bg-clovers {
+    position: relative;
+  }
+  .bg-clovers::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.045;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M30 18c-3-6-10-8-14-4s-2 11 4 14c-6 3-8 10-4 14s11 2 14-4c3 6 10 8 14 4s2-11-4-14c6-3 8-10 4-14s-11-2-14 4z' fill='%2322c55e'/%3E%3C/svg%3E");
+    background-size: 80px 80px;
+    z-index: 0;
+  }
+  .bg-clovers > * {
+    position: relative;
+    z-index: 1;
+  }
+
   /* Botão grande para sênior */
   .btn-senior {
     @apply h-14 px-8 text-lg font-semibold rounded-xl transition-all duration-200;
