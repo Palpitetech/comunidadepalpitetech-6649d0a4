@@ -161,6 +161,22 @@ serve(async (req) => {
           continue;
         }
 
+        // DEDUPLICAÇÃO: Verificar se já postou nos últimos 30 minutos
+        const thirtyMinAgo = new Date(now.getTime() - 30 * 60 * 1000).toISOString();
+        const { data: recentPost } = await supabaseAdmin
+          .from("postagens")
+          .select("id, created_at")
+          .eq("user_id", guide.perfil_id)
+          .gte("created_at", thirtyMinAgo)
+          .limit(1)
+          .single();
+
+        if (recentPost) {
+          console.log(`[${guide.perfis?.nome}] ⚠️ Já postou nos últimos 30min (${recentPost.id}), pulando duplicata`);
+          skipped.push(`${guide.perfis?.nome}: Já postou recentemente`);
+          continue;
+        }
+
         console.log(`[${guide.perfis?.nome}] ✅ Gerando post (horário: ${matchingTime})`);
 
         // Determinar tipo de post baseado no papel do bot
