@@ -134,9 +134,9 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
   ];
 
   return (
-    <Card className="w-full max-w-lg shadow-xl">
+    <Card className="w-full max-w-lg shadow-xl overflow-hidden">
       {/* Indicadores de etapa */}
-      <div className="p-6 border-b bg-muted/30">
+      <div className="p-3 md:p-6 border-b bg-muted/30">
         <StepIndicator currentStep={step} steps={steps} />
       </div>
 

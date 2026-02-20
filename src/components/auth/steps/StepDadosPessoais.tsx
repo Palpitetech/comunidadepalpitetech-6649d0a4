@@ -86,19 +86,19 @@ export function StepDadosPessoais({
 
   return (
     <>
-      <CardHeader className="text-center pb-6">
-        <CardTitle className="text-senior-2xl">Criar sua conta</CardTitle>
-        <CardDescription className="text-senior-base">
+      <CardHeader className="text-center pb-3 md:pb-6 px-4 md:px-6 pt-4 md:pt-6">
+        <CardTitle className="text-xl md:text-senior-2xl">Criar sua conta</CardTitle>
+        <CardDescription className="text-sm md:text-senior-base">
           Preencha seus dados para começar
         </CardDescription>
       </CardHeader>
 
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-5">
+      <CardContent className="px-4 md:px-6 pb-4 md:pb-6">
+        <form onSubmit={handleSubmit} className="space-y-3 md:space-y-5">
           {/* Nome */}
-          <div className="space-y-2">
-            <Label htmlFor="nome" className="text-senior-base font-medium flex items-center gap-2">
-              <User className="h-5 w-5 text-muted-foreground" />
+          <div className="space-y-1">
+            <Label htmlFor="nome" className="text-sm md:text-senior-base font-medium flex items-center gap-2">
+              <User className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
               Nome completo
             </Label>
             <Input
@@ -107,7 +107,7 @@ export function StepDadosPessoais({
               placeholder="Seu nome completo"
               value={formData.nome}
               onChange={(e) => onFormDataChange({ nome: e.target.value })}
-              className="input-senior"
+              className="h-11 md:h-14 text-base md:text-lg px-3 md:px-4 rounded-lg md:rounded-xl border-2 focus:border-primary"
               disabled={isLoading}
             />
             {errors.nome && (
@@ -116,9 +116,9 @@ export function StepDadosPessoais({
           </div>
 
           {/* Email */}
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-senior-base font-medium flex items-center gap-2">
-              <Mail className="h-5 w-5 text-muted-foreground" />
+          <div className="space-y-1">
+            <Label htmlFor="email" className="text-sm md:text-senior-base font-medium flex items-center gap-2">
+              <Mail className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
               E-mail
             </Label>
             <Input
@@ -127,7 +127,7 @@ export function StepDadosPessoais({
               placeholder="seu@email.com"
               value={formData.email}
               onChange={(e) => onFormDataChange({ email: e.target.value })}
-              className="input-senior"
+              className="h-11 md:h-14 text-base md:text-lg px-3 md:px-4 rounded-lg md:rounded-xl border-2 focus:border-primary"
               disabled={isLoading}
             />
             {errors.email && (
@@ -136,10 +136,10 @@ export function StepDadosPessoais({
           </div>
 
           {/* Celular */}
-          <div className="space-y-2">
-            <Label htmlFor="celular" className="text-senior-base font-medium flex items-center gap-2">
-              <Phone className="h-5 w-5 text-muted-foreground" />
-              Celular (para verificação)
+          <div className="space-y-1">
+            <Label htmlFor="celular" className="text-sm md:text-senior-base font-medium flex items-center gap-2">
+              <Phone className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
+              Celular
             </Label>
             <Input
               id="celular"
@@ -147,7 +147,7 @@ export function StepDadosPessoais({
               placeholder="(11) 99999-9999"
               value={formData.celular}
               onChange={(e) => onFormDataChange({ celular: formatCelular(e.target.value) })}
-              className="input-senior"
+              className="h-11 md:h-14 text-base md:text-lg px-3 md:px-4 rounded-lg md:rounded-xl border-2 focus:border-primary"
               disabled={isLoading}
               inputMode="numeric"
             />
@@ -157,19 +157,19 @@ export function StepDadosPessoais({
           </div>
 
           {/* Senha */}
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-senior-base font-medium flex items-center gap-2">
-              <Lock className="h-5 w-5 text-muted-foreground" />
+          <div className="space-y-1">
+            <Label htmlFor="password" className="text-sm md:text-senior-base font-medium flex items-center gap-2">
+              <Lock className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
               Senha
             </Label>
             <div className="relative">
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Mínimo 8 caracteres"
                 value={formData.password}
                 onChange={(e) => onFormDataChange({ password: e.target.value })}
-                className="input-senior pr-14"
+                className="h-11 md:h-14 text-base md:text-lg px-3 md:px-4 rounded-lg md:rounded-xl border-2 focus:border-primary pr-12 md:pr-14"
                 disabled={isLoading}
               />
               <Button
@@ -189,9 +189,9 @@ export function StepDadosPessoais({
           </div>
 
           {/* Confirmar Senha */}
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword" className="text-senior-base font-medium flex items-center gap-2">
-              <Lock className="h-5 w-5 text-muted-foreground" />
+          <div className="space-y-1">
+            <Label htmlFor="confirmPassword" className="text-sm md:text-senior-base font-medium flex items-center gap-2">
+              <Lock className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
               Confirmar senha
             </Label>
             <Input
@@ -200,7 +200,7 @@ export function StepDadosPessoais({
               placeholder="Digite a senha novamente"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="input-senior"
+              className="h-11 md:h-14 text-base md:text-lg px-3 md:px-4 rounded-lg md:rounded-xl border-2 focus:border-primary"
               disabled={isLoading}
             />
             {errors.confirmPassword && (
@@ -209,8 +209,8 @@ export function StepDadosPessoais({
           </div>
 
           {/* Consentimento LGPD */}
-          <div className="space-y-2">
-            <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
+          <div className="space-y-1">
+            <div className="flex items-start gap-2 md:gap-3 p-3 md:p-4 bg-muted/50 rounded-lg">
               <Checkbox
                 id="termos"
                 checked={aceitouTermos}
@@ -218,7 +218,7 @@ export function StepDadosPessoais({
                 disabled={isLoading}
                 className="mt-0.5"
               />
-              <label htmlFor="termos" className="text-senior-sm text-muted-foreground cursor-pointer leading-relaxed">
+              <label htmlFor="termos" className="text-xs md:text-senior-sm text-muted-foreground cursor-pointer leading-relaxed">
                 Li e aceito os{" "}
                 <a href="/termos" target="_blank" className="underline text-primary hover:text-primary/80">
                   Termos de Uso
@@ -237,7 +237,7 @@ export function StepDadosPessoais({
 
           <Button 
             type="submit" 
-            className="btn-senior w-full mt-8"
+            className="h-12 md:h-14 px-6 md:px-8 text-base md:text-lg font-semibold rounded-xl transition-all duration-200 w-full mt-4 md:mt-8"
             disabled={isLoading}
           >
             {isLoading ? (
