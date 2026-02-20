@@ -385,19 +385,19 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
 
     const aiData = await aiResponse.json();
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    const usage = aiData.usage;
+    const aiUsage = aiData.usage;
 
     // Log de uso de IA
-    if (usage) {
+    if (aiUsage) {
       supabaseAdmin.from("ai_usage_logs").insert({
         user_id: user.id,
         edge_function: "generate-palpites",
         action_type: "palpite",
-        prompt_tokens: usage.prompt_tokens || 0,
-        completion_tokens: usage.completion_tokens || 0,
-        total_tokens: usage.total_tokens || 0,
+        prompt_tokens: aiUsage.prompt_tokens || 0,
+        completion_tokens: aiUsage.completion_tokens || 0,
+        total_tokens: aiUsage.total_tokens || 0,
         model: "openai/gpt-5.2",
-        cost_usd: estimateCost(usage, "openai/gpt-5.2"),
+        cost_usd: estimateCost(aiUsage, "openai/gpt-5.2"),
         metadata: { quantidade, qtdDezenas, periodoAnalise },
       }).then(() => {}).catch(e => console.error("Erro log:", e));
     }
