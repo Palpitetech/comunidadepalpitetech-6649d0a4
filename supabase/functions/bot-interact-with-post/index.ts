@@ -6,6 +6,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function estimateCost(usage: { prompt_tokens?: number; completion_tokens?: number }, model: string): number {
+  const rates: Record<string, { input: number; output: number }> = {
+    "google/gemini-3-flash-preview": { input: 0.15, output: 0.60 },
+    "google/gemini-2.5-flash": { input: 0.15, output: 0.60 },
+    "google/gemini-2.5-pro": { input: 1.25, output: 5.00 },
+    "openai/gpt-5.2": { input: 2.00, output: 8.00 },
+  };
+  const rate = rates[model] || { input: 0.15, output: 0.60 };
+  return ((usage.prompt_tokens || 0) / 1e6) * rate.input + ((usage.completion_tokens || 0) / 1e6) * rate.output;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -168,6 +179,24 @@ Responda APENAS com o texto do comentário (sem JSON, sem aspas).`,
 
         const aiData = await aiResponse.json();
         const comentario = aiData.choices?.[0]?.message?.content?.trim();
+        const usage = aiData.usage;
+
+        // Log de uso de IA
+        if (usage) {
+          const model = guide.ai_model || "google/gemini-3-flash-preview";
+          supabaseAdmin.from("ai_usage_logs").insert({
+            bot_persona_id: guide.id,
+            bot_name: (guide.perfis as any)?.nome,
+            edge_function: "bot-interact-with-post",
+            action_type: "comment",
+            prompt_tokens: usage.prompt_tokens || 0,
+            completion_tokens: usage.completion_tokens || 0,
+            total_tokens: usage.total_tokens || 0,
+            model,
+            cost_usd: estimateCost(usage, model),
+            metadata: { post_id },
+          }).then(() => {}).catch(e => console.error("Erro log:", e));
+        }
 
         if (!comentario) throw new Error("Resposta da IA vazia");
 

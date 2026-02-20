@@ -6,6 +6,22 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Estimativa de custo por modelo (USD por 1M tokens)
+function estimateCost(usage: { prompt_tokens?: number; completion_tokens?: number }, model: string): number {
+  const rates: Record<string, { input: number; output: number }> = {
+    "google/gemini-3-flash-preview": { input: 0.15, output: 0.60 },
+    "google/gemini-2.5-flash": { input: 0.15, output: 0.60 },
+    "google/gemini-2.5-pro": { input: 1.25, output: 5.00 },
+    "openai/gpt-5.2": { input: 2.00, output: 8.00 },
+    "openai/gpt-5": { input: 2.00, output: 8.00 },
+    "openai/gpt-5-mini": { input: 0.40, output: 1.60 },
+  };
+  const rate = rates[model] || { input: 0.15, output: 0.60 };
+  const inputCost = ((usage.prompt_tokens || 0) / 1_000_000) * rate.input;
+  const outputCost = ((usage.completion_tokens || 0) / 1_000_000) * rate.output;
+  return inputCost + outputCost;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -199,6 +215,23 @@ Responda APENAS no formato JSON:
 
     const aiData = await aiResponse.json();
     const content = aiData.choices?.[0]?.message?.content;
+    const usage = aiData.usage;
+
+    // Log de uso de IA
+    if (usage) {
+      await supabaseAdmin.from("ai_usage_logs").insert({
+        bot_persona_id: guide_id,
+        bot_name: guide.perfis?.nome,
+        edge_function: "generate-bot-post",
+        action_type: "post",
+        prompt_tokens: usage.prompt_tokens || 0,
+        completion_tokens: usage.completion_tokens || 0,
+        total_tokens: usage.total_tokens || 0,
+        model: guide.ai_model || "google/gemini-3-flash-preview",
+        cost_usd: estimateCost(usage, guide.ai_model || "google/gemini-3-flash-preview"),
+        metadata: { tipo_post: postType },
+      }).then(() => {}).catch(e => console.error("Erro ao logar uso:", e));
+    }
     
     let parsed;
     try {

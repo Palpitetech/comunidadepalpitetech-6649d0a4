@@ -6,6 +6,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function estimateCost(usage: { prompt_tokens?: number; completion_tokens?: number }, model: string): number {
+  const rates: Record<string, { input: number; output: number }> = {
+    "google/gemini-3-flash-preview": { input: 0.15, output: 0.60 },
+    "google/gemini-2.5-flash": { input: 0.15, output: 0.60 },
+  };
+  const rate = rates[model] || { input: 0.15, output: 0.60 };
+  return ((usage.prompt_tokens || 0) / 1e6) * rate.input + ((usage.completion_tokens || 0) / 1e6) * rate.output;
+}
+
 type ChatTopicId =
   | "boloes"
   | "estrategias"
@@ -394,6 +403,25 @@ serve(async (req) => {
 
     const aiData = await aiResp.json();
     const reply = (aiData?.choices?.[0]?.message?.content as string | undefined)?.trim() || "";
+    const usage = aiData?.usage;
+
+    // Log de uso de IA
+    if (usage) {
+      const model = chosenBot.ai_model || "google/gemini-3-flash-preview";
+      adminClient.from("ai_usage_logs").insert({
+        bot_persona_id: chosenBot.id,
+        bot_name: null,
+        user_id: userId,
+        edge_function: "chat-assistant",
+        action_type: "chat",
+        prompt_tokens: usage.prompt_tokens || 0,
+        completion_tokens: usage.completion_tokens || 0,
+        total_tokens: usage.total_tokens || 0,
+        model,
+        cost_usd: estimateCost(usage, model),
+        metadata: { topic },
+      }).then(() => {}).catch(e => console.error("Erro log:", e));
+    }
 
     if (!reply) {
       return new Response(JSON.stringify({ error: "Resposta vazia" }), {

@@ -14,6 +14,49 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_settings: {
+        Row: {
+          id: string
+          updated_at: string
+          updated_by: string | null
+          usd_to_brl: number
+        }
+        Insert: {
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          usd_to_brl?: number
+        }
+        Update: {
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          usd_to_brl?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "perfis_publicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "usuarios_notificaveis_hoje"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_cta_settings: {
         Row: {
           buttons: Json
@@ -43,6 +86,90 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      ai_usage_logs: {
+        Row: {
+          action_type: string
+          bot_name: string | null
+          bot_persona_id: string | null
+          completion_tokens: number
+          cost_usd: number
+          created_at: string
+          edge_function: string
+          id: string
+          metadata: Json | null
+          model: string | null
+          prompt_tokens: number
+          total_tokens: number
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          bot_name?: string | null
+          bot_persona_id?: string | null
+          completion_tokens?: number
+          cost_usd?: number
+          created_at?: string
+          edge_function: string
+          id?: string
+          metadata?: Json | null
+          model?: string | null
+          prompt_tokens?: number
+          total_tokens?: number
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          bot_name?: string | null
+          bot_persona_id?: string | null
+          completion_tokens?: number
+          cost_usd?: number
+          created_at?: string
+          edge_function?: string
+          id?: string
+          metadata?: Json | null
+          model?: string | null
+          prompt_tokens?: number
+          total_tokens?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_logs_bot_persona_id_fkey"
+            columns: ["bot_persona_id"]
+            isOneToOne: false
+            referencedRelation: "guide_personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_logs_bot_persona_id_fkey"
+            columns: ["bot_persona_id"]
+            isOneToOne: false
+            referencedRelation: "guide_personas_publico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_publicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios_notificaveis_hoje"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bot_post_interactions: {
         Row: {

@@ -6,6 +6,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function estimateCost(usage: { prompt_tokens?: number; completion_tokens?: number }, model: string): number {
+  const rates: Record<string, { input: number; output: number }> = {
+    "openai/gpt-5.2": { input: 2.00, output: 8.00 },
+    "google/gemini-3-flash-preview": { input: 0.15, output: 0.60 },
+  };
+  const rate = rates[model] || { input: 0.15, output: 0.60 };
+  return ((usage.prompt_tokens || 0) / 1e6) * rate.input + ((usage.completion_tokens || 0) / 1e6) * rate.output;
+}
+
 // Constantes da Lotofácil
 const MOLDURA = [1, 2, 3, 4, 5, 6, 10, 11, 15, 16, 20, 21, 22, 23, 24, 25];
 const PRIMOS = [2, 3, 5, 7, 11, 13, 17, 19, 23];
@@ -376,6 +385,22 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
 
     const aiData = await aiResponse.json();
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+    const usage = aiData.usage;
+
+    // Log de uso de IA
+    if (usage) {
+      supabaseAdmin.from("ai_usage_logs").insert({
+        user_id: user.id,
+        edge_function: "generate-palpites",
+        action_type: "palpite",
+        prompt_tokens: usage.prompt_tokens || 0,
+        completion_tokens: usage.completion_tokens || 0,
+        total_tokens: usage.total_tokens || 0,
+        model: "openai/gpt-5.2",
+        cost_usd: estimateCost(usage, "openai/gpt-5.2"),
+        metadata: { quantidade, qtdDezenas, periodoAnalise },
+      }).then(() => {}).catch(e => console.error("Erro log:", e));
+    }
     
     if (!toolCall?.function?.arguments) {
       return new Response(JSON.stringify({ error: "Resposta inválida da IA" }), {

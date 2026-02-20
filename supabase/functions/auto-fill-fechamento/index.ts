@@ -6,6 +6,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function estimateCost(usage: { prompt_tokens?: number; completion_tokens?: number }, model: string): number {
+  const rates: Record<string, { input: number; output: number }> = {
+    "google/gemini-3-flash-preview": { input: 0.15, output: 0.60 },
+  };
+  const rate = rates[model] || { input: 0.15, output: 0.60 };
+  return ((usage.prompt_tokens || 0) / 1e6) * rate.input + ((usage.completion_tokens || 0) / 1e6) * rate.output;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -303,6 +311,22 @@ IMPORTANTE: Organize as dezenas assim no array de resposta:
 
     const aiData = await aiResponse.json();
     
+    // Log de uso de IA
+    const usage = aiData.usage;
+    if (usage) {
+      const supabaseAdmin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      supabaseAdmin.from("ai_usage_logs").insert({
+        user_id: user.id,
+        edge_function: "auto-fill-fechamento",
+        action_type: "auto_fill",
+        prompt_tokens: usage.prompt_tokens || 0,
+        completion_tokens: usage.completion_tokens || 0,
+        total_tokens: usage.total_tokens || 0,
+        model: "google/gemini-3-flash-preview",
+        cost_usd: estimateCost(usage, "google/gemini-3-flash-preview"),
+        metadata: { estrategiaId, totalDezenas },
+      }).then(() => {}).catch(e => console.error("Erro log:", e));
+    }
     // Extrair dados do tool call
     let dezenas: number[] = [];
     let estrategia = null;
