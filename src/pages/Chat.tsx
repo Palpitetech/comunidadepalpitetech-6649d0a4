@@ -74,7 +74,7 @@ export default function Chat() {
         No mobile existe o menu inferior fixo (h-16). Este padding garante que o composer
         fique sempre visível acima dele (inclui safe-area do iOS).
       */}
-      <div className="flex h-[calc(100dvh-5rem)] flex-col overflow-hidden md:h-full">
+      <div className="flex h-[calc(100dvh-5rem)] flex-col overflow-hidden md:h-full bg-clovers">
         {/* Header minimalista - Desktop only */}
         {!isMobile && (
           <header className="sticky top-0 z-10 border-b border-border bg-background/80 px-3 py-1.5 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-4">

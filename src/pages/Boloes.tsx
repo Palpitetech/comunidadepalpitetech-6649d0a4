@@ -64,7 +64,7 @@ const Boloes = () => {
 
   return (
     <MainLayout pageTitle="Bolões">
-      <div className="container-senior pt-4 pb-8">
+      <div className="container-senior pt-4 pb-8 bg-clovers min-h-full">
         {/* Header - Desktop only */}
         {!isMobile && (
           <div className="flex items-center gap-3 mb-6">
