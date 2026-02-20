@@ -12,6 +12,7 @@ export interface CommunityPost {
   respostas_count: number | null;
   created_at: string;
   user_id: string;
+  tipo: string | null;
   tool_snapshot: boolean | null;
   external_link_url: string | null;
   external_link_text: string | null;
@@ -40,6 +41,7 @@ export function useCommunityPosts() {
           respostas_count,
           created_at,
           user_id,
+          tipo,
           tool_snapshot,
           external_link_url,
           external_link_text
