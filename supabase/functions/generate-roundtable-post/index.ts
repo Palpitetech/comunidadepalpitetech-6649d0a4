@@ -6,6 +6,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function estimateCost(usage: { prompt_tokens?: number; completion_tokens?: number }, model: string): number {
+  const rates: Record<string, { input: number; output: number }> = {
+    "google/gemini-3-flash-preview": { input: 0.15, output: 0.60 },
+    "google/gemini-2.5-flash": { input: 0.15, output: 0.60 },
+    "google/gemini-2.5-pro": { input: 1.25, output: 5.00 },
+  };
+  const rate = rates[model] || { input: 0.15, output: 0.60 };
+  return ((usage.prompt_tokens || 0) / 1e6) * rate.input + ((usage.completion_tokens || 0) / 1e6) * rate.output;
+}
+
 // Constantes para cálculos
 const TOTAL_DEZENAS = 25;
 const PERIODO_ANALISE = 20;
@@ -504,6 +514,23 @@ Responda APENAS no formato JSON:
 
     const aiData = await aiResponse.json();
     const content = aiData.choices?.[0]?.message?.content;
+    const mainUsage = aiData.usage;
+
+    // Log de uso de IA (post principal)
+    if (mainUsage) {
+      supabaseAdmin.from("ai_usage_logs").insert({
+        bot_persona_id: authorGuide.id,
+        bot_name: authorName,
+        edge_function: "generate-roundtable-post",
+        action_type: "post",
+        prompt_tokens: mainUsage.prompt_tokens || 0,
+        completion_tokens: mainUsage.completion_tokens || 0,
+        total_tokens: mainUsage.total_tokens || 0,
+        model: authorModel,
+        cost_usd: estimateCost(mainUsage, authorModel),
+        metadata: { tipo_post: tipoPost, concurso: ultimoResultado?.concurso_id },
+      }).then(() => {}).catch(e => console.error("Erro log:", e));
+    }
 
     if (!content) {
       throw new Error("Resposta da IA vazia");

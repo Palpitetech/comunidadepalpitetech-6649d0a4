@@ -6,6 +6,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function estimateCost(usage: { prompt_tokens?: number; completion_tokens?: number }, model: string): number {
+  const rates: Record<string, { input: number; output: number }> = {
+    "google/gemini-3-flash-preview": { input: 0.15, output: 0.60 },
+    "google/gemini-2.5-flash": { input: 0.15, output: 0.60 },
+    "google/gemini-2.5-pro": { input: 1.25, output: 5.00 },
+  };
+  const rate = rates[model] || { input: 0.15, output: 0.60 };
+  return ((usage.prompt_tokens || 0) / 1e6) * rate.input + ((usage.completion_tokens || 0) / 1e6) * rate.output;
+}
+
 interface GuideData {
   id: string;
   perfil_id: string;
@@ -242,6 +252,24 @@ Responda APENAS com o texto da resposta (sem JSON, sem aspas).`
     
     const aiData = await aiResponse.json();
     const resposta = aiData.choices?.[0]?.message?.content?.trim();
+    const usage = aiData.usage;
+
+    // Log de uso de IA
+    if (usage) {
+      supabaseAdmin.from("ai_usage_logs").insert({
+        bot_persona_id: selectedGuide.id,
+        bot_name: getGuideName(selectedGuide),
+        user_id: user_id,
+        edge_function: "bot-reply-user",
+        action_type: "reply",
+        prompt_tokens: usage.prompt_tokens || 0,
+        completion_tokens: usage.completion_tokens || 0,
+        total_tokens: usage.total_tokens || 0,
+        model: "google/gemini-3-flash-preview",
+        cost_usd: estimateCost(usage, "google/gemini-3-flash-preview"),
+        metadata: { post_id, comment_id },
+      }).then(() => {}).catch(e => console.error("Erro log:", e));
+    }
     
     if (!resposta) {
       throw new Error("Resposta da IA vazia");
