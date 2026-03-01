@@ -52,7 +52,7 @@ export function PageHeader({ title, breadcrumb, onBack, rightContent, hideBackBu
   const hasBreadcrumb = breadcrumb && breadcrumb.length > 0;
 
   return (
-    <header className="sticky top-0 z-20 bg-background border-b border-border px-4 py-3">
+    <header className="sticky top-0 z-20 bg-background border-b border-border px-4 py-3 safe-area-top">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {!hideBackButton && (
