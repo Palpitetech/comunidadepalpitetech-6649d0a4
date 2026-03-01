@@ -191,14 +191,6 @@
 }
 
 @layer components {
-  /* Safe area utilities para iPhone (Notch / Dynamic Island) */
-  .safe-area-top {
-    padding-top: env(safe-area-inset-top, 0px);
-  }
-
-  .safe-area-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
 
   /* Container padrão com padding generoso */
   .container-senior {
@@ -356,4 +348,13 @@
     transform: rotate(45deg);
     border-bottom-right-radius: 2px;
   }
+}
+
+/* Safe area utilities — fora de @layer para garantir compatibilidade iOS */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
