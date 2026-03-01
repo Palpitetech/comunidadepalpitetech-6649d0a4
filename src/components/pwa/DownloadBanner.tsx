@@ -11,7 +11,6 @@ export function DownloadBanner() {
   const [showIOSModal, setShowIOSModal] = useState(false);
 
   if (isInstalled || dismissed) return null;
-  if (!canInstall && !showIOSGuide) return null;
 
   const handleDismiss = () => {
     setDismissed(true);
