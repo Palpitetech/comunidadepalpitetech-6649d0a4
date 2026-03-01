@@ -1,35 +1,35 @@
 
 
-# Otimização para iPhone (Notch e Dynamic Island)
+# Diagnóstico: Bots Não Comentam nos Posts de Resultado
 
-O problema é que iPhones possuem áreas seguras (safe areas) no topo — o "notch" nos modelos mais antigos e a "Dynamic Island" nos mais recentes — e na parte inferior (home indicator). Atualmente, o conteúdo pode ficar por trás dessas áreas.
+## Causa Raiz
 
-## O que será feito
+A função `sync-lotofacil` cria o post da Ana com sucesso, mas **nunca chama** a Edge Function `bot-interact-with-post` depois de criar o post. Isso significa que nenhum bot é notificado para comentar.
 
-### 1. CSS Global — Safe Area no topo e fundo
-Adicionar padding dinâmico usando `env(safe-area-inset-top)` e `env(safe-area-inset-bottom)` nos elementos-chave:
+Confirmações nos dados:
+- Todos os posts recentes de bots têm `bot_interactions_target: null` e `bot_interactions_done: 0` — nenhuma interação foi sequer tentada
+- A busca por `bot-interact-with-post` dentro de `sync-lotofacil` retorna zero resultados
+- Os bots Lucas, Matheus, Sistema Tech, Carlos, Fernanda e Especialista Dupla Sena **têm** `can_respond_to_bot_posts: true`, então estariam elegíveis
 
-- **PageHeader (mobile)**: Adicionar `pt-[env(safe-area-inset-top)]` para que o header sticky respeite o notch/Dynamic Island, empurrando o conteúdo para baixo da câmera.
-- **MobileBottomNav**: Já tem classe `safe-area-bottom`. Verificar se o CSS correspondente existe e funciona corretamente com `pb-[env(safe-area-inset-bottom)]`.
-- **DownloadBanner**: Quando exibido no topo (antes do header), adicionar `pt-[env(safe-area-inset-top)]` para não ficar atrás do notch.
+O mesmo problema acontece com `generate-bot-post` e `process-scheduled-posts` — nenhum deles chama `bot-interact-with-post` após criar um post.
 
-### 2. HTML — viewport-fit=cover
-O `index.html` já tem `viewport-fit=cover` no meta viewport e `apple-mobile-web-app-status-bar-style` como `black-translucent` — isso está correto e permite que o app use a área toda da tela enquanto respeitamos as safe areas via CSS.
+## Plano de Correção
 
-### 3. CSS Utilitário
-Adicionar no `index.css` uma classe utilitária `.safe-area-top` com `padding-top: env(safe-area-inset-top)` e garantir que `.safe-area-bottom` também existe para a bottom nav.
+### 1. `sync-lotofacil/index.ts` — Chamar `bot-interact-with-post` após Ana criar post
 
-### Arquivos a editar
+Após a linha 206 (onde loga sucesso), adicionar uma chamada para a Edge Function `bot-interact-with-post` passando o `post_id` do post recém-criado. Incluir um delay de 30-60 segundos para que os comentários pareçam naturais.
+
+### 2. `generate-bot-post/index.ts` — Chamar `bot-interact-with-post` após qualquer bot criar post
+
+Mesma lógica: após criar o post com sucesso, invocar `bot-interact-with-post` com o novo `post_id`.
+
+### 3. `process-scheduled-posts` — Verificar se já dispara interações
+
+Preciso verificar se essa função também deveria disparar interações. Como ela chama `generate-bot-post`, a correção no item 2 pode ser suficiente.
 
 | Arquivo | Mudança |
 |---|---|
-| `src/index.css` | Adicionar classes `.safe-area-top` e verificar `.safe-area-bottom` |
-| `src/components/layout/PageHeader.tsx` | Adicionar safe-area-top ao header sticky |
-| `src/components/layout/MobileBottomNav.tsx` | Verificar/ajustar safe-area-bottom |
-| `src/components/pwa/DownloadBanner.tsx` | Adicionar safe-area-top quando no topo da página |
-| `src/components/layout/MainLayout.tsx` | Garantir que o DownloadBanner + PageHeader se integrem com as safe areas |
-
-### Detalhes técnicos
-
-O CSS `env(safe-area-inset-top)` retorna o tamanho exato da área ocupada pelo notch/Dynamic Island (0px em dispositivos sem notch, ~47px no notch, ~59px na Dynamic Island). Combinado com `viewport-fit=cover` (já presente), o conteúdo se expande até as bordas mas respeita as áreas seguras via padding.
+| `supabase/functions/sync-lotofacil/index.ts` | Após criar post da Ana, chamar `bot-interact-with-post` com delay |
+| `supabase/functions/generate-bot-post/index.ts` | Após criar post de qualquer bot, chamar `bot-interact-with-post` |
+| `supabase/functions/generate-roundtable-post/index.ts` | Verificar se já dispara (provavelmente já gera comentários internamente — não precisará de mudança) |
 
