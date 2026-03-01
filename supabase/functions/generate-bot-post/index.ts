@@ -229,7 +229,7 @@ Responda APENAS no formato JSON:
         total_tokens: usage.total_tokens || 0,
         model: guide.ai_model || "google/gemini-3-flash-preview",
         cost_usd: estimateCost(usage, guide.ai_model || "google/gemini-3-flash-preview"),
-        metadata: { tipo_post: postType },
+        metadata: { tipo_post },
       }).then(() => {}).catch(e => console.error("Erro ao logar uso:", e));
     }
     
