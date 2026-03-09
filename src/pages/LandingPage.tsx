@@ -112,7 +112,7 @@ export default function LandingPage() {
           <p className="mt-3 text-primary font-semibold text-base">
             Foi por isso que criamos essa comunidade.
           </p>
-          <div className="mt-8">
+          <div className="mt-5">
             <CtaGhost>Quero mudar isso agora</CtaGhost>
           </div>
         </div>
