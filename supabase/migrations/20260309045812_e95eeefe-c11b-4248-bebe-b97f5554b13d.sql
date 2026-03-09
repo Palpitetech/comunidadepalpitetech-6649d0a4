@@ -1,0 +1,1 @@
+UPDATE public.plans SET checkout_link = 'https://pay.kirvano.com/d5647172-2837-4b23-9d29-bb618fa5f2f0', updated_at = now() WHERE id = 'edd28ed5-6a66-4aeb-a232-cb24b84bd4e2';
