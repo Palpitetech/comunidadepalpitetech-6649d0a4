@@ -217,7 +217,7 @@ export default function LandingPage() {
       </section>
 
       {/* ===== 7. CTA FINAL ===== */}
-      <section className="py-20 md:py-28 bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground">
+      <section className="py-14 md:py-20 bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground">
         <div className="max-w-2xl mx-auto px-5 text-center">
           <h2 className="text-xl md:text-3xl font-extrabold mb-4 leading-snug">
             🚀 Entre agora na Comunidade de Apostadores
