@@ -239,7 +239,7 @@ export default function AdminUsuarios() {
 
         {/* Mobile: User list */}
         <div className="md:hidden space-y-0.5">
-          {filteredUsers.map((user) => (
+          {paginatedUsers.map((user) => (
             <button
               key={user.id}
               className="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg active:bg-muted/60 transition-colors border-b border-border/30 last:border-0"
