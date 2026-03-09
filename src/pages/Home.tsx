@@ -227,7 +227,7 @@ export default function LandingPage() {
           </p>
           <div className="rounded-2xl overflow-hidden border border-border shadow-lg">
             <video
-              className="w-full aspect-video"
+              className="w-full aspect-video object-contain bg-black"
               controls
               playsInline
               preload="metadata"
