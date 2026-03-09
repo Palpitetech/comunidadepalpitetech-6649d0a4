@@ -437,6 +437,39 @@ serve(async (req) => {
 
   // Regra do negócio: apenas pagos/confirmados ativam acesso
   if (action === "ignore") {
+    // Se for PIX gerado, envia email com dados do PIX
+    const ev = eventName.toLowerCase();
+    if (ev.includes("pix_generated") && email) {
+      try {
+        const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+        const pixPayment = payload?.payment ?? {};
+        const emailPayload = {
+          type: "pix_generated",
+          to: email,
+          customerName: customerName ?? "Jogador",
+          pixQrCode: pixPayment.qrcode ?? null,
+          pixQrCodeImage: pixPayment.qrcode_image ?? null,
+          pixExpiresAt: pixPayment.expires_at ?? null,
+          totalPrice: payload?.total_price ?? null,
+        };
+        const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-subscription-email`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${supabaseAnonKey}`,
+            "Content-Type": "application/json",
+            apikey: supabaseAnonKey,
+          },
+          body: JSON.stringify(emailPayload),
+        });
+        if (emailRes.ok) {
+          logStep("PIX email sent", { email });
+        } else {
+          logStep("PIX email failed", { status: emailRes.status });
+        }
+      } catch (e) {
+        logStep("PIX email error (non-fatal)", { message: e instanceof Error ? e.message : String(e) });
+      }
+    }
     await finalizeLog({ processed: true, process_result: "ignored_non_paid" });
     return new Response(JSON.stringify({ ok: true, ignored: true }), {
       status: 200,
