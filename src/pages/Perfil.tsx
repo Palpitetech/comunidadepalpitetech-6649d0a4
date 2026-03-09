@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useMySubscription } from "@/hooks/useMySubscription";
 import { STATUS_CONFIG } from "@/lib/subscription";
