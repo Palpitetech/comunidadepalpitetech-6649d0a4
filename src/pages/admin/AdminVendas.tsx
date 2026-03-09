@@ -162,6 +162,10 @@ export default function AdminVendas() {
   sales.sort((a, b) => new Date(b.latest.received_at).getTime() - new Date(a.latest.received_at).getTime());
 
   const totalAprovadas = logs.filter(l => l.event === "SALE_APPROVED").length;
+
+  const totalPages = Math.max(1, Math.ceil(sales.length / PAGE_SIZE));
+  const paginatedSales = sales.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   const totalPendentes = logs.filter(l => ["PIX_GENERATED", "BANK_SLIP_GENERATED"].includes(l.event || "")).length;
   const totalCanceladas = logs.filter(l => ["SALE_REFUSED", "SALE_CHARGEBACK", "BANK_SLIP_EXPIRED", "PIX_EXPIRED"].includes(l.event || "")).length;
 
