@@ -562,24 +562,58 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
               <ShoppingCart className="h-4 w-4" /> Produtos
             </h3>
             <div className="space-y-2">
-              {products.map((p: any, i: number) => (
-                <div key={i} className="bg-muted/50 rounded-lg p-3 text-sm">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="font-medium truncate">{p.name || p.offer_name}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Oferta: <span className="font-mono">{p.offer_id}</span>
+              {products.map((p: any, i: number) => {
+                const mapped = p.offer_id ? planMap[p.offer_id] : null;
+                return (
+                  <div key={i} className="bg-muted/50 rounded-lg p-3 text-sm space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{p.name || p.offer_name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Oferta: <span className="font-mono">{p.offer_id}</span>
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-medium">{p.price}</p>
+                        {p.is_order_bump && (
+                          <Badge variant="secondary" className="text-[10px] mt-0.5">bump</Badge>
+                        )}
+                      </div>
+                    </div>
+                    {mapped && (
+                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/50">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="h-3.5 w-3.5 text-primary" />
+                          <span className="text-xs font-medium">Plano: {mapped.planName}</span>
+                        </div>
+                        {mapped.checkoutLink && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs gap-1.5"
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(mapped.checkoutLink!);
+                                toast.success("Link de checkout copiado!");
+                              } catch {
+                                toast.error("Erro ao copiar");
+                              }
+                            }}
+                          >
+                            <Copy className="h-3 w-3" />
+                            Copiar link
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                    {!mapped && p.offer_id && (
+                      <p className="text-[11px] text-orange-600 pt-1 border-t border-border/50">
+                        ⚠ Oferta não mapeada a nenhum plano
                       </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="font-medium">{p.price}</p>
-                      {p.is_order_bump && (
-                        <Badge variant="secondary" className="text-[10px] mt-0.5">bump</Badge>
-                      )}
-                    </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
