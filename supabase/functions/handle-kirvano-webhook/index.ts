@@ -206,6 +206,9 @@ function deriveSubscriptionAction(eventName: string, rawStatus: string): Subscri
   // Cancelamento de assinatura recorrente: mantém acesso até fim da validade
   if (ev === "subscription_canceled" || ev === "subscription_cancelled") return "cancel_end_of_period";
 
+  // Inadimplência de assinatura recorrente: mantém acesso temporário (grace period)
+  if (ev === "subscription_overdue") return "overdue_grace";
+
   // Cancelamentos imediatos (reembolso, chargeback) removem acesso na hora
   if (["cancel", "canceled", "cancelled", "refunded", "chargeback"].some((k) => s.includes(k))) return "cancel";
 
