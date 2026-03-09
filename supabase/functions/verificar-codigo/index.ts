@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { user_id, codigo } = await req.json();
+    const { user_id, codigo, tipo } = await req.json();
 
     if (!user_id || !codigo) {
       throw new Error('user_id e codigo são obrigatórios');
@@ -27,12 +27,19 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Buscar código válido mais recente
-    const { data: codigoData, error: fetchError } = await supabase
+    // Se tipo foi especificado, filtrar por tipo
+    let query = supabase
       .from('codigos_verificacao')
       .select('*')
       .eq('user_id', user_id)
       .eq('usado', false)
-      .gt('expira_em', new Date().toISOString())
+      .gt('expira_em', new Date().toISOString());
+    
+    if (tipo) {
+      query = query.eq('tipo', tipo);
+    }
+
+    const { data: codigoData, error: fetchError } = await query
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -76,24 +83,24 @@ Deno.serve(async (req) => {
       .eq('id', codigoData.id);
 
     // Atualizar perfil como verificado baseado no tipo
-    const updateData = codigoData.tipo === 'email' 
-      ? { email_verificado: true } 
-      : { celular_verificado: true };
-
-    const { error: updateError } = await supabase
-      .from('perfis')
-      .update(updateData)
-      .eq('id', user_id);
-
-    if (updateError) {
-      console.error('[ERRO] Falha ao atualizar perfil:', updateError);
-      // Não lançamos erro aqui pois o código foi verificado
+    // Para alteracao_celular, não atualizamos aqui (o frontend faz após receber sucesso)
+    if (codigoData.tipo === 'email') {
+      await supabase
+        .from('perfis')
+        .update({ email_verificado: true })
+        .eq('id', user_id);
+    } else if (codigoData.tipo === 'sms') {
+      await supabase
+        .from('perfis')
+        .update({ celular_verificado: true })
+        .eq('id', user_id);
     }
+    // Para 'alteracao_celular', 'recuperacao_email', 'recuperacao_sms' não atualizamos verificação aqui
 
     console.log(`[VERIFICAÇÃO] Usuário ${user_id} verificado via ${codigoData.tipo} com sucesso`);
 
     return new Response(
-      JSON.stringify({ sucesso: true, mensagem: 'Celular verificado com sucesso!' }),
+      JSON.stringify({ sucesso: true, mensagem: 'Código verificado com sucesso!' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

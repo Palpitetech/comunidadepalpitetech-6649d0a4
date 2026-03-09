@@ -26,6 +26,8 @@ import { useMySubscription } from "@/hooks/useMySubscription";
 import { STATUS_CONFIG } from "@/lib/subscription";
 import { differenceInDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AlterarCelularDialog } from "@/components/perfil/AlterarCelularDialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Perfil() {
   const isMobile = useIsMobile();
@@ -36,6 +38,13 @@ export default function Perfil() {
   const navigate = useNavigate();
   const { isPremium } = useUserRole();
   const { data: subscription } = useMySubscription(user?.id);
+  const queryClient = useQueryClient();
+
+  const handleCelularSuccess = () => {
+    // Refresh profile data
+    queryClient.invalidateQueries({ queryKey: ["profile"] });
+    window.location.reload();
+  };
 
   const handleOpenCheckout = async () => {
     if (!user) {
@@ -165,7 +174,11 @@ export default function Perfil() {
             </div>
 
             {/* Botões de ação */}
-            <div className="pt-2 grid gap-3 sm:grid-cols-2">
+            <div className="pt-2 grid gap-3 sm:grid-cols-3">
+              <AlterarCelularDialog
+                celularAtual={profile?.celular || null}
+                onSuccess={handleCelularSuccess}
+              />
               <Button variant="outline" className="h-12 text-senior-base gap-2">
                 <Mail className="h-5 w-5" />
                 Alterar E-mail
