@@ -166,10 +166,12 @@ export function AlterarCelularDialog({ celularAtual, onSuccess, trigger }: Alter
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="h-12 text-senior-base gap-2">
-          <Phone className="h-5 w-5" />
-          Alterar Celular
-        </Button>
+        {trigger || (
+          <Button variant="outline" className="h-12 text-senior-base gap-2">
+            <Phone className="h-5 w-5" />
+            Alterar Celular
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         {step === "input" && (
