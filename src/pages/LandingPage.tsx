@@ -172,7 +172,7 @@ export default function LandingPage() {
       </section>
 
       {/* ===== 5. PARA QUEM É ===== */}
-      <section className="py-16 md:py-24">
+      <section className="py-10 md:py-14">
         <div className="max-w-2xl mx-auto px-5 text-center">
           <h2 className="text-xl md:text-2xl font-bold mb-7 leading-snug">
             Essa comunidade é para quem quer apostar com mais estratégia
