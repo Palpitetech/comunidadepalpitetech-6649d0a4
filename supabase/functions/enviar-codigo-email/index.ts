@@ -27,7 +27,7 @@ async function enviarEmailResend(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'Lotofácil Inteligente <Solicitacao@palpitetech.com.br>',
+      from: 'Comunidade Palpite Tech <solicitacao@palpitetech.com.br>',
       to: [to],
       subject,
       html,
