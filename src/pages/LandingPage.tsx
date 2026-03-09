@@ -96,7 +96,7 @@ export default function LandingPage() {
       </section>
 
       {/* ===== 2. PROBLEMA ===== */}
-      <section className="py-16 md:py-24 bg-secondary/30">
+      <section className="py-10 md:py-14 bg-secondary/30">
         <div className="max-w-2xl mx-auto px-5 text-center">
           <h2 className="text-xl md:text-2xl font-bold text-foreground mb-5 leading-snug">
             A maioria das pessoas aposta sozinha… e no escuro.
