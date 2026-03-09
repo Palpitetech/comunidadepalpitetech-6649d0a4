@@ -3,15 +3,9 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFrequenciaDuplaSena } from "@/hooks/useFrequenciaDuplaSena";
+import { SeletorPeriodo } from "@/components/frequencia/SeletorPeriodo";
 import { cn } from "@/lib/utils";
 import { BarChart3, TrendingUp, TrendingDown, Minus } from "lucide-react";
 
@@ -97,36 +91,20 @@ export default function FrequenciaDecenasDuplaSena() {
     <MainLayout pageTitle="Frequência das Dezenas - Dupla Sena">
       <div className="min-h-screen bg-background">
         <div className="px-2 py-4 space-y-3 max-w-4xl mx-auto">
-          {/* Período */}
-          <Card>
-            <CardContent className="py-4">
-              <div className="flex flex-wrap items-center gap-4 justify-center">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Período:</span>
-                  <Select value={String(periodo)} onValueChange={(v) => setPeriodo(Number(v))}>
-                    <SelectTrigger className="w-[150px] h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PERIODOS.map((p) => (
-                        <SelectItem key={p} value={String(p)}>
-                          {p} concurso{p > 1 ? "s" : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Tabs Sorteio */}
-          <Tabs value={sorteio} onValueChange={(v) => setSorteio(v as "sorteio1" | "sorteio2")}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="sorteio1">Sorteio 1</TabsTrigger>
-              <TabsTrigger value="sorteio2">Sorteio 2</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          {/* Tabs + Período na mesma linha */}
+          <div className="flex items-center justify-between gap-2">
+            <Tabs value={sorteio} onValueChange={(v) => setSorteio(v as "sorteio1" | "sorteio2")} className="flex-1">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="sorteio1">Sorteio 1</TabsTrigger>
+                <TabsTrigger value="sorteio2">Sorteio 2</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <SeletorPeriodo
+              periodos={PERIODOS}
+              selecionado={periodo}
+              onChange={setPeriodo}
+            />
+          </div>
 
           {/* Resumo */}
           <div className="flex items-center justify-center gap-2">
