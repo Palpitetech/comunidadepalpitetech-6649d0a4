@@ -76,6 +76,16 @@ function pickEmail(payload: any): string | undefined {
   return normalized.includes("@") ? normalized : undefined;
 }
 
+function normalizePhone(raw: string): string {
+  // Remove tudo que não é dígito
+  let digits = raw.replace(/\D/g, "");
+  // Remove código do país 55 se presente (resultando em 10 ou 11 dígitos)
+  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
+    digits = digits.substring(2);
+  }
+  return digits;
+}
+
 function pickPhone(payload: any): string | null {
   const phone = coalesce(
     payload?.phone,
@@ -89,8 +99,8 @@ function pickPhone(payload: any): string | null {
     payload?.data?.customer?.phone_number,
   );
   if (typeof phone !== "string") return null;
-  const normalized = phone.trim();
-  return normalized ? normalized : null;
+  const normalized = normalizePhone(phone);
+  return normalized.length >= 10 ? normalized : null;
 }
 
 function pickCpf(payload: any): string | null {
@@ -179,7 +189,16 @@ function mapToStatusAssinatura(statusOrEvent: string): "ativa" | "cancelada" | "
 type SubscriptionAction = "activate" | "cancel" | "delinquent" | "ignore";
 
 function deriveSubscriptionAction(eventName: string, rawStatus: string): SubscriptionAction {
+  const ev = eventName.toLowerCase();
   const s = `${eventName} ${rawStatus}`.toLowerCase();
+
+  // Eventos de pagamento expirado/gerado são intermediários — nunca devem afetar assinatura
+  const ignoredEvents = [
+    "bank_slip_generated", "bank_slip_expired",
+    "pix_generated", "pix_expired",
+    "sale_refused",
+  ];
+  if (ignoredEvents.some((k) => ev.includes(k))) return "ignore";
 
   // Apenas pagos/confirmados ativam acesso
   if (["paid", "approved", "confirmed", "success", "completed"].some((k) => s.includes(k))) return "activate";
@@ -188,7 +207,7 @@ function deriveSubscriptionAction(eventName: string, rawStatus: string): Subscri
 
   if (["overdue", "past_due", "inadimpl", "unpaid", "failed"].some((k) => s.includes(k))) return "delinquent";
 
-  // PENDING / boleto gerado / eventos intermediários: só audita
+  // Outros eventos intermediários: só audita
   return "ignore";
 }
 
