@@ -136,10 +136,19 @@ export default function Planos() {
                 }`}
               >
                 {/* Popular badge */}
-                {isPopular && !isCurrent && (
+                {isPopular && !isCurrent && !isVip && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <Badge className="bg-accent text-accent-foreground px-3 py-0.5 text-xs shadow-sm">
                       Mais completo
+                    </Badge>
+                  </div>
+                )}
+
+                {/* VIP badge */}
+                {isVip && !isCurrent && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <Badge className="bg-yellow-500 text-white px-4 py-0.5 text-xs shadow-md font-bold tracking-wide">
+                      ⭐ VIP
                     </Badge>
                   </div>
                 )}
