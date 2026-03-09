@@ -49,8 +49,8 @@ export const ConviteCard: React.FC<ConviteCardProps> = ({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Junte-se à Comunidade Palpite Tech!",
-          text: "Estou usando a Comunidade Palpite Tech para analisar loterias. Crie sua conta usando meu convite!",
+          title: "Venha para a Comunidade Palpite Tech!",
+          text: "Te convidei para interagir comigo sobre a Lotofácil e Mega Sena na Comunidade Palpite Tech!",
           url: referralLink,
         });
       } catch {
