@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,7 +24,6 @@ export default function AdminUsuarios() {
 
   const fetchData = async () => {
     try {
-      // Buscar planos
       const { data: plansData, error: plansError } = await supabase
         .from("plans")
         .select("*")
@@ -40,7 +38,6 @@ export default function AdminUsuarios() {
       }));
       setPlans(formattedPlans);
 
-      // Buscar usuários (excluindo bots)
       const { data: usersData, error: usersError } = await supabase
         .from("perfis")
         .select("*")
@@ -49,7 +46,6 @@ export default function AdminUsuarios() {
 
       if (usersError) throw usersError;
 
-      // Mapear planos aos usuários
       const usersWithPlans: UserWithPlan[] = (usersData || []).map((u) => ({
         ...u,
         custom_features: u.custom_features as PlanFeatures | null,
@@ -89,12 +85,7 @@ export default function AdminUsuarios() {
 
   const getInitials = (nome: string | null) => {
     if (!nome) return "U";
-    return nome
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+    return nome.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
   if (loading) {
@@ -109,29 +100,69 @@ export default function AdminUsuarios() {
 
   return (
     <MainLayout>
-      <div className="container-senior py-8">
-        <div className="flex items-center justify-between mb-6">
+      <div className="container-senior py-4 md:py-8">
+        <div className="flex items-center justify-between mb-4 md:mb-6">
           <div>
-            <h1 className="text-senior-2xl font-bold">Gestão de Usuários</h1>
-            <p className="text-muted-foreground">
-              {users.length} usuário{users.length !== 1 ? "s" : ""} cadastrado{users.length !== 1 ? "s" : ""}
+            <h1 className="text-lg md:text-senior-2xl font-bold">Gestão de Usuários</h1>
+            <p className="text-xs md:text-sm text-muted-foreground">
+              {users.length} usuário{users.length !== 1 ? "s" : ""}
             </p>
           </div>
         </div>
 
         {/* Busca */}
-        <div className="relative mb-6">
+        <div className="relative mb-4 md:mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por nome, email ou celular..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-10"
           />
         </div>
 
-        {/* Tabela */}
-        <div className="border rounded-lg">
+        {/* Mobile: Card list */}
+        <div className="md:hidden space-y-1">
+          {filteredUsers.map((user) => (
+            <div
+              key={user.id}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg active:bg-muted/60 cursor-pointer border-b border-border/40 last:border-0"
+              onClick={() => handleRowClick(user)}
+            >
+              <Avatar className="h-9 w-9 shrink-0">
+                <AvatarImage src={user.avatar_url || undefined} />
+                <AvatarFallback className="text-[11px]">
+                  {getInitials(user.nome)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium truncate">
+                    {user.nome || "Sem nome"}
+                  </p>
+                  {user.is_blocked && (
+                    <span className="w-2 h-2 rounded-full bg-destructive shrink-0" />
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground truncate">
+                  {user.email || user.celular || "-"}
+                </p>
+              </div>
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shrink-0">
+                {user.plan?.name || "Free"}
+              </Badge>
+            </div>
+          ))}
+
+          {filteredUsers.length === 0 && (
+            <div className="text-center py-8 text-sm text-muted-foreground">
+              {searchTerm ? "Nenhum resultado" : "Nenhum usuário"}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop: Table */}
+        <div className="hidden md:block border rounded-lg">
           <Table>
             <TableHeader>
               <TableRow>
@@ -170,7 +201,7 @@ export default function AdminUsuarios() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                {user.is_blocked ? (
+                    {user.is_blocked ? (
                       <Badge variant="destructive">Bloqueado</Badge>
                     ) : (
                       <Badge variant="outline" className="text-emerald-600 border-emerald-600">
