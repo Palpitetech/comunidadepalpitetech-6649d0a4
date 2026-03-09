@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface Convidado {
   id: string;
@@ -16,6 +17,7 @@ interface Reward {
   milestone_count: number;
   days_granted: number;
   created_at: string;
+  claimed_at: string | null;
 }
 
 interface UseConvitesReturn {
@@ -24,12 +26,16 @@ interface UseConvitesReturn {
   totalConvidados: number;
   totalVendas: number;
   rewards: Reward[];
+  unclaimedRewards: Reward[];
   totalDaysEarned: number;
-  progressCadastros: number; // 0-50 current progress toward next milestone
-  progressVendas: number; // 0-10 current progress toward next milestone
+  totalDaysClaimed: number;
+  progressCadastros: number;
+  progressVendas: number;
   isLoading: boolean;
   isGenerating: boolean;
+  isClaiming: boolean;
   generateCode: () => Promise<void>;
+  claimReward: (rewardId: string) => Promise<boolean>;
   refetch: () => Promise<void>;
 }
 
@@ -40,6 +46,7 @@ export function useConvites(): UseConvitesReturn {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isClaiming, setIsClaiming] = useState(false);
 
   const fetchReferralCode = useCallback(async () => {
     if (!user?.id) return;
@@ -90,11 +97,11 @@ export function useConvites(): UseConvitesReturn {
 
     const { data } = await supabase
       .from("referral_rewards")
-      .select("id, milestone_type, milestone_count, days_granted, created_at")
+      .select("id, milestone_type, milestone_count, days_granted, created_at, claimed_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
-    setRewards(data ?? []);
+    setRewards((data as Reward[]) ?? []);
   }, [user?.id]);
 
   const refetch = useCallback(async () => {
@@ -125,6 +132,38 @@ export function useConvites(): UseConvitesReturn {
     }
   }, [user?.id, referralCode]);
 
+  const claimReward = useCallback(async (rewardId: string): Promise<boolean> => {
+    if (!user?.id) return false;
+
+    setIsClaiming(true);
+    try {
+      const { data, error } = await supabase.rpc("claim_referral_reward", {
+        p_reward_id: rewardId,
+      });
+
+      if (error) {
+        toast.error("Erro ao reinvindicar recompensa");
+        return false;
+      }
+
+      const result = data as { success: boolean; message?: string; error?: string };
+      
+      if (result.success) {
+        toast.success(result.message || "Recompensa reinvindicada!");
+        await refetch();
+        return true;
+      } else {
+        toast.error(result.error || "Não foi possível reinvindicar");
+        return false;
+      }
+    } catch (e) {
+      toast.error("Erro ao processar recompensa");
+      return false;
+    } finally {
+      setIsClaiming(false);
+    }
+  }, [user?.id, refetch]);
+
   useEffect(() => {
     if (user?.id) {
       refetch();
@@ -134,6 +173,8 @@ export function useConvites(): UseConvitesReturn {
   const totalConvidados = convidados.length;
   const totalVendas = convidados.filter(c => c.converted_at).length;
   const totalDaysEarned = rewards.reduce((sum, r) => sum + r.days_granted, 0);
+  const totalDaysClaimed = rewards.filter(r => r.claimed_at).reduce((sum, r) => sum + r.days_granted, 0);
+  const unclaimedRewards = rewards.filter(r => !r.claimed_at);
   const progressCadastros = totalConvidados % 50;
   const progressVendas = totalVendas % 10;
 
@@ -143,12 +184,16 @@ export function useConvites(): UseConvitesReturn {
     totalConvidados,
     totalVendas,
     rewards,
+    unclaimedRewards,
     totalDaysEarned,
+    totalDaysClaimed,
     progressCadastros,
     progressVendas,
     isLoading,
     isGenerating,
+    isClaiming,
     generateCode,
+    claimReward,
     refetch,
   };
 }
