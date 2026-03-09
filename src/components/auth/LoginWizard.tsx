@@ -206,6 +206,14 @@ export function LoginWizard() {
                   Resetar senha
                 </Link>
 
+                <button
+                  type="button"
+                  onClick={() => setEtapa("cadastro")}
+                  className="text-center text-senior-base text-primary underline underline-offset-4"
+                >
+                  Criar Conta
+                </button>
+
                 <a
                   href={supportWhatsApp}
                   target="_blank"
