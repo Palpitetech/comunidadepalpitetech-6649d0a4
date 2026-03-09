@@ -85,9 +85,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
     const feature = getFeatureForRoute(path);
     if (feature && !hasPermission(feature)) {
       e.preventDefault();
-      setUpgradeLabel(FEATURE_LABELS[feature]);
-      setUpgradeVariant(isVipFeature(feature) ? "vip" : "premium");
-      setUpgradeOpen(true);
+      onOpenChange(false);
+      setTimeout(() => {
+        setUpgradeLabel(FEATURE_LABELS[feature]);
+        setUpgradeVariant(isVipFeature(feature) ? "vip" : "premium");
+        setUpgradeOpen(true);
+      }, 300);
     } else {
       closeAndNavigate();
     }
