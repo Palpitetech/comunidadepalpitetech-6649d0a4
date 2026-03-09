@@ -119,6 +119,7 @@ export default function Planos() {
           {plans.map((plan) => {
             const isCurrent = isCurrentPlan(plan.id);
             const isPopular = plan.id === bestPlanId && plan.price > 0;
+            const isVip = plan.slug === "plano-anual-vip";
             const activeFeatureCount = Object.values(plan.features).filter(Boolean).length;
 
             return (
@@ -127,6 +128,8 @@ export default function Planos() {
                 className={`relative flex flex-col transition-all duration-200 ${
                   isCurrent
                     ? "border-primary ring-2 ring-primary/20 shadow-lg"
+                    : isVip
+                    ? "border-yellow-500 ring-2 ring-yellow-400/30 shadow-xl bg-gradient-to-b from-yellow-50/50 to-card"
                     : isPopular
                     ? "border-accent ring-1 ring-accent/30 shadow-md"
                     : "hover:shadow-md"
