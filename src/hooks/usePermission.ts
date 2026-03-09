@@ -7,6 +7,7 @@ interface PermissionState {
   plan: Plan | null;
   customFeatures: PlanFeatures | null;
   isBlocked: boolean;
+  isAdmin: boolean;
   loading: boolean;
 }
 
@@ -16,6 +17,7 @@ export function usePermissions() {
     plan: null,
     customFeatures: null,
     isBlocked: false,
+    isAdmin: false,
     loading: true,
   });
 
@@ -27,14 +29,24 @@ export function usePermissions() {
       }
 
       try {
-        // Buscar perfil completo com plan_id
-        const { data: perfilData, error: perfilError } = await supabase
-          .from("perfis")
-          .select("plan_id, custom_features, is_blocked")
-          .eq("id", user.id)
-          .single();
+        // Buscar perfil e role em paralelo
+        const [perfilRes, roleRes] = await Promise.all([
+          supabase
+            .from("perfis")
+            .select("plan_id, custom_features, is_blocked")
+            .eq("id", user.id)
+            .single(),
+          supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", user.id)
+            .eq("role", "admin")
+            .maybeSingle(),
+        ]);
 
-        if (perfilError) throw perfilError;
+        if (perfilRes.error) throw perfilRes.error;
+        const perfilData = perfilRes.data;
+        const isAdmin = !!roleRes.data;
 
         let planData: Plan | null = null;
 
@@ -58,6 +70,7 @@ export function usePermissions() {
           plan: planData,
           customFeatures: perfilData?.custom_features as PlanFeatures | null,
           isBlocked: perfilData?.is_blocked || false,
+          isAdmin,
           loading: false,
         });
       } catch (error) {
@@ -77,6 +90,9 @@ export function usePermissions() {
       // Se não está logado, sem permissão
       if (!user) return false;
 
+      // Admin tem tudo liberado
+      if (state.isAdmin) return true;
+
       // 1. Verificar custom_features primeiro (override individual)
       if (state.customFeatures && feature in state.customFeatures) {
         return state.customFeatures[feature] === true;
@@ -90,7 +106,7 @@ export function usePermissions() {
       // 3. Default: sem permissão
       return false;
     },
-    [state.isBlocked, state.customFeatures, state.plan, user]
+    [state.isBlocked, state.isAdmin, state.customFeatures, state.plan, user]
   );
 
   return {
