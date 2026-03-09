@@ -39,7 +39,7 @@ export function Header() {
       <div className="container-senior flex items-center justify-between py-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 no-underline">
-          <span className="text-3xl">🍀</span>
+          <img src="/logo.png" alt="Palpite Tech" className="h-9 w-9 rounded-md" />
           <span className="text-senior-xl font-bold text-primary hidden sm:inline">Palpite Tech</span>
           <span className="text-senior-xl font-bold text-primary sm:hidden">Palpite</span>
         </Link>

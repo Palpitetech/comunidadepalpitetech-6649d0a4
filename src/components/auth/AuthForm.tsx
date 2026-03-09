@@ -97,9 +97,10 @@ export function AuthForm() {
   return (
     <Card className="w-full max-w-lg mx-auto shadow-xl">
       <CardHeader className="text-center pb-2">
-        <CardTitle className="text-senior-2xl text-primary">
-          🍀 Lotofácil Inteligente
-        </CardTitle>
+        <div className="flex items-center justify-center gap-2">
+          <img src="/logo.png" alt="Palpite Tech" className="h-10 w-10 rounded-md" />
+          <CardTitle className="text-senior-2xl text-primary">Palpite Tech</CardTitle>
+        </div>
         <CardDescription className="text-senior-base text-muted-foreground">
           Sua comunidade de apostadores
         </CardDescription>
