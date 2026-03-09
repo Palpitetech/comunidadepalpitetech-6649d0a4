@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { FileText, Users, ArrowRight, Bot, DollarSign, Gift, ShoppingCart, Crown, UserCheck, UserX, Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { 
+  FileText, Users, Bot, DollarSign, Gift, ShoppingCart, Crown, 
+  UserCheck, UserX, Loader2, ChevronRight, Activity
+} from "lucide-react";
 import { BotHealthWidget } from "@/components/admin/BotHealthWidget";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,200 +44,108 @@ function UserStatsWidget() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="py-8 flex justify-center">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
+      <div className="flex justify-center py-6">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
     );
   }
 
   if (!stats) return null;
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold">Resumo de Usuários</h2>
-      <div className="grid grid-cols-3 gap-3">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Users className="h-5 w-5 text-primary mx-auto mb-1" />
-            <p className="text-2xl font-bold">{stats.total}</p>
-            <p className="text-xs text-muted-foreground">Total</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <UserCheck className="h-5 w-5 text-green-600 mx-auto mb-1" />
-            <p className="text-2xl font-bold">{stats.pagos}</p>
-            <p className="text-xs text-muted-foreground">Pagos</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <UserX className="h-5 w-5 text-muted-foreground mx-auto mb-1" />
-            <p className="text-2xl font-bold">{stats.free}</p>
-            <p className="text-xs text-muted-foreground">Free</p>
-          </CardContent>
-        </Card>
+    <div className="space-y-3">
+      {/* Stats row */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-muted/40 rounded-xl p-3 text-center">
+          <Users className="h-4 w-4 text-primary mx-auto mb-1" />
+          <p className="text-xl font-bold">{stats.total}</p>
+          <p className="text-[10px] text-muted-foreground">Total</p>
+        </div>
+        <div className="bg-muted/40 rounded-xl p-3 text-center">
+          <UserCheck className="h-4 w-4 text-green-600 mx-auto mb-1" />
+          <p className="text-xl font-bold">{stats.pagos}</p>
+          <p className="text-[10px] text-muted-foreground">Pagos</p>
+        </div>
+        <div className="bg-muted/40 rounded-xl p-3 text-center">
+          <UserX className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
+          <p className="text-xl font-bold">{stats.free}</p>
+          <p className="text-[10px] text-muted-foreground">Free</p>
+        </div>
       </div>
 
-      <Card>
-        <CardContent className="p-4 space-y-2">
-          <p className="text-sm font-semibold flex items-center gap-2">
-            <Crown className="h-4 w-4 text-primary" /> Por Plano
-          </p>
-          {stats.planList.map(plan => (
-            <div key={plan.name} className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">{plan.name}</span>
-              <span className="font-medium">{plan.count}</span>
-            </div>
-          ))}
-          <div className="flex items-center justify-between text-sm border-t pt-2 border-border">
-            <span className="text-muted-foreground">Sem plano</span>
-            <span className="font-medium">{stats.semPlano}</span>
+      {/* Plan breakdown */}
+      <div className="bg-muted/30 rounded-xl p-3 space-y-1.5">
+        <p className="text-xs font-semibold flex items-center gap-1.5">
+          <Crown className="h-3.5 w-3.5 text-primary" /> Por Plano
+        </p>
+        {stats.planList.map(plan => (
+          <div key={plan.name} className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">{plan.name}</span>
+            <span className="font-medium">{plan.count}</span>
           </div>
-        </CardContent>
-      </Card>
+        ))}
+        <div className="flex items-center justify-between text-xs border-t pt-1.5 border-border/50">
+          <span className="text-muted-foreground">Sem plano</span>
+          <span className="font-medium">{stats.semPlano}</span>
+        </div>
+      </div>
     </div>
   );
 }
 
+const ADMIN_MODULES = [
+  { to: "/admin/planos", icon: FileText, label: "Planos", desc: "Criar e configurar planos" },
+  { to: "/admin/usuarios", icon: Users, label: "Usuários", desc: "Perfis, planos e permissões" },
+  { to: "/admin/bots", icon: Bot, label: "Bots", desc: "Automação e especialistas" },
+  { to: "/admin/custos", icon: DollarSign, label: "Custos IA", desc: "Monitorar gastos com IA" },
+  { to: "/admin/convites", icon: Gift, label: "Convites", desc: "Ranking de indicações" },
+  { to: "/admin/vendas", icon: ShoppingCart, label: "Vendas", desc: "Histórico Kirvano" },
+];
+
 export default function AdminIndex() {
   return (
-    <MainLayout>
-      <div className="container-senior py-8">
-        <h1 className="text-3xl font-bold mb-8">Painel Administrativo</h1>
-        
+    <MainLayout
+      pageTitle="Admin"
+      hideBackButton
+      hideBottomNav
+    >
+      <div className="px-4 py-3 md:container-senior md:py-8 space-y-4 md:space-y-6">
+        {/* Desktop title */}
+        <h1 className="hidden md:block text-3xl font-bold">Painel Administrativo</h1>
+
         {/* User Stats */}
-        <div className="mb-8">
+        <div>
+          <h2 className="text-sm font-semibold text-muted-foreground mb-2 md:text-lg md:text-foreground">Usuários</h2>
           <UserStatsWidget />
         </div>
 
-        {/* Bot Health Widget */}
-        <div className="mb-8">
+        {/* Bot Health */}
+        <div>
+          <h2 className="text-sm font-semibold text-muted-foreground mb-2 md:text-lg md:text-foreground">Saúde dos Bots</h2>
           <BotHealthWidget />
         </div>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Card Planos */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-senior-lg">
-                <FileText className="h-6 w-6 text-primary" />
-                Gerenciar Planos
-              </CardTitle>
-              <CardDescription className="text-senior-base">
-                Criar, editar e configurar planos e features do sistema
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/admin/planos">
-                <Button className="w-full gap-2 h-12 text-senior-base">
-                  Acessar <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
 
-          {/* Card Usuários */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-senior-lg">
-                <Users className="h-6 w-6 text-primary" />
-                Gerenciar Usuários
-              </CardTitle>
-              <CardDescription className="text-senior-base">
-                Administrar perfis, planos e permissões de usuários
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/admin/usuarios">
-                <Button className="w-full gap-2 h-12 text-senior-base">
-                  Acessar <ArrowRight className="h-5 w-5" />
-                </Button>
+        {/* Quick Access Modules */}
+        <div>
+          <h2 className="text-sm font-semibold text-muted-foreground mb-2 md:text-lg md:text-foreground">Módulos</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
+            {ADMIN_MODULES.map(({ to, icon: Icon, label, desc }) => (
+              <Link key={to} to={to}>
+                <Card className="hover:bg-accent/50 transition-colors border-border/60">
+                  <CardContent className="p-3 md:p-4 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <Icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm">{label}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{desc}</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </CardContent>
+                </Card>
               </Link>
-            </CardContent>
-          </Card>
-
-          {/* Card Bots */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-senior-lg">
-                <Bot className="h-6 w-6 text-primary" />
-                Gerenciar Bots
-              </CardTitle>
-              <CardDescription className="text-senior-base">
-                Administrar especialistas virtuais e automação de posts
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/admin/bots">
-                <Button className="w-full gap-2 h-12 text-senior-base">
-                  Acessar <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          {/* Card Custos IA */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-senior-lg">
-                <DollarSign className="h-6 w-6 text-primary" />
-                Custos de IA
-              </CardTitle>
-              <CardDescription className="text-senior-base">
-                Monitorar gastos com tokens, bots e ferramentas de IA
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/admin/custos">
-                <Button className="w-full gap-2 h-12 text-senior-base">
-                  Acessar <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          {/* Card Convites */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-senior-lg">
-                <Gift className="h-6 w-6 text-primary" />
-                Convites
-              </CardTitle>
-              <CardDescription className="text-senior-base">
-                Ranking de indicadores por vendas e cadastros
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/admin/convites">
-                <Button className="w-full gap-2 h-12 text-senior-base">
-                  Acessar <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          {/* Card Vendas Kirvano */}
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-senior-lg">
-                <ShoppingCart className="h-6 w-6 text-primary" />
-                Vendas Kirvano
-              </CardTitle>
-              <CardDescription className="text-senior-base">
-                Histórico de vendas e webhooks recebidos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/admin/vendas">
-                <Button className="w-full gap-2 h-12 text-senior-base">
-                  Acessar <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+            ))}
+          </div>
         </div>
       </div>
     </MainLayout>
