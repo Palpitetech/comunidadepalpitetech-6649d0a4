@@ -36,7 +36,8 @@ export default function Perfil() {
   const { toast } = useToast();
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+  const fileInputRef2 = null; // placeholder removed
   const { isPremium } = useUserRole();
   const { data: subscription } = useMySubscription(user?.id);
   const queryClient = useQueryClient();
