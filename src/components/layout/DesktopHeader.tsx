@@ -348,6 +348,12 @@ export function DesktopHeader() {
                     Convites
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                  <Link to="/admin/vendas">
+                    <Ticket className="h-4 w-4" />
+                    Vendas Kirvano
+                  </Link>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
