@@ -145,11 +145,11 @@ export default function Planos() {
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-2xl border-2 bg-card flex flex-col overflow-hidden transition-all duration-200 ${
+                className={`relative rounded-2xl border-2 bg-card flex flex-col overflow-hidden transition-all duration-200 min-h-[520px] ${
                   isCurrent
                     ? "border-primary shadow-lg"
                     : isVip
-                    ? "border-amber-400 shadow-xl scale-[1.02] md:scale-105"
+                    ? "border-amber-400 shadow-xl"
                     : isAnual
                     ? "border-accent/60 shadow-md"
                     : "border-border hover:shadow-md hover:border-primary/30"
