@@ -22,6 +22,7 @@ export default function GeradorDuplaSena() {
   const [periodoAnalise, setPeriodoAnalise] = useState(50);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   
   // Filtros
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
