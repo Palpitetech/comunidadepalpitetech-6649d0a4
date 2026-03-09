@@ -273,6 +273,7 @@ export default function Planos() {
                       Em breve
                     </Button>
                   )}
+                  </div>
                 </div>
               </div>
             );
