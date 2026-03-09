@@ -155,20 +155,22 @@ export default function Planos() {
                     : "border-border hover:shadow-md hover:border-primary/30"
                 }`}
               >
-                {/* Top ribbon */}
-                {isVip && !isCurrent && (
+                {/* Top ribbon - all cards get one for symmetry */}
+                {isCurrent ? (
+                  <div className="bg-primary text-primary-foreground text-center py-1.5 text-xs font-bold uppercase tracking-widest">
+                    Seu plano atual
+                  </div>
+                ) : isVip ? (
                   <div className="bg-gradient-to-r from-amber-500 to-amber-400 text-white text-center py-1.5 text-xs font-bold uppercase tracking-widest">
                     ⭐ Mais completo
                   </div>
-                )}
-                {isAnual && !isCurrent && !isVip && (
+                ) : isAnual ? (
                   <div className="bg-accent text-accent-foreground text-center py-1.5 text-xs font-bold uppercase tracking-widest">
                     Melhor custo-benefício
                   </div>
-                )}
-                {isCurrent && (
-                  <div className="bg-primary text-primary-foreground text-center py-1.5 text-xs font-bold uppercase tracking-widest">
-                    Seu plano atual
+                ) : (
+                  <div className="bg-secondary text-secondary-foreground text-center py-1.5 text-xs font-bold uppercase tracking-widest">
+                    Flexível
                   </div>
                 )}
 
