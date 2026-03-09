@@ -79,7 +79,7 @@ async function enviarEmailResend(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Lotofácil Inteligente <onboarding@resend.dev>",
+        from: "Lotofácil Inteligente <Solicitacao@palpitetech.com.br>",
         to: [to],
         subject,
         html,
