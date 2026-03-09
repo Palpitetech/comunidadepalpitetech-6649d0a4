@@ -64,13 +64,9 @@ export default function LandingPage() {
     captureReferralCode();
 
     const fetchReferrer = async () => {
-      const { data } = await supabase
-        .from("perfis")
-        .select("nome")
-        .eq("referral_code", refCode)
-        .single();
-      if (data?.nome) {
-        setReferrerName(data.nome.split(" ")[0]); // First name only
+      const { data } = await supabase.rpc("get_referrer_name", { p_code: refCode });
+      if (data) {
+        setReferrerName((data as string).split(" ")[0]);
       }
     };
     fetchReferrer();
