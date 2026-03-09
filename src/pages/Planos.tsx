@@ -179,17 +179,38 @@ export default function Planos() {
                   <div className="text-center">
                     {plan.price === 0 ? (
                       <div className="text-senior-2xl font-bold text-foreground">Grátis</div>
-                    ) : (
-                      <>
-                        <div className="flex items-baseline justify-center gap-1">
-                          <span className="text-sm text-muted-foreground">R$</span>
-                          <span className="text-senior-3xl font-bold text-foreground">
-                            {plan.price.toFixed(2).replace(".", ",")}
-                          </span>
-                        </div>
-                        <span className="text-sm text-muted-foreground">por período</span>
-                      </>
-                    )}
+                    ) : (() => {
+                      // Installment config per slug
+                      const installments: Record<string, { parcelas: number; valor: string }> = {
+                        "plano-anual-vip": { parcelas: 12, valor: "40,69" },
+                        "anual": { parcelas: 12, valor: "30,44" },
+                      };
+                      const inst = installments[plan.slug];
+
+                      return inst ? (
+                        <>
+                          <div className="flex items-baseline justify-center gap-1">
+                            <span className="text-sm text-muted-foreground">12x de</span>
+                            <span className="text-senior-3xl font-bold text-foreground">
+                              R$ {inst.valor}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            ou <span className="font-semibold text-foreground">R$ {plan.price.toFixed(2).replace(".", ",")}</span> à vista no Pix
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-baseline justify-center gap-1">
+                            <span className="text-sm text-muted-foreground">R$</span>
+                            <span className="text-senior-3xl font-bold text-foreground">
+                              {plan.price.toFixed(2).replace(".", ",")}
+                            </span>
+                          </div>
+                          <span className="text-sm text-muted-foreground">por mês</span>
+                        </>
+                      );
+                    })()}
                   </div>
 
                   {/* VIP Exclusive Highlights */}
