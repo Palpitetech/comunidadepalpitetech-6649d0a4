@@ -41,8 +41,8 @@ export function useAuth() {
 
           // Vincular OneSignal external_id ao user_id
           try {
-            window.OneSignalDeferred = window.OneSignalDeferred || [];
-            window.OneSignalDeferred.push(async (OneSignal: any) => {
+            (window as any).OneSignalDeferred = (window as any).OneSignalDeferred || [];
+            (window as any).OneSignalDeferred.push(async (OneSignal: any) => {
               await OneSignal.login(session.user.id);
             });
           } catch (e) {
