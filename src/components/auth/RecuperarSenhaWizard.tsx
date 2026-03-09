@@ -14,7 +14,7 @@ interface RecuperarSenhaWizardProps {
 export function RecuperarSenhaWizard({ onVoltar }: RecuperarSenhaWizardProps) {
   const [step, setStep] = useState(1);
   const [codigoVerificado, setCodigoVerificado] = useState("");
-  
+
   const {
     state,
     isLoading,
@@ -48,10 +48,6 @@ export function RecuperarSenhaWizard({ onVoltar }: RecuperarSenhaWizardProps) {
     return result;
   };
 
-  const handleVoltarLogin = () => {
-    onVoltar();
-  };
-
   const steps = [
     { number: 1, label: "Identificar" },
     { number: 2, label: "Código" },
@@ -59,9 +55,9 @@ export function RecuperarSenhaWizard({ onVoltar }: RecuperarSenhaWizardProps) {
   ];
 
   return (
-    <Card className="w-full max-w-lg mx-auto shadow-xl">
+    <Card className="w-full max-w-lg shadow-none border-0 md:shadow-xl md:border">
       {step < 4 && (
-        <div className="pt-6 px-6">
+        <div className="pt-4 px-4 md:pt-6 md:px-6">
           <StepIndicator currentStep={step} steps={steps} />
         </div>
       )}
@@ -100,7 +96,7 @@ export function RecuperarSenhaWizard({ onVoltar }: RecuperarSenhaWizardProps) {
       )}
 
       {step === 4 && (
-        <StepSenhaAlterada onVoltarLogin={handleVoltarLogin} />
+        <StepSenhaAlterada onVoltarLogin={onVoltar} />
       )}
     </Card>
   );

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { Loader2, CheckCircle, AlertCircle, RefreshCw, Phone, Mail, ArrowLeft } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, RefreshCw, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface StepCodigoRecuperacaoProps {
@@ -31,52 +31,34 @@ export function StepCodigoRecuperacao({
   resetError,
 }: StepCodigoRecuperacaoProps) {
   const [codigo, setCodigo] = useState("");
-  const [tempoRestante, setTempoRestante] = useState(600); // 10 minutos
+  const [tempoRestante, setTempoRestante] = useState(600);
   const [verificando, setVerificando] = useState(false);
   const [erroLocal, setErroLocal] = useState<string | null>(null);
 
-  const Icon = metodo === "email" ? Mail : Phone;
   const tipoTexto = metodo === "email" ? "email" : "SMS";
 
-  // Timer de expiração
   useEffect(() => {
     if (tempoRestante <= 0) return;
-
     const timer = setInterval(() => {
       setTempoRestante((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
+        if (prev <= 1) { clearInterval(timer); return 0; }
         return prev - 1;
       });
     }, 1000);
-
     return () => clearInterval(timer);
   }, [tempoRestante]);
 
   const handleVerificar = async () => {
     if (codigo.length !== 6) return;
-
     setVerificando(true);
     setErroLocal(null);
     resetError();
-
     try {
       const { data, error: fnError } = await supabase.functions.invoke("verificar-codigo", {
         body: { user_id: userId, codigo },
       });
-
-      if (fnError) {
-        setErroLocal("Erro ao verificar código");
-        return;
-      }
-
-      if (!data.sucesso) {
-        setErroLocal(data.erro);
-        return;
-      }
-
+      if (fnError) { setErroLocal("Erro ao verificar código"); return; }
+      if (!data.sucesso) { setErroLocal(data.erro); return; }
       onVerificado(codigo);
     } catch (err: any) {
       setErroLocal(err.message || "Erro ao verificar código");
@@ -107,23 +89,20 @@ export function StepCodigoRecuperacao({
 
   return (
     <>
-      <CardHeader className="text-center pb-6">
-        <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-          <Icon className="h-8 w-8 text-primary" />
-        </div>
-        <CardTitle className="text-senior-2xl">Digite o código</CardTitle>
-        <CardDescription className="text-senior-base">
+      <CardHeader className="text-center pb-4 md:pb-6 px-4 md:px-6">
+        <CardTitle className="text-xl md:text-senior-2xl">Digite o código</CardTitle>
+        <CardDescription className="text-sm md:text-senior-base">
           Enviamos um código de 6 dígitos para
           <br />
           <span className="font-semibold text-foreground">{destinoMascarado}</span>
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 md:space-y-6 px-4 md:px-6">
         {/* Timer */}
         <div className="text-center">
           <div
-            className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl text-senior-xl font-mono font-bold ${
+            className={`inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-xl text-lg md:text-senior-xl font-mono font-bold ${
               codigoExpirado
                 ? "bg-destructive/10 text-destructive"
                 : tempoRestante <= 60
@@ -134,7 +113,7 @@ export function StepCodigoRecuperacao({
             ⏱ {formatarTempo(tempoRestante)}
           </div>
           {codigoExpirado && (
-            <p className="text-destructive text-senior-sm mt-2">
+            <p className="text-destructive text-xs md:text-senior-sm mt-2">
               Código expirado. Solicite um novo.
             </p>
           )}
@@ -152,30 +131,30 @@ export function StepCodigoRecuperacao({
             }}
             disabled={isLoadingAny || codigoExpirado}
           >
-            <InputOTPGroup className="gap-2">
+            <InputOTPGroup className="gap-1.5 md:gap-2">
               {[0, 1, 2, 3, 4, 5].map((index) => (
                 <InputOTPSlot
                   key={index}
                   index={index}
-                  className="w-14 h-16 text-3xl font-bold border-2 rounded-xl focus:ring-4 focus:ring-primary/50"
+                  className="w-11 h-12 md:w-14 md:h-16 text-2xl md:text-3xl font-bold border-2 rounded-lg md:rounded-xl focus:ring-4 focus:ring-primary/50"
                 />
               ))}
             </InputOTPGroup>
           </InputOTP>
         </div>
 
-        {/* Mensagem de erro */}
+        {/* Erro */}
         {displayError && (
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-destructive/10 text-destructive">
-            <AlertCircle className="h-6 w-6 flex-shrink-0" />
-            <p className="text-senior-base">{displayError}</p>
+          <div className="flex items-center gap-2 md:gap-3 p-3 md:p-4 rounded-xl bg-destructive/10 text-destructive">
+            <AlertCircle className="h-5 w-5 md:h-6 md:w-6 flex-shrink-0" />
+            <p className="text-sm md:text-senior-base">{displayError}</p>
           </div>
         )}
 
-        {/* Botão Verificar */}
+        {/* Verificar */}
         <Button
           onClick={handleVerificar}
-          className="btn-senior w-full"
+          className="w-full h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl"
           disabled={codigo.length !== 6 || isLoadingAny || codigoExpirado}
         >
           {verificando ? (
@@ -191,16 +170,16 @@ export function StepCodigoRecuperacao({
           )}
         </Button>
 
-        {/* Reenviar código */}
-        <div className="text-center pt-4 border-t">
-          <p className="text-muted-foreground text-senior-sm mb-3">
+        {/* Reenviar */}
+        <div className="text-center pt-2 md:pt-4 border-t">
+          <p className="text-muted-foreground text-xs md:text-senior-sm mb-2 md:mb-3">
             Não recebeu o {tipoTexto}?
           </p>
           <Button
             variant="outline"
             onClick={handleReenviar}
             disabled={cooldown > 0 || isLoadingAny}
-            className="h-12 px-6 text-senior-base"
+            className="h-10 md:h-12 px-4 md:px-6 text-sm md:text-senior-base"
           >
             {cooldown > 0 ? (
               <>Aguarde {cooldown}s</>
@@ -211,7 +190,7 @@ export function StepCodigoRecuperacao({
               </>
             ) : (
               <>
-                <RefreshCw className="h-5 w-5 mr-2" />
+                <RefreshCw className="h-4 w-4 md:h-5 md:w-5 mr-2" />
                 Reenviar código
               </>
             )}
@@ -219,17 +198,15 @@ export function StepCodigoRecuperacao({
         </div>
 
         {/* Voltar */}
-        <div className="pt-2">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onVoltar}
-            className="w-full h-12 text-senior-base"
-          >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Voltar
-          </Button>
-        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onVoltar}
+          className="w-full h-10 md:h-12 text-sm md:text-senior-base"
+        >
+          <ArrowLeft className="h-4 w-4 md:h-5 md:w-5 mr-2" />
+          Voltar
+        </Button>
       </CardContent>
     </>
   );
