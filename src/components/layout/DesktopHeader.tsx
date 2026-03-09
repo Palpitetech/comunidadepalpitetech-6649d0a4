@@ -492,6 +492,12 @@ export function DesktopHeader() {
           )}
         </div>
       </div>
+      <UpgradeModal
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        featureLabel={upgradeLabel}
+        variant={upgradeVariant}
+      />
     </header>
   );
 }
