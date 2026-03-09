@@ -119,9 +119,9 @@ export default function LandingPage() {
       </section>
 
       {/* ===== 3. FEATURES ===== */}
-      <section className="py-16 md:py-24">
+      <section className="py-10 md:py-14">
         <div className="max-w-4xl mx-auto px-5">
-          <h2 className="text-xl md:text-2xl font-bold text-center mb-10 leading-snug">
+          <h2 className="text-xl md:text-2xl font-bold text-center mb-6 leading-snug">
             Tudo o que um apostador precisa em um só lugar
           </h2>
           <div className="grid sm:grid-cols-2 gap-5">
