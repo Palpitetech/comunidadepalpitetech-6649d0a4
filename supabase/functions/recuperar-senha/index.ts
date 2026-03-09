@@ -40,18 +40,18 @@ async function enviarEmailSenha(
         subject: "Sua nova senha - ComunidadePalpiteTech",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #16a34a; margin: 0;">🍀 ComunidadePalpiteTech</h1>
+            <div style="text-align: center; margin-bottom: 24px;">
+              <p style="color: #16a34a; margin: 0; font-size: 20px; font-weight: bold;">🍀 Comunidade Palpite Tech</p>
             </div>
-            <h2 style="color: #333;">Recuperação de Senha</h2>
-            <p style="color: #666; font-size: 16px;">Olá, ${nome}!</p>
-            <p style="color: #666; font-size: 16px;">Sua senha foi redefinida com sucesso. Use a senha abaixo para fazer login:</p>
-            <div style="background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); padding: 30px; border-radius: 16px; text-align: center; margin: 30px 0;">
-              <p style="color: rgba(255,255,255,0.9); margin: 0 0 10px 0; font-size: 14px;">Sua nova senha:</p>
-              <h1 style="color: white; font-size: 48px; letter-spacing: 12px; margin: 0; font-family: monospace;">${novaSenha}</h1>
+            <h2 style="color: #333; font-size: 18px;">Recuperação de Senha</h2>
+            <p style="color: #666; font-size: 15px;">Olá, ${nome}!</p>
+            <p style="color: #666; font-size: 15px;">Sua senha foi redefinida com sucesso. Use a senha abaixo para fazer login:</p>
+            <div style="background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); padding: 24px 16px; border-radius: 12px; text-align: center; margin: 24px 0;">
+              <p style="color: rgba(255,255,255,0.9); margin: 0 0 8px 0; font-size: 13px;">Sua nova senha:</p>
+              <p style="color: white; font-size: 32px; letter-spacing: 8px; margin: 0; font-family: monospace; font-weight: bold;">${novaSenha}</p>
             </div>
-            <p style="color: #666; font-size: 14px;">⚠️ Recomendamos que você altere sua senha após o login.</p>
-            <p style="color: #999; font-size: 12px;">Se você não solicitou esta recuperação, entre em contato conosco imediatamente.</p>
+            <p style="color: #666; font-size: 13px;">⚠️ Recomendamos que você altere sua senha após o login.</p>
+            <p style="color: #999; font-size: 12px;">Se você não solicitou esta recuperação, ignore este email.</p>
           </div>
         `,
       }),
