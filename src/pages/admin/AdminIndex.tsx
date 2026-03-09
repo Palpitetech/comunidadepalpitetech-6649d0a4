@@ -106,8 +106,6 @@ export default function AdminIndex() {
   return (
     <MainLayout
       pageTitle="Admin"
-      hideBackButton
-      hideBottomNav
     >
       <div className="px-4 py-3 md:container-senior md:py-8 space-y-4 md:space-y-6">
         {/* Desktop title */}
