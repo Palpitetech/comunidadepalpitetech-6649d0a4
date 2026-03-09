@@ -327,8 +327,8 @@ export default function Perfil() {
               {/* Trocar Senha */}
               <Link to="/recuperar-senha" className="block">
                 <div className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors">
-                  <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
-                    <Lock className="h-5 w-5 text-amber-500" />
+                  <div className="h-10 w-10 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
+                    <Lock className="h-5 w-5 text-[hsl(var(--primary))]" />
                   </div>
                   <div className="flex-1">
                     <p className="font-medium">Trocar Senha</p>
