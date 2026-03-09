@@ -210,7 +210,7 @@ export default function LandingPage() {
           <p className="mt-3 text-primary font-semibold text-sm">
             É exatamente isso que acontece dentro da comunidade.
           </p>
-          <div className="mt-8">
+          <div className="mt-5">
             <CtaSecondary>Fazer parte da comunidade</CtaSecondary>
           </div>
         </div>
