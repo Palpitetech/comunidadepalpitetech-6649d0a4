@@ -125,7 +125,7 @@ export function Header() {
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
         <nav className="md:hidden border-t border-border bg-card p-4 space-y-2">
-          <Link to="/" onClick={() => setMobileMenuOpen(false)}>
+          <Link to="/home" onClick={() => setMobileMenuOpen(false)}>
             <Button variant="ghost" className="w-full justify-start text-senior-base gap-3 h-14">
               <Home className="h-6 w-6" />
               Início

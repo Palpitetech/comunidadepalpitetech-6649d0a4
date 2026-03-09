@@ -27,7 +27,7 @@ export function AdminRoute({ children }: AdminRouteProps) {
 
   // Não é admin
   if (!isAdmin) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/home" replace />;
   }
 
   return <>{children}</>;
