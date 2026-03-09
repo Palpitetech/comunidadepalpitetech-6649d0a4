@@ -1,6 +1,8 @@
-import { Users, Ticket, Menu, MessageCircle } from "lucide-react";
+import { Users, Ticket, Menu, MessageCircle, Lock } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useUserRole } from "@/hooks/useUserRole";
+import { toast } from "sonner";
 
 interface MobileBottomNavProps {
   onMenuClick: () => void;
@@ -10,8 +12,16 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
   const location = useLocation();
   const currentPath = location.pathname;
   const isAdminRoute = currentPath.startsWith('/admin');
+  const { isAdmin } = useUserRole();
 
   const isActive = (path: string) => currentPath === path;
+
+  const handleLockedClick = (e: React.MouseEvent, label: string) => {
+    if (!isAdmin) {
+      e.preventDefault();
+      toast.info(`${label} estará disponível em breve! 🚀`);
+    }
+  };
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-[100] bg-card border-t border-border safe-area-bottom" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
@@ -30,31 +40,51 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
           <span className="text-xs mt-1 font-medium">Comunidade</span>
         </Link>
 
-        {/* Chat */}
+        {/* Chat - Em Breve */}
         <Link
-          to="/chat"
+          to={isAdmin ? "/chat" : "#"}
+          onClick={(e) => handleLockedClick(e, "Chat")}
           className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors",
-            isActive("/chat")
+            "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors relative",
+            isAdmin && isActive("/chat")
               ? "text-primary"
+              : !isAdmin
+              ? "text-muted-foreground/50"
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          <MessageCircle className="h-6 w-6" />
+          <div className="relative">
+            <MessageCircle className="h-6 w-6" />
+            {!isAdmin && (
+              <span className="absolute -top-1 -right-2 bg-accent text-accent-foreground text-[8px] font-bold px-1 rounded leading-tight">
+                BREVE
+              </span>
+            )}
+          </div>
           <span className="text-xs mt-1 font-medium">Chat</span>
         </Link>
 
-        {/* Bolões */}
+        {/* Bolões - Em Breve */}
         <Link
-          to="/boloes"
+          to={isAdmin ? "/boloes" : "#"}
+          onClick={(e) => handleLockedClick(e, "Bolões")}
           className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors",
-            isActive("/boloes")
+            "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors relative",
+            isAdmin && isActive("/boloes")
               ? "text-primary"
+              : !isAdmin
+              ? "text-muted-foreground/50"
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          <Ticket className="h-6 w-6" />
+          <div className="relative">
+            <Ticket className="h-6 w-6" />
+            {!isAdmin && (
+              <span className="absolute -top-1 -right-2 bg-accent text-accent-foreground text-[8px] font-bold px-1 rounded leading-tight">
+                BREVE
+              </span>
+            )}
+          </div>
           <span className="text-xs mt-1 font-medium">Bolões</span>
         </Link>
 
