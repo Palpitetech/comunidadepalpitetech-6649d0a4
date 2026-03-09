@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 type PushPermission = "default" | "granted" | "denied" | "unsupported";
 
