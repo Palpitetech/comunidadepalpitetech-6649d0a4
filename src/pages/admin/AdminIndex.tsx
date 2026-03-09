@@ -14,7 +14,7 @@ function UserStatsWidget() {
       const [{ data: perfis }, { data: roles }, { data: plans }] = await Promise.all([
         supabase.from("perfis").select("id, plan_id, is_bot, status_assinatura").eq("is_bot", false),
         supabase.from("user_roles").select("user_id, role").eq("role", "premium"),
-        supabase.from("plans").select("id, name, price").eq("is_active", true).order("display_order"),
+        supabase.from("plans").select("id, name, price").order("display_order"),
       ]);
 
       const users = perfis || [];
@@ -32,7 +32,7 @@ function UserStatsWidget() {
       const planList = (plans || []).map(plan => ({
         name: plan.name,
         count: users.filter(u => u.plan_id === plan.id).length,
-      }));
+      })).filter(p => p.count > 0);
 
       const semPlano = users.filter(u => !u.plan_id).length;
 
