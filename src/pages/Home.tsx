@@ -216,7 +216,33 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ===== 7. CTA FINAL ===== */}
+      {/* ===== VÍDEO TOUR ===== */}
+      <section className="py-10 md:py-14">
+        <div className="max-w-3xl mx-auto px-5 text-center">
+          <h2 className="text-xl md:text-2xl font-bold mb-2 leading-snug">
+            Conheça por dentro a comunidade
+          </h2>
+          <p className="text-muted-foreground text-sm md:text-base mb-6">
+            Você nunca viu uma comunidade assim antes.
+          </p>
+          <div className="rounded-2xl overflow-hidden border border-border shadow-lg">
+            <video
+              className="w-full aspect-video"
+              controls
+              playsInline
+              preload="metadata"
+              poster=""
+            >
+              <source src="/videos/tour-comunidade.mp4" type="video/mp4" />
+              Seu navegador não suporta vídeo.
+            </video>
+          </div>
+          <div className="mt-6">
+            <CtaPrimary>Quero fazer parte</CtaPrimary>
+          </div>
+        </div>
+      </section>
+
       <section className="py-14 md:py-20 bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground">
         <div className="max-w-2xl mx-auto px-5 text-center">
           <h2 className="text-xl md:text-3xl font-extrabold mb-4 leading-snug">
