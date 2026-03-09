@@ -367,13 +367,42 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
           <h3 className="text-sm font-semibold flex items-center gap-2">
             <User className="h-4 w-4" /> Cliente
           </h3>
-          <div className="bg-muted/50 rounded-lg p-3 space-y-1 text-sm">
-            {customer.name && <p className="font-medium">{customer.name}</p>}
-            {latest.email && <p className="text-muted-foreground">{latest.email}</p>}
-            {latest.phone && <p className="text-muted-foreground">{latest.phone}</p>}
+          <div className="bg-muted/50 rounded-lg p-3 space-y-1.5 text-sm">
+            {customer.name && (
+              <CopyableField label="Nome" value={customer.name} />
+            )}
+            {latest.email && (
+              <CopyableField label="Email" value={latest.email} />
+            )}
+            {latest.phone && (
+              <CopyableField label="Telefone" value={latest.phone} />
+            )}
             {customer.document && (
               <p className="text-muted-foreground text-xs">CPF: {customer.document}</p>
             )}
+            {(() => {
+              const phone = latest.phone || customer.phone_number;
+              if (!phone) return null;
+              const digits = phone.replace(/\D/g, "");
+              const waNumber = digits.startsWith("55") ? digits : `55${digits}`;
+              return (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full gap-2 mt-2"
+                  asChild
+                >
+                  <a
+                    href={`https://wa.me/${waNumber}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    Enviar WhatsApp
+                  </a>
+                </Button>
+              );
+            })()}
           </div>
         </div>
 
