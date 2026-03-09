@@ -20,9 +20,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (nova_senha.length < 8) {
+    if (nova_senha.length < 6) {
       return new Response(
-        JSON.stringify({ sucesso: false, erro: "A senha deve ter pelo menos 8 caracteres" }),
+        JSON.stringify({ sucesso: false, erro: "A senha deve ter pelo menos 6 caracteres" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -31,13 +31,13 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Buscar código de recuperação válido
+    // Buscar código de recuperação (já verificado no step anterior, pode estar usado=true)
     const { data: codigoData, error: codigoError } = await supabase
       .from("codigos_verificacao")
       .select("*")
       .eq("user_id", user_id)
+      .eq("codigo", codigo)
       .in("tipo", ["recuperacao_email", "recuperacao_sms"])
-      .eq("usado", false)
       .gt("expira_em", new Date().toISOString())
       .order("created_at", { ascending: false })
       .limit(1)
