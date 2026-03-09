@@ -34,7 +34,7 @@ import { Separator } from "@/components/ui/separator";
 export default function Perfil() {
   const { profile, user, signOut } = useAuthContext();
   const { toast } = useToast();
-  const [isOpeningCheckout, setIsOpeningCheckout] = useState(false);
+  const [_isOpeningCheckout, _setIsOpeningCheckout] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const navigate = useNavigate();
   const { isPremium } = useUserRole();
