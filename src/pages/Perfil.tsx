@@ -26,6 +26,8 @@ import { useMySubscription } from "@/hooks/useMySubscription";
 import { STATUS_CONFIG } from "@/lib/subscription";
 import { differenceInDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AlterarCelularDialog } from "@/components/perfil/AlterarCelularDialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Perfil() {
   const isMobile = useIsMobile();
