@@ -14,7 +14,9 @@ type EmailType =
   | "expira_7dias"
   | "expira_3dias"
   | "renove_assinatura"
-  | "atrasada_7dias";
+  | "atrasada_7dias"
+  | "inadimplente_lembrete"
+  | "inadimplente_removido";
 
 interface EmailPayload {
   type: EmailType;
