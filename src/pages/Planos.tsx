@@ -247,7 +247,8 @@ export default function Planos() {
                     {activeFeatures} recursos incluídos
                   </p>
 
-                  {/* CTA */}
+                  {/* CTA - pushed to bottom */}
+                  <div className="mt-auto pt-2">
                   {isCurrent ? (
                     <Button disabled className="w-full h-12 text-base" variant="outline">
                       Plano atual
