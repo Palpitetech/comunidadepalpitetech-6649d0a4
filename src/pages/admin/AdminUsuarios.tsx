@@ -108,6 +108,14 @@ export default function AdminUsuarios() {
     );
   }, [users, plans, activeFilter, searchTerm]);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(0);
+  }, [activeFilter, searchTerm]);
+
+  const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE);
+  const paginatedUsers = filteredUsers.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
   const handleRowClick = (user: UserWithPlan) => {
     setSelectedUser(user);
     setSheetOpen(true);
