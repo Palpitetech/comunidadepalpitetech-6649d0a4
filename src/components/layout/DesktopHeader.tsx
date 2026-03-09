@@ -282,11 +282,12 @@ export function DesktopHeader() {
                    <span className="text-base">🎯</span>
                    Dupla Sena
                  </DropdownMenuSubTrigger>
-                 <DropdownMenuSubContent className="w-48 bg-popover z-50">
-                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                 <DropdownMenuSubContent className="w-52 bg-popover z-50">
+                   <DropdownMenuItem className="gap-3 py-2 cursor-pointer" onClick={(e) => handleGatedClick(e, "/duplasena/analise-do-dia")} asChild>
                      <Link to="/duplasena/analise-do-dia">
                        <Target className="h-4 w-4" />
                        Análise do Dia
+                       {renderBadge("/duplasena/analise-do-dia")}
                      </Link>
                    </DropdownMenuItem>
                    <DropdownMenuSeparator />
@@ -296,62 +297,71 @@ export function DesktopHeader() {
                        Resultados
                      </Link>
                    </DropdownMenuItem>
-                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                   <DropdownMenuItem className="gap-3 py-2 cursor-pointer" onClick={(e) => handleGatedClick(e, "/duplasena/tendencias")} asChild>
                      <Link to="/duplasena/tendencias">
                        <TrendingUp className="h-4 w-4" />
                        Tendências
+                       {renderBadge("/duplasena/tendencias")}
                      </Link>
                    </DropdownMenuItem>
-                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                   <DropdownMenuItem className="gap-3 py-2 cursor-pointer" onClick={(e) => handleGatedClick(e, "/duplasena/frequencia")} asChild>
                      <Link to="/duplasena/frequencia">
                        <Flame className="h-4 w-4" />
                        Quentes e Frias
+                       {renderBadge("/duplasena/frequencia")}
                      </Link>
                    </DropdownMenuItem>
-                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                   <DropdownMenuItem className="gap-3 py-2 cursor-pointer" onClick={(e) => handleGatedClick(e, "/duplasena/frequencia-dezenas")} asChild>
                      <Link to="/duplasena/frequencia-dezenas">
                        <BarChart3 className="h-4 w-4" />
                        Frequência das Dezenas
+                       {renderBadge("/duplasena/frequencia-dezenas")}
                      </Link>
                    </DropdownMenuItem>
-                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                   <DropdownMenuItem className="gap-3 py-2 cursor-pointer" onClick={(e) => handleGatedClick(e, "/duplasena/dezenas-por-posicao")} asChild>
                      <Link to="/duplasena/dezenas-por-posicao">
                        <Target className="h-4 w-4" />
                        Dezenas por Posição
+                       {renderBadge("/duplasena/dezenas-por-posicao")}
                      </Link>
                    </DropdownMenuItem>
-                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                   <DropdownMenuItem className="gap-3 py-2 cursor-pointer" onClick={(e) => handleGatedClick(e, "/duplasena/linhas-colunas")} asChild>
                      <Link to="/duplasena/linhas-colunas">
                        <LayoutGrid className="h-4 w-4" />
                        Linhas e Colunas
+                       {renderBadge("/duplasena/linhas-colunas")}
                      </Link>
                    </DropdownMenuItem>
-                   <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                   <DropdownMenuItem className="gap-3 py-2 cursor-pointer" onClick={(e) => handleGatedClick(e, "/duplasena/tabela-movimentacao")} asChild>
                      <Link to="/duplasena/tabela-movimentacao">
                        <Table2 className="h-4 w-4" />
                        Tabela de Movimentação
+                       {renderBadge("/duplasena/tabela-movimentacao")}
                      </Link>
                    </DropdownMenuItem>
                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                      <Link to="/duplasena/gerador">
-                        <Dices className="h-4 w-4" />
-                        Gerador
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                      <Link to="/duplasena/desdobramento">
-                        <Shuffle className="h-4 w-4" />
-                        Desdobramento
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                      <Link to="/duplasena/fechamento">
-                        <Wrench className="h-4 w-4" />
-                        Fechamento
-                      </Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuSubContent>
+                   <DropdownMenuItem className="gap-3 py-2 cursor-pointer" onClick={(e) => handleGatedClick(e, "/duplasena/gerador")} asChild>
+                     <Link to="/duplasena/gerador">
+                       <Dices className="h-4 w-4" />
+                       Gerador
+                       {renderBadge("/duplasena/gerador")}
+                     </Link>
+                   </DropdownMenuItem>
+                   <DropdownMenuItem className="gap-3 py-2 cursor-pointer" onClick={(e) => handleGatedClick(e, "/duplasena/desdobramento")} asChild>
+                     <Link to="/duplasena/desdobramento">
+                       <Shuffle className="h-4 w-4" />
+                       Desdobramento
+                       {renderBadge("/duplasena/desdobramento")}
+                     </Link>
+                   </DropdownMenuItem>
+                   <DropdownMenuItem className="gap-3 py-2 cursor-pointer" onClick={(e) => handleGatedClick(e, "/duplasena/fechamento")} asChild>
+                     <Link to="/duplasena/fechamento">
+                       <Wrench className="h-4 w-4" />
+                       Fechamento
+                       {renderBadge("/duplasena/fechamento")}
+                     </Link>
+                   </DropdownMenuItem>
+                 </DropdownMenuSubContent>
                 </DropdownMenuSub>
              </DropdownMenuContent>
            </DropdownMenu>
