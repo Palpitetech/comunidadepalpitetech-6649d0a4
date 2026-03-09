@@ -32,7 +32,7 @@ function UserStatsWidget() {
       const planList = (plans || []).map(plan => ({
         name: plan.name,
         count: users.filter(u => u.plan_id === plan.id).length,
-      }));
+      })).filter(p => p.count > 0);
 
       const semPlano = users.filter(u => !u.plan_id).length;
 
