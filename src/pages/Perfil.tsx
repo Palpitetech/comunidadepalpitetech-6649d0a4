@@ -300,8 +300,8 @@ export default function Perfil() {
                 onSuccess={handleCelularSuccess}
                 trigger={
                   <button className="w-full flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors text-left">
-                    <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
-                      <Phone className="h-5 w-5 text-green-500" />
+                    <div className="h-10 w-10 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
+                      <Phone className="h-5 w-5 text-[hsl(var(--primary))]" />
                     </div>
                     <div className="flex-1">
                       <p className="font-medium">{profile?.celular ? "Alterar Celular" : "Adicionar Celular"}</p>
