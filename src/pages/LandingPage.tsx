@@ -199,7 +199,7 @@ export default function LandingPage() {
       </section>
 
       {/* ===== 6. BENEFÍCIO PRINCIPAL ===== */}
-      <section className="py-16 md:py-24 bg-primary/5">
+      <section className="py-10 md:py-14 bg-primary/5">
         <div className="max-w-2xl mx-auto px-5 text-center">
           <h2 className="text-xl md:text-2xl font-bold mb-5 leading-snug">
             Apostar sozinho é difícil. Apostar em comunidade é diferente.
