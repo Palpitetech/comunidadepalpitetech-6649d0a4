@@ -1,4 +1,4 @@
-import { Users, Ticket, Menu, MessageCircle, Lock } from "lucide-react";
+import { Users, Ticket, Menu, MessageCircle } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -16,17 +16,23 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
 
   const isActive = (path: string) => currentPath === path;
 
-  const handleLockedClick = (e: React.MouseEvent, label: string) => {
+  const handleComingSoonClick = (e: React.MouseEvent, label: string) => {
     if (!isAdmin) {
       e.preventDefault();
       toast.info(`${label} estará disponível em breve! 🚀`);
     }
   };
 
+  const comingSoonBadge = (
+    <span className="absolute -top-1 -right-2 bg-accent text-accent-foreground text-[8px] font-bold px-1 rounded leading-tight">
+      BREVE
+    </span>
+  );
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-[100] bg-card border-t border-border safe-area-bottom" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       <div className="flex items-center justify-around h-16">
-        {/* Comunidade (Início) */}
+        {/* Comunidade */}
         <Link
           to="/comunidade"
           className={cn(
@@ -43,23 +49,17 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
         {/* Chat - Em Breve */}
         <Link
           to={isAdmin ? "/chat" : "#"}
-          onClick={(e) => handleLockedClick(e, "Chat")}
+          onClick={(e) => handleComingSoonClick(e, "Chat")}
           className={cn(
             "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors relative",
-            isAdmin && isActive("/chat")
+            isActive("/chat")
               ? "text-primary"
-              : !isAdmin
-              ? "text-muted-foreground/50"
-              : "text-muted-foreground hover:text-foreground"
+              : "text-muted-foreground/50 hover:text-muted-foreground"
           )}
         >
           <div className="relative">
             <MessageCircle className="h-6 w-6" />
-            {!isAdmin && (
-              <span className="absolute -top-1 -right-2 bg-accent text-accent-foreground text-[8px] font-bold px-1 rounded leading-tight">
-                BREVE
-              </span>
-            )}
+            {comingSoonBadge}
           </div>
           <span className="text-xs mt-1 font-medium">Chat</span>
         </Link>
@@ -67,23 +67,17 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
         {/* Bolões - Em Breve */}
         <Link
           to={isAdmin ? "/boloes" : "#"}
-          onClick={(e) => handleLockedClick(e, "Bolões")}
+          onClick={(e) => handleComingSoonClick(e, "Bolões")}
           className={cn(
             "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors relative",
-            isAdmin && isActive("/boloes")
+            isActive("/boloes")
               ? "text-primary"
-              : !isAdmin
-              ? "text-muted-foreground/50"
-              : "text-muted-foreground hover:text-foreground"
+              : "text-muted-foreground/50 hover:text-muted-foreground"
           )}
         >
           <div className="relative">
             <Ticket className="h-6 w-6" />
-            {!isAdmin && (
-              <span className="absolute -top-1 -right-2 bg-accent text-accent-foreground text-[8px] font-bold px-1 rounded leading-tight">
-                BREVE
-              </span>
-            )}
+            {comingSoonBadge}
           </div>
           <span className="text-xs mt-1 font-medium">Bolões</span>
         </Link>
