@@ -65,8 +65,24 @@ export default function FrequenciaMegaSena() {
           </div>
         )}
 
-        {/* Mobile: Seletor de período */}
-        {isMobile && (
+        {/* Mobile: Filtro + Período na mesma linha */}
+        {isMobile && !isLoading && !error && (
+          <div className="flex items-center justify-between gap-2">
+            <FiltroStatus
+              selecionado={filtroStatus}
+              onChange={setFiltroStatus}
+              contagem={contagem}
+            />
+            <SeletorPeriodo
+              periodos={PERIODOS}
+              selecionado={periodo}
+              onChange={setPeriodo}
+            />
+          </div>
+        )}
+
+        {/* Mobile: Só período se loading/error */}
+        {isMobile && (isLoading || error) && (
           <div className="flex justify-end">
             <SeletorPeriodo
               periodos={PERIODOS}
@@ -78,8 +94,8 @@ export default function FrequenciaMegaSena() {
 
         {/* Conteúdo capturável */}
         <div ref={contentRef} className="space-y-6">
-          {/* Filtro de Status */}
-          {!isLoading && !error && (
+          {/* Filtro de Status - Desktop only */}
+          {!isMobile && !isLoading && !error && (
             <FiltroStatus
               selecionado={filtroStatus}
               onChange={setFiltroStatus}
