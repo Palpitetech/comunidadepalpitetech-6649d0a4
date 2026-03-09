@@ -178,7 +178,7 @@ export default function Perfil() {
               <div className="mt-3 flex items-center gap-2">
                 <Badge 
                   variant={isPremium ? "default" : "secondary"}
-                  className={isPremium ? "bg-amber-500 hover:bg-amber-600" : ""}
+                  className={isPremium ? "bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90" : ""}
                 >
                   {isPremium ? (
                     <>
