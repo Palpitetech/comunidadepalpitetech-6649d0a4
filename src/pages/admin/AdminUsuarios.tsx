@@ -1,35 +1,49 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, Users, UserCheck, UserX, ShieldOff, ChevronRight, X } from "lucide-react";
 import { toast } from "sonner";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
+import { cn } from "@/lib/utils";
 import type { Plan, PlanFeatures, ExtendedProfile } from "@/types/plans";
 
 interface UserWithPlan extends ExtendedProfile {
   plan?: Plan | null;
 }
 
+type FilterTab = "todos" | "pagos" | "free" | "bloqueados";
+
+const FILTER_TABS: { key: FilterTab; label: string; icon: typeof Users }[] = [
+  { key: "todos", label: "Todos", icon: Users },
+  { key: "pagos", label: "Pagos", icon: UserCheck },
+  { key: "free", label: "Free", icon: UserX },
+  { key: "bloqueados", label: "Bloqueados", icon: ShieldOff },
+];
+
 export default function AdminUsuarios() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<UserWithPlan[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserWithPlan | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<FilterTab>("todos");
 
   const fetchData = async () => {
     try {
-      const { data: plansData, error: plansError } = await supabase
-        .from("plans")
-        .select("*")
-        .order("display_order");
+      const [{ data: plansData, error: plansError }, { data: usersData, error: usersError }] = await Promise.all([
+        supabase.from("plans").select("*").order("display_order"),
+        supabase.from("perfis").select("*").eq("is_bot", false).order("created_at", { ascending: false }),
+      ]);
 
       if (plansError) throw plansError;
+      if (usersError) throw usersError;
 
       const formattedPlans: Plan[] = (plansData || []).map((p) => ({
         ...p,
@@ -38,13 +52,7 @@ export default function AdminUsuarios() {
       }));
       setPlans(formattedPlans);
 
-      const { data: usersData, error: usersError } = await supabase
-        .from("perfis")
-        .select("*")
-        .eq("is_bot", false)
-        .order("created_at", { ascending: false });
-
-      if (usersError) throw usersError;
+      const paidPlanIds = new Set(formattedPlans.filter(p => p.price > 0).map(p => p.id));
 
       const usersWithPlans: UserWithPlan[] = (usersData || []).map((u) => ({
         ...u,
@@ -65,22 +73,41 @@ export default function AdminUsuarios() {
     fetchData();
   }, []);
 
-  const filteredUsers = users.filter((user) => {
+  const stats = useMemo(() => {
+    const paidPlanIds = new Set(plans.filter(p => p.price > 0).map(p => p.id));
+    const total = users.length;
+    const bloqueados = users.filter(u => u.is_blocked).length;
+    const pagos = users.filter(u =>
+      (u.plan_id && paidPlanIds.has(u.plan_id)) || u.status_assinatura === "ativa"
+    ).length;
+    const free = total - pagos;
+    return { total, pagos, free, bloqueados };
+  }, [users, plans]);
+
+  const filteredUsers = useMemo(() => {
+    const paidPlanIds = new Set(plans.filter(p => p.price > 0).map(p => p.id));
+    
+    let list = users;
+    if (activeFilter === "pagos") {
+      list = users.filter(u => (u.plan_id && paidPlanIds.has(u.plan_id)) || u.status_assinatura === "ativa");
+    } else if (activeFilter === "free") {
+      list = users.filter(u => !((u.plan_id && paidPlanIds.has(u.plan_id)) || u.status_assinatura === "ativa"));
+    } else if (activeFilter === "bloqueados") {
+      list = users.filter(u => u.is_blocked);
+    }
+
+    if (!searchTerm) return list;
     const search = searchTerm.toLowerCase();
-    return (
+    return list.filter((user) =>
       user.nome?.toLowerCase().includes(search) ||
       user.email?.toLowerCase().includes(search) ||
       user.celular?.includes(search)
     );
-  });
+  }, [users, plans, activeFilter, searchTerm]);
 
   const handleRowClick = (user: UserWithPlan) => {
     setSelectedUser(user);
     setSheetOpen(true);
-  };
-
-  const handleUserUpdated = () => {
-    fetchData();
   };
 
   const getInitials = (nome: string | null) => {
@@ -88,9 +115,18 @@ export default function AdminUsuarios() {
     return nome.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
+  const getFilterCount = (key: FilterTab) => {
+    switch (key) {
+      case "todos": return stats.total;
+      case "pagos": return stats.pagos;
+      case "free": return stats.free;
+      case "bloqueados": return stats.bloqueados;
+    }
+  };
+
   if (loading) {
     return (
-      <MainLayout>
+      <MainLayout pageTitle="Usuários" onBack={() => navigate("/admin")}>
         <div className="flex items-center justify-center min-h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -99,34 +135,76 @@ export default function AdminUsuarios() {
   }
 
   return (
-    <MainLayout>
-      <div className="container-senior py-4 md:py-8">
-        <div className="flex items-center justify-between mb-4 md:mb-6">
-          <div>
-            <h1 className="text-lg md:text-senior-2xl font-bold">Gestão de Usuários</h1>
-            <p className="text-xs md:text-sm text-muted-foreground">
-              {users.length} usuário{users.length !== 1 ? "s" : ""}
-            </p>
-          </div>
+    <MainLayout
+      pageTitle="Usuários"
+      onBack={() => navigate("/admin")}
+      headerRightContent={
+        <span className="text-xs text-muted-foreground font-medium">{stats.total}</span>
+      }
+    >
+      <div className="px-4 py-3 md:container-senior md:py-8 space-y-3 md:space-y-6">
+        {/* Desktop title */}
+        <div className="hidden md:block">
+          <h1 className="text-3xl font-bold">Gestão de Usuários</h1>
+          <p className="text-sm text-muted-foreground mt-1">{stats.total} usuários cadastrados</p>
         </div>
 
-        {/* Busca */}
-        <div className="relative mb-4 md:mb-6">
+        {/* Stats row - mobile compact */}
+        <div className="grid grid-cols-4 gap-1.5 md:gap-3">
+          {FILTER_TABS.map(({ key, label, icon: Icon }) => {
+            const count = getFilterCount(key);
+            const isActive = activeFilter === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setActiveFilter(key)}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 rounded-xl p-2 md:p-3 transition-colors text-center",
+                  isActive
+                    ? "bg-primary/10 ring-1 ring-primary/30"
+                    : "bg-muted/40 hover:bg-muted/60"
+                )}
+              >
+                <Icon className={cn("h-4 w-4", isActive ? "text-primary" : "text-muted-foreground")} />
+                <span className="text-lg md:text-xl font-bold">{count}</span>
+                <span className={cn("text-[10px] md:text-xs", isActive ? "text-primary font-medium" : "text-muted-foreground")}>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Search */}
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por nome, email ou celular..."
+            placeholder="Buscar nome, email ou celular..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-10"
+            className="pl-10 h-10 pr-9"
           />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
-        {/* Mobile: Card list */}
-        <div className="md:hidden space-y-1">
+        {/* Results count */}
+        {(searchTerm || activeFilter !== "todos") && (
+          <p className="text-xs text-muted-foreground">
+            {filteredUsers.length} resultado{filteredUsers.length !== 1 ? "s" : ""}
+          </p>
+        )}
+
+        {/* Mobile: User list */}
+        <div className="md:hidden space-y-0.5">
           {filteredUsers.map((user) => (
-            <div
+            <button
               key={user.id}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg active:bg-muted/60 cursor-pointer border-b border-border/40 last:border-0"
+              className="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg active:bg-muted/60 transition-colors border-b border-border/30 last:border-0"
               onClick={() => handleRowClick(user)}
             >
               <Avatar className="h-9 w-9 shrink-0">
@@ -136,7 +214,7 @@ export default function AdminUsuarios() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <p className="text-sm font-medium truncate">
                     {user.nome || "Sem nome"}
                   </p>
@@ -148,15 +226,22 @@ export default function AdminUsuarios() {
                   {user.email || user.celular || "-"}
                 </p>
               </div>
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 shrink-0">
+              <Badge
+                variant="secondary"
+                className={cn(
+                  "text-[10px] px-1.5 py-0.5 shrink-0",
+                  user.plan && user.plan.price > 0 && "bg-primary/10 text-primary border-primary/20"
+                )}
+              >
                 {user.plan?.name || "Free"}
               </Badge>
-            </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+            </button>
           ))}
 
           {filteredUsers.length === 0 && (
-            <div className="text-center py-8 text-sm text-muted-foreground">
-              {searchTerm ? "Nenhum resultado" : "Nenhum usuário"}
+            <div className="text-center py-12 text-sm text-muted-foreground">
+              {searchTerm ? "Nenhum resultado encontrado" : "Nenhum usuário"}
             </div>
           )}
         </div>
@@ -218,9 +303,7 @@ export default function AdminUsuarios() {
               {filteredUsers.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    {searchTerm
-                      ? "Nenhum usuário encontrado para esta busca"
-                      : "Nenhum usuário cadastrado"}
+                    {searchTerm ? "Nenhum usuário encontrado" : "Nenhum usuário cadastrado"}
                   </TableCell>
                 </TableRow>
               )}
@@ -234,7 +317,7 @@ export default function AdminUsuarios() {
           plans={plans}
           open={sheetOpen}
           onOpenChange={setSheetOpen}
-          onUserUpdated={handleUserUpdated}
+          onUserUpdated={() => fetchData()}
         />
       </div>
     </MainLayout>
