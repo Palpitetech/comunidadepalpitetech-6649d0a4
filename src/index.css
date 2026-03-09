@@ -145,7 +145,12 @@
     --highlight: 152 55% 48%;
     --highlight-foreground: 0 0% 100%;
 
-    /* Status Quente/Frio - Dark Mode */
+    /* Premium badges - Dark */
+    --premium: 270 60% 60%;
+    --premium-foreground: 0 0% 100%;
+    --vip: 43 96% 60%;
+    --vip-foreground: 0 0% 10%;
+
     --status-quente: 142 70% 50%;
     --status-quente-foreground: 215 50% 10%;
     --status-quente-bg: 142 70% 15%;
