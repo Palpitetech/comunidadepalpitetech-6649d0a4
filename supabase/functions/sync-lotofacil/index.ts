@@ -34,6 +34,44 @@ function shouldNotifyResultadoNovo(url: URL): boolean {
   return true;
 }
 
+async function dispararPushResultadoNovo(params: {
+  supabaseUrl: string;
+  authBearer: string;
+  webhookSecret: string | undefined;
+  concurso: number;
+  loteria: string;
+}) {
+  const { supabaseUrl, authBearer, webhookSecret, concurso, loteria } = params;
+  if (!webhookSecret) return;
+
+  try {
+    const fnUrl = `${supabaseUrl}/functions/v1/send-push`;
+    const res = await fetch(fnUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authBearer}`,
+        'x-webhook-secret': webhookSecret,
+      },
+      body: JSON.stringify({
+        tipo: 'resultado_novo',
+        titulo: `Resultado ${loteria}`,
+        mensagem: `Concurso ${concurso} disponível! Confira agora.`,
+        loteria,
+        concurso_id: concurso,
+      }),
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      console.error(`[PUSH] Falha: ${res.status} ${text}`);
+    } else {
+      console.log(`[PUSH] ✅ Push enviado para ${loteria} concurso ${concurso}`);
+    }
+  } catch (e) {
+    console.error(`[PUSH] Erro:`, e);
+  }
+}
+
 async function dispararNotificacaoResultadoNovo(params: {
   supabaseUrl: string;
   authBearer: string;
