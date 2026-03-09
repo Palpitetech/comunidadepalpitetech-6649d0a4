@@ -13,7 +13,8 @@ import { useGeradorMegaSena } from "@/hooks/useGeradorMegaSena";
 import { useGeradorStatus } from "@/hooks/useGeradorStatus";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
-import { Dices, Loader2, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Dices, Loader2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { UpgradeModal } from "@/components/shared/UpgradeModal";
 
 export default function GeradorMegaSena() {
   const isMobile = useIsMobile();
