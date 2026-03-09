@@ -15,14 +15,17 @@ export function StepSenhaAlterada({ onVoltarLogin }: StepSenhaAlteradaProps) {
         </div>
         <CardTitle className="text-xl md:text-senior-2xl text-accent">Senha Alterada!</CardTitle>
         <CardDescription className="text-sm md:text-senior-base">
-          Sua senha foi alterada com sucesso. Agora você pode fazer login com sua nova senha.
+          Sua senha foi redefinida para a senha padrão. Faça login e altere sua senha.
         </CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-4 md:space-y-6 px-4 md:px-6">
         <div className="p-4 md:p-6 rounded-2xl bg-accent/10 border border-accent/30 text-center">
-          <p className="text-accent text-sm md:text-senior-base">
-            🎉 Tudo pronto! Sua conta está segura novamente.
+          <p className="text-accent text-sm md:text-senior-base font-bold text-lg">
+            Sua nova senha é: <span className="font-mono tracking-widest">123456</span>
+          </p>
+          <p className="text-muted-foreground text-xs md:text-sm mt-2">
+            Recomendamos alterar sua senha após o login.
           </p>
         </div>
 
