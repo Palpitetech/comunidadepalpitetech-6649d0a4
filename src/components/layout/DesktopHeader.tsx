@@ -25,6 +25,28 @@ import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, Trendin
 export function DesktopHeader() {
   const { isAuthenticated, profile, signOut } = useAuthContext();
   const { isAdmin } = useUserRole();
+  const { hasPermission } = usePermissions();
+  const navigate = useNavigate();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [upgradeLabel, setUpgradeLabel] = useState<string | undefined>();
+  const [upgradeVariant, setUpgradeVariant] = useState<"premium" | "vip">("premium");
+
+  const handleGatedClick = (e: React.MouseEvent, path: string) => {
+    const feature = getFeatureForRoute(path);
+    if (feature && !hasPermission(feature)) {
+      e.preventDefault();
+      e.stopPropagation();
+      setUpgradeLabel(FEATURE_LABELS[feature]);
+      setUpgradeVariant(isVipFeature(feature) ? "vip" : "premium");
+      setUpgradeOpen(true);
+    }
+  };
+
+  const renderBadge = (path: string) => {
+    const feature = getFeatureForRoute(path);
+    if (!feature || hasPermission(feature)) return null;
+    return <Lock className="h-3 w-3 text-muted-foreground/60 ml-auto" />;
+  };
 
   const handleSignOut = async () => {
     try {
