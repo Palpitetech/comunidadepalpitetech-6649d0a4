@@ -90,7 +90,7 @@ async function enviarEmailResend(params: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'Lovable <onboarding@resend.dev>',
+      from: 'Comunidade Palpite Tech <solicitacao@palpitetech.com.br>',
       to: [to],
       subject,
       html,
