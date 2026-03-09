@@ -310,12 +310,17 @@ serve(async (req) => {
     const queryAuth = pickQueryAuth(req.url);
 
     if (signature) {
-      const expected = await hmacSha256Hex(webhookSecret, rawBody);
-      authorized = timingSafeEqual(signature.trim().toLowerCase(), expected);
+      for (const secret of webhookSecrets) {
+        const expected = await hmacSha256Hex(secret, rawBody);
+        if (timingSafeEqual(signature.trim().toLowerCase(), expected)) {
+          authorized = true;
+          break;
+        }
+      }
     } else if (token) {
-      authorized = timingSafeEqual(token.trim(), webhookSecret);
+      authorized = webhookSecrets.some((s) => timingSafeEqual(token.trim(), s));
     } else if (queryAuth) {
-      authorized = timingSafeEqual(queryAuth.value, webhookSecret);
+      authorized = webhookSecrets.some((s) => timingSafeEqual(queryAuth.value, s));
       logStep("Auth via query", { key: queryAuth.key, authorized });
     }
   }
