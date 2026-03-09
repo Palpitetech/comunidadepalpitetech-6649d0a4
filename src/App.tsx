@@ -32,6 +32,7 @@ import AdminPlanos from "./pages/admin/AdminPlanos";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
 import AdminBots from "./pages/admin/AdminBots";
 import AdminCustos from "./pages/admin/AdminCustos";
+import AdminConvites from "./pages/admin/AdminConvites";
 import AnaliseDoDia from "./pages/AnaliseDoDia";
 import TabelaMovimentacao from "./pages/TabelaMovimentacao";
 import FrequenciaDezenas from "./pages/FrequenciaDezenas";
@@ -138,6 +139,7 @@ const App = () => (
             <Route path="/admin/usuarios" element={<AdminRoute><AdminUsuarios /></AdminRoute>} />
             <Route path="/admin/bots" element={<AdminRoute><AdminBots /></AdminRoute>} />
             <Route path="/admin/custos" element={<AdminRoute><AdminCustos /></AdminRoute>} />
+            <Route path="/admin/convites" element={<AdminRoute><AdminConvites /></AdminRoute>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
