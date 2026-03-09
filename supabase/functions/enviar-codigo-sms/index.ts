@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { user_id, celular } = await req.json();
+    const { user_id, celular, tipo = 'sms' } = await req.json();
 
     if (!user_id || !celular) {
       throw new Error('user_id e celular são obrigatórios');
@@ -84,12 +84,15 @@ Deno.serve(async (req) => {
     const codigo = gerarCodigo();
     const celularFormatado = formatarCelularE164(celular);
 
-    // Invalidar códigos anteriores do mesmo usuário
+    // Usar o tipo passado ou default 'sms'
+    const tipoVerificacao = tipo || 'sms';
+
+    // Invalidar códigos anteriores do mesmo usuário e tipo
     await supabase
       .from('codigos_verificacao')
       .update({ usado: true })
       .eq('user_id', user_id)
-      .eq('tipo', 'sms')
+      .eq('tipo', tipoVerificacao)
       .eq('usado', false);
 
     // Salvar novo código (expira em 10 minutos)
@@ -98,7 +101,7 @@ Deno.serve(async (req) => {
     const { error: insertError } = await supabase.from('codigos_verificacao').insert({
       user_id,
       codigo,
-      tipo: 'sms',
+      tipo: tipoVerificacao,
       destino: celularFormatado,
       expira_em: expiraEm.toISOString(),
     });
@@ -111,7 +114,7 @@ Deno.serve(async (req) => {
     // Enviar SMS via Twilio
     const result = await enviarSMSTwilio(
       celularFormatado,
-      `Seu código de verificação Lotofácil: ${codigo}. Válido por 10 minutos.`,
+      `Comunidade Palpite Tech: Seu codigo de verificacao e ${codigo}. Valido por 10 min.`,
       twilioAccountSid,
       twilioAuthToken,
       twilioPhoneNumber
