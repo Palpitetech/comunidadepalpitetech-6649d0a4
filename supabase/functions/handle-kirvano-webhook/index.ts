@@ -189,7 +189,16 @@ function mapToStatusAssinatura(statusOrEvent: string): "ativa" | "cancelada" | "
 type SubscriptionAction = "activate" | "cancel" | "delinquent" | "ignore";
 
 function deriveSubscriptionAction(eventName: string, rawStatus: string): SubscriptionAction {
+  const ev = eventName.toLowerCase();
   const s = `${eventName} ${rawStatus}`.toLowerCase();
+
+  // Eventos de pagamento expirado/gerado são intermediários — nunca devem afetar assinatura
+  const ignoredEvents = [
+    "bank_slip_generated", "bank_slip_expired",
+    "pix_generated", "pix_expired",
+    "sale_refused",
+  ];
+  if (ignoredEvents.some((k) => ev.includes(k))) return "ignore";
 
   // Apenas pagos/confirmados ativam acesso
   if (["paid", "approved", "confirmed", "success", "completed"].some((k) => s.includes(k))) return "activate";
@@ -198,7 +207,7 @@ function deriveSubscriptionAction(eventName: string, rawStatus: string): Subscri
 
   if (["overdue", "past_due", "inadimpl", "unpaid", "failed"].some((k) => s.includes(k))) return "delinquent";
 
-  // PENDING / boleto gerado / eventos intermediários: só audita
+  // Outros eventos intermediários: só audita
   return "ignore";
 }
 
