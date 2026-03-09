@@ -7,12 +7,26 @@ interface Convidado {
   nome: string | null;
   avatar_url: string | null;
   created_at: string;
+  converted_at: string | null;
+}
+
+interface Reward {
+  id: string;
+  milestone_type: string;
+  milestone_count: number;
+  days_granted: number;
+  created_at: string;
 }
 
 interface UseConvitesReturn {
   referralCode: string | null;
   convidados: Convidado[];
   totalConvidados: number;
+  totalVendas: number;
+  rewards: Reward[];
+  totalDaysEarned: number;
+  progressCadastros: number; // 0-50 current progress toward next milestone
+  progressVendas: number; // 0-10 current progress toward next milestone
   isLoading: boolean;
   isGenerating: boolean;
   generateCode: () => Promise<void>;
@@ -23,6 +37,7 @@ export function useConvites(): UseConvitesReturn {
   const { user } = useAuthContext();
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [convidados, setConvidados] = useState<Convidado[]>([]);
+  const [rewards, setRewards] = useState<Reward[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -43,16 +58,11 @@ export function useConvites(): UseConvitesReturn {
 
     const { data } = await supabase
       .from("convites")
-      .select(`
-        id,
-        created_at,
-        referred_id
-      `)
+      .select("id, created_at, referred_id, converted_at")
       .eq("referrer_id", user.id)
       .order("created_at", { ascending: false });
 
     if (data && data.length > 0) {
-      // Fetch profile info for each referred user
       const referredIds = data.map(c => c.referred_id);
       const { data: profiles } = await supabase
         .from("perfis_publicos")
@@ -66,6 +76,7 @@ export function useConvites(): UseConvitesReturn {
         nome: profileMap.get(c.referred_id)?.nome ?? "Usuário",
         avatar_url: profileMap.get(c.referred_id)?.avatar_url ?? null,
         created_at: c.created_at,
+        converted_at: c.converted_at,
       }));
 
       setConvidados(mapped);
@@ -74,18 +85,29 @@ export function useConvites(): UseConvitesReturn {
     }
   }, [user?.id]);
 
+  const fetchRewards = useCallback(async () => {
+    if (!user?.id) return;
+
+    const { data } = await supabase
+      .from("referral_rewards")
+      .select("id, milestone_type, milestone_count, days_granted, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    setRewards(data ?? []);
+  }, [user?.id]);
+
   const refetch = useCallback(async () => {
     setIsLoading(true);
-    await Promise.all([fetchReferralCode(), fetchConvidados()]);
+    await Promise.all([fetchReferralCode(), fetchConvidados(), fetchRewards()]);
     setIsLoading(false);
-  }, [fetchReferralCode, fetchConvidados]);
+  }, [fetchReferralCode, fetchConvidados, fetchRewards]);
 
   const generateCode = useCallback(async () => {
     if (!user?.id || referralCode) return;
 
     setIsGenerating(true);
     try {
-      // Call RPC to generate unique code
       const { data: newCode } = await supabase.rpc("generate_referral_code");
 
       if (newCode) {
@@ -109,10 +131,21 @@ export function useConvites(): UseConvitesReturn {
     }
   }, [user?.id, refetch]);
 
+  const totalConvidados = convidados.length;
+  const totalVendas = convidados.filter(c => c.converted_at).length;
+  const totalDaysEarned = rewards.reduce((sum, r) => sum + r.days_granted, 0);
+  const progressCadastros = totalConvidados % 50;
+  const progressVendas = totalVendas % 10;
+
   return {
     referralCode,
     convidados,
-    totalConvidados: convidados.length,
+    totalConvidados,
+    totalVendas,
+    rewards,
+    totalDaysEarned,
+    progressCadastros,
+    progressVendas,
     isLoading,
     isGenerating,
     generateCode,

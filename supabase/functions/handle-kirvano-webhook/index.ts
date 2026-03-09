@@ -523,6 +523,28 @@ serve(async (req) => {
       });
     }
 
+    // Track referral conversion: mark referred user as converted and check milestones
+    try {
+      const { data: convite } = await admin
+        .from("convites")
+        .select("id, referrer_id, converted_at")
+        .eq("referred_id", targetPerfilId)
+        .maybeSingle();
+
+      if (convite && !convite.converted_at) {
+        await admin
+          .from("convites")
+          .update({ converted_at: new Date().toISOString() })
+          .eq("id", convite.id);
+
+        // Check if referrer hit a milestone
+        await admin.rpc("check_referral_milestones", { p_referrer_id: convite.referrer_id });
+        logStep("Referral conversion tracked", { referrer_id: convite.referrer_id, referred_id: targetPerfilId });
+      }
+    } catch (e) {
+      logStep("Referral tracking error (non-fatal)", { message: e instanceof Error ? e.message : String(e) });
+    }
+
     // Sync role premium
     const { data: existing, error: existingError } = await admin
       .from("user_roles")
