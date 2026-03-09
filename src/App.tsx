@@ -81,7 +81,7 @@ const App = () => (
             {/* Rotas Protegidas - Requer Login */}
             <Route path="/" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
             <Route path="/comunidade" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
-            <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+            <Route path="/chat" element={<AdminRoute><Chat /></AdminRoute>} />
             <Route path="/notificacoes" element={<ProtectedRoute><Notificacoes /></ProtectedRoute>} />
             <Route path="/resultados" element={<ProtectedRoute><Resultados /></ProtectedRoute>} />
             <Route path="/tendencias" element={<ProtectedRoute><Tendencias /></ProtectedRoute>} />
@@ -91,7 +91,7 @@ const App = () => (
             <Route path="/desdobramento" element={<ProtectedRoute><Desdobramento /></ProtectedRoute>} />
             <Route path="/fechamento" element={<ProtectedRoute><Fechamento /></ProtectedRoute>} />
             <Route path="/meus-palpites" element={<ProtectedRoute><MeusPalpites /></ProtectedRoute>} />
-            <Route path="/boloes" element={<ProtectedRoute><Boloes /></ProtectedRoute>} />
+            <Route path="/boloes" element={<AdminRoute><Boloes /></AdminRoute>} />
             <Route path="/analise-do-dia" element={<ProtectedRoute><AnaliseDoDia /></ProtectedRoute>} />
             <Route path="/tabela-movimentacao" element={<ProtectedRoute><TabelaMovimentacao /></ProtectedRoute>} />
             <Route path="/frequencia-dezenas" element={<ProtectedRoute><FrequenciaDezenas /></ProtectedRoute>} />

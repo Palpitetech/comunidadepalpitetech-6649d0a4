@@ -155,18 +155,34 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                     Início
                   </div>
                 </Link>
-                <Link to="/chat" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
+                {isAdmin ? (
+                  <Link to="/chat" onClick={closeAndNavigate}>
+                    <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
+                      <MessageSquare className="h-5 w-5 stroke-[1.5]" />
+                      Chat
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="flex items-center gap-3 py-3 text-base text-muted-foreground/50 cursor-not-allowed">
                     <MessageSquare className="h-5 w-5 stroke-[1.5]" />
                     Chat
+                    <span className="ml-auto bg-accent text-accent-foreground text-[10px] font-bold px-1.5 py-0.5 rounded">EM BREVE</span>
                   </div>
-                </Link>
-                <Link to="/boloes" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
+                )}
+                {isAdmin ? (
+                  <Link to="/boloes" onClick={closeAndNavigate}>
+                    <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
+                      <Ticket className="h-5 w-5 stroke-[1.5]" />
+                      Bolões
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="flex items-center gap-3 py-3 text-base text-muted-foreground/50 cursor-not-allowed">
                     <Ticket className="h-5 w-5 stroke-[1.5]" />
                     Bolões
+                    <span className="ml-auto bg-accent text-accent-foreground text-[10px] font-bold px-1.5 py-0.5 rounded">EM BREVE</span>
                   </div>
-                </Link>
+                )}
                 <Link to="/meus-palpites" onClick={closeAndNavigate}>
                   <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
                     <Bookmark className="h-5 w-5 stroke-[1.5]" />
