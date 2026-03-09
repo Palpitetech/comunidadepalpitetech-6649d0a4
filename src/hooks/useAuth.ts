@@ -53,8 +53,8 @@ export function useAuth() {
 
           // Desvincular OneSignal ao deslogar
           try {
-            window.OneSignalDeferred = window.OneSignalDeferred || [];
-            window.OneSignalDeferred.push(async (OneSignal: any) => {
+            (window as any).OneSignalDeferred = (window as any).OneSignalDeferred || [];
+            (window as any).OneSignalDeferred.push(async (OneSignal: any) => {
               await OneSignal.logout();
             });
           } catch (e) {
