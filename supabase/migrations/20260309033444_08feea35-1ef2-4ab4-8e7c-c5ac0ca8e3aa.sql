@@ -1,0 +1,1 @@
+ALTER TABLE public.codigos_verificacao ALTER COLUMN tipo TYPE text;
