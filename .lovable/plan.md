@@ -1,35 +1,89 @@
 
 
-# Diagnóstico: Bots Não Comentam nos Posts de Resultado
+# Sistema de Convites (Referral)
 
-## Causa Raiz
+## Visão Geral
+Criar um sistema onde qualquer usuário autenticado pode gerar um link de convite único e acompanhar quantas pessoas se cadastraram através dele.
 
-A função `sync-lotofacil` cria o post da Ana com sucesso, mas **nunca chama** a Edge Function `bot-interact-with-post` depois de criar o post. Isso significa que nenhum bot é notificado para comentar.
+## Arquitetura Proposta
 
-Confirmações nos dados:
-- Todos os posts recentes de bots têm `bot_interactions_target: null` e `bot_interactions_done: 0` — nenhuma interação foi sequer tentada
-- A busca por `bot-interact-with-post` dentro de `sync-lotofacil` retorna zero resultados
-- Os bots Lucas, Matheus, Sistema Tech, Carlos, Fernanda e Especialista Dupla Sena **têm** `can_respond_to_bot_posts: true`, então estariam elegíveis
+### 1. Banco de Dados
 
-O mesmo problema acontece com `generate-bot-post` e `process-scheduled-posts` — nenhum deles chama `bot-interact-with-post` após criar um post.
+**Nova tabela `convites`:**
+| Coluna | Tipo | Descrição |
+|--------|------|-----------|
+| id | uuid | PK |
+| referrer_id | uuid | Quem convidou (FK → perfis.id) |
+| referred_id | uuid | Quem foi convidado (FK → perfis.id, único) |
+| created_at | timestamp | Data do cadastro via convite |
 
-## Plano de Correção
+**Alteração na tabela `perfis`:**
+- Adicionar coluna `referral_code` (varchar, único) — código curto como "ABC123" para URLs amigáveis
 
-### 1. `sync-lotofacil/index.ts` — Chamar `bot-interact-with-post` após Ana criar post
+### 2. Fluxo do Convite
 
-Após a linha 206 (onde loga sucesso), adicionar uma chamada para a Edge Function `bot-interact-with-post` passando o `post_id` do post recém-criado. Incluir um delay de 30-60 segundos para que os comentários pareçam naturais.
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  Usuário A acessa /convites                                 │
+│  → Vê seu código: comunidadepalpitetech.lovable.app?ref=ABC123  │
+│  → Compartilha no WhatsApp/Redes                            │
+└─────────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Visitante B abre o link                                    │
+│  → ref=ABC123 é salvo no localStorage                       │
+│  → Redireciona para /login (modo cadastro)                  │
+└─────────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Visitante B completa cadastro                              │
+│  → Trigger no banco registra convite (referrer_id → A)      │
+│  → Usuário A vê +1 convite na página /convites              │
+└─────────────────────────────────────────────────────────────┘
+```
 
-### 2. `generate-bot-post/index.ts` — Chamar `bot-interact-with-post` após qualquer bot criar post
+### 3. Componentes Frontend
 
-Mesma lógica: após criar o post com sucesso, invocar `bot-interact-with-post` com o novo `post_id`.
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/pages/Convites.tsx` | Página principal com link de convite + lista de convidados |
+| `src/hooks/useConvites.ts` | Hook para buscar/gerar código e listar convidados |
+| `src/components/convites/ConviteCard.tsx` | Card com o link copiável |
+| `src/components/convites/ConvidadosList.tsx` | Lista de pessoas que se cadastraram |
 
-### 3. `process-scheduled-posts` — Verificar se já dispara interações
+### 4. Modificações no Cadastro
 
-Preciso verificar se essa função também deveria disparar interações. Como ela chama `generate-bot-post`, a correção no item 2 pode ser suficiente.
+- `RegisterWizard.tsx`: Ler `ref` do localStorage após cadastro
+- `useAuth.ts`: Passar `referral_code` ao criar perfil
+- Trigger no banco: Após INSERT em `perfis`, verificar se há referral_code e criar registro em `convites`
 
-| Arquivo | Mudança |
-|---|---|
-| `supabase/functions/sync-lotofacil/index.ts` | Após criar post da Ana, chamar `bot-interact-with-post` com delay |
-| `supabase/functions/generate-bot-post/index.ts` | Após criar post de qualquer bot, chamar `bot-interact-with-post` |
-| `supabase/functions/generate-roundtable-post/index.ts` | Verificar se já dispara (provavelmente já gera comentários internamente — não precisará de mudança) |
+## Detalhes Técnicos
+
+### Geração do Código
+- Código de 6 caracteres alfanuméricos (ex: "XK7M2P")
+- Gerado automaticamente no primeiro acesso à página /convites
+- Único por usuário
+
+### RLS (Segurança)
+- Usuários só veem seus próprios convites
+- Service role pode inserir (para o trigger funcionar)
+
+### Custo de Armazenamento
+- Mínimo: ~100 bytes por convite
+- Sem custo adicional de IA ou API externa
+
+## Arquivos a Criar/Editar
+
+| Ação | Arquivo |
+|------|---------|
+| Criar | `src/pages/Convites.tsx` |
+| Criar | `src/hooks/useConvites.ts` |
+| Criar | `src/components/convites/ConviteCard.tsx` |
+| Criar | `src/components/convites/ConvidadosList.tsx` |
+| Editar | `src/App.tsx` (nova rota /convites) |
+| Editar | `src/components/auth/RegisterWizard.tsx` (capturar ref) |
+| Editar | `src/hooks/useAuth.ts` (passar referral ao signUp) |
+| Migração | Tabela `convites` + coluna `referral_code` em `perfis` + trigger |
 
