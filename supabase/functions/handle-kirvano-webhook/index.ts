@@ -186,7 +186,7 @@ function mapToStatusAssinatura(statusOrEvent: string): "ativa" | "cancelada" | "
   return "inativa";
 }
 
-type SubscriptionAction = "activate" | "cancel" | "delinquent" | "ignore";
+type SubscriptionAction = "activate" | "cancel" | "cancel_end_of_period" | "delinquent" | "ignore";
 
 function deriveSubscriptionAction(eventName: string, rawStatus: string): SubscriptionAction {
   const ev = eventName.toLowerCase();
@@ -203,6 +203,10 @@ function deriveSubscriptionAction(eventName: string, rawStatus: string): Subscri
   // Apenas pagos/confirmados ativam acesso
   if (["paid", "approved", "confirmed", "success", "completed"].some((k) => s.includes(k))) return "activate";
 
+  // Cancelamento de assinatura recorrente: mantém acesso até fim da validade
+  if (ev === "subscription_canceled" || ev === "subscription_cancelled") return "cancel_end_of_period";
+
+  // Cancelamentos imediatos (reembolso, chargeback) removem acesso na hora
   if (["cancel", "canceled", "cancelled", "refunded", "chargeback"].some((k) => s.includes(k))) return "cancel";
 
   if (["overdue", "past_due", "inadimpl", "unpaid", "failed"].some((k) => s.includes(k))) return "delinquent";
@@ -719,6 +723,101 @@ serve(async (req) => {
     }
 
     await finalizeLog({ processed: true, process_result: targetPerfilId === perfil?.id ? "updated_user_activated" : "created_user_activated" });
+  } else if (action === "cancel_end_of_period") {
+    // SUBSCRIPTION_CANCELED: mantém acesso até validade_assinatura expirar
+    if (!perfil?.id) {
+      await finalizeLog({ processed: true, process_result: "no_profile_to_update" });
+      return new Response(JSON.stringify({ ok: true, skipped: true, reason: "perfil_not_found" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Marca como cancelada mas NÃO remove premium role — acesso continua até validade
+    const { error: updateError } = await admin
+      .from("perfis")
+      .update({ status_assinatura: "cancelada" })
+      .eq("id", perfil.id);
+
+    if (updateError) {
+      await finalizeLog({ processed: true, process_result: "error_update_profile", error: updateError.message });
+      return new Response(JSON.stringify({ error: "Failed to update user" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    logStep("Subscription canceled (end of period)", {
+      userId: perfil.id,
+      validade: perfil.validade_assinatura,
+    });
+
+    // Envia email de cancelamento
+    try {
+      const resendApiKey = Deno.env.get("RESEND_API_KEY");
+      if (resendApiKey && email) {
+        const validadeDate = perfil.validade_assinatura
+          ? new Date(perfil.validade_assinatura).toLocaleDateString("pt-BR")
+          : "não definida";
+
+        const emailHtml = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:40px 24px;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <h1 style="color:#1a1a2e;font-size:24px;margin:0 0 8px;">Assinatura cancelada</h1>
+      <p style="color:#6b7280;font-size:16px;margin:0;">Sentiremos sua falta! 😢</p>
+    </div>
+    <div style="background:#f8fafc;border-radius:12px;padding:24px;margin-bottom:24px;">
+      <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 16px;">
+        Olá! Recebemos o cancelamento da sua assinatura na <strong>Palpite Tech</strong>.
+      </p>
+      <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 16px;">
+        Seu acesso continua ativo até <strong>${validadeDate}</strong>. Após essa data, sua conta voltará ao plano gratuito.
+      </p>
+      <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 16px;">
+        Se mudar de ideia, você pode renovar a qualquer momento na página de planos.
+      </p>
+      <div style="text-align:center;margin:24px 0;">
+        <a href="https://comunidadepalpitetech.lovable.app/planos" style="display:inline-block;background:#7c3aed;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:bold;">
+          Ver planos
+        </a>
+      </div>
+    </div>
+    <div style="text-align:center;padding-top:16px;border-top:1px solid #e5e7eb;">
+      <p style="color:#9ca3af;font-size:12px;margin:0;">© Palpite Tech — Comunidade de Loteria</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+        const resendRes = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${resendApiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            from: "Palpite Tech <noreply@resend.dev>",
+            to: [email],
+            subject: "Sua assinatura foi cancelada — Palpite Tech",
+            html: emailHtml,
+          }),
+        });
+
+        if (!resendRes.ok) {
+          logStep("Cancellation email failed", { status: resendRes.status });
+        } else {
+          logStep("Cancellation email sent", { email });
+        }
+      }
+    } catch (e) {
+      logStep("Cancellation email error (non-fatal)", { message: e instanceof Error ? e.message : String(e) });
+    }
+
+    await finalizeLog({ processed: true, process_result: "subscription_canceled_end_of_period" });
   } else {
     // cancel / delinquent: se existir perfil, atualiza status e remove premium
     if (!perfil?.id) {
