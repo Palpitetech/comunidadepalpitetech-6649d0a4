@@ -231,58 +231,66 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                        </div>
                      </AccordionTrigger>
                     <AccordionContent className="pb-0">
-                      <div className="pl-8 space-y-0">
-                        <Link to="/analise-do-dia" onClick={closeAndNavigate}>
-                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                            <Target className="h-4 w-4" />
-                            Análise do Dia
-                          </div>
-                        </Link>
-                        <div className="border-t border-border/50 my-1" />
-                        <Link to="/resultados" onClick={closeAndNavigate}>
-                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
-                            Resultados
-                          </div>
-                        </Link>
-                        <Link to="/tendencias" onClick={closeAndNavigate}>
-                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
-                            Tendências
-                          </div>
-                        </Link>
-                         <Link to="/frequencia" onClick={closeAndNavigate}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
-                             Quentes e Frias
-                           </div>
-                         </Link>
-                         <Link to="/frequencia-dezenas" onClick={closeAndNavigate}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             <BarChart3 className="h-4 w-4" />
-                             Frequência das Dezenas
-                           </div>
-                         </Link>
-                         <Link to="/dezenas-por-posicao" onClick={closeAndNavigate}>
+                       <div className="pl-8 space-y-0">
+                         <Link to="/analise-do-dia" onClick={(e) => handleGatedClick(e, "/analise-do-dia")}>
                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
                              <Target className="h-4 w-4" />
-                             Dezenas por Posição
+                             Análise do Dia
+                             {renderBadge("/analise-do-dia")}
                            </div>
                          </Link>
-                         <Link to="/linhas-colunas" onClick={closeAndNavigate}>
-                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                            <LayoutGrid className="h-4 w-4" />
-                            Linhas e Colunas
-                          </div>
-                        </Link>
-                        <Link to="/tabela-movimentacao" onClick={closeAndNavigate}>
-                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                            <Table2 className="h-4 w-4" />
-                            Tabela de Movimentação
-                          </div>
-                        </Link>
-                        <Link to="/smart-gerador" onClick={closeAndNavigate}>
-                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                            <Dices className="h-4 w-4" />
-                            Gerador de Palpites
-                          </div>
+                         <div className="border-t border-border/50 my-1" />
+                         <Link to="/resultados" onClick={closeAndNavigate}>
+                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
+                             Resultados
+                           </div>
+                         </Link>
+                         <Link to="/tendencias" onClick={(e) => handleGatedClick(e, "/tendencias")}>
+                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                             Tendências
+                             {renderBadge("/tendencias")}
+                           </div>
+                         </Link>
+                          <Link to="/frequencia" onClick={(e) => handleGatedClick(e, "/frequencia")}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                              Quentes e Frias
+                              {renderBadge("/frequencia")}
+                            </div>
+                          </Link>
+                          <Link to="/frequencia-dezenas" onClick={(e) => handleGatedClick(e, "/frequencia-dezenas")}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                              <BarChart3 className="h-4 w-4" />
+                              Frequência das Dezenas
+                              {renderBadge("/frequencia-dezenas")}
+                            </div>
+                          </Link>
+                          <Link to="/dezenas-por-posicao" onClick={(e) => handleGatedClick(e, "/dezenas-por-posicao")}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                              <Target className="h-4 w-4" />
+                              Dezenas por Posição
+                              {renderBadge("/dezenas-por-posicao")}
+                            </div>
+                          </Link>
+                          <Link to="/linhas-colunas" onClick={(e) => handleGatedClick(e, "/linhas-colunas")}>
+                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                             <LayoutGrid className="h-4 w-4" />
+                             Linhas e Colunas
+                             {renderBadge("/linhas-colunas")}
+                           </div>
+                         </Link>
+                         <Link to="/tabela-movimentacao" onClick={(e) => handleGatedClick(e, "/tabela-movimentacao")}>
+                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                             <Table2 className="h-4 w-4" />
+                             Tabela de Movimentação
+                             {renderBadge("/tabela-movimentacao")}
+                           </div>
+                         </Link>
+                         <Link to="/smart-gerador" onClick={(e) => handleGatedClick(e, "/smart-gerador")}>
+                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                             <Dices className="h-4 w-4" />
+                             Gerador de Palpites
+                             {renderBadge("/smart-gerador")}
+                           </div>
                         </Link>
                         <Link to="/desdobramento" onClick={closeAndNavigate}>
                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
