@@ -38,6 +38,13 @@ export default function Perfil() {
   const navigate = useNavigate();
   const { isPremium } = useUserRole();
   const { data: subscription } = useMySubscription(user?.id);
+  const queryClient = useQueryClient();
+
+  const handleCelularSuccess = () => {
+    // Refresh profile data
+    queryClient.invalidateQueries({ queryKey: ["profile"] });
+    window.location.reload();
+  };
 
   const handleOpenCheckout = async () => {
     if (!user) {
