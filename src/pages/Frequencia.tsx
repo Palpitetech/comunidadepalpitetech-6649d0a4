@@ -42,17 +42,28 @@ export default function Frequencia() {
 
   return (
     <MainLayout pageTitle="Análise de Dezenas">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-         {/* Header desktop */}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-4">
+        {/* Header desktop */}
         {!isMobile && (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center justify-between gap-4">
             <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
               Análise de Dezenas
             </h1>
-            <div className="flex items-center justify-center sm:justify-end gap-2">
-              <SnapshotButton
-                targetRef={contentRef} 
-                defaultTitle={`Análise de Dezenas - Últimos ${periodo} concursos`}
+            <SnapshotButton
+              targetRef={contentRef}
+              defaultTitle={`Análise de Dezenas - Últimos ${periodo} concursos`}
+            />
+          </div>
+        )}
+
+        {/* Filtro + Período na mesma linha */}
+        <div ref={contentRef} className="space-y-4">
+          {!isLoading && !error && (
+            <div className="flex items-center justify-between gap-2">
+              <FiltroStatus
+                selecionado={filtroStatus}
+                onChange={setFiltroStatus}
+                contagem={contagem}
               />
               <SeletorPeriodo
                 periodos={PERIODOS}
@@ -60,29 +71,6 @@ export default function Frequencia() {
                 onChange={setPeriodo}
               />
             </div>
-          </div>
-        )}
-
-        {/* Mobile: Seletor de período */}
-        {isMobile && (
-          <div className="flex justify-end">
-            <SeletorPeriodo
-              periodos={PERIODOS}
-              selecionado={periodo}
-              onChange={setPeriodo}
-            />
-          </div>
-        )}
-
-        {/* Conteúdo capturável */}
-        <div ref={contentRef} className="space-y-6">
-          {/* Filtro de Status */}
-          {!isLoading && !error && (
-            <FiltroStatus
-              selecionado={filtroStatus}
-              onChange={setFiltroStatus}
-              contagem={contagem}
-            />
           )}
 
           {/* Loading State */}
