@@ -64,7 +64,7 @@ export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRigh
       )}
 
       {/* Mobile Navigation */}
-      {isMobile && (
+      {isMobile && !hideBottomNav && (
         <>
           <MobileBottomNav onMenuClick={() => setMenuOpen(true)} />
           <MobileMenuSheet open={menuOpen} onOpenChange={setMenuOpen} />
