@@ -102,7 +102,7 @@ const App = () => (
             <Route path="/comunidade/post/:id" element={<PostDetalhes />} />
             <Route path="/convites" element={<ProtectedRoute><Convites /></ProtectedRoute>} />
             <Route path="/bloqueado" element={<Bloqueado />} />
-            <Route path="/planos" element={<ProtectedRoute><Planos /></ProtectedRoute>} />
+            <Route path="/planos" element={<Planos />} />
             
             {/* Rotas Mega Sena */}
             <Route path="/megasena/resultados" element={<ProtectedRoute><ResultadosMegaSena /></ProtectedRoute>} />
