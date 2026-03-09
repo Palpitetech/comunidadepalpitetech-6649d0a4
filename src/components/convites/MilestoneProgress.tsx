@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Users, ShoppingCart, Trophy, Gift, Check, Loader2 } from "lucide-react";
+import { Users, ShoppingCart, Trophy, Gift, Check, Loader2, Lock } from "lucide-react";
 
 interface Reward {
   id: string;
@@ -106,9 +106,17 @@ export const MilestoneProgress: React.FC<MilestoneProgressProps> = ({
             </span>
           </div>
           <Progress value={cadastroPercent} className="h-3" />
-          <p className="text-xs text-muted-foreground">
-            A cada 50 pessoas cadastradas = <span className="font-semibold text-primary">1 mês grátis</span>
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">
+              A cada 50 pessoas cadastradas = <span className="font-semibold text-primary">1 mês grátis</span>
+            </p>
+            {!unclaimedRewards.some(r => r.milestone_type === 'cadastros') && (
+              <Button size="sm" variant="outline" disabled className="opacity-50 gap-1.5">
+                <Lock className="h-3.5 w-3.5" />
+                Reinvindicar
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Vendas milestone */}
@@ -123,9 +131,17 @@ export const MilestoneProgress: React.FC<MilestoneProgressProps> = ({
             </span>
           </div>
           <Progress value={vendaPercent} className="h-3" />
-          <p className="text-xs text-muted-foreground">
-            A cada 10 vendas de assinatura = <span className="font-semibold text-primary">1 mês grátis</span>
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">
+              A cada 10 vendas de assinatura = <span className="font-semibold text-primary">1 mês grátis</span>
+            </p>
+            {!unclaimedRewards.some(r => r.milestone_type === 'vendas') && (
+              <Button size="sm" variant="outline" disabled className="opacity-50 gap-1.5">
+                <Lock className="h-3.5 w-3.5" />
+                Reinvindicar
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Summary */}
