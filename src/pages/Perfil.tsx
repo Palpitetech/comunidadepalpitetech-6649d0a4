@@ -1,11 +1,11 @@
-import { useIsMobile } from "@/hooks/use-mobile";
-import { MainLayout } from "@/components/layout/MainLayout";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { User, Mail, Phone, Lock, CreditCard, Calendar, Sparkles, Trash2, Loader2 } from "lucide-react";
+import { 
+  User, Mail, Phone, Lock, CreditCard, Calendar, Sparkles, Trash2, Loader2, 
+  ChevronRight, ArrowLeft, Shield, CheckCircle2, AlertCircle
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   AlertDialog,
@@ -28,10 +28,11 @@ import { differenceInDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AlterarCelularDialog } from "@/components/perfil/AlterarCelularDialog";
 import { useQueryClient } from "@tanstack/react-query";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 export default function Perfil() {
-  const isMobile = useIsMobile();
-  const { profile, user } = useAuthContext();
+  const { profile, user, signOut } = useAuthContext();
   const { toast } = useToast();
   const [isOpeningCheckout, setIsOpeningCheckout] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
@@ -41,7 +42,6 @@ export default function Perfil() {
   const queryClient = useQueryClient();
 
   const handleCelularSuccess = () => {
-    // Refresh profile data
     queryClient.invalidateQueries({ queryKey: ["profile"] });
     window.location.reload();
   };
@@ -121,6 +121,11 @@ export default function Perfil() {
     }
   };
 
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/login", { replace: true });
+  };
+
   const getInitials = (nome: string | null) => {
     if (!nome) return "U";
     return nome
@@ -131,201 +136,285 @@ export default function Perfil() {
       .slice(0, 2);
   };
 
+  const statusConfig = STATUS_CONFIG[(subscription?.status ?? "inativa")];
+  const diasRestantes = subscription?.validade 
+    ? differenceInDays(new Date(subscription.validade), new Date()) 
+    : null;
+
   return (
-    <MainLayout pageTitle="Perfil">
-      <div className="container-senior py-8 max-w-2xl mx-auto">
-        {/* Cabeçalho do Perfil */}
-        <div className="flex flex-col items-center mb-8">
-          <Avatar className="h-24 w-24 mb-4">
-            <AvatarImage src={profile?.avatar_url || undefined} />
-            <AvatarFallback className="bg-primary text-primary-foreground text-3xl">
-              {getInitials(profile?.nome)}
-            </AvatarFallback>
-          </Avatar>
-          <h1 className="text-senior-2xl font-bold">{profile?.nome || "Usuário"}</h1>
-          <Badge variant="secondary" className="mt-2">Grátis</Badge>
+    <div className="fixed inset-0 z-50 flex flex-col bg-background">
+      {/* Header fixo */}
+      <header className="shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex items-center justify-between h-14 px-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => navigate(-1)}
+            className="h-10 w-10"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-lg font-semibold">Meu Perfil</h1>
+          <div className="w-10" />
         </div>
+      </header>
 
-        {/* Seção 1: Dados de Acesso */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-senior-lg flex items-center gap-2">
-              <User className="h-5 w-5" />
+      {/* Conteúdo scrollável */}
+      <ScrollArea className="flex-1">
+        <div className="pb-24">
+          {/* Hero do perfil */}
+          <div className="relative bg-gradient-to-b from-primary/10 to-background pt-6 pb-8 px-4">
+            <div className="flex flex-col items-center">
+              <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
+                <AvatarImage src={profile?.avatar_url || undefined} />
+                <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-bold">
+                  {getInitials(profile?.nome)}
+                </AvatarFallback>
+              </Avatar>
+              <h2 className="mt-4 text-xl font-bold text-foreground">{profile?.nome || "Usuário"}</h2>
+              <p className="text-sm text-muted-foreground">{user?.email}</p>
+              
+              {/* Badge de status */}
+              <div className="mt-3 flex items-center gap-2">
+                <Badge 
+                  variant={isPremium ? "default" : "secondary"}
+                  className={isPremium ? "bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90" : ""}
+                >
+                  {isPremium ? (
+                    <>
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Premium
+                    </>
+                  ) : (
+                    "Grátis"
+                  )}
+                </Badge>
+                <Badge variant={statusConfig.variant}>
+                  {statusConfig.label}
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          {/* Seção de Assinatura */}
+          <div className="px-4 mt-6">
+            <div className="rounded-2xl border bg-card overflow-hidden">
+              <div className="p-4 bg-muted/30">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <CreditCard className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-muted-foreground">Minha Assinatura</p>
+                    <p className="font-semibold">{isPremium ? "Plano Premium" : "Plano Grátis"}</p>
+                  </div>
+                  {diasRestantes !== null && (
+                    <Badge 
+                      variant={diasRestantes > 7 ? "outline" : diasRestantes > 0 ? "secondary" : "destructive"}
+                      className="shrink-0"
+                    >
+                      {diasRestantes > 0
+                        ? `${diasRestantes}d restantes`
+                        : diasRestantes === 0
+                          ? "Expira hoje"
+                          : `Expirou`}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              {subscription?.validade && (
+                <div className="px-4 py-3 border-t flex items-center gap-3">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Válido até:</span>
+                  <span className="text-sm font-medium">
+                    {format(new Date(subscription.validade), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                  </span>
+                </div>
+              )}
+
+              <div className="p-4 border-t space-y-2">
+                <Button
+                  className="w-full h-12 text-base font-semibold gap-2"
+                  onClick={handleOpenCheckout}
+                  disabled={isOpeningCheckout}
+                >
+                  {isOpeningCheckout ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <>
+                      <Sparkles className="h-5 w-5" />
+                      {isPremium ? "Renovar Assinatura" : "Assinar Premium"}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Seção Dados de Acesso */}
+          <div className="px-4 mt-6">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">
               Dados de Acesso
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Campo Celular */}
-            <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
-              <Phone className="h-5 w-5 text-muted-foreground" />
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground">Celular</p>
-                <p className="text-senior-base font-medium">{profile?.celular || "Não informado"}</p>
+            </h3>
+            <div className="rounded-2xl border bg-card overflow-hidden divide-y">
+              {/* Email */}
+              <div className="flex items-center gap-4 p-4">
+                <div className="h-10 w-10 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
+                  <Mail className="h-5 w-5 text-[hsl(var(--primary))]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground">E-mail</p>
+                  <p className="font-medium truncate">{user?.email || "Não informado"}</p>
+                </div>
+                <CheckCircle2 className="h-5 w-5 text-[hsl(var(--primary))] shrink-0" />
+              </div>
+
+              {/* Celular */}
+              <div className="flex items-center gap-4 p-4">
+                <div className="h-10 w-10 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
+                  <Phone className="h-5 w-5 text-[hsl(var(--primary))]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground">Celular</p>
+                  <p className="font-medium">{profile?.celular || "Não informado"}</p>
+                </div>
+                {profile?.celular ? (
+                  <CheckCircle2 className="h-5 w-5 text-[hsl(var(--primary))] shrink-0" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 text-muted-foreground shrink-0" />
+                )}
               </div>
             </div>
+          </div>
 
-            {/* Campo E-mail */}
-            <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
-              <Mail className="h-5 w-5 text-muted-foreground" />
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground">E-mail</p>
-                <p className="text-senior-base font-medium">{user?.email || "Não informado"}</p>
-              </div>
-            </div>
-
-            {/* Botões de ação */}
-            <div className="pt-2 grid gap-3 sm:grid-cols-3">
+          {/* Ações de Conta */}
+          <div className="px-4 mt-6">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">
+              Configurações da Conta
+            </h3>
+            <div className="rounded-2xl border bg-card overflow-hidden divide-y">
+              {/* Alterar Celular */}
               <AlterarCelularDialog
                 celularAtual={profile?.celular || null}
                 onSuccess={handleCelularSuccess}
+                trigger={
+                  <button className="w-full flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors text-left">
+                    <div className="h-10 w-10 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
+                      <Phone className="h-5 w-5 text-[hsl(var(--primary))]" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium">{profile?.celular ? "Alterar Celular" : "Adicionar Celular"}</p>
+                      <p className="text-xs text-muted-foreground">Verificação por SMS</p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </button>
+                }
               />
-              <Button variant="outline" className="h-12 text-senior-base gap-2">
-                <Mail className="h-5 w-5" />
-                Alterar E-mail
-              </Button>
-              <Link to="/recuperar-senha">
-                <Button variant="outline" className="w-full h-12 text-senior-base gap-2">
-                  <Lock className="h-5 w-5" />
-                  Trocar Senha
-                </Button>
+
+              {/* Alterar Email */}
+              <button className="w-full flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors text-left">
+                <div className="h-10 w-10 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
+                  <Mail className="h-5 w-5 text-[hsl(var(--primary))]" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium">Alterar E-mail</p>
+                  <p className="text-xs text-muted-foreground">Verificação necessária</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </button>
+
+              {/* Trocar Senha */}
+              <Link to="/recuperar-senha" className="block">
+                <div className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors">
+                  <div className="h-10 w-10 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
+                    <Lock className="h-5 w-5 text-[hsl(var(--primary))]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">Trocar Senha</p>
+                    <p className="text-xs text-muted-foreground">Altere sua senha de acesso</p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </Link>
+
+              {/* Privacidade */}
+              <Link to="/privacidade" className="block">
+                <div className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors">
+                  <div className="h-10 w-10 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
+                    <Shield className="h-5 w-5 text-[hsl(var(--primary))]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">Privacidade</p>
+                    <p className="text-xs text-muted-foreground">Política de privacidade</p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </div>
               </Link>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Seção 2: Dados da Assinatura */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-senior-lg flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              Minha Assinatura
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Status da Assinatura */}
-            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-              <div>
-                <p className="text-sm text-muted-foreground">Status atual</p>
-                <p className="text-senior-base font-semibold">{isPremium ? "Premium" : "Grátis"}</p>
-              </div>
-              <Badge variant={STATUS_CONFIG[(subscription?.status ?? "inativa")].variant}>
-                {STATUS_CONFIG[(subscription?.status ?? "inativa")].label}
-              </Badge>
+          {/* Zona de Perigo */}
+          <div className="px-4 mt-6">
+            <h3 className="text-sm font-semibold text-destructive uppercase tracking-wider mb-3 px-1">
+              Zona de Perigo
+            </h3>
+            <div className="rounded-2xl border border-destructive/30 bg-card overflow-hidden">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button className="w-full flex items-center gap-4 p-4 hover:bg-destructive/5 transition-colors text-left">
+                    <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+                      <Trash2 className="h-5 w-5 text-destructive" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-destructive">Excluir Conta</p>
+                      <p className="text-xs text-muted-foreground">Ação irreversível</p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-destructive" />
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação é irreversível. Todos os seus dados serão excluídos permanentemente, 
+                      incluindo perfil, palpites salvos, postagens e histórico de conversas.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAccount}
+                      disabled={isDeletingAccount}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {isDeletingAccount ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Excluindo...
+                        </>
+                      ) : (
+                        "Sim, excluir minha conta"
+                      )}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
+          </div>
 
-            {/* Validade / Próxima cobrança */}
-            {subscription?.validade ? (
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Validade</p>
-                    <p className="text-senior-base font-medium">
-                      {format(new Date(subscription.validade), "dd/MM/yyyy", { locale: ptBR })}
-                    </p>
-                  </div>
-                </div>
-
-                {(() => {
-                  const diasRestantes = differenceInDays(new Date(subscription.validade), new Date());
-                  const variant = diasRestantes > 7 ? "outline" : diasRestantes > 0 ? "secondary" : "destructive";
-
-                  const label =
-                    diasRestantes > 0
-                      ? `${diasRestantes} dia${diasRestantes !== 1 ? "s" : ""} restante${diasRestantes !== 1 ? "s" : ""}`
-                      : diasRestantes === 0
-                        ? "Expira hoje"
-                        : `Expirou há ${Math.abs(diasRestantes)} dia${Math.abs(diasRestantes) !== 1 ? "s" : ""}`;
-
-                  return <Badge variant={variant}>{label}</Badge>;
-                })()}
-              </div>
-            ) : (
-              <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
-                <Calendar className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Próxima cobrança</p>
-                  <p className="text-senior-base font-medium">Sem cobrança (plano grátis)</p>
-                </div>
-              </div>
-            )}
-
-            {/* Botões de Assinatura */}
-            <div className="pt-2 space-y-3">
-              <Button
-                variant="outline"
-                className="w-full h-12 text-senior-base"
-                onClick={handleOpenCheckout}
-                disabled={isOpeningCheckout}
-              >
-                <CreditCard className="h-5 w-5 mr-2" />
-                {isOpeningCheckout ? "Abrindo checkout..." : "Abrir Checkout"}
-              </Button>
-              <Button
-                className="w-full h-12 text-senior-base gap-2 bg-accent hover:bg-accent/90 text-accent-foreground"
-                onClick={handleOpenCheckout}
-                disabled={isOpeningCheckout}
-              >
-                <Sparkles className="h-5 w-5" />
-                Assinar Premium
-              </Button>
-              <Button variant="ghost" className="w-full h-10 text-sm text-muted-foreground">
-                Ver histórico de pagamentos
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Seção 3: Excluir Conta */}
-        <Card className="mt-6 border-destructive/30">
-          <CardHeader>
-            <CardTitle className="text-senior-lg flex items-center gap-2 text-destructive">
-              <Trash2 className="h-5 w-5" />
-              Excluir Conta
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-senior-base text-muted-foreground mb-4">
-              Ao excluir sua conta, todos os seus dados serão removidos permanentemente, 
-              incluindo palpites, postagens e histórico de conversas. Esta ação não pode ser desfeita.
-            </p>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full h-12 text-senior-base gap-2">
-                  <Trash2 className="h-5 w-5" />
-                  Excluir minha conta
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta ação é irreversível. Todos os seus dados serão excluídos permanentemente, 
-                    incluindo perfil, palpites salvos, postagens e histórico de conversas.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDeleteAccount}
-                    disabled={isDeletingAccount}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    {isDeletingAccount ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Excluindo...
-                      </>
-                    ) : (
-                      "Sim, excluir minha conta"
-                    )}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </CardContent>
-        </Card>
-      </div>
-    </MainLayout>
+          {/* Botão de Logout */}
+          <div className="px-4 mt-8 mb-8">
+            <Button 
+              variant="outline" 
+              className="w-full h-12 text-base"
+              onClick={handleLogout}
+            >
+              Sair da Conta
+            </Button>
+          </div>
+        </div>
+      </ScrollArea>
+    </div>
   );
 }

@@ -19,9 +19,10 @@ import { useAuthContext } from "@/contexts/AuthContext";
 interface AlterarCelularDialogProps {
   celularAtual: string | null;
   onSuccess: () => void;
+  trigger?: React.ReactNode;
 }
 
-export function AlterarCelularDialog({ celularAtual, onSuccess }: AlterarCelularDialogProps) {
+export function AlterarCelularDialog({ celularAtual, onSuccess, trigger }: AlterarCelularDialogProps) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<"input" | "verify" | "success">("input");
   const [novoCelular, setNovoCelular] = useState("");
@@ -165,10 +166,12 @@ export function AlterarCelularDialog({ celularAtual, onSuccess }: AlterarCelular
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="h-12 text-senior-base gap-2">
-          <Phone className="h-5 w-5" />
-          Alterar Celular
-        </Button>
+        {trigger || (
+          <Button variant="outline" className="h-12 text-senior-base gap-2">
+            <Phone className="h-5 w-5" />
+            Alterar Celular
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         {step === "input" && (
