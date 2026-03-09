@@ -19,11 +19,11 @@ const Convites: React.FC = () => {
   return (
     <MainLayout>
       <div className="container max-w-2xl mx-auto px-4 py-6 space-y-6">
-        <PageHeader
-          title="Convites"
-          subtitle="Convide amigos e acompanhe quem entrou pela sua indicação"
-          icon={Gift}
-        />
+        <PageHeader title="Convites" />
+        
+        <p className="text-muted-foreground text-sm -mt-2">
+          Convide amigos e acompanhe quem entrou pela sua indicação
+        </p>
 
         <ConviteCard
           referralCode={referralCode}

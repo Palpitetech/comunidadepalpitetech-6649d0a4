@@ -111,9 +111,9 @@ export const ConviteCard: React.FC<ConviteCardProps> = ({
             onClick={handleCopy}
             className="shrink-0"
           >
-            {copied ? (
-              <Check className="h-4 w-4 text-green-500" />
-            ) : (
+          {copied ? (
+            <Check className="h-4 w-4 text-emerald-500" />
+          ) : (
               <Copy className="h-4 w-4" />
             )}
           </Button>
