@@ -186,7 +186,7 @@ function mapToStatusAssinatura(statusOrEvent: string): "ativa" | "cancelada" | "
   return "inativa";
 }
 
-type SubscriptionAction = "activate" | "cancel" | "delinquent" | "ignore";
+type SubscriptionAction = "activate" | "cancel" | "cancel_end_of_period" | "delinquent" | "ignore";
 
 function deriveSubscriptionAction(eventName: string, rawStatus: string): SubscriptionAction {
   const ev = eventName.toLowerCase();
@@ -203,6 +203,10 @@ function deriveSubscriptionAction(eventName: string, rawStatus: string): Subscri
   // Apenas pagos/confirmados ativam acesso
   if (["paid", "approved", "confirmed", "success", "completed"].some((k) => s.includes(k))) return "activate";
 
+  // Cancelamento de assinatura recorrente: mantém acesso até fim da validade
+  if (ev === "subscription_canceled" || ev === "subscription_cancelled") return "cancel_end_of_period";
+
+  // Cancelamentos imediatos (reembolso, chargeback) removem acesso na hora
   if (["cancel", "canceled", "cancelled", "refunded", "chargeback"].some((k) => s.includes(k))) return "cancel";
 
   if (["overdue", "past_due", "inadimpl", "unpaid", "failed"].some((k) => s.includes(k))) return "delinquent";
