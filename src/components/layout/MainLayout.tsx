@@ -45,6 +45,9 @@ export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRigh
         />
       )}
 
+      {/* Push Notification Banner */}
+      <PushNotificationBanner />
+
       {/* Main Content */}
       <main className={`flex-1 ${isMobile ? 'pb-20' : ''}`}>
         {children}
