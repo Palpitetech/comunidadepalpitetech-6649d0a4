@@ -61,6 +61,47 @@ function generatePassword(): string {
   return pw;
 }
 
+function parseCsvLine(line: string): string[] {
+  const result: string[] = [];
+  let current = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      inQuotes = !inQuotes;
+    } else if (ch === ";" && !inQuotes) {
+      result.push(current.trim());
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
+
+function parseCsv(csvText: string): Record<string, string>[] {
+  const lines = csvText.split("\n").map(l => l.replace(/\r/g, "").trim()).filter(l => l.length > 0);
+  if (lines.length < 2) return [];
+
+  // Remove BOM
+  let headerLine = lines[0];
+  if (headerLine.charCodeAt(0) === 0xFEFF) headerLine = headerLine.slice(1);
+
+  const headers = parseCsvLine(headerLine);
+  const users: Record<string, string>[] = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = parseCsvLine(lines[i]);
+    const obj: Record<string, string> = {};
+    for (let j = 0; j < headers.length; j++) {
+      obj[headers[j]] = values[j] || "";
+    }
+    users.push(obj);
+  }
+  return users;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -71,13 +112,27 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
-    const { users } = await req.json();
-    if (!Array.isArray(users) || users.length === 0) throw new Error("Lista de usuários vazia");
+    const body = await req.json();
+    
+    // Support both formats: { users: [...] } or { csv: "raw csv text" }
+    let users: Record<string, string>[];
+    if (body.csv) {
+      users = parseCsv(body.csv);
+    } else if (Array.isArray(body.users)) {
+      users = body.users;
+    } else {
+      throw new Error("Envie { csv: '...' } ou { users: [...] }");
+    }
+
+    if (users.length === 0) throw new Error("Lista de usuários vazia");
+
+    console.log(`Processando ${users.length} usuários...`);
 
     const results: { email: string; status: string; error?: string; plan?: string }[] = [];
 
     for (const u of users) {
-      const email = (u.email || "").trim().toLowerCase();
+      // Support both field naming conventions
+      const email = (u.Email || u.email || "").trim().toLowerCase();
       if (!email || !email.includes("@")) {
         results.push({ email: email || "vazio", status: "skipped", error: "Email inválido" });
         continue;
@@ -88,9 +143,8 @@ serve(async (req) => {
         continue;
       }
 
-      // Skip names that are clearly test/placeholder
-      const nome = (u.nome || "").trim();
-      if (nome === "-" || nome === "" || nome.toLowerCase().includes("vídeo tutorial") || nome.toLowerCase().includes("vídeo de teste")) {
+      const nome = (u.Nome || u.nome || "").trim();
+      if (nome === "-" || nome.toLowerCase().includes("vídeo tutorial") || nome.toLowerCase().includes("vídeo de teste")) {
         results.push({ email, status: "skipped", error: "Usuário de teste" });
         continue;
       }
@@ -127,29 +181,28 @@ serve(async (req) => {
 
         const userId = authData.user.id;
 
-        // Determine if user has active access
-        // Ativo="Sim" means they currently have access (includes active + canceled-but-not-expired)
-        const isAtivo = u.ativo === "Sim";
-        const planoSlug = (u.plano || "-").toLowerCase();
+        // Determine access
+        const ativo = (u.Ativo || u.ativo || "").trim();
+        const isAtivo = ativo === "Sim";
+        const planoSlug = (u.Plano || u.plano || "-").toLowerCase();
         const planId = isAtivo ? (PLAN_MAP[planoSlug] || GRATIS_ID) : GRATIS_ID;
 
-        const celular = normalizePhone(u.telefone);
-        const cpf = normalizeCpf(u.cpf);
-        const diasExtras = parseInt(u.diasExtras || "0", 10) || 0;
+        const celular = normalizePhone(u.Telefone || u.telefone || "");
+        const cpf = normalizeCpf(u.CPF || u.cpf || "");
+        const diasExtras = parseInt(u.DiasExtras || u.diasExtras || "0", 10) || 0;
 
         // Calculate validity
         let validade: string | null = null;
         if (isAtivo) {
-          const proximaCobranca = parseDate(u.proximaCobranca);
+          const proximaCobranca = parseDate(u.ProximaCobranca || u.proximaCobranca || "");
           if (proximaCobranca) {
             validade = diasExtras > 0 ? addDays(proximaCobranca, diasExtras) : proximaCobranca;
           } else {
-            // If no ProximaCobranca but active, give 30 days from now
             validade = addDays(new Date().toISOString(), 30);
           }
         }
 
-        // Update perfil (created by trigger handle_new_user)
+        // Update perfil
         const updateData: Record<string, unknown> = {
           nome: nome || null,
           celular,
@@ -159,10 +212,7 @@ serve(async (req) => {
           validade_assinatura: validade,
           email_verificado: true,
         };
-
-        if (cpf) {
-          updateData.cpf = cpf;
-        }
+        if (cpf) updateData.cpf = cpf;
 
         const { error: perfilError } = await supabase
           .from("perfis")
@@ -173,7 +223,7 @@ serve(async (req) => {
           console.error(`Erro perfil ${email}:`, perfilError);
         }
 
-        // If active, add premium role
+        // If active with paid plan, add premium role
         if (isAtivo && planId !== GRATIS_ID) {
           await supabase
             .from("user_roles")
@@ -195,6 +245,8 @@ serve(async (req) => {
     const skipped = results.filter(r => r.status === "skipped").length;
     const errors = results.filter(r => r.status === "error").length;
 
+    console.log(`Resultado: ${created} criados, ${skipped} pulados, ${errors} erros`);
+
     return new Response(JSON.stringify({
       summary: { total: users.length, created, skipped, errors },
       details: results,
@@ -203,6 +255,7 @@ serve(async (req) => {
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   } catch (error: any) {
+    console.error("Erro geral:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
