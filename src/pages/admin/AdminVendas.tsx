@@ -172,39 +172,6 @@ export default function AdminVendas() {
   const customerName = (log: WebhookLog) => log.raw_payload?.customer?.name || null;
   const totalPrice = (log: WebhookLog) => log.raw_payload?.total_price || null;
 
-  // Recorrências: agrupar por email, contar SALE_APPROVED de tipo RECURRING
-  const recorrenciasMap = new Map<string, { name: string; email: string; phone: string | null; approvedCount: number; totalEvents: number; lastPayment: string; purchaseType: string }>();
-  for (const log of logs) {
-    const email = log.email?.toLowerCase();
-    if (!email) continue;
-    const isRecurring = log.raw_payload?.type === "RECURRING" || log.raw_payload?.purchase_type === "RECURRING" || log.purchase_type === "RECURRING";
-    if (!isRecurring) continue;
-    
-    if (!recorrenciasMap.has(email)) {
-      recorrenciasMap.set(email, {
-        name: log.raw_payload?.customer?.name || email,
-        email,
-        phone: log.phone,
-        approvedCount: 0,
-        totalEvents: 0,
-        lastPayment: log.received_at,
-        purchaseType: log.raw_payload?.plan?.charge_frequency || "Recorrente",
-      });
-    }
-    const entry = recorrenciasMap.get(email)!;
-    entry.totalEvents++;
-    if (log.event === "SALE_APPROVED") {
-      entry.approvedCount++;
-    }
-    if (new Date(log.received_at) > new Date(entry.lastPayment)) {
-      entry.lastPayment = log.received_at;
-      if (log.raw_payload?.customer?.name) entry.name = log.raw_payload.customer.name;
-      if (log.phone) entry.phone = log.phone;
-    }
-  }
-  const recorrencias = [...recorrenciasMap.values()]
-    .filter(r => r.approvedCount > 0)
-    .sort((a, b) => b.approvedCount - a.approvedCount);
 
   return (
     <MainLayout>
