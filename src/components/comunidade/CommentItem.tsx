@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Trash2, Reply, Send, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { GuideBadge } from "./GuideBadge";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -69,98 +68,102 @@ export function CommentItem({
   };
 
   return (
-    <div className={cn("py-3", isNested && "ml-8 border-l-2 border-muted pl-4")}>
-      <div className="flex gap-3">
-        <Avatar className="h-8 w-8 flex-shrink-0">
+    <div className={cn("py-2.5", isNested && "ml-7 border-l border-border/50 pl-3")}>
+      <div className="flex gap-2.5">
+        <Avatar className="h-7 w-7 flex-shrink-0">
           <AvatarImage src={comment.perfis?.avatar_url || undefined} />
-          <AvatarFallback className="text-xs bg-muted text-muted-foreground">
+          <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
             {initials}
           </AvatarFallback>
         </Avatar>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="font-medium text-sm text-foreground">
+          <div className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="font-medium text-xs text-foreground">
               {authorName}
             </span>
             {comment.perfis?.is_bot && <GuideBadge />}
-            <span className="text-xs text-muted-foreground">{timeAgo}</span>
+            <span className="text-[11px] text-muted-foreground/70">{timeAgo}</span>
           </div>
-          <p className="text-sm text-foreground whitespace-pre-wrap break-words">
+          <p className="text-sm text-foreground/90 mt-0.5 whitespace-pre-wrap break-words leading-relaxed">
             {comment.conteudo}
           </p>
 
-          {/* Botões de ação */}
-          {depth === 0 && onReply && (
-            <div className="mt-2 flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                onClick={() => setShowReplyInput(!showReplyInput)}
-              >
-                <Reply className="h-3.5 w-3.5 mr-1" />
-                Responder
-              </Button>
+          {/* Ações inline */}
+          {depth === 0 && (
+            <div className="mt-1 flex items-center gap-3">
+              {onReply && (
+                <button
+                  className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setShowReplyInput(!showReplyInput)}
+                >
+                  Responder
+                </button>
+              )}
+              {canDelete && onDelete && (
+                <button
+                  className="text-[11px] text-muted-foreground hover:text-destructive transition-colors"
+                  onClick={() => onDelete(comment.id)}
+                  disabled={isDeleting}
+                >
+                  Excluir
+                </button>
+              )}
             </div>
           )}
-        </div>
 
-        {canDelete && onDelete && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-destructive flex-shrink-0"
-            onClick={() => onDelete(comment.id)}
-            disabled={isDeleting}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
+          {/* Delete para respostas aninhadas */}
+          {isNested && canDelete && onDelete && (
+            <button
+              className="mt-1 text-[11px] text-muted-foreground hover:text-destructive transition-colors"
+              onClick={() => onDelete(comment.id)}
+              disabled={isDeleting}
+            >
+              Excluir
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Input de resposta */}
       {showReplyInput && (
-        <div className="mt-3 ml-11 flex gap-2">
-          <Textarea
-            placeholder={`Responder a ${authorName}...`}
+        <div className="mt-2 ml-9 flex items-end gap-2">
+          <input
+            type="text"
+            placeholder={`Responder ${authorName}...`}
             value={replyContent}
             onChange={(e) => setReplyContent(e.target.value)}
-            className="min-h-[60px] resize-none text-sm"
+            className="flex-1 bg-transparent border-b border-border text-sm py-1.5 px-0 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
+              if (e.key === "Enter") {
                 e.preventDefault();
                 handleSubmitReply();
               }
             }}
+            autoFocus
           />
-          <div className="flex flex-col gap-1">
-            <Button
-              onClick={handleSubmitReply}
-              disabled={!replyContent.trim() || isReplying}
-              size="icon"
-              className="h-8 w-8"
-            >
-              <Send className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => {
-                setShowReplyInput(false);
-                setReplyContent("");
-              }}
-            >
-              <X className="h-3.5 w-3.5" />
-            </Button>
-          </div>
+          <button
+            onClick={handleSubmitReply}
+            disabled={!replyContent.trim() || isReplying}
+            className="text-muted-foreground hover:text-primary disabled:opacity-30 transition-colors p-1"
+          >
+            <Send className="h-3.5 w-3.5" />
+          </button>
+          <button
+            className="text-muted-foreground hover:text-foreground transition-colors p-1"
+            onClick={() => {
+              setShowReplyInput(false);
+              setReplyContent("");
+            }}
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
       )}
 
       {/* Respostas aninhadas */}
       {comment.replies && comment.replies.length > 0 && (
-        <div className="mt-2">
+        <div className="mt-1">
           {comment.replies.map((reply) => (
             <CommentItem
               key={reply.id}
