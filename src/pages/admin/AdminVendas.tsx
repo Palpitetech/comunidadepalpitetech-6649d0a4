@@ -215,51 +215,6 @@ export default function AdminVendas() {
           </Card>
         </div>
 
-        {/* Recorrências */}
-        <Card>
-          <CardContent className="p-3 md:p-4">
-            <button
-              onClick={() => setShowRecorrencias(!showRecorrencias)}
-              className="flex items-center justify-between w-full"
-            >
-              <div className="flex items-center gap-2">
-                <Repeat className="h-4 w-4 text-primary" />
-                <span className="font-semibold text-sm">Recorrências</span>
-                <Badge variant="secondary" className="text-[10px]">{recorrencias.length} clientes</Badge>
-              </div>
-              <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${showRecorrencias ? "rotate-90" : ""}`} />
-            </button>
-            {showRecorrencias && (
-              <div className="mt-3 space-y-2">
-                {recorrencias.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">Nenhuma recorrência encontrada</p>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground font-medium px-1 pb-1 border-b border-border">
-                      <span>Cliente</span>
-                      <span className="text-center">Pagamentos</span>
-                      <span className="text-right">Último</span>
-                    </div>
-                    {recorrencias.map((r) => (
-                      <div key={r.email} className="grid grid-cols-[1fr_auto_auto] gap-x-3 items-center px-1 py-1.5 rounded hover:bg-accent/50 transition-colors">
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{r.name}</p>
-                          <p className="text-[11px] text-muted-foreground truncate">{r.email}</p>
-                        </div>
-                        <Badge variant="outline" className="text-xs font-bold px-2.5 py-0.5 bg-green-500/10 text-green-700 border-green-200">
-                          {r.approvedCount}x
-                        </Badge>
-                        <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-                          {format(new Date(r.lastPayment), "dd/MM/yy", { locale: ptBR })}
-                        </span>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
         {/* Filters */}
         <div className="flex gap-2">
