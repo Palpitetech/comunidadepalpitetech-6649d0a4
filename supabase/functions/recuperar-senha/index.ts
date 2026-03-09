@@ -50,6 +50,9 @@ async function enviarEmailSenha(
               <p style="color: rgba(255,255,255,0.9); margin: 0 0 8px 0; font-size: 13px;">Sua nova senha:</p>
               <p style="color: white; font-size: 32px; letter-spacing: 8px; margin: 0; font-family: monospace; font-weight: bold;">${novaSenha}</p>
             </div>
+            <div style="text-align: center; margin: 24px 0;">
+              <a href="https://comunidadepalpitetech.lovable.app/login" style="display: inline-block; background-color: #16a34a; color: white; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px 32px; border-radius: 10px;">Fazer Login Direto</a>
+            </div>
             <p style="color: #666; font-size: 13px;">⚠️ Recomendamos que você altere sua senha após o login.</p>
             <p style="color: #999; font-size: 12px;">Se você não solicitou esta recuperação, ignore este email.</p>
           </div>
