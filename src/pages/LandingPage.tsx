@@ -55,9 +55,9 @@ export default function LandingPage() {
             </Link>
           </Button>
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-8 text-sm text-white/70">
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-300" /> Cadastro gratuito</span>
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-300" /> Dicas todos os dias</span>
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-300" /> Comunidade ativa</span>
+            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-accent" /> Cadastro gratuito</span>
+            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-accent" /> Dicas todos os dias</span>
+            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-accent" /> Comunidade ativa</span>
           </div>
         </div>
       </section>
