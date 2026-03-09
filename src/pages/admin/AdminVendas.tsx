@@ -173,17 +173,28 @@ export default function AdminVendas() {
   const totalPrice = (log: WebhookLog) => log.raw_payload?.total_price || null;
 
 
+  const refreshButton = (
+    <Button variant="ghost" size="icon" onClick={fetchLogs} disabled={loading} className="h-9 w-9">
+      <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+    </Button>
+  );
+
   return (
-    <MainLayout>
-      <div className="container-senior py-4 md:py-8 space-y-4 md:space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-3">
+    <MainLayout
+      pageTitle="Vendas Kirvano"
+      onBack={() => navigate("/admin")}
+      headerRightContent={refreshButton}
+      hideBottomNav
+    >
+      <div className="px-4 py-3 md:container-senior md:py-8 space-y-3 md:space-y-6">
+        {/* Desktop Header */}
+        <div className="hidden md:flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="shrink-0">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl md:text-3xl font-bold truncate">Vendas Kirvano</h1>
-            <p className="text-xs md:text-sm text-muted-foreground">Histórico de webhooks recebidos</p>
+            <h1 className="text-3xl font-bold truncate">Vendas Kirvano</h1>
+            <p className="text-sm text-muted-foreground">Histórico de webhooks recebidos</p>
           </div>
           <Button variant="outline" size="icon" onClick={fetchLogs} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
@@ -192,59 +203,58 @@ export default function AdminVendas() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-3 gap-2 md:gap-4">
-          <Card>
-            <CardContent className="p-3 md:p-4 text-center">
-              <CheckCircle2 className="h-5 w-5 text-green-600 mx-auto mb-1" />
-              <p className="text-lg md:text-2xl font-bold">{totalAprovadas}</p>
+          <Card className="border-0 shadow-none md:border md:shadow-sm bg-muted/40 md:bg-card">
+            <CardContent className="p-2.5 md:p-4 text-center">
+              <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-green-600 mx-auto mb-0.5 md:mb-1" />
+              <p className="text-base md:text-2xl font-bold">{totalAprovadas}</p>
               <p className="text-[10px] md:text-xs text-muted-foreground">Aprovadas</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-3 md:p-4 text-center">
-              <Clock className="h-5 w-5 text-yellow-600 mx-auto mb-1" />
-              <p className="text-lg md:text-2xl font-bold">{totalPendentes}</p>
+          <Card className="border-0 shadow-none md:border md:shadow-sm bg-muted/40 md:bg-card">
+            <CardContent className="p-2.5 md:p-4 text-center">
+              <Clock className="h-4 w-4 md:h-5 md:w-5 text-yellow-600 mx-auto mb-0.5 md:mb-1" />
+              <p className="text-base md:text-2xl font-bold">{totalPendentes}</p>
               <p className="text-[10px] md:text-xs text-muted-foreground">Pendentes</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-3 md:p-4 text-center">
-              <XCircle className="h-5 w-5 text-red-600 mx-auto mb-1" />
-              <p className="text-lg md:text-2xl font-bold">{totalCanceladas}</p>
+          <Card className="border-0 shadow-none md:border md:shadow-sm bg-muted/40 md:bg-card">
+            <CardContent className="p-2.5 md:p-4 text-center">
+              <XCircle className="h-4 w-4 md:h-5 md:w-5 text-red-600 mx-auto mb-0.5 md:mb-1" />
+              <p className="text-base md:text-2xl font-bold">{totalCanceladas}</p>
               <p className="text-[10px] md:text-xs text-muted-foreground">Canceladas</p>
             </CardContent>
           </Card>
         </div>
-
 
         {/* Filters */}
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por email, telefone, venda..."
+              placeholder="Buscar email, telefone..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 text-sm"
+              className="pl-9 text-sm h-9"
             />
           </div>
           <Select value={eventFilter} onValueChange={setEventFilter}>
-            <SelectTrigger className="w-[140px] md:w-[180px] text-sm">
+            <SelectTrigger className="w-[120px] md:w-[180px] text-xs md:text-sm h-9">
               <SelectValue placeholder="Filtro" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="SALE_APPROVED">Venda Aprovada</SelectItem>
+              <SelectItem value="SALE_APPROVED">Aprovada</SelectItem>
               <SelectItem value="PIX_GENERATED">PIX Gerado</SelectItem>
               <SelectItem value="PIX_EXPIRED">PIX Expirado</SelectItem>
               <SelectItem value="BANK_SLIP_GENERATED">Boleto Gerado</SelectItem>
               <SelectItem value="BANK_SLIP_EXPIRED">Boleto Expirado</SelectItem>
-              <SelectItem value="SALE_REFUSED">Venda Recusada</SelectItem>
-              <SelectItem value="SALE_CHARGEBACK">Estorno / Chargeback</SelectItem>
+              <SelectItem value="SALE_REFUSED">Recusada</SelectItem>
+              <SelectItem value="SALE_CHARGEBACK">Chargeback</SelectItem>
               <SelectItem value="SALE_REFUNDED">Reembolso</SelectItem>
-              <SelectItem value="SUBSCRIPTION_CANCELED">Assinatura Cancelada</SelectItem>
-              <SelectItem value="SUBSCRIPTION_OVERDUE">Assinatura Inadimplente</SelectItem>
-              <SelectItem value="SUBSCRIPTION_RENEWED">Assinatura Renovada</SelectItem>
-              <SelectItem value="SUBSCRIPTION_REACTIVATED">Assinatura Reativada</SelectItem>
+              <SelectItem value="SUBSCRIPTION_CANCELED">Cancelada</SelectItem>
+              <SelectItem value="SUBSCRIPTION_OVERDUE">Inadimplente</SelectItem>
+              <SelectItem value="SUBSCRIPTION_RENEWED">Renovada</SelectItem>
+              <SelectItem value="SUBSCRIPTION_REACTIVATED">Reativada</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -255,60 +265,56 @@ export default function AdminVendas() {
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : sales.length === 0 && orphans.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              Nenhuma venda encontrada
-            </CardContent>
-          </Card>
+          <div className="py-12 text-center text-muted-foreground text-sm">
+            Nenhuma venda encontrada
+          </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-1.5 md:space-y-2">
             {paginatedSales.map(({ key, events, latest }) => {
               const evInfo = getEventInfo(latest.event);
               const name = customerName(latest);
               const price = totalPrice(latest);
 
               return (
-                <Card
+                <button
                   key={key}
-                  className="cursor-pointer hover:bg-accent/50 transition-colors"
+                  className="w-full text-left rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors p-3"
                   onClick={() => setSelectedLog(latest)}
                 >
-                  <CardContent className="p-3 md:p-4">
-                    <div className="flex items-center gap-3">
-                      <PaymentMethodIcon method={latest.payment_method} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-sm truncate">
-                            {name || latest.email || "Sem identificação"}
-                          </span>
-                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 shrink-0 ${evInfo.color}`}>
-                            {evInfo.label}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
-                          {price && <span className="font-medium">{price}</span>}
-                          <span>•</span>
-                          <span>{format(new Date(latest.received_at), "dd/MM/yy HH:mm", { locale: ptBR })}</span>
-                          {events.length > 1 && (
-                            <>
-                              <span>•</span>
-                              <span>{events.length} eventos</span>
-                            </>
-                          )}
-                        </div>
+                  <div className="flex items-center gap-3">
+                    <PaymentMethodIcon method={latest.payment_method} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-sm truncate">
+                          {name || latest.email || "Sem identificação"}
+                        </span>
+                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 shrink-0 ${evInfo.color}`}>
+                          {evInfo.label}
+                        </Badge>
                       </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
+                        {price && <span className="font-medium">{price}</span>}
+                        {price && <span>·</span>}
+                        <span>{format(new Date(latest.received_at), "dd/MM HH:mm", { locale: ptBR })}</span>
+                        {events.length > 1 && (
+                          <>
+                            <span>·</span>
+                            <span>{events.length} evt</span>
+                          </>
+                        )}
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </div>
+                </button>
               );
             })}
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-2">
-                <p className="text-xs text-muted-foreground">
-                  {sales.length} vendas • Página {page} de {totalPages}
+              <div className="flex items-center justify-between pt-2 pb-2">
+                <p className="text-[11px] text-muted-foreground">
+                  {sales.length} vendas · Pág. {page}/{totalPages}
                 </p>
                 <div className="flex items-center gap-1">
                   <Button
@@ -337,10 +343,10 @@ export default function AdminVendas() {
 
         {/* Detail Sheet */}
         <Sheet open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
-          <SheetContent side="right" className="w-full sm:max-w-lg p-0">
-            <SheetHeader className="p-4 pb-2">
-              <SheetTitle className="text-lg">Detalhes da Venda</SheetTitle>
-            </SheetHeader>
+          <SheetContent side="bottom" className="h-[92vh] rounded-t-2xl p-0 md:!inset-y-0 md:!right-0 md:!left-auto md:!bottom-auto md:!h-full md:!w-[480px] md:!max-w-lg md:rounded-none">
+            <div className="flex items-center justify-between p-4 pb-2 border-b border-border">
+              <SheetTitle className="text-base font-semibold">Detalhes da Venda</SheetTitle>
+            </div>
             {selectedLog && (
               <SaleDetail
                 saleKey={selectedLog.sale_id || selectedLog.checkout_id || selectedLog.id}
