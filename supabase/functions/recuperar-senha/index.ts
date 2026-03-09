@@ -35,7 +35,7 @@ async function enviarEmailSenha(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "ComunidadePalpiteTech <solicitacao@palpitetech.com.br>",
+        from: "Comunidade Palpite Tech <solicitacao@palpitetech.com.br>",
         to: [to],
         subject: "Sua nova senha - ComunidadePalpiteTech",
         html: `
