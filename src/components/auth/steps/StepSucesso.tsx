@@ -47,7 +47,7 @@ export function StepSucesso() {
         </div>
 
         <Button
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/home")}
           className="btn-senior w-full"
         >
           <Home className="h-5 w-5 mr-2" />
