@@ -88,12 +88,13 @@
   </head>
 
   <body>
-    <!-- Splash screen (removed by React after mount) -->
+    <!-- Splash screen (removed by React after mount, hidden on landing) -->
     <div id="splash-screen">
       <img src="/logo.png" alt="Palpite Tech" width="96" height="96" />
       <p>Palpite Tech</p>
       <div id="splash-loader"></div>
     </div>
+    <script>if(location.pathname==='/'){document.getElementById('splash-screen').style.display='none';}</script>
 
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
