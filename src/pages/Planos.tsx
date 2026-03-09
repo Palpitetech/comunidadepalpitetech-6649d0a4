@@ -134,7 +134,7 @@ export default function Planos() {
         </div>
 
         {/* Plans */}
-        <div className="grid gap-5 md:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-3 items-stretch">
           {paidPlans.map((plan) => {
             const isCurrent = isCurrentPlan(plan.id);
             const isVip = plan.slug === "plano-anual-vip";
