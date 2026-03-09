@@ -1,0 +1,1 @@
+ALTER TABLE public.codigos_verificacao DROP CONSTRAINT codigos_verificacao_tipo_check;
