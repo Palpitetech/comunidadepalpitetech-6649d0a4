@@ -475,10 +475,10 @@ serve(async (req) => {
 
     // Se não houver perfil, cria conta com email+telefone e tenta novamente
     let targetPerfilId = perfil?.id ?? null;
+    let isNewAccount = false;
     if (!targetPerfilId) {
       logStep("Perfil not found for email (will create auth user)", { email });
       try {
-        // auth-js não expõe getUserByEmail aqui; tentamos criar e ignoramos se já existir.
         const password = crypto.randomUUID();
         const { error: createUserError } = await admin.auth.admin.createUser({
           email,
@@ -495,6 +495,8 @@ serve(async (req) => {
           const alreadyExists = msg.includes("already") || msg.includes("exists") || msg.includes("registered");
           if (!alreadyExists) throw createUserError;
           logStep("Auth user already exists", { email });
+        } else {
+          isNewAccount = true;
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -521,6 +523,90 @@ serve(async (req) => {
         });
       }
       targetPerfilId = perfil2.id;
+
+      // Envia email de boas-vindas com link para definir senha
+      try {
+        const siteUrl = "https://comunidadepalpitetech.lovable.app";
+        const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
+          type: "recovery",
+          email,
+          options: { redirectTo: `${siteUrl}/login` },
+        });
+
+        if (linkError) {
+          logStep("Failed to generate recovery link", { message: linkError.message });
+        } else {
+          const recoveryLink = linkData?.properties?.action_link;
+          if (recoveryLink) {
+            const resendApiKey = Deno.env.get("RESEND_API_KEY");
+            if (resendApiKey) {
+              const displayName = customerName ?? "Jogador";
+              const emailHtml = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:40px 24px;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <h1 style="color:#1a1a2e;font-size:24px;margin:0 0 8px;">🎯 Bem-vindo(a) à Palpite Tech!</h1>
+      <p style="color:#6b7280;font-size:16px;margin:0;">Sua conta foi criada com sucesso</p>
+    </div>
+    <div style="background:#f8fafc;border-radius:12px;padding:24px;margin-bottom:24px;">
+      <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 16px;">
+        Olá, <strong>${displayName}</strong>! 👋
+      </p>
+      <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 16px;">
+        Seu acesso à <strong>Comunidade Palpite Tech</strong> já está ativo. Para entrar, clique no botão abaixo e defina sua senha:
+      </p>
+      <div style="text-align:center;margin:24px 0;">
+        <a href="${recoveryLink}" style="display:inline-block;background:#7c3aed;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:bold;">
+          Definir minha senha e acessar
+        </a>
+      </div>
+      <p style="color:#6b7280;font-size:14px;line-height:1.5;margin:0;">
+        Após definir sua senha, use seu email <strong>${email}</strong> para fazer login sempre que quiser.
+      </p>
+    </div>
+    <div style="text-align:center;padding-top:16px;border-top:1px solid #e5e7eb;">
+      <p style="color:#9ca3af;font-size:12px;margin:0;">
+        Se você não solicitou essa conta, ignore este email.
+      </p>
+      <p style="color:#9ca3af;font-size:12px;margin:8px 0 0;">
+        © Palpite Tech — Comunidade de Loteria
+      </p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+              const resendRes = await fetch("https://api.resend.com/emails", {
+                method: "POST",
+                headers: {
+                  "Authorization": `Bearer ${resendApiKey}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  from: "Palpite Tech <noreply@resend.dev>",
+                  to: [email],
+                  subject: "🎯 Seu acesso à Palpite Tech está pronto!",
+                  html: emailHtml,
+                }),
+              });
+
+              if (!resendRes.ok) {
+                const errText = await resendRes.text();
+                logStep("Resend email failed", { status: resendRes.status, body: errText });
+              } else {
+                logStep("Welcome email sent successfully", { email, isNewAccount });
+              }
+            } else {
+              logStep("RESEND_API_KEY not configured, skipping welcome email");
+            }
+          }
+        }
+      } catch (emailErr) {
+        logStep("Welcome email error (non-fatal)", { message: emailErr instanceof Error ? emailErr.message : String(emailErr) });
+      }
     }
 
     const daysValid = typeof offerMap.days_valid === "number" ? offerMap.days_valid : 30;
