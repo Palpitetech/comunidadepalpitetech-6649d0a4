@@ -90,50 +90,50 @@ const App = () => (
             <Route path="/chat" element={<AdminRoute><Chat /></AdminRoute>} />
             <Route path="/notificacoes" element={<ProtectedRoute><Notificacoes /></ProtectedRoute>} />
             <Route path="/resultados" element={<ProtectedRoute><Resultados /></ProtectedRoute>} />
-            <Route path="/tendencias" element={<ProtectedRoute><Tendencias /></ProtectedRoute>} />
-            <Route path="/linhas-colunas" element={<ProtectedRoute><LinhasColunas /></ProtectedRoute>} />
-            <Route path="/frequencia" element={<ProtectedRoute><Frequencia /></ProtectedRoute>} />
-            <Route path="/smart-gerador" element={<ProtectedRoute><Gerador /></ProtectedRoute>} />
-            <Route path="/desdobramento" element={<ProtectedRoute><Desdobramento /></ProtectedRoute>} />
-            <Route path="/fechamento" element={<ProtectedRoute><Fechamento /></ProtectedRoute>} />
-            <Route path="/meus-palpites" element={<ProtectedRoute><MeusPalpites /></ProtectedRoute>} />
+            <Route path="/tendencias" element={<ProtectedRoute><GatedPage feature="tendencias"><Tendencias /></GatedPage></ProtectedRoute>} />
+            <Route path="/linhas-colunas" element={<ProtectedRoute><GatedPage feature="linhas_colunas"><LinhasColunas /></GatedPage></ProtectedRoute>} />
+            <Route path="/frequencia" element={<ProtectedRoute><GatedPage feature="quentes_frias"><Frequencia /></GatedPage></ProtectedRoute>} />
+            <Route path="/smart-gerador" element={<ProtectedRoute><GatedPage feature="gerador"><Gerador /></GatedPage></ProtectedRoute>} />
+            <Route path="/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><Desdobramento /></GatedPage></ProtectedRoute>} />
+            <Route path="/fechamento" element={<ProtectedRoute><GatedPage feature="fechamento"><Fechamento /></GatedPage></ProtectedRoute>} />
+            <Route path="/meus-palpites" element={<ProtectedRoute><GatedPage feature="palpites_salvos"><MeusPalpites /></GatedPage></ProtectedRoute>} />
             <Route path="/boloes" element={<AdminRoute><Boloes /></AdminRoute>} />
-            <Route path="/analise-do-dia" element={<ProtectedRoute><AnaliseDoDia /></ProtectedRoute>} />
-            <Route path="/tabela-movimentacao" element={<ProtectedRoute><TabelaMovimentacao /></ProtectedRoute>} />
-            <Route path="/frequencia-dezenas" element={<ProtectedRoute><FrequenciaDezenas /></ProtectedRoute>} />
-            <Route path="/dezenas-por-posicao" element={<ProtectedRoute><DezenasporPosicao /></ProtectedRoute>} />
+            <Route path="/analise-do-dia" element={<ProtectedRoute><GatedPage feature="analise_do_dia"><AnaliseDoDia /></GatedPage></ProtectedRoute>} />
+            <Route path="/tabela-movimentacao" element={<ProtectedRoute><GatedPage feature="tabela_movimentacao"><TabelaMovimentacao /></GatedPage></ProtectedRoute>} />
+            <Route path="/frequencia-dezenas" element={<ProtectedRoute><GatedPage feature="frequencia_dezenas"><FrequenciaDezenas /></GatedPage></ProtectedRoute>} />
+            <Route path="/dezenas-por-posicao" element={<ProtectedRoute><GatedPage feature="dezenas_por_posicao"><DezenasporPosicao /></GatedPage></ProtectedRoute>} />
             <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
             <Route path="/criar-post" element={<ProtectedRoute><CriarPost /></ProtectedRoute>} />
             <Route path="/comunidade/post/:id" element={<PostDetalhes />} />
-            <Route path="/convites" element={<ProtectedRoute><Convites /></ProtectedRoute>} />
+            <Route path="/convites" element={<ProtectedRoute><GatedPage feature="comunidade_full"><Convites /></GatedPage></ProtectedRoute>} />
             <Route path="/bloqueado" element={<Bloqueado />} />
             <Route path="/planos" element={<Planos />} />
             
             {/* Rotas Mega Sena */}
             <Route path="/megasena/resultados" element={<ProtectedRoute><ResultadosMegaSena /></ProtectedRoute>} />
-            <Route path="/megasena/tendencias" element={<ProtectedRoute><TendenciasMegaSena /></ProtectedRoute>} />
-            <Route path="/megasena/frequencia" element={<ProtectedRoute><FrequenciaMegaSena /></ProtectedRoute>} />
-            <Route path="/megasena/gerador" element={<ProtectedRoute><GeradorMegaSena /></ProtectedRoute>} />
-            <Route path="/megasena/fechamento" element={<ProtectedRoute><FechamentoMegaSena /></ProtectedRoute>} />
-            <Route path="/megasena/desdobramento" element={<ProtectedRoute><DesdobramentoMegaSena /></ProtectedRoute>} />
-            <Route path="/megasena/linhas-colunas" element={<ProtectedRoute><LinhasColunasMegaSena /></ProtectedRoute>} />
-            <Route path="/megasena/analise-do-dia" element={<ProtectedRoute><AnaliseDoDiaMegaSena /></ProtectedRoute>} />
-            <Route path="/megasena/tabela-movimentacao" element={<ProtectedRoute><TabelaMovimentacaoMegaSena /></ProtectedRoute>} />
-            <Route path="/megasena/frequencia-dezenas" element={<ProtectedRoute><FrequenciaDecenasMegaSena /></ProtectedRoute>} />
-            <Route path="/megasena/dezenas-por-posicao" element={<ProtectedRoute><DezenasporPosicaoMegaSena /></ProtectedRoute>} />
+            <Route path="/megasena/tendencias" element={<ProtectedRoute><GatedPage feature="tendencias"><TendenciasMegaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/megasena/frequencia" element={<ProtectedRoute><GatedPage feature="quentes_frias"><FrequenciaMegaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/megasena/gerador" element={<ProtectedRoute><GatedPage feature="gerador"><GeradorMegaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/megasena/fechamento" element={<ProtectedRoute><GatedPage feature="fechamento"><FechamentoMegaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/megasena/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><DesdobramentoMegaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/megasena/linhas-colunas" element={<ProtectedRoute><GatedPage feature="linhas_colunas"><LinhasColunasMegaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/megasena/analise-do-dia" element={<ProtectedRoute><GatedPage feature="analise_do_dia"><AnaliseDoDiaMegaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/megasena/tabela-movimentacao" element={<ProtectedRoute><GatedPage feature="tabela_movimentacao"><TabelaMovimentacaoMegaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/megasena/frequencia-dezenas" element={<ProtectedRoute><GatedPage feature="frequencia_dezenas"><FrequenciaDecenasMegaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/megasena/dezenas-por-posicao" element={<ProtectedRoute><GatedPage feature="dezenas_por_posicao"><DezenasporPosicaoMegaSena /></GatedPage></ProtectedRoute>} />
             
             {/* Rotas Dupla Sena */}
             <Route path="/duplasena/resultados" element={<ProtectedRoute><ResultadosDuplaSena /></ProtectedRoute>} />
-            <Route path="/duplasena/tendencias" element={<ProtectedRoute><TendenciasDuplaSena /></ProtectedRoute>} />
-            <Route path="/duplasena/frequencia" element={<ProtectedRoute><FrequenciaDuplaSena /></ProtectedRoute>} />
-            <Route path="/duplasena/dezenas-por-posicao" element={<ProtectedRoute><DezenasporPosicaoDuplaSena /></ProtectedRoute>} />
-            <Route path="/duplasena/linhas-colunas" element={<ProtectedRoute><LinhasColunasDuplaSena /></ProtectedRoute>} />
-            <Route path="/duplasena/analise-do-dia" element={<ProtectedRoute><AnaliseDoDiaDuplaSena /></ProtectedRoute>} />
-            <Route path="/duplasena/gerador" element={<ProtectedRoute><GeradorDuplaSena /></ProtectedRoute>} />
-            <Route path="/duplasena/desdobramento" element={<ProtectedRoute><DesdobramentoDuplaSena /></ProtectedRoute>} />
-            <Route path="/duplasena/frequencia-dezenas" element={<ProtectedRoute><FrequenciaDecenasDuplaSena /></ProtectedRoute>} />
-            <Route path="/duplasena/tabela-movimentacao" element={<ProtectedRoute><TabelaMovimentacaoDuplaSena /></ProtectedRoute>} />
-            <Route path="/duplasena/fechamento" element={<ProtectedRoute><FechamentoDuplaSena /></ProtectedRoute>} />
+            <Route path="/duplasena/tendencias" element={<ProtectedRoute><GatedPage feature="tendencias"><TendenciasDuplaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/duplasena/frequencia" element={<ProtectedRoute><GatedPage feature="quentes_frias"><FrequenciaDuplaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/duplasena/dezenas-por-posicao" element={<ProtectedRoute><GatedPage feature="dezenas_por_posicao"><DezenasporPosicaoDuplaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/duplasena/linhas-colunas" element={<ProtectedRoute><GatedPage feature="linhas_colunas"><LinhasColunasDuplaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/duplasena/analise-do-dia" element={<ProtectedRoute><GatedPage feature="analise_do_dia"><AnaliseDoDiaDuplaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/duplasena/gerador" element={<ProtectedRoute><GatedPage feature="gerador"><GeradorDuplaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/duplasena/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><DesdobramentoDuplaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/duplasena/frequencia-dezenas" element={<ProtectedRoute><GatedPage feature="frequencia_dezenas"><FrequenciaDecenasDuplaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/duplasena/tabela-movimentacao" element={<ProtectedRoute><GatedPage feature="tabela_movimentacao"><TabelaMovimentacaoDuplaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/duplasena/fechamento" element={<ProtectedRoute><GatedPage feature="fechamento"><FechamentoDuplaSena /></GatedPage></ProtectedRoute>} />
             
             {/* Rotas Admin */}
             <Route path="/admin" element={<AdminRoute><AdminIndex /></AdminRoute>} />
