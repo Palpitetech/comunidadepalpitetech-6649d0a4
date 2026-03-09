@@ -12,8 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Search, CreditCard, QrCode, Barcode, ChevronRight,
   CheckCircle2, XCircle, Clock, AlertTriangle, RefreshCw, ArrowLeft,
-  ShoppingCart, User, Calendar, DollarSign, FileText
+  ShoppingCart, User, Calendar, DollarSign, FileText, Copy, Check
 } from "lucide-react";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
@@ -309,6 +310,41 @@ export default function AdminVendas() {
   );
 }
 
+function PixCodeBlock({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      toast.success("Código PIX copiado!");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Erro ao copiar");
+    }
+  };
+  return (
+    <div className="space-y-2">
+      <h3 className="text-sm font-semibold flex items-center gap-2">
+        <QrCode className="h-4 w-4" /> Código PIX
+      </h3>
+      <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+        <p className="text-[11px] font-mono break-all leading-relaxed text-muted-foreground select-all">
+          {code}
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full gap-2"
+          onClick={handleCopy}
+        >
+          {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? "Copiado!" : "Copiar código PIX"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog[] }) {
   const events = allLogs
     .filter((l) => l.sale_id === saleKey || l.checkout_id === saleKey || l.id === saleKey)
@@ -383,6 +419,25 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
             </div>
           </div>
         </div>
+
+        {/* PIX Code */}
+        {(() => {
+          // Find the PIX_GENERATED event for this sale to get the qrcode
+          const pixEvent = events.find(e => e.event === "PIX_GENERATED");
+          const pixCode = pixEvent?.raw_payload?.payment?.qrcode;
+          const pixExpires = pixEvent?.raw_payload?.payment?.expires_at;
+          if (!pixCode) return null;
+          return (
+            <div className="space-y-2">
+              <PixCodeBlock code={pixCode} />
+              {pixExpires && (
+                <p className="text-[11px] text-muted-foreground ml-1">
+                  Expira em: {format(new Date(pixExpires.replace(" ", "T")), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                </p>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Products */}
         {products.length > 0 && (
