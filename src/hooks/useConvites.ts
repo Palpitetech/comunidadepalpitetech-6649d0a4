@@ -175,8 +175,23 @@ export function useConvites(): UseConvitesReturn {
   const totalDaysEarned = rewards.reduce((sum, r) => sum + r.days_granted, 0);
   const totalDaysClaimed = rewards.filter(r => r.claimed_at).reduce((sum, r) => sum + r.days_granted, 0);
   const unclaimedRewards = rewards.filter(r => !r.claimed_at);
-  const progressCadastros = totalConvidados % 50;
-  const progressVendas = totalVendas % 10;
+
+  // Calculate "current" progress: only count convites created after the last claim
+  const lastClaimedAt = rewards
+    .filter(r => r.claimed_at)
+    .map(r => r.claimed_at as string)
+    .sort()
+    .pop() || null;
+
+  const currentCadastros = lastClaimedAt
+    ? convidados.filter(c => c.created_at > lastClaimedAt).length
+    : totalConvidados;
+  const currentVendas = lastClaimedAt
+    ? convidados.filter(c => c.converted_at && c.created_at > lastClaimedAt).length
+    : totalVendas;
+
+  const progressCadastros = currentCadastros % 50;
+  const progressVendas = currentVendas % 10;
 
   return {
     referralCode,
