@@ -311,6 +311,27 @@ export default function AdminVendas() {
   );
 }
 
+function CopyableField({ label, value }: { label: string; value: string }) {
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(`${label} copiado!`);
+    } catch {
+      toast.error("Erro ao copiar");
+    }
+  };
+  return (
+    <button
+      onClick={handleCopy}
+      className="flex items-center justify-between w-full group hover:bg-accent/50 -mx-1 px-1 rounded transition-colors cursor-pointer"
+      title={`Copiar ${label}`}
+    >
+      <span className="text-muted-foreground truncate">{value}</span>
+      <Copy className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2" />
+    </button>
+  );
+}
+
 function PixCodeBlock({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = async () => {
