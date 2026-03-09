@@ -313,6 +313,40 @@ Deno.serve(async (req) => {
       ? resultadosParaInserir[resultadosParaInserir.length - 1]?.concurso_id 
       : ultimoConcursoAPI;
 
+    // Push notification para novo resultado (apenas se inseriu exatamente 1 concurso novo)
+    if (resultadosParaInserir.length === 1) {
+      const webhookSecret = Deno.env.get('NOTIFICATIONS_WEBHOOK_SECRET');
+      const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+      if (webhookSecret && supabaseAnonKey) {
+        try {
+          const fnUrl = `${supabaseUrl}/functions/v1/send-push`;
+          const res = await fetch(fnUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${supabaseAnonKey}`,
+              'x-webhook-secret': webhookSecret,
+            },
+            body: JSON.stringify({
+              tipo: 'resultado_novo',
+              titulo: 'Resultado Dupla Sena',
+              mensagem: `Concurso ${ultimoConcursoInserido} disponível! Confira agora.`,
+              loteria: 'duplasena',
+              concurso_id: ultimoConcursoInserido,
+            }),
+          });
+          if (res.ok) {
+            console.log(`[PUSH] ✅ Push enviado para Dupla Sena concurso ${ultimoConcursoInserido}`);
+          } else {
+            const text = await res.text().catch(() => '');
+            console.error(`[PUSH] Falha: ${res.status} ${text}`);
+          }
+        } catch (e) {
+          console.error('[PUSH] Erro:', e);
+        }
+      }
+    }
+
     return new Response(
       JSON.stringify({
         message: "Sincronização Dupla Sena concluída",
