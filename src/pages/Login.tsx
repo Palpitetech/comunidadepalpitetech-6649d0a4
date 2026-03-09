@@ -26,11 +26,11 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-background md:bg-gradient-to-br md:from-background md:via-secondary/30 md:to-background p-0 md:p-6">
-      <div className="w-full max-w-lg flex flex-col flex-1 md:flex-initial justify-center">
+    <div className="min-h-[100dvh] flex flex-col bg-background md:bg-gradient-to-br md:from-background md:via-secondary/30 md:to-background p-0 md:p-6 overflow-y-auto">
+      <div className="w-full max-w-lg mx-auto flex flex-col flex-1 md:flex-initial justify-center py-4 md:py-0">
         <LoginWizard />
 
-        <p className="text-center py-3 md:mt-6 text-muted-foreground text-xs md:text-senior-sm px-4">
+        <p className="text-center py-3 md:mt-6 text-muted-foreground text-xs md:text-senior-sm px-4 pb-6">
           Ao criar uma conta, você concorda com nossos{" "}
           <a href="/termos" target="_blank" className="underline text-primary hover:text-primary/80">Termos de Uso</a>
           {" "}e{" "}
