@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { ConviteCard } from "@/components/convites/ConviteCard";
 import { ConvidadosList } from "@/components/convites/ConvidadosList";
 import { useConvites } from "@/hooks/useConvites";
-import { Gift } from "lucide-react";
+
 
 const Convites: React.FC = () => {
   const {
