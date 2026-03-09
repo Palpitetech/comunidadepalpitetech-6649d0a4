@@ -31,17 +31,25 @@ export function PushNotificationBanner() {
 
   const handleEnable = async () => {
     try {
-      // Use OneSignal's slidedown prompt (works on iOS PWA with user gesture)
-      const OneSignalDeferred = (window as any).OneSignalDeferred || [];
-      OneSignalDeferred.push(async (OneSignal: any) => {
-        await OneSignal.Slidedown.promptPush();
+      (window as any).OneSignalDeferred = (window as any).OneSignalDeferred || [];
+      (window as any).OneSignalDeferred.push(async (OneSignal: any) => {
+        // requestPermission triggers the native browser prompt directly
+        await OneSignal.Notifications.requestPermission();
+        setPermission(getPushPermission());
       });
-      // Update state after a short delay to check permission
+      // Fallback: check permission after delay in case callback didn't fire
       setTimeout(() => {
         setPermission(getPushPermission());
-      }, 1000);
+      }, 3000);
     } catch (e) {
       console.warn("Push permission error:", e);
+      // Ultimate fallback: native API
+      try {
+        const result = await Notification.requestPermission();
+        setPermission(result as PushPermission);
+      } catch (e2) {
+        console.warn("Native push permission error:", e2);
+      }
     }
   };
 
