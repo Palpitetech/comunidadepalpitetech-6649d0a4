@@ -38,7 +38,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <div className="container-senior flex items-center justify-between py-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3 no-underline">
+        <Link to="/home" className="flex items-center gap-3 no-underline">
           <img src="/logo.png" alt="Palpite Tech" className="h-9 w-9 rounded-md" />
           <span className="text-senior-xl font-bold text-primary hidden sm:inline">Palpite Tech</span>
           <span className="text-senior-xl font-bold text-primary sm:hidden">Palpite</span>
