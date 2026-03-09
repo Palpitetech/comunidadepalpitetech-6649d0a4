@@ -12,6 +12,16 @@
     <meta name="apple-mobile-web-app-title" content="Palpite Tech" />
     <link rel="apple-touch-icon" href="/pwa-512x512.png" />
 
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "9e05e0eb-3aa5-4ec1-b76e-7d32f7549585",
+        });
+      });
+    </script>
+
     <meta property="og:title" content="Palpite Tech - Análise de Loterias" />
     <meta property="og:description" content="As melhores ferramentas de análise para Lotofácil, Mega-Sena e Dupla Sena." />
     <meta property="og:type" content="website" />
