@@ -57,14 +57,19 @@ export default function GeradorDuplaSena() {
   }, []);
 
   const handleGenerate = () => {
+    if (!canGenerate) {
+      setUpgradeOpen(true);
+      return;
+    }
     const filtros = {
       dezenasFiexas: dezenasFiexasOpcao === "sim" ? dezenasFixas : [],
       dezenasExcluidas: dezenasExcluidasOpcao === "sim" ? dezenasExcluidas : [],
       pedidoEspecial: pedidoEspecial.trim() || undefined,
     };
-    
     generatePalpites(quantidade, periodoAnalise, filtros);
   };
+
+  const usageBadgeText = isAdmin ? "∞" : `${remaining_today}/${max_per_day}`;
 
   useEffect(() => {
     if (result) {
