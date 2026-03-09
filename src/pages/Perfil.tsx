@@ -174,7 +174,11 @@ export default function Perfil() {
             </div>
 
             {/* Botões de ação */}
-            <div className="pt-2 grid gap-3 sm:grid-cols-2">
+            <div className="pt-2 grid gap-3 sm:grid-cols-3">
+              <AlterarCelularDialog
+                celularAtual={profile?.celular || null}
+                onSuccess={handleCelularSuccess}
+              />
               <Button variant="outline" className="h-12 text-senior-base gap-2">
                 <Mail className="h-5 w-5" />
                 Alterar E-mail
