@@ -52,39 +52,24 @@ export default function DezenasporPosicao() {
     <MainLayout pageTitle="Dezenas por Posição">
       <div className="min-h-screen bg-background">
         <div className="px-4 py-6 space-y-4 max-w-2xl mx-auto">
-          {/* Controles */}
-          <Card>
-            <CardContent className="py-4">
-              <div className="flex flex-wrap items-center gap-4 justify-center">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Período:</span>
-                  <Select value={String(periodo)} onValueChange={(v) => setPeriodo(Number(v))}>
-                    <SelectTrigger className="w-[150px] h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">1 concurso</SelectItem>
-                      <SelectItem value="2">2 concursos</SelectItem>
-                      <SelectItem value="3">3 concursos</SelectItem>
-                      <SelectItem value="4">4 concursos</SelectItem>
-                      <SelectItem value="5">5 concursos</SelectItem>
-                      <SelectItem value="6">6 concursos</SelectItem>
-                      <SelectItem value="7">7 concursos</SelectItem>
-                      <SelectItem value="8">8 concursos</SelectItem>
-                      <SelectItem value="9">9 concursos</SelectItem>
-                      <SelectItem value="10">10 concursos</SelectItem>
-                      <SelectItem value="15">15 concursos</SelectItem>
-                      <SelectItem value="20">20 concursos</SelectItem>
-                      <SelectItem value="25">25 concursos</SelectItem>
-                      <SelectItem value="30">30 concursos</SelectItem>
-                      <SelectItem value="50">50 concursos</SelectItem>
-                      <SelectItem value="100">100 concursos</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Seletor de Período inline */}
+          <div className="flex justify-end">
+            <Select value={String(periodo)} onValueChange={(v) => setPeriodo(Number(v))}>
+              <SelectTrigger className="w-[130px] h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3">3 concursos</SelectItem>
+                <SelectItem value="5">5 concursos</SelectItem>
+                <SelectItem value="10">10 concursos</SelectItem>
+                <SelectItem value="15">15 concursos</SelectItem>
+                <SelectItem value="20">20 concursos</SelectItem>
+                <SelectItem value="25">25 concursos</SelectItem>
+                <SelectItem value="50">50 concursos</SelectItem>
+                <SelectItem value="100">100 concursos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Grid de Posições 5x3 */}
           <Card>
