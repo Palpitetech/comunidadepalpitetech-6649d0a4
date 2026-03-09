@@ -1,17 +1,27 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1" />
     <title>Palpite Tech - Análise de Loterias</title>
     <meta name="description" content="As melhores ferramentas de análise para Lotofácil, Mega-Sena e Dupla Sena. Resultados, tendências, gerador e muito mais." />
     <meta name="author" content="Palpite Tech" />
     <meta name="theme-color" content="#1e3a5f" />
+
+    <!-- PWA iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Palpite Tech" />
-    <link rel="apple-touch-icon" href="/pwa-512x512.png" />
+    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/pwa-152x152.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/pwa-192x192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/pwa-512x512.png" />
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/pwa-96x96.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/pwa-72x72.png" />
+
+    <!-- OneSignal Push -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -24,6 +34,7 @@
       });
     </script>
 
+    <!-- Open Graph -->
     <meta property="og:title" content="Palpite Tech - Análise de Loterias" />
     <meta property="og:description" content="As melhores ferramentas de análise para Lotofácil, Mega-Sena e Dupla Sena." />
     <meta property="og:type" content="website" />
@@ -32,9 +43,57 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@PalpiteTech" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <!-- Splash Screen CSS (instant loading) -->
+    <style>
+      #splash-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #1e3a5f;
+        transition: opacity 0.3s ease;
+      }
+      #splash-screen.fade-out {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #splash-screen img {
+        width: 96px;
+        height: 96px;
+        border-radius: 20px;
+      }
+      #splash-screen p {
+        color: rgba(255,255,255,0.9);
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 18px;
+        font-weight: 600;
+        margin-top: 16px;
+      }
+      #splash-loader {
+        margin-top: 24px;
+        width: 36px;
+        height: 36px;
+        border: 3px solid rgba(255,255,255,0.2);
+        border-top-color: rgba(255,255,255,0.8);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
   </head>
 
   <body>
+    <!-- Splash screen (removed by React after mount) -->
+    <div id="splash-screen">
+      <img src="/pwa-192x192.png" alt="Palpite Tech" width="96" height="96" />
+      <p>Palpite Tech</p>
+      <div id="splash-loader"></div>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
