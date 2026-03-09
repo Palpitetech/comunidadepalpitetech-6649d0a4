@@ -133,6 +133,18 @@ export default function LandingPage() {
         </div>
       </nav>
 
+      {/* Referral Banner */}
+      {referrerName && (
+        <div className="bg-accent/10 border-b border-accent/20">
+          <div className="max-w-5xl mx-auto px-5 py-3 flex items-center justify-center gap-2.5 text-center">
+            <UserPlus className="h-5 w-5 text-accent shrink-0" />
+            <p className="text-sm font-medium text-foreground">
+              <span className="font-bold">{referrerName}</span> te convidou para interagir com ele sobre a <span className="font-bold">Lotofácil</span> e <span className="font-bold">Mega Sena</span>.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ===== 1. HERO ===== */}
       <section className="relative bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.08)_0%,transparent_60%)]" />
