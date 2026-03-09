@@ -554,5 +554,13 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
         </div>
       </SheetContent>
     </Sheet>
+
+    <UpgradeModal
+      open={upgradeOpen}
+      onOpenChange={setUpgradeOpen}
+      featureLabel={upgradeLabel}
+      variant={upgradeVariant}
+    />
+    </>
   );
 }
