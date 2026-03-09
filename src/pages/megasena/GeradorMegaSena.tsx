@@ -189,29 +189,35 @@ export default function GeradorMegaSena() {
               </div>
             )}
 
-            <Button
-              onClick={handleGenerate}
-              disabled={isLoading || !canGenerate}
-              className="w-full h-14 text-lg gap-2"
-              size="lg"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  Analisando dados...
-                </>
-              ) : !canGenerate ? (
-                <>
-                  <Clock className="h-5 w-5" />
-                  Aguarde até amanhã
-                </>
-              ) : (
-                <>
-                  <Dices className="h-5 w-5" />
-                  Gerar {quantidade} Palpite{quantidade > 1 ? "s" : ""}
-                </>
+            <div className="relative">
+              <Button
+                onClick={handleGenerate}
+                disabled={isLoading}
+                className="w-full h-14 text-lg gap-2"
+                size="lg"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Analisando dados...
+                  </>
+                ) : (
+                  <>
+                    <Dices className="h-5 w-5" />
+                    Gerar {quantidade} Palpite{quantidade > 1 ? "s" : ""}
+                  </>
+                )}
+              </Button>
+              {!statusLoading && !isLoading && (
+                <span className={`absolute -top-2 -right-2 text-[11px] font-bold px-2 py-0.5 rounded-full border shadow-sm ${
+                  canGenerate
+                    ? "bg-background text-foreground border-border"
+                    : "bg-destructive text-destructive-foreground border-destructive"
+                }`}>
+                  {usageBadgeText} uso{max_per_day !== 1 ? "s" : ""}/dia
+                </span>
               )}
-            </Button>
+            </div>
 
             {isLoading && (
               <div className="space-y-3">
@@ -220,25 +226,6 @@ export default function GeradorMegaSena() {
                 </div>
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-3/4 mx-auto" />
-              </div>
-            )}
-
-            {!statusLoading && (
-              <div className={`flex items-center justify-center gap-2 p-3 rounded-lg ${
-                canGenerate 
-                  ? "bg-muted/50 text-muted-foreground" 
-                  : "bg-destructive/10 text-destructive"
-              }`}>
-                <Clock className="h-4 w-4" />
-                <span className="text-sm">
-                  {isAdmin ? (
-                    <>🛡️ Modo Admin: <strong>Geração ilimitada</strong></>
-                  ) : canGenerate ? (
-                    <>Você pode gerar <strong>{remaining_today}</strong> vez(es) hoje</>
-                  ) : (
-                    <>Limite diário atingido. Volte amanhã!</>
-                  )}
-                </span>
               </div>
             )}
           </CardContent>
@@ -256,6 +243,13 @@ export default function GeradorMegaSena() {
             dezenasFixes={dezenasFiexasOpcao === "sim" ? dezenasFixas : undefined}
           />
         )}
+
+        <UpgradeModal
+          open={upgradeOpen}
+          onOpenChange={setUpgradeOpen}
+          featureLabel="Gerador de Palpites — 10 usos/dia"
+          variant="vip"
+        />
       </div>
     </MainLayout>
   );
