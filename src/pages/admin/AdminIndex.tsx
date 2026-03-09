@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Users, ArrowRight, Bot, DollarSign, Gift } from "lucide-react";
+import { FileText, Users, ArrowRight, Bot, DollarSign, Gift, ShoppingCart } from "lucide-react";
 import { BotHealthWidget } from "@/components/admin/BotHealthWidget";
 
 export default function AdminIndex() {
@@ -110,6 +110,26 @@ export default function AdminIndex() {
             </CardHeader>
             <CardContent>
               <Link to="/admin/convites">
+                <Button className="w-full gap-2 h-12 text-senior-base">
+                  Acessar <ArrowRight className="h-5 w-5" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* Card Vendas Kirvano */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-senior-lg">
+                <ShoppingCart className="h-6 w-6 text-primary" />
+                Vendas Kirvano
+              </CardTitle>
+              <CardDescription className="text-senior-base">
+                Histórico de vendas e webhooks recebidos
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to="/admin/vendas">
                 <Button className="w-full gap-2 h-12 text-senior-base">
                   Acessar <ArrowRight className="h-5 w-5" />
                 </Button>
