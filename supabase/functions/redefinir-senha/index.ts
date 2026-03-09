@@ -20,9 +20,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (nova_senha.length < 8) {
+    if (nova_senha.length < 6) {
       return new Response(
-        JSON.stringify({ sucesso: false, erro: "A senha deve ter pelo menos 8 caracteres" }),
+        JSON.stringify({ sucesso: false, erro: "A senha deve ter pelo menos 6 caracteres" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
