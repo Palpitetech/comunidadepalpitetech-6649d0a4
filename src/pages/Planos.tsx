@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useMySubscription } from "@/hooks/useMySubscription";
-import { Loader2, Check, Crown, Star, Gift, ExternalLink, Sparkles } from "lucide-react";
+import { Loader2, Check, Crown, Star, Gift, ExternalLink, Sparkles, Bot, Zap, MessageCircle, Infinity } from "lucide-react";
 import type { Plan, PlanFeatures } from "@/types/plans";
 import { FEATURE_CATEGORIES, FEATURE_LABELS } from "@/types/plans";
 import { STATUS_CONFIG } from "@/lib/subscription";
