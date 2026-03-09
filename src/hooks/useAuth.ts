@@ -38,8 +38,28 @@ export function useAuth() {
             
             setProfile(data);
           }, 0);
+
+          // Vincular OneSignal external_id ao user_id
+          try {
+            window.OneSignalDeferred = window.OneSignalDeferred || [];
+            window.OneSignalDeferred.push(async (OneSignal: any) => {
+              await OneSignal.login(session.user.id);
+            });
+          } catch (e) {
+            console.warn("OneSignal login error:", e);
+          }
         } else {
           setProfile(null);
+
+          // Desvincular OneSignal ao deslogar
+          try {
+            window.OneSignalDeferred = window.OneSignalDeferred || [];
+            window.OneSignalDeferred.push(async (OneSignal: any) => {
+              await OneSignal.logout();
+            });
+          } catch (e) {
+            console.warn("OneSignal logout error:", e);
+          }
         }
       }
     );
