@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, DollarSign } from "lucide-react";
 import type { Plan, PlanFeatures, FeatureKey } from "@/types/plans";
-import { FEATURE_LABELS, FEATURE_LIST } from "@/types/plans";
+import { FEATURE_LABELS, FEATURE_CATEGORIES } from "@/types/plans";
 
 interface PlanFormProps {
   plan: Plan | null;
@@ -37,23 +37,32 @@ export function PlanForm({ plan, onSaved, onCancel }: PlanFormProps) {
   const [chatStatsLimit, setChatStatsLimit] = useState(
     (plan?.chat_estatisticas_max_msgs_per_day ?? 0).toString()
   );
+  const [geradorLimit, setGeradorLimit] = useState(
+    (plan?.gerador_max_per_day ?? 0).toString()
+  );
   const [features, setFeatures] = useState<PlanFeatures>(
-    plan?.features || {
-      gerador: false,
-      estatisticas: false,
-      quentes_frias: false,
-      ciclos: false,
-      comunidade_full: false,
-      guias: false,
-      notificacoes_push: false,
-      notificacoes_email: false,
-      notificacoes_sms: false,
-    }
+    plan?.features || {}
   );
 
   const handleFeatureChange = (feature: FeatureKey, checked: boolean) => {
     setFeatures((prev) => ({ ...prev, [feature]: checked }));
   };
+
+  const handleCategoryToggle = (categoryFeatures: FeatureKey[], checked: boolean) => {
+    setFeatures((prev) => {
+      const next = { ...prev };
+      for (const f of categoryFeatures) {
+        next[f] = checked;
+      }
+      return next;
+    });
+  };
+
+  const isCategoryFullyChecked = (categoryFeatures: FeatureKey[]) =>
+    categoryFeatures.every((f) => features[f] === true);
+
+  const isCategoryPartiallyChecked = (categoryFeatures: FeatureKey[]) =>
+    categoryFeatures.some((f) => features[f] === true) && !isCategoryFullyChecked(categoryFeatures);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +86,7 @@ export function PlanForm({ plan, onSaved, onCancel }: PlanFormProps) {
         display_order: parseInt(displayOrder) || 0,
         features,
         chat_estatisticas_max_msgs_per_day: Math.max(0, parseInt(chatStatsLimit) || 0),
+        gerador_max_per_day: Math.max(0, parseInt(geradorLimit) || 0),
       };
 
       if (plan) {
@@ -204,44 +214,86 @@ export function PlanForm({ plan, onSaved, onCancel }: PlanFormProps) {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="chatStatsLimit">Chat (Estatísticas): limite de mensagens/dia</Label>
-          <Input
-            id="chatStatsLimit"
-            type="number"
-            min={0}
-            value={chatStatsLimit}
-            onChange={(e) => setChatStatsLimit(e.target.value)}
-          />
-          <p className="text-xs text-muted-foreground">
-            Use 0 para não permitir conversas sobre estatísticas neste plano.
-          </p>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="geradorLimit">Gerador: limite/dia</Label>
+            <Input
+              id="geradorLimit"
+              type="number"
+              min={0}
+              value={geradorLimit}
+              onChange={(e) => setGeradorLimit(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="chatStatsLimit">Chat Stats: msgs/dia</Label>
+            <Input
+              id="chatStatsLimit"
+              type="number"
+              min={0}
+              value={chatStatsLimit}
+              onChange={(e) => setChatStatsLimit(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Seção: Funcionalidades */}
+      {/* Seção: Funcionalidades por Categoria */}
       <div className="space-y-3 pt-4 border-t">
         <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
           Funcionalidades Incluídas
         </h3>
-        <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
-          {FEATURE_LIST.map((feature) => (
-            <div key={feature} className="flex items-center space-x-3">
-              <Checkbox
-                id={feature}
-                checked={features[feature] || false}
-                onCheckedChange={(checked) =>
-                  handleFeatureChange(feature, checked === true)
-                }
-              />
-              <Label
-                htmlFor={feature}
-                className="text-sm font-normal cursor-pointer"
-              >
-                {FEATURE_LABELS[feature]}
-              </Label>
-            </div>
-          ))}
+
+        <div className="space-y-4">
+          {FEATURE_CATEGORIES.map((category) => {
+            const allChecked = isCategoryFullyChecked(category.features);
+            const partial = isCategoryPartiallyChecked(category.features);
+
+            return (
+              <div key={category.label} className="border rounded-lg overflow-hidden">
+                {/* Category header */}
+                <div
+                  className="flex items-center gap-3 px-4 py-2.5 bg-muted/50 cursor-pointer select-none"
+                  onClick={() => handleCategoryToggle(category.features, !allChecked)}
+                >
+                  <Checkbox
+                    checked={allChecked}
+                    className={partial ? "data-[state=unchecked]:bg-primary/30 data-[state=unchecked]:border-primary" : ""}
+                    onCheckedChange={(checked) =>
+                      handleCategoryToggle(category.features, checked === true)
+                    }
+                  />
+                  <span className="text-sm font-semibold">
+                    {category.emoji} {category.label}
+                  </span>
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {category.features.filter((f) => features[f]).length}/{category.features.length}
+                  </span>
+                </div>
+
+                {/* Individual features */}
+                <div className="px-4 py-2 space-y-2">
+                  {category.features.map((feature) => (
+                    <div key={feature} className="flex items-center space-x-3">
+                      <Checkbox
+                        id={`plan-${feature}`}
+                        checked={features[feature] || false}
+                        onCheckedChange={(checked) =>
+                          handleFeatureChange(feature, checked === true)
+                        }
+                      />
+                      <Label
+                        htmlFor={`plan-${feature}`}
+                        className="text-sm font-normal cursor-pointer"
+                      >
+                        {FEATURE_LABELS[feature]}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

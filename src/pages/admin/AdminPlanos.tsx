@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { PlanForm } from "@/components/admin/PlanForm";
 import { KirvanoWebhookCard } from "@/components/admin/KirvanoWebhookCard";
 import type { Plan, PlanFeatures } from "@/types/plans";
-import { FEATURE_LABELS, FEATURE_LIST } from "@/types/plans";
+import { FEATURE_LABELS, FEATURE_CATEGORIES } from "@/types/plans";
 
 export default function AdminPlanos() {
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -76,10 +76,6 @@ export default function AdminPlanos() {
     fetchPlans();
   };
 
-  const countActiveFeatures = (features: PlanFeatures): number => {
-    return Object.values(features).filter((v) => v === true).length;
-  };
-
   const getPlanIcon = (price: number) => {
     if (price === 0) return <Gift className="h-5 w-5 text-primary" />;
     if (price >= 200) return <Crown className="h-5 w-5 text-primary" />;
@@ -137,90 +133,14 @@ export default function AdminPlanos() {
 
         <div className="grid gap-4">
           {plans.map((plan) => (
-            <Card key={plan.id} className={!plan.is_active ? "opacity-60" : ""}>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {getPlanIcon(plan.price)}
-                    <div>
-                      <CardTitle className="text-senior-lg">{plan.name}</CardTitle>
-                      {plan.description && (
-                        <p className="text-sm text-muted-foreground mt-0.5">
-                          {plan.description}
-                        </p>
-                      )}
-                    </div>
-                    {!plan.is_active && (
-                      <Badge variant="secondary">Inativo</Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEdit(plan)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(plan.id)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 mt-2">
-                  <CardDescription className="text-base font-medium text-foreground">
-                    R$ {plan.price.toFixed(2).replace(".", ",")}
-                    <span className="text-muted-foreground font-normal"> / mês</span>
-                  </CardDescription>
-                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                    slug: {plan.slug}
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  {FEATURE_LIST.map((feature) => (
-                    <Badge
-                      key={feature}
-                      variant={plan.features[feature] ? "default" : "outline"}
-                      className={
-                        plan.features[feature]
-                          ? ""
-                          : "text-muted-foreground"
-                      }
-                    >
-                      {plan.features[feature] ? "✓" : "✗"} {FEATURE_LABELS[feature]}
-                    </Badge>
-                  ))}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {countActiveFeatures(plan.features)} de {FEATURE_LIST.length} recursos ativos
-                </p>
-
-                {plan.checkout_link && (
-                  <div className="flex items-center gap-2 pt-2 border-t">
-                    <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <span className="text-xs text-muted-foreground truncate flex-1">
-                      {plan.checkout_link}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => copyCheckoutLink(plan.checkout_link!)}
-                      className="h-7 px-2 gap-1"
-                    >
-                      <Copy className="h-3 w-3" />
-                      Copiar
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <PlanCard
+              key={plan.id}
+              plan={plan}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onCopyLink={copyCheckoutLink}
+              getPlanIcon={getPlanIcon}
+            />
           ))}
 
           {plans.length === 0 && (
@@ -233,5 +153,116 @@ export default function AdminPlanos() {
         </div>
       </div>
     </MainLayout>
+  );
+}
+
+// Extracted PlanCard component
+function PlanCard({
+  plan,
+  onEdit,
+  onDelete,
+  onCopyLink,
+  getPlanIcon,
+}: {
+  plan: Plan;
+  onEdit: (plan: Plan) => void;
+  onDelete: (id: string) => void;
+  onCopyLink: (link: string) => void;
+  getPlanIcon: (price: number) => React.ReactNode;
+}) {
+  return (
+    <Card className={!plan.is_active ? "opacity-60" : ""}>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {getPlanIcon(plan.price)}
+            <div>
+              <CardTitle className="text-senior-lg">{plan.name}</CardTitle>
+              {plan.description && (
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {plan.description}
+                </p>
+              )}
+            </div>
+            {!plan.is_active && <Badge variant="secondary">Inativo</Badge>}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => onEdit(plan)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onDelete(plan.id)}
+              className="text-destructive hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        <div className="flex items-center gap-4 mt-2">
+          <CardDescription className="text-base font-medium text-foreground">
+            R$ {plan.price.toFixed(2).replace(".", ",")}
+            <span className="text-muted-foreground font-normal"> / mês</span>
+          </CardDescription>
+          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+            slug: {plan.slug}
+          </span>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* Features grouped by category */}
+        <div className="space-y-2">
+          {FEATURE_CATEGORIES.map((category) => {
+            const activeCount = category.features.filter((f) => plan.features[f]).length;
+            if (activeCount === 0) return null;
+
+            return (
+              <div key={category.label}>
+                <p className="text-xs font-medium text-muted-foreground mb-1">
+                  {category.emoji} {category.label}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {category.features.map((feature) => (
+                    <Badge
+                      key={feature}
+                      variant={plan.features[feature] ? "default" : "outline"}
+                      className={`text-[11px] px-1.5 py-0 ${
+                        plan.features[feature] ? "" : "text-muted-foreground"
+                      }`}
+                    >
+                      {plan.features[feature] ? "✓" : "✗"} {FEATURE_LABELS[feature]}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="text-sm text-muted-foreground">
+          {Object.values(plan.features).filter(Boolean).length} de{" "}
+          {Object.keys(FEATURE_LABELS).length} recursos ativos
+        </p>
+
+        {plan.checkout_link && (
+          <div className="flex items-center gap-2 pt-2 border-t">
+            <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <span className="text-xs text-muted-foreground truncate flex-1">
+              {plan.checkout_link}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onCopyLink(plan.checkout_link!)}
+              className="h-7 px-2 gap-1"
+            >
+              <Copy className="h-3 w-3" />
+              Copiar
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
