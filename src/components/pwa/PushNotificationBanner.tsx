@@ -65,10 +65,10 @@ export function PushNotificationBanner() {
 
         <div className="flex-1 min-w-0">
           <p className="font-bold text-[15px] leading-tight">
-            Ative as notificações
+            Receba quando sair novos resultados
           </p>
           <p className="text-[13px] opacity-80 leading-tight mt-0.5">
-            Receba resultados na hora do sorteio
+            Além de notificações de novas análises, não perca nada.
           </p>
         </div>
 
