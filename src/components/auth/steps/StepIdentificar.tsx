@@ -3,7 +3,7 @@ import { CardContent, CardDescription, CardHeader, CardTitle } from "@/component
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Search, Mail, Phone, ArrowLeft } from "lucide-react";
+import { Loader2, Mail, Phone, ArrowLeft } from "lucide-react";
 
 interface StepIdentificarProps {
   isLoading: boolean;
@@ -26,21 +26,18 @@ export function StepIdentificar({ isLoading, error, onBuscar, onVoltar }: StepId
 
   return (
     <>
-      <CardHeader className="text-center pb-6">
-        <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-          <Search className="h-8 w-8 text-primary" />
-        </div>
-        <CardTitle className="text-senior-2xl">Recuperar Senha</CardTitle>
-        <CardDescription className="text-senior-base">
+      <CardHeader className="text-center pb-4 md:pb-6 px-4 md:px-6">
+        <CardTitle className="text-xl md:text-senior-2xl">Recuperar Senha</CardTitle>
+        <CardDescription className="text-sm md:text-senior-base">
           Digite seu email ou celular cadastrado para receber um código de recuperação.
         </CardDescription>
       </CardHeader>
 
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="identificador" className="text-senior-base flex items-center gap-2">
-              <Icon className="h-5 w-5" />
+      <CardContent className="px-4 md:px-6">
+        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+          <div className="space-y-1.5 md:space-y-2">
+            <Label htmlFor="identificador" className="text-sm md:text-senior-base flex items-center gap-2">
+              <Icon className="h-4 w-4 md:h-5 md:w-5" />
               Email ou Celular
             </Label>
             <Input
@@ -49,20 +46,20 @@ export function StepIdentificar({ isLoading, error, onBuscar, onVoltar }: StepId
               placeholder="seu@email.com ou (11) 99999-9999"
               value={identificador}
               onChange={(e) => setIdentificador(e.target.value)}
-              className="input-senior"
+              className="h-11 md:h-14 text-sm md:text-lg px-3 md:px-4 rounded-lg md:rounded-xl border-2 focus:border-primary"
               autoFocus
             />
           </div>
 
           {error && (
-            <div className="p-4 rounded-xl bg-destructive/10 text-destructive text-senior-base">
+            <div className="p-3 md:p-4 rounded-xl bg-destructive/10 text-destructive text-sm md:text-senior-base">
               {error}
             </div>
           )}
 
           <Button
             type="submit"
-            className="btn-senior w-full"
+            className="w-full h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl"
             disabled={isLoading || !identificador.trim()}
           >
             {isLoading ? (
@@ -71,21 +68,18 @@ export function StepIdentificar({ isLoading, error, onBuscar, onVoltar }: StepId
                 Buscando...
               </>
             ) : (
-              <>
-                <Search className="h-5 w-5 mr-2" />
-                Enviar Código
-              </>
+              "Enviar Código"
             )}
           </Button>
 
-          <div className="pt-4 border-t">
+          <div className="flex flex-col gap-2 md:gap-3 pt-1 md:pt-2">
             <Button
               type="button"
               variant="ghost"
               onClick={onVoltar}
-              className="w-full h-12 text-senior-base"
+              className="w-full h-10 md:h-12 text-sm md:text-senior-base"
             >
-              <ArrowLeft className="h-5 w-5 mr-2" />
+              <ArrowLeft className="h-4 w-4 md:h-5 md:w-5 mr-2" />
               Voltar para o login
             </Button>
           </div>
