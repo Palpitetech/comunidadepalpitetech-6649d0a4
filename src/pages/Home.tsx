@@ -1,10 +1,12 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { Volume2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Volume2, UserPlus } from "lucide-react";
 import { CheckCircle2, ArrowRight, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { captureReferralCode } from "@/hooks/useConvites";
 
 function VideoWithSoundPrompt() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -47,12 +49,30 @@ function VideoWithSoundPrompt() {
 export default function LandingPage() {
   const { isAuthenticated } = useAuthContext();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [referrerName, setReferrerName] = useState<string | null>(null);
+
+  const refCode = searchParams.get("ref");
 
   useEffect(() => {
     if (isAuthenticated) navigate("/home", { replace: true });
   }, [isAuthenticated, navigate]);
 
-  const ctaLink = "/login?cadastro=true";
+  // Capture referral code and fetch referrer name
+  useEffect(() => {
+    if (!refCode) return;
+    captureReferralCode();
+
+    const fetchReferrer = async () => {
+      const { data } = await supabase.rpc("get_referrer_name", { p_code: refCode });
+      if (data) {
+        setReferrerName((data as string).split(" ")[0]);
+      }
+    };
+    fetchReferrer();
+  }, [refCode]);
+
+  const ctaLink = refCode ? `/login?cadastro=true&ref=${refCode}` : "/login?cadastro=true";
 
   const CtaPrimary = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
     <Button size="lg" className={`bg-accent text-accent-foreground hover:bg-accent/90 text-sm md:text-base font-semibold px-7 py-5 rounded-xl shadow-lg ${className}`} asChild>
@@ -108,6 +128,18 @@ export default function LandingPage() {
           </div>
         </div>
       </nav>
+
+      {/* Referral Banner */}
+      {referrerName && (
+        <div className="bg-accent/10 border-b border-accent/20">
+          <div className="max-w-5xl mx-auto px-5 py-3 flex items-center justify-center gap-2.5 text-center">
+            <UserPlus className="h-5 w-5 text-accent shrink-0" />
+            <p className="text-sm font-medium text-foreground">
+              <span className="font-bold">{referrerName}</span> te convidou para interagir com ele sobre a <span className="font-bold">Lotofácil</span> e <span className="font-bold">Mega Sena</span>.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ===== 1. HERO ===== */}
       <section className="relative bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground overflow-hidden">

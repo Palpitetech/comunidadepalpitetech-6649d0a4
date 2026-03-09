@@ -20,7 +20,7 @@ export const ConviteCard: React.FC<ConviteCardProps> = ({
   const { toast } = useToast();
 
   const referralLink = referralCode
-    ? `${window.location.origin}/login?ref=${referralCode}`
+    ? `${window.location.origin}/?ref=${referralCode}`
     : "";
 
   const handleCopy = async () => {
@@ -49,8 +49,8 @@ export const ConviteCard: React.FC<ConviteCardProps> = ({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Junte-se à Comunidade Palpite Tech!",
-          text: "Estou usando a Comunidade Palpite Tech para analisar loterias. Crie sua conta usando meu convite!",
+          title: "Venha para a Comunidade Palpite Tech!",
+          text: "Te convidei para interagir comigo sobre a Lotofácil e Mega Sena na Comunidade Palpite Tech!",
           url: referralLink,
         });
       } catch {
