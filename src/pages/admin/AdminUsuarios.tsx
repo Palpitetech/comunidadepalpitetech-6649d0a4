@@ -6,7 +6,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Loader2, Users, UserCheck, UserX, ShieldOff, ChevronRight, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, Loader2, Users, UserCheck, UserX, ShieldOff, ChevronRight, ChevronLeft, X } from "lucide-react";
 import { toast } from "sonner";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
 import { cn } from "@/lib/utils";
@@ -34,6 +35,8 @@ export default function AdminUsuarios() {
   const [selectedUser, setSelectedUser] = useState<UserWithPlan | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("todos");
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 20;
 
   const fetchData = async () => {
     try {
@@ -104,6 +107,14 @@ export default function AdminUsuarios() {
       user.celular?.includes(search)
     );
   }, [users, plans, activeFilter, searchTerm]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(0);
+  }, [activeFilter, searchTerm]);
+
+  const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE);
+  const paginatedUsers = filteredUsers.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   const handleRowClick = (user: UserWithPlan) => {
     setSelectedUser(user);
@@ -192,16 +203,43 @@ export default function AdminUsuarios() {
           )}
         </div>
 
-        {/* Results count */}
-        {(searchTerm || activeFilter !== "todos") && (
+        {/* Results count & page info */}
+        <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">
-            {filteredUsers.length} resultado{filteredUsers.length !== 1 ? "s" : ""}
+            {filteredUsers.length > 0
+              ? `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, filteredUsers.length)} de ${filteredUsers.length}`
+              : "0 resultados"}
           </p>
-        )}
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                disabled={page === 0}
+                onClick={() => setPage(p => p - 1)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-xs text-muted-foreground min-w-[3ch] text-center">
+                {page + 1}/{totalPages}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                disabled={page >= totalPages - 1}
+                onClick={() => setPage(p => p + 1)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
 
         {/* Mobile: User list */}
         <div className="md:hidden space-y-0.5">
-          {filteredUsers.map((user) => (
+          {paginatedUsers.map((user) => (
             <button
               key={user.id}
               className="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg active:bg-muted/60 transition-colors border-b border-border/30 last:border-0"
@@ -260,7 +298,7 @@ export default function AdminUsuarios() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.map((user) => (
+              {paginatedUsers.map((user) => (
                 <TableRow
                   key={user.id}
                   className="cursor-pointer hover:bg-muted/50"
@@ -311,7 +349,33 @@ export default function AdminUsuarios() {
           </Table>
         </div>
 
-        {/* Sheet de Detalhes */}
+        {/* Bottom pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 py-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1"
+              disabled={page === 0}
+              onClick={() => setPage(p => p - 1)}
+            >
+              <ChevronLeft className="h-3.5 w-3.5" /> Anterior
+            </Button>
+            <span className="text-xs text-muted-foreground px-2">
+              {page + 1} de {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1"
+              disabled={page >= totalPages - 1}
+              onClick={() => setPage(p => p + 1)}
+            >
+              Próxima <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        )}
+
         <UserDetailSheet
           user={selectedUser}
           plans={plans}
