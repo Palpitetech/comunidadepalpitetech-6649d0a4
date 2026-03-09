@@ -292,18 +292,20 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                              {renderBadge("/smart-gerador")}
                            </div>
                         </Link>
-                        <Link to="/desdobramento" onClick={closeAndNavigate}>
-                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                            <Shuffle className="h-4 w-4" />
-                            Desdobramento
-                          </div>
-                        </Link>
-                        <Link to="/fechamento" onClick={closeAndNavigate}>
-                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                            <Grid3X3 className="h-4 w-4" />
-                            Gerador de Fechamento
-                          </div>
-                        </Link>
+                         <Link to="/desdobramento" onClick={(e) => handleGatedClick(e, "/desdobramento")}>
+                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                             <Shuffle className="h-4 w-4" />
+                             Desdobramento
+                             {renderBadge("/desdobramento")}
+                           </div>
+                         </Link>
+                         <Link to="/fechamento" onClick={(e) => handleGatedClick(e, "/fechamento")}>
+                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                             <Grid3X3 className="h-4 w-4" />
+                             Gerador de Fechamento
+                             {renderBadge("/fechamento")}
+                           </div>
+                         </Link>
                       </div>
                     </AccordionContent>
                   </AccordionItem>
