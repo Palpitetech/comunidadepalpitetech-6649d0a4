@@ -260,7 +260,7 @@ export default function AdminVendas() {
           </Card>
         ) : (
           <div className="space-y-2">
-            {sales.map(({ key, events, latest }) => {
+            {paginatedSales.map(({ key, events, latest }) => {
               const evInfo = getEventInfo(latest.event);
               const name = customerName(latest);
               const price = totalPrice(latest);
@@ -301,6 +301,35 @@ export default function AdminVendas() {
                 </Card>
               );
             })}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-2">
+                <p className="text-xs text-muted-foreground">
+                  {sales.length} vendas • Página {page} de {totalPages}
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={page <= 1}
+                    onClick={() => setPage(p => p - 1)}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={page >= totalPages}
+                    onClick={() => setPage(p => p + 1)}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
