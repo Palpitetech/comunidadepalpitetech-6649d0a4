@@ -12,7 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Search, CreditCard, QrCode, Barcode, ChevronRight,
   CheckCircle2, XCircle, Clock, AlertTriangle, RefreshCw, ArrowLeft,
-  ShoppingCart, User, Calendar, DollarSign, FileText, Copy, Check
+  ShoppingCart, User, Calendar, DollarSign, FileText, Copy, Check,
+  MessageCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
