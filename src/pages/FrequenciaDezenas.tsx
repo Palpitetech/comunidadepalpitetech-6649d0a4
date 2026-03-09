@@ -97,53 +97,42 @@ export default function FrequenciaDezenas() {
     <MainLayout pageTitle="Frequência das Dezenas">
       <div className="min-h-screen bg-background">
         <div className="px-4 py-6 space-y-4 max-w-2xl mx-auto">
-          <Card>
-            <CardContent className="py-4">
-              <div className="flex flex-wrap items-center gap-4 justify-center">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Período:</span>
-                  <Select value={String(periodo)} onValueChange={(v) => setPeriodo(Number(v))}>
-                    <SelectTrigger className="w-[150px] h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">1 concurso</SelectItem>
-                      <SelectItem value="2">2 concursos</SelectItem>
-                      <SelectItem value="3">3 concursos</SelectItem>
-                      <SelectItem value="4">4 concursos</SelectItem>
-                      <SelectItem value="5">5 concursos</SelectItem>
-                      <SelectItem value="6">6 concursos</SelectItem>
-                      <SelectItem value="7">7 concursos</SelectItem>
-                      <SelectItem value="8">8 concursos</SelectItem>
-                      <SelectItem value="9">9 concursos</SelectItem>
-                      <SelectItem value="10">10 concursos</SelectItem>
-                      <SelectItem value="15">15 concursos</SelectItem>
-                      <SelectItem value="20">20 concursos</SelectItem>
-                      <SelectItem value="25">25 concursos</SelectItem>
-                      <SelectItem value="30">30 concursos</SelectItem>
-                      <SelectItem value="50">50 concursos</SelectItem>
-                      <SelectItem value="100">100 concursos</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Filtros + Resumo na mesma linha */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 shrink-0">
+              <Select value={String(periodo)} onValueChange={(v) => setPeriodo(Number(v))}>
+                <SelectTrigger className="w-[130px] h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 concurso</SelectItem>
+                  <SelectItem value="2">2 concursos</SelectItem>
+                  <SelectItem value="3">3 concursos</SelectItem>
+                  <SelectItem value="5">5 concursos</SelectItem>
+                  <SelectItem value="10">10 concursos</SelectItem>
+                  <SelectItem value="15">15 concursos</SelectItem>
+                  <SelectItem value="20">20 concursos</SelectItem>
+                  <SelectItem value="25">25 concursos</SelectItem>
+                  <SelectItem value="50">50 concursos</SelectItem>
+                  <SelectItem value="100">100 concursos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Resumo - Linha Única */}
-          <div className="flex items-center justify-center gap-2">
-            <Badge variant="outline" className="px-2 py-1 gap-1.5 bg-emerald-500/10 border-emerald-500/30 whitespace-nowrap">
-              <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
-              <span className="text-xs">Fortes: <strong>{fortes}</strong></span>
-            </Badge>
-            <Badge variant="outline" className="px-2 py-1 gap-1.5 whitespace-nowrap">
-              <Minus className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs">Neutras: <strong>{neutras}</strong></span>
-            </Badge>
-            <Badge variant="outline" className="px-2 py-1 gap-1.5 bg-red-500/10 border-red-500/30 whitespace-nowrap">
-              <TrendingDown className="h-3.5 w-3.5 text-red-500" />
-              <span className="text-xs">Fracas: <strong>{fracas}</strong></span>
-            </Badge>
+            <div className="flex items-center gap-1.5 flex-wrap justify-end">
+              <Badge variant="outline" className="px-1.5 py-0.5 gap-1 bg-emerald-500/10 border-emerald-500/30 text-xs">
+                <TrendingUp className="h-3 w-3 text-emerald-500" />
+                <strong>{fortes}</strong>
+              </Badge>
+              <Badge variant="outline" className="px-1.5 py-0.5 gap-1 text-xs">
+                <Minus className="h-3 w-3 text-muted-foreground" />
+                <strong>{neutras}</strong>
+              </Badge>
+              <Badge variant="outline" className="px-1.5 py-0.5 gap-1 bg-red-500/10 border-red-500/30 text-xs">
+                <TrendingDown className="h-3 w-3 text-red-500" />
+                <strong>{fracas}</strong>
+              </Badge>
+            </div>
           </div>
 
           {/* Grid 5x5 */}
