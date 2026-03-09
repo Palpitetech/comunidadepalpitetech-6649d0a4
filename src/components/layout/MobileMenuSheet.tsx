@@ -15,7 +15,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sparkles, Target, Table2, Flame } from "lucide-react";
+import { Sparkles, Target, Table2, Flame, Gift } from "lucide-react";
 import {
   ArrowLeft,
   Home,
@@ -450,6 +450,13 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
 
         {/* Rodapé Minimalista */}
         <div className="mt-auto px-4 py-4 border-t border-border/30 space-y-3">
+          <Link to="/convites" onClick={closeAndNavigate}>
+            <div className="flex items-center gap-2 text-primary font-medium text-base transition-colors hover:opacity-80">
+              <Gift className="h-5 w-5" />
+              🎁 Ganhar Assinatura grátis
+            </div>
+          </Link>
+
           <a
             href={supportWhatsApp}
             target="_blank"
