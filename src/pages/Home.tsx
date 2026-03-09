@@ -6,6 +6,44 @@ import { Volume2 } from "lucide-react";
 import { CheckCircle2, ArrowRight, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+function VideoWithSoundPrompt() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isMuted, setIsMuted] = useState(true);
+
+  const handleUnmute = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.muted = false;
+      videoRef.current.play();
+      setIsMuted(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl overflow-hidden border border-border shadow-lg max-w-xs mx-auto relative cursor-pointer" onClick={isMuted ? handleUnmute : undefined}>
+      <video
+        ref={videoRef}
+        className="w-full aspect-[9/16] object-cover"
+        autoPlay
+        loop
+        muted={isMuted}
+        playsInline
+      >
+        <source src="/videos/tour-comunidade.mp4" type="video/mp4" />
+        Seu navegador não suporta vídeo.
+      </video>
+      {isMuted && (
+        <div className="absolute inset-0 flex items-end justify-center pb-8 bg-gradient-to-t from-black/60 via-transparent to-transparent">
+          <div className="flex items-center gap-2 bg-white/90 dark:bg-card/90 text-foreground rounded-full px-4 py-2.5 shadow-lg animate-pulse">
+            <Volume2 className="h-4 w-4 text-primary" />
+            <span className="text-xs font-semibold">Clique para ativar o som</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function LandingPage() {
   const { isAuthenticated } = useAuthContext();
   const navigate = useNavigate();
