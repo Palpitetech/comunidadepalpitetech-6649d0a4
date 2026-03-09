@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useMySubscription } from "@/hooks/useMySubscription";
-import { Loader2, Check, Crown, Star, Gift, ExternalLink, Sparkles } from "lucide-react";
+import { Loader2, Check, Crown, Star, Gift, ExternalLink, Sparkles, Bot, Zap, MessageCircle, Infinity } from "lucide-react";
 import type { Plan, PlanFeatures } from "@/types/plans";
 import { FEATURE_CATEGORIES, FEATURE_LABELS } from "@/types/plans";
 import { STATUS_CONFIG } from "@/lib/subscription";
@@ -119,6 +119,7 @@ export default function Planos() {
           {plans.map((plan) => {
             const isCurrent = isCurrentPlan(plan.id);
             const isPopular = plan.id === bestPlanId && plan.price > 0;
+            const isVip = plan.slug === "plano-anual-vip";
             const activeFeatureCount = Object.values(plan.features).filter(Boolean).length;
 
             return (
@@ -127,16 +128,27 @@ export default function Planos() {
                 className={`relative flex flex-col transition-all duration-200 ${
                   isCurrent
                     ? "border-primary ring-2 ring-primary/20 shadow-lg"
+                    : isVip
+                    ? "border-yellow-500 ring-2 ring-yellow-400/30 shadow-xl bg-gradient-to-b from-yellow-50/50 to-card"
                     : isPopular
                     ? "border-accent ring-1 ring-accent/30 shadow-md"
                     : "hover:shadow-md"
                 }`}
               >
                 {/* Popular badge */}
-                {isPopular && !isCurrent && (
+                {isPopular && !isCurrent && !isVip && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <Badge className="bg-accent text-accent-foreground px-3 py-0.5 text-xs shadow-sm">
                       Mais completo
+                    </Badge>
+                  </div>
+                )}
+
+                {/* VIP badge */}
+                {isVip && !isCurrent && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <Badge className="bg-yellow-500 text-white px-4 py-0.5 text-xs shadow-md font-bold tracking-wide">
+                      ⭐ VIP
                     </Badge>
                   </div>
                 )}
@@ -179,6 +191,45 @@ export default function Planos() {
                       </>
                     )}
                   </div>
+
+                  {/* VIP Exclusive Highlights */}
+                  {isVip && (
+                    <div className="rounded-lg border border-yellow-300/60 bg-yellow-50/80 p-3 space-y-2.5">
+                      <p className="text-xs font-bold text-yellow-700 uppercase tracking-wider flex items-center gap-1.5">
+                        <Zap className="h-3.5 w-3.5" />
+                        Exclusivo VIP
+                      </p>
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2.5">
+                          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-yellow-500/20 flex-shrink-0 mt-0.5">
+                            <Bot className="h-3.5 w-3.5 text-yellow-700" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">Ferramentas com IA</p>
+                            <p className="text-xs text-muted-foreground">Análises inteligentes exclusivas potencializadas por inteligência artificial</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-yellow-500/20 flex-shrink-0 mt-0.5">
+                            <MessageCircle className="h-3.5 w-3.5 text-yellow-700" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">Chat IA Completo</p>
+                            <p className="text-xs text-muted-foreground">Converse sobre estatísticas, estratégias e ferramentas com a IA</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-yellow-500/20 flex-shrink-0 mt-0.5">
+                            <Infinity className="h-3.5 w-3.5 text-yellow-700" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">Gerador Ilimitado</p>
+                            <p className="text-xs text-muted-foreground">Gere quantos palpites quiser por dia, sem limite</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Feature summary */}
                   <div className="flex-1 space-y-3">
