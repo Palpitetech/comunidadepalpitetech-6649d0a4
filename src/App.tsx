@@ -75,7 +75,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             {/* Rotas Públicas */}
-            <Route path="/landing" element={<LandingPage />} />
+            <Route path="/landing" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/recuperar-senha" element={<RecuperarSenha />} />
             <Route path="/termos" element={<Termos />} />
