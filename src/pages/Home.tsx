@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { Volume2 } from "lucide-react";
 import { CheckCircle2, ArrowRight, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
