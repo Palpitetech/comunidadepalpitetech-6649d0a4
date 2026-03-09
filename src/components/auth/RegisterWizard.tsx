@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { StepIndicator } from "./steps/StepIndicator";
 import { StepDadosPessoais } from "./steps/StepDadosPessoais";
@@ -8,6 +8,7 @@ import { StepSucesso } from "./steps/StepSucesso";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useVerificacao } from "@/hooks/useVerificacao";
+import { captureReferralCode, getStoredReferralCode, clearStoredReferralCode } from "@/hooks/useConvites";
 
 interface FormData {
   nome: string;
