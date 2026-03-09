@@ -225,13 +225,13 @@ export default function LandingPage() {
           <p className="text-muted-foreground text-sm md:text-base mb-6">
             Você nunca viu uma comunidade assim antes.
           </p>
-          <div className="rounded-2xl overflow-hidden border border-border shadow-lg">
+          <div className="rounded-2xl overflow-hidden border border-border shadow-lg max-w-xs mx-auto">
             <video
-              className="w-full aspect-video object-contain bg-black"
-              controls
+              className="w-full aspect-[9/16] object-cover"
+              autoPlay
+              loop
+              muted
               playsInline
-              preload="metadata"
-              poster=""
             >
               <source src="/videos/tour-comunidade.mp4" type="video/mp4" />
               Seu navegador não suporta vídeo.
