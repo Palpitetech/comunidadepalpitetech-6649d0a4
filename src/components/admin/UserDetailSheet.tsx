@@ -42,7 +42,7 @@ export function UserDetailSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+      <SheetContent className="w-full sm:max-w-lg overflow-y-auto h-[100dvh] md:h-auto p-4 md:p-6">
         <SheetHeader className="pb-4">
           <div className="flex items-center gap-4">
             <Avatar className="h-14 w-14">
