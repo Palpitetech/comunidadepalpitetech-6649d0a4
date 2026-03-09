@@ -35,6 +35,8 @@ export default function AdminUsuarios() {
   const [selectedUser, setSelectedUser] = useState<UserWithPlan | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("todos");
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 20;
 
   const fetchData = async () => {
     try {
