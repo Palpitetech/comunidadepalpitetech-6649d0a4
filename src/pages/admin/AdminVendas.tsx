@@ -12,7 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Search, CreditCard, QrCode, Barcode, ChevronRight,
   CheckCircle2, XCircle, Clock, AlertTriangle, RefreshCw, ArrowLeft,
-  ShoppingCart, User, Calendar, DollarSign, FileText, Copy, Check
+  ShoppingCart, User, Calendar, DollarSign, FileText, Copy, Check,
+  MessageCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -310,6 +311,27 @@ export default function AdminVendas() {
   );
 }
 
+function CopyableField({ label, value }: { label: string; value: string }) {
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(`${label} copiado!`);
+    } catch {
+      toast.error("Erro ao copiar");
+    }
+  };
+  return (
+    <button
+      onClick={handleCopy}
+      className="flex items-center justify-between w-full group hover:bg-accent/50 -mx-1 px-1 rounded transition-colors cursor-pointer"
+      title={`Copiar ${label}`}
+    >
+      <span className="text-muted-foreground truncate">{value}</span>
+      <Copy className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2" />
+    </button>
+  );
+}
+
 function PixCodeBlock({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = async () => {
@@ -366,13 +388,42 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
           <h3 className="text-sm font-semibold flex items-center gap-2">
             <User className="h-4 w-4" /> Cliente
           </h3>
-          <div className="bg-muted/50 rounded-lg p-3 space-y-1 text-sm">
-            {customer.name && <p className="font-medium">{customer.name}</p>}
-            {latest.email && <p className="text-muted-foreground">{latest.email}</p>}
-            {latest.phone && <p className="text-muted-foreground">{latest.phone}</p>}
+          <div className="bg-muted/50 rounded-lg p-3 space-y-1.5 text-sm">
+            {customer.name && (
+              <CopyableField label="Nome" value={customer.name} />
+            )}
+            {latest.email && (
+              <CopyableField label="Email" value={latest.email} />
+            )}
+            {latest.phone && (
+              <CopyableField label="Telefone" value={latest.phone} />
+            )}
             {customer.document && (
               <p className="text-muted-foreground text-xs">CPF: {customer.document}</p>
             )}
+            {(() => {
+              const phone = latest.phone || customer.phone_number;
+              if (!phone) return null;
+              const digits = phone.replace(/\D/g, "");
+              const waNumber = digits.startsWith("55") ? digits : `55${digits}`;
+              return (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full gap-2 mt-2"
+                  asChild
+                >
+                  <a
+                    href={`https://wa.me/${waNumber}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    Enviar WhatsApp
+                  </a>
+                </Button>
+              );
+            })()}
           </div>
         </div>
 
