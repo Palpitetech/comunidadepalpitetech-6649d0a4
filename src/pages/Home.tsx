@@ -49,12 +49,34 @@ function VideoWithSoundPrompt() {
 export default function LandingPage() {
   const { isAuthenticated } = useAuthContext();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [referrerName, setReferrerName] = useState<string | null>(null);
+
+  const refCode = searchParams.get("ref");
 
   useEffect(() => {
     if (isAuthenticated) navigate("/home", { replace: true });
   }, [isAuthenticated, navigate]);
 
-  const ctaLink = "/login?cadastro=true";
+  // Capture referral code and fetch referrer name
+  useEffect(() => {
+    if (!refCode) return;
+    captureReferralCode();
+
+    const fetchReferrer = async () => {
+      const { data } = await supabase
+        .from("perfis")
+        .select("nome")
+        .eq("referral_code", refCode)
+        .single();
+      if (data?.nome) {
+        setReferrerName(data.nome.split(" ")[0]); // First name only
+      }
+    };
+    fetchReferrer();
+  }, [refCode]);
+
+  const ctaLink = refCode ? `/login?cadastro=true&ref=${refCode}` : "/login?cadastro=true";
 
   const CtaPrimary = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
     <Button size="lg" className={`bg-accent text-accent-foreground hover:bg-accent/90 text-sm md:text-base font-semibold px-7 py-5 rounded-xl shadow-lg ${className}`} asChild>
