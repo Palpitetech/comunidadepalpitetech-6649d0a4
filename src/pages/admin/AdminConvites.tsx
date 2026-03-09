@@ -1,13 +1,24 @@
 import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Loader2, Users, ShoppingCart, Trophy } from "lucide-react";
+import { Search, Loader2, Users, ShoppingCart, Trophy, Gift, Check } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+interface RewardInfo {
+  id: string;
+  milestone_type: string;
+  milestone_count: number;
+  days_granted: number;
+  created_at: string;
+  claimed_at: string | null;
+}
 
 interface ReferrerStats {
   id: string;
@@ -17,12 +28,18 @@ interface ReferrerStats {
   referral_code: string | null;
   total_cadastros: number;
   total_vendas: number;
+  cadastros_atual: number;
+  vendas_atual: number;
+  rewards: RewardInfo[];
+  total_days_claimed: number;
+  total_days_unclaimed: number;
 }
 
 export default function AdminConvites() {
   const [stats, setStats] = useState<ReferrerStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [expandedUser, setExpandedUser] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStats();
@@ -30,7 +47,6 @@ export default function AdminConvites() {
 
   const fetchStats = async () => {
     try {
-      // Get all referrers with referral_code
       const { data: referrers, error: refError } = await supabase
         .from("perfis")
         .select("id, nome, avatar_url, email, referral_code")
@@ -46,34 +62,81 @@ export default function AdminConvites() {
 
       const referrerIds = referrers.map((r) => r.id);
 
-      // Get all convites for these referrers
-      const { data: convites, error: convError } = await supabase
-        .from("convites")
-        .select("referrer_id, converted_at")
-        .in("referrer_id", referrerIds);
+      // Fetch convites and rewards in parallel
+      const [convitesRes, rewardsRes] = await Promise.all([
+        supabase
+          .from("convites")
+          .select("referrer_id, converted_at, created_at")
+          .in("referrer_id", referrerIds),
+        supabase
+          .from("referral_rewards")
+          .select("id, user_id, milestone_type, milestone_count, days_granted, created_at, claimed_at")
+          .in("user_id", referrerIds)
+          .order("created_at", { ascending: false }),
+      ]);
 
-      if (convError) throw convError;
+      if (convitesRes.error) throw convitesRes.error;
+      if (rewardsRes.error) throw rewardsRes.error;
 
-      // Aggregate
-      const countMap = new Map<string, { cadastros: number; vendas: number }>();
-      (convites || []).forEach((c) => {
-        const entry = countMap.get(c.referrer_id) || { cadastros: 0, vendas: 0 };
+      const convites = convitesRes.data || [];
+      const rewards = rewardsRes.data || [];
+
+      // Build rewards map
+      const rewardsMap = new Map<string, RewardInfo[]>();
+      rewards.forEach((r) => {
+        const list = rewardsMap.get(r.user_id) || [];
+        list.push(r);
+        rewardsMap.set(r.user_id, list);
+      });
+
+      // Build convites map with "current" counts (since last claim)
+      const countMap = new Map<string, { cadastros: number; vendas: number; cadastros_atual: number; vendas_atual: number }>();
+      
+      // Find last claimed_at per user
+      const lastClaimMap = new Map<string, string>();
+      rewards.forEach((r) => {
+        if (r.claimed_at) {
+          const existing = lastClaimMap.get(r.user_id);
+          if (!existing || r.claimed_at > existing) {
+            lastClaimMap.set(r.user_id, r.claimed_at);
+          }
+        }
+      });
+
+      convites.forEach((c) => {
+        const entry = countMap.get(c.referrer_id) || { cadastros: 0, vendas: 0, cadastros_atual: 0, vendas_atual: 0 };
         entry.cadastros++;
         if (c.converted_at) entry.vendas++;
+        
+        // Count only after last claim for "current" progress
+        const lastClaim = lastClaimMap.get(c.referrer_id);
+        if (!lastClaim || c.created_at > lastClaim) {
+          entry.cadastros_atual++;
+          if (c.converted_at) entry.vendas_atual++;
+        }
+        
         countMap.set(c.referrer_id, entry);
       });
 
-      const mapped: ReferrerStats[] = referrers.map((r) => ({
-        id: r.id,
-        nome: r.nome,
-        avatar_url: r.avatar_url,
-        email: r.email,
-        referral_code: r.referral_code,
-        total_cadastros: countMap.get(r.id)?.cadastros || 0,
-        total_vendas: countMap.get(r.id)?.vendas || 0,
-      }));
+      const mapped: ReferrerStats[] = referrers.map((r) => {
+        const counts = countMap.get(r.id) || { cadastros: 0, vendas: 0, cadastros_atual: 0, vendas_atual: 0 };
+        const userRewards = rewardsMap.get(r.id) || [];
+        return {
+          id: r.id,
+          nome: r.nome,
+          avatar_url: r.avatar_url,
+          email: r.email,
+          referral_code: r.referral_code,
+          total_cadastros: counts.cadastros,
+          total_vendas: counts.vendas,
+          cadastros_atual: counts.cadastros_atual,
+          vendas_atual: counts.vendas_atual,
+          rewards: userRewards,
+          total_days_claimed: userRewards.filter((rw) => rw.claimed_at).reduce((sum, rw) => sum + rw.days_granted, 0),
+          total_days_unclaimed: userRewards.filter((rw) => !rw.claimed_at).reduce((sum, rw) => sum + rw.days_granted, 0),
+        };
+      });
 
-      // Sort: vendas desc, then cadastros desc
       mapped.sort((a, b) => {
         if (b.total_vendas !== a.total_vendas) return b.total_vendas - a.total_vendas;
         return b.total_cadastros - a.total_cadastros;
@@ -99,6 +162,7 @@ export default function AdminConvites() {
 
   const totalCadastros = stats.reduce((sum, s) => sum + s.total_cadastros, 0);
   const totalVendas = stats.reduce((sum, s) => sum + s.total_vendas, 0);
+  const totalRewardsClaimed = stats.reduce((sum, s) => sum + s.total_days_claimed, 0);
 
   const getInitials = (nome: string | null) => {
     if (!nome) return "U";
@@ -126,10 +190,10 @@ export default function AdminConvites() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="flex items-center gap-3 py-4">
-              <Users className="h-8 w-8 text-primary" />
+              <Users className="h-8 w-8 text-primary shrink-0" />
               <div>
                 <p className="text-2xl font-bold">{stats.length}</p>
                 <p className="text-xs text-muted-foreground">Indicadores</p>
@@ -138,7 +202,7 @@ export default function AdminConvites() {
           </Card>
           <Card>
             <CardContent className="flex items-center gap-3 py-4">
-              <Trophy className="h-8 w-8 text-amber-500" />
+              <Trophy className="h-8 w-8 text-primary shrink-0" />
               <div>
                 <p className="text-2xl font-bold">{totalCadastros}</p>
                 <p className="text-xs text-muted-foreground">Cadastros</p>
@@ -147,10 +211,19 @@ export default function AdminConvites() {
           </Card>
           <Card>
             <CardContent className="flex items-center gap-3 py-4">
-              <ShoppingCart className="h-8 w-8 text-emerald-500" />
+              <ShoppingCart className="h-8 w-8 text-primary shrink-0" />
               <div>
                 <p className="text-2xl font-bold">{totalVendas}</p>
                 <p className="text-xs text-muted-foreground">Vendas</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-3 py-4">
+              <Gift className="h-8 w-8 text-primary shrink-0" />
+              <div>
+                <p className="text-2xl font-bold">{totalRewardsClaimed}d</p>
+                <p className="text-xs text-muted-foreground">Dias reinvindicados</p>
               </div>
             </CardContent>
           </Card>
@@ -176,18 +249,19 @@ export default function AdminConvites() {
                 <TableHead className="w-12"></TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead>Código</TableHead>
-                <TableHead className="text-center">Cadastros</TableHead>
-                <TableHead className="text-center">Vendas</TableHead>
-                <TableHead className="text-center">Conversão</TableHead>
+                <TableHead className="text-center">Total</TableHead>
+                <TableHead className="text-center">Atual</TableHead>
+                <TableHead className="text-center">Recompensas</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredStats.map((s, idx) => {
-                const conversion = s.total_cadastros > 0
-                  ? ((s.total_vendas / s.total_cadastros) * 100).toFixed(0)
-                  : "0";
-                return (
-                  <TableRow key={s.id}>
+              {filteredStats.map((s, idx) => (
+                <>
+                  <TableRow
+                    key={s.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => setExpandedUser(expandedUser === s.id ? null : s.id)}
+                  >
                     <TableCell className="font-bold text-muted-foreground">
                       {idx + 1}
                     </TableCell>
@@ -210,20 +284,74 @@ export default function AdminConvites() {
                         {s.referral_code}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-center font-semibold">
-                      {s.total_cadastros}
+                    <TableCell className="text-center">
+                      <div className="text-xs space-y-0.5">
+                        <p><span className="font-semibold">{s.total_cadastros}</span> cad.</p>
+                        <p><span className="font-semibold text-primary">{s.total_vendas}</span> vend.</p>
+                      </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <span className="font-semibold text-emerald-600">
-                        {s.total_vendas}
-                      </span>
+                      <div className="text-xs space-y-0.5">
+                        <p><span className="font-semibold">{s.cadastros_atual}</span> cad.</p>
+                        <p><span className="font-semibold text-primary">{s.vendas_atual}</span> vend.</p>
+                      </div>
                     </TableCell>
-                    <TableCell className="text-center text-muted-foreground">
-                      {conversion}%
+                    <TableCell className="text-center">
+                      {s.rewards.length > 0 ? (
+                        <div className="flex items-center justify-center gap-1.5">
+                          {s.total_days_claimed > 0 && (
+                            <Badge variant="default" className="text-xs gap-1">
+                              <Check className="h-3 w-3" />
+                              {s.total_days_claimed}d
+                            </Badge>
+                          )}
+                          {s.total_days_unclaimed > 0 && (
+                            <Badge variant="secondary" className="text-xs gap-1">
+                              <Gift className="h-3 w-3" />
+                              {s.total_days_unclaimed}d
+                            </Badge>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                   </TableRow>
-                );
-              })}
+                  {/* Expanded row with reward details */}
+                  {expandedUser === s.id && s.rewards.length > 0 && (
+                    <TableRow key={`${s.id}-details`}>
+                      <TableCell colSpan={7} className="bg-muted/30 px-6 py-3">
+                        <p className="text-xs font-semibold text-muted-foreground mb-2">Histórico de recompensas</p>
+                        <div className="space-y-1.5">
+                          {s.rewards.map((r) => (
+                            <div key={r.id} className="flex items-center justify-between text-xs">
+                              <div className="flex items-center gap-2">
+                                {r.claimed_at ? (
+                                  <Check className="h-3.5 w-3.5 text-primary" />
+                                ) : (
+                                  <Gift className="h-3.5 w-3.5 text-muted-foreground" />
+                                )}
+                                <span>
+                                  {r.milestone_type === "cadastros" ? "Cadastros" : "Vendas"} — Meta {r.milestone_count} — {r.days_granted} dias
+                                </span>
+                              </div>
+                              <div className="text-muted-foreground">
+                                {r.claimed_at ? (
+                                  <span className="text-primary font-medium">
+                                    Reinvindicado em {format(new Date(r.claimed_at), "dd/MM/yy", { locale: ptBR })}
+                                  </span>
+                                ) : (
+                                  <span>Pendente</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </>
+              ))}
               {filteredStats.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
