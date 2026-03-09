@@ -192,6 +192,45 @@ export default function Planos() {
                     )}
                   </div>
 
+                  {/* VIP Exclusive Highlights */}
+                  {isVip && (
+                    <div className="rounded-lg border border-yellow-300/60 bg-yellow-50/80 p-3 space-y-2.5">
+                      <p className="text-xs font-bold text-yellow-700 uppercase tracking-wider flex items-center gap-1.5">
+                        <Zap className="h-3.5 w-3.5" />
+                        Exclusivo VIP
+                      </p>
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2.5">
+                          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-yellow-500/20 flex-shrink-0 mt-0.5">
+                            <Bot className="h-3.5 w-3.5 text-yellow-700" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">Ferramentas com IA</p>
+                            <p className="text-xs text-muted-foreground">Análises inteligentes exclusivas potencializadas por inteligência artificial</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-yellow-500/20 flex-shrink-0 mt-0.5">
+                            <MessageCircle className="h-3.5 w-3.5 text-yellow-700" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">Chat IA Completo</p>
+                            <p className="text-xs text-muted-foreground">Converse sobre estatísticas, estratégias e ferramentas com a IA</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5">
+                          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-yellow-500/20 flex-shrink-0 mt-0.5">
+                            <Infinity className="h-3.5 w-3.5 text-yellow-700" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">Gerador Ilimitado</p>
+                            <p className="text-xs text-muted-foreground">Gere quantos palpites quiser por dia, sem limite</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Feature summary */}
                   <div className="flex-1 space-y-3">
                     {FEATURE_CATEGORIES.map((category) => {
