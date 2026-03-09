@@ -1,16 +1,21 @@
 import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useMySubscription } from "@/hooks/useMySubscription";
-import { Loader2, Check, Crown, Star, Gift, ExternalLink, Sparkles, Bot, Zap, MessageCircle, Infinity } from "lucide-react";
+import { Loader2, Check, Crown, Star, Sparkles, Bot, Zap, MessageCircle, Infinity, ShieldCheck, ArrowRight } from "lucide-react";
 import type { Plan, PlanFeatures } from "@/types/plans";
 import { FEATURE_CATEGORIES, FEATURE_LABELS } from "@/types/plans";
 import { STATUS_CONFIG } from "@/lib/subscription";
 import type { StatusAssinatura } from "@/types/plans";
+
+// Installment config
+const INSTALLMENTS: Record<string, { parcelas: number; valor: string }> = {
+  "plano-anual-vip": { parcelas: 12, valor: "40,69" },
+  "anual": { parcelas: 12, valor: "30,44" },
+};
 
 export default function Planos() {
   const { user } = useAuthContext();
@@ -55,12 +60,6 @@ export default function Planos() {
     load();
   }, [user]);
 
-  const getPlanIcon = (price: number) => {
-    if (price === 0) return <Gift className="h-6 w-6" />;
-    if (price >= 200) return <Crown className="h-6 w-6" />;
-    return <Star className="h-6 w-6" />;
-  };
-
   const isCurrentPlan = (planId: string) => userPlanId === planId;
 
   const handleSubscribe = (plan: Plan) => {
@@ -83,29 +82,28 @@ export default function Planos() {
     ? STATUS_CONFIG[subscription.status as StatusAssinatura]?.label ?? "Sem assinatura"
     : null;
 
-  // Find the "best" plan (highest price) to mark as popular
-  const bestPlanId = plans.length > 0
-    ? plans.reduce((best, p) => (p.price > best.price ? p : best), plans[0]).id
-    : null;
+  // Filter out free plans
+  const paidPlans = plans.filter((p) => p.price > 0);
 
   return (
     <MainLayout>
-      <div className="container-senior py-8 max-w-5xl mx-auto px-4">
+      <div className="py-8 max-w-4xl mx-auto px-4">
         {/* Header */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-4 py-1.5 mb-4">
             <Sparkles className="h-4 w-4" />
             <span className="text-sm font-medium">Escolha seu plano</span>
           </div>
-          <h1 className="text-senior-3xl font-bold text-foreground mb-3">
-            Desbloqueie todo o potencial
+          <h1 className="text-senior-3xl font-bold text-foreground mb-2">
+            Invista no seu jogo
           </h1>
-          <p className="text-muted-foreground text-senior-base max-w-2xl mx-auto">
-            Acesse ferramentas avançadas de análise, gerador inteligente e muito mais para aumentar suas chances na loteria.
+          <p className="text-muted-foreground text-senior-base max-w-xl mx-auto">
+            Ferramentas de análise, gerador inteligente e comunidade exclusiva para aumentar suas chances.
           </p>
 
           {subscription && user && (
-            <div className="mt-4 inline-flex items-center gap-2">
+            <div className="mt-4 inline-flex items-center gap-2 bg-card border rounded-full px-4 py-2">
+              <ShieldCheck className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">Sua assinatura:</span>
               <Badge variant={STATUS_CONFIG[subscription.status as StatusAssinatura]?.variant ?? "outline"}>
                 {statusLabel}
@@ -114,156 +112,127 @@ export default function Planos() {
           )}
         </div>
 
-        {/* Plans Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {plans.map((plan) => {
+        {/* Plans */}
+        <div className="grid gap-5 md:grid-cols-3">
+          {paidPlans.map((plan) => {
             const isCurrent = isCurrentPlan(plan.id);
-            const isPopular = plan.id === bestPlanId && plan.price > 0;
             const isVip = plan.slug === "plano-anual-vip";
-            const activeFeatureCount = Object.values(plan.features).filter(Boolean).length;
+            const isAnual = plan.slug === "anual";
+            const inst = INSTALLMENTS[plan.slug];
+            const activeFeatures = Object.values(plan.features).filter(Boolean).length;
 
             return (
-              <Card
+              <div
                 key={plan.id}
-                className={`relative flex flex-col transition-all duration-200 ${
+                className={`relative rounded-2xl border-2 bg-card flex flex-col overflow-hidden transition-all duration-200 ${
                   isCurrent
-                    ? "border-primary ring-2 ring-primary/20 shadow-lg"
+                    ? "border-primary shadow-lg"
                     : isVip
-                    ? "border-yellow-500 ring-2 ring-yellow-400/30 shadow-xl bg-gradient-to-b from-yellow-50/50 to-card"
-                    : isPopular
-                    ? "border-accent ring-1 ring-accent/30 shadow-md"
-                    : "hover:shadow-md"
+                    ? "border-amber-400 shadow-xl scale-[1.02] md:scale-105"
+                    : isAnual
+                    ? "border-accent/60 shadow-md"
+                    : "border-border hover:shadow-md hover:border-primary/30"
                 }`}
               >
-                {/* Popular badge */}
-                {isPopular && !isCurrent && !isVip && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-accent text-accent-foreground px-3 py-0.5 text-xs shadow-sm">
-                      Mais completo
-                    </Badge>
-                  </div>
-                )}
-
-                {/* VIP badge */}
+                {/* Top ribbon */}
                 {isVip && !isCurrent && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-yellow-500 text-white px-4 py-0.5 text-xs shadow-md font-bold tracking-wide">
-                      ⭐ VIP
-                    </Badge>
+                  <div className="bg-gradient-to-r from-amber-500 to-amber-400 text-white text-center py-1.5 text-xs font-bold uppercase tracking-widest">
+                    ⭐ Mais completo
                   </div>
                 )}
-
-                {/* Current plan badge */}
+                {isAnual && !isCurrent && !isVip && (
+                  <div className="bg-accent text-accent-foreground text-center py-1.5 text-xs font-bold uppercase tracking-widest">
+                    Melhor custo-benefício
+                  </div>
+                )}
                 {isCurrent && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-primary text-primary-foreground px-3 py-0.5 text-xs shadow-sm">
-                      Seu plano atual
-                    </Badge>
+                  <div className="bg-primary text-primary-foreground text-center py-1.5 text-xs font-bold uppercase tracking-widest">
+                    Seu plano atual
                   </div>
                 )}
 
-                <CardHeader className="pb-4 pt-6 text-center">
-                  <div className={`mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl ${
-                    isCurrent ? "bg-primary text-primary-foreground" : "bg-secondary text-primary"
-                  }`}>
-                    {getPlanIcon(plan.price)}
+                {/* Plan content */}
+                <div className="p-6 flex flex-col flex-1">
+                  {/* Icon + Name */}
+                  <div className="text-center mb-5">
+                    <div className={`mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl ${
+                      isVip
+                        ? "bg-amber-100 text-amber-600"
+                        : isCurrent
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-primary"
+                    }`}>
+                      {isVip ? <Crown className="h-7 w-7" /> : plan.price >= 200 ? <Crown className="h-7 w-7" /> : <Star className="h-7 w-7" />}
+                    </div>
+                    <h2 className="text-senior-xl font-bold text-foreground">{plan.name}</h2>
+                    {plan.description && (
+                      <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
+                    )}
                   </div>
-                  <CardTitle className="text-senior-lg">{plan.name}</CardTitle>
-                  {plan.description && (
-                    <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
-                  )}
-                </CardHeader>
 
-                <CardContent className="flex flex-col flex-1 gap-5">
                   {/* Price */}
-                  <div className="text-center">
-                    {plan.price === 0 ? (
-                      <div className="text-senior-2xl font-bold text-foreground">Grátis</div>
-                    ) : (() => {
-                      // Installment config per slug
-                      const installments: Record<string, { parcelas: number; valor: string }> = {
-                        "plano-anual-vip": { parcelas: 12, valor: "40,69" },
-                        "anual": { parcelas: 12, valor: "30,44" },
-                      };
-                      const inst = installments[plan.slug];
-
-                      return inst ? (
-                        <>
-                          <div className="flex items-baseline justify-center gap-1">
-                            <span className="text-sm text-muted-foreground">12x de</span>
-                            <span className="text-senior-3xl font-bold text-foreground">
-                              R$ {inst.valor}
-                            </span>
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            ou <span className="font-semibold text-foreground">R$ {plan.price.toFixed(2).replace(".", ",")}</span> à vista no Pix
-                          </p>
-                        </>
-                      ) : (
-                        <>
-                          <div className="flex items-baseline justify-center gap-1">
-                            <span className="text-sm text-muted-foreground">R$</span>
-                            <span className="text-senior-3xl font-bold text-foreground">
-                              {plan.price.toFixed(2).replace(".", ",")}
-                            </span>
-                          </div>
-                          <span className="text-sm text-muted-foreground">por mês</span>
-                        </>
-                      );
-                    })()}
+                  <div className="text-center mb-5 pb-5 border-b">
+                    {inst ? (
+                      <>
+                        <div className="flex items-baseline justify-center gap-1.5">
+                          <span className="text-muted-foreground text-sm">12x de</span>
+                          <span className="text-senior-3xl font-extrabold text-foreground">
+                            R$ {inst.valor}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1.5">
+                          ou <span className="font-bold text-foreground">R$ {plan.price.toFixed(2).replace(".", ",")}</span> à vista no Pix
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-baseline justify-center gap-1">
+                          <span className="text-senior-3xl font-extrabold text-foreground">
+                            R$ {plan.price.toFixed(2).replace(".", ",")}
+                          </span>
+                          <span className="text-muted-foreground text-sm">/mês</span>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* VIP Exclusive Highlights */}
                   {isVip && (
-                    <div className="rounded-lg border border-yellow-300/60 bg-yellow-50/80 p-3 space-y-2.5">
-                      <p className="text-xs font-bold text-yellow-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 mb-5 space-y-3">
+                      <p className="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
                         <Zap className="h-3.5 w-3.5" />
                         Exclusivo VIP
                       </p>
-                      <div className="space-y-2">
-                        <div className="flex items-start gap-2.5">
-                          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-yellow-500/20 flex-shrink-0 mt-0.5">
-                            <Bot className="h-3.5 w-3.5 text-yellow-700" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">Ferramentas com IA</p>
-                            <p className="text-xs text-muted-foreground">Análises inteligentes exclusivas potencializadas por inteligência artificial</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2.5">
-                          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-yellow-500/20 flex-shrink-0 mt-0.5">
-                            <MessageCircle className="h-3.5 w-3.5 text-yellow-700" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">Chat IA Completo</p>
-                            <p className="text-xs text-muted-foreground">Converse sobre estatísticas, estratégias e ferramentas com a IA</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2.5">
-                          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-yellow-500/20 flex-shrink-0 mt-0.5">
-                            <Infinity className="h-3.5 w-3.5 text-yellow-700" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">Gerador Ilimitado</p>
-                            <p className="text-xs text-muted-foreground">Gere quantos palpites quiser por dia, sem limite</p>
-                          </div>
-                        </div>
-                      </div>
+                      <VipFeature
+                        icon={<Bot className="h-4 w-4 text-amber-600" />}
+                        title="Ferramentas com IA"
+                        desc="Análises inteligentes potencializadas por inteligência artificial"
+                      />
+                      <VipFeature
+                        icon={<MessageCircle className="h-4 w-4 text-amber-600" />}
+                        title="Chat IA Completo"
+                        desc="Converse sobre estatísticas e estratégias com a IA"
+                      />
+                      <VipFeature
+                        icon={<Infinity className="h-4 w-4 text-amber-600" />}
+                        title="Gerador Ilimitado"
+                        desc="Gere quantos palpites quiser, sem limite diário"
+                      />
                     </div>
                   )}
 
-                  {/* Feature summary */}
-                  <div className="flex-1 space-y-3">
+                  {/* Features list */}
+                  <div className="flex-1 space-y-3 mb-5">
                     {FEATURE_CATEGORIES.map((category) => {
                       const active = category.features.filter((f) => plan.features[f]);
                       if (active.length === 0) return null;
 
                       return (
                         <div key={category.label}>
-                          <p className="text-xs font-semibold text-muted-foreground mb-1.5">
+                          <p className="text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">
                             {category.emoji} {category.label}
                           </p>
-                          <ul className="space-y-1">
+                          <ul className="space-y-1.5">
                             {active.map((feature) => (
                               <li key={feature} className="flex items-start gap-2 text-sm">
                                 <Check className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
@@ -276,45 +245,79 @@ export default function Planos() {
                     })}
                   </div>
 
-                  <p className="text-xs text-muted-foreground text-center">
-                    {activeFeatureCount} recursos incluídos
+                  <p className="text-xs text-muted-foreground text-center mb-4">
+                    {activeFeatures} recursos incluídos
                   </p>
 
-                  {/* CTA Button */}
-                  <div className="pt-2">
-                    {isCurrent ? (
-                      <Button disabled className="w-full" variant="outline" size="lg">
-                        Plano atual
-                      </Button>
-                    ) : plan.checkout_link ? (
-                      <Button
-                        onClick={() => handleSubscribe(plan)}
-                        className={`w-full gap-2 ${
-                          isPopular ? "bg-accent hover:bg-accent/90 text-accent-foreground" : ""
-                        }`}
-                        size="lg"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        {plan.price === 0 ? "Começar grátis" : "Assinar agora"}
-                      </Button>
-                    ) : (
-                      <Button disabled className="w-full" variant="secondary" size="lg">
-                        {plan.price === 0 ? "Plano gratuito" : "Em breve"}
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                  {/* CTA */}
+                  {isCurrent ? (
+                    <Button disabled className="w-full h-12 text-base" variant="outline">
+                      Plano atual
+                    </Button>
+                  ) : plan.checkout_link ? (
+                    <Button
+                      onClick={() => handleSubscribe(plan)}
+                      className={`w-full h-12 text-base font-semibold gap-2 ${
+                        isVip
+                          ? "bg-amber-500 hover:bg-amber-600 text-white"
+                          : isAnual
+                          ? "bg-accent hover:bg-accent/90 text-accent-foreground"
+                          : ""
+                      }`}
+                      size="lg"
+                    >
+                      Assinar agora
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button disabled className="w-full h-12 text-base" variant="secondary">
+                      Em breve
+                    </Button>
+                  )}
+                </div>
+              </div>
             );
           })}
         </div>
 
-        {plans.length === 0 && (
+        {paidPlans.length === 0 && (
           <div className="text-center py-16 text-muted-foreground">
             <p className="text-senior-lg">Nenhum plano disponível no momento.</p>
           </div>
         )}
+
+        {/* Trust footer */}
+        <div className="mt-10 text-center space-y-2">
+          <div className="flex items-center justify-center gap-6 text-muted-foreground text-sm">
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck className="h-4 w-4" />
+              Pagamento seguro
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Check className="h-4 w-4" />
+              Acesso imediato
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Cancele a qualquer momento. Sem fidelidade.
+          </p>
+        </div>
       </div>
     </MainLayout>
+  );
+}
+
+// Small sub-component for VIP features
+function VipFeature({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-200/60 flex-shrink-0 mt-0.5">
+        {icon}
+      </div>
+      <div>
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="text-xs text-muted-foreground">{desc}</p>
+      </div>
+    </div>
   );
 }
