@@ -39,6 +39,7 @@ import DezenasporPosicao from "./pages/DezenasporPosicao";
 import NotFound from "./pages/NotFound";
 import Termos from "./pages/Termos";
 import Privacidade from "./pages/Privacidade";
+import LandingPage from "./pages/LandingPage";
 import ResultadosMegaSena from "./pages/megasena/ResultadosMegaSena";
 import TendenciasMegaSena from "./pages/megasena/TendenciasMegaSena";
 import FrequenciaMegaSena from "./pages/megasena/FrequenciaMegaSena";
