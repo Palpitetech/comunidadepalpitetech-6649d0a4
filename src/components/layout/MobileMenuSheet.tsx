@@ -416,70 +416,80 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                      </AccordionTrigger>
                     <AccordionContent className="pb-0">
                        <div className="pl-8 space-y-0">
-                         <Link to="/megasena/analise-do-dia" onClick={closeAndNavigate}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             <Target className="h-4 w-4" />
-                             Análise do Dia
-                           </div>
-                         </Link>
-                         <div className="border-t border-border/50 my-1" />
-                         <Link to="/megasena/resultados" onClick={closeAndNavigate}>
-                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
-                            Resultados
-                          </div>
-                        </Link>
-                        <Link to="/megasena/tendencias" onClick={closeAndNavigate}>
-                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
-                            Tendências
-                          </div>
-                        </Link>
-                         <Link to="/megasena/frequencia" onClick={closeAndNavigate}>
+                          <Link to="/megasena/analise-do-dia" onClick={(e) => handleGatedClick(e, "/megasena/analise-do-dia")}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                              <Target className="h-4 w-4" />
+                              Análise do Dia
+                              {renderBadge("/megasena/analise-do-dia")}
+                            </div>
+                          </Link>
+                          <div className="border-t border-border/50 my-1" />
+                          <Link to="/megasena/resultados" onClick={closeAndNavigate}>
                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
-                             Quentes e Frias
+                             Resultados
                            </div>
                          </Link>
-                         <Link to="/megasena/frequencia-dezenas" onClick={closeAndNavigate}>
+                         <Link to="/megasena/tendencias" onClick={(e) => handleGatedClick(e, "/megasena/tendencias")}>
                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             <BarChart3 className="h-4 w-4" />
-                             Frequência das Dezenas
+                             Tendências
+                             {renderBadge("/megasena/tendencias")}
                            </div>
                          </Link>
-                         <Link to="/megasena/dezenas-por-posicao" onClick={closeAndNavigate}>
+                          <Link to="/megasena/frequencia" onClick={(e) => handleGatedClick(e, "/megasena/frequencia")}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                              Quentes e Frias
+                              {renderBadge("/megasena/frequencia")}
+                            </div>
+                          </Link>
+                          <Link to="/megasena/frequencia-dezenas" onClick={(e) => handleGatedClick(e, "/megasena/frequencia-dezenas")}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                              <BarChart3 className="h-4 w-4" />
+                              Frequência das Dezenas
+                              {renderBadge("/megasena/frequencia-dezenas")}
+                            </div>
+                          </Link>
+                          <Link to="/megasena/dezenas-por-posicao" onClick={(e) => handleGatedClick(e, "/megasena/dezenas-por-posicao")}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                              <Target className="h-4 w-4" />
+                              Dezenas por Posição
+                              {renderBadge("/megasena/dezenas-por-posicao")}
+                            </div>
+                          </Link>
+                          <Link to="/megasena/linhas-colunas" onClick={(e) => handleGatedClick(e, "/megasena/linhas-colunas")}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                              <LayoutGrid className="h-4 w-4" />
+                              Linhas e Colunas
+                              {renderBadge("/megasena/linhas-colunas")}
+                            </div>
+                          </Link>
+                          <Link to="/megasena/tabela-movimentacao" onClick={(e) => handleGatedClick(e, "/megasena/tabela-movimentacao")}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                              <Table2 className="h-4 w-4" />
+                              Tabela de Movimentação
+                              {renderBadge("/megasena/tabela-movimentacao")}
+                            </div>
+                          </Link>
+                          <Link to="/megasena/gerador" onClick={(e) => handleGatedClick(e, "/megasena/gerador")}>
                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             <Target className="h-4 w-4" />
-                             Dezenas por Posição
+                             <Dices className="h-4 w-4" />
+                             Gerador de Palpites
+                             {renderBadge("/megasena/gerador")}
                            </div>
                          </Link>
-                         <Link to="/megasena/linhas-colunas" onClick={closeAndNavigate}>
+                         <Link to="/megasena/desdobramento" onClick={(e) => handleGatedClick(e, "/megasena/desdobramento")}>
                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             <LayoutGrid className="h-4 w-4" />
-                             Linhas e Colunas
+                             <Shuffle className="h-4 w-4" />
+                             Desdobramento
+                             {renderBadge("/megasena/desdobramento")}
                            </div>
                          </Link>
-                         <Link to="/megasena/tabela-movimentacao" onClick={closeAndNavigate}>
+                         <Link to="/megasena/fechamento" onClick={(e) => handleGatedClick(e, "/megasena/fechamento")}>
                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             <Table2 className="h-4 w-4" />
-                             Tabela de Movimentação
+                             <Grid3X3 className="h-4 w-4" />
+                             Gerador de Fechamento
+                             {renderBadge("/megasena/fechamento")}
                            </div>
                          </Link>
-                         <Link to="/megasena/gerador" onClick={closeAndNavigate}>
-                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                            <Dices className="h-4 w-4" />
-                            Gerador de Palpites
-                          </div>
-                        </Link>
-                        <Link to="/megasena/desdobramento" onClick={closeAndNavigate}>
-                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                            <Shuffle className="h-4 w-4" />
-                            Desdobramento
-                          </div>
-                        </Link>
-                        <Link to="/megasena/fechamento" onClick={closeAndNavigate}>
-                          <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                            <Grid3X3 className="h-4 w-4" />
-                            Gerador de Fechamento
-                          </div>
-                        </Link>
                       </div>
                     </AccordionContent>
                     </AccordionItem>
