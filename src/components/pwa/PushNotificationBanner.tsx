@@ -36,30 +36,33 @@ export function PushNotificationBanner() {
     setIsRequesting(true);
 
     try {
-      // Fallback nativo (especialmente útil no Android)
-      if ("Notification" in window && Notification.permission === "default") {
-        const nativePermission = await Notification.requestPermission();
-        setPermission(nativePermission as PushPermission);
+      const oneSignal = (window as any).OneSignal;
+
+      if (oneSignal?.Notifications?.requestPermission) {
+        // Chamada direta para preservar o gesto de clique (mais confiável no desktop/Android)
+        await oneSignal.Notifications.requestPermission();
+      } else if ("Notification" in window && Notification.permission === "default") {
+        await Notification.requestPermission();
+      } else {
+        (window as any).OneSignalDeferred = (window as any).OneSignalDeferred || [];
+        (window as any).OneSignalDeferred.push(async (OneSignal: any) => {
+          await OneSignal.Notifications.requestPermission();
+        });
       }
 
-      // Fluxo OneSignal para registrar subscription
-      (window as any).OneSignalDeferred = (window as any).OneSignalDeferred || [];
-      (window as any).OneSignalDeferred.push(async (OneSignal: any) => {
-        try {
-          await OneSignal.Notifications.requestPermission(true);
-        } catch (err) {
-          console.warn("OneSignal requestPermission error:", err);
-        } finally {
-          setPermission(getPushPermission());
-        }
-      });
+      const currentPermission = getPushPermission();
+      setPermission(currentPermission);
 
-      // Garantia de atualização da UI mesmo sem callback imediato do SDK
-      setTimeout(() => {
-        setPermission(getPushPermission());
-      }, 2500);
+      if (currentPermission === "granted") {
+        toast.success("Notificações ativadas com sucesso!");
+      } else if (currentPermission === "denied") {
+        toast.error("Permissão bloqueada no navegador. Libere nas configurações do site.");
+      } else {
+        toast.message("Não foi possível abrir o prompt agora. Tente novamente.");
+      }
     } catch (e) {
       console.warn("Push permission error:", e);
+      toast.error("Falha ao solicitar permissão de notificação.");
     } finally {
       setIsRequesting(false);
     }
