@@ -53,15 +53,19 @@ export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRigh
         {children}
       </main>
 
+      {/* Aviso Legal */}
+      <div className={`bg-muted/50 border-t border-border px-4 py-3 ${isMobile ? 'mb-16' : ''}`}>
+        <p className="max-w-3xl mx-auto text-[10px] md:text-xs text-muted-foreground text-center leading-relaxed">
+          <strong>Aviso legal:</strong> Este site não possui qualquer vínculo com a Caixa Econômica Federal, Facebook, Instagram, Meta ou qualquer outra empresa do grupo Meta Platforms, Inc. O conteúdo apresentado tem caráter exclusivamente educacional e informativo, baseado em análises estatísticas de resultados públicos. <strong>Não garantimos premiação em nenhuma modalidade de loteria.</strong> Aposte com responsabilidade.
+        </p>
+      </div>
+
       {/* Footer - apenas desktop */}
       {!isMobile && (
-        <footer className="border-t border-border bg-card py-6">
+        <footer className="border-t border-border bg-card py-4">
           <div className="container-senior text-center text-muted-foreground">
-            <p className="text-senior-sm">
-              © 2026 Palpite Tech. Todos os direitos reservados.
-            </p>
-            <p className="text-sm mt-2">
-              Este site não possui vínculo com a Caixa Econômica Federal.
+            <p className="text-sm">
+              © {new Date().getFullYear()} Palpite Tech. Todos os direitos reservados.
             </p>
           </div>
         </footer>
