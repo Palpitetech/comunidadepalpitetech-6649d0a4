@@ -305,16 +305,13 @@ export default function Planos() {
 }
 
 // Small sub-component for VIP features
-function VipFeature({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+function VipFeature({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
-    <div className="flex items-start gap-3">
-      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-200/60 flex-shrink-0 mt-0.5">
+    <div className="flex items-center gap-2">
+      <div className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-200/60 flex-shrink-0">
         {icon}
       </div>
-      <div>
-        <p className="text-sm font-semibold text-foreground">{title}</p>
-        <p className="text-xs text-muted-foreground">{desc}</p>
-      </div>
+      <p className="text-sm font-medium text-foreground">{title}</p>
     </div>
   );
 }
