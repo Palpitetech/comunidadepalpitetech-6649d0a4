@@ -87,7 +87,12 @@
     --highlight: 152 60% 52%;
     --highlight-foreground: 0 0% 100%;
 
-    /* Sidebar */
+    /* Premium badges */
+    --premium: 270 60% 55%;
+    --premium-foreground: 0 0% 100%;
+    --vip: 43 96% 56%;
+    --vip-foreground: 0 0% 10%;
+
     --sidebar-background: 215 50% 20%;
     --sidebar-foreground: 0 0% 95%;
     --sidebar-primary: 142 70% 45%;
@@ -140,7 +145,12 @@
     --highlight: 152 55% 48%;
     --highlight-foreground: 0 0% 100%;
 
-    /* Status Quente/Frio - Dark Mode */
+    /* Premium badges - Dark */
+    --premium: 270 60% 60%;
+    --premium-foreground: 0 0% 100%;
+    --vip: 43 96% 60%;
+    --vip-foreground: 0 0% 10%;
+
     --status-quente: 142 70% 50%;
     --status-quente-foreground: 215 50% 10%;
     --status-quente-bg: 142 70% 15%;
