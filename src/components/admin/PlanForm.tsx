@@ -252,10 +252,7 @@ export function PlanForm({ plan, onSaved, onCancel }: PlanFormProps) {
             return (
               <div key={category.label} className="border rounded-lg overflow-hidden">
                 {/* Category header */}
-                <div
-                  className="flex items-center gap-3 px-4 py-2.5 bg-muted/50 cursor-pointer select-none"
-                  onClick={() => handleCategoryToggle(category.features, !allChecked)}
-                >
+                <div className="flex items-center gap-3 px-4 py-2.5 bg-muted/50">
                   <Checkbox
                     checked={allChecked}
                     className={partial ? "data-[state=unchecked]:bg-primary/30 data-[state=unchecked]:border-primary" : ""}
@@ -263,10 +260,13 @@ export function PlanForm({ plan, onSaved, onCancel }: PlanFormProps) {
                       handleCategoryToggle(category.features, checked === true)
                     }
                   />
-                  <span className="text-sm font-semibold">
+                  <span
+                    className="text-sm font-semibold cursor-pointer select-none flex-1"
+                    onClick={() => handleCategoryToggle(category.features, !allChecked)}
+                  >
                     {category.emoji} {category.label}
                   </span>
-                  <span className="ml-auto text-xs text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     {category.features.filter((f) => features[f]).length}/{category.features.length}
                   </span>
                 </div>
