@@ -3,15 +3,9 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFrequenciaDuplaSena } from "@/hooks/useFrequenciaDuplaSena";
+import { SeletorPeriodo } from "@/components/frequencia/SeletorPeriodo";
 import { cn } from "@/lib/utils";
 import { BarChart3, TrendingUp, TrendingDown, Minus } from "lucide-react";
 
