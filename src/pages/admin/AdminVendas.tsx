@@ -119,19 +119,25 @@ export default function AdminVendas() {
 
   useEffect(() => { fetchLogs(); }, []);
 
-  const filtered = logs.filter((log) => {
-    if (eventFilter !== "all" && log.event !== eventFilter) return false;
-    if (search) {
-      const s = search.toLowerCase();
-      return (
-        log.email?.toLowerCase().includes(s) ||
-        log.phone?.includes(s) ||
-        log.sale_id?.toLowerCase().includes(s) ||
-        log.checkout_id?.toLowerCase().includes(s)
-      );
-    }
-    return true;
-  });
+  const filtered = (() => {
+    // Reset page when filters change is handled via useEffect below
+    return logs.filter((log) => {
+      if (eventFilter !== "all" && log.event !== eventFilter) return false;
+      if (search) {
+        const s = search.toLowerCase();
+        return (
+          log.email?.toLowerCase().includes(s) ||
+          log.phone?.includes(s) ||
+          log.sale_id?.toLowerCase().includes(s) ||
+          log.checkout_id?.toLowerCase().includes(s)
+        );
+      }
+      return true;
+    });
+  })();
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [search, eventFilter]);
 
   // Group by sale_id
   const salesMap = new Map<string, WebhookLog[]>();
