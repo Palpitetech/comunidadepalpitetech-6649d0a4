@@ -21,7 +21,7 @@ export function LoginPromptModal({ open, onOpenChange }: LoginPromptModalProps) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="text-center space-y-3">
-          <div className="mx-auto text-4xl">🍀</div>
+          <img src="/logo.png" alt="Palpite Tech" className="mx-auto h-12 w-12 rounded-md" />
           <DialogTitle className="text-xl">
             Entre para continuar
           </DialogTitle>

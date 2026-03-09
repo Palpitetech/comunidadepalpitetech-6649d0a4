@@ -42,7 +42,7 @@ export function DesktopHeader() {
       <div className="container-senior flex items-center justify-between py-3 gap-2">
         {/* Logo - Compacto */}
         <Link to="/" className="flex items-center gap-2 no-underline shrink-0">
-          <span className="text-2xl">🍀</span>
+          <img src="/logo.png" alt="Palpite Tech" className="h-8 w-8 rounded-md" />
           <span className="text-lg font-bold text-primary hidden sm:inline">Palpite Tech</span>
         </Link>
 
