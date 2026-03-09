@@ -411,6 +411,28 @@ function PixCodeBlock({ code }: { code: string }) {
 }
 
 function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog[] }) {
+  const [planMap, setPlanMap] = useState<Record<string, { planName: string; checkoutLink: string | null }>>({});
+
+  useEffect(() => {
+    const loadPlanMappings = async () => {
+      const { data } = await supabase
+        .from("kirvano_offer_plan_map")
+        .select("offer_id, plans!inner(name, checkout_link)")
+        .eq("is_active", true);
+      if (data) {
+        const map: Record<string, { planName: string; checkoutLink: string | null }> = {};
+        for (const row of data as any[]) {
+          map[row.offer_id] = {
+            planName: row.plans?.name || "—",
+            checkoutLink: row.plans?.checkout_link || null,
+          };
+        }
+        setPlanMap(map);
+      }
+    };
+    loadPlanMappings();
+  }, []);
+
   const events = allLogs
     .filter((l) => l.sale_id === saleKey || l.checkout_id === saleKey || l.id === saleKey)
     .sort((a, b) => new Date(a.received_at).getTime() - new Date(b.received_at).getTime());
