@@ -129,17 +129,12 @@ function BolaoDetailSheet({ bolao, open, onOpenChange }: { bolao: Bolao | null; 
         <div className="space-y-2 mb-4">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-bold">{bolao.nome}</h2>
+              <h2 className="text-lg font-bold pr-8">{bolao.nome}</h2>
               <div className="flex items-center gap-2 mt-1">
                 <Badge variant="secondary" className="text-[10px]">{bolao.loteria}</Badge>
                 <span className="text-xs text-muted-foreground">Concurso {bolao.concurso}</span>
               </div>
             </div>
-            {!isMobile && (
-              <button onClick={() => onOpenChange(false)} className="text-muted-foreground hover:text-foreground">
-                <X className="h-5 w-5" />
-              </button>
-            )}
           </div>
         </div>
 
