@@ -236,17 +236,10 @@ export default function Perfil() {
               <div className="p-4 border-t space-y-2">
                 <Button
                   className="w-full h-12 text-base font-semibold gap-2"
-                  onClick={handleOpenCheckout}
-                  disabled={isOpeningCheckout}
+                  onClick={() => navigate("/planos")}
                 >
-                  {isOpeningCheckout ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <>
-                      <Sparkles className="h-5 w-5" />
-                      {isPremium ? "Renovar Assinatura" : "Assinar Premium"}
-                    </>
-                  )}
+                  <Sparkles className="h-5 w-5" />
+                  {isPremium ? "Renovar / Trocar Plano" : "Ver Planos"}
                 </Button>
               </div>
             </div>
