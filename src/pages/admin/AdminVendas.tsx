@@ -12,8 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Search, CreditCard, QrCode, Barcode, ChevronRight,
   CheckCircle2, XCircle, Clock, AlertTriangle, RefreshCw, ArrowLeft,
-  ShoppingCart, User, Calendar, DollarSign, FileText
+  ShoppingCart, User, Calendar, DollarSign, FileText, Copy, Check
 } from "lucide-react";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
