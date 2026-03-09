@@ -186,7 +186,7 @@ function mapToStatusAssinatura(statusOrEvent: string): "ativa" | "cancelada" | "
   return "inativa";
 }
 
-type SubscriptionAction = "activate" | "cancel" | "cancel_end_of_period" | "delinquent" | "ignore";
+type SubscriptionAction = "activate" | "cancel" | "cancel_end_of_period" | "overdue_grace" | "delinquent" | "ignore";
 
 function deriveSubscriptionAction(eventName: string, rawStatus: string): SubscriptionAction {
   const ev = eventName.toLowerCase();
