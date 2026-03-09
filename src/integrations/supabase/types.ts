@@ -1641,6 +1641,7 @@ export type Database = {
       }
       claim_referral_reward: { Args: { p_reward_id: string }; Returns: Json }
       generate_referral_code: { Args: never; Returns: string }
+      get_referrer_name: { Args: { p_code: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
