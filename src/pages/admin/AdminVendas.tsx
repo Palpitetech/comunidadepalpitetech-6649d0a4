@@ -215,13 +215,18 @@ export default function AdminVendas() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="SALE_APPROVED">Aprovadas</SelectItem>
+              <SelectItem value="SALE_APPROVED">Venda Aprovada</SelectItem>
               <SelectItem value="PIX_GENERATED">PIX Gerado</SelectItem>
               <SelectItem value="PIX_EXPIRED">PIX Expirado</SelectItem>
               <SelectItem value="BANK_SLIP_GENERATED">Boleto Gerado</SelectItem>
               <SelectItem value="BANK_SLIP_EXPIRED">Boleto Expirado</SelectItem>
-              <SelectItem value="SALE_REFUSED">Recusadas</SelectItem>
-              <SelectItem value="SALE_CHARGEBACK">Chargeback</SelectItem>
+              <SelectItem value="SALE_REFUSED">Venda Recusada</SelectItem>
+              <SelectItem value="SALE_CHARGEBACK">Estorno / Chargeback</SelectItem>
+              <SelectItem value="SALE_REFUNDED">Reembolso</SelectItem>
+              <SelectItem value="SUBSCRIPTION_CANCELED">Assinatura Cancelada</SelectItem>
+              <SelectItem value="SUBSCRIPTION_OVERDUE">Assinatura Inadimplente</SelectItem>
+              <SelectItem value="SUBSCRIPTION_RENEWED">Assinatura Renovada</SelectItem>
+              <SelectItem value="SUBSCRIPTION_REACTIVATED">Assinatura Reativada</SelectItem>
             </SelectContent>
           </Select>
         </div>
