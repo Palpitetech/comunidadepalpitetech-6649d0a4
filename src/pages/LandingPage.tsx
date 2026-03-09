@@ -138,7 +138,7 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
-          <div className="text-center mt-10">
+          <div className="text-center mt-6">
             <CtaSecondary>Quero acessar tudo isso</CtaSecondary>
           </div>
         </div>
