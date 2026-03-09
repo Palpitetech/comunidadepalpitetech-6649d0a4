@@ -272,15 +272,15 @@ export default function Perfil() {
 
               {/* Celular */}
               <div className="flex items-center gap-4 p-4">
-                <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
-                  <Phone className="h-5 w-5 text-green-500" />
+                <div className="h-10 w-10 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
+                  <Phone className="h-5 w-5 text-[hsl(var(--primary))]" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-muted-foreground">Celular</p>
                   <p className="font-medium">{profile?.celular || "Não informado"}</p>
                 </div>
                 {profile?.celular ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+                  <CheckCircle2 className="h-5 w-5 text-[hsl(var(--primary))] shrink-0" />
                 ) : (
                   <AlertCircle className="h-5 w-5 text-muted-foreground shrink-0" />
                 )}
