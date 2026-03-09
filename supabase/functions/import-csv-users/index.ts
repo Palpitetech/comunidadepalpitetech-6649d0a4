@@ -7,24 +7,36 @@ const corsHeaders = {
 };
 
 const PLAN_MAP: Record<string, string> = {
-  monthly: "96f56437-8582-4f53-aaee-e31103e5bcc8",   // Mensal
-  semestral: "54711fb1-5fe5-4094-8c8e-3f97e4921ea7",  // Semestral
-  yearly: "a1fc6ca2-cce2-41ef-aca4-4a2e8e60226f",     // Anual
-  manual_30d: "96f56437-8582-4f53-aaee-e31103e5bcc8",  // Mensal
-  manual_365d: "a1fc6ca2-cce2-41ef-aca4-4a2e8e60226f", // Anual
-  manual_7d: "65f08789-debf-4e31-b182-7c73c2823b1b",   // Grátis
-  trial: "65f08789-debf-4e31-b182-7c73c2823b1b",       // Grátis
+  monthly: "96f56437-8582-4f53-aaee-e31103e5bcc8",
+  semestral: "54711fb1-5fe5-4094-8c8e-3f97e4921ea7",
+  yearly: "a1fc6ca2-cce2-41ef-aca4-4a2e8e60226f",
+  manual_30d: "96f56437-8582-4f53-aaee-e31103e5bcc8",
+  manual_365d: "a1fc6ca2-cce2-41ef-aca4-4a2e8e60226f",
+  manual_7d: "65f08789-debf-4e31-b182-7c73c2823b1b",
+  trial: "65f08789-debf-4e31-b182-7c73c2823b1b",
 };
 
 const GRATIS_ID = "65f08789-debf-4e31-b182-7c73c2823b1b";
 
+const SKIP_EMAILS = new Set([
+  "tutorial@gmail.com", "videoteste@gmail.com", "teste@gmail.com",
+  "josezinho@gmail.com", "verificacao@kirvano.com.br", "exemplo@email.com",
+  "jeje@gmail.com", "joao@gmail.com.br.us", "contato.palpitetech@gmail.com",
+  "testejoao202@gmail.com", "gahdgdg@hotmail.com",
+]);
+
 function parseDate(str: string): string | null {
   if (!str || str === "-") return null;
-  // DD/MM/YYYY -> ISO
   const parts = str.split("/");
   if (parts.length !== 3) return null;
   const [d, m, y] = parts;
   return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}T23:59:59Z`;
+}
+
+function addDays(isoDate: string, days: number): string {
+  const d = new Date(isoDate);
+  d.setDate(d.getDate() + days);
+  return d.toISOString();
 }
 
 function normalizePhone(raw: string): string | null {
@@ -35,11 +47,59 @@ function normalizePhone(raw: string): string | null {
   return digits || null;
 }
 
+function normalizeCpf(raw: string): string | null {
+  if (!raw || raw === "-") return null;
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length === 11) return digits;
+  return null;
+}
+
 function generatePassword(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$";
   let pw = "";
   for (let i = 0; i < 16; i++) pw += chars[Math.floor(Math.random() * chars.length)];
   return pw;
+}
+
+function parseCsvLine(line: string): string[] {
+  const result: string[] = [];
+  let current = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      inQuotes = !inQuotes;
+    } else if (ch === ";" && !inQuotes) {
+      result.push(current.trim());
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
+
+function parseCsv(csvText: string): Record<string, string>[] {
+  const lines = csvText.split("\n").map(l => l.replace(/\r/g, "").trim()).filter(l => l.length > 0);
+  if (lines.length < 2) return [];
+
+  // Remove BOM
+  let headerLine = lines[0];
+  if (headerLine.charCodeAt(0) === 0xFEFF) headerLine = headerLine.slice(1);
+
+  const headers = parseCsvLine(headerLine);
+  const users: Record<string, string>[] = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = parseCsvLine(lines[i]);
+    const obj: Record<string, string> = {};
+    for (let j = 0; j < headers.length; j++) {
+      obj[headers[j]] = values[j] || "";
+    }
+    users.push(obj);
+  }
+  return users;
 }
 
 serve(async (req) => {
@@ -52,34 +112,45 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
-    const { users } = await req.json();
-    if (!Array.isArray(users) || users.length === 0) throw new Error("Lista de usuários vazia");
+    const body = await req.json();
+    
+    // Support both formats: { users: [...] } or { csv: "raw csv text" }
+    let users: Record<string, string>[];
+    if (body.csv) {
+      users = parseCsv(body.csv);
+    } else if (Array.isArray(body.users)) {
+      users = body.users;
+    } else {
+      throw new Error("Envie { csv: '...' } ou { users: [...] }");
+    }
 
-    const results: { email: string; status: string; error?: string }[] = [];
+    if (users.length === 0) throw new Error("Lista de usuários vazia");
+
+    console.log(`Processando ${users.length} usuários...`);
+
+    const results: { email: string; status: string; error?: string; plan?: string }[] = [];
 
     for (const u of users) {
-      const email = (u.email || "").trim().toLowerCase();
+      // Support both field naming conventions
+      const email = (u.Email || u.email || "").trim().toLowerCase();
       if (!email || !email.includes("@")) {
         results.push({ email: email || "vazio", status: "skipped", error: "Email inválido" });
         continue;
       }
 
-      // Skip test/fake emails
-      if (["tutorial@gmail.com", "videoteste@gmail.com", "teste@gmail.com", "josezinho@gmail.com",
-           "verificacao@kirvano.com.br", "exemplo@email.com", "jeje@gmail.com", "joao@gmail.com.br.us",
-           "contato.palpitetech@gmail.com"].includes(email)) {
+      if (SKIP_EMAILS.has(email)) {
         results.push({ email, status: "skipped", error: "Email de teste" });
         continue;
       }
 
-      // Skip "Não informado" with suspicious emails
-      if (u.nome === "Não informado" && (email.includes("gahdgdg") || email.includes("angelba"))) {
-        results.push({ email, status: "skipped", error: "Usuário teste" });
+      const nome = (u.Nome || u.nome || "").trim();
+      if (nome === "-" || nome.toLowerCase().includes("vídeo tutorial") || nome.toLowerCase().includes("vídeo de teste")) {
+        results.push({ email, status: "skipped", error: "Usuário de teste" });
         continue;
       }
 
       try {
-        // Check if user already exists by email in perfis
+        // Check if user already exists
         const { data: existing } = await supabase
           .from("perfis")
           .select("id")
@@ -97,13 +168,10 @@ serve(async (req) => {
           email,
           password,
           email_confirm: true,
-          user_metadata: {
-            nome: u.nome || email.split("@")[0],
-          },
+          user_metadata: { nome: nome || email.split("@")[0] },
         });
 
         if (authError) {
-          // User might already exist in auth
           if (authError.message?.includes("already been registered")) {
             results.push({ email, status: "skipped", error: "Auth já existe" });
             continue;
@@ -112,31 +180,62 @@ serve(async (req) => {
         }
 
         const userId = authData.user.id;
-        const isAtivo = u.status === "Ativo";
-        const planoSlug = u.plano || "-";
-        const planId = isAtivo ? (PLAN_MAP[planoSlug] || GRATIS_ID) : GRATIS_ID;
-        const celular = normalizePhone(u.telefone);
-        const validade = isAtivo ? parseDate(u.proximaCobranca) : null;
 
-        // Update perfil (created by trigger handle_new_user)
+        // Determine access
+        const ativo = (u.Ativo || u.ativo || "").trim();
+        const isAtivo = ativo === "Sim";
+        const planoSlug = (u.Plano || u.plano || "-").toLowerCase();
+        const planId = isAtivo ? (PLAN_MAP[planoSlug] || GRATIS_ID) : GRATIS_ID;
+
+        const celular = normalizePhone(u.Telefone || u.telefone || "");
+        const cpf = normalizeCpf(u.CPF || u.cpf || "");
+        const diasExtras = parseInt(u.DiasExtras || u.diasExtras || "0", 10) || 0;
+
+        // Calculate validity
+        let validade: string | null = null;
+        if (isAtivo) {
+          const proximaCobranca = parseDate(u.ProximaCobranca || u.proximaCobranca || "");
+          if (proximaCobranca) {
+            validade = diasExtras > 0 ? addDays(proximaCobranca, diasExtras) : proximaCobranca;
+          } else {
+            validade = addDays(new Date().toISOString(), 30);
+          }
+        }
+
+        // Update perfil
+        const updateData: Record<string, unknown> = {
+          nome: nome || null,
+          celular,
+          email,
+          plan_id: planId,
+          status_assinatura: isAtivo ? "ativa" : "inativa",
+          validade_assinatura: validade,
+          email_verificado: true,
+        };
+        if (cpf) updateData.cpf = cpf;
+
         const { error: perfilError } = await supabase
           .from("perfis")
-          .update({
-            nome: u.nome || null,
-            celular,
-            email,
-            plan_id: planId,
-            status_assinatura: isAtivo ? "ativa" : "inativa",
-            validade_assinatura: validade,
-            email_verificado: true,
-          })
+          .update(updateData)
           .eq("id", userId);
 
         if (perfilError) {
           console.error(`Erro perfil ${email}:`, perfilError);
         }
 
-        results.push({ email, status: "created" });
+        // If active with paid plan, add premium role
+        if (isAtivo && planId !== GRATIS_ID) {
+          await supabase
+            .from("user_roles")
+            .insert({ user_id: userId, role: "premium" })
+            .then(() => {});
+        }
+
+        const planName = isAtivo
+          ? (planoSlug === "yearly" ? "Anual" : planoSlug === "semestral" ? "Semestral" : planoSlug === "monthly" ? "Mensal" : "Grátis")
+          : "Grátis";
+
+        results.push({ email, status: "created", plan: planName });
       } catch (err: any) {
         results.push({ email, status: "error", error: err.message || String(err) });
       }
@@ -146,6 +245,8 @@ serve(async (req) => {
     const skipped = results.filter(r => r.status === "skipped").length;
     const errors = results.filter(r => r.status === "error").length;
 
+    console.log(`Resultado: ${created} criados, ${skipped} pulados, ${errors} erros`);
+
     return new Response(JSON.stringify({
       summary: { total: users.length, created, skipped, errors },
       details: results,
@@ -154,6 +255,7 @@ serve(async (req) => {
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   } catch (error: any) {
+    console.error("Erro geral:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
