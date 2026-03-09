@@ -31,6 +31,7 @@ interface EmailPayload {
   validadeAssinatura?: string;
   planName?: string;
   checkoutLink?: string;
+  daysLeft?: string;
 }
 
 function formatDate(isoStr?: string): string {
