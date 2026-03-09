@@ -25,6 +25,7 @@ import Perfil from "./pages/Perfil";
 import CriarPost from "./pages/CriarPost";
 import PostDetalhes from "./pages/PostDetalhes";
 import Bloqueado from "./pages/Bloqueado";
+import Convites from "./pages/Convites";
 import AdminIndex from "./pages/admin/AdminIndex";
 import AdminPlanos from "./pages/admin/AdminPlanos";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
