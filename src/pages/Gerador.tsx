@@ -37,7 +37,7 @@ export default function Gerador() {
   const { isLoading, result, error, generatePalpites, reset } = useGerador();
   const { remaining_today, max_per_day, isLoading: statusLoading, refetch, isAdmin } = useGeradorStatus();
 
-  const canGenerate = isAdmin || remaining_today > 0;
+  const canGenerate = statusLoading || isAdmin || remaining_today > 0;
 
   // Buscar último concurso para cálculo de repetidas
   useEffect(() => {
@@ -57,6 +57,7 @@ export default function Gerador() {
   }, []);
 
   const handleGenerate = () => {
+    if (statusLoading) return;
     if (!canGenerate) {
       setUpgradeOpen(true);
       return;
