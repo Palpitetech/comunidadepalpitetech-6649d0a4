@@ -12,15 +12,21 @@ function UserStatsWidget() {
     queryKey: ["admin-user-stats"],
     queryFn: async () => {
       const [{ data: perfis }, { data: roles }, { data: plans }] = await Promise.all([
-        supabase.from("perfis").select("id, plan_id, is_bot").eq("is_bot", false),
+        supabase.from("perfis").select("id, plan_id, is_bot, status_assinatura").eq("is_bot", false),
         supabase.from("user_roles").select("user_id, role").eq("role", "premium"),
-        supabase.from("plans").select("id, name").eq("is_active", true).order("display_order"),
+        supabase.from("plans").select("id, name, price").eq("is_active", true).order("display_order"),
       ]);
 
       const users = perfis || [];
       const premiumUserIds = new Set((roles || []).map(r => r.user_id));
+      const paidPlanIds = new Set((plans || []).filter(p => p.price > 0).map(p => p.id));
+
       const total = users.length;
-      const pagos = users.filter(u => premiumUserIds.has(u.id)).length;
+      const pagos = users.filter(u =>
+        premiumUserIds.has(u.id) ||
+        (u.plan_id && paidPlanIds.has(u.plan_id)) ||
+        u.status_assinatura === "ativa"
+      ).length;
       const free = total - pagos;
 
       const planList = (plans || []).map(plan => ({
