@@ -97,6 +97,7 @@ export default function AdminVendas() {
   const [eventFilter, setEventFilter] = useState("all");
   const [selectedLog, setSelectedLog] = useState<WebhookLog | null>(null);
   const [page, setPage] = useState(1);
+  const [showRecorrencias, setShowRecorrencias] = useState(false);
   const PAGE_SIZE = 20;
 
   const fetchLogs = async () => {
