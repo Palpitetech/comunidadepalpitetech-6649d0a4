@@ -25,6 +25,7 @@ import Perfil from "./pages/Perfil";
 import CriarPost from "./pages/CriarPost";
 import PostDetalhes from "./pages/PostDetalhes";
 import Bloqueado from "./pages/Bloqueado";
+import Convites from "./pages/Convites";
 import AdminIndex from "./pages/admin/AdminIndex";
 import AdminPlanos from "./pages/admin/AdminPlanos";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
@@ -97,6 +98,7 @@ const App = () => (
             <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
             <Route path="/criar-post" element={<ProtectedRoute><CriarPost /></ProtectedRoute>} />
             <Route path="/comunidade/post/:id" element={<ProtectedRoute><PostDetalhes /></ProtectedRoute>} />
+            <Route path="/convites" element={<ProtectedRoute><Convites /></ProtectedRoute>} />
             <Route path="/bloqueado" element={<Bloqueado />} />
             
             {/* Rotas Mega Sena */}

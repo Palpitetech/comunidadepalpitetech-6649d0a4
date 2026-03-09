@@ -433,6 +433,70 @@ export type Database = {
         }
         Relationships: []
       }
+      convites: {
+        Row: {
+          created_at: string
+          id: string
+          referred_id: string
+          referrer_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          referred_id: string
+          referrer_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          referred_id?: string
+          referrer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "convites_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: true
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convites_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: true
+            referencedRelation: "perfis_publicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convites_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: true
+            referencedRelation: "usuarios_notificaveis_hoje"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convites_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convites_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_publicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convites_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios_notificaveis_hoje"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fechamento_auto_usage: {
         Row: {
           count: number
@@ -890,6 +954,7 @@ export type Database = {
           is_bot: boolean | null
           nome: string | null
           plan_id: string | null
+          referral_code: string | null
           status_assinatura: string | null
           updated_at: string
           validade_assinatura: string | null
@@ -912,6 +977,7 @@ export type Database = {
           is_bot?: boolean | null
           nome?: string | null
           plan_id?: string | null
+          referral_code?: string | null
           status_assinatura?: string | null
           updated_at?: string
           validade_assinatura?: string | null
@@ -934,6 +1000,7 @@ export type Database = {
           is_bot?: boolean | null
           nome?: string | null
           plan_id?: string | null
+          referral_code?: string | null
           status_assinatura?: string | null
           updated_at?: string
           validade_assinatura?: string | null
@@ -1510,6 +1577,7 @@ export type Database = {
       }
     }
     Functions: {
+      generate_referral_code: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { StepIndicator } from "./steps/StepIndicator";
 import { StepDadosPessoais } from "./steps/StepDadosPessoais";
@@ -8,6 +8,7 @@ import { StepSucesso } from "./steps/StepSucesso";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useVerificacao } from "@/hooks/useVerificacao";
+import { captureReferralCode, getStoredReferralCode, clearStoredReferralCode } from "@/hooks/useConvites";
 
 interface FormData {
   nome: string;
@@ -54,6 +55,11 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
   const { toast } = useToast();
   const { enviarCodigo, isLoading: isEnviandoCodigo } = useVerificacao();
 
+  // Capture referral code from URL on mount
+  useEffect(() => {
+    captureReferralCode();
+  }, []);
+
   const handleFormDataChange = (data: Partial<FormData>) => {
     setFormData((prev) => ({ ...prev, ...data }));
   };
@@ -61,14 +67,21 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
   const handleCriarConta = async () => {
     setIsLoading(true);
     try {
+      // Get referral code from localStorage
+      const referralCode = getStoredReferralCode();
+      
       const result = await signUp(
         formData.email,
         formData.password,
         formData.nome,
-        formData.celular.replace(/\D/g, "")
+        formData.celular.replace(/\D/g, ""),
+        referralCode || undefined
       );
 
       if (result?.user?.id) {
+        // Clear referral code after successful signup
+        clearStoredReferralCode();
+        
         setFormData((prev) => ({ ...prev, userId: result.user.id }));
         setStep(2);
         toast({
