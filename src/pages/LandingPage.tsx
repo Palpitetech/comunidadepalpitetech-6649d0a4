@@ -145,9 +145,9 @@ export default function LandingPage() {
       </section>
 
       {/* ===== 4. COMO FUNCIONA ===== */}
-      <section className="py-16 md:py-24 bg-secondary/30">
+      <section className="py-10 md:py-14 bg-secondary/30">
         <div className="max-w-3xl mx-auto px-5">
-          <h2 className="text-xl md:text-2xl font-bold text-center mb-10 leading-snug">
+          <h2 className="text-xl md:text-2xl font-bold text-center mb-6 leading-snug">
             Entrar na comunidade leva menos de 1 minuto
           </h2>
           <div className="grid md:grid-cols-3 gap-8 text-center">
