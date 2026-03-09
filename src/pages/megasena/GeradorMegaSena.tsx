@@ -55,6 +55,7 @@ export default function GeradorMegaSena() {
   }, []);
 
   const handleGenerate = () => {
+    if (statusLoading) return;
     if (!canGenerate) {
       setUpgradeOpen(true);
       return;

@@ -57,6 +57,7 @@ export default function Gerador() {
   }, []);
 
   const handleGenerate = () => {
+    if (statusLoading) return;
     if (!canGenerate) {
       setUpgradeOpen(true);
       return;
