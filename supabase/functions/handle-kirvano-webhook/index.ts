@@ -186,7 +186,7 @@ function mapToStatusAssinatura(statusOrEvent: string): "ativa" | "cancelada" | "
   return "inativa";
 }
 
-type SubscriptionAction = "activate" | "cancel" | "cancel_end_of_period" | "delinquent" | "ignore";
+type SubscriptionAction = "activate" | "cancel" | "cancel_end_of_period" | "overdue_grace" | "delinquent" | "ignore";
 
 function deriveSubscriptionAction(eventName: string, rawStatus: string): SubscriptionAction {
   const ev = eventName.toLowerCase();
@@ -205,6 +205,9 @@ function deriveSubscriptionAction(eventName: string, rawStatus: string): Subscri
 
   // Cancelamento de assinatura recorrente: mantém acesso até fim da validade
   if (ev === "subscription_canceled" || ev === "subscription_cancelled") return "cancel_end_of_period";
+
+  // Inadimplência de assinatura recorrente: mantém acesso temporário (grace period)
+  if (ev === "subscription_overdue") return "overdue_grace";
 
   // Cancelamentos imediatos (reembolso, chargeback) removem acesso na hora
   if (["cancel", "canceled", "cancelled", "refunded", "chargeback"].some((k) => s.includes(k))) return "cancel";
@@ -818,6 +821,109 @@ serve(async (req) => {
     }
 
     await finalizeLog({ processed: true, process_result: "subscription_canceled_end_of_period" });
+  } else if (action === "overdue_grace") {
+    // SUBSCRIPTION_OVERDUE: marca inadimplente mas mantém premium (grace period)
+    if (!perfil?.id) {
+      await finalizeLog({ processed: true, process_result: "no_profile_to_update" });
+      return new Response(JSON.stringify({ ok: true, skipped: true, reason: "perfil_not_found" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { error: updateError } = await admin
+      .from("perfis")
+      .update({ status_assinatura: "inadimplente" })
+      .eq("id", perfil.id);
+
+    if (updateError) {
+      await finalizeLog({ processed: true, process_result: "error_update_profile", error: updateError.message });
+      return new Response(JSON.stringify({ error: "Failed to update user" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    logStep("Subscription overdue (grace period)", {
+      userId: perfil.id,
+      validade: perfil.validade_assinatura,
+    });
+
+    // Envia email de aviso de inadimplência
+    try {
+      const resendApiKey = Deno.env.get("RESEND_API_KEY");
+      if (resendApiKey && email) {
+        const validadeDate = perfil.validade_assinatura
+          ? new Date(perfil.validade_assinatura).toLocaleDateString("pt-BR")
+          : "não definida";
+
+        const emailHtml = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:40px 24px;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <h1 style="color:#1a1a2e;font-size:24px;margin:0 0 8px;">⚠️ Pagamento pendente</h1>
+      <p style="color:#6b7280;font-size:16px;margin:0;">Regularize para manter seu acesso</p>
+    </div>
+    <div style="background:#fefce8;border:1px solid #fbbf24;border-radius:12px;padding:24px;margin-bottom:24px;">
+      <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 16px;">
+        Olá, <strong>${customerName || perfil.nome || "Jogador"}</strong>! 👋
+      </p>
+      <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 16px;">
+        Identificamos que o pagamento da sua assinatura na <strong>Palpite Tech</strong> está pendente.
+      </p>
+      <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 16px;">
+        Seu acesso continua ativo por enquanto, mas se o pagamento não for regularizado, ele será suspenso em breve.
+      </p>
+      <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 0;">
+        <strong>Regularize agora para não perder acesso às ferramentas premium, palpites por IA e análises avançadas.</strong>
+      </p>
+      <div style="text-align:center;margin:24px 0;">
+        <a href="https://comunidadepalpitetech.lovable.app/planos" style="display:inline-block;background:#7c3aed;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:bold;">
+          Regularizar pagamento
+        </a>
+      </div>
+    </div>
+    <div style="background:#f0fdf4;border-radius:8px;padding:16px;margin-bottom:24px;text-align:center;">
+      <p style="color:#374151;font-size:14px;margin:0 0 8px;"><strong>Precisa de ajuda?</strong></p>
+      <a href="https://wa.me/5551981854281" style="display:inline-block;background:#25D366;color:#ffffff;text-decoration:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:bold;">
+        💬 Falar no WhatsApp
+      </a>
+    </div>
+    <div style="text-align:center;padding-top:16px;border-top:1px solid #e5e7eb;">
+      <p style="color:#9ca3af;font-size:12px;margin:0;">© Palpite Tech — Comunidade de Loteria</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+        const resendRes = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${resendApiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            from: "Palpite Tech <noreply@resend.dev>",
+            to: [email],
+            subject: "⚠️ Pagamento pendente — Palpite Tech",
+            html: emailHtml,
+          }),
+        });
+
+        if (!resendRes.ok) {
+          logStep("Overdue email failed", { status: resendRes.status });
+        } else {
+          logStep("Overdue email sent", { email });
+        }
+      }
+    } catch (e) {
+      logStep("Overdue email error (non-fatal)", { message: e instanceof Error ? e.message : String(e) });
+    }
+
+    await finalizeLog({ processed: true, process_result: "subscription_overdue_grace" });
   } else {
     // cancel / delinquent: se existir perfil, atualiza status e remove premium
     if (!perfil?.id) {
