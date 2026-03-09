@@ -17,6 +17,28 @@ const INSTALLMENTS: Record<string, { parcelas: number; valor: string }> = {
   "anual": { parcelas: 12, valor: "30,44" },
 };
 
+// Compact highlights per plan slug
+const PLAN_HIGHLIGHTS: Record<string, string[]> = {
+  "mensal": [
+    "Gerador de Jogos (10x/dia)",
+    "Fechamento e Desdobramento",
+    "Estatísticas completas",
+    "Comunidade e Mesa Redonda",
+  ],
+  "anual": [
+    "Tudo do Mensal",
+    "Gerador de Jogos (10x/dia)",
+    "Economia de 47% vs mensal",
+    "Comunidade e Mesa Redonda",
+  ],
+  "plano-anual-vip": [
+    "Tudo do Anual +",
+    "Gerador Ilimitado",
+    "Chat IA completo",
+    "Ferramentas com IA exclusivas",
+  ],
+};
+
 export default function Planos() {
   const { user } = useAuthContext();
   const { data: subscription } = useMySubscription(user?.id);
