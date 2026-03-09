@@ -38,7 +38,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <div className="container-senior flex items-center justify-between py-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3 no-underline">
+        <Link to="/home" className="flex items-center gap-3 no-underline">
           <img src="/logo.png" alt="Palpite Tech" className="h-9 w-9 rounded-md" />
           <span className="text-senior-xl font-bold text-primary hidden sm:inline">Palpite Tech</span>
           <span className="text-senior-xl font-bold text-primary sm:hidden">Palpite</span>
@@ -46,7 +46,7 @@ export function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-2">
-          <Link to="/">
+          <Link to="/home">
             <Button variant="ghost" className="text-senior-base gap-2 h-12">
               <Home className="h-5 w-5" />
               Início
@@ -125,7 +125,7 @@ export function Header() {
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
         <nav className="md:hidden border-t border-border bg-card p-4 space-y-2">
-          <Link to="/" onClick={() => setMobileMenuOpen(false)}>
+          <Link to="/home" onClick={() => setMobileMenuOpen(false)}>
             <Button variant="ghost" className="w-full justify-start text-senior-base gap-3 h-14">
               <Home className="h-6 w-6" />
               Início

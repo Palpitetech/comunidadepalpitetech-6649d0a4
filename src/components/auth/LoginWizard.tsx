@@ -118,7 +118,7 @@ export function LoginWizard() {
     try {
       await signIn(resolvedEmail, senha);
       toast({ title: "Bem-vindo!", description: "Login realizado com sucesso." });
-      navigate("/", { replace: true });
+      navigate("/home", { replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : "E-mail/telefone ou senha inválidos";
       toast({ title: "Não foi possível entrar", description: message, variant: "destructive" });

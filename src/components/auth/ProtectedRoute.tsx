@@ -23,8 +23,8 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // Se não está autenticado, redireciona para login
   if (!isAuthenticated) {
-    const isRoot = location.pathname === "/" || location.pathname === "/comunidade";
-    return <Navigate to={isRoot ? "/landing" : "/login"} state={{ from: location }} replace />;
+    const isHome = location.pathname === "/home" || location.pathname === "/comunidade";
+    return <Navigate to={isHome ? "/" : "/login"} state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

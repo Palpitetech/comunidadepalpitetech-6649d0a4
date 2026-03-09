@@ -41,14 +41,14 @@ export function DesktopHeader() {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 overflow-x-hidden">
       <div className="container-senior flex items-center justify-between py-3 gap-2">
         {/* Logo - Compacto */}
-        <Link to="/" className="flex items-center gap-2 no-underline shrink-0">
+        <Link to="/home" className="flex items-center gap-2 no-underline shrink-0">
           <img src="/logo.png" alt="Palpite Tech" className="h-8 w-8 rounded-md" />
           <span className="text-lg font-bold text-primary hidden sm:inline">Palpite Tech</span>
         </Link>
 
         {/* Desktop Navigation - Compacto */}
         <nav className="flex items-center gap-1">
-          <Link to="/">
+          <Link to="/home">
             <Button variant="ghost" className="gap-1.5 h-10 px-3 text-sm">
               <Home className="h-4 w-4" />
               <span className="hidden lg:inline">Início</span>

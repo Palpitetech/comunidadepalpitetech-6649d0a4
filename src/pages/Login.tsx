@@ -10,7 +10,7 @@ export default function Auth() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/", { replace: true });
+      navigate("/home", { replace: true });
     }
   }, [isAuthenticated, navigate]);
 

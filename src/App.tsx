@@ -75,14 +75,14 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             {/* Rotas Públicas */}
-            <Route path="/landing" element={<Home />} />
+            <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/recuperar-senha" element={<RecuperarSenha />} />
             <Route path="/termos" element={<Termos />} />
             <Route path="/privacidade" element={<Privacidade />} />
 
             {/* Rotas Protegidas - Requer Login */}
-            <Route path="/" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
+            <Route path="/home" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
             <Route path="/comunidade" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
             <Route path="/chat" element={<AdminRoute><Chat /></AdminRoute>} />
             <Route path="/notificacoes" element={<ProtectedRoute><Notificacoes /></ProtectedRoute>} />

@@ -10,7 +10,7 @@ export default function LandingPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAuthenticated) navigate("/", { replace: true });
+    if (isAuthenticated) navigate("/home", { replace: true });
   }, [isAuthenticated, navigate]);
 
   const ctaLink = "/login?cadastro=true";
@@ -55,7 +55,7 @@ export default function LandingPage() {
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur">
         <div className="max-w-5xl mx-auto flex items-center justify-between px-5 py-3.5">
-          <Link to="/landing" className="flex items-center gap-2.5">
+          <Link to="/" className="flex items-center gap-2.5">
             <img src="/logo.png" alt="Palpite Tech" className="h-9 w-9 rounded-lg" />
             <span className="font-bold text-base text-primary hidden sm:inline tracking-tight">Palpite Tech</span>
           </Link>
