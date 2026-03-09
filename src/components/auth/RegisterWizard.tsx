@@ -143,8 +143,8 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      {/* Step indicator - compact */}
-      <div className="px-4 py-2 md:p-6 border-b bg-muted/30 shrink-0">
+      {/* Step indicator - desktop only */}
+      <div className="hidden md:block px-4 py-2 md:p-6 border-b bg-muted/30 shrink-0">
         <StepIndicator currentStep={step} steps={steps} />
       </div>
 
