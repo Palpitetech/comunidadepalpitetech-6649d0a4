@@ -28,7 +28,7 @@ export function StepSenhaAlterada({ onVoltarLogin }: StepSenhaAlteradaProps) {
                 Vá até sua caixa de entrada, promoções, spam, lixo eletrônico e outros.
               </p>
               <p className="text-muted-foreground text-xs md:text-sm">
-                Procure pelo email do remetente <strong className="text-foreground">"ComunidadePalpiteTech"</strong> ou{" "}
+                Procure pelo email do remetente <strong className="text-foreground">"Comunidade Palpite Tech"</strong> ou{" "}
                 <strong className="text-foreground">solicitacao@palpitetech.com.br</strong>
               </p>
             </div>
