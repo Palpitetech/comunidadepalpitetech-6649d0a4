@@ -1260,6 +1260,7 @@ export type Database = {
       }
       referral_rewards: {
         Row: {
+          claimed_at: string | null
           created_at: string
           days_granted: number
           id: string
@@ -1268,6 +1269,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          claimed_at?: string | null
           created_at?: string
           days_granted?: number
           id?: string
@@ -1276,6 +1278,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          claimed_at?: string | null
           created_at?: string
           days_granted?: number
           id?: string
@@ -1633,6 +1636,7 @@ export type Database = {
         Args: { p_referrer_id: string }
         Returns: undefined
       }
+      claim_referral_reward: { Args: { p_reward_id: string }; Returns: Json }
       generate_referral_code: { Args: never; Returns: string }
       has_role: {
         Args: {
