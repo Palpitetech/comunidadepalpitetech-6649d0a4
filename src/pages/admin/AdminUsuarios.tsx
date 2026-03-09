@@ -349,7 +349,33 @@ export default function AdminUsuarios() {
           </Table>
         </div>
 
-        {/* Sheet de Detalhes */}
+        {/* Bottom pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 py-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1"
+              disabled={page === 0}
+              onClick={() => setPage(p => p - 1)}
+            >
+              <ChevronLeft className="h-3.5 w-3.5" /> Anterior
+            </Button>
+            <span className="text-xs text-muted-foreground px-2">
+              {page + 1} de {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1"
+              disabled={page >= totalPages - 1}
+              onClick={() => setPage(p => p + 1)}
+            >
+              Próxima <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        )}
+
         <UserDetailSheet
           user={selectedUser}
           plans={plans}
