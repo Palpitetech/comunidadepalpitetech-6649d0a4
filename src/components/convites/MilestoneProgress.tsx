@@ -136,7 +136,7 @@ export const MilestoneProgress: React.FC<MilestoneProgressProps> = ({
               <p className="font-semibold text-sm">
                 {totalDaysClaimed > 0 ? (
                   <>
-                    <Check className="inline h-4 w-4 mr-1 text-green-500" />
+                    <Check className="inline h-4 w-4 mr-1 text-primary" />
                     {totalDaysClaimed} dias reinvindicados
                   </>
                 ) : (
