@@ -14,7 +14,9 @@ type EmailType =
   | "expira_7dias"
   | "expira_3dias"
   | "renove_assinatura"
-  | "atrasada_7dias";
+  | "atrasada_7dias"
+  | "inadimplente_lembrete"
+  | "inadimplente_removido";
 
 interface EmailPayload {
   type: EmailType;
@@ -29,6 +31,7 @@ interface EmailPayload {
   validadeAssinatura?: string;
   planName?: string;
   checkoutLink?: string;
+  daysLeft?: string;
 }
 
 function formatDate(isoStr?: string): string {
@@ -177,6 +180,53 @@ function buildEmail(payload: EmailPayload): { subject: string; html: string } {
       return {
         subject: "⚠️ Assinatura vencida há 7 dias — Reative seu acesso | Palpite Tech",
         html: baseTemplate("Assinatura Vencida há 7 Dias", "⚠️", body, "Reativar Meu Acesso", payload.checkoutLink || SITE_URL + "/planos"),
+      };
+    }
+
+    case "inadimplente_lembrete": {
+      const daysLeft = payload.daysLeft || "2";
+      const body = `
+        <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 16px;">
+          Olá, <strong>${name}</strong>! 👋
+        </p>
+        <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 16px;">
+          Identificamos que o pagamento da sua assinatura <strong>${payload.planName || "Premium"}</strong> está pendente.
+        </p>
+        <p style="color:#ef4444;font-size:16px;line-height:1.6;margin:0 0 16px;">
+          ⚠️ <strong>Você tem ${daysLeft} dia(s)</strong> para regularizar antes que seu acesso Premium seja suspenso.
+        </p>
+        <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 0;">
+          Regularize agora para continuar usando o Gerador por IA, análises avançadas e todas as ferramentas premium.
+        </p>`;
+      return {
+        subject: `⚠️ Pagamento pendente — ${daysLeft} dia(s) para regularizar | Palpite Tech`,
+        html: baseTemplate("Pagamento Pendente", "⚠️", body, "Regularizar Agora", payload.checkoutLink || SITE_URL + "/planos"),
+      };
+    }
+
+    case "inadimplente_removido": {
+      const body = `
+        <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 16px;">
+          Olá, <strong>${name}</strong>! 👋
+        </p>
+        <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 16px;">
+          Infelizmente, seu acesso ao plano <strong>${payload.planName || "Premium"}</strong> foi <strong>suspenso</strong> por falta de pagamento.
+        </p>
+        <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 16px;">
+          Você perdeu o acesso a:
+        </p>
+        <ul style="color:#374151;font-size:15px;line-height:1.8;margin:0 0 16px;padding-left:20px;">
+          <li>🤖 Gerador de Palpites por IA</li>
+          <li>📊 Análises avançadas e tendências</li>
+          <li>🎯 Fechamentos e desdobramentos</li>
+          <li>💬 Chat com especialistas</li>
+        </ul>
+        <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 0;">
+          <strong>A boa notícia:</strong> você pode reativar seu acesso a qualquer momento renovando sua assinatura.
+        </p>`;
+      return {
+        subject: "⛔ Acesso Premium suspenso — Reative agora | Palpite Tech",
+        html: baseTemplate("Acesso Premium Suspenso", "⛔", body, "Reativar Minha Assinatura", payload.checkoutLink || SITE_URL + "/planos"),
       };
     }
   }
