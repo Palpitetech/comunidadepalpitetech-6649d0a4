@@ -96,6 +96,26 @@ export default function AdminIndex() {
               </Link>
             </CardContent>
           </Card>
+
+          {/* Card Convites */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-senior-lg">
+                <Gift className="h-6 w-6 text-primary" />
+                Convites
+              </CardTitle>
+              <CardDescription className="text-senior-base">
+                Ranking de indicadores por vendas e cadastros
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to="/admin/convites">
+                <Button className="w-full gap-2 h-12 text-senior-base">
+                  Acessar <ArrowRight className="h-5 w-5" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </MainLayout>
