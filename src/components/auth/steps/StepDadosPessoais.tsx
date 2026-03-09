@@ -51,10 +51,9 @@ export function StepDadosPessoais({
       newErrors.email = "E-mail inválido";
     }
 
+    // Celular é opcional, mas se preenchido deve ser válido
     const celularNumeros = formData.celular.replace(/\D/g, "");
-    if (!celularNumeros) {
-      newErrors.celular = "Digite seu celular";
-    } else if (celularNumeros.length < 10 || celularNumeros.length > 11) {
+    if (celularNumeros && (celularNumeros.length < 10 || celularNumeros.length > 11)) {
       newErrors.celular = "Celular deve ter 10 ou 11 dígitos";
     }
 
@@ -129,10 +128,10 @@ export function StepDadosPessoais({
           {errors.email && <p className="text-destructive text-xs">{errors.email}</p>}
         </div>
 
-        {/* Celular */}
+        {/* Celular (opcional) */}
         <div className="space-y-0.5">
           <Label htmlFor="celular" className="text-xs md:text-senior-base font-medium">
-            Celular
+            Celular <span className="text-muted-foreground font-normal">(opcional)</span>
           </Label>
           <Input
             id="celular"

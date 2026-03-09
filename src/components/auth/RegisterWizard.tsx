@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { StepIndicator } from "./steps/StepIndicator";
 import { StepDadosPessoais } from "./steps/StepDadosPessoais";
-import { StepEscolhaVerificacao } from "./steps/StepEscolhaVerificacao";
 import { StepCodigoOTP } from "./steps/StepCodigoOTP";
 import { StepSucesso } from "./steps/StepSucesso";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -15,7 +14,6 @@ interface FormData {
   celular: string;
   password: string;
   userId: string;
-  tipoVerificacao: 'sms' | 'email' | null;
 }
 
 export interface RegisterWizardProps {
@@ -46,7 +44,6 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
     celular: initialData?.celular ? formatCelularBR(String(initialData.celular)) : "",
     password: "",
     userId: "",
-    tipoVerificacao: null,
   });
 
   const { signUp } = useAuthContext();
@@ -66,11 +63,14 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
     try {
       const referralCode = getStoredReferralCode();
       
+      // Celular é opcional - só passa se preenchido
+      const celularLimpo = formData.celular.replace(/\D/g, "");
+      
       const result = await signUp(
         formData.email,
         formData.password,
         formData.nome,
-        formData.celular.replace(/\D/g, ""),
+        celularLimpo || undefined,
         referralCode || undefined
       );
 
@@ -78,11 +78,29 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
         clearStoredReferralCode();
         
         setFormData((prev) => ({ ...prev, userId: result.user.id }));
-        setStep(2);
-        toast({
-          title: "Conta criada!",
-          description: "Escolha como deseja verificar sua conta.",
+        
+        // Enviar código de verificação por email automaticamente
+        const envioResult = await enviarCodigo({
+          userId: result.user.id,
+          tipo: 'email',
+          destino: formData.email,
+          nome: formData.nome,
         });
+
+        if (envioResult.sucesso) {
+          setStep(2);
+          toast({
+            title: "Conta criada!",
+            description: "Enviamos um código de verificação para seu e-mail.",
+          });
+        } else {
+          toast({
+            title: "Conta criada, mas houve um erro",
+            description: envioResult.erro || "Não foi possível enviar o código. Tente reenviar.",
+            variant: "destructive",
+          });
+          setStep(2); // Vai para o step de código mesmo assim para poder reenviar
+        }
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro ao criar conta";
@@ -96,49 +114,14 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
     }
   };
 
-  const handleEscolhaVerificacao = async (tipo: 'sms' | 'email') => {
-    setFormData((prev) => ({ ...prev, tipoVerificacao: tipo }));
-    
-    const destino = tipo === 'email' ? formData.email : formData.celular.replace(/\D/g, "");
-    
-    const result = await enviarCodigo({
-      userId: formData.userId,
-      tipo,
-      destino,
-      nome: formData.nome,
-    });
-
-    if (result.sucesso) {
-      setStep(3);
-      toast({
-        title: "Código enviado!",
-        description: `Verifique seu ${tipo === 'email' ? 'email' : 'celular'}.`,
-      });
-    } else {
-      toast({
-        title: "Erro ao enviar código",
-        description: result.erro,
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleVerificado = () => {
-    setStep(4);
-  };
-
-  const getDestinoVerificacao = () => {
-    if (formData.tipoVerificacao === 'email') {
-      return formData.email;
-    }
-    return formData.celular.replace(/\D/g, "");
+    setStep(3);
   };
 
   const steps = [
     { number: 1, label: "Dados" },
-    { number: 2, label: "Escolha" },
-    { number: 3, label: "Código" },
-    { number: 4, label: "Pronto" },
+    { number: 2, label: "Código" },
+    { number: 3, label: "Pronto" },
   ];
 
   return (
@@ -155,30 +138,21 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
             formData={formData}
             onFormDataChange={handleFormDataChange}
             onNext={handleCriarConta}
-            isLoading={isLoading}
+            isLoading={isLoading || isEnviandoCodigo}
           />
         )}
 
         {step === 2 && (
-          <StepEscolhaVerificacao
-            email={formData.email}
-            celular={formData.celular}
-            onEscolha={handleEscolhaVerificacao}
-            isLoading={isEnviandoCodigo}
-          />
-        )}
-
-        {step === 3 && formData.tipoVerificacao && (
           <StepCodigoOTP
             userId={formData.userId}
-            tipo={formData.tipoVerificacao}
-            destino={getDestinoVerificacao()}
+            tipo="email"
+            destino={formData.email}
             nome={formData.nome}
             onVerified={handleVerificado}
           />
         )}
 
-        {step === 4 && <StepSucesso />}
+        {step === 3 && <StepSucesso />}
       </div>
     </div>
   );
