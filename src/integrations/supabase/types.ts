@@ -1648,6 +1648,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      identificar_conta: { Args: { p_identificador: string }; Returns: Json }
       process_pending_bot_replies: { Args: never; Returns: undefined }
     }
     Enums: {
