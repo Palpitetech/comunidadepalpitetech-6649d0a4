@@ -298,7 +298,7 @@ export default function AdminUsuarios() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.map((user) => (
+              {paginatedUsers.map((user) => (
                 <TableRow
                   key={user.id}
                   className="cursor-pointer hover:bg-muted/50"
