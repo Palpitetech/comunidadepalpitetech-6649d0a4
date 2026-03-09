@@ -15,9 +15,13 @@ const Convites: React.FC = () => {
     progressCadastros,
     progressVendas,
     totalDaysEarned,
+    totalDaysClaimed,
+    unclaimedRewards,
     isLoading,
     isGenerating,
+    isClaiming,
     generateCode,
+    claimReward,
   } = useConvites();
 
   return (
@@ -41,6 +45,10 @@ const Convites: React.FC = () => {
           progressCadastros={progressCadastros}
           progressVendas={progressVendas}
           totalDaysEarned={totalDaysEarned}
+          totalDaysClaimed={totalDaysClaimed}
+          unclaimedRewards={unclaimedRewards}
+          isClaiming={isClaiming}
+          onClaimReward={claimReward}
         />
 
         <ConvidadosList
