@@ -73,7 +73,7 @@ export default function LandingPage() {
       {/* ===== 1. HERO ===== */}
       <section className="relative bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.08)_0%,transparent_60%)]" />
-        <div className="max-w-3xl mx-auto px-5 py-20 md:py-32 text-center relative z-10">
+        <div className="max-w-3xl mx-auto px-5 py-14 md:py-20 text-center relative z-10">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wider mb-8">
             <span>🎯</span> Comunidade 100% Gratuita
           </div>
