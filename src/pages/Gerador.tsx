@@ -10,11 +10,12 @@ import { PeriodoAnaliseSelector } from "@/components/gerador/PeriodoAnaliseSelec
 import { FiltroDezenasSelector } from "@/components/gerador/FiltroDezenasSelector";
 import { PedidoEspecialInput } from "@/components/gerador/PedidoEspecialInput";
 import { ResultadosSheet } from "@/components/gerador/ResultadosSheet";
+import { UpgradeModal } from "@/components/shared/UpgradeModal";
 import { useGerador } from "@/hooks/useGerador";
 import { useGeradorStatus } from "@/hooks/useGeradorStatus";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
-import { Dices, Loader2, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Dices, Loader2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function Gerador() {
   const isMobile = useIsMobile();
@@ -23,6 +24,7 @@ export default function Gerador() {
   const [periodoAnalise, setPeriodoAnalise] = useState(50);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   
   // Novos estados para filtros
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
@@ -55,6 +57,11 @@ export default function Gerador() {
   }, []);
 
   const handleGenerate = () => {
+    if (!canGenerate) {
+      setUpgradeOpen(true);
+      return;
+    }
+    
     // Preparar filtros
     const filtros = {
       dezenasFiexas: dezenasFiexasOpcao === "sim" ? dezenasFixas : [],
@@ -90,6 +97,10 @@ export default function Gerador() {
     dezenasExcluidasOpcao !== "padrao" || 
     pedidoEspecial.trim().length > 0;
 
+  const usageBadgeText = isAdmin
+    ? "∞"
+    : `${remaining_today}/${max_per_day}`;
+
   return (
     <MainLayout pageTitle="Gerador de Palpites">
       <div className="container-senior py-6 space-y-6 max-w-md mx-auto">
@@ -114,21 +125,21 @@ export default function Gerador() {
               value={quantidade}
               onChange={setQuantidade}
               max={12}
-              disabled={isLoading || !canGenerate}
+              disabled={isLoading}
             />
 
             {/* Seletor de Dezenas por Palpite */}
             <DezenasSelector
               value={qtdDezenas}
               onChange={setQtdDezenas}
-              disabled={isLoading || !canGenerate}
+              disabled={isLoading}
             />
 
             {/* Seletor de Período de Análise */}
             <PeriodoAnaliseSelector
               value={periodoAnalise}
               onChange={setPeriodoAnalise}
-              disabled={isLoading || !canGenerate}
+              disabled={isLoading}
             />
 
             <Separator />
@@ -165,7 +176,7 @@ export default function Gerador() {
                   onChange={setDezenasFiexasOpcao}
                   dezenasSelecionadas={dezenasFixas}
                   onDezenasChange={setDezenasFixas}
-                  disabled={isLoading || !canGenerate}
+                  disabled={isLoading}
                   tipo="fixas"
                 />
 
@@ -177,7 +188,7 @@ export default function Gerador() {
                   onChange={setDezenasExcluidasOpcao}
                   dezenasSelecionadas={dezenasExcluidas}
                   onDezenasChange={setDezenasExcluidas}
-                  disabled={isLoading || !canGenerate}
+                  disabled={isLoading}
                   tipo="excluidas"
                 />
 
@@ -185,7 +196,7 @@ export default function Gerador() {
                 <PedidoEspecialInput
                   value={pedidoEspecial}
                   onChange={setPedidoEspecial}
-                  disabled={isLoading || !canGenerate}
+                  disabled={isLoading}
                 />
               </div>
             )}
@@ -198,30 +209,37 @@ export default function Gerador() {
               </div>
             )}
 
-            {/* Botão de Gerar */}
-            <Button
-              onClick={handleGenerate}
-              disabled={isLoading || !canGenerate}
-              className="w-full h-14 text-lg gap-2"
-              size="lg"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  Analisando dados...
-                </>
-              ) : !canGenerate ? (
-                <>
-                  <Clock className="h-5 w-5" />
-                  Aguarde até amanhã
-                </>
-              ) : (
-                <>
-                  <Dices className="h-5 w-5" />
-                  Gerar {quantidade} Palpite{quantidade > 1 ? "s" : ""}
-                </>
+            {/* Botão de Gerar com badge de uso */}
+            <div className="relative">
+              <Button
+                onClick={handleGenerate}
+                disabled={isLoading}
+                className="w-full h-14 text-lg gap-2"
+                size="lg"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Analisando dados...
+                  </>
+                ) : (
+                  <>
+                    <Dices className="h-5 w-5" />
+                    Gerar {quantidade} Palpite{quantidade > 1 ? "s" : ""}
+                  </>
+                )}
+              </Button>
+              {/* Badge de uso no canto do botão */}
+              {!statusLoading && !isLoading && (
+                <span className={`absolute -top-2 -right-2 text-[11px] font-bold px-2 py-0.5 rounded-full border shadow-sm ${
+                  canGenerate
+                    ? "bg-background text-foreground border-border"
+                    : "bg-destructive text-destructive-foreground border-destructive"
+                }`}>
+                  {usageBadgeText} uso{max_per_day !== 1 ? "s" : ""}/dia
+                </span>
               )}
-            </Button>
+            </div>
 
             {/* Loading skeleton */}
             {isLoading && (
@@ -231,26 +249,6 @@ export default function Gerador() {
                 </div>
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-3/4 mx-auto" />
-              </div>
-            )}
-
-            {/* Status de uso - discreto no rodapé */}
-            {!statusLoading && (
-              <div className={`flex items-center justify-center gap-2 p-3 rounded-lg ${
-                canGenerate 
-                  ? "bg-muted/50 text-muted-foreground" 
-                  : "bg-destructive/10 text-destructive"
-              }`}>
-                <Clock className="h-4 w-4" />
-                <span className="text-sm">
-                  {isAdmin ? (
-                    <>🛡️ Modo Admin: <strong>Geração ilimitada</strong></>
-                  ) : canGenerate ? (
-                    <>Você pode gerar <strong>{remaining_today}</strong> vez(es) hoje</>
-                  ) : (
-                    <>Limite diário atingido. Volte amanhã!</>
-                  )}
-                </span>
               </div>
             )}
           </CardContent>
@@ -269,6 +267,14 @@ export default function Gerador() {
             dezenasFixes={dezenasFiexasOpcao === "sim" ? dezenasFixas : undefined}
           />
         )}
+
+        {/* Modal de Upgrade ao exceder limite */}
+        <UpgradeModal
+          open={upgradeOpen}
+          onOpenChange={setUpgradeOpen}
+          featureLabel="Gerador de Palpites — 10 usos/dia"
+          variant="vip"
+        />
       </div>
     </MainLayout>
   );
