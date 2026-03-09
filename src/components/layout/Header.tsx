@@ -46,7 +46,7 @@ export function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-2">
-          <Link to="/">
+          <Link to="/home">
             <Button variant="ghost" className="text-senior-base gap-2 h-12">
               <Home className="h-5 w-5" />
               Início
