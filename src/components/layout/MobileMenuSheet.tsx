@@ -81,6 +81,24 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
     onOpenChange(false);
   };
 
+  const handleGatedClick = (e: React.MouseEvent, path: string) => {
+    const feature = getFeatureForRoute(path);
+    if (feature && !hasPermission(feature)) {
+      e.preventDefault();
+      setUpgradeLabel(FEATURE_LABELS[feature]);
+      setUpgradeVariant(isVipFeature(feature) ? "vip" : "premium");
+      setUpgradeOpen(true);
+    } else {
+      closeAndNavigate();
+    }
+  };
+
+  const renderBadge = (path: string) => {
+    const feature = getFeatureForRoute(path);
+    if (!feature || hasPermission(feature)) return null;
+    return <PremiumBadge variant={isVipFeature(feature) ? "vip" : "premium"} className="ml-auto" />;
+  };
+
   const supportWhatsApp = "https://wa.me/5516997175392?text=Olá! Preciso de ajuda com o Palpite Tech.";
 
   return (
