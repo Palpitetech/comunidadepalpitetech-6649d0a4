@@ -19,6 +19,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 interface AlterarCelularDialogProps {
   celularAtual: string | null;
   onSuccess: () => void;
+  trigger?: React.ReactNode;
 }
 
 export function AlterarCelularDialog({ celularAtual, onSuccess }: AlterarCelularDialogProps) {
