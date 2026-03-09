@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Send, MessageCircle } from "lucide-react";
+import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { CommentItem } from "./CommentItem";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -54,24 +53,22 @@ export function CommentSection({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <MessageCircle className="h-5 w-5 text-muted-foreground" />
-        <h3 className="font-semibold text-foreground">
-          Comentários ({commentsCount})
-        </h3>
-      </div>
+      <p className="text-sm text-muted-foreground">
+        {commentsCount} {commentsCount === 1 ? "comentário" : "comentários"}
+      </p>
 
       {/* Input de novo comentário */}
-      <div className="flex gap-2">
-        <Textarea
-          placeholder="Escrever comentário..."
+      <div className="flex items-end gap-2">
+        <input
+          type="text"
+          placeholder="Escreva um comentário..."
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
-          className="min-h-[80px] resize-none"
+          className="flex-1 bg-transparent border-b border-border text-sm py-2 px-0 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
+            if (e.key === "Enter") {
               e.preventDefault();
               handleSubmit();
             }
@@ -80,8 +77,9 @@ export function CommentSection({
         <Button
           onClick={handleSubmit}
           disabled={!newComment.trim() || isAdding}
+          variant="ghost"
           size="icon"
-          className="h-10 w-10 flex-shrink-0"
+          className="h-8 w-8 text-muted-foreground hover:text-primary flex-shrink-0"
         >
           <Send className="h-4 w-4" />
         </Button>
@@ -89,23 +87,23 @@ export function CommentSection({
 
       {/* Lista de comentários */}
       {isLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex gap-3">
-              <Skeleton className="h-8 w-8 rounded-full" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-4 w-full" />
+        <div className="space-y-3 pt-2">
+          {[1, 2].map((i) => (
+            <div key={i} className="flex gap-2.5">
+              <Skeleton className="h-7 w-7 rounded-full" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-3 w-full" />
               </div>
             </div>
           ))}
         </div>
       ) : comments.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-6">
-          Nenhum comentário ainda. Seja o primeiro!
+        <p className="text-xs text-muted-foreground text-center py-4">
+          Seja o primeiro a comentar.
         </p>
       ) : (
-        <div className="divide-y divide-border">
+        <div className="space-y-0">
           {comments.map((comment) => (
             <CommentItem
               key={comment.id}
