@@ -834,6 +834,15 @@ Deno.serve(async (req) => {
             // Não interrompe sincronização por falha de notificação
           }
 
+          // Push notification via OneSignal
+          await dispararPushResultadoNovo({
+            supabaseUrl,
+            authBearer: supabaseAnonKey,
+            webhookSecret: notificationsWebhookSecret,
+            concurso: concurso.numero,
+            loteria: 'Lotofácil',
+          });
+
           // Cria post da Ana diretamente (sem depender de outra edge function)
           try {
             await criarPostResultadoOficialAna({
