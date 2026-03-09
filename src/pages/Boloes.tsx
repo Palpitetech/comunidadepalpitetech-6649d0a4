@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { ChevronRight, MessageCircle, Ticket, Clock, X } from "lucide-react";
+import { ChevronRight, MessageCircle, Ticket, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Bolao {
