@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { CheckCircle2, ArrowRight } from "lucide-react";
+import { CheckCircle2, ArrowRight, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function LandingPage() {
@@ -14,6 +14,41 @@ export default function LandingPage() {
   }, [isAuthenticated, navigate]);
 
   const ctaLink = "/login?cadastro=true";
+
+  const CtaPrimary = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+    <Button size="lg" className={`bg-accent text-accent-foreground hover:bg-accent/90 text-sm md:text-base font-semibold px-7 py-5 rounded-xl shadow-lg ${className}`} asChild>
+      <Link to={ctaLink}>
+        {children}
+        <ArrowRight className="ml-2 h-4 w-4" />
+      </Link>
+    </Button>
+  );
+
+  const CtaSecondary = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+    <Button variant="outline" size="lg" className={`border-primary/30 text-primary hover:bg-primary/5 text-sm font-medium px-6 py-5 rounded-xl ${className}`} asChild>
+      <Link to={ctaLink}>
+        {children}
+        <ChevronRight className="ml-1.5 h-4 w-4" />
+      </Link>
+    </Button>
+  );
+
+  const CtaGhost = ({ children }: { children: React.ReactNode }) => (
+    <Button variant="ghost" className="text-primary hover:text-primary/80 text-sm font-semibold underline-offset-4 hover:underline px-0" asChild>
+      <Link to={ctaLink}>
+        {children}
+        <ArrowRight className="ml-1 h-3.5 w-3.5" />
+      </Link>
+    </Button>
+  );
+
+  const CtaLight = ({ children }: { children: React.ReactNode }) => (
+    <Button size="lg" variant="secondary" className="bg-white/15 text-primary-foreground hover:bg-white/25 border border-white/20 text-sm font-medium px-6 py-5 rounded-xl backdrop-blur" asChild>
+      <Link to="/login">
+        {children}
+      </Link>
+    </Button>
+  );
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -48,12 +83,10 @@ export default function LandingPage() {
           <p className="text-base md:text-lg text-primary-foreground/75 max-w-xl mx-auto mb-10 leading-relaxed">
             Receba dicas durante todo o dia, participe de discussões com outros apostadores, analise resultados e utilize ferramentas exclusivas para montar seus jogos com mais estratégia.
           </p>
-          <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 text-sm md:text-base font-semibold px-7 py-5 rounded-xl shadow-lg" asChild>
-            <Link to={ctaLink}>
-              Entrar na Comunidade Gratuitamente
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <CtaPrimary>Entrar na Comunidade Gratuitamente</CtaPrimary>
+            <CtaLight>Já tenho conta</CtaLight>
+          </div>
           <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 mt-8 text-xs font-medium text-primary-foreground/60">
             <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-accent" /> Cadastro gratuito</span>
             <span className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-accent" /> Dicas todos os dias</span>
@@ -79,6 +112,9 @@ export default function LandingPage() {
           <p className="mt-3 text-primary font-semibold text-base">
             Foi por isso que criamos essa comunidade.
           </p>
+          <div className="mt-8">
+            <CtaGhost>Quero mudar isso agora</CtaGhost>
+          </div>
         </div>
       </section>
 
@@ -101,6 +137,9 @@ export default function LandingPage() {
                 <p className="text-muted-foreground text-sm leading-relaxed">{f.desc}</p>
               </div>
             ))}
+          </div>
+          <div className="text-center mt-10">
+            <CtaSecondary>Quero acessar tudo isso</CtaSecondary>
           </div>
         </div>
       </section>
@@ -126,6 +165,9 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+          <div className="text-center mt-10">
+            <CtaPrimary>Começar Agora — É Grátis</CtaPrimary>
+          </div>
         </div>
       </section>
 
@@ -148,10 +190,11 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
-          <p className="text-muted-foreground text-sm max-w-md mx-auto leading-relaxed">
+          <p className="text-muted-foreground text-sm max-w-md mx-auto leading-relaxed mb-8">
             Se você aposta apenas por impulso, talvez não seja para você.
             Mas se gosta de <strong className="text-foreground">estratégia e análise</strong>, você vai se sentir em casa.
           </p>
+          <CtaGhost>Sim, quero participar</CtaGhost>
         </div>
       </section>
 
@@ -167,6 +210,9 @@ export default function LandingPage() {
           <p className="mt-3 text-primary font-semibold text-sm">
             É exatamente isso que acontece dentro da comunidade.
           </p>
+          <div className="mt-8">
+            <CtaSecondary>Fazer parte da comunidade</CtaSecondary>
+          </div>
         </div>
       </section>
 
@@ -179,12 +225,10 @@ export default function LandingPage() {
           <p className="text-primary-foreground/75 text-sm md:text-base mb-8 max-w-md mx-auto leading-relaxed">
             O cadastro é gratuito e você já pode começar a acompanhar as dicas e discussões imediatamente.
           </p>
-          <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 text-sm md:text-base font-semibold px-7 py-5 rounded-xl shadow-lg" asChild>
-            <Link to={ctaLink}>
-              Criar Conta Gratuita Agora
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <CtaPrimary>Criar Conta Gratuita Agora</CtaPrimary>
+            <CtaLight>Já tenho conta</CtaLight>
+          </div>
         </div>
       </section>
 
