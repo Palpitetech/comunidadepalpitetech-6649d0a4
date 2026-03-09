@@ -67,14 +67,21 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
   const handleCriarConta = async () => {
     setIsLoading(true);
     try {
+      // Get referral code from localStorage
+      const referralCode = getStoredReferralCode();
+      
       const result = await signUp(
         formData.email,
         formData.password,
         formData.nome,
-        formData.celular.replace(/\D/g, "")
+        formData.celular.replace(/\D/g, ""),
+        referralCode || undefined
       );
 
       if (result?.user?.id) {
+        // Clear referral code after successful signup
+        clearStoredReferralCode();
+        
         setFormData((prev) => ({ ...prev, userId: result.user.id }));
         setStep(2);
         toast({
