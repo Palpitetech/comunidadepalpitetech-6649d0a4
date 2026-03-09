@@ -13,7 +13,7 @@ import {
   Loader2, Search, CreditCard, QrCode, Barcode, ChevronRight,
   CheckCircle2, XCircle, Clock, AlertTriangle, RefreshCw, ArrowLeft,
   ShoppingCart, User, Calendar, DollarSign, FileText, Copy, Check,
-  MessageCircle
+  MessageCircle, ChevronLeft
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -96,6 +96,8 @@ export default function AdminVendas() {
   const [search, setSearch] = useState("");
   const [eventFilter, setEventFilter] = useState("all");
   const [selectedLog, setSelectedLog] = useState<WebhookLog | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -117,19 +119,25 @@ export default function AdminVendas() {
 
   useEffect(() => { fetchLogs(); }, []);
 
-  const filtered = logs.filter((log) => {
-    if (eventFilter !== "all" && log.event !== eventFilter) return false;
-    if (search) {
-      const s = search.toLowerCase();
-      return (
-        log.email?.toLowerCase().includes(s) ||
-        log.phone?.includes(s) ||
-        log.sale_id?.toLowerCase().includes(s) ||
-        log.checkout_id?.toLowerCase().includes(s)
-      );
-    }
-    return true;
-  });
+  const filtered = (() => {
+    // Reset page when filters change is handled via useEffect below
+    return logs.filter((log) => {
+      if (eventFilter !== "all" && log.event !== eventFilter) return false;
+      if (search) {
+        const s = search.toLowerCase();
+        return (
+          log.email?.toLowerCase().includes(s) ||
+          log.phone?.includes(s) ||
+          log.sale_id?.toLowerCase().includes(s) ||
+          log.checkout_id?.toLowerCase().includes(s)
+        );
+      }
+      return true;
+    });
+  })();
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [search, eventFilter]);
 
   // Group by sale_id
   const salesMap = new Map<string, WebhookLog[]>();
@@ -154,6 +162,10 @@ export default function AdminVendas() {
   sales.sort((a, b) => new Date(b.latest.received_at).getTime() - new Date(a.latest.received_at).getTime());
 
   const totalAprovadas = logs.filter(l => l.event === "SALE_APPROVED").length;
+
+  const totalPages = Math.max(1, Math.ceil(sales.length / PAGE_SIZE));
+  const paginatedSales = sales.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   const totalPendentes = logs.filter(l => ["PIX_GENERATED", "BANK_SLIP_GENERATED"].includes(l.event || "")).length;
   const totalCanceladas = logs.filter(l => ["SALE_REFUSED", "SALE_CHARGEBACK", "BANK_SLIP_EXPIRED", "PIX_EXPIRED"].includes(l.event || "")).length;
 
@@ -248,7 +260,7 @@ export default function AdminVendas() {
           </Card>
         ) : (
           <div className="space-y-2">
-            {sales.map(({ key, events, latest }) => {
+            {paginatedSales.map(({ key, events, latest }) => {
               const evInfo = getEventInfo(latest.event);
               const name = customerName(latest);
               const price = totalPrice(latest);
@@ -289,6 +301,35 @@ export default function AdminVendas() {
                 </Card>
               );
             })}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-2">
+                <p className="text-xs text-muted-foreground">
+                  {sales.length} vendas • Página {page} de {totalPages}
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={page <= 1}
+                    onClick={() => setPage(p => p - 1)}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={page >= totalPages}
+                    onClick={() => setPage(p => p + 1)}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
