@@ -106,7 +106,7 @@ export default function LandingPage() {
             <p>❌ Sem análise de resultados.</p>
             <p>❌ Sem trocar ideias com quem também aposta.</p>
           </div>
-          <p className="mt-8 text-foreground text-sm md:text-base max-w-lg mx-auto leading-relaxed">
+          <p className="mt-5 text-foreground text-sm md:text-base max-w-lg mx-auto leading-relaxed">
             A verdade é que muitos apostadores perdem oportunidades simplesmente por não ter <strong>informação e análise no momento certo</strong>.
           </p>
           <p className="mt-3 text-primary font-semibold text-base">
