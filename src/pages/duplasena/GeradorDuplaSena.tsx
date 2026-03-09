@@ -57,6 +57,7 @@ export default function GeradorDuplaSena() {
   }, []);
 
   const handleGenerate = () => {
+    if (statusLoading) return;
     if (!canGenerate) {
       setUpgradeOpen(true);
       return;
