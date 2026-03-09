@@ -268,17 +268,17 @@ export default function TabelaMovimentacao() {
                       <>
                         {/* Linha de Fechamento de Ciclo */}
                         {resultado.isFechamentoCiclo && resultado.cicloInfo && (
-                          <tr key={`ciclo-${resultado.cicloInfo.cicloNumero}`} className="bg-primary/10">
+                          <tr key={`ciclo-${resultado.cicloInfo.cicloNumero}`} className="bg-primary/5">
                             <td 
                               colSpan={30} 
-                              className="py-2 px-3 text-center font-semibold text-primary text-sm"
+                              className="py-0.5 px-2 text-center text-[10px] text-primary font-medium"
                             >
-                              <div className="flex items-center justify-center gap-2">
-                                <Badge variant="default" className="bg-primary">
-                                  Ciclo {resultado.cicloInfo.cicloNumero}
-                                </Badge>
-                                <span>Fechado em {resultado.cicloInfo.duracao} concursos</span>
-                              </div>
+                              <span className="inline-flex items-center gap-1">
+                                <span className="bg-primary text-primary-foreground rounded px-1.5 py-px text-[9px] font-bold">
+                                  C{resultado.cicloInfo.cicloNumero}
+                                </span>
+                                {resultado.cicloInfo.duracao} conc.
+                              </span>
                             </td>
                           </tr>
                         )}
