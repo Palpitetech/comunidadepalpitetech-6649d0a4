@@ -22,7 +22,7 @@ interface AlterarCelularDialogProps {
   trigger?: React.ReactNode;
 }
 
-export function AlterarCelularDialog({ celularAtual, onSuccess }: AlterarCelularDialogProps) {
+export function AlterarCelularDialog({ celularAtual, onSuccess, trigger }: AlterarCelularDialogProps) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<"input" | "verify" | "success">("input");
   const [novoCelular, setNovoCelular] = useState("");
