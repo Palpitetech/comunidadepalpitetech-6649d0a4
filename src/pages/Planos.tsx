@@ -7,7 +7,6 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useMySubscription } from "@/hooks/useMySubscription";
 import { Loader2, Check, Crown, Star, Sparkles, Bot, Zap, MessageCircle, Infinity, ShieldCheck, ArrowRight } from "lucide-react";
 import type { Plan, PlanFeatures } from "@/types/plans";
-import { FEATURE_CATEGORIES, FEATURE_LABELS } from "@/types/plans";
 import { STATUS_CONFIG } from "@/lib/subscription";
 import type { StatusAssinatura } from "@/types/plans";
 
