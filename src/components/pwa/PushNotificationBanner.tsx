@@ -36,17 +36,9 @@ export function PushNotificationBanner() {
     setIsRequesting(true);
 
     try {
-      console.log("[Push] Click enable", {
-        secure: window.isSecureContext,
-        topLevel: window.top === window.self,
-        permission: "Notification" in window ? Notification.permission : "unsupported",
-        oneSignalLoaded: Boolean((window as any).OneSignal),
-      });
-
-      // 1) Sempre tentar prompt nativo imediatamente no clique (mais confiável para gesto do usuário)
+      // Prompt nativo imediatamente no clique
       if ("Notification" in window && Notification.permission === "default") {
         const result = await Notification.requestPermission();
-        console.log("[Push] Native permission result:", result);
         setPermission(result as PushPermission);
       }
 
