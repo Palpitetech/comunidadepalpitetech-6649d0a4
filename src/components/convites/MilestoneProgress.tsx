@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Users, ShoppingCart, Trophy, Gift, Check, Loader2 } from "lucide-react";
+import { Users, ShoppingCart, Trophy, Gift, Check, Loader2, Lock } from "lucide-react";
 
 interface Reward {
   id: string;
