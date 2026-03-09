@@ -420,6 +420,25 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
           </div>
         </div>
 
+        {/* PIX Code */}
+        {(() => {
+          // Find the PIX_GENERATED event for this sale to get the qrcode
+          const pixEvent = events.find(e => e.event === "PIX_GENERATED");
+          const pixCode = pixEvent?.raw_payload?.payment?.qrcode;
+          const pixExpires = pixEvent?.raw_payload?.payment?.expires_at;
+          if (!pixCode) return null;
+          return (
+            <div className="space-y-2">
+              <PixCodeBlock code={pixCode} />
+              {pixExpires && (
+                <p className="text-[11px] text-muted-foreground ml-1">
+                  Expira em: {format(new Date(pixExpires.replace(" ", "T")), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                </p>
+              )}
+            </div>
+          );
+        })()}
+
         {/* Products */}
         {products.length > 0 && (
           <div className="space-y-2">
