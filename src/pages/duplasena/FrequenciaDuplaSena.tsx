@@ -55,21 +55,10 @@ export default function FrequenciaDuplaSena() {
   const estatisticasFiltradas_s1 = aplicarFiltro(estatisticasOrdenadas_s1);
   const estatisticasFiltradas_s2 = aplicarFiltro(estatisticasOrdenadas_s2);
 
-  const renderContent = (
-    estatisticasFiltered: typeof estatisticas_s1,
-    contagem: typeof contagem_s1
-  ) => (
-    <div className="space-y-6">
-      {/* Filtro de Status */}
-      {!isLoading && !error && (
-        <FiltroStatus
-          selecionado={filtroStatus}
-          onChange={setFiltroStatus}
-          contagem={contagem}
-        />
-      )}
+  const currentContagem = sorteio === "sorteio1" ? contagem_s1 : contagem_s2;
 
-      {/* Loading State */}
+  const renderCards = (estatisticasFiltered: typeof estatisticas_s1) => (
+    <>
       {isLoading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {Array.from({ length: 25 }).map((_, i) => (
@@ -78,14 +67,12 @@ export default function FrequenciaDuplaSena() {
         </div>
       )}
 
-      {/* Error State */}
       {error && (
         <div className="bg-destructive/10 text-destructive rounded-xl p-6 text-center">
           <p className="text-base">Erro ao carregar dados. Tente novamente.</p>
         </div>
       )}
 
-      {/* Empty State */}
       {!isLoading && !error && estatisticasFiltered.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
           <p>
@@ -94,7 +81,6 @@ export default function FrequenciaDuplaSena() {
         </div>
       )}
 
-      {/* Grid de Cards */}
       {!isLoading && !error && estatisticasFiltered.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {estatisticasFiltered.map((est) => (
@@ -114,35 +100,33 @@ export default function FrequenciaDuplaSena() {
           ))}
         </div>
       )}
-    </div>
+    </>
   );
 
   return (
     <MainLayout pageTitle="Análise de Dezenas - Dupla Sena">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-4">
         {/* Header desktop */}
         {!isMobile && (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center justify-between gap-4">
             <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
               Análise de Dezenas - Dupla Sena
             </h1>
-            <div className="flex items-center justify-center sm:justify-end gap-2">
-              <SnapshotButton
-                targetRef={contentRef}
-                defaultTitle={`Análise de Dezenas Dupla Sena - Últimos ${periodo} concursos`}
-              />
-              <SeletorPeriodo
-                periodos={PERIODOS}
-                selecionado={periodo}
-                onChange={setPeriodo}
-              />
-            </div>
+            <SnapshotButton
+              targetRef={contentRef}
+              defaultTitle={`Análise de Dezenas Dupla Sena - Últimos ${periodo} concursos`}
+            />
           </div>
         )}
 
-        {/* Mobile: Seletor de período */}
-        {isMobile && (
-          <div className="flex justify-end">
+        {/* Filtro + Período na mesma linha */}
+        {!isLoading && !error && (
+          <div className="flex items-center justify-between gap-2">
+            <FiltroStatus
+              selecionado={filtroStatus}
+              onChange={setFiltroStatus}
+              contagem={currentContagem}
+            />
             <SeletorPeriodo
               periodos={PERIODOS}
               selecionado={periodo}
@@ -159,12 +143,12 @@ export default function FrequenciaDuplaSena() {
               <TabsTrigger value="sorteio2">Sorteio 2</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="sorteio1" className="mt-6">
-              {renderContent(estatisticasFiltradas_s1, contagem_s1)}
+            <TabsContent value="sorteio1" className="mt-4">
+              {renderCards(estatisticasFiltradas_s1)}
             </TabsContent>
 
-            <TabsContent value="sorteio2" className="mt-6">
-              {renderContent(estatisticasFiltradas_s2, contagem_s2)}
+            <TabsContent value="sorteio2" className="mt-4">
+              {renderCards(estatisticasFiltradas_s2)}
             </TabsContent>
           </Tabs>
         </div>
