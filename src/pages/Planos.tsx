@@ -134,7 +134,7 @@ export default function Planos() {
         </div>
 
         {/* Plans */}
-        <div className="grid gap-5 md:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-3 items-stretch">
           {paidPlans.map((plan) => {
             const isCurrent = isCurrentPlan(plan.id);
             const isVip = plan.slug === "plano-anual-vip";
@@ -145,30 +145,32 @@ export default function Planos() {
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-2xl border-2 bg-card flex flex-col overflow-hidden transition-all duration-200 ${
+                className={`relative rounded-2xl border-2 bg-card flex flex-col overflow-hidden transition-all duration-200 min-h-[520px] ${
                   isCurrent
                     ? "border-primary shadow-lg"
                     : isVip
-                    ? "border-amber-400 shadow-xl scale-[1.02] md:scale-105"
+                    ? "border-amber-400 shadow-xl"
                     : isAnual
                     ? "border-accent/60 shadow-md"
                     : "border-border hover:shadow-md hover:border-primary/30"
                 }`}
               >
-                {/* Top ribbon */}
-                {isVip && !isCurrent && (
+                {/* Top ribbon - all cards get one for symmetry */}
+                {isCurrent ? (
+                  <div className="bg-primary text-primary-foreground text-center py-1.5 text-xs font-bold uppercase tracking-widest">
+                    Seu plano atual
+                  </div>
+                ) : isVip ? (
                   <div className="bg-gradient-to-r from-amber-500 to-amber-400 text-white text-center py-1.5 text-xs font-bold uppercase tracking-widest">
                     ⭐ Mais completo
                   </div>
-                )}
-                {isAnual && !isCurrent && !isVip && (
+                ) : isAnual ? (
                   <div className="bg-accent text-accent-foreground text-center py-1.5 text-xs font-bold uppercase tracking-widest">
                     Melhor custo-benefício
                   </div>
-                )}
-                {isCurrent && (
-                  <div className="bg-primary text-primary-foreground text-center py-1.5 text-xs font-bold uppercase tracking-widest">
-                    Seu plano atual
+                ) : (
+                  <div className="bg-secondary text-secondary-foreground text-center py-1.5 text-xs font-bold uppercase tracking-widest">
+                    Flexível
                   </div>
                 )}
 
@@ -245,7 +247,8 @@ export default function Planos() {
                     {activeFeatures} recursos incluídos
                   </p>
 
-                  {/* CTA */}
+                  {/* CTA - pushed to bottom */}
+                  <div className="mt-auto pt-2">
                   {isCurrent ? (
                     <Button disabled className="w-full h-12 text-base" variant="outline">
                       Plano atual
@@ -270,6 +273,7 @@ export default function Planos() {
                       Em breve
                     </Button>
                   )}
+                  </div>
                 </div>
               </div>
             );
