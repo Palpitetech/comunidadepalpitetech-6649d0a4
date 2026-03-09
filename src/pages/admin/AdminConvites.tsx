@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Loader2, Users, ShoppingCart, Trophy, Gift, Check } from "lucide-react";
+import { Search, Loader2, Users, ShoppingCart, Trophy, Gift, Check, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -62,7 +62,6 @@ export default function AdminConvites() {
 
       const referrerIds = referrers.map((r) => r.id);
 
-      // Fetch convites and rewards in parallel
       const [convitesRes, rewardsRes] = await Promise.all([
         supabase
           .from("convites")
@@ -81,7 +80,6 @@ export default function AdminConvites() {
       const convites = convitesRes.data || [];
       const rewards = rewardsRes.data || [];
 
-      // Build rewards map
       const rewardsMap = new Map<string, RewardInfo[]>();
       rewards.forEach((r) => {
         const list = rewardsMap.get(r.user_id) || [];
@@ -89,10 +87,7 @@ export default function AdminConvites() {
         rewardsMap.set(r.user_id, list);
       });
 
-      // Build convites map with "current" counts (since last claim)
       const countMap = new Map<string, { cadastros: number; vendas: number; cadastros_atual: number; vendas_atual: number }>();
-      
-      // Find last claimed_at per user
       const lastClaimMap = new Map<string, string>();
       rewards.forEach((r) => {
         if (r.claimed_at) {
@@ -107,14 +102,11 @@ export default function AdminConvites() {
         const entry = countMap.get(c.referrer_id) || { cadastros: 0, vendas: 0, cadastros_atual: 0, vendas_atual: 0 };
         entry.cadastros++;
         if (c.converted_at) entry.vendas++;
-        
-        // Count only after last claim for "current" progress
         const lastClaim = lastClaimMap.get(c.referrer_id);
         if (!lastClaim || c.created_at > lastClaim) {
           entry.cadastros_atual++;
           if (c.converted_at) entry.vendas_atual++;
         }
-        
         countMap.set(c.referrer_id, entry);
       });
 
@@ -181,67 +173,154 @@ export default function AdminConvites() {
 
   return (
     <MainLayout>
-      <div className="container-senior py-8">
-        <div className="mb-6">
-          <h1 className="text-senior-2xl font-bold">Convites</h1>
-          <p className="text-muted-foreground">
-            Ranking de desempenho dos indicadores
+      <div className="container-senior py-4 md:py-8">
+        <div className="mb-4 md:mb-6">
+          <h1 className="text-lg md:text-senior-2xl font-bold">Convites</h1>
+          <p className="text-xs md:text-sm text-muted-foreground">
+            Ranking de indicadores
           </p>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
           <Card>
-            <CardContent className="flex items-center gap-3 py-4">
-              <Users className="h-8 w-8 text-primary shrink-0" />
-              <div>
-                <p className="text-2xl font-bold">{stats.length}</p>
-                <p className="text-xs text-muted-foreground">Indicadores</p>
+            <CardContent className="flex flex-col md:flex-row items-center gap-1 md:gap-3 py-3 md:py-4 px-2 md:px-4">
+              <Users className="h-5 w-5 md:h-8 md:w-8 text-primary shrink-0" />
+              <div className="text-center md:text-left">
+                <p className="text-lg md:text-2xl font-bold leading-none">{stats.length}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground">Indicadores</p>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="flex items-center gap-3 py-4">
-              <Trophy className="h-8 w-8 text-primary shrink-0" />
-              <div>
-                <p className="text-2xl font-bold">{totalCadastros}</p>
-                <p className="text-xs text-muted-foreground">Cadastros</p>
+            <CardContent className="flex flex-col md:flex-row items-center gap-1 md:gap-3 py-3 md:py-4 px-2 md:px-4">
+              <Trophy className="h-5 w-5 md:h-8 md:w-8 text-primary shrink-0" />
+              <div className="text-center md:text-left">
+                <p className="text-lg md:text-2xl font-bold leading-none">{totalCadastros}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground">Cadastros</p>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="flex items-center gap-3 py-4">
-              <ShoppingCart className="h-8 w-8 text-primary shrink-0" />
-              <div>
-                <p className="text-2xl font-bold">{totalVendas}</p>
-                <p className="text-xs text-muted-foreground">Vendas</p>
+            <CardContent className="flex flex-col md:flex-row items-center gap-1 md:gap-3 py-3 md:py-4 px-2 md:px-4">
+              <ShoppingCart className="h-5 w-5 md:h-8 md:w-8 text-primary shrink-0" />
+              <div className="text-center md:text-left">
+                <p className="text-lg md:text-2xl font-bold leading-none">{totalVendas}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground">Vendas</p>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="flex items-center gap-3 py-4">
-              <Gift className="h-8 w-8 text-primary shrink-0" />
-              <div>
-                <p className="text-2xl font-bold">{totalRewardsClaimed}d</p>
-                <p className="text-xs text-muted-foreground">Dias reinvindicados</p>
+            <CardContent className="flex flex-col md:flex-row items-center gap-1 md:gap-3 py-3 md:py-4 px-2 md:px-4">
+              <Gift className="h-5 w-5 md:h-8 md:w-8 text-primary shrink-0" />
+              <div className="text-center md:text-left">
+                <p className="text-lg md:text-2xl font-bold leading-none">{totalRewardsClaimed}d</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground">Reinvind.</p>
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Search */}
-        <div className="relative mb-6">
+        <div className="relative mb-4 md:mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por nome, email ou código..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-10"
           />
         </div>
 
-        {/* Table */}
-        <div className="border rounded-lg">
+        {/* Mobile: Compact list */}
+        <div className="md:hidden space-y-0.5">
+          {filteredStats.map((s, idx) => (
+            <div key={s.id}>
+              <div
+                className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg active:bg-muted/60 cursor-pointer border-b border-border/40 last:border-0"
+                onClick={() => setExpandedUser(expandedUser === s.id ? null : s.id)}
+              >
+                <span className="text-[11px] font-bold text-muted-foreground w-5 text-right shrink-0">
+                  {idx + 1}
+                </span>
+                <Avatar className="h-8 w-8 shrink-0">
+                  <AvatarImage src={s.avatar_url || undefined} />
+                  <AvatarFallback className="text-[10px]">
+                    {getInitials(s.nome)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{s.nome || "Sem nome"}</p>
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <span>{s.total_cadastros} cad.</span>
+                    <span className="text-primary font-semibold">{s.total_vendas} vend.</span>
+                    {s.total_days_claimed > 0 && (
+                      <span className="flex items-center gap-0.5">
+                        <Check className="h-3 w-3 text-primary" />
+                        {s.total_days_claimed}d
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <ChevronRight className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform ${expandedUser === s.id ? 'rotate-90' : ''}`} />
+              </div>
+
+              {/* Expanded details */}
+              {expandedUser === s.id && (
+                <div className="ml-10 mr-2 mb-2 p-3 rounded-lg bg-muted/30 border border-border/40 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Código</span>
+                    <span className="font-mono font-medium">{s.referral_code}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Atual</span>
+                    <span>{s.cadastros_atual} cad. / {s.vendas_atual} vend.</span>
+                  </div>
+                  {s.total_days_unclaimed > 0 && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Pendente</span>
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-0.5">
+                        <Gift className="h-3 w-3" />
+                        {s.total_days_unclaimed}d
+                      </Badge>
+                    </div>
+                  )}
+                  {s.rewards.length > 0 && (
+                    <div className="pt-1 border-t border-border/40 space-y-1">
+                      <p className="text-[10px] font-semibold text-muted-foreground">Recompensas</p>
+                      {s.rewards.map((r) => (
+                        <div key={r.id} className="flex items-center justify-between text-[11px]">
+                          <div className="flex items-center gap-1.5">
+                            {r.claimed_at ? (
+                              <Check className="h-3 w-3 text-primary" />
+                            ) : (
+                              <Gift className="h-3 w-3 text-muted-foreground" />
+                            )}
+                            <span>{r.milestone_type === "cadastros" ? "Cad." : "Vend."} {r.milestone_count}</span>
+                          </div>
+                          <span className={r.claimed_at ? "text-primary font-medium" : "text-muted-foreground"}>
+                            {r.claimed_at
+                              ? format(new Date(r.claimed_at), "dd/MM/yy", { locale: ptBR })
+                              : "Pendente"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {filteredStats.length === 0 && (
+            <div className="text-center py-8 text-sm text-muted-foreground">
+              {searchTerm ? "Nenhum resultado" : "Nenhum indicador ativo"}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop: Full Table */}
+        <div className="hidden md:block border rounded-lg">
           <Table>
             <TableHeader>
               <TableRow>
@@ -317,7 +396,6 @@ export default function AdminConvites() {
                       )}
                     </TableCell>
                   </TableRow>
-                  {/* Expanded row with reward details */}
                   {expandedUser === s.id && s.rewards.length > 0 && (
                     <TableRow key={`${s.id}-details`}>
                       <TableCell colSpan={7} className="bg-muted/30 px-6 py-3">
