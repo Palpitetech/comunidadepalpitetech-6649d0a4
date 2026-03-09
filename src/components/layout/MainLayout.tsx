@@ -22,9 +22,11 @@ interface MainLayoutProps {
   headerRightContent?: ReactNode;
   /** Esconde o botão de voltar no header mobile */
   hideBackButton?: boolean;
+  /** Esconde a barra de navegação inferior no mobile */
+  hideBottomNav?: boolean;
 }
 
-export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRightContent, hideBackButton }: MainLayoutProps) {
+export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRightContent, hideBackButton, hideBottomNav }: MainLayoutProps) {
   const isMobile = useIsMobile();
   const [menuOpen, setMenuOpen] = useState(false);
 
