@@ -1,10 +1,12 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { Volume2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Volume2, UserPlus } from "lucide-react";
 import { CheckCircle2, ArrowRight, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { captureReferralCode } from "@/hooks/useConvites";
 
 function VideoWithSoundPrompt() {
   const videoRef = useRef<HTMLVideoElement>(null);
