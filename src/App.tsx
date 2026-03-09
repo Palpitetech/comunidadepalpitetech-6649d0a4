@@ -63,6 +63,7 @@ import FechamentoDuplaSena from "./pages/duplasena/FechamentoDuplaSena";
 
 const queryClient = new QueryClient();
 
+// Main App component
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
