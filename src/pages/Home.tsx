@@ -10,7 +10,7 @@ export default function LandingPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAuthenticated) navigate("/", { replace: true });
+    if (isAuthenticated) navigate("/home", { replace: true });
   }, [isAuthenticated, navigate]);
 
   const ctaLink = "/login?cadastro=true";
