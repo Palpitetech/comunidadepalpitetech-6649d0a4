@@ -55,6 +55,11 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
   const { toast } = useToast();
   const { enviarCodigo, isLoading: isEnviandoCodigo } = useVerificacao();
 
+  // Capture referral code from URL on mount
+  useEffect(() => {
+    captureReferralCode();
+  }, []);
+
   const handleFormDataChange = (data: Partial<FormData>) => {
     setFormData((prev) => ({ ...prev, ...data }));
   };
