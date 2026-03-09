@@ -342,6 +342,12 @@ export function DesktopHeader() {
                     Bots
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                  <Link to="/admin/convites">
+                    <Gift className="h-4 w-4" />
+                    Convites
+                  </Link>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
