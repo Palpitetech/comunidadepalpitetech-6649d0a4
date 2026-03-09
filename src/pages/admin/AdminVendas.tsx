@@ -13,7 +13,7 @@ import {
   Loader2, Search, CreditCard, QrCode, Barcode, ChevronRight,
   CheckCircle2, XCircle, Clock, AlertTriangle, RefreshCw, ArrowLeft,
   ShoppingCart, User, Calendar, DollarSign, FileText, Copy, Check,
-  MessageCircle, ChevronLeft, Repeat
+  MessageCircle, ChevronLeft
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -97,7 +97,6 @@ export default function AdminVendas() {
   const [eventFilter, setEventFilter] = useState("all");
   const [selectedLog, setSelectedLog] = useState<WebhookLog | null>(null);
   const [page, setPage] = useState(1);
-  const [showRecorrencias, setShowRecorrencias] = useState(false);
   const PAGE_SIZE = 20;
 
   const fetchLogs = async () => {
@@ -173,39 +172,6 @@ export default function AdminVendas() {
   const customerName = (log: WebhookLog) => log.raw_payload?.customer?.name || null;
   const totalPrice = (log: WebhookLog) => log.raw_payload?.total_price || null;
 
-  // Recorrências: agrupar por email, contar SALE_APPROVED de tipo RECURRING
-  const recorrenciasMap = new Map<string, { name: string; email: string; phone: string | null; approvedCount: number; totalEvents: number; lastPayment: string; purchaseType: string }>();
-  for (const log of logs) {
-    const email = log.email?.toLowerCase();
-    if (!email) continue;
-    const isRecurring = log.raw_payload?.type === "RECURRING" || log.raw_payload?.purchase_type === "RECURRING" || log.purchase_type === "RECURRING";
-    if (!isRecurring) continue;
-    
-    if (!recorrenciasMap.has(email)) {
-      recorrenciasMap.set(email, {
-        name: log.raw_payload?.customer?.name || email,
-        email,
-        phone: log.phone,
-        approvedCount: 0,
-        totalEvents: 0,
-        lastPayment: log.received_at,
-        purchaseType: log.raw_payload?.plan?.charge_frequency || "Recorrente",
-      });
-    }
-    const entry = recorrenciasMap.get(email)!;
-    entry.totalEvents++;
-    if (log.event === "SALE_APPROVED") {
-      entry.approvedCount++;
-    }
-    if (new Date(log.received_at) > new Date(entry.lastPayment)) {
-      entry.lastPayment = log.received_at;
-      if (log.raw_payload?.customer?.name) entry.name = log.raw_payload.customer.name;
-      if (log.phone) entry.phone = log.phone;
-    }
-  }
-  const recorrencias = [...recorrenciasMap.values()]
-    .filter(r => r.approvedCount > 0)
-    .sort((a, b) => b.approvedCount - a.approvedCount);
 
   return (
     <MainLayout>
@@ -249,51 +215,6 @@ export default function AdminVendas() {
           </Card>
         </div>
 
-        {/* Recorrências */}
-        <Card>
-          <CardContent className="p-3 md:p-4">
-            <button
-              onClick={() => setShowRecorrencias(!showRecorrencias)}
-              className="flex items-center justify-between w-full"
-            >
-              <div className="flex items-center gap-2">
-                <Repeat className="h-4 w-4 text-primary" />
-                <span className="font-semibold text-sm">Recorrências</span>
-                <Badge variant="secondary" className="text-[10px]">{recorrencias.length} clientes</Badge>
-              </div>
-              <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${showRecorrencias ? "rotate-90" : ""}`} />
-            </button>
-            {showRecorrencias && (
-              <div className="mt-3 space-y-2">
-                {recorrencias.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">Nenhuma recorrência encontrada</p>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground font-medium px-1 pb-1 border-b border-border">
-                      <span>Cliente</span>
-                      <span className="text-center">Pagamentos</span>
-                      <span className="text-right">Último</span>
-                    </div>
-                    {recorrencias.map((r) => (
-                      <div key={r.email} className="grid grid-cols-[1fr_auto_auto] gap-x-3 items-center px-1 py-1.5 rounded hover:bg-accent/50 transition-colors">
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{r.name}</p>
-                          <p className="text-[11px] text-muted-foreground truncate">{r.email}</p>
-                        </div>
-                        <Badge variant="outline" className="text-xs font-bold px-2.5 py-0.5 bg-green-500/10 text-green-700 border-green-200">
-                          {r.approvedCount}x
-                        </Badge>
-                        <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-                          {format(new Date(r.lastPayment), "dd/MM/yy", { locale: ptBR })}
-                        </span>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
         {/* Filters */}
         <div className="flex gap-2">
