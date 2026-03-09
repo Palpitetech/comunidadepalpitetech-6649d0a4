@@ -34,56 +34,7 @@ import { Separator } from "@/components/ui/separator";
 export default function Perfil() {
   const { profile, user, signOut } = useAuthContext();
   const { toast } = useToast();
-  const [_isOpeningCheckout, _setIsOpeningCheckout] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-  const navigate = useNavigate();
-  const { isPremium } = useUserRole();
-  const { data: subscription } = useMySubscription(user?.id);
-  const queryClient = useQueryClient();
-
-  const handleCelularSuccess = () => {
-    queryClient.invalidateQueries({ queryKey: ["profile"] });
-    window.location.reload();
-  };
-
-  const handleOpenCheckout = async () => {
-    if (!user) {
-      toast({
-        title: "Você precisa estar logado",
-        description: "Faça login para assinar um plano.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsOpeningCheckout(true);
-    try {
-      const { data, error } = await supabase
-        .from("plans")
-        .select("checkout_link")
-        .eq("is_active", true)
-        .gt("price", 0)
-        .not("checkout_link", "is", null)
-        .order("price", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) throw error;
-      const url = data?.checkout_link;
-      if (!url) throw new Error("Nenhum link de checkout configurado para planos pagos.");
-
-      window.open(String(url), "_blank", "noopener,noreferrer");
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Não foi possível abrir o checkout";
-      toast({
-        title: "Erro ao abrir checkout",
-        description: message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsOpeningCheckout(false);
-    }
-  };
 
   const handleDeleteAccount = async () => {
     if (!user) return;
