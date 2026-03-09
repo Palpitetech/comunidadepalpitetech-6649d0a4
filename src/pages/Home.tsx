@@ -258,6 +258,13 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Disclaimer */}
+      <div className="bg-muted/50 border-t border-border px-5 py-4">
+        <p className="max-w-3xl mx-auto text-[10px] md:text-xs text-muted-foreground text-center leading-relaxed">
+          <strong>Aviso legal:</strong> Este site não possui qualquer vínculo com a Caixa Econômica Federal, Facebook, Instagram, Meta ou qualquer outra empresa do grupo Meta Platforms, Inc. O conteúdo apresentado tem caráter exclusivamente educacional e informativo, baseado em análises estatísticas de resultados públicos. <strong>Não garantimos premiação em nenhuma modalidade de loteria.</strong> Aposte com responsabilidade.
+        </p>
+      </div>
+
       {/* Footer */}
       <footer className="py-6 border-t border-border bg-card">
         <div className="max-w-5xl mx-auto px-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
