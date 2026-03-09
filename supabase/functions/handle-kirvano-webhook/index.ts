@@ -249,7 +249,7 @@ serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const webhookSecret = Deno.env.get("KIRVANO_WEBHOOK_SECRET") ?? "";
+  let webhookSecret = Deno.env.get("KIRVANO_WEBHOOK_SECRET") ?? "";
 
   if (!supabaseUrl || !serviceRoleKey) {
     logStep("Missing backend env vars");
@@ -258,8 +258,24 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
+  // If env secret is empty, fetch token from admin_settings table
   if (!webhookSecret) {
-    logStep("Missing KIRVANO_WEBHOOK_SECRET");
+    try {
+      const sbAdmin = createClient(supabaseUrl, serviceRoleKey);
+      const { data } = await sbAdmin
+        .from("admin_settings")
+        .select("kirvano_webhook_token")
+        .eq("id", "default")
+        .single();
+      webhookSecret = data?.kirvano_webhook_token ?? "";
+    } catch (_e) {
+      logStep("Failed to fetch token from admin_settings");
+    }
+  }
+
+  if (!webhookSecret) {
+    logStep("No webhook secret configured (env or DB)");
     return new Response(JSON.stringify({ error: "Webhook secret not configured" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
