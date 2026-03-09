@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   User, Mail, Phone, Lock, CreditCard, Calendar, Sparkles, Trash2, Loader2, 
-  ChevronRight, ArrowLeft, Shield, CheckCircle2, AlertCircle
+  ChevronRight, ArrowLeft, Shield, CheckCircle2, AlertCircle, Camera
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import {
