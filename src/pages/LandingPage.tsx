@@ -165,7 +165,7 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
-          <div className="text-center mt-10">
+          <div className="text-center mt-6">
             <CtaPrimary>Começar Agora — É Grátis</CtaPrimary>
           </div>
         </div>
