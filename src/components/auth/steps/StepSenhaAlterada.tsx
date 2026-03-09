@@ -1,6 +1,6 @@
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, LogIn } from "lucide-react";
+import { CheckCircle, LogIn, Mail } from "lucide-react";
 
 interface StepSenhaAlteradaProps {
   onVoltarLogin: () => void;
@@ -15,18 +15,24 @@ export function StepSenhaAlterada({ onVoltarLogin }: StepSenhaAlteradaProps) {
         </div>
         <CardTitle className="text-xl md:text-senior-2xl text-accent">Senha Alterada!</CardTitle>
         <CardDescription className="text-sm md:text-senior-base">
-          Sua senha foi redefinida para a senha padrão. Faça login e altere sua senha.
+          Sua nova senha foi enviada para o seu email cadastrado.
         </CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-4 md:space-y-6 px-4 md:px-6">
-        <div className="p-4 md:p-6 rounded-2xl bg-accent/10 border border-accent/30 text-center">
-          <p className="text-accent text-sm md:text-senior-base font-bold text-lg">
-            Sua nova senha é: <span className="font-mono tracking-widest">123456</span>
-          </p>
-          <p className="text-muted-foreground text-xs md:text-sm mt-2">
-            Recomendamos alterar sua senha após o login.
-          </p>
+        <div className="p-4 md:p-6 rounded-2xl bg-accent/10 border border-accent/30">
+          <div className="flex items-start gap-3">
+            <Mail className="h-5 w-5 text-accent mt-0.5 shrink-0" />
+            <div className="space-y-2">
+              <p className="text-foreground text-sm md:text-senior-base font-semibold">
+                Vá até sua caixa de entrada, promoções, spam, lixo eletrônico e outros.
+              </p>
+              <p className="text-muted-foreground text-xs md:text-sm">
+                Procure pelo email do remetente <strong className="text-foreground">"ComunidadePalpiteTech"</strong> ou{" "}
+                <strong className="text-foreground">solicitacao@palpitetech.com.br</strong>
+              </p>
+            </div>
+          </div>
         </div>
 
         <Button
