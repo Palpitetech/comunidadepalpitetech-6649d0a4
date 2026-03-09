@@ -34,7 +34,6 @@ import { Separator } from "@/components/ui/separator";
 export default function Perfil() {
   const { profile, user, signOut } = useAuthContext();
   const { toast } = useToast();
-  const [isOpeningCheckout, setIsOpeningCheckout] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const navigate = useNavigate();
   const { isPremium } = useUserRole();
@@ -44,45 +43,6 @@ export default function Perfil() {
   const handleCelularSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["profile"] });
     window.location.reload();
-  };
-
-  const handleOpenCheckout = async () => {
-    if (!user) {
-      toast({
-        title: "Você precisa estar logado",
-        description: "Faça login para assinar um plano.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsOpeningCheckout(true);
-    try {
-      const { data, error } = await supabase
-        .from("plans")
-        .select("checkout_link")
-        .eq("is_active", true)
-        .gt("price", 0)
-        .not("checkout_link", "is", null)
-        .order("price", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) throw error;
-      const url = data?.checkout_link;
-      if (!url) throw new Error("Nenhum link de checkout configurado para planos pagos.");
-
-      window.open(String(url), "_blank", "noopener,noreferrer");
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Não foi possível abrir o checkout";
-      toast({
-        title: "Erro ao abrir checkout",
-        description: message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsOpeningCheckout(false);
-    }
   };
 
   const handleDeleteAccount = async () => {
@@ -236,17 +196,10 @@ export default function Perfil() {
               <div className="p-4 border-t space-y-2">
                 <Button
                   className="w-full h-12 text-base font-semibold gap-2"
-                  onClick={handleOpenCheckout}
-                  disabled={isOpeningCheckout}
+                  onClick={() => navigate("/planos")}
                 >
-                  {isOpeningCheckout ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <>
-                      <Sparkles className="h-5 w-5" />
-                      {isPremium ? "Renovar Assinatura" : "Assinar Premium"}
-                    </>
-                  )}
+                  <Sparkles className="h-5 w-5" />
+                  {isPremium ? "Renovar / Trocar Plano" : "Ver Planos"}
                 </Button>
               </div>
             </div>
