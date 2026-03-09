@@ -80,13 +80,19 @@ export function LoginWizard() {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("identificar-conta", {
-        body: { identificador: input },
+      const { data, error } = await supabase.rpc("identificar_conta", {
+        p_identificador: input,
       });
       if (error) throw error;
 
-      if (data?.exists) {
-        if (!data?.email) {
+      const result = data as any;
+      if (result?.error) {
+        toast({ title: "Erro", description: result.error, variant: "destructive" });
+        return;
+      }
+
+      if (result?.exists) {
+        if (!result?.email) {
           toast({
             title: "Conta encontrada",
             description:
@@ -95,7 +101,7 @@ export function LoginWizard() {
           });
           return;
         }
-        setResolvedEmail(String(data.email));
+        setResolvedEmail(String(result.email));
         setEtapa("senha");
         return;
       }
