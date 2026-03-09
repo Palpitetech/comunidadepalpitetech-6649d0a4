@@ -53,6 +53,7 @@ const EVENT_LABELS: Record<string, { label: string; color: string }> = {
   SUBSCRIPTION_TRIAL_ENDED: { label: "Período de Teste Encerrado", color: "bg-muted text-muted-foreground border-border" },
   CHECKOUT_ABANDONED: { label: "Checkout Abandonado", color: "bg-muted text-muted-foreground border-border" },
   ABANDONED_CART: { label: "Carrinho Abandonado", color: "bg-muted text-muted-foreground border-border" },
+  SUBSCRIPTION_EXPIRED: { label: "Assinatura Expirada", color: "bg-orange-500/10 text-orange-700 border-orange-200" },
 };
 
 const RESULT_LABELS: Record<string, { label: string; icon: typeof CheckCircle2 }> = {
