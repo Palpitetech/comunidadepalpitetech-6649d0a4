@@ -9,7 +9,7 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   isAuthenticated: boolean;
-  signUp: (email: string, password: string, nome?: string, celular?: string) => Promise<any>;
+  signUp: (email: string, password: string, nome?: string, celular?: string, referralCode?: string) => Promise<any>;
   signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<any>;

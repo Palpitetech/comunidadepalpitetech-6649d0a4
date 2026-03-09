@@ -59,7 +59,7 @@ export function useAuth() {
   }, []);
 
   const signUp = useCallback(
-    async (email: string, password: string, nome?: string, celular?: string) => {
+    async (email: string, password: string, nome?: string, celular?: string, referralCode?: string) => {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -68,6 +68,7 @@ export function useAuth() {
           data: {
             nome: nome || email.split("@")[0],
             celular,
+            referral_code: referralCode || null,
           },
         },
       });

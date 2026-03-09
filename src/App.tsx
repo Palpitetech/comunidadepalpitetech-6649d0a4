@@ -98,6 +98,7 @@ const App = () => (
             <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
             <Route path="/criar-post" element={<ProtectedRoute><CriarPost /></ProtectedRoute>} />
             <Route path="/comunidade/post/:id" element={<ProtectedRoute><PostDetalhes /></ProtectedRoute>} />
+            <Route path="/convites" element={<ProtectedRoute><Convites /></ProtectedRoute>} />
             <Route path="/bloqueado" element={<Bloqueado />} />
             
             {/* Rotas Mega Sena */}
