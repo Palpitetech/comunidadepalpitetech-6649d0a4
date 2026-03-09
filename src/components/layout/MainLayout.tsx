@@ -4,6 +4,10 @@ import { DesktopHeader } from "./DesktopHeader";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { MobileMenuSheet } from "./MobileMenuSheet";
 import { PageHeader } from "./PageHeader";
+import { PushNotificationBanner } from "@/components/pwa/PushNotificationBanner";
+import { MobileBottomNav } from "./MobileBottomNav";
+import { MobileMenuSheet } from "./MobileMenuSheet";
+import { PageHeader } from "./PageHeader";
 
 interface BreadcrumbItem {
   label: string;
