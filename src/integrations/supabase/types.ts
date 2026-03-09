@@ -435,18 +435,21 @@ export type Database = {
       }
       convites: {
         Row: {
+          converted_at: string | null
           created_at: string
           id: string
           referred_id: string
           referrer_id: string
         }
         Insert: {
+          converted_at?: string | null
           created_at?: string
           id?: string
           referred_id: string
           referrer_id: string
         }
         Update: {
+          converted_at?: string | null
           created_at?: string
           id?: string
           referred_id?: string
@@ -1255,6 +1258,55 @@ export type Database = {
           },
         ]
       }
+      referral_rewards: {
+        Row: {
+          created_at: string
+          days_granted: number
+          id: string
+          milestone_count: number
+          milestone_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          days_granted?: number
+          id?: string
+          milestone_count: number
+          milestone_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          days_granted?: number
+          id?: string
+          milestone_count?: number
+          milestone_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_rewards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_rewards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_publicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_rewards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios_notificaveis_hoje"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resultados: {
         Row: {
           acumulou: boolean | null
@@ -1577,6 +1629,10 @@ export type Database = {
       }
     }
     Functions: {
+      check_referral_milestones: {
+        Args: { p_referrer_id: string }
+        Returns: undefined
+      }
       generate_referral_code: { Args: never; Returns: string }
       has_role: {
         Args: {
