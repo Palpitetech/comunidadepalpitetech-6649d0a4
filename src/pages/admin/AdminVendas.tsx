@@ -37,13 +37,21 @@ type WebhookLog = {
 };
 
 const EVENT_LABELS: Record<string, { label: string; color: string }> = {
-  SALE_APPROVED: { label: "Aprovada", color: "bg-green-500/10 text-green-700 border-green-200" },
-  SALE_REFUSED: { label: "Recusada", color: "bg-red-500/10 text-red-700 border-red-200" },
-  SALE_CHARGEBACK: { label: "Chargeback", color: "bg-red-500/10 text-red-700 border-red-200" },
+  SALE_APPROVED: { label: "Venda Aprovada", color: "bg-green-500/10 text-green-700 border-green-200" },
+  SALE_REFUSED: { label: "Venda Recusada", color: "bg-red-500/10 text-red-700 border-red-200" },
+  SALE_CHARGEBACK: { label: "Estorno / Chargeback", color: "bg-red-500/10 text-red-700 border-red-200" },
+  SALE_REFUNDED: { label: "Reembolso", color: "bg-red-500/10 text-red-700 border-red-200" },
   BANK_SLIP_GENERATED: { label: "Boleto Gerado", color: "bg-yellow-500/10 text-yellow-700 border-yellow-200" },
   BANK_SLIP_EXPIRED: { label: "Boleto Expirado", color: "bg-muted text-muted-foreground border-border" },
   PIX_GENERATED: { label: "PIX Gerado", color: "bg-yellow-500/10 text-yellow-700 border-yellow-200" },
   PIX_EXPIRED: { label: "PIX Expirado", color: "bg-muted text-muted-foreground border-border" },
+  SUBSCRIPTION_CANCELED: { label: "Assinatura Cancelada", color: "bg-orange-500/10 text-orange-700 border-orange-200" },
+  SUBSCRIPTION_OVERDUE: { label: "Assinatura Inadimplente", color: "bg-red-500/10 text-red-700 border-red-200" },
+  SUBSCRIPTION_RENEWED: { label: "Assinatura Renovada", color: "bg-green-500/10 text-green-700 border-green-200" },
+  SUBSCRIPTION_REACTIVATED: { label: "Assinatura Reativada", color: "bg-green-500/10 text-green-700 border-green-200" },
+  SUBSCRIPTION_TRIAL_STARTED: { label: "Período de Teste Iniciado", color: "bg-blue-500/10 text-blue-700 border-blue-200" },
+  SUBSCRIPTION_TRIAL_ENDED: { label: "Período de Teste Encerrado", color: "bg-muted text-muted-foreground border-border" },
+  CHECKOUT_ABANDONED: { label: "Checkout Abandonado", color: "bg-muted text-muted-foreground border-border" },
 };
 
 const RESULT_LABELS: Record<string, { label: string; icon: typeof CheckCircle2 }> = {
@@ -207,13 +215,18 @@ export default function AdminVendas() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="SALE_APPROVED">Aprovadas</SelectItem>
+              <SelectItem value="SALE_APPROVED">Venda Aprovada</SelectItem>
               <SelectItem value="PIX_GENERATED">PIX Gerado</SelectItem>
               <SelectItem value="PIX_EXPIRED">PIX Expirado</SelectItem>
               <SelectItem value="BANK_SLIP_GENERATED">Boleto Gerado</SelectItem>
               <SelectItem value="BANK_SLIP_EXPIRED">Boleto Expirado</SelectItem>
-              <SelectItem value="SALE_REFUSED">Recusadas</SelectItem>
-              <SelectItem value="SALE_CHARGEBACK">Chargeback</SelectItem>
+              <SelectItem value="SALE_REFUSED">Venda Recusada</SelectItem>
+              <SelectItem value="SALE_CHARGEBACK">Estorno / Chargeback</SelectItem>
+              <SelectItem value="SALE_REFUNDED">Reembolso</SelectItem>
+              <SelectItem value="SUBSCRIPTION_CANCELED">Assinatura Cancelada</SelectItem>
+              <SelectItem value="SUBSCRIPTION_OVERDUE">Assinatura Inadimplente</SelectItem>
+              <SelectItem value="SUBSCRIPTION_RENEWED">Assinatura Renovada</SelectItem>
+              <SelectItem value="SUBSCRIPTION_REACTIVATED">Assinatura Reativada</SelectItem>
             </SelectContent>
           </Select>
         </div>
