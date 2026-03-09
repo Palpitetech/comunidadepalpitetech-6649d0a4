@@ -324,70 +324,80 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                      </AccordionTrigger>
                      <AccordionContent className="pb-0">
                       <div className="pl-8 space-y-0">
-                         <Link to="/duplasena/analise-do-dia" onClick={closeAndNavigate}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             <Target className="h-4 w-4" />
-                             Análise do Dia
-                           </div>
-                         </Link>
-                         <div className="border-t border-border/50 my-1" />
-                         <Link to="/duplasena/resultados" onClick={closeAndNavigate}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
-                             Resultados
-                           </div>
-                         </Link>
-                         <Link to="/duplasena/tendencias" onClick={closeAndNavigate}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
-                             Tendências
-                           </div>
-                         </Link>
-                         <Link to="/duplasena/frequencia" onClick={closeAndNavigate}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
-                             Quentes e Frias
-                           </div>
-                         </Link>
-                         <Link to="/duplasena/frequencia-dezenas" onClick={closeAndNavigate}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             <BarChart3 className="h-4 w-4" />
-                             Frequência das Dezenas
-                           </div>
-                         </Link>
-                         <Link to="/duplasena/dezenas-por-posicao" onClick={closeAndNavigate}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             <Target className="h-4 w-4" />
-                             Dezenas por Posição
-                           </div>
-                         </Link>
-                         <Link to="/duplasena/linhas-colunas" onClick={closeAndNavigate}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             <LayoutGrid className="h-4 w-4" />
-                             Linhas e Colunas
-                           </div>
-                         </Link>
-                         <Link to="/duplasena/tabela-movimentacao" onClick={closeAndNavigate}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             <Table2 className="h-4 w-4" />
-                             Tabela de Movimentação
-                           </div>
-                         </Link>
-                          <Link to="/duplasena/gerador" onClick={closeAndNavigate}>
+                          <Link to="/duplasena/analise-do-dia" onClick={(e) => handleGatedClick(e, "/duplasena/analise-do-dia")}>
                             <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                              <Dices className="h-4 w-4" />
-                              Gerador de Palpites
+                              <Target className="h-4 w-4" />
+                              Análise do Dia
+                              {renderBadge("/duplasena/analise-do-dia")}
                             </div>
                           </Link>
-                          <Link to="/duplasena/desdobramento" onClick={closeAndNavigate}>
-                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                              <Shuffle className="h-4 w-4" />
-                              Desdobramento
+                          <div className="border-t border-border/50 my-1" />
+                          <Link to="/duplasena/resultados" onClick={closeAndNavigate}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
+                              Resultados
                             </div>
                           </Link>
-                          <Link to="/duplasena/fechamento" onClick={closeAndNavigate}>
+                          <Link to="/duplasena/tendencias" onClick={(e) => handleGatedClick(e, "/duplasena/tendencias")}>
                             <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                              <Grid3X3 className="h-4 w-4" />
-                              Gerador de Fechamento
+                              Tendências
+                              {renderBadge("/duplasena/tendencias")}
                             </div>
                           </Link>
+                          <Link to="/duplasena/frequencia" onClick={(e) => handleGatedClick(e, "/duplasena/frequencia")}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                              Quentes e Frias
+                              {renderBadge("/duplasena/frequencia")}
+                            </div>
+                          </Link>
+                          <Link to="/duplasena/frequencia-dezenas" onClick={(e) => handleGatedClick(e, "/duplasena/frequencia-dezenas")}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                              <BarChart3 className="h-4 w-4" />
+                              Frequência das Dezenas
+                              {renderBadge("/duplasena/frequencia-dezenas")}
+                            </div>
+                          </Link>
+                          <Link to="/duplasena/dezenas-por-posicao" onClick={(e) => handleGatedClick(e, "/duplasena/dezenas-por-posicao")}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                              <Target className="h-4 w-4" />
+                              Dezenas por Posição
+                              {renderBadge("/duplasena/dezenas-por-posicao")}
+                            </div>
+                          </Link>
+                          <Link to="/duplasena/linhas-colunas" onClick={(e) => handleGatedClick(e, "/duplasena/linhas-colunas")}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                              <LayoutGrid className="h-4 w-4" />
+                              Linhas e Colunas
+                              {renderBadge("/duplasena/linhas-colunas")}
+                            </div>
+                          </Link>
+                          <Link to="/duplasena/tabela-movimentacao" onClick={(e) => handleGatedClick(e, "/duplasena/tabela-movimentacao")}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                              <Table2 className="h-4 w-4" />
+                              Tabela de Movimentação
+                              {renderBadge("/duplasena/tabela-movimentacao")}
+                            </div>
+                          </Link>
+                           <Link to="/duplasena/gerador" onClick={(e) => handleGatedClick(e, "/duplasena/gerador")}>
+                             <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                               <Dices className="h-4 w-4" />
+                               Gerador de Palpites
+                               {renderBadge("/duplasena/gerador")}
+                             </div>
+                           </Link>
+                           <Link to="/duplasena/desdobramento" onClick={(e) => handleGatedClick(e, "/duplasena/desdobramento")}>
+                             <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                               <Shuffle className="h-4 w-4" />
+                               Desdobramento
+                               {renderBadge("/duplasena/desdobramento")}
+                             </div>
+                           </Link>
+                           <Link to="/duplasena/fechamento" onClick={(e) => handleGatedClick(e, "/duplasena/fechamento")}>
+                             <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                               <Grid3X3 className="h-4 w-4" />
+                               Gerador de Fechamento
+                               {renderBadge("/duplasena/fechamento")}
+                             </div>
+                           </Link>
                         </div>
                       </AccordionContent>
                     </AccordionItem>
