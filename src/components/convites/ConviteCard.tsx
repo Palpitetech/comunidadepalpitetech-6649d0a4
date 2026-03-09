@@ -20,7 +20,7 @@ export const ConviteCard: React.FC<ConviteCardProps> = ({
   const { toast } = useToast();
 
   const referralLink = referralCode
-    ? `${window.location.origin}/login?ref=${referralCode}`
+    ? `${window.location.origin}/?ref=${referralCode}`
     : "";
 
   const handleCopy = async () => {
