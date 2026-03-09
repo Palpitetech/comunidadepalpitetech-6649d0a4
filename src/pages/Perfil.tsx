@@ -260,14 +260,14 @@ export default function Perfil() {
             <div className="rounded-2xl border bg-card overflow-hidden divide-y">
               {/* Email */}
               <div className="flex items-center gap-4 p-4">
-                <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
-                  <Mail className="h-5 w-5 text-blue-500" />
+                <div className="h-10 w-10 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
+                  <Mail className="h-5 w-5 text-[hsl(var(--primary))]" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-muted-foreground">E-mail</p>
                   <p className="font-medium truncate">{user?.email || "Não informado"}</p>
                 </div>
-                <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+                <CheckCircle2 className="h-5 w-5 text-[hsl(var(--primary))] shrink-0" />
               </div>
 
               {/* Celular */}
