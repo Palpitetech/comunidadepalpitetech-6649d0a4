@@ -17,18 +17,21 @@ export type Database = {
       admin_settings: {
         Row: {
           id: string
+          kirvano_webhook_token: string
           updated_at: string
           updated_by: string | null
           usd_to_brl: number
         }
         Insert: {
           id?: string
+          kirvano_webhook_token?: string
           updated_at?: string
           updated_by?: string | null
           usd_to_brl?: number
         }
         Update: {
           id?: string
+          kirvano_webhook_token?: string
           updated_at?: string
           updated_by?: string | null
           usd_to_brl?: number
