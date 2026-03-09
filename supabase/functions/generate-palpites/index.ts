@@ -277,7 +277,7 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "openai/gpt-5.2",
+        model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -396,8 +396,8 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
         prompt_tokens: aiUsage.prompt_tokens || 0,
         completion_tokens: aiUsage.completion_tokens || 0,
         total_tokens: aiUsage.total_tokens || 0,
-        model: "openai/gpt-5.2",
-        cost_usd: estimateCost(aiUsage, "openai/gpt-5.2"),
+        model: "google/gemini-3-flash-preview",
+        cost_usd: estimateCost(aiUsage, "google/gemini-3-flash-preview"),
         metadata: { quantidade, qtdDezenas, periodoAnalise },
       }).then(() => {}).catch(e => console.error("Erro log:", e));
     }
