@@ -16,6 +16,7 @@ export function PushNotificationBanner() {
   const [dismissed, setDismissed] = useState(() => {
     return sessionStorage.getItem("push-banner-dismissed") === "true";
   });
+  const [isRequesting, setIsRequesting] = useState(false);
 
   useEffect(() => {
     setPermission(getPushPermission());
@@ -30,26 +31,36 @@ export function PushNotificationBanner() {
   };
 
   const handleEnable = async () => {
+    if (isRequesting) return;
+    setIsRequesting(true);
+
     try {
+      // Fallback nativo (especialmente útil no Android)
+      if ("Notification" in window && Notification.permission === "default") {
+        const nativePermission = await Notification.requestPermission();
+        setPermission(nativePermission as PushPermission);
+      }
+
+      // Fluxo OneSignal para registrar subscription
       (window as any).OneSignalDeferred = (window as any).OneSignalDeferred || [];
       (window as any).OneSignalDeferred.push(async (OneSignal: any) => {
-        // requestPermission triggers the native browser prompt directly
-        await OneSignal.Notifications.requestPermission();
-        setPermission(getPushPermission());
+        try {
+          await OneSignal.Notifications.requestPermission(true);
+        } catch (err) {
+          console.warn("OneSignal requestPermission error:", err);
+        } finally {
+          setPermission(getPushPermission());
+        }
       });
-      // Fallback: check permission after delay in case callback didn't fire
+
+      // Garantia de atualização da UI mesmo sem callback imediato do SDK
       setTimeout(() => {
         setPermission(getPushPermission());
-      }, 3000);
+      }, 2500);
     } catch (e) {
       console.warn("Push permission error:", e);
-      // Ultimate fallback: native API
-      try {
-        const result = await Notification.requestPermission();
-        setPermission(result as PushPermission);
-      } catch (e2) {
-        console.warn("Native push permission error:", e2);
-      }
+    } finally {
+      setIsRequesting(false);
     }
   };
 
@@ -75,9 +86,10 @@ export function PushNotificationBanner() {
         <Button
           onClick={handleEnable}
           size="sm"
+          disabled={isRequesting}
           className="flex-shrink-0 bg-white text-accent hover:bg-white/90 font-bold h-9 px-4 rounded-lg shadow-md text-[13px]"
         >
-          Ativar
+          {isRequesting ? "Ativando..." : "Ativar"}
         </Button>
 
         <button
