@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Lock, ArrowLeft, Phone, Mail, LifeBuoy, MessageCircle } from "lucide-react";
+import { Loader2, Lock, ArrowLeft, Phone, Mail, MessageCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { RegisterWizard } from "./RegisterWizard";
 
@@ -47,7 +47,6 @@ export function LoginWizard() {
   const normalized = useMemo(() => normalizeIdentifier(identificador), [identificador]);
   const Icon = normalized.tipo === "email" ? Mail : Phone;
 
-  const supportPhone = "tel:+5516997175392";
   const supportWhatsApp = "https://wa.me/5516997175392";
 
   const handleIdentificar = async (e: React.FormEvent) => {
@@ -55,7 +54,6 @@ export function LoginWizard() {
     const input = identificador.trim();
     if (!input) return;
 
-    // Validação rápida no client (o backend valida de novo)
     if (normalized.tipo === "celular") {
       const d = normalized.celular || "";
       const isShort = d.length < 10;
@@ -128,6 +126,41 @@ export function LoginWizard() {
       setIsLoading(false);
     }
   };
+
+  /* ─── Cadastro fullscreen no mobile ─── */
+  if (etapa === "cadastro") {
+    return (
+      <div className="fixed inset-0 z-50 bg-background flex flex-col md:static md:z-auto md:bg-transparent md:block">
+        {/* Header com voltar */}
+        <div className="flex items-center gap-2 px-3 py-2 md:px-5 md:pt-5 shrink-0 border-b md:border-none bg-background">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setEtapa("identificar")}
+            className="h-9 text-sm md:h-12 md:text-senior-base"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1 md:h-5 md:w-5 md:mr-2" />
+            Voltar
+          </Button>
+          <span className="text-xs text-muted-foreground md:hidden">Criar conta</span>
+        </div>
+
+        {/* Mensagem + RegisterWizard */}
+        <div className="flex flex-col flex-1 min-h-0 md:px-6 md:pb-6">
+          <p className="text-xs md:text-senior-base text-muted-foreground px-4 py-2 md:mb-4 shrink-0">
+            Ainda não existe conta com esse contato. Vamos criar uma agora.
+          </p>
+          <RegisterWizard
+            initialData={{
+              email: normalized.tipo === "email" ? normalized.email ?? undefined : undefined,
+              celular: normalized.tipo === "celular" ? normalized.celular ?? undefined : undefined,
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Card className="w-full max-w-lg shadow-xl">
@@ -246,33 +279,6 @@ export function LoginWizard() {
             </form>
           </CardContent>
         </>
-      )}
-
-      {etapa === "cadastro" && (
-        <div className="p-1">
-          <div className="px-5 pt-5">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setEtapa("identificar")}
-              className="h-12 text-senior-base"
-            >
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Voltar
-            </Button>
-          </div>
-          <div className="px-6 pb-6">
-            <p className="text-senior-base text-muted-foreground mb-4">
-              Ainda não existe conta com esse contato. Vamos criar uma agora.
-            </p>
-            <RegisterWizard
-              initialData={{
-                email: normalized.tipo === "email" ? normalized.email ?? undefined : undefined,
-                celular: normalized.tipo === "celular" ? normalized.celular ?? undefined : undefined,
-              }}
-            />
-          </div>
-        </div>
       )}
     </Card>
   );

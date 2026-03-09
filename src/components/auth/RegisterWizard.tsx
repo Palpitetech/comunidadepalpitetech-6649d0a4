@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
 import { StepIndicator } from "./steps/StepIndicator";
 import { StepDadosPessoais } from "./steps/StepDadosPessoais";
 import { StepEscolhaVerificacao } from "./steps/StepEscolhaVerificacao";
@@ -32,7 +31,6 @@ function formatCelularBR(value: string) {
     const mid = is9 ? 7 : 6;
     return `(${digits.slice(0, 2)}) ${digits.slice(2, mid)}-${digits.slice(mid)}`;
   }
-  // Se vier com DDI 55, tenta remover para exibir bonitinho
   if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
     return formatCelularBR(digits.slice(2));
   }
@@ -55,7 +53,6 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
   const { toast } = useToast();
   const { enviarCodigo, isLoading: isEnviandoCodigo } = useVerificacao();
 
-  // Capture referral code from URL on mount
   useEffect(() => {
     captureReferralCode();
   }, []);
@@ -67,7 +64,6 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
   const handleCriarConta = async () => {
     setIsLoading(true);
     try {
-      // Get referral code from localStorage
       const referralCode = getStoredReferralCode();
       
       const result = await signUp(
@@ -79,7 +75,6 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
       );
 
       if (result?.user?.id) {
-        // Clear referral code after successful signup
         clearStoredReferralCode();
         
         setFormData((prev) => ({ ...prev, userId: result.user.id }));
@@ -147,44 +142,44 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
   ];
 
   return (
-    <Card className="w-full max-w-lg shadow-xl overflow-hidden">
-      {/* Indicadores de etapa */}
-      <div className="p-3 md:p-6 border-b bg-muted/30">
+    <div className="flex flex-col flex-1 min-h-0">
+      {/* Step indicator - compact */}
+      <div className="px-4 py-2 md:p-6 border-b bg-muted/30 shrink-0">
         <StepIndicator currentStep={step} steps={steps} />
       </div>
 
-      {/* Conteúdo da etapa atual */}
-      {step === 1 && (
-        <StepDadosPessoais
-          formData={formData}
-          onFormDataChange={handleFormDataChange}
-          onNext={handleCriarConta}
-          isLoading={isLoading}
-        />
-      )}
+      {/* Step content - fills remaining space */}
+      <div className="flex flex-col flex-1 min-h-0">
+        {step === 1 && (
+          <StepDadosPessoais
+            formData={formData}
+            onFormDataChange={handleFormDataChange}
+            onNext={handleCriarConta}
+            isLoading={isLoading}
+          />
+        )}
 
-      {step === 2 && (
-        <StepEscolhaVerificacao
-          email={formData.email}
-          celular={formData.celular}
-          onEscolha={handleEscolhaVerificacao}
-          isLoading={isEnviandoCodigo}
-        />
-      )}
+        {step === 2 && (
+          <StepEscolhaVerificacao
+            email={formData.email}
+            celular={formData.celular}
+            onEscolha={handleEscolhaVerificacao}
+            isLoading={isEnviandoCodigo}
+          />
+        )}
 
-      {step === 3 && formData.tipoVerificacao && (
-        <StepCodigoOTP
-          userId={formData.userId}
-          tipo={formData.tipoVerificacao}
-          destino={getDestinoVerificacao()}
-          nome={formData.nome}
-          onVerified={handleVerificado}
-        />
-      )}
+        {step === 3 && formData.tipoVerificacao && (
+          <StepCodigoOTP
+            userId={formData.userId}
+            tipo={formData.tipoVerificacao}
+            destino={getDestinoVerificacao()}
+            nome={formData.nome}
+            onVerified={handleVerificado}
+          />
+        )}
 
-      {step === 4 && <StepSucesso />}
-    </Card>
+        {step === 4 && <StepSucesso />}
+      </div>
+    </div>
   );
 };
-
-// Named export only - do not use default export to avoid TypeScript ambiguity
