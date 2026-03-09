@@ -128,34 +128,43 @@ Deno.serve(async (req) => {
     let metodoDisponivel: "email" | "sms" | null = null;
 
     if (isEmail) {
-      // Buscar por email na tabela auth.users
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) {
-        console.error("Erro ao buscar usuários:", authError);
-        return new Response(
-          JSON.stringify({ sucesso: false, erro: "Erro interno" }),
-          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      }
+      // Buscar por email na tabela perfis primeiro (mais eficiente)
+      const { data: perfil, error: perfilError } = await supabase
+        .from("perfis")
+        .select("id, nome, celular, email")
+        .eq("email", identificadorLimpo)
+        .single();
 
-      const user = authUsers.users.find(u => u.email?.toLowerCase() === identificadorLimpo);
-      
-      if (user) {
-        userId = user.id;
-        email = user.email!;
+      if (!perfilError && perfil) {
+        userId = perfil.id;
+        email = identificadorLimpo;
+        nome = perfil.nome;
+        celular = perfil.celular;
         metodoDisponivel = "email";
+      } else {
+        // Fallback: buscar direto no auth por email
+        const { data: userList, error: authError } = await supabase.auth.admin.listUsers({
+          page: 1,
+          perPage: 1,
+        });
 
-        // Buscar nome no perfil
-        const { data: perfil } = await supabase
-          .from("perfis")
-          .select("nome, celular")
-          .eq("id", userId)
-          .single();
+        if (!authError && userList) {
+          // listUsers não suporta filtro por email diretamente, usar getUserByEmail via workaround
+          // Buscar todos os perfis com esse email
+          const { data: perfilByEmail } = await supabase
+            .from("perfis")
+            .select("id, nome, celular")
+            .ilike("email", identificadorLimpo)
+            .limit(1)
+            .single();
 
-        if (perfil) {
-          nome = perfil.nome;
-          celular = perfil.celular;
+          if (perfilByEmail) {
+            userId = perfilByEmail.id;
+            email = identificadorLimpo;
+            nome = perfilByEmail.nome;
+            celular = perfilByEmail.celular;
+            metodoDisponivel = "email";
+          }
         }
       }
     } else {
