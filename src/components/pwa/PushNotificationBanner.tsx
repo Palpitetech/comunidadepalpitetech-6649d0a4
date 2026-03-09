@@ -36,13 +36,24 @@ export function PushNotificationBanner() {
     setIsRequesting(true);
 
     try {
-      const oneSignal = (window as any).OneSignal;
+      console.log("[Push] Click enable", {
+        secure: window.isSecureContext,
+        topLevel: window.top === window.self,
+        permission: "Notification" in window ? Notification.permission : "unsupported",
+        oneSignalLoaded: Boolean((window as any).OneSignal),
+      });
 
+      // 1) Sempre tentar prompt nativo imediatamente no clique (mais confiável para gesto do usuário)
+      if ("Notification" in window && Notification.permission === "default") {
+        const result = await Notification.requestPermission();
+        console.log("[Push] Native permission result:", result);
+        setPermission(result as PushPermission);
+      }
+
+      // 2) Depois sincroniza com OneSignal para garantir subscription
+      const oneSignal = (window as any).OneSignal;
       if (oneSignal?.Notifications?.requestPermission) {
-        // Chamada direta para preservar o gesto de clique (mais confiável no desktop/Android)
         await oneSignal.Notifications.requestPermission();
-      } else if ("Notification" in window && Notification.permission === "default") {
-        await Notification.requestPermission();
       } else {
         (window as any).OneSignalDeferred = (window as any).OneSignalDeferred || [];
         (window as any).OneSignalDeferred.push(async (OneSignal: any) => {
@@ -58,7 +69,7 @@ export function PushNotificationBanner() {
       } else if (currentPermission === "denied") {
         toast.error("Permissão bloqueada no navegador. Libere nas configurações do site.");
       } else {
-        toast.message("Não foi possível abrir o prompt agora. Tente novamente.");
+        toast.message("Prompt não exibido. Tente fora da prévia e no domínio publicado.");
       }
     } catch (e) {
       console.warn("Push permission error:", e);
