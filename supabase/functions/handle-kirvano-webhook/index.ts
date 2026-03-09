@@ -76,6 +76,16 @@ function pickEmail(payload: any): string | undefined {
   return normalized.includes("@") ? normalized : undefined;
 }
 
+function normalizePhone(raw: string): string {
+  // Remove tudo que não é dígito
+  let digits = raw.replace(/\D/g, "");
+  // Remove código do país 55 se presente (resultando em 10 ou 11 dígitos)
+  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
+    digits = digits.substring(2);
+  }
+  return digits;
+}
+
 function pickPhone(payload: any): string | null {
   const phone = coalesce(
     payload?.phone,
@@ -89,8 +99,8 @@ function pickPhone(payload: any): string | null {
     payload?.data?.customer?.phone_number,
   );
   if (typeof phone !== "string") return null;
-  const normalized = phone.trim();
-  return normalized ? normalized : null;
+  const normalized = normalizePhone(phone);
+  return normalized.length >= 10 ? normalized : null;
 }
 
 function pickCpf(payload: any): string | null {
