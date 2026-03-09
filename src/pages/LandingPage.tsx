@@ -73,7 +73,7 @@ export default function LandingPage() {
       {/* ===== 1. HERO ===== */}
       <section className="relative bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.08)_0%,transparent_60%)]" />
-        <div className="max-w-3xl mx-auto px-5 py-20 md:py-32 text-center relative z-10">
+        <div className="max-w-3xl mx-auto px-5 py-14 md:py-20 text-center relative z-10">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wider mb-8">
             <span>🎯</span> Comunidade 100% Gratuita
           </div>
@@ -96,7 +96,7 @@ export default function LandingPage() {
       </section>
 
       {/* ===== 2. PROBLEMA ===== */}
-      <section className="py-16 md:py-24 bg-secondary/30">
+      <section className="py-10 md:py-14 bg-secondary/30">
         <div className="max-w-2xl mx-auto px-5 text-center">
           <h2 className="text-xl md:text-2xl font-bold text-foreground mb-5 leading-snug">
             A maioria das pessoas aposta sozinha… e no escuro.
@@ -106,22 +106,22 @@ export default function LandingPage() {
             <p>❌ Sem análise de resultados.</p>
             <p>❌ Sem trocar ideias com quem também aposta.</p>
           </div>
-          <p className="mt-8 text-foreground text-sm md:text-base max-w-lg mx-auto leading-relaxed">
+          <p className="mt-5 text-foreground text-sm md:text-base max-w-lg mx-auto leading-relaxed">
             A verdade é que muitos apostadores perdem oportunidades simplesmente por não ter <strong>informação e análise no momento certo</strong>.
           </p>
           <p className="mt-3 text-primary font-semibold text-base">
             Foi por isso que criamos essa comunidade.
           </p>
-          <div className="mt-8">
+          <div className="mt-5">
             <CtaGhost>Quero mudar isso agora</CtaGhost>
           </div>
         </div>
       </section>
 
       {/* ===== 3. FEATURES ===== */}
-      <section className="py-16 md:py-24">
+      <section className="py-10 md:py-14">
         <div className="max-w-4xl mx-auto px-5">
-          <h2 className="text-xl md:text-2xl font-bold text-center mb-10 leading-snug">
+          <h2 className="text-xl md:text-2xl font-bold text-center mb-6 leading-snug">
             Tudo o que um apostador precisa em um só lugar
           </h2>
           <div className="grid sm:grid-cols-2 gap-5">
@@ -138,16 +138,16 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
-          <div className="text-center mt-10">
+          <div className="text-center mt-6">
             <CtaSecondary>Quero acessar tudo isso</CtaSecondary>
           </div>
         </div>
       </section>
 
       {/* ===== 4. COMO FUNCIONA ===== */}
-      <section className="py-16 md:py-24 bg-secondary/30">
+      <section className="py-10 md:py-14 bg-secondary/30">
         <div className="max-w-3xl mx-auto px-5">
-          <h2 className="text-xl md:text-2xl font-bold text-center mb-10 leading-snug">
+          <h2 className="text-xl md:text-2xl font-bold text-center mb-6 leading-snug">
             Entrar na comunidade leva menos de 1 minuto
           </h2>
           <div className="grid md:grid-cols-3 gap-8 text-center">
@@ -165,14 +165,14 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
-          <div className="text-center mt-10">
+          <div className="text-center mt-6">
             <CtaPrimary>Começar Agora — É Grátis</CtaPrimary>
           </div>
         </div>
       </section>
 
       {/* ===== 5. PARA QUEM É ===== */}
-      <section className="py-16 md:py-24">
+      <section className="py-10 md:py-14">
         <div className="max-w-2xl mx-auto px-5 text-center">
           <h2 className="text-xl md:text-2xl font-bold mb-7 leading-snug">
             Essa comunidade é para quem quer apostar com mais estratégia
@@ -199,7 +199,7 @@ export default function LandingPage() {
       </section>
 
       {/* ===== 6. BENEFÍCIO PRINCIPAL ===== */}
-      <section className="py-16 md:py-24 bg-primary/5">
+      <section className="py-10 md:py-14 bg-primary/5">
         <div className="max-w-2xl mx-auto px-5 text-center">
           <h2 className="text-xl md:text-2xl font-bold mb-5 leading-snug">
             Apostar sozinho é difícil. Apostar em comunidade é diferente.
@@ -210,14 +210,14 @@ export default function LandingPage() {
           <p className="mt-3 text-primary font-semibold text-sm">
             É exatamente isso que acontece dentro da comunidade.
           </p>
-          <div className="mt-8">
+          <div className="mt-5">
             <CtaSecondary>Fazer parte da comunidade</CtaSecondary>
           </div>
         </div>
       </section>
 
       {/* ===== 7. CTA FINAL ===== */}
-      <section className="py-20 md:py-28 bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground">
+      <section className="py-14 md:py-20 bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground">
         <div className="max-w-2xl mx-auto px-5 text-center">
           <h2 className="text-xl md:text-3xl font-extrabold mb-4 leading-snug">
             🚀 Entre agora na Comunidade de Apostadores
