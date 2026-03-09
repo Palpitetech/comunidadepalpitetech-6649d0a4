@@ -163,20 +163,20 @@ export function LoginWizard() {
   }
 
   return (
-    <Card className="w-full max-w-lg shadow-xl">
+    <Card className="w-full max-w-lg shadow-none border-0 md:shadow-xl md:border">
       {etapa === "identificar" && (
         <>
-          <CardHeader className="text-center pb-6">
-            <CardTitle className="text-senior-2xl">Palpite Tech</CardTitle>
-            <CardDescription className="text-senior-base">
+          <CardHeader className="text-center pb-4 md:pb-6 px-4 md:px-6">
+            <CardTitle className="text-xl md:text-senior-2xl">Palpite Tech</CardTitle>
+            <CardDescription className="text-sm md:text-senior-base">
               Digite seu telefone ou e-mail para continuar.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleIdentificar} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="identificador" className="text-senior-base flex items-center gap-2">
-                  <Icon className="h-5 w-5" />
+          <CardContent className="px-4 md:px-6">
+            <form onSubmit={handleIdentificar} className="space-y-4 md:space-y-6">
+              <div className="space-y-1.5 md:space-y-2">
+                <Label htmlFor="identificador" className="text-sm md:text-senior-base flex items-center gap-2">
+                  <Icon className="h-4 w-4 md:h-5 md:w-5" />
                   Telefone ou E-mail
                 </Label>
                 <Input
@@ -185,12 +185,12 @@ export function LoginWizard() {
                   placeholder="seu@email.com ou (16) 99999-9999"
                   value={identificador}
                   onChange={(e) => setIdentificador(e.target.value)}
-                  className="input-senior"
+                  className="h-11 md:h-14 text-sm md:text-lg px-3 md:px-4 rounded-lg md:rounded-xl border-2 focus:border-primary"
                   autoFocus
                 />
               </div>
 
-              <Button type="submit" className="btn-senior w-full" disabled={isLoading || !identificador.trim()}>
+              <Button type="submit" className="w-full h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl" disabled={isLoading || !identificador.trim()}>
                 {isLoading ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin mr-2" />
@@ -201,15 +201,15 @@ export function LoginWizard() {
                 )}
               </Button>
 
-              <div className="flex flex-col gap-3 pt-2">
-                <Link to="/recuperar-senha" className="text-center text-senior-base text-primary underline underline-offset-4">
+              <div className="flex flex-col gap-2 md:gap-3 pt-1 md:pt-2">
+                <Link to="/recuperar-senha" className="text-center text-sm md:text-senior-base text-primary underline underline-offset-4">
                   Resetar senha
                 </Link>
 
                 <button
                   type="button"
                   onClick={() => setEtapa("cadastro")}
-                  className="text-center text-senior-base text-primary underline underline-offset-4"
+                  className="text-center text-sm md:text-senior-base text-primary underline underline-offset-4"
                 >
                   Criar Conta
                 </button>
@@ -218,9 +218,9 @@ export function LoginWizard() {
                   href={supportWhatsApp}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 text-senior-base text-[#25D366] hover:text-[#25D366]/80 h-12 px-4 transition-colors"
+                  className="inline-flex items-center justify-center gap-2 text-sm md:text-senior-base text-[#25D366] hover:text-[#25D366]/80 h-10 md:h-12 px-4 transition-colors"
                 >
-                  <MessageCircle className="h-5 w-5" />
+                  <MessageCircle className="h-4 w-4 md:h-5 md:w-5" />
                   Preciso de Suporte
                 </a>
               </div>
@@ -231,17 +231,17 @@ export function LoginWizard() {
 
       {etapa === "senha" && (
         <>
-          <CardHeader className="text-center pb-6">
-            <CardTitle className="text-senior-2xl">Digite sua senha</CardTitle>
-            <CardDescription className="text-senior-base">
+          <CardHeader className="text-center pb-4 md:pb-6 px-4 md:px-6">
+            <CardTitle className="text-xl md:text-senior-2xl">Digite sua senha</CardTitle>
+            <CardDescription className="text-sm md:text-senior-base">
               Encontramos sua conta. Agora é só entrar.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleEntrar} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="senha" className="text-senior-base flex items-center gap-2">
-                  <Lock className="h-5 w-5" />
+          <CardContent className="px-4 md:px-6">
+            <form onSubmit={handleEntrar} className="space-y-4 md:space-y-6">
+              <div className="space-y-1.5 md:space-y-2">
+                <Label htmlFor="senha" className="text-sm md:text-senior-base flex items-center gap-2">
+                  <Lock className="h-4 w-4 md:h-5 md:w-5" />
                   Senha
                 </Label>
                 <Input
@@ -249,12 +249,12 @@ export function LoginWizard() {
                   type="password"
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
-                  className="input-senior"
+                  className="h-11 md:h-14 text-sm md:text-lg px-3 md:px-4 rounded-lg md:rounded-xl border-2 focus:border-primary"
                   autoFocus
                 />
               </div>
 
-              <Button type="submit" className="btn-senior w-full" disabled={isLoading || !senha.trim()}>
+              <Button type="submit" className="w-full h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl" disabled={isLoading || !senha.trim()}>
                 {isLoading ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin mr-2" />
@@ -265,8 +265,8 @@ export function LoginWizard() {
                 )}
               </Button>
 
-              <div className="flex flex-col gap-3">
-                <Link to="/recuperar-senha" className="text-center text-senior-base text-primary underline underline-offset-4">
+              <div className="flex flex-col gap-2 md:gap-3">
+                <Link to="/recuperar-senha" className="text-center text-sm md:text-senior-base text-primary underline underline-offset-4">
                   Resetar senha
                 </Link>
 
@@ -278,9 +278,9 @@ export function LoginWizard() {
                     setResolvedEmail(null);
                     setEtapa("identificar");
                   }}
-                  className="w-full h-12 text-senior-base"
+                  className="w-full h-10 md:h-12 text-sm md:text-senior-base"
                 >
-                  <ArrowLeft className="h-5 w-5 mr-2" />
+                  <ArrowLeft className="h-4 w-4 md:h-5 md:w-5 mr-2" />
                   Voltar
                 </Button>
               </div>
