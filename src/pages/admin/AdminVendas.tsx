@@ -115,7 +115,10 @@ export default function AdminVendas() {
   const [selectedLog, setSelectedLog] = useState<WebhookLog | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("todos");
   const [page, setPage] = useState(0);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const PAGE_SIZE = 25;
+
+  const hasDateFilter = !!(dateRange?.from);
 
   const fetchLogs = async () => {
     setLoading(true);
