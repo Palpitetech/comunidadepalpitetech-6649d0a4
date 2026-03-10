@@ -279,6 +279,20 @@ export default function AdminUsuarios() {
           )}
         </div>
 
+        {/* Tag filter mobile */}
+        <Popover open={tagFilterOpen} onOpenChange={setTagFilterOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={cn("h-9 gap-1.5 text-xs", tagFilterActive && "border-primary/40 bg-primary/5 text-primary")}>
+              <Tag className="h-3.5 w-3.5" />
+              Filtrar por tags
+              {tagFilterActive && <span className="ml-0.5 bg-primary text-primary-foreground rounded-full w-4 h-4 text-[10px] flex items-center justify-center">{includeTags.length + excludeTags.length}</span>}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="p-3">
+            {tagFilterContent}
+          </PopoverContent>
+        </Popover>
+
 
         {/* User list */}
         <div className="space-y-0.5">
