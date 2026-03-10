@@ -178,7 +178,7 @@ export default function AdminUsuarios() {
   const filteredExcludeSuggestions = allTags.filter(t => t.toLowerCase().includes(excludeSearch.toLowerCase()) && !excludeTags.includes(t));
 
   const tagFilterContent = (
-    <div className="w-80 space-y-4">
+    <div className="w-[calc(100vw-3rem)] max-w-80 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
