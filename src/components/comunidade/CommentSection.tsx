@@ -111,13 +111,15 @@ export function CommentSection({
           ))}
         </div>
       ) : comments.length === 0 ? (
-        <div className="text-center py-8">
-          <MessageCircle className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">
-            Nenhum comentário ainda.
+        <div className="text-center py-6">
+          <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-muted/60 mb-3">
+            <MessageCircle className="h-5 w-5 text-muted-foreground/50" />
+          </div>
+          <p className="text-sm font-medium text-muted-foreground">
+            Sem comentários ainda
           </p>
-          <p className="text-xs text-muted-foreground/60 mt-0.5">
-            Seja o primeiro a comentar!
+          <p className="text-xs text-muted-foreground/50 mt-1">
+            Inicie a conversa 💬
           </p>
         </div>
       ) : (

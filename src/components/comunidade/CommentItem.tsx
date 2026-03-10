@@ -42,7 +42,8 @@ export function CommentItem({
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [replyContent, setReplyContent] = useState("");
 
-  const authorName = comment.perfis?.nome || "Usuário";
+  const isOptimistic = comment.id.startsWith("optimistic-");
+  const authorName = comment.perfis?.nome || "Você";
   const initials = authorName.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase();
   const timeAgo = formatDistanceToNow(new Date(comment.created_at), { addSuffix: true, locale: ptBR });
   const canDelete = currentUserId === comment.user_id;
@@ -58,8 +59,9 @@ export function CommentItem({
 
   return (
     <div className={cn(
-      "py-3",
-      isNested && "ml-8 border-l-2 border-primary/10 pl-3"
+      "py-3 transition-opacity duration-300",
+      isNested && "ml-8 border-l-2 border-primary/10 pl-3",
+      isOptimistic && "opacity-60"
     )}>
       <div className="flex gap-2.5">
         <Avatar className={cn("shrink-0", isNested ? "h-6 w-6" : "h-8 w-8")}>

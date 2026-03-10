@@ -54,14 +54,49 @@ export function usePostActions(postId: string) {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onMutate: async ({ content, parentId }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["post-comments", postId] });
+
+      // Snapshot previous comments
+      const previous = queryClient.getQueryData(["post-comments", postId]);
+
+      // Optimistically add comment
+      const optimistic = {
+        id: `optimistic-${Date.now()}`,
+        conteudo: content,
+        created_at: new Date().toISOString(),
+        user_id: user?.id || "",
+        parent_id: parentId || null,
+        perfis: null, // will resolve on refetch
+        replies: [],
+      };
+
+      queryClient.setQueryData(["post-comments", postId], (old: any[] | undefined) => {
+        if (!old) return [optimistic];
+        if (parentId) {
+          return old.map((c: any) =>
+            c.id === parentId
+              ? { ...c, replies: [...(c.replies || []), optimistic] }
+              : c
+          );
+        }
+        return [...old, optimistic];
+      });
+
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      // Rollback on error
+      if (context?.previous) {
+        queryClient.setQueryData(["post-comments", postId], context.previous);
+      }
+      toast.error("Erro ao adicionar comentário");
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["post-comments", postId] });
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
-      toast.success("Comentário adicionado!");
-    },
-    onError: () => {
-      toast.error("Erro ao adicionar comentário");
     },
   });
 
