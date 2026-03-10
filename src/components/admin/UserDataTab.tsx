@@ -172,18 +172,10 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
                   <button
                     type="button"
                     className="ml-0.5 rounded-full hover:bg-destructive/20 hover:text-destructive p-0.5 transition-colors"
-                    onClick={async () => {
-                      const newTags = user.tags.filter((t) => t !== tag);
-                      const { error } = await supabase
-                        .from("perfis")
-                        .update({ tags: newTags })
-                        .eq("id", user.id);
-                      if (error) {
-                        toast.error("Erro ao remover tag");
-                      } else {
-                        toast.success(`Tag "${tag}" removida`);
-                        onUserUpdated();
-                      }
+                    onClick={() => {
+                      setTagToRemove(tag);
+                      setConfirmTagName("");
+                      setConfirmPassword("");
                     }}
                   >
                     <X className="h-3 w-3" />
@@ -195,6 +187,90 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
           <Separator />
         </>
       )}
+
+      {/* Dialog de confirmação para remover tag */}
+      <AlertDialog open={!!tagToRemove} onOpenChange={(open) => !open && setTagToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover tag "{tagToRemove}"</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é irreversível. Para confirmar, digite o nome da tag e sua senha.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="confirm-tag" className="text-sm">
+                Digite <span className="font-semibold text-foreground">{tagToRemove}</span> para confirmar
+              </Label>
+              <Input
+                id="confirm-tag"
+                value={confirmTagName}
+                onChange={(e) => setConfirmTagName(e.target.value)}
+                placeholder={tagToRemove || ""}
+                autoComplete="off"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="confirm-password" className="text-sm">Senha do admin</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Sua senha"
+                autoComplete="current-password"
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removingTag}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={confirmTagName !== tagToRemove || !confirmPassword || removingTag}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!tagToRemove || confirmTagName !== tagToRemove) return;
+
+                setRemovingTag(true);
+                try {
+                  // Verifica senha do admin re-autenticando
+                  const { data: { user: currentUser } } = await supabase.auth.getUser();
+                  if (!currentUser?.email) throw new Error("Sessão inválida");
+
+                  const { error: authError } = await supabase.auth.signInWithPassword({
+                    email: currentUser.email,
+                    password: confirmPassword,
+                  });
+
+                  if (authError) {
+                    toast.error("Senha incorreta");
+                    return;
+                  }
+
+                  const newTags = user.tags.filter((t) => t !== tagToRemove);
+                  const { error } = await supabase
+                    .from("perfis")
+                    .update({ tags: newTags })
+                    .eq("id", user.id);
+
+                  if (error) throw error;
+
+                  toast.success(`Tag "${tagToRemove}" removida`);
+                  setTagToRemove(null);
+                  onUserUpdated();
+                } catch (err: any) {
+                  toast.error(err.message || "Erro ao remover tag");
+                } finally {
+                  setRemovingTag(false);
+                }
+              }}
+            >
+              {removingTag && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Remover Tag
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="space-y-4">
         <div className="space-y-2">
