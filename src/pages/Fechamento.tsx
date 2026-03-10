@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useAutoFillFechamento } from "@/hooks/useAutoFillFechamento";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useComputeFechamento } from "@/hooks/useComputeFechamento";
 import { Badge } from "@/components/ui/badge";
 import { EstrategiaFechamentoSelector, ESTRATEGIAS_FECHAMENTO } from "@/components/fechamento/EstrategiaFechamentoSelector";
 import { FechamentoRulesCard } from "@/components/fechamento/FechamentoRulesCard";
@@ -13,7 +14,7 @@ import { ResultadosFechamento } from "@/components/fechamento/ResultadosFechamen
 import { EstrategiaCard, type EstrategiaData } from "@/components/gerador/EstrategiaCard";
 import { cn } from "@/lib/utils";
 import { formatarDezena } from "@/lib/lotofacil";
-import { gerarFechamento, ResultadoFechamento } from "@/lib/fechamento";
+import type { ResultadoFechamento } from "@/lib/fechamento";
 
 const LOADING_MESSAGES = [
   "Analisando suas ferramentas...",
