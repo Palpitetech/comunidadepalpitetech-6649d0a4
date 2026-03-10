@@ -11,11 +11,26 @@ export function usePWAInstall() {
   const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
-    // Check if already installed
-    if (window.matchMedia("(display-mode: standalone)").matches) {
+    // Check if already installed (standalone mode)
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true ||
+      document.referrer.includes("android-app://");
+
+    if (isStandalone) {
       setIsInstalled(true);
       return;
     }
+
+    // Listen for display-mode changes (e.g. user installs while page is open)
+    const mql = window.matchMedia("(display-mode: standalone)");
+    const onDisplayChange = (e: MediaQueryListEvent) => {
+      if (e.matches) {
+        setIsInstalled(true);
+        setDeferredPrompt(null);
+      }
+    };
+    mql.addEventListener("change", onDisplayChange);
 
     // Detect iOS
     const ua = navigator.userAgent;
