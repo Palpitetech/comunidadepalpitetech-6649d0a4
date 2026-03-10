@@ -433,6 +433,20 @@ serve(async (req) => {
     if (error) logStep("Failed to update kirvano_webhook_logs", { message: error.message });
   };
 
+  // Helper: registra evento na tabela events
+  const insertEvent = async (userId: string, eventType: string, meta: Record<string, any> = {}) => {
+    try {
+      await admin.from("events").insert({
+        user_id: userId,
+        event_type: eventType,
+        metadata: { ...meta, webhook_event: eventName, email: email ?? null },
+      });
+      logStep("Event inserted", { eventType, userId });
+    } catch (e) {
+      logStep("Event insert error (non-fatal)", { message: e instanceof Error ? e.message : String(e) });
+    }
+  };
+
   if (!email) {
     logStep("No email in payload", { keys: Object.keys(payload ?? {}) });
     await finalizeLog({ processed: true, process_result: "missing_email" });
