@@ -29,6 +29,7 @@ export default function FechamentoMegaSena() {
   const [estrategiaIA, setEstrategiaIA] = useState<EstrategiaMegaSena | null>(null);
 
   const { isLoading: isAutoFilling, canUse, autoFill, checkUsage } = useAutoFillMegaSena();
+  const { compute, isComputing } = useComputeFechamento();
 
   useEffect(() => {
     checkUsage();
