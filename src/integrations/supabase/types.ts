@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_logs: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          table_name: string
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          table_name: string
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          table_name?: string
+        }
+        Relationships: []
+      }
       admin_settings: {
         Row: {
           id: string
@@ -1598,6 +1628,69 @@ export type Database = {
           },
         ]
       }
+      kirvano_webhook_logs_masked: {
+        Row: {
+          authorized_method: string | null
+          checkout_id: string | null
+          email: string | null
+          email_masked: string | null
+          error: string | null
+          event: string | null
+          id: string | null
+          payment_method: string | null
+          phone: string | null
+          phone_masked: string | null
+          process_result: string | null
+          processed: boolean | null
+          purchase_type: string | null
+          raw_payload: Json | null
+          raw_payload_safe: Json | null
+          received_at: string | null
+          sale_id: string | null
+          status: string | null
+        }
+        Insert: {
+          authorized_method?: string | null
+          checkout_id?: string | null
+          email?: string | null
+          email_masked?: never
+          error?: string | null
+          event?: string | null
+          id?: string | null
+          payment_method?: string | null
+          phone?: string | null
+          phone_masked?: never
+          process_result?: string | null
+          processed?: boolean | null
+          purchase_type?: string | null
+          raw_payload?: Json | null
+          raw_payload_safe?: never
+          received_at?: string | null
+          sale_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          authorized_method?: string | null
+          checkout_id?: string | null
+          email?: string | null
+          email_masked?: never
+          error?: string | null
+          event?: string | null
+          id?: string | null
+          payment_method?: string | null
+          phone?: string | null
+          phone_masked?: never
+          process_result?: string | null
+          processed?: boolean | null
+          purchase_type?: string | null
+          raw_payload?: Json | null
+          raw_payload_safe?: never
+          received_at?: string | null
+          sale_id?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       perfis_publicos: {
         Row: {
           avatar_url: string | null
@@ -1635,6 +1728,7 @@ export type Database = {
       }
     }
     Functions: {
+      audit_webhook_access: { Args: never; Returns: undefined }
       check_referral_milestones: {
         Args: { p_referrer_id: string }
         Returns: undefined
