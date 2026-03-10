@@ -433,7 +433,21 @@ serve(async (req) => {
     if (error) logStep("Failed to update kirvano_webhook_logs", { message: error.message });
   };
 
-  // Helper: registra evento na tabela events
+  // Mapa de event_type → tag no perfil
+  const EVENT_TAG_MAP: Record<string, string> = {
+    novo_cadastro: "user_created",
+    compra_aprovada: "sale_confirmed",
+    pix_gerado: "pix_generated",
+    pix_expirado: "pix_expired",
+    boleto_gerado: "boleto_generated",
+    boleto_expirado: "boleto_expired",
+    assinatura_cancelada: "sale_cancelled",
+    assinatura_inadimplente: "sale_overdue",
+    checkout_abandonado: "checkout_abandoned",
+    carrinho_abandonado: "cart_abandoned",
+  };
+
+  // Helper: registra evento na tabela events + adiciona tag no perfil
   const insertEvent = async (userId: string, eventType: string, meta: Record<string, any> = {}) => {
     try {
       await admin.from("events").insert({
@@ -441,7 +455,23 @@ serve(async (req) => {
         event_type: eventType,
         metadata: { ...meta, webhook_event: eventName, email: email ?? null },
       });
-      logStep("Event inserted", { eventType, userId });
+
+      // Adiciona tag ao perfil (sem duplicar)
+      const tag = EVENT_TAG_MAP[eventType] ?? eventType;
+      const { data: perfRow } = await admin
+        .from("perfis")
+        .select("tags")
+        .eq("id", userId)
+        .single();
+      const currentTags: string[] = perfRow?.tags ?? [];
+      if (!currentTags.includes(tag)) {
+        await admin
+          .from("perfis")
+          .update({ tags: [...currentTags, tag] })
+          .eq("id", userId);
+      }
+
+      logStep("Event + tag inserted", { eventType, tag, userId });
     } catch (e) {
       logStep("Event insert error (non-fatal)", { message: e instanceof Error ? e.message : String(e) });
     }
