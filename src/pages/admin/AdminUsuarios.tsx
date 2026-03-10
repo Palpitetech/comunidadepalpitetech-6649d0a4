@@ -279,12 +279,6 @@ export default function AdminUsuarios() {
             )}
           </div>
 
-          {/* Pagination */}
-          <div className="flex items-center gap-1 text-xs text-muted-foreground ml-2">
-            <span>{filteredUsers.length > 0 ? `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, filteredUsers.length)}` : "0"} de {filteredUsers.length}</span>
-            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}><ChevronLeft className="h-3.5 w-3.5" /></Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}><ChevronRight className="h-3.5 w-3.5" /></Button>
-          </div>
         </div>
 
         {/* Table */}
