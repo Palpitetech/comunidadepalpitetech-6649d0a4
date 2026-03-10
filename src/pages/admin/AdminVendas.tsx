@@ -1,24 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Search, CreditCard, QrCode, Barcode, ChevronRight,
   CheckCircle2, XCircle, Clock, AlertTriangle, RefreshCw, ArrowLeft,
   ShoppingCart, User, Calendar, DollarSign, FileText, Copy, Check,
-  MessageCircle, ChevronLeft
+  MessageCircle, ChevronLeft, X
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 type WebhookLog = {
   id: string;
@@ -38,24 +38,37 @@ type WebhookLog = {
   raw_payload: any;
 };
 
+type FilterTab = "todos" | "aprovadas" | "pendentes" | "canceladas";
+
+const FILTER_TABS: { key: FilterTab; label: string; icon: typeof CheckCircle2 }[] = [
+  { key: "todos", label: "Todos", icon: ShoppingCart },
+  { key: "aprovadas", label: "Aprovadas", icon: CheckCircle2 },
+  { key: "pendentes", label: "Pendentes", icon: Clock },
+  { key: "canceladas", label: "Canceladas", icon: XCircle },
+];
+
+const APPROVED_EVENTS = ["SALE_APPROVED", "SUBSCRIPTION_RENEWED", "SUBSCRIPTION_REACTIVATED"];
+const PENDING_EVENTS = ["PIX_GENERATED", "BANK_SLIP_GENERATED"];
+const CANCELED_EVENTS = ["SALE_REFUSED", "SALE_CHARGEBACK", "SALE_REFUNDED", "BANK_SLIP_EXPIRED", "PIX_EXPIRED", "SUBSCRIPTION_CANCELED", "SUBSCRIPTION_OVERDUE", "SUBSCRIPTION_EXPIRED"];
+
 const EVENT_LABELS: Record<string, { label: string; color: string }> = {
-  SALE_APPROVED: { label: "Venda Aprovada", color: "bg-green-500/10 text-green-700 border-green-200" },
-  SALE_REFUSED: { label: "Venda Recusada", color: "bg-red-500/10 text-red-700 border-red-200" },
-  SALE_CHARGEBACK: { label: "Estorno / Chargeback", color: "bg-red-500/10 text-red-700 border-red-200" },
+  SALE_APPROVED: { label: "Aprovada", color: "bg-green-500/10 text-green-700 border-green-200" },
+  SALE_REFUSED: { label: "Recusada", color: "bg-red-500/10 text-red-700 border-red-200" },
+  SALE_CHARGEBACK: { label: "Chargeback", color: "bg-red-500/10 text-red-700 border-red-200" },
   SALE_REFUNDED: { label: "Reembolso", color: "bg-red-500/10 text-red-700 border-red-200" },
   BANK_SLIP_GENERATED: { label: "Boleto Gerado", color: "bg-yellow-500/10 text-yellow-700 border-yellow-200" },
   BANK_SLIP_EXPIRED: { label: "Boleto Expirado", color: "bg-muted text-muted-foreground border-border" },
   PIX_GENERATED: { label: "PIX Gerado", color: "bg-yellow-500/10 text-yellow-700 border-yellow-200" },
   PIX_EXPIRED: { label: "PIX Expirado", color: "bg-muted text-muted-foreground border-border" },
-  SUBSCRIPTION_CANCELED: { label: "Assinatura Cancelada", color: "bg-orange-500/10 text-orange-700 border-orange-200" },
-  SUBSCRIPTION_OVERDUE: { label: "Assinatura Inadimplente", color: "bg-red-500/10 text-red-700 border-red-200" },
-  SUBSCRIPTION_RENEWED: { label: "Assinatura Renovada", color: "bg-green-500/10 text-green-700 border-green-200" },
-  SUBSCRIPTION_REACTIVATED: { label: "Assinatura Reativada", color: "bg-green-500/10 text-green-700 border-green-200" },
-  SUBSCRIPTION_TRIAL_STARTED: { label: "Período de Teste Iniciado", color: "bg-blue-500/10 text-blue-700 border-blue-200" },
-  SUBSCRIPTION_TRIAL_ENDED: { label: "Período de Teste Encerrado", color: "bg-muted text-muted-foreground border-border" },
+  SUBSCRIPTION_CANCELED: { label: "Cancelada", color: "bg-orange-500/10 text-orange-700 border-orange-200" },
+  SUBSCRIPTION_OVERDUE: { label: "Inadimplente", color: "bg-red-500/10 text-red-700 border-red-200" },
+  SUBSCRIPTION_RENEWED: { label: "Renovada", color: "bg-green-500/10 text-green-700 border-green-200" },
+  SUBSCRIPTION_REACTIVATED: { label: "Reativada", color: "bg-green-500/10 text-green-700 border-green-200" },
+  SUBSCRIPTION_TRIAL_STARTED: { label: "Teste Iniciado", color: "bg-blue-500/10 text-blue-700 border-blue-200" },
+  SUBSCRIPTION_TRIAL_ENDED: { label: "Teste Encerrado", color: "bg-muted text-muted-foreground border-border" },
   CHECKOUT_ABANDONED: { label: "Checkout Abandonado", color: "bg-muted text-muted-foreground border-border" },
   ABANDONED_CART: { label: "Carrinho Abandonado", color: "bg-muted text-muted-foreground border-border" },
-  SUBSCRIPTION_EXPIRED: { label: "Assinatura Expirada", color: "bg-orange-500/10 text-orange-700 border-orange-200" },
+  SUBSCRIPTION_EXPIRED: { label: "Expirada", color: "bg-orange-500/10 text-orange-700 border-orange-200" },
 };
 
 const RESULT_LABELS: Record<string, { label: string; icon: typeof CheckCircle2 }> = {
@@ -89,28 +102,27 @@ function getResultInfo(result: string | null) {
   return RESULT_LABELS[result] ?? { label: result, icon: FileText };
 }
 
+type SaleGroup = { key: string; events: WebhookLog[]; latest: WebhookLog };
+
 export default function AdminVendas() {
   const navigate = useNavigate();
   const [logs, setLogs] = useState<WebhookLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [eventFilter, setEventFilter] = useState("all");
   const [selectedLog, setSelectedLog] = useState<WebhookLog | null>(null);
-  const [page, setPage] = useState(1);
-  const PAGE_SIZE = 20;
+  const [activeFilter, setActiveFilter] = useState<FilterTab>("todos");
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 25;
 
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      // Registrar acesso para auditoria
       await supabase.rpc("audit_webhook_access");
-
       const { data, error } = await supabase
         .from("kirvano_webhook_logs")
         .select("*")
         .order("received_at", { ascending: false })
         .limit(500);
-
       if (error) throw error;
       setLogs((data as WebhookLog[]) || []);
     } catch (err) {
@@ -122,243 +134,309 @@ export default function AdminVendas() {
 
   useEffect(() => { fetchLogs(); }, []);
 
-  const filtered = (() => {
-    // Reset page when filters change is handled via useEffect below
-    return logs.filter((log) => {
-      if (eventFilter !== "all" && log.event !== eventFilter) return false;
-      if (search) {
-        const s = search.toLowerCase();
-        return (
-          log.email?.toLowerCase().includes(s) ||
-          log.phone?.includes(s) ||
-          log.sale_id?.toLowerCase().includes(s) ||
-          log.checkout_id?.toLowerCase().includes(s)
-        );
+  const sales = useMemo(() => {
+    const salesMap = new Map<string, WebhookLog[]>();
+    for (const log of logs) {
+      const key = log.sale_id || log.checkout_id;
+      if (key) {
+        if (!salesMap.has(key)) salesMap.set(key, []);
+        salesMap.get(key)!.push(log);
       }
-      return true;
-    });
-  })();
-
-  // Reset page when filters change
-  useEffect(() => { setPage(1); }, [search, eventFilter]);
-
-  // Group by sale_id
-  const salesMap = new Map<string, WebhookLog[]>();
-  const orphans: WebhookLog[] = [];
-  for (const log of filtered) {
-    const key = log.sale_id || log.checkout_id;
-    if (key) {
-      if (!salesMap.has(key)) salesMap.set(key, []);
-      salesMap.get(key)!.push(log);
-    } else {
-      orphans.push(log);
     }
-  }
+    const result = [...salesMap.entries()].map(([key, events]) => {
+      events.sort((a, b) => new Date(b.received_at).getTime() - new Date(a.received_at).getTime());
+      return { key, events, latest: events[0] };
+    });
+    result.sort((a, b) => new Date(b.latest.received_at).getTime() - new Date(a.latest.received_at).getTime());
+    return result;
+  }, [logs]);
 
-  // Sort each group by date and get latest status
-  const sales = [...salesMap.entries()].map(([key, events]) => {
-    events.sort((a, b) => new Date(b.received_at).getTime() - new Date(a.received_at).getTime());
-    return { key, events, latest: events[0] };
-  });
+  const stats = useMemo(() => ({
+    total: sales.length,
+    aprovadas: sales.filter(s => APPROVED_EVENTS.includes(s.latest.event || "")).length,
+    pendentes: sales.filter(s => PENDING_EVENTS.includes(s.latest.event || "")).length,
+    canceladas: sales.filter(s => CANCELED_EVENTS.includes(s.latest.event || "")).length,
+  }), [sales]);
 
-  // Sort sales by latest event date
-  sales.sort((a, b) => new Date(b.latest.received_at).getTime() - new Date(a.latest.received_at).getTime());
+  const filteredSales = useMemo(() => {
+    let list = sales;
+    if (activeFilter === "aprovadas") list = sales.filter(s => APPROVED_EVENTS.includes(s.latest.event || ""));
+    else if (activeFilter === "pendentes") list = sales.filter(s => PENDING_EVENTS.includes(s.latest.event || ""));
+    else if (activeFilter === "canceladas") list = sales.filter(s => CANCELED_EVENTS.includes(s.latest.event || ""));
 
-  const totalAprovadas = logs.filter(l => l.event === "SALE_APPROVED").length;
+    if (!search) return list;
+    const s = search.toLowerCase();
+    return list.filter(({ latest }) =>
+      latest.email?.toLowerCase().includes(s) ||
+      latest.phone?.includes(s) ||
+      latest.sale_id?.toLowerCase().includes(s) ||
+      latest.checkout_id?.toLowerCase().includes(s) ||
+      latest.raw_payload?.customer?.name?.toLowerCase()?.includes(s)
+    );
+  }, [sales, activeFilter, search]);
 
-  const totalPages = Math.max(1, Math.ceil(sales.length / PAGE_SIZE));
-  const paginatedSales = sales.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  useEffect(() => { setPage(0); }, [activeFilter, search]);
 
-  const totalPendentes = logs.filter(l => ["PIX_GENERATED", "BANK_SLIP_GENERATED"].includes(l.event || "")).length;
-  const totalCanceladas = logs.filter(l => ["SALE_REFUSED", "SALE_CHARGEBACK", "BANK_SLIP_EXPIRED", "PIX_EXPIRED"].includes(l.event || "")).length;
+  const totalPages = Math.ceil(filteredSales.length / PAGE_SIZE);
+  const paginatedSales = filteredSales.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   const customerName = (log: WebhookLog) => log.raw_payload?.customer?.name || null;
   const totalPrice = (log: WebhookLog) => log.raw_payload?.total_price || null;
 
+  const getFilterCount = (key: FilterTab) => stats[key === "todos" ? "total" : key];
 
-  const refreshButton = (
-    <Button variant="ghost" size="icon" onClick={fetchLogs} disabled={loading} className="h-9 w-9">
-      <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-    </Button>
-  );
+  if (loading) {
+    return (
+      <MainLayout pageTitle="Vendas" onBack={() => navigate("/admin")}>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout
-      pageTitle="Vendas Kirvano"
+      pageTitle="Vendas"
       onBack={() => navigate("/admin")}
-      headerRightContent={refreshButton}
-      hideBottomNav
+      headerRightContent={
+        <button onClick={fetchLogs} disabled={loading} className="text-muted-foreground hover:text-foreground">
+          <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+        </button>
+      }
     >
-      <div className="px-4 py-3 md:container-senior md:py-8 space-y-3 md:space-y-6">
-        {/* Desktop Header */}
-        <div className="hidden md:flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="shrink-0">
-            <ArrowLeft className="h-5 w-5" />
+      {/* ======= MOBILE ======= */}
+      <div className="md:hidden px-4 py-3 space-y-3">
+        {/* Stats row */}
+        <div className="grid grid-cols-4 gap-1.5">
+          {FILTER_TABS.map(({ key, label, icon: Icon }) => {
+            const count = getFilterCount(key);
+            const isActive = activeFilter === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setActiveFilter(key)}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 rounded-xl p-2 transition-colors text-center",
+                  isActive ? "bg-primary/10 ring-1 ring-primary/30" : "bg-muted/40 hover:bg-muted/60"
+                )}
+              >
+                <Icon className={cn("h-4 w-4", isActive ? "text-primary" : "text-muted-foreground")} />
+                <span className="text-lg font-bold">{count}</span>
+                <span className={cn("text-[10px]", isActive ? "text-primary font-medium" : "text-muted-foreground")}>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Buscar email, telefone, nome..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-10 pr-9" />
+          {search && (
+            <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Pagination info */}
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            {filteredSales.length > 0 ? `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, filteredSales.length)} de ${filteredSales.length}` : "0 resultados"}
+          </p>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}><ChevronLeft className="h-4 w-4" /></Button>
+              <span className="text-xs text-muted-foreground min-w-[3ch] text-center">{page + 1}/{totalPages}</span>
+              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}><ChevronRight className="h-4 w-4" /></Button>
+            </div>
+          )}
+        </div>
+
+        {/* Sales list */}
+        <div className="space-y-0.5">
+          {paginatedSales.map(({ key, events, latest }) => {
+            const evInfo = getEventInfo(latest.event);
+            const name = customerName(latest);
+            const price = totalPrice(latest);
+            return (
+              <button
+                key={key}
+                className="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg active:bg-muted/60 transition-colors border-b border-border/30 last:border-0"
+                onClick={() => setSelectedLog(latest)}
+              >
+                <PaymentMethodIcon method={latest.payment_method} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-medium truncate">{name || latest.email || "Sem identificação"}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
+                    {price && <span className="font-medium">{price}</span>}
+                    {price && <span>·</span>}
+                    <span>{format(new Date(latest.received_at), "dd/MM HH:mm", { locale: ptBR })}</span>
+                    {events.length > 1 && <><span>·</span><span>{events.length} evt</span></>}
+                  </div>
+                </div>
+                <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0.5 shrink-0", evInfo.color)}>
+                  {evInfo.label}
+                </Badge>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+              </button>
+            );
+          })}
+          {filteredSales.length === 0 && (
+            <div className="text-center py-12 text-sm text-muted-foreground">
+              {search ? "Nenhum resultado encontrado" : "Nenhuma venda"}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ======= DESKTOP — fullscreen minimal ======= */}
+      <div className="hidden md:flex flex-col flex-1 min-h-0">
+        {/* Toolbar */}
+        <div className="border-b border-border bg-card/50 px-6 py-3 flex items-center gap-4">
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => navigate("/admin")}>
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-3xl font-bold truncate">Vendas Kirvano</h1>
-            <p className="text-sm text-muted-foreground">Histórico de webhooks recebidos</p>
-          </div>
-          <Button variant="outline" size="icon" onClick={fetchLogs} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          </Button>
-        </div>
+          <h1 className="text-lg font-semibold mr-2">Vendas</h1>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-3 gap-2 md:gap-4">
-          <Card className="border-0 shadow-none md:border md:shadow-sm bg-muted/40 md:bg-card">
-            <CardContent className="p-2.5 md:p-4 text-center">
-              <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-green-600 mx-auto mb-0.5 md:mb-1" />
-              <p className="text-base md:text-2xl font-bold">{totalAprovadas}</p>
-              <p className="text-[10px] md:text-xs text-muted-foreground">Aprovadas</p>
-            </CardContent>
-          </Card>
-          <Card className="border-0 shadow-none md:border md:shadow-sm bg-muted/40 md:bg-card">
-            <CardContent className="p-2.5 md:p-4 text-center">
-              <Clock className="h-4 w-4 md:h-5 md:w-5 text-yellow-600 mx-auto mb-0.5 md:mb-1" />
-              <p className="text-base md:text-2xl font-bold">{totalPendentes}</p>
-              <p className="text-[10px] md:text-xs text-muted-foreground">Pendentes</p>
-            </CardContent>
-          </Card>
-          <Card className="border-0 shadow-none md:border md:shadow-sm bg-muted/40 md:bg-card">
-            <CardContent className="p-2.5 md:p-4 text-center">
-              <XCircle className="h-4 w-4 md:h-5 md:w-5 text-red-600 mx-auto mb-0.5 md:mb-1" />
-              <p className="text-base md:text-2xl font-bold">{totalCanceladas}</p>
-              <p className="text-[10px] md:text-xs text-muted-foreground">Canceladas</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters */}
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar email, telefone..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 text-sm h-9"
-            />
-          </div>
-          <Select value={eventFilter} onValueChange={setEventFilter}>
-            <SelectTrigger className="w-[120px] md:w-[180px] text-xs md:text-sm h-9">
-              <SelectValue placeholder="Filtro" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="SALE_APPROVED">Aprovada</SelectItem>
-              <SelectItem value="PIX_GENERATED">PIX Gerado</SelectItem>
-              <SelectItem value="PIX_EXPIRED">PIX Expirado</SelectItem>
-              <SelectItem value="BANK_SLIP_GENERATED">Boleto Gerado</SelectItem>
-              <SelectItem value="BANK_SLIP_EXPIRED">Boleto Expirado</SelectItem>
-              <SelectItem value="SALE_REFUSED">Recusada</SelectItem>
-              <SelectItem value="SALE_CHARGEBACK">Chargeback</SelectItem>
-              <SelectItem value="SALE_REFUNDED">Reembolso</SelectItem>
-              <SelectItem value="SUBSCRIPTION_CANCELED">Cancelada</SelectItem>
-              <SelectItem value="SUBSCRIPTION_OVERDUE">Inadimplente</SelectItem>
-              <SelectItem value="SUBSCRIPTION_RENEWED">Renovada</SelectItem>
-              <SelectItem value="SUBSCRIPTION_REACTIVATED">Reativada</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Sales List */}
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : sales.length === 0 && orphans.length === 0 ? (
-          <div className="py-12 text-center text-muted-foreground text-sm">
-            Nenhuma venda encontrada
-          </div>
-        ) : (
-          <div className="space-y-1.5 md:space-y-2">
-            {paginatedSales.map(({ key, events, latest }) => {
-              const evInfo = getEventInfo(latest.event);
-              const name = customerName(latest);
-              const price = totalPrice(latest);
-
+          {/* Filter pills */}
+          <div className="flex items-center gap-1">
+            {FILTER_TABS.map(({ key, label }) => {
+              const count = getFilterCount(key);
+              const isActive = activeFilter === key;
               return (
                 <button
                   key={key}
-                  className="w-full text-left rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors p-3"
-                  onClick={() => setSelectedLog(latest)}
+                  onClick={() => setActiveFilter(key)}
+                  className={cn(
+                    "px-3 py-1 rounded-full text-xs font-medium transition-colors",
+                    isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+                  )}
                 >
-                  <div className="flex items-center gap-3">
-                    <PaymentMethodIcon method={latest.payment_method} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm truncate">
-                          {name || latest.email || "Sem identificação"}
-                        </span>
-                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 shrink-0 ${evInfo.color}`}>
-                          {evInfo.label}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
-                        {price && <span className="font-medium">{price}</span>}
-                        {price && <span>·</span>}
-                        <span>{format(new Date(latest.received_at), "dd/MM HH:mm", { locale: ptBR })}</span>
-                        {events.length > 1 && (
-                          <>
-                            <span>·</span>
-                            <span>{events.length} evt</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                  </div>
+                  {label} <span className="opacity-70">{count}</span>
                 </button>
               );
             })}
+          </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-2 pb-2">
-                <p className="text-[11px] text-muted-foreground">
-                  {sales.length} vendas · Pág. {page}/{totalPages}
-                </p>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    disabled={page <= 1}
-                    onClick={() => setPage(p => p - 1)}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage(p => p + 1)}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+          <div className="flex-1" />
+
+          {/* Search */}
+          <div className="relative w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-8 text-sm bg-background" />
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <X className="h-3.5 w-3.5" />
+              </button>
             )}
           </div>
-        )}
 
-        {/* Detail Sheet */}
-        <Sheet open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
-          <SheetContent side="bottom" className="h-[92vh] rounded-t-2xl p-0 md:!inset-y-0 md:!right-0 md:!left-auto md:!bottom-auto md:!h-full md:!w-[480px] md:!max-w-lg md:rounded-none">
-            <div className="flex items-center justify-between p-4 pb-2 border-b border-border">
-              <SheetTitle className="text-base font-semibold">Detalhes da Venda</SheetTitle>
-            </div>
-            {selectedLog && (
-              <SaleDetail
-                saleKey={selectedLog.sale_id || selectedLog.checkout_id || selectedLog.id}
-                allLogs={logs}
-              />
-            )}
-          </SheetContent>
-        </Sheet>
+          {/* Refresh */}
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fetchLogs} disabled={loading}>
+            <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
+          </Button>
+
+          {/* Pagination */}
+          <div className="flex items-center gap-1 text-xs text-muted-foreground ml-1">
+            <span>{filteredSales.length > 0 ? `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, filteredSales.length)}` : "0"} de {filteredSales.length}</span>
+            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}><ChevronLeft className="h-3.5 w-3.5" /></Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}><ChevronRight className="h-3.5 w-3.5" /></Button>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="flex-1 overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="w-10 pl-6"></TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Cliente</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Email / Telefone</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Valor</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Resultado</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Data</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Eventos</TableHead>
+                <TableHead className="w-8"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedSales.map(({ key, events, latest }) => {
+                const evInfo = getEventInfo(latest.event);
+                const name = customerName(latest);
+                const price = totalPrice(latest);
+                const resultInfo = getResultInfo(latest.process_result);
+                return (
+                  <TableRow key={key} className="cursor-pointer group" onClick={() => setSelectedLog(latest)}>
+                    <TableCell className="pl-6 py-2.5">
+                      <PaymentMethodIcon method={latest.payment_method} />
+                    </TableCell>
+                    <TableCell className="py-2.5">
+                      <span className="text-sm font-medium truncate max-w-[200px] block">{name || "Sem nome"}</span>
+                    </TableCell>
+                    <TableCell className="py-2.5 text-sm text-muted-foreground truncate max-w-[220px]">
+                      {latest.email || latest.phone || "—"}
+                    </TableCell>
+                    <TableCell className="py-2.5">
+                      <span className="text-sm font-medium tabular-nums">{price || "—"}</span>
+                    </TableCell>
+                    <TableCell className="py-2.5">
+                      <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", evInfo.color)}>
+                        {evInfo.label}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-2.5">
+                      {resultInfo ? (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <resultInfo.icon className="h-3 w-3 shrink-0" />
+                          <span className="truncate max-w-[140px]">{resultInfo.label}</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-2.5 text-xs text-muted-foreground tabular-nums">
+                      {format(new Date(latest.received_at), "dd/MM/yy HH:mm", { locale: ptBR })}
+                    </TableCell>
+                    <TableCell className="py-2.5 text-xs text-muted-foreground text-center tabular-nums">
+                      {events.length}
+                    </TableCell>
+                    <TableCell className="py-2.5 pr-4">
+                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              {filteredSales.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={9} className="text-center py-16 text-sm text-muted-foreground">
+                    {search ? "Nenhuma venda encontrada" : "Nenhuma venda registrada"}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
+
+      {/* Detail Sheet */}
+      <Sheet open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
+        <SheetContent side="bottom" className="h-[92vh] rounded-t-2xl p-0 md:!inset-y-0 md:!right-0 md:!left-auto md:!bottom-auto md:!h-full md:!w-[480px] md:!max-w-lg md:rounded-none">
+          <div className="flex items-center justify-between p-4 pb-2 border-b border-border">
+            <SheetTitle className="text-base font-semibold">Detalhes da Venda</SheetTitle>
+          </div>
+          {selectedLog && (
+            <SaleDetail
+              saleKey={selectedLog.sale_id || selectedLog.checkout_id || selectedLog.id}
+              allLogs={logs}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
     </MainLayout>
   );
 }
@@ -405,12 +483,7 @@ function PixCodeBlock({ code }: { code: string }) {
         <p className="text-[11px] font-mono break-all leading-relaxed text-muted-foreground select-all">
           {code}
         </p>
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full gap-2"
-          onClick={handleCopy}
-        >
+        <Button variant="outline" size="sm" className="w-full gap-2" onClick={handleCopy}>
           {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
           {copied ? "Copiado!" : "Copiar código PIX"}
         </Button>
@@ -463,35 +536,18 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
             <User className="h-4 w-4" /> Cliente
           </h3>
           <div className="bg-muted/50 rounded-lg p-3 space-y-1.5 text-sm">
-            {customer.name && (
-              <CopyableField label="Nome" value={customer.name} />
-            )}
-            {latest.email && (
-              <CopyableField label="Email" value={latest.email} />
-            )}
-            {latest.phone && (
-              <CopyableField label="Telefone" value={latest.phone} />
-            )}
-            {customer.document && (
-              <p className="text-muted-foreground text-xs">CPF: {customer.document}</p>
-            )}
+            {customer.name && <CopyableField label="Nome" value={customer.name} />}
+            {latest.email && <CopyableField label="Email" value={latest.email} />}
+            {latest.phone && <CopyableField label="Telefone" value={latest.phone} />}
+            {customer.document && <p className="text-muted-foreground text-xs">CPF: {customer.document}</p>}
             {(() => {
               const phone = latest.phone || customer.phone_number;
               if (!phone) return null;
               const digits = phone.replace(/\D/g, "");
               const waNumber = digits.startsWith("55") ? digits : `55${digits}`;
               return (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full gap-2 mt-2"
-                  asChild
-                >
-                  <a
-                    href={`https://wa.me/${waNumber}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                <Button variant="outline" size="sm" className="w-full gap-2 mt-2" asChild>
+                  <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer">
                     <MessageCircle className="h-3.5 w-3.5" />
                     Enviar WhatsApp
                   </a>
@@ -507,47 +563,18 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
             <DollarSign className="h-4 w-4" /> Venda
           </h3>
           <div className="bg-muted/50 rounded-lg p-3 space-y-1 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Valor</span>
-              <span className="font-medium">{payload.total_price || "—"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Tipo</span>
-              <span>{payload.type === "RECURRING" ? "Assinatura" : "Pagamento único"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Pagamento</span>
-              <span className="flex items-center gap-1.5">
-                <PaymentMethodIcon method={latest.payment_method} />
-                {latest.payment_method || "—"}
-              </span>
-            </div>
-            {payment.brand && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Bandeira</span>
-                <span className="capitalize">{payment.brand}</span>
-              </div>
-            )}
-            {payment.installments && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Parcelas</span>
-                <span>{payment.installments}x</span>
-              </div>
-            )}
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Sale ID</span>
-              <span className="text-xs font-mono">{latest.sale_id || "—"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Checkout ID</span>
-              <span className="text-xs font-mono">{latest.checkout_id || "—"}</span>
-            </div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Valor</span><span className="font-medium">{payload.total_price || "—"}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Tipo</span><span>{payload.type === "RECURRING" ? "Assinatura" : "Pagamento único"}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Pagamento</span><span className="flex items-center gap-1.5"><PaymentMethodIcon method={latest.payment_method} />{latest.payment_method || "—"}</span></div>
+            {payment.brand && <div className="flex justify-between"><span className="text-muted-foreground">Bandeira</span><span className="capitalize">{payment.brand}</span></div>}
+            {payment.installments && <div className="flex justify-between"><span className="text-muted-foreground">Parcelas</span><span>{payment.installments}x</span></div>}
+            <div className="flex justify-between"><span className="text-muted-foreground">Sale ID</span><span className="text-xs font-mono">{latest.sale_id || "—"}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Checkout ID</span><span className="text-xs font-mono">{latest.checkout_id || "—"}</span></div>
           </div>
         </div>
 
         {/* PIX Code */}
         {(() => {
-          // Find the PIX_GENERATED event for this sale to get the qrcode
           const pixEvent = events.find(e => e.event === "PIX_GENERATED");
           const pixCode = pixEvent?.raw_payload?.payment?.qrcode;
           const pixExpires = pixEvent?.raw_payload?.payment?.expires_at;
@@ -578,15 +605,11 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="font-medium truncate">{p.name || p.offer_name}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Oferta: <span className="font-mono">{p.offer_id}</span>
-                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Oferta: <span className="font-mono">{p.offer_id}</span></p>
                       </div>
                       <div className="text-right shrink-0">
                         <p className="font-medium">{p.price}</p>
-                        {p.is_order_bump && (
-                          <Badge variant="secondary" className="text-[10px] mt-0.5">bump</Badge>
-                        )}
+                        {p.is_order_bump && <Badge variant="secondary" className="text-[10px] mt-0.5">bump</Badge>}
                       </div>
                     </div>
                     {mapped && (
@@ -596,19 +619,9 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
                           <span className="text-xs font-medium">Plano: {mapped.planName}</span>
                         </div>
                         {mapped.checkoutLink && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-xs gap-1.5"
-                            onClick={async () => {
-                              try {
-                                await navigator.clipboard.writeText(mapped.checkoutLink!);
-                                toast.success("Link de checkout copiado!");
-                              } catch {
-                                toast.error("Erro ao copiar");
-                              }
-                            }}
-                          >
+                          <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={async () => {
+                            try { await navigator.clipboard.writeText(mapped.checkoutLink!); toast.success("Link de checkout copiado!"); } catch { toast.error("Erro ao copiar"); }
+                          }}>
                             <Copy className="h-3 w-3" />
                             Copiar link
                           </Button>
@@ -616,9 +629,7 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
                       </div>
                     )}
                     {!mapped && p.offer_id && (
-                      <p className="text-[11px] text-orange-600 pt-1 border-t border-border/50">
-                        ⚠ Oferta não mapeada a nenhum plano
-                      </p>
+                      <p className="text-[11px] text-orange-600 pt-1 border-t border-border/50">⚠ Oferta não mapeada a nenhum plano</p>
                     )}
                   </div>
                 );
@@ -627,26 +638,17 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
           </div>
         )}
 
-        {/* Plan Info (recurring) */}
+        {/* Plan Info */}
         {payload.plan && (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold flex items-center gap-2">
               <Calendar className="h-4 w-4" /> Plano
             </h3>
             <div className="bg-muted/50 rounded-lg p-3 space-y-1 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Nome</span>
-                <span>{payload.plan.name}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Frequência</span>
-                <span>{payload.plan.charge_frequency}</span>
-              </div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Nome</span><span>{payload.plan.name}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Frequência</span><span>{payload.plan.charge_frequency}</span></div>
               {payload.plan.next_charge_date && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Próxima cobrança</span>
-                  <span>{format(new Date(payload.plan.next_charge_date.replace(" ", "T")), "dd/MM/yyyy", { locale: ptBR })}</span>
-                </div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Próxima cobrança</span><span>{format(new Date(payload.plan.next_charge_date.replace(" ", "T")), "dd/MM/yyyy", { locale: ptBR })}</span></div>
               )}
             </div>
           </div>
@@ -668,7 +670,7 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
                   <div className="absolute -left-[21px] top-1 h-3 w-3 rounded-full bg-background border-2 border-primary" />
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${evInfo.color}`}>
+                      <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", evInfo.color)}>
                         {evInfo.label}
                       </Badge>
                       <span className="text-[11px] text-muted-foreground">
@@ -681,9 +683,7 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
                         {resultInfo.label}
                       </div>
                     )}
-                    {ev.error && (
-                      <p className="text-xs text-destructive">Erro: {ev.error}</p>
-                    )}
+                    {ev.error && <p className="text-xs text-destructive">Erro: {ev.error}</p>}
                   </div>
                 </div>
               );
