@@ -393,6 +393,44 @@ export default function AdminVendas() {
             )}
           </div>
 
+          {/* Date filter */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={hasDateFilter ? "outline" : "ghost"}
+                size="sm"
+                className={cn(
+                  "h-8 gap-1.5 text-xs shrink-0",
+                  hasDateFilter && "border-primary/40 bg-primary/5 text-primary"
+                )}
+              >
+                <CalendarDays className="h-3.5 w-3.5" />
+                {hasDateFilter
+                  ? `${format(dateRange!.from!, "dd/MM", { locale: ptBR })}${dateRange?.to ? ` – ${format(dateRange.to, "dd/MM", { locale: ptBR })}` : ""}`
+                  : "Data"
+                }
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-auto p-0" sideOffset={8}>
+              <div className="p-3 flex items-center justify-between">
+                <span className="text-sm font-semibold">Filtrar por data</span>
+                {hasDateFilter && (
+                  <button onClick={() => setDateRange(undefined)} className="text-[11px] text-primary hover:text-primary/80 font-medium">
+                    Limpar
+                  </button>
+                )}
+              </div>
+              <CalendarComponent
+                mode="range"
+                selected={dateRange}
+                onSelect={setDateRange}
+                numberOfMonths={2}
+                locale={ptBR}
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+
           {/* Refresh */}
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fetchLogs} disabled={loading}>
             <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
