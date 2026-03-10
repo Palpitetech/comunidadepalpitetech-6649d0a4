@@ -364,7 +364,7 @@ export default function AdminUsuarios() {
                 {tagFilterActive && <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 text-[10px] flex items-center justify-center">{includeTags.length + excludeTags.length}</span>}
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="p-3">
+            <PopoverContent align="end" className="p-3" sideOffset={8}>
               {tagFilterContent}
             </PopoverContent>
           </Popover>
