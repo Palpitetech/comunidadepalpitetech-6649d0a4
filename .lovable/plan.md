@@ -1,35 +1,40 @@
 
 
-# Diagnóstico: Bots Não Comentam nos Posts de Resultado
+## Plan: Add Events page to Admin panel
 
-## Causa Raiz
+### 1. Create `src/pages/admin/AdminEventos.tsx`
+A new admin page following the same patterns as `AdminVendas.tsx` and `AdminUsuarios.tsx`:
+- Fetch from `events` table joined with `perfis` (for user name/avatar)
+- Filter tabs by event_type (todos, novo_cadastro, nova_venda, pix_gerado, etc.)
+- Search by user name/email
+- Pagination (20 per page)
+- Mobile: card list with event icon, user info, timestamp
+- Desktop: table with columns (User, Event Type, Metadata preview, Date)
+- Click row to open detail sheet showing full metadata JSON
 
-A função `sync-lotofacil` cria o post da Ana com sucesso, mas **nunca chama** a Edge Function `bot-interact-with-post` depois de criar o post. Isso significa que nenhum bot é notificado para comentar.
+### 2. Register route in `src/App.tsx`
+Add at line ~151:
+```tsx
+<Route path="/admin/eventos" element={<AdminRoute><AdminEventos /></AdminRoute>} />
+```
 
-Confirmações nos dados:
-- Todos os posts recentes de bots têm `bot_interactions_target: null` e `bot_interactions_done: 0` — nenhuma interação foi sequer tentada
-- A busca por `bot-interact-with-post` dentro de `sync-lotofacil` retorna zero resultados
-- Os bots Lucas, Matheus, Sistema Tech, Carlos, Fernanda e Especialista Dupla Sena **têm** `can_respond_to_bot_posts: true`, então estariam elegíveis
+### 3. Add to AdminIndex modules list
+Add entry to `ADMIN_MODULES` array:
+```tsx
+{ to: "/admin/eventos", icon: Activity, label: "Eventos", desc: "Timeline de eventos por lead" }
+```
+(`Activity` icon is already imported)
 
-O mesmo problema acontece com `generate-bot-post` e `process-scheduled-posts` — nenhum deles chama `bot-interact-with-post` após criar um post.
+### 4. Add to Desktop Header admin dropdown
+Add a new `DropdownMenuItem` linking to `/admin/eventos` with `Activity` icon after the "Vendas Kirvano" item (~line 415).
 
-## Plano de Correção
+### 5. Add to Mobile Menu admin section
+Add a new `Link` to `/admin/eventos` in the admin nav block (~line 536) following the same pattern.
 
-### 1. `sync-lotofacil/index.ts` — Chamar `bot-interact-with-post` após Ana criar post
-
-Após a linha 206 (onde loga sucesso), adicionar uma chamada para a Edge Function `bot-interact-with-post` passando o `post_id` do post recém-criado. Incluir um delay de 30-60 segundos para que os comentários pareçam naturais.
-
-### 2. `generate-bot-post/index.ts` — Chamar `bot-interact-with-post` após qualquer bot criar post
-
-Mesma lógica: após criar o post com sucesso, invocar `bot-interact-with-post` com o novo `post_id`.
-
-### 3. `process-scheduled-posts` — Verificar se já dispara interações
-
-Preciso verificar se essa função também deveria disparar interações. Como ela chama `generate-bot-post`, a correção no item 2 pode ser suficiente.
-
-| Arquivo | Mudança |
-|---|---|
-| `supabase/functions/sync-lotofacil/index.ts` | Após criar post da Ana, chamar `bot-interact-with-post` com delay |
-| `supabase/functions/generate-bot-post/index.ts` | Após criar post de qualquer bot, chamar `bot-interact-with-post` |
-| `supabase/functions/generate-roundtable-post/index.ts` | Verificar se já dispara (provavelmente já gera comentários internamente — não precisará de mudança) |
+### Files changed
+- `src/pages/admin/AdminEventos.tsx` (new)
+- `src/App.tsx` (add route + import)
+- `src/pages/admin/AdminIndex.tsx` (add module card)
+- `src/components/layout/DesktopHeader.tsx` (add dropdown item)
+- `src/components/layout/MobileMenuSheet.tsx` (add link)
 
