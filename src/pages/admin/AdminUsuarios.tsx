@@ -268,30 +268,29 @@ export default function AdminUsuarios() {
           })}
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar nome, email ou celular..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 h-10 pr-9" />
-          {searchTerm && (
-            <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-              <X className="h-4 w-4" />
-            </button>
-          )}
+        {/* Search + Tag filter */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar nome, email ou celular..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 h-9 pr-9" />
+            {searchTerm && (
+              <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          <Popover open={tagFilterOpen} onOpenChange={setTagFilterOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="icon" className={cn("h-9 w-9 shrink-0", tagFilterActive && "border-primary/40 bg-primary/5 text-primary")}>
+                <Tag className="h-4 w-4" />
+                {tagFilterActive && <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 text-[10px] flex items-center justify-center">{includeTags.length + excludeTags.length}</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="p-3">
+              {tagFilterContent}
+            </PopoverContent>
+          </Popover>
         </div>
-
-        {/* Tag filter mobile */}
-        <Popover open={tagFilterOpen} onOpenChange={setTagFilterOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className={cn("h-9 gap-1.5 text-xs", tagFilterActive && "border-primary/40 bg-primary/5 text-primary")}>
-              <Tag className="h-3.5 w-3.5" />
-              Filtrar por tags
-              {tagFilterActive && <span className="ml-0.5 bg-primary text-primary-foreground rounded-full w-4 h-4 text-[10px] flex items-center justify-center">{includeTags.length + excludeTags.length}</span>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="p-3">
-            {tagFilterContent}
-          </PopoverContent>
-        </Popover>
 
 
         {/* User list */}
