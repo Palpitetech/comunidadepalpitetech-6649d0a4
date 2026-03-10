@@ -10,7 +10,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Search, ChevronRight, ArrowLeft, Activity,
-  UserPlus, ShoppingCart, QrCode, ChevronLeft, Calendar
+  UserPlus, ShoppingCart, QrCode, ChevronLeft, Calendar,
+  CreditCard, XCircle, AlertTriangle, Clock, Ban
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
