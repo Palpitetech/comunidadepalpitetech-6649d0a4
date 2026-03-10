@@ -78,6 +78,7 @@ const App = () => (
       <PermissionProvider>
       <TooltipProvider>
         <CodeProtection />
+        <PWAUpdateHandler />
         <Toaster />
         <Sonner />
         <BrowserRouter>
