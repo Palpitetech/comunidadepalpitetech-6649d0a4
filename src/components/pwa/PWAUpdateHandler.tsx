@@ -1,23 +1,24 @@
 import { useEffect } from "react";
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { toast } from "sonner";
+import { RefreshCw } from "lucide-react";
 
 /**
- * Handles PWA auto-update silently.
- * When a new service worker is ready, it auto-activates and reloads the page
- * to avoid duplicate/stale app versions.
+ * Handles PWA updates with a persistent toast notification.
+ * Shows a button for the user to apply the update manually.
  */
 export function PWAUpdateHandler() {
   const {
-    needRefresh: [needRefresh, setNeedRefresh],
+    needRefresh: [needRefresh],
     updateServiceWorker,
   } = useRegisterSW({
-    // Check for updates every 60 seconds
-    onRegisteredSW(swUrl, registration) {
+    // Check for updates every 30 seconds
+    onRegisteredSW(_swUrl, registration) {
       if (registration) {
-        setInterval(() => {
-          registration.update();
-        }, 60 * 1000);
+        // Initial check after 3 seconds
+        setTimeout(() => registration.update(), 3000);
+        // Then every 30 seconds
+        setInterval(() => registration.update(), 30 * 1000);
       }
     },
     onRegisterError(error) {
@@ -27,15 +28,16 @@ export function PWAUpdateHandler() {
 
   useEffect(() => {
     if (needRefresh) {
-      // Show a brief toast then auto-update
-      toast.info("Atualizando o app...", { duration: 2000 });
-
-      // Small delay so the user sees the toast
-      const timer = setTimeout(() => {
-        updateServiceWorker(true);
-      }, 1500);
-
-      return () => clearTimeout(timer);
+      toast("Nova atualização disponível!", {
+        description: "Toque para atualizar o app agora.",
+        icon: <RefreshCw className="h-5 w-5 text-primary" />,
+        duration: Infinity,
+        action: {
+          label: "Atualizar",
+          onClick: () => updateServiceWorker(true),
+        },
+        dismissible: false,
+      });
     }
   }, [needRefresh, updateServiceWorker]);
 
