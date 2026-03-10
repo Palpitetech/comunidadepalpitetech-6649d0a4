@@ -403,6 +403,7 @@ Responda APENAS no formato JSON:
       titulo: parsed.titulo.substring(0, 100),
       conteudo: parsed.conteudo.substring(0, 1000),
       loteria_tag: "Lotofácil",
+      tipo: tipoPost || "analise",
     });
 
     if (postError) {
