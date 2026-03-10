@@ -240,20 +240,6 @@ export default function AdminVendas() {
           )}
         </div>
 
-        {/* Pagination info */}
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">
-            {filteredSales.length > 0 ? `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, filteredSales.length)} de ${filteredSales.length}` : "0 resultados"}
-          </p>
-          {totalPages > 1 && (
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}><ChevronLeft className="h-4 w-4" /></Button>
-              <span className="text-xs text-muted-foreground min-w-[3ch] text-center">{page + 1}/{totalPages}</span>
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}><ChevronRight className="h-4 w-4" /></Button>
-            </div>
-          )}
-        </div>
-
         {/* Sales list */}
         <div className="space-y-0.5">
           {paginatedSales.map(({ key, latest }) => {
@@ -281,6 +267,20 @@ export default function AdminVendas() {
             </div>
           )}
         </div>
+
+        {/* Bottom pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between pt-2 pb-4">
+            <p className="text-xs text-muted-foreground">
+              {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredSales.length)} de {filteredSales.length}
+            </p>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}><ChevronLeft className="h-4 w-4" /></Button>
+              <span className="text-xs text-muted-foreground min-w-[3ch] text-center">{page + 1}/{totalPages}</span>
+              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}><ChevronRight className="h-4 w-4" /></Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ======= DESKTOP — fullscreen minimal ======= */}
@@ -330,12 +330,6 @@ export default function AdminVendas() {
             <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
           </Button>
 
-          {/* Pagination */}
-          <div className="flex items-center gap-1 text-xs text-muted-foreground ml-1">
-            <span>{filteredSales.length > 0 ? `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, filteredSales.length)}` : "0"} de {filteredSales.length}</span>
-            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}><ChevronLeft className="h-3.5 w-3.5" /></Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}><ChevronRight className="h-3.5 w-3.5" /></Button>
-          </div>
         </div>
 
         {/* Table */}
@@ -411,6 +405,20 @@ export default function AdminVendas() {
             </TableBody>
           </Table>
         </div>
+
+        {/* Bottom pagination desktop */}
+        {totalPages > 1 && (
+          <div className="border-t border-border px-6 py-2 flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">
+              {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredSales.length)} de {filteredSales.length}
+            </p>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}><ChevronLeft className="h-3.5 w-3.5" /></Button>
+              <span className="text-xs text-muted-foreground min-w-[3ch] text-center">{page + 1}/{totalPages}</span>
+              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}><ChevronRight className="h-3.5 w-3.5" /></Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Detail Sheet */}
