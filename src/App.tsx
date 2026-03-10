@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
 import { GatedPage } from "@/components/shared/GatedPage";
 import { CodeProtection } from "@/components/shared/CodeProtection";
+import { PWAUpdateHandler } from "@/components/pwa/PWAUpdateHandler";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import RecuperarSenha from "./pages/RecuperarSenha";
@@ -77,6 +78,7 @@ const App = () => (
       <PermissionProvider>
       <TooltipProvider>
         <CodeProtection />
+        <PWAUpdateHandler />
         <Toaster />
         <Sonner />
         <BrowserRouter>
