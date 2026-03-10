@@ -307,18 +307,16 @@ export default function AdminUsuarios() {
           <div className="flex-1" />
 
           {/* Tag filter desktop */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className={cn("h-8 gap-1.5 text-xs", tagFilterActive && "border-primary/40 bg-primary/5 text-primary")}>
-                <Tag className="h-3 w-3" />
-                Tags
-                {tagFilterActive && <span className="ml-0.5 bg-primary text-primary-foreground rounded-full w-4 h-4 text-[10px] flex items-center justify-center">{includeTags.length + excludeTags.length}</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="p-3">
-              {tagFilterContent}
-            </PopoverContent>
-          </Popover>
+          <TagFilterPopover
+            allTags={allTags}
+            includeTags={includeTags}
+            excludeTags={excludeTags}
+            exactMatch={exactMatch}
+            onIncludeTagsChange={setIncludeTags}
+            onExcludeTagsChange={setExcludeTags}
+            onExactMatchChange={setExactMatch}
+            align="end"
+          />
 
           {/* Search */}
           <div className="relative w-72">
