@@ -7,18 +7,21 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Search, CreditCard, QrCode, Barcode, ChevronRight,
   CheckCircle2, XCircle, Clock, AlertTriangle, RefreshCw, ArrowLeft,
   ShoppingCart, User, Calendar, DollarSign, FileText, Copy, Check,
-  MessageCircle, ChevronLeft, X
+  MessageCircle, ChevronLeft, X, CalendarDays
 } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import type { DateRange } from "react-day-picker";
 
 type WebhookLog = {
   id: string;
@@ -112,7 +115,10 @@ export default function AdminVendas() {
   const [selectedLog, setSelectedLog] = useState<WebhookLog | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("todos");
   const [page, setPage] = useState(0);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const PAGE_SIZE = 25;
+
+  const hasDateFilter = !!(dateRange?.from);
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -164,6 +170,15 @@ export default function AdminVendas() {
     else if (activeFilter === "pendentes") list = sales.filter(s => PENDING_EVENTS.includes(s.latest.event || ""));
     else if (activeFilter === "canceladas") list = sales.filter(s => CANCELED_EVENTS.includes(s.latest.event || ""));
 
+    if (dateRange?.from) {
+      const from = startOfDay(dateRange.from);
+      const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+      list = list.filter(({ latest }) => {
+        const d = new Date(latest.received_at);
+        return isWithinInterval(d, { start: from, end: to });
+      });
+    }
+
     if (!search) return list;
     const s = search.toLowerCase();
     return list.filter(({ latest }) =>
@@ -173,9 +188,9 @@ export default function AdminVendas() {
       latest.checkout_id?.toLowerCase().includes(s) ||
       latest.raw_payload?.customer?.name?.toLowerCase()?.includes(s)
     );
-  }, [sales, activeFilter, search]);
+  }, [sales, activeFilter, search, dateRange]);
 
-  useEffect(() => { setPage(0); }, [activeFilter, search]);
+  useEffect(() => { setPage(0); }, [activeFilter, search, dateRange]);
 
   const totalPages = Math.ceil(filteredSales.length / PAGE_SIZE);
   const paginatedSales = filteredSales.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
@@ -229,15 +244,60 @@ export default function AdminVendas() {
           })}
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar email, telefone, nome..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-10 pr-9" />
-          {search && (
-            <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-              <X className="h-4 w-4" />
-            </button>
-          )}
+        {/* Search + Date filter */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar email, telefone, nome..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-10 pr-9" />
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className={cn(
+                  "h-10 w-10 shrink-0 relative",
+                  hasDateFilter && "border-primary/40 bg-primary/5 text-primary"
+                )}
+              >
+                <CalendarDays className="h-4 w-4" />
+                {hasDateFilter && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground rounded-full w-4 h-4 text-[9px] font-bold flex items-center justify-center">✓</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-auto p-0" sideOffset={8}>
+              <div className="p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold">Filtrar por data</span>
+                  {hasDateFilter && (
+                    <button onClick={() => setDateRange(undefined)} className="text-[11px] text-primary hover:text-primary/80 font-medium">
+                      Limpar
+                    </button>
+                  )}
+                </div>
+                {hasDateFilter && (
+                  <p className="text-[11px] text-muted-foreground">
+                    {dateRange?.from && format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })}
+                    {dateRange?.to && ` — ${format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}`}
+                  </p>
+                )}
+              </div>
+              <CalendarComponent
+                mode="range"
+                selected={dateRange}
+                onSelect={setDateRange}
+                numberOfMonths={1}
+                locale={ptBR}
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Sales list */}
@@ -332,6 +392,44 @@ export default function AdminVendas() {
               </button>
             )}
           </div>
+
+          {/* Date filter */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={hasDateFilter ? "outline" : "ghost"}
+                size="sm"
+                className={cn(
+                  "h-8 gap-1.5 text-xs shrink-0",
+                  hasDateFilter && "border-primary/40 bg-primary/5 text-primary"
+                )}
+              >
+                <CalendarDays className="h-3.5 w-3.5" />
+                {hasDateFilter
+                  ? `${format(dateRange!.from!, "dd/MM", { locale: ptBR })}${dateRange?.to ? ` – ${format(dateRange.to, "dd/MM", { locale: ptBR })}` : ""}`
+                  : "Data"
+                }
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-auto p-0" sideOffset={8}>
+              <div className="p-3 flex items-center justify-between">
+                <span className="text-sm font-semibold">Filtrar por data</span>
+                {hasDateFilter && (
+                  <button onClick={() => setDateRange(undefined)} className="text-[11px] text-primary hover:text-primary/80 font-medium">
+                    Limpar
+                  </button>
+                )}
+              </div>
+              <CalendarComponent
+                mode="range"
+                selected={dateRange}
+                onSelect={setDateRange}
+                numberOfMonths={2}
+                locale={ptBR}
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
 
           {/* Refresh */}
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fetchLogs} disabled={loading}>
