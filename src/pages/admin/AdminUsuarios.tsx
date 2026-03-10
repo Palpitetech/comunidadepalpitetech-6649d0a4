@@ -162,6 +162,70 @@ export default function AdminUsuarios() {
     }
   };
 
+  const toggleTag = (tag: string, list: string[], setList: (v: string[]) => void) => {
+    setList(list.includes(tag) ? list.filter(t => t !== tag) : [...list, tag]);
+  };
+
+  const clearTagFilters = () => {
+    setIncludeTags([]);
+    setExcludeTags([]);
+    setExactMatch(false);
+  };
+
+  const tagFilterContent = (
+    <div className="w-72 space-y-3 p-1">
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-1.5">Contém a tag</p>
+        <div className="flex flex-wrap gap-1 max-h-28 overflow-auto">
+          {allTags.map(tag => (
+            <button
+              key={`inc-${tag}`}
+              onClick={() => toggleTag(tag, includeTags, setIncludeTags)}
+              className={cn(
+                "px-2 py-0.5 rounded-full text-[11px] border transition-colors",
+                includeTags.includes(tag)
+                  ? "bg-primary/15 text-primary border-primary/30"
+                  : "bg-muted/40 text-muted-foreground border-transparent hover:bg-muted"
+              )}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-1.5">Não contém a tag</p>
+        <div className="flex flex-wrap gap-1 max-h-28 overflow-auto">
+          {allTags.map(tag => (
+            <button
+              key={`exc-${tag}`}
+              onClick={() => toggleTag(tag, excludeTags, setExcludeTags)}
+              className={cn(
+                "px-2 py-0.5 rounded-full text-[11px] border transition-colors",
+                excludeTags.includes(tag)
+                  ? "bg-destructive/15 text-destructive border-destructive/30"
+                  : "bg-muted/40 text-muted-foreground border-transparent hover:bg-muted"
+              )}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="flex items-center justify-between pt-1 border-t border-border">
+        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+          <Switch checked={exactMatch} onCheckedChange={setExactMatch} className="scale-75" />
+          Correspondência exata
+        </label>
+        {tagFilterActive && (
+          <button onClick={clearTagFilters} className="text-[11px] text-muted-foreground hover:text-foreground underline">
+            Limpar
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
   if (loading) {
     return (
       <MainLayout pageTitle="Usuários" onBack={() => navigate("/admin")}>
