@@ -29,6 +29,7 @@ export default function FechamentoDuplaSena() {
   const [estrategiaIA, setEstrategiaIA] = useState<EstrategiaDuplaSena | null>(null);
 
   const { isLoading: isAutoFilling, canUse, autoFill, checkUsage } = useAutoFillDuplaSena();
+  const { compute, isComputing } = useComputeFechamento();
 
   useEffect(() => { checkUsage(); }, []);
 
