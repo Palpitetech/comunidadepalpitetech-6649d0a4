@@ -42,7 +42,8 @@ export function CommentItem({
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [replyContent, setReplyContent] = useState("");
 
-  const authorName = comment.perfis?.nome || "Usuário";
+  const isOptimistic = comment.id.startsWith("optimistic-");
+  const authorName = comment.perfis?.nome || "Você";
   const initials = authorName.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase();
   const timeAgo = formatDistanceToNow(new Date(comment.created_at), { addSuffix: true, locale: ptBR });
   const canDelete = currentUserId === comment.user_id;
