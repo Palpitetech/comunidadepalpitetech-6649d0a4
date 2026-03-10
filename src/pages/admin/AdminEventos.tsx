@@ -10,7 +10,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Search, ChevronRight, ArrowLeft, Activity,
-  UserPlus, ShoppingCart, QrCode, ChevronLeft, Calendar
+  UserPlus, ShoppingCart, QrCode, ChevronLeft, Calendar,
+  CreditCard, XCircle, AlertTriangle, Clock, Ban
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -31,8 +32,15 @@ type EventRow = {
 
 const EVENT_TYPE_CONFIG: Record<string, { label: string; icon: typeof Activity; color: string }> = {
   novo_cadastro: { label: "Novo Cadastro", icon: UserPlus, color: "bg-blue-500/10 text-blue-700 border-blue-200" },
-  nova_venda: { label: "Nova Venda", icon: ShoppingCart, color: "bg-green-500/10 text-green-700 border-green-200" },
+  compra_aprovada: { label: "Compra Aprovada", icon: ShoppingCart, color: "bg-green-500/10 text-green-700 border-green-200" },
   pix_gerado: { label: "PIX Gerado", icon: QrCode, color: "bg-yellow-500/10 text-yellow-700 border-yellow-200" },
+  pix_expirado: { label: "PIX Expirado", icon: Clock, color: "bg-muted text-muted-foreground border-border" },
+  boleto_gerado: { label: "Boleto Gerado", icon: CreditCard, color: "bg-yellow-500/10 text-yellow-700 border-yellow-200" },
+  boleto_expirado: { label: "Boleto Expirado", icon: Clock, color: "bg-muted text-muted-foreground border-border" },
+  assinatura_cancelada: { label: "Assinatura Cancelada", icon: XCircle, color: "bg-red-500/10 text-red-700 border-red-200" },
+  assinatura_inadimplente: { label: "Inadimplente", icon: AlertTriangle, color: "bg-orange-500/10 text-orange-700 border-orange-200" },
+  checkout_abandonado: { label: "Checkout Abandonado", icon: Ban, color: "bg-muted text-muted-foreground border-border" },
+  carrinho_abandonado: { label: "Carrinho Abandonado", icon: Ban, color: "bg-muted text-muted-foreground border-border" },
 };
 
 function getEventConfig(type: string) {
@@ -105,7 +113,11 @@ export default function AdminEventos() {
 
         {/* Summary */}
         <div className="grid grid-cols-3 gap-2 md:gap-4">
-          {Object.entries(EVENT_TYPE_CONFIG).map(([type, config]) => {
+          {[
+            { type: "novo_cadastro", config: EVENT_TYPE_CONFIG.novo_cadastro },
+            { type: "compra_aprovada", config: EVENT_TYPE_CONFIG.compra_aprovada },
+            { type: "assinatura_cancelada", config: EVENT_TYPE_CONFIG.assinatura_cancelada },
+          ].map(({ type, config }) => {
             const count = events.filter(e => e.event_type === type).length;
             const Icon = config.icon;
             return (

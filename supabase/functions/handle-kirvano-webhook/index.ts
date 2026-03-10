@@ -433,6 +433,20 @@ serve(async (req) => {
     if (error) logStep("Failed to update kirvano_webhook_logs", { message: error.message });
   };
 
+  // Helper: registra evento na tabela events
+  const insertEvent = async (userId: string, eventType: string, meta: Record<string, any> = {}) => {
+    try {
+      await admin.from("events").insert({
+        user_id: userId,
+        event_type: eventType,
+        metadata: { ...meta, webhook_event: eventName, email: email ?? null },
+      });
+      logStep("Event inserted", { eventType, userId });
+    } catch (e) {
+      logStep("Event insert error (non-fatal)", { message: e instanceof Error ? e.message : String(e) });
+    }
+  };
+
   if (!email) {
     logStep("No email in payload", { keys: Object.keys(payload ?? {}) });
     await finalizeLog({ processed: true, process_result: "missing_email" });
@@ -477,6 +491,31 @@ serve(async (req) => {
         logStep("PIX email error (non-fatal)", { message: e instanceof Error ? e.message : String(e) });
       }
     }
+
+    // Tenta registrar evento para ações intermediárias (PIX gerado, boleto etc.)
+    if (email) {
+      const { data: perfilIgnore } = await admin
+        .from("perfis")
+        .select("id")
+        .ilike("email", email)
+        .maybeSingle();
+      if (perfilIgnore?.id) {
+        const eventMap: Record<string, string> = {
+          pix_generated: "pix_gerado",
+          pix_expired: "pix_expirado",
+          bank_slip_generated: "boleto_gerado",
+          bank_slip_expired: "boleto_expirado",
+          checkout_abandoned: "checkout_abandonado",
+          abandoned_cart: "carrinho_abandonado",
+        };
+        const mappedType = eventMap[ev] ?? ev;
+        await insertEvent(perfilIgnore.id, mappedType, {
+          payment_method: payload?.payment_method ?? null,
+          total_price: payload?.total_price ?? null,
+        });
+      }
+    }
+
     await finalizeLog({ processed: true, process_result: "ignored_non_paid" });
     return new Response(JSON.stringify({ ok: true, ignored: true }), {
       status: 200,
@@ -725,6 +764,15 @@ serve(async (req) => {
       if (insertError) logStep("Failed to insert premium role", { message: insertError.message });
     }
 
+    await insertEvent(targetPerfilId, "compra_aprovada", {
+      plan_id: offerMap.plan_id,
+      days_valid: daysValid,
+      offer_id: offerId,
+      payment_method: payload?.payment_method ?? null,
+      customer_name: customerName,
+      is_new_account: isNewAccount,
+    });
+
     await finalizeLog({ processed: true, process_result: targetPerfilId === perfil?.id ? "updated_user_activated" : "created_user_activated" });
   } else if (action === "cancel_end_of_period") {
     // SUBSCRIPTION_CANCELED: mantém acesso até validade_assinatura expirar
@@ -819,6 +867,10 @@ serve(async (req) => {
     } catch (e) {
       logStep("Cancellation email error (non-fatal)", { message: e instanceof Error ? e.message : String(e) });
     }
+
+    await insertEvent(perfil.id, "assinatura_cancelada", {
+      validade: perfil.validade_assinatura,
+    });
 
     await finalizeLog({ processed: true, process_result: "subscription_canceled_end_of_period" });
   } else if (action === "overdue_grace") {
@@ -923,6 +975,10 @@ serve(async (req) => {
       logStep("Overdue email error (non-fatal)", { message: e instanceof Error ? e.message : String(e) });
     }
 
+    await insertEvent(perfil.id, "assinatura_inadimplente", {
+      validade: perfil.validade_assinatura,
+    });
+
     await finalizeLog({ processed: true, process_result: "subscription_overdue_grace" });
   } else {
     // cancel / delinquent: se existir perfil, atualiza status e remove premium
@@ -943,6 +999,9 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const eventType = action === "cancel" ? "assinatura_cancelada" : "assinatura_inadimplente";
+    await insertEvent(perfil.id, eventType, { action });
 
     const { error: deleteRoleError } = await admin.from("user_roles").delete().eq("user_id", perfil.id).eq("role", "premium");
     if (deleteRoleError) logStep("Failed to delete premium role", { message: deleteRoleError.message });
