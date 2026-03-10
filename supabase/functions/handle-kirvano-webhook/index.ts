@@ -447,7 +447,17 @@ serve(async (req) => {
     carrinho_abandonado: "carrinho_abandonado",
   };
 
-  // Helper: registra evento na tabela events + adiciona tag no perfil
+  // Regras de transição: ao adicionar uma tag, quais tags remover
+  // - inadimplente: perde "ativo"
+  // - cancelado: perde "ativo" e "inadimplente"
+  // - ativo: perde "inadimplente" e "cancelado"
+  const TAG_REMOVES: Record<string, string[]> = {
+    inadimplente: ["ativo"],
+    cancelado: ["ativo", "inadimplente"],
+    ativo: ["inadimplente", "cancelado"],
+  };
+
+  // Helper: registra evento na tabela events + gerencia tags no perfil
   const insertEvent = async (userId: string, eventType: string, meta: Record<string, any> = {}) => {
     try {
       await admin.from("events").insert({
@@ -456,22 +466,31 @@ serve(async (req) => {
         metadata: { ...meta, webhook_event: eventName, email: email ?? null },
       });
 
-      // Adiciona tag ao perfil (sem duplicar)
       const tag = EVENT_TAG_MAP[eventType] ?? eventType;
       const { data: perfRow } = await admin
         .from("perfis")
         .select("tags")
         .eq("id", userId)
         .single();
-      const currentTags: string[] = perfRow?.tags ?? [];
-      if (!currentTags.includes(tag)) {
-        await admin
-          .from("perfis")
-          .update({ tags: [...currentTags, tag] })
-          .eq("id", userId);
+      let currentTags: string[] = perfRow?.tags ?? [];
+
+      // Remove tags conflitantes conforme regras de transição
+      const toRemove = TAG_REMOVES[tag] ?? [];
+      if (toRemove.length > 0) {
+        currentTags = currentTags.filter((t) => !toRemove.includes(t));
       }
 
-      logStep("Event + tag inserted", { eventType, tag, userId });
+      // Adiciona a nova tag se não existir
+      if (!currentTags.includes(tag)) {
+        currentTags.push(tag);
+      }
+
+      await admin
+        .from("perfis")
+        .update({ tags: currentTags })
+        .eq("id", userId);
+
+      logStep("Event + tag updated", { eventType, tag, removed: toRemove, userId });
     } catch (e) {
       logStep("Event insert error (non-fatal)", { message: e instanceof Error ? e.message : String(e) });
     }

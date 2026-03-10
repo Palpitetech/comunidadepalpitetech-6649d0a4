@@ -162,10 +162,15 @@ serve(async (req) => {
           .eq("user_id", perfil.id)
           .eq("role", "premium");
 
-        // Update status to inativa
+        // Update status to inativa + ajustar tags (acesso cortado: remove "ativo", mantém "inadimplente")
+        const { data: perfRow } = await admin.from("perfis").select("tags").eq("id", perfil.id).single();
+        let currentTags: string[] = perfRow?.tags ?? [];
+        currentTags = currentTags.filter((t: string) => t !== "ativo");
+        if (!currentTags.includes("acesso_cortado")) currentTags.push("acesso_cortado");
+
         await admin
           .from("perfis")
-          .update({ status_assinatura: "inativa" })
+          .update({ status_assinatura: "inativa", tags: currentTags })
           .eq("id", perfil.id);
 
         removedCount++;
