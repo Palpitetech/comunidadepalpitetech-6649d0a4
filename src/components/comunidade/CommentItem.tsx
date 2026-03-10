@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Trash2, Reply, Send, X } from "lucide-react";
+import { Send, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { GuideBadge } from "./GuideBadge";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -44,18 +43,8 @@ export function CommentItem({
   const [replyContent, setReplyContent] = useState("");
 
   const authorName = comment.perfis?.nome || "Usuário";
-  const initials = authorName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .substring(0, 2)
-    .toUpperCase();
-
-  const timeAgo = formatDistanceToNow(new Date(comment.created_at), {
-    addSuffix: true,
-    locale: ptBR,
-  });
-
+  const initials = authorName.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase();
+  const timeAgo = formatDistanceToNow(new Date(comment.created_at), { addSuffix: true, locale: ptBR });
   const canDelete = currentUserId === comment.user_id;
   const isNested = depth > 0;
 
@@ -68,72 +57,67 @@ export function CommentItem({
   };
 
   return (
-    <div className={cn("py-2.5", isNested && "ml-7 border-l border-border/50 pl-3")}>
+    <div className={cn(
+      "py-3",
+      isNested && "ml-8 border-l-2 border-primary/10 pl-3"
+    )}>
       <div className="flex gap-2.5">
-        <Avatar className="h-7 w-7 flex-shrink-0">
+        <Avatar className={cn("shrink-0", isNested ? "h-6 w-6" : "h-8 w-8")}>
           <AvatarImage src={comment.perfis?.avatar_url || undefined} />
-          <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
+          <AvatarFallback className={cn(
+            "bg-muted text-muted-foreground font-medium",
+            isNested ? "text-[8px]" : "text-[10px]"
+          )}>
             {initials}
           </AvatarFallback>
         </Avatar>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-1.5 flex-wrap">
-            <span className="font-medium text-xs text-foreground">
-              {authorName}
-            </span>
-            {comment.perfis?.is_bot && <GuideBadge />}
-            <span className="text-[11px] text-muted-foreground/70">{timeAgo}</span>
+          {/* Author line */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="font-semibold text-xs text-foreground">{authorName}</span>
+            {comment.perfis?.is_bot && <GuideBadge className="scale-90 origin-left" />}
+            <span className="text-[11px] text-muted-foreground/60">·</span>
+            <span className="text-[11px] text-muted-foreground/60">{timeAgo}</span>
           </div>
-          <p className="text-sm text-foreground/90 mt-0.5 whitespace-pre-wrap break-words leading-relaxed">
+
+          {/* Comment body */}
+          <p className="text-sm text-foreground/85 mt-1 whitespace-pre-wrap break-words leading-relaxed">
             {comment.conteudo}
           </p>
 
-          {/* Ações inline */}
-          {depth === 0 && (
-            <div className="mt-1 flex items-center gap-3">
-              {onReply && (
-                <button
-                  className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={() => setShowReplyInput(!showReplyInput)}
-                >
-                  Responder
-                </button>
-              )}
-              {canDelete && onDelete && (
-                <button
-                  className="text-[11px] text-muted-foreground hover:text-destructive transition-colors"
-                  onClick={() => onDelete(comment.id)}
-                  disabled={isDeleting}
-                >
-                  Excluir
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Delete para respostas aninhadas */}
-          {isNested && canDelete && onDelete && (
-            <button
-              className="mt-1 text-[11px] text-muted-foreground hover:text-destructive transition-colors"
-              onClick={() => onDelete(comment.id)}
-              disabled={isDeleting}
-            >
-              Excluir
-            </button>
-          )}
+          {/* Actions */}
+          <div className="mt-1.5 flex items-center gap-3">
+            {depth === 0 && onReply && (
+              <button
+                className="text-[11px] font-medium text-muted-foreground hover:text-primary transition-colors"
+                onClick={() => setShowReplyInput(!showReplyInput)}
+              >
+                Responder
+              </button>
+            )}
+            {canDelete && onDelete && (
+              <button
+                className="text-[11px] font-medium text-muted-foreground hover:text-destructive transition-colors"
+                onClick={() => onDelete(comment.id)}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Excluindo..." : "Excluir"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Input de resposta */}
+      {/* Reply input */}
       {showReplyInput && (
-        <div className="mt-2 ml-9 flex items-end gap-2">
+        <div className="mt-2 ml-10 flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-1 border border-border/30 focus-within:border-primary/30 transition-all animate-in fade-in slide-in-from-top-1 duration-200">
           <input
             type="text"
             placeholder={`Responder ${authorName}...`}
             value={replyContent}
             onChange={(e) => setReplyContent(e.target.value)}
-            className="flex-1 bg-transparent border-b border-border text-sm py-1.5 px-0 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+            className="flex-1 bg-transparent text-sm py-2 text-foreground placeholder:text-muted-foreground focus:outline-none min-w-0"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -145,23 +129,20 @@ export function CommentItem({
           <button
             onClick={handleSubmitReply}
             disabled={!replyContent.trim() || isReplying}
-            className="text-muted-foreground hover:text-primary disabled:opacity-30 transition-colors p-1"
+            className="text-primary hover:text-primary/80 disabled:opacity-30 transition-colors p-1"
           >
             <Send className="h-3.5 w-3.5" />
           </button>
           <button
             className="text-muted-foreground hover:text-foreground transition-colors p-1"
-            onClick={() => {
-              setShowReplyInput(false);
-              setReplyContent("");
-            }}
+            onClick={() => { setShowReplyInput(false); setReplyContent(""); }}
           >
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
       )}
 
-      {/* Respostas aninhadas */}
+      {/* Nested replies */}
       {comment.replies && comment.replies.length > 0 && (
         <div className="mt-1">
           {comment.replies.map((reply) => (
