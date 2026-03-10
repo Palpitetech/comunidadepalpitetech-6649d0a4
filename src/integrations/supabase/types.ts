@@ -1041,6 +1041,7 @@ export type Database = {
           plan_id: string | null
           referral_code: string | null
           status_assinatura: string | null
+          tags: string[]
           updated_at: string
           validade_assinatura: string | null
           whatsapp: string | null
@@ -1064,6 +1065,7 @@ export type Database = {
           plan_id?: string | null
           referral_code?: string | null
           status_assinatura?: string | null
+          tags?: string[]
           updated_at?: string
           validade_assinatura?: string | null
           whatsapp?: string | null
@@ -1087,6 +1089,7 @@ export type Database = {
           plan_id?: string | null
           referral_code?: string | null
           status_assinatura?: string | null
+          tags?: string[]
           updated_at?: string
           validade_assinatura?: string | null
           whatsapp?: string | null
