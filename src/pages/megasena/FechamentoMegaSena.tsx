@@ -14,8 +14,8 @@ import { LoadingPalpiteIA } from "@/components/megasena/LoadingPalpiteIA";
 import { ResultadosFechamentoMegaSena } from "@/components/megasena/ResultadosFechamentoMegaSena";
 import { EstrategiaCardMegaSena } from "@/components/megasena/EstrategiaCardMegaSena";
 import { useAutoFillMegaSena, type EstrategiaMegaSena } from "@/hooks/useAutoFillMegaSena";
+import { useComputeFechamento } from "@/hooks/useComputeFechamento";
 import { 
-  gerarFechamentoMegaSena, 
   formatarDezenaMegaSena,
   type ResultadoFechamentoMegaSena 
 } from "@/lib/fechamentoMegaSena";
