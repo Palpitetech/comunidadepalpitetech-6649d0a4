@@ -100,16 +100,15 @@ export default function Fechamento() {
     }
   };
 
-  const handleGerarFechamento = () => {
-    if (!podeGerar) return;
+  const handleGerarFechamento = async () => {
+    if (!podeGerar || isComputing) return;
     
     try {
-      // Combina fixas + selecionadas para gerar o fechamento
-      // IMPORTANTE: A ordem é crítica para matrizes com fixas obrigatórias!
-      // Fixas devem vir PRIMEIRO, variáveis (selecionadas) DEPOIS
       const todasDezenas = [...new Set([...fixas, ...selecionadas])];
-      const resultadoGerado = gerarFechamento(estrategiaId, todasDezenas);
-      setResultado(resultadoGerado);
+      const resultadoGerado = await compute("lotofacil", estrategiaId, todasDezenas);
+      if (resultadoGerado) {
+        setResultado(resultadoGerado as ResultadoFechamento);
+      }
     } catch (error) {
       console.error("Erro ao gerar fechamento:", error);
     }
