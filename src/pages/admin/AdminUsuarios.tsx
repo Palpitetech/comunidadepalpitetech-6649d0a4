@@ -92,6 +92,14 @@ export default function AdminUsuarios() {
     return { total, pagos, free, bloqueados };
   }, [users, plans]);
 
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    users.forEach(u => u.tags?.forEach(t => tagSet.add(t)));
+    return Array.from(tagSet).sort();
+  }, [users]);
+
+  const tagFilterActive = includeTags.length > 0 || excludeTags.length > 0;
+
   const filteredUsers = useMemo(() => {
     const paidPlanIds = new Set(plans.filter(p => p.price > 0).map(p => p.id));
     let list = users;
@@ -102,6 +110,24 @@ export default function AdminUsuarios() {
     } else if (activeFilter === "bloqueados") {
       list = users.filter(u => u.is_blocked);
     }
+
+    // Tag filters
+    if (includeTags.length > 0) {
+      list = list.filter(u => {
+        const userTags = u.tags || [];
+        if (exactMatch) {
+          return includeTags.every(t => userTags.includes(t));
+        }
+        return includeTags.some(t => userTags.includes(t));
+      });
+    }
+    if (excludeTags.length > 0) {
+      list = list.filter(u => {
+        const userTags = u.tags || [];
+        return !excludeTags.some(t => userTags.includes(t));
+      });
+    }
+
     if (!searchTerm) return list;
     const search = searchTerm.toLowerCase();
     return list.filter((user) =>
@@ -110,9 +136,9 @@ export default function AdminUsuarios() {
       user.celular?.includes(search) ||
       user.tags?.some(t => t.toLowerCase().includes(search))
     );
-  }, [users, plans, activeFilter, searchTerm]);
+  }, [users, plans, activeFilter, searchTerm, includeTags, excludeTags, exactMatch]);
 
-  useEffect(() => { setPage(0); }, [activeFilter, searchTerm]);
+  useEffect(() => { setPage(0); }, [activeFilter, searchTerm, includeTags, excludeTags, exactMatch]);
 
   const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE);
   const paginatedUsers = filteredUsers.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
