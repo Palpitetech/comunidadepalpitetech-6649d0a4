@@ -14,8 +14,8 @@ import { LoadingPalpiteIA } from "@/components/megasena/LoadingPalpiteIA";
 import { ResultadosFechamentoDuplaSena } from "@/components/duplasena/ResultadosFechamentoDuplaSena";
 import { EstrategiaCardDuplaSena } from "@/components/duplasena/EstrategiaCardDuplaSena";
 import { useAutoFillDuplaSena, type EstrategiaDuplaSena } from "@/hooks/useAutoFillDuplaSena";
+import { useComputeFechamento } from "@/hooks/useComputeFechamento";
 import { 
-  gerarFechamentoDuplaSena, 
   formatarDezenaDuplaSena,
   type ResultadoFechamentoDuplaSena as ResultadoType
 } from "@/lib/fechamentoDuplaSena";
@@ -29,6 +29,7 @@ export default function FechamentoDuplaSena() {
   const [estrategiaIA, setEstrategiaIA] = useState<EstrategiaDuplaSena | null>(null);
 
   const { isLoading: isAutoFilling, canUse, autoFill, checkUsage } = useAutoFillDuplaSena();
+  const { compute, isComputing } = useComputeFechamento();
 
   useEffect(() => { checkUsage(); }, []);
 
@@ -71,11 +72,14 @@ export default function FechamentoDuplaSena() {
     }
   };
 
-  const handleGerarFechamento = () => {
-    if (!podeGerar) return;
+  const handleGerarFechamento = async () => {
+    if (!podeGerar || isComputing) return;
     try {
       const todasDezenas = [...new Set([...fixas, ...selecionadas])];
-      setResultado(gerarFechamentoDuplaSena(estrategiaId, todasDezenas));
+      const resultadoGerado = await compute("duplasena", estrategiaId, todasDezenas);
+      if (resultadoGerado) {
+        setResultado(resultadoGerado as ResultadoType);
+      }
     } catch (error) {
       console.error("Erro ao gerar fechamento:", error);
     }

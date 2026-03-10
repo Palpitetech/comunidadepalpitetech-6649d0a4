@@ -13,6 +13,52 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
+  build: {
+    // Remove source maps in production to prevent code inspection
+    sourcemap: false,
+    // Aggressive minification with terser
+    minify: "terser",
+    terserOptions: {
+      compress: {
+        drop_console: mode === "production",
+        drop_debugger: true,
+        passes: 2,
+        dead_code: true,
+        conditionals: true,
+        evaluate: true,
+        unused: true,
+      },
+      mangle: {
+        toplevel: true,
+        properties: {
+          regex: /^_/, // Mangle properties starting with _
+        },
+      },
+      format: {
+        comments: false,
+      },
+    },
+    // Split sensitive code into separate chunks with obfuscated names
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("lib/matrizes")) {
+            return "m-" + Math.random().toString(36).substring(2, 6);
+          }
+          if (id.includes("lib/fechamento") || id.includes("lib/desdobramento")) {
+            return "e-" + Math.random().toString(36).substring(2, 6);
+          }
+        },
+        // Obfuscate chunk file names
+        chunkFileNames: (chunkInfo) => {
+          if (chunkInfo.name?.startsWith("m-") || chunkInfo.name?.startsWith("e-")) {
+            return `assets/[hash].js`;
+          }
+          return `assets/[name]-[hash].js`;
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     mode === "development" && componentTagger(),
@@ -22,7 +68,6 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         navigateFallbackDenylist: [/^\/~oauth/, /^\/push\//],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,woff,ttf}"],
-        // Cache First for static assets (images, fonts, CSS)
         runtimeCaching: [
           {
             urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
@@ -31,7 +76,7 @@ export default defineConfig(({ mode }) => ({
               cacheName: "images-cache",
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+                maxAgeSeconds: 30 * 24 * 60 * 60,
               },
             },
           },
@@ -42,7 +87,7 @@ export default defineConfig(({ mode }) => ({
               cacheName: "fonts-cache",
               expiration: {
                 maxEntries: 30,
-                maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year
+                maxAgeSeconds: 365 * 24 * 60 * 60,
               },
             },
           },
@@ -53,12 +98,11 @@ export default defineConfig(({ mode }) => ({
               cacheName: "static-resources",
               expiration: {
                 maxEntries: 60,
-                maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+                maxAgeSeconds: 7 * 24 * 60 * 60,
               },
             },
           },
           {
-            // Network First for API/Supabase calls
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: "NetworkFirst",
             options: {
@@ -66,12 +110,11 @@ export default defineConfig(({ mode }) => ({
               networkTimeoutSeconds: 10,
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 5 * 60, // 5 min
+                maxAgeSeconds: 5 * 60,
               },
             },
           },
         ],
-        // Pre-cache the app shell
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,

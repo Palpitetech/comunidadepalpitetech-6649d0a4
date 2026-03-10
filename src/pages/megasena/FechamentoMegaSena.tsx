@@ -14,8 +14,8 @@ import { LoadingPalpiteIA } from "@/components/megasena/LoadingPalpiteIA";
 import { ResultadosFechamentoMegaSena } from "@/components/megasena/ResultadosFechamentoMegaSena";
 import { EstrategiaCardMegaSena } from "@/components/megasena/EstrategiaCardMegaSena";
 import { useAutoFillMegaSena, type EstrategiaMegaSena } from "@/hooks/useAutoFillMegaSena";
+import { useComputeFechamento } from "@/hooks/useComputeFechamento";
 import { 
-  gerarFechamentoMegaSena, 
   formatarDezenaMegaSena,
   type ResultadoFechamentoMegaSena 
 } from "@/lib/fechamentoMegaSena";
@@ -29,6 +29,7 @@ export default function FechamentoMegaSena() {
   const [estrategiaIA, setEstrategiaIA] = useState<EstrategiaMegaSena | null>(null);
 
   const { isLoading: isAutoFilling, canUse, autoFill, checkUsage } = useAutoFillMegaSena();
+  const { compute, isComputing } = useComputeFechamento();
 
   useEffect(() => {
     checkUsage();
@@ -86,13 +87,15 @@ export default function FechamentoMegaSena() {
     }
   };
 
-  const handleGerarFechamento = () => {
-    if (!podeGerar) return;
+  const handleGerarFechamento = async () => {
+    if (!podeGerar || isComputing) return;
     
     try {
       const todasDezenas = [...new Set([...fixas, ...selecionadas])];
-      const resultadoGerado = gerarFechamentoMegaSena(estrategiaId, todasDezenas);
-      setResultado(resultadoGerado);
+      const resultadoGerado = await compute("megasena", estrategiaId, todasDezenas);
+      if (resultadoGerado) {
+        setResultado(resultadoGerado as ResultadoFechamentoMegaSena);
+      }
     } catch (error) {
       console.error("Erro ao gerar fechamento:", error);
     }
