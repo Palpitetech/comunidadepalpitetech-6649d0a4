@@ -102,6 +102,9 @@ export default function AdminVendas() {
   const fetchLogs = async () => {
     setLoading(true);
     try {
+      // Registrar acesso para auditoria
+      await supabase.rpc("audit_webhook_access");
+
       const { data, error } = await supabase
         .from("kirvano_webhook_logs")
         .select("*")
