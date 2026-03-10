@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface CommunityPost {
@@ -24,6 +25,30 @@ export interface CommunityPost {
 }
 
 export function useCommunityPosts() {
+  const queryClient = useQueryClient();
+
+  // Realtime subscription — invalidate query on any change
+  useEffect(() => {
+    const channel = supabase
+      .channel("community-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "postagens",
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   return useQuery({
     queryKey: ["community-posts"],
     queryFn: async () => {
@@ -69,7 +94,6 @@ export function useCommunityPosts() {
         perfis: profilesMap.get(post.user_id) || null,
       }));
 
-      if (error) throw error;
       return data as CommunityPost[];
     },
   });
