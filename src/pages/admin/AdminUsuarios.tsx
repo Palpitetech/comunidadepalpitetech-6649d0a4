@@ -7,11 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, Users, UserCheck, UserX, ShieldOff, ChevronRight, ChevronLeft, X, ArrowLeft } from "lucide-react";
+import { Search, Loader2, Users, UserCheck, UserX, ShieldOff, ChevronRight, ChevronLeft, X, ArrowLeft, Filter, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
 import { cn } from "@/lib/utils";
 import type { Plan, PlanFeatures, ExtendedProfile } from "@/types/plans";
+import { Switch } from "@/components/ui/switch";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -38,6 +41,10 @@ export default function AdminUsuarios() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("todos");
   const [page, setPage] = useState(0);
+  const [includeTags, setIncludeTags] = useState<string[]>([]);
+  const [excludeTags, setExcludeTags] = useState<string[]>([]);
+  const [exactMatch, setExactMatch] = useState(false);
+  const [tagFilterOpen, setTagFilterOpen] = useState(false);
   const PAGE_SIZE = 25;
 
   const fetchData = async () => {
@@ -85,6 +92,14 @@ export default function AdminUsuarios() {
     return { total, pagos, free, bloqueados };
   }, [users, plans]);
 
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    users.forEach(u => u.tags?.forEach(t => tagSet.add(t)));
+    return Array.from(tagSet).sort();
+  }, [users]);
+
+  const tagFilterActive = includeTags.length > 0 || excludeTags.length > 0;
+
   const filteredUsers = useMemo(() => {
     const paidPlanIds = new Set(plans.filter(p => p.price > 0).map(p => p.id));
     let list = users;
@@ -95,6 +110,24 @@ export default function AdminUsuarios() {
     } else if (activeFilter === "bloqueados") {
       list = users.filter(u => u.is_blocked);
     }
+
+    // Tag filters
+    if (includeTags.length > 0) {
+      list = list.filter(u => {
+        const userTags = u.tags || [];
+        if (exactMatch) {
+          return includeTags.every(t => userTags.includes(t));
+        }
+        return includeTags.some(t => userTags.includes(t));
+      });
+    }
+    if (excludeTags.length > 0) {
+      list = list.filter(u => {
+        const userTags = u.tags || [];
+        return !excludeTags.some(t => userTags.includes(t));
+      });
+    }
+
     if (!searchTerm) return list;
     const search = searchTerm.toLowerCase();
     return list.filter((user) =>
@@ -103,9 +136,9 @@ export default function AdminUsuarios() {
       user.celular?.includes(search) ||
       user.tags?.some(t => t.toLowerCase().includes(search))
     );
-  }, [users, plans, activeFilter, searchTerm]);
+  }, [users, plans, activeFilter, searchTerm, includeTags, excludeTags, exactMatch]);
 
-  useEffect(() => { setPage(0); }, [activeFilter, searchTerm]);
+  useEffect(() => { setPage(0); }, [activeFilter, searchTerm, includeTags, excludeTags, exactMatch]);
 
   const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE);
   const paginatedUsers = filteredUsers.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
@@ -128,6 +161,70 @@ export default function AdminUsuarios() {
       case "bloqueados": return stats.bloqueados;
     }
   };
+
+  const toggleTag = (tag: string, list: string[], setList: (v: string[]) => void) => {
+    setList(list.includes(tag) ? list.filter(t => t !== tag) : [...list, tag]);
+  };
+
+  const clearTagFilters = () => {
+    setIncludeTags([]);
+    setExcludeTags([]);
+    setExactMatch(false);
+  };
+
+  const tagFilterContent = (
+    <div className="w-72 space-y-3 p-1">
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-1.5">Contém a tag</p>
+        <div className="flex flex-wrap gap-1 max-h-28 overflow-auto">
+          {allTags.map(tag => (
+            <button
+              key={`inc-${tag}`}
+              onClick={() => toggleTag(tag, includeTags, setIncludeTags)}
+              className={cn(
+                "px-2 py-0.5 rounded-full text-[11px] border transition-colors",
+                includeTags.includes(tag)
+                  ? "bg-primary/15 text-primary border-primary/30"
+                  : "bg-muted/40 text-muted-foreground border-transparent hover:bg-muted"
+              )}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-1.5">Não contém a tag</p>
+        <div className="flex flex-wrap gap-1 max-h-28 overflow-auto">
+          {allTags.map(tag => (
+            <button
+              key={`exc-${tag}`}
+              onClick={() => toggleTag(tag, excludeTags, setExcludeTags)}
+              className={cn(
+                "px-2 py-0.5 rounded-full text-[11px] border transition-colors",
+                excludeTags.includes(tag)
+                  ? "bg-destructive/15 text-destructive border-destructive/30"
+                  : "bg-muted/40 text-muted-foreground border-transparent hover:bg-muted"
+              )}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="flex items-center justify-between pt-1 border-t border-border">
+        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+          <Switch checked={exactMatch} onCheckedChange={setExactMatch} className="scale-75" />
+          Correspondência exata
+        </label>
+        {tagFilterActive && (
+          <button onClick={clearTagFilters} className="text-[11px] text-muted-foreground hover:text-foreground underline">
+            Limpar
+          </button>
+        )}
+      </div>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -181,6 +278,20 @@ export default function AdminUsuarios() {
             </button>
           )}
         </div>
+
+        {/* Tag filter mobile */}
+        <Popover open={tagFilterOpen} onOpenChange={setTagFilterOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={cn("h-9 gap-1.5 text-xs", tagFilterActive && "border-primary/40 bg-primary/5 text-primary")}>
+              <Tag className="h-3.5 w-3.5" />
+              Filtrar por tags
+              {tagFilterActive && <span className="ml-0.5 bg-primary text-primary-foreground rounded-full w-4 h-4 text-[10px] flex items-center justify-center">{includeTags.length + excludeTags.length}</span>}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="p-3">
+            {tagFilterContent}
+          </PopoverContent>
+        </Popover>
 
 
         {/* User list */}
@@ -262,6 +373,20 @@ export default function AdminUsuarios() {
           </div>
 
           <div className="flex-1" />
+
+          {/* Tag filter desktop */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className={cn("h-8 gap-1.5 text-xs", tagFilterActive && "border-primary/40 bg-primary/5 text-primary")}>
+                <Tag className="h-3 w-3" />
+                Tags
+                {tagFilterActive && <span className="ml-0.5 bg-primary text-primary-foreground rounded-full w-4 h-4 text-[10px] flex items-center justify-center">{includeTags.length + excludeTags.length}</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="p-3">
+              {tagFilterContent}
+            </PopoverContent>
+          </Popover>
 
           {/* Search */}
           <div className="relative w-72">
