@@ -244,15 +244,60 @@ export default function AdminVendas() {
           })}
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar email, telefone, nome..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-10 pr-9" />
-          {search && (
-            <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-              <X className="h-4 w-4" />
-            </button>
-          )}
+        {/* Search + Date filter */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar email, telefone, nome..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-10 pr-9" />
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className={cn(
+                  "h-10 w-10 shrink-0 relative",
+                  hasDateFilter && "border-primary/40 bg-primary/5 text-primary"
+                )}
+              >
+                <CalendarDays className="h-4 w-4" />
+                {hasDateFilter && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground rounded-full w-4 h-4 text-[9px] font-bold flex items-center justify-center">✓</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-auto p-0" sideOffset={8}>
+              <div className="p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold">Filtrar por data</span>
+                  {hasDateFilter && (
+                    <button onClick={() => setDateRange(undefined)} className="text-[11px] text-primary hover:text-primary/80 font-medium">
+                      Limpar
+                    </button>
+                  )}
+                </div>
+                {hasDateFilter && (
+                  <p className="text-[11px] text-muted-foreground">
+                    {dateRange?.from && format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })}
+                    {dateRange?.to && ` — ${format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}`}
+                  </p>
+                )}
+              </div>
+              <CalendarComponent
+                mode="range"
+                selected={dateRange}
+                onSelect={setDateRange}
+                numberOfMonths={1}
+                locale={ptBR}
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Sales list */}
