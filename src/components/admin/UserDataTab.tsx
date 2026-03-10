@@ -141,6 +141,26 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
 
       <Separator />
 
+      {/* Tags do usuário */}
+      {user.tags && user.tags.length > 0 && (
+        <>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5">
+              <Tag className="h-3.5 w-3.5" />
+              Tags
+            </Label>
+            <div className="flex flex-wrap gap-1.5">
+              {user.tags.map((tag) => (
+                <Badge key={tag} variant="secondary" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          </div>
+          <Separator />
+        </>
+      )}
+
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="notes">Notas Internas (Admin)</Label>
