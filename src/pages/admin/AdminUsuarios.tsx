@@ -178,7 +178,7 @@ export default function AdminUsuarios() {
   const filteredExcludeSuggestions = allTags.filter(t => t.toLowerCase().includes(excludeSearch.toLowerCase()) && !excludeTags.includes(t));
 
   const tagFilterContent = (
-    <div className="w-80 space-y-4">
+    <div className="w-[calc(100vw-3rem)] max-w-80 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -364,7 +364,7 @@ export default function AdminUsuarios() {
                 {tagFilterActive && <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 text-[10px] flex items-center justify-center">{includeTags.length + excludeTags.length}</span>}
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="p-3">
+            <PopoverContent align="end" className="p-3" sideOffset={8}>
               {tagFilterContent}
             </PopoverContent>
           </Popover>
