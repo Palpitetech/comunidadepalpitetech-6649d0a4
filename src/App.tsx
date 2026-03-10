@@ -38,6 +38,7 @@ import AdminBots from "./pages/admin/AdminBots";
 import AdminCustos from "./pages/admin/AdminCustos";
 import AdminConvites from "./pages/admin/AdminConvites";
 import AdminVendas from "./pages/admin/AdminVendas";
+import AdminEventos from "./pages/admin/AdminEventos";
 import AnaliseDoDia from "./pages/AnaliseDoDia";
 import TabelaMovimentacao from "./pages/TabelaMovimentacao";
 import FrequenciaDezenas from "./pages/FrequenciaDezenas";
