@@ -100,6 +100,7 @@ const ADMIN_MODULES = [
   { to: "/admin/custos", icon: DollarSign, label: "Custos IA", desc: "Monitorar gastos com IA" },
   { to: "/admin/convites", icon: Gift, label: "Convites", desc: "Ranking de indicações" },
   { to: "/admin/vendas", icon: ShoppingCart, label: "Vendas", desc: "Histórico Kirvano" },
+  { to: "/admin/eventos", icon: Activity, label: "Eventos", desc: "Timeline de eventos por lead" },
 ];
 
 export default function AdminIndex() {
