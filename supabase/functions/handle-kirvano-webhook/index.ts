@@ -454,7 +454,9 @@ serve(async (req) => {
   const TAG_REMOVES: Record<string, string[]> = {
     inadimplente: ["ativo"],
     cancelado: ["ativo", "inadimplente"],
-    ativo: ["inadimplente", "cancelado"],
+    ativo: ["inadimplente", "cancelado", "pix_expirado", "boleto_expirado", "pix_gerado", "boleto_gerado"],
+    pix_expirado: ["pix_gerado"],
+    boleto_expirado: ["boleto_gerado"],
   };
 
   // Helper: registra evento na tabela events + gerencia tags no perfil
