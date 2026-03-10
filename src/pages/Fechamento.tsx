@@ -35,6 +35,7 @@ export default function Fechamento() {
 
   const { isLoading: isAutoFilling, canUse, usageCount, autoFill, checkUsage } = useAutoFillFechamento();
   const { isAdmin } = useUserRole();
+  const { compute, isComputing } = useComputeFechamento();
 
   // Verificar uso ao carregar
   useEffect(() => {
