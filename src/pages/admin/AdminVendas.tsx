@@ -256,32 +256,22 @@ export default function AdminVendas() {
 
         {/* Sales list */}
         <div className="space-y-0.5">
-          {paginatedSales.map(({ key, events, latest }) => {
+          {paginatedSales.map(({ key, latest }) => {
             const evInfo = getEventInfo(latest.event);
             const name = customerName(latest);
-            const price = totalPrice(latest);
             return (
               <button
                 key={key}
-                className="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg active:bg-muted/60 transition-colors border-b border-border/30 last:border-0"
+                className="flex items-center gap-3 w-full text-left px-3 py-2 rounded-lg active:bg-muted/60 transition-colors border-b border-border/30 last:border-0"
                 onClick={() => setSelectedLog(latest)}
               >
-                <PaymentMethodIcon method={latest.payment_method} />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-medium truncate">{name || latest.email || "Sem identificação"}</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
-                    {price && <span className="font-medium">{price}</span>}
-                    {price && <span>·</span>}
-                    <span>{format(new Date(latest.received_at), "dd/MM HH:mm", { locale: ptBR })}</span>
-                    {events.length > 1 && <><span>·</span><span>{events.length} evt</span></>}
-                  </div>
+                  <p className="text-sm font-medium truncate">{name || latest.email || "Sem identificação"}</p>
+                  <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 mt-1 inline-flex", evInfo.color)}>
+                    {evInfo.label}
+                  </Badge>
                 </div>
-                <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0.5 shrink-0", evInfo.color)}>
-                  {evInfo.label}
-                </Badge>
-                <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+                <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
               </button>
             );
           })}
