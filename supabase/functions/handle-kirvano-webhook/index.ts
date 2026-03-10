@@ -950,6 +950,10 @@ serve(async (req) => {
       logStep("Overdue email error (non-fatal)", { message: e instanceof Error ? e.message : String(e) });
     }
 
+    await insertEvent(perfil.id, "assinatura_inadimplente", {
+      validade: perfil.validade_assinatura,
+    });
+
     await finalizeLog({ processed: true, process_result: "subscription_overdue_grace" });
   } else {
     // cancel / delinquent: se existir perfil, atualiza status e remove premium
