@@ -190,7 +190,7 @@ export default function AdminVendas() {
     );
   }, [sales, activeFilter, search, dateRange]);
 
-  useEffect(() => { setPage(0); }, [activeFilter, search]);
+  useEffect(() => { setPage(0); }, [activeFilter, search, dateRange]);
 
   const totalPages = Math.ceil(filteredSales.length / PAGE_SIZE);
   const paginatedSales = filteredSales.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
