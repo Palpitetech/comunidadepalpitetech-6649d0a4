@@ -843,6 +843,10 @@ serve(async (req) => {
       logStep("Cancellation email error (non-fatal)", { message: e instanceof Error ? e.message : String(e) });
     }
 
+    await insertEvent(perfil.id, "assinatura_cancelada", {
+      validade: perfil.validade_assinatura,
+    });
+
     await finalizeLog({ processed: true, process_result: "subscription_canceled_end_of_period" });
   } else if (action === "overdue_grace") {
     // SUBSCRIPTION_OVERDUE: marca inadimplente mas mantém premium (grace period)
