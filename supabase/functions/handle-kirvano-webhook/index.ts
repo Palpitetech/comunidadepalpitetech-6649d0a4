@@ -739,6 +739,15 @@ serve(async (req) => {
       if (insertError) logStep("Failed to insert premium role", { message: insertError.message });
     }
 
+    await insertEvent(targetPerfilId, "compra_aprovada", {
+      plan_id: offerMap.plan_id,
+      days_valid: daysValid,
+      offer_id: offerId,
+      payment_method: payload?.payment_method ?? null,
+      customer_name: customerName,
+      is_new_account: isNewAccount,
+    });
+
     await finalizeLog({ processed: true, process_result: targetPerfilId === perfil?.id ? "updated_user_activated" : "created_user_activated" });
   } else if (action === "cancel_end_of_period") {
     // SUBSCRIPTION_CANCELED: mantém acesso até validade_assinatura expirar
