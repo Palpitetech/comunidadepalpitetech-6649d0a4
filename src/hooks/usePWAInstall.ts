@@ -49,7 +49,10 @@ export function usePWAInstall() {
       setDeferredPrompt(null);
     });
 
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      mql.removeEventListener("change", onDisplayChange);
+    };
   }, []);
 
   const install = async () => {
