@@ -435,16 +435,16 @@ serve(async (req) => {
 
   // Mapa de event_type → tag no perfil
   const EVENT_TAG_MAP: Record<string, string> = {
-    novo_cadastro: "user_created",
-    compra_aprovada: "sale_confirmed",
-    pix_gerado: "pix_generated",
-    pix_expirado: "pix_expired",
-    boleto_gerado: "boleto_generated",
-    boleto_expirado: "boleto_expired",
-    assinatura_cancelada: "sale_cancelled",
-    assinatura_inadimplente: "sale_overdue",
-    checkout_abandonado: "checkout_abandoned",
-    carrinho_abandonado: "cart_abandoned",
+    novo_cadastro: "comunidade",
+    compra_aprovada: "ativo",
+    pix_gerado: "pix_gerado",
+    pix_expirado: "pix_expirado",
+    boleto_gerado: "boleto_gerado",
+    boleto_expirado: "boleto_expirado",
+    assinatura_cancelada: "cancelado",
+    assinatura_inadimplente: "inadimplente",
+    checkout_abandonado: "checkout_abandonado",
+    carrinho_abandonado: "carrinho_abandonado",
   };
 
   // Helper: registra evento na tabela events + adiciona tag no perfil
