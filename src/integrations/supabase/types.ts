@@ -48,6 +48,7 @@ export type Database = {
         Row: {
           id: string
           kirvano_webhook_token: string
+          notifications_webhook_secret: string | null
           updated_at: string
           updated_by: string | null
           usd_to_brl: number
@@ -55,6 +56,7 @@ export type Database = {
         Insert: {
           id?: string
           kirvano_webhook_token?: string
+          notifications_webhook_secret?: string | null
           updated_at?: string
           updated_by?: string | null
           usd_to_brl?: number
@@ -62,6 +64,7 @@ export type Database = {
         Update: {
           id?: string
           kirvano_webhook_token?: string
+          notifications_webhook_secret?: string | null
           updated_at?: string
           updated_by?: string | null
           usd_to_brl?: number
