@@ -14,8 +14,8 @@ import { LoadingPalpiteIA } from "@/components/megasena/LoadingPalpiteIA";
 import { ResultadosFechamentoDuplaSena } from "@/components/duplasena/ResultadosFechamentoDuplaSena";
 import { EstrategiaCardDuplaSena } from "@/components/duplasena/EstrategiaCardDuplaSena";
 import { useAutoFillDuplaSena, type EstrategiaDuplaSena } from "@/hooks/useAutoFillDuplaSena";
+import { useComputeFechamento } from "@/hooks/useComputeFechamento";
 import { 
-  gerarFechamentoDuplaSena, 
   formatarDezenaDuplaSena,
   type ResultadoFechamentoDuplaSena as ResultadoType
 } from "@/lib/fechamentoDuplaSena";
