@@ -108,7 +108,7 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
     fetchAll();
 
     return () => { cancelled = true; };
-  }, [user, profile]);
+  }, [user?.id]);
 
   const isAdmin = useMemo(() => roles.includes("admin"), [roles]);
   const isModerator = useMemo(() => roles.includes("moderator") || isAdmin, [roles, isAdmin]);
