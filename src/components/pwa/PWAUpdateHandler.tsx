@@ -5,22 +5,13 @@ import { RefreshCw } from "lucide-react";
 
 /**
  * Handles PWA updates with a persistent toast notification.
- * Shows a button for the user to apply the update manually.
+ * Only checks for updates on page load/focus — no polling.
  */
 export function PWAUpdateHandler() {
   const {
     needRefresh: [needRefresh],
     updateServiceWorker,
   } = useRegisterSW({
-    // Check for updates every 30 seconds
-    onRegisteredSW(_swUrl, registration) {
-      if (registration) {
-        // Initial check after 3 seconds
-        setTimeout(() => registration.update(), 3000);
-        // Then every 30 seconds
-        setInterval(() => registration.update(), 30 * 1000);
-      }
-    },
     onRegisterError(error) {
       console.error("SW registration error:", error);
     },
