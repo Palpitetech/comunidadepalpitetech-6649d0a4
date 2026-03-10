@@ -95,7 +95,7 @@ export default function AdminUsuarios() {
     return Array.from(tagSet).sort();
   }, [users]);
 
-  const tagFilterActive = includeTags.length > 0 || excludeTags.length > 0;
+  
 
   const filteredUsers = useMemo(() => {
     const paidPlanIds = new Set(plans.filter(p => p.price > 0).map(p => p.id));
