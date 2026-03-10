@@ -245,6 +245,7 @@ export default function AdminVendas() {
           {paginatedSales.map(({ key, latest }) => {
             const evInfo = getEventInfo(latest.event);
             const name = customerName(latest);
+            const price = totalPrice(latest);
             return (
               <button
                 key={key}
@@ -253,9 +254,16 @@ export default function AdminVendas() {
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{name || latest.email || "Sem identificação"}</p>
-                  <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 mt-1 inline-flex", evInfo.color)}>
-                    {evInfo.label}
-                  </Badge>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 inline-flex", evInfo.color)}>
+                      {evInfo.label}
+                    </Badge>
+                    {price && (
+                      <span className="text-[11px] font-semibold tabular-nums text-foreground/70 ml-auto">
+                        {price}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
               </button>
