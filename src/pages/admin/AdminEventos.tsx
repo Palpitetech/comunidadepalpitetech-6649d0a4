@@ -113,7 +113,11 @@ export default function AdminEventos() {
 
         {/* Summary */}
         <div className="grid grid-cols-3 gap-2 md:gap-4">
-          {Object.entries(EVENT_TYPE_CONFIG).map(([type, config]) => {
+          {[
+            { type: "novo_cadastro", config: EVENT_TYPE_CONFIG.novo_cadastro },
+            { type: "compra_aprovada", config: EVENT_TYPE_CONFIG.compra_aprovada },
+            { type: "assinatura_cancelada", config: EVENT_TYPE_CONFIG.assinatura_cancelada },
+          ].map(({ type, config }) => {
             const count = events.filter(e => e.event_type === type).length;
             const Icon = config.icon;
             return (
