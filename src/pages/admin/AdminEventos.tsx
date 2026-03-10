@@ -1,21 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Search, ChevronRight, ArrowLeft, Activity,
   UserPlus, ShoppingCart, QrCode, ChevronLeft, Calendar,
-  CreditCard, XCircle, AlertTriangle, Clock, Ban
+  CreditCard, XCircle, AlertTriangle, Clock, Ban, X
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 type EventRow = {
   id: string;
@@ -30,6 +30,15 @@ type EventRow = {
   } | null;
 };
 
+type FilterTab = "todos" | "cadastros" | "compras" | "cancelamentos";
+
+const FILTER_TABS: { key: FilterTab; label: string; icon: typeof Activity; types: string[] }[] = [
+  { key: "todos", label: "Todos", icon: Activity, types: [] },
+  { key: "cadastros", label: "Cadastros", icon: UserPlus, types: ["novo_cadastro"] },
+  { key: "compras", label: "Compras", icon: ShoppingCart, types: ["compra_aprovada", "pix_gerado", "boleto_gerado"] },
+  { key: "cancelamentos", label: "Cancelamentos", icon: XCircle, types: ["assinatura_cancelada", "assinatura_inadimplente", "pix_expirado", "boleto_expirado", "checkout_abandonado", "carrinho_abandonado"] },
+];
+
 const EVENT_TYPE_CONFIG: Record<string, { label: string; icon: typeof Activity; color: string }> = {
   novo_cadastro: { label: "Novo Cadastro", icon: UserPlus, color: "bg-blue-500/10 text-blue-700 border-blue-200" },
   compra_aprovada: { label: "Compra Aprovada", icon: ShoppingCart, color: "bg-green-500/10 text-green-700 border-green-200" },
@@ -37,7 +46,7 @@ const EVENT_TYPE_CONFIG: Record<string, { label: string; icon: typeof Activity; 
   pix_expirado: { label: "PIX Expirado", icon: Clock, color: "bg-muted text-muted-foreground border-border" },
   boleto_gerado: { label: "Boleto Gerado", icon: CreditCard, color: "bg-yellow-500/10 text-yellow-700 border-yellow-200" },
   boleto_expirado: { label: "Boleto Expirado", icon: Clock, color: "bg-muted text-muted-foreground border-border" },
-  assinatura_cancelada: { label: "Assinatura Cancelada", icon: XCircle, color: "bg-red-500/10 text-red-700 border-red-200" },
+  assinatura_cancelada: { label: "Cancelada", icon: XCircle, color: "bg-red-500/10 text-red-700 border-red-200" },
   assinatura_inadimplente: { label: "Inadimplente", icon: AlertTriangle, color: "bg-orange-500/10 text-orange-700 border-orange-200" },
   checkout_abandonado: { label: "Checkout Abandonado", icon: Ban, color: "bg-muted text-muted-foreground border-border" },
   carrinho_abandonado: { label: "Carrinho Abandonado", icon: Ban, color: "bg-muted text-muted-foreground border-border" },
@@ -52,10 +61,10 @@ export default function AdminEventos() {
   const [events, setEvents] = useState<EventRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
   const [selectedEvent, setSelectedEvent] = useState<EventRow | null>(null);
-  const [page, setPage] = useState(1);
-  const PAGE_SIZE = 20;
+  const [activeFilter, setActiveFilter] = useState<FilterTab>("todos");
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 25;
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -65,7 +74,6 @@ export default function AdminEventos() {
         .select("*, perfis(nome, email, avatar_url)")
         .order("created_at", { ascending: false })
         .limit(500);
-
       if (error) throw error;
       setEvents((data as EventRow[]) || []);
     } catch (err) {
@@ -76,184 +84,279 @@ export default function AdminEventos() {
   };
 
   useEffect(() => { fetchEvents(); }, []);
-  useEffect(() => { setPage(1); }, [search, typeFilter]);
 
-  const filtered = events.filter((ev) => {
-    if (typeFilter !== "all" && ev.event_type !== typeFilter) return false;
-    if (search) {
-      const s = search.toLowerCase();
-      return (
-        ev.perfis?.nome?.toLowerCase().includes(s) ||
-        ev.perfis?.email?.toLowerCase().includes(s) ||
-        ev.event_type.toLowerCase().includes(s)
-      );
-    }
-    return true;
-  });
+  const stats = useMemo(() => ({
+    total: events.length,
+    cadastros: events.filter(e => e.event_type === "novo_cadastro").length,
+    compras: events.filter(e => ["compra_aprovada", "pix_gerado", "boleto_gerado"].includes(e.event_type)).length,
+    cancelamentos: events.filter(e => ["assinatura_cancelada", "assinatura_inadimplente", "pix_expirado", "boleto_expirado", "checkout_abandonado", "carrinho_abandonado"].includes(e.event_type)).length,
+  }), [events]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const filtered = useMemo(() => {
+    const tab = FILTER_TABS.find(t => t.key === activeFilter)!;
+    let list = events;
+    if (tab.types.length > 0) list = events.filter(e => tab.types.includes(e.event_type));
+    if (!search) return list;
+    const s = search.toLowerCase();
+    return list.filter(ev =>
+      ev.perfis?.nome?.toLowerCase().includes(s) ||
+      ev.perfis?.email?.toLowerCase().includes(s) ||
+      ev.event_type.toLowerCase().includes(s)
+    );
+  }, [events, activeFilter, search]);
 
-  // Unique event types for filter
-  const uniqueTypes = [...new Set(events.map(e => e.event_type))];
+  useEffect(() => { setPage(0); }, [activeFilter, search]);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  const getFilterCount = (key: FilterTab) => stats[key === "todos" ? "total" : key];
+
+  const getMetaSummary = (ev: EventRow) => {
+    const m = ev.metadata;
+    if (!m || typeof m !== "object") return "—";
+    if (m.plano) return m.plano;
+    if (m.email) return m.email;
+    if (m.metodo) return m.metodo;
+    return "—";
+  };
+
+  if (loading) {
+    return (
+      <MainLayout pageTitle="Eventos" onBack={() => navigate("/admin")}>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
-    <MainLayout pageTitle="Eventos" onBack={() => navigate("/admin")} hideBottomNav>
-      <div className="px-4 py-3 md:container-senior md:py-8 space-y-3 md:space-y-6">
-        {/* Desktop Header */}
-        <div className="hidden md:flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="shrink-0">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-3xl font-bold truncate">Eventos</h1>
-            <p className="text-sm text-muted-foreground">Timeline de eventos por lead</p>
-          </div>
-        </div>
-
-        {/* Summary */}
-        <div className="grid grid-cols-3 gap-2 md:gap-4">
-          {[
-            { type: "novo_cadastro", config: EVENT_TYPE_CONFIG.novo_cadastro },
-            { type: "compra_aprovada", config: EVENT_TYPE_CONFIG.compra_aprovada },
-            { type: "assinatura_cancelada", config: EVENT_TYPE_CONFIG.assinatura_cancelada },
-          ].map(({ type, config }) => {
-            const count = events.filter(e => e.event_type === type).length;
-            const Icon = config.icon;
+    <MainLayout
+      pageTitle="Eventos"
+      onBack={() => navigate("/admin")}
+      headerRightContent={
+        <span className="text-xs text-muted-foreground font-medium">{stats.total}</span>
+      }
+    >
+      {/* ======= MOBILE ======= */}
+      <div className="md:hidden px-4 py-3 space-y-3">
+        <div className="grid grid-cols-4 gap-1.5">
+          {FILTER_TABS.map(({ key, label, icon: Icon }) => {
+            const count = getFilterCount(key);
+            const isActive = activeFilter === key;
             return (
-              <Card key={type} className="border-0 shadow-none md:border md:shadow-sm bg-muted/40 md:bg-card">
-                <CardContent className="p-2.5 md:p-4 text-center">
-                  <Icon className="h-4 w-4 md:h-5 md:w-5 text-primary mx-auto mb-0.5 md:mb-1" />
-                  <p className="text-base md:text-2xl font-bold">{count}</p>
-                  <p className="text-[10px] md:text-xs text-muted-foreground">{config.label}</p>
-                </CardContent>
-              </Card>
+              <button
+                key={key}
+                onClick={() => setActiveFilter(key)}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 rounded-xl p-2 transition-colors text-center",
+                  isActive ? "bg-primary/10 ring-1 ring-primary/30" : "bg-muted/40 hover:bg-muted/60"
+                )}
+              >
+                <Icon className={cn("h-4 w-4", isActive ? "text-primary" : "text-muted-foreground")} />
+                <span className="text-lg font-bold">{count}</span>
+                <span className={cn("text-[10px]", isActive ? "text-primary font-medium" : "text-muted-foreground")}>{label}</span>
+              </button>
             );
           })}
         </div>
 
-        {/* Filters */}
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar nome, email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 text-sm h-9"
-            />
-          </div>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[130px] md:w-[180px] text-xs md:text-sm h-9">
-              <SelectValue placeholder="Tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              {uniqueTypes.map(type => (
-                <SelectItem key={type} value={type}>
-                  {getEventConfig(type).label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Buscar nome, email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-10 pr-9" />
+          {search && (
+            <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
-        {/* Events List */}
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="py-12 text-center text-muted-foreground text-sm">
-            Nenhum evento encontrado
-          </div>
-        ) : (
-          <div className="space-y-1.5 md:space-y-2">
-            {paginated.map((ev) => {
-              const config = getEventConfig(ev.event_type);
-              const Icon = config.icon;
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            {filtered.length > 0 ? `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, filtered.length)} de ${filtered.length}` : "0 resultados"}
+          </p>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}><ChevronLeft className="h-4 w-4" /></Button>
+              <span className="text-xs text-muted-foreground min-w-[3ch] text-center">{page + 1}/{totalPages}</span>
+              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}><ChevronRight className="h-4 w-4" /></Button>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-0.5">
+          {paginated.map((ev) => {
+            const config = getEventConfig(ev.event_type);
+            const Icon = config.icon;
+            return (
+              <button
+                key={ev.id}
+                className="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg active:bg-muted/60 transition-colors border-b border-border/30 last:border-0"
+                onClick={() => setSelectedEvent(ev)}
+              >
+                <Icon className={cn("h-4 w-4 shrink-0 text-muted-foreground")} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-medium truncate">{ev.perfis?.nome || ev.perfis?.email || "Usuário"}</p>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    {format(new Date(ev.created_at), "dd/MM HH:mm", { locale: ptBR })}
+                  </p>
+                </div>
+                <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0.5 shrink-0", config.color)}>
+                  {config.label}
+                </Badge>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+              </button>
+            );
+          })}
+          {filtered.length === 0 && (
+            <div className="text-center py-12 text-sm text-muted-foreground">
+              {search ? "Nenhum resultado encontrado" : "Nenhum evento"}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ======= DESKTOP — fullscreen minimal ======= */}
+      <div className="hidden md:flex flex-col flex-1 min-h-0">
+        <div className="border-b border-border bg-card/50 px-6 py-3 flex items-center gap-4">
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => navigate("/admin")}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-lg font-semibold mr-2">Eventos</h1>
+
+          <div className="flex items-center gap-1">
+            {FILTER_TABS.map(({ key, label }) => {
+              const count = getFilterCount(key);
+              const isActive = activeFilter === key;
               return (
                 <button
-                  key={ev.id}
-                  className="w-full text-left rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors p-3"
-                  onClick={() => setSelectedEvent(ev)}
+                  key={key}
+                  onClick={() => setActiveFilter(key)}
+                  className={cn(
+                    "px-3 py-1 rounded-full text-xs font-medium transition-colors",
+                    isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+                  )}
                 >
-                  <div className="flex items-center gap-3">
-                    <Icon className="h-4 w-4 text-primary shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm truncate">
-                          {ev.perfis?.nome || ev.perfis?.email || "Usuário"}
-                        </span>
-                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 shrink-0 ${config.color}`}>
-                          {config.label}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
-                        <Calendar className="h-3 w-3" />
-                        <span>{format(new Date(ev.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                  </div>
+                  {label} <span className="opacity-70">{count}</span>
                 </button>
               );
             })}
+          </div>
 
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-2 pb-2">
-                <p className="text-[11px] text-muted-foreground">
-                  {filtered.length} eventos · Pág. {page}/{totalPages}
-                </p>
-                <div className="flex items-center gap-1">
-                  <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+          <div className="flex-1" />
+
+          <div className="relative w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-8 text-sm bg-background" />
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <X className="h-3.5 w-3.5" />
+              </button>
             )}
           </div>
-        )}
 
-        {/* Detail Sheet */}
-        <Sheet open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>
-          <SheetContent side="bottom" className="h-[80vh] rounded-t-2xl p-0 md:!inset-y-0 md:!right-0 md:!left-auto md:!bottom-auto md:!h-full md:!w-[480px] md:!max-w-lg md:rounded-none">
-            <div className="flex items-center justify-between p-4 pb-2 border-b border-border">
-              <SheetTitle className="text-base font-semibold">Detalhes do Evento</SheetTitle>
-            </div>
-            {selectedEvent && (
-              <ScrollArea className="h-[calc(100%-60px)] p-4">
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Tipo</p>
-                    <Badge variant="outline" className={getEventConfig(selectedEvent.event_type).color}>
-                      {getEventConfig(selectedEvent.event_type).label}
-                    </Badge>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Usuário</p>
-                    <p className="text-sm font-medium">{selectedEvent.perfis?.nome || "—"}</p>
-                    <p className="text-xs text-muted-foreground">{selectedEvent.perfis?.email || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Data</p>
-                    <p className="text-sm">{format(new Date(selectedEvent.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Metadata</p>
-                    <pre className="text-xs bg-muted/50 rounded-lg p-3 overflow-auto max-h-[300px] whitespace-pre-wrap break-all">
-                      {JSON.stringify(selectedEvent.metadata, null, 2)}
-                    </pre>
-                  </div>
-                </div>
-              </ScrollArea>
-            )}
-          </SheetContent>
-        </Sheet>
+          <div className="flex items-center gap-1 text-xs text-muted-foreground ml-1">
+            <span>{filtered.length > 0 ? `${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, filtered.length)}` : "0"} de {filtered.length}</span>
+            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}><ChevronLeft className="h-3.5 w-3.5" /></Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}><ChevronRight className="h-3.5 w-3.5" /></Button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="w-10 pl-6"></TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Usuário</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Email</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Tipo</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Detalhe</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Data</TableHead>
+                <TableHead className="w-8"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginated.map((ev) => {
+                const config = getEventConfig(ev.event_type);
+                const Icon = config.icon;
+                return (
+                  <TableRow key={ev.id} className="cursor-pointer group" onClick={() => setSelectedEvent(ev)}>
+                    <TableCell className="pl-6 py-2.5">
+                      <Icon className="h-4 w-4 text-muted-foreground" />
+                    </TableCell>
+                    <TableCell className="py-2.5">
+                      <span className="text-sm font-medium truncate max-w-[200px] block">{ev.perfis?.nome || "Sem nome"}</span>
+                    </TableCell>
+                    <TableCell className="py-2.5 text-sm text-muted-foreground truncate max-w-[220px]">
+                      {ev.perfis?.email || "—"}
+                    </TableCell>
+                    <TableCell className="py-2.5">
+                      <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", config.color)}>
+                        {config.label}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-2.5 text-xs text-muted-foreground truncate max-w-[160px]">
+                      {getMetaSummary(ev)}
+                    </TableCell>
+                    <TableCell className="py-2.5 text-xs text-muted-foreground tabular-nums">
+                      {format(new Date(ev.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
+                    </TableCell>
+                    <TableCell className="py-2.5 pr-4">
+                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              {filtered.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-16 text-sm text-muted-foreground">
+                    {search ? "Nenhum evento encontrado" : "Nenhum evento registrado"}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
+
+      {/* Detail Sheet */}
+      <Sheet open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>
+        <SheetContent side="bottom" className="h-[80vh] rounded-t-2xl p-0 md:!inset-y-0 md:!right-0 md:!left-auto md:!bottom-auto md:!h-full md:!w-[480px] md:!max-w-lg md:rounded-none">
+          <div className="flex items-center justify-between p-4 pb-2 border-b border-border">
+            <SheetTitle className="text-base font-semibold">Detalhes do Evento</SheetTitle>
+          </div>
+          {selectedEvent && (
+            <ScrollArea className="h-[calc(100%-60px)] p-4">
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Tipo</p>
+                  <Badge variant="outline" className={getEventConfig(selectedEvent.event_type).color}>
+                    {getEventConfig(selectedEvent.event_type).label}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Usuário</p>
+                  <p className="text-sm font-medium">{selectedEvent.perfis?.nome || "—"}</p>
+                  <p className="text-xs text-muted-foreground">{selectedEvent.perfis?.email || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Data</p>
+                  <p className="text-sm">{format(new Date(selectedEvent.created_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Metadata</p>
+                  <pre className="text-xs bg-muted/50 rounded-lg p-3 overflow-auto max-h-[300px] whitespace-pre-wrap break-all">
+                    {JSON.stringify(selectedEvent.metadata, null, 2)}
+                  </pre>
+                </div>
+              </div>
+            </ScrollArea>
+          )}
+        </SheetContent>
+      </Sheet>
     </MainLayout>
   );
 }
