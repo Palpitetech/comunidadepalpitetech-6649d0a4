@@ -43,7 +43,6 @@ export default function AdminUsuarios() {
   const [excludeTags, setExcludeTags] = useState<string[]>([]);
   const [exactMatch, setExactMatch] = useState(false);
   const PAGE_SIZE = 25;
-  const PAGE_SIZE = 25;
 
   const fetchData = async () => {
     try {
