@@ -72,11 +72,14 @@ export default function FechamentoDuplaSena() {
     }
   };
 
-  const handleGerarFechamento = () => {
-    if (!podeGerar) return;
+  const handleGerarFechamento = async () => {
+    if (!podeGerar || isComputing) return;
     try {
       const todasDezenas = [...new Set([...fixas, ...selecionadas])];
-      setResultado(gerarFechamentoDuplaSena(estrategiaId, todasDezenas));
+      const resultadoGerado = await compute("duplasena", estrategiaId, todasDezenas);
+      if (resultadoGerado) {
+        setResultado(resultadoGerado as ResultadoType);
+      }
     } catch (error) {
       console.error("Erro ao gerar fechamento:", error);
     }

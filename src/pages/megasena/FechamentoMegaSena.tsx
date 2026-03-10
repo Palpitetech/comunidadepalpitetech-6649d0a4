@@ -87,13 +87,15 @@ export default function FechamentoMegaSena() {
     }
   };
 
-  const handleGerarFechamento = () => {
-    if (!podeGerar) return;
+  const handleGerarFechamento = async () => {
+    if (!podeGerar || isComputing) return;
     
     try {
       const todasDezenas = [...new Set([...fixas, ...selecionadas])];
-      const resultadoGerado = gerarFechamentoMegaSena(estrategiaId, todasDezenas);
-      setResultado(resultadoGerado);
+      const resultadoGerado = await compute("megasena", estrategiaId, todasDezenas);
+      if (resultadoGerado) {
+        setResultado(resultadoGerado as ResultadoFechamentoMegaSena);
+      }
     } catch (error) {
       console.error("Erro ao gerar fechamento:", error);
     }
