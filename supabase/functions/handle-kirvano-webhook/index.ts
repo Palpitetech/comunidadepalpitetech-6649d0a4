@@ -491,6 +491,31 @@ serve(async (req) => {
         logStep("PIX email error (non-fatal)", { message: e instanceof Error ? e.message : String(e) });
       }
     }
+
+    // Tenta registrar evento para ações intermediárias (PIX gerado, boleto etc.)
+    if (email) {
+      const { data: perfilIgnore } = await admin
+        .from("perfis")
+        .select("id")
+        .ilike("email", email)
+        .maybeSingle();
+      if (perfilIgnore?.id) {
+        const eventMap: Record<string, string> = {
+          pix_generated: "pix_gerado",
+          pix_expired: "pix_expirado",
+          bank_slip_generated: "boleto_gerado",
+          bank_slip_expired: "boleto_expirado",
+          checkout_abandoned: "checkout_abandonado",
+          abandoned_cart: "carrinho_abandonado",
+        };
+        const mappedType = eventMap[ev] ?? ev;
+        await insertEvent(perfilIgnore.id, mappedType, {
+          payment_method: payload?.payment_method ?? null,
+          total_price: payload?.total_price ?? null,
+        });
+      }
+    }
+
     await finalizeLog({ processed: true, process_result: "ignored_non_paid" });
     return new Response(JSON.stringify({ ok: true, ignored: true }), {
       status: 200,
