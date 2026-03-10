@@ -42,9 +42,7 @@ export default function AdminUsuarios() {
   const [includeTags, setIncludeTags] = useState<string[]>([]);
   const [excludeTags, setExcludeTags] = useState<string[]>([]);
   const [exactMatch, setExactMatch] = useState(false);
-  const [tagFilterOpen, setTagFilterOpen] = useState(false);
-  const [includeSearch, setIncludeSearch] = useState("");
-  const [excludeSearch, setExcludeSearch] = useState("");
+  const PAGE_SIZE = 25;
   const PAGE_SIZE = 25;
 
   const fetchData = async () => {
