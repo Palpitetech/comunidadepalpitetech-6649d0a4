@@ -43,60 +43,52 @@ export function ActionBar({
   };
 
   return (
-    <div className="flex items-center gap-1 py-2 border-y border-border/60">
+    <div className="flex items-center gap-0.5 py-1">
       {/* Like */}
-      <Button
-        variant="ghost"
-        size="sm"
+      <button
         onClick={onToggleLike}
         disabled={isLiking}
         className={cn(
-          "gap-1.5 h-9 px-3 rounded-lg transition-all",
+          "inline-flex items-center gap-1 px-2 py-1.5 rounded-md text-xs transition-colors",
           isLiked
-            ? "text-destructive hover:text-destructive/90"
+            ? "text-destructive"
             : "text-muted-foreground hover:text-foreground"
         )}
       >
-        <Heart className={cn("h-[18px] w-[18px] transition-transform", isLiked && "fill-current scale-110")} />
-        <span className="text-sm font-medium tabular-nums">{likesCount}</span>
-      </Button>
+        <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
+        <span className="tabular-nums">{likesCount}</span>
+      </button>
 
       {/* Comments */}
       {commentsCount !== undefined && (
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
           onClick={onCommentsClick}
-          className="gap-1.5 h-9 px-3 rounded-lg text-muted-foreground hover:text-foreground"
+          className="inline-flex items-center gap-1 px-2 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
-          <MessageCircle className="h-[18px] w-[18px]" />
-          <span className="text-sm font-medium tabular-nums">{commentsCount}</span>
-        </Button>
+          <MessageCircle className="h-4 w-4" />
+          <span className="tabular-nums">{commentsCount}</span>
+        </button>
       )}
 
       <div className="flex-1" />
 
       {/* Copy */}
       {postContent && (
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
           onClick={handleCopyContent}
-          className="h-9 w-9 text-muted-foreground hover:text-foreground rounded-lg"
+          className="p-1.5 rounded-md text-muted-foreground/60 hover:text-muted-foreground transition-colors"
         >
-          <Copy className="h-[18px] w-[18px]" />
-        </Button>
+          <Copy className="h-3.5 w-3.5" />
+        </button>
       )}
 
       {/* Share */}
-      <Button
-        variant="ghost"
-        size="icon"
+      <button
         onClick={handleShare}
-        className="h-9 w-9 text-muted-foreground hover:text-foreground rounded-lg"
+        className="p-1.5 rounded-md text-muted-foreground/60 hover:text-muted-foreground transition-colors"
       >
-        <Share2 className="h-[18px] w-[18px]" />
-      </Button>
+        <Share2 className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }
