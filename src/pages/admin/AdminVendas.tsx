@@ -170,6 +170,15 @@ export default function AdminVendas() {
     else if (activeFilter === "pendentes") list = sales.filter(s => PENDING_EVENTS.includes(s.latest.event || ""));
     else if (activeFilter === "canceladas") list = sales.filter(s => CANCELED_EVENTS.includes(s.latest.event || ""));
 
+    if (dateRange?.from) {
+      const from = startOfDay(dateRange.from);
+      const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+      list = list.filter(({ latest }) => {
+        const d = new Date(latest.received_at);
+        return isWithinInterval(d, { start: from, end: to });
+      });
+    }
+
     if (!search) return list;
     const s = search.toLowerCase();
     return list.filter(({ latest }) =>
@@ -179,7 +188,7 @@ export default function AdminVendas() {
       latest.checkout_id?.toLowerCase().includes(s) ||
       latest.raw_payload?.customer?.name?.toLowerCase()?.includes(s)
     );
-  }, [sales, activeFilter, search]);
+  }, [sales, activeFilter, search, dateRange]);
 
   useEffect(() => { setPage(0); }, [activeFilter, search]);
 
