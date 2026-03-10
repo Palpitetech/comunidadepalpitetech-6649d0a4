@@ -213,17 +213,16 @@ export default function AdminUsuarios() {
               </button>
             )}
           </div>
-          <Popover open={tagFilterOpen} onOpenChange={setTagFilterOpen}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="icon" className={cn("h-9 w-9 shrink-0", tagFilterActive && "border-primary/40 bg-primary/5 text-primary")}>
-                <Tag className="h-4 w-4" />
-                {tagFilterActive && <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 text-[10px] flex items-center justify-center">{includeTags.length + excludeTags.length}</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="p-3" sideOffset={8}>
-              {tagFilterContent}
-            </PopoverContent>
-          </Popover>
+          <TagFilterPopover
+            allTags={allTags}
+            includeTags={includeTags}
+            excludeTags={excludeTags}
+            exactMatch={exactMatch}
+            onIncludeTagsChange={setIncludeTags}
+            onExcludeTagsChange={setExcludeTags}
+            onExactMatchChange={setExactMatch}
+            align="end"
+          />
         </div>
 
 
