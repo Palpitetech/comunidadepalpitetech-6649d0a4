@@ -5,9 +5,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Mail, AlertTriangle } from "lucide-react";
+import { Loader2, Mail, AlertTriangle, Tag } from "lucide-react";
 import type { ExtendedProfile, Plan } from "@/types/plans";
 
 interface UserWithPlan extends ExtendedProfile {
@@ -139,6 +140,26 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
       </div>
 
       <Separator />
+
+      {/* Tags do usuário */}
+      {user.tags && user.tags.length > 0 && (
+        <>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5">
+              <Tag className="h-3.5 w-3.5" />
+              Tags
+            </Label>
+            <div className="flex flex-wrap gap-1.5">
+              {user.tags.map((tag) => (
+                <Badge key={tag} variant="secondary" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          </div>
+          <Separator />
+        </>
+      )}
 
       <div className="space-y-4">
         <div className="space-y-2">

@@ -90,6 +90,7 @@ export interface ExtendedProfile {
   status_assinatura: string | null;
   validade_assinatura: string | null;
   cpf: string | null;
+  tags: string[];
 }
 
 // Labels amigáveis para cada feature
