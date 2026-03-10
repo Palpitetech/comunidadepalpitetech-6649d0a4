@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { Send } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Send, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CommentItem } from "./CommentItem";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 interface Comment {
   id: string;
@@ -40,6 +41,7 @@ export function CommentSection({
   deletingId,
 }: CommentSectionProps) {
   const [newComment, setNewComment] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = () => {
     if (newComment.trim()) {
@@ -53,20 +55,24 @@ export function CommentSection({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {/* Header */}
-      <p className="text-sm text-muted-foreground">
-        {commentsCount} {commentsCount === 1 ? "comentário" : "comentários"}
-      </p>
+      <div className="flex items-center gap-2 pt-2">
+        <MessageCircle className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-medium text-foreground">
+          {commentsCount} {commentsCount === 1 ? "comentário" : "comentários"}
+        </span>
+      </div>
 
-      {/* Input de novo comentário */}
-      <div className="flex items-end gap-2">
+      {/* New comment input */}
+      <div className="flex items-center gap-2 bg-muted/40 rounded-xl px-3 py-1 border border-border/40 focus-within:border-primary/40 focus-within:bg-muted/20 transition-all">
         <input
+          ref={inputRef}
           type="text"
           placeholder="Escreva um comentário..."
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
-          className="flex-1 bg-transparent border-b border-border text-sm py-2 px-0 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+          className="flex-1 bg-transparent text-sm py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none min-w-0"
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
@@ -79,41 +85,58 @@ export function CommentSection({
           disabled={!newComment.trim() || isAdding}
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-muted-foreground hover:text-primary flex-shrink-0"
+          className={cn(
+            "h-8 w-8 shrink-0 rounded-lg transition-all",
+            newComment.trim()
+              ? "text-primary hover:text-primary hover:bg-primary/10"
+              : "text-muted-foreground/40"
+          )}
         >
           <Send className="h-4 w-4" />
         </Button>
       </div>
 
-      {/* Lista de comentários */}
+      {/* Comment list */}
       {isLoading ? (
-        <div className="space-y-3 pt-2">
-          {[1, 2].map((i) => (
-            <div key={i} className="flex gap-2.5">
-              <Skeleton className="h-7 w-7 rounded-full" />
-              <div className="flex-1 space-y-1.5">
-                <Skeleton className="h-3 w-20" />
+        <div className="space-y-4 pt-1">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex gap-2.5 animate-in fade-in duration-300" style={{ animationDelay: `${i * 100}ms` }}>
+              <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-3 w-24" />
                 <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-3/4" />
               </div>
             </div>
           ))}
         </div>
       ) : comments.length === 0 ? (
-        <p className="text-xs text-muted-foreground text-center py-4">
-          Seja o primeiro a comentar.
-        </p>
+        <div className="text-center py-8">
+          <MessageCircle className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">
+            Nenhum comentário ainda.
+          </p>
+          <p className="text-xs text-muted-foreground/60 mt-0.5">
+            Seja o primeiro a comentar!
+          </p>
+        </div>
       ) : (
-        <div className="space-y-0">
-          {comments.map((comment) => (
-            <CommentItem
+        <div className="space-y-0 divide-y divide-border/30">
+          {comments.map((comment, index) => (
+            <div
               key={comment.id}
-              comment={comment}
-              currentUserId={currentUserId}
-              onDelete={onDeleteComment}
-              onReply={handleReply}
-              isDeleting={deletingId === comment.id}
-              isReplying={isAdding}
-            />
+              className="animate-in fade-in slide-in-from-bottom-1 duration-200"
+              style={{ animationDelay: `${index * 40}ms` }}
+            >
+              <CommentItem
+                comment={comment}
+                currentUserId={currentUserId}
+                onDelete={onDeleteComment}
+                onReply={handleReply}
+                isDeleting={deletingId === comment.id}
+                isReplying={isAdding}
+              />
+            </div>
           ))}
         </div>
       )}
