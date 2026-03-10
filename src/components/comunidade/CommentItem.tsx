@@ -59,8 +59,9 @@ export function CommentItem({
 
   return (
     <div className={cn(
-      "py-3",
-      isNested && "ml-8 border-l-2 border-primary/10 pl-3"
+      "py-3 transition-opacity duration-300",
+      isNested && "ml-8 border-l-2 border-primary/10 pl-3",
+      isOptimistic && "opacity-60"
     )}>
       <div className="flex gap-2.5">
         <Avatar className={cn("shrink-0", isNested ? "h-6 w-6" : "h-8 w-8")}>
