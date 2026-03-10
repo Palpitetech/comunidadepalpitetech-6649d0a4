@@ -151,8 +151,27 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
             </Label>
             <div className="flex flex-wrap gap-1.5">
               {user.tags.map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-xs">
+                <Badge key={tag} variant="secondary" className="text-xs flex items-center gap-1 pr-1">
                   {tag}
+                  <button
+                    type="button"
+                    className="ml-0.5 rounded-full hover:bg-destructive/20 hover:text-destructive p-0.5 transition-colors"
+                    onClick={async () => {
+                      const newTags = user.tags.filter((t) => t !== tag);
+                      const { error } = await supabase
+                        .from("perfis")
+                        .update({ tags: newTags })
+                        .eq("id", user.id);
+                      if (error) {
+                        toast.error("Erro ao remover tag");
+                      } else {
+                        toast.success(`Tag "${tag}" removida`);
+                        onUserUpdated();
+                      }
+                    }}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
                 </Badge>
               ))}
             </div>
