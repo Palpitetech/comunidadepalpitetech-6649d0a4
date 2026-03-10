@@ -447,10 +447,10 @@ serve(async (req) => {
     carrinho_abandonado: "carrinho_abandonado",
   };
 
+  // Tags de plano conhecidas
+  const PLAN_TAGS = ["gratis", "mensal", "semestral", "anual", "anual-vip"];
+
   // Regras de transição: ao adicionar uma tag, quais tags remover
-  // - inadimplente: perde "ativo"
-  // - cancelado: perde "ativo" e "inadimplente"
-  // - ativo: perde "inadimplente" e "cancelado"
   const TAG_REMOVES: Record<string, string[]> = {
     inadimplente: ["ativo"],
     cancelado: ["ativo", "inadimplente"],
@@ -483,6 +483,31 @@ serve(async (req) => {
       // Adiciona a nova tag se não existir
       if (!currentTags.includes(tag)) {
         currentTags.push(tag);
+      }
+
+      // Se tem plan_id no metadata, resolve o slug e troca a tag de plano
+      if (meta.plan_id) {
+        const { data: planRow } = await admin
+          .from("plans")
+          .select("slug")
+          .eq("id", meta.plan_id)
+          .single();
+        if (planRow?.slug) {
+          // Mapeia slug para tag
+          const slugToTag: Record<string, string> = {
+            gratis: "gratis",
+            mensal: "mensal",
+            semestral: "semestral",
+            anual: "anual",
+            "plano-anual-vip": "anual-vip",
+          };
+          const planTag = slugToTag[planRow.slug] ?? planRow.slug;
+          // Remove todas as tags de plano antigas
+          currentTags = currentTags.filter((t) => !PLAN_TAGS.includes(t));
+          // Adiciona a tag do plano novo
+          currentTags.push(planTag);
+          logStep("Plan tag updated", { planTag, slug: planRow.slug });
+        }
       }
 
       await admin
