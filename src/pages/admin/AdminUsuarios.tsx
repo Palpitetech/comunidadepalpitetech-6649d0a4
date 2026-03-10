@@ -41,6 +41,10 @@ export default function AdminUsuarios() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("todos");
   const [page, setPage] = useState(0);
+  const [includeTags, setIncludeTags] = useState<string[]>([]);
+  const [excludeTags, setExcludeTags] = useState<string[]>([]);
+  const [exactMatch, setExactMatch] = useState(false);
+  const [tagFilterOpen, setTagFilterOpen] = useState(false);
   const PAGE_SIZE = 25;
 
   const fetchData = async () => {
