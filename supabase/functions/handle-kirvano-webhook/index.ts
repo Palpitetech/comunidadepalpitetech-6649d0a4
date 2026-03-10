@@ -975,6 +975,9 @@ serve(async (req) => {
       });
     }
 
+    const eventType = action === "cancel" ? "assinatura_cancelada" : "assinatura_inadimplente";
+    await insertEvent(perfil.id, eventType, { action });
+
     const { error: deleteRoleError } = await admin.from("user_roles").delete().eq("user_id", perfil.id).eq("role", "premium");
     if (deleteRoleError) logStep("Failed to delete premium role", { message: deleteRoleError.message });
     await finalizeLog({ processed: true, process_result: action === "cancel" ? "canceled_removed_role" : "delinquent_removed_role" });
