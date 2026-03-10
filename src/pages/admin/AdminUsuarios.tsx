@@ -178,41 +178,75 @@ export default function AdminUsuarios() {
     <div className="w-72 space-y-3 p-1">
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-1.5">Contém a tag</p>
-        <div className="flex flex-wrap gap-1 max-h-28 overflow-auto">
-          {allTags.map(tag => (
-            <button
-              key={`inc-${tag}`}
-              onClick={() => toggleTag(tag, includeTags, setIncludeTags)}
-              className={cn(
-                "px-2 py-0.5 rounded-full text-[11px] border transition-colors",
-                includeTags.includes(tag)
-                  ? "bg-primary/15 text-primary border-primary/30"
-                  : "bg-muted/40 text-muted-foreground border-transparent hover:bg-muted"
-              )}
-            >
-              {tag}
-            </button>
-          ))}
+        {/* Selected include tags */}
+        {includeTags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-1.5">
+            {includeTags.map(tag => (
+              <button key={`sel-inc-${tag}`} onClick={() => toggleTag(tag, includeTags, setIncludeTags)} className="px-2 py-0.5 rounded-full text-[11px] border bg-primary/15 text-primary border-primary/30 flex items-center gap-0.5">
+                {tag} <X className="h-2.5 w-2.5" />
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="relative">
+          <Input
+            placeholder="Digitar tag..."
+            value={includeSearch}
+            onChange={(e) => setIncludeSearch(e.target.value)}
+            className="h-8 text-xs"
+          />
         </div>
+        {includeSearch && (
+          <div className="flex flex-wrap gap-1 mt-1.5 max-h-24 overflow-auto">
+            {allTags
+              .filter(t => t.toLowerCase().includes(includeSearch.toLowerCase()) && !includeTags.includes(t))
+              .map(tag => (
+                <button
+                  key={`sug-inc-${tag}`}
+                  onClick={() => { toggleTag(tag, includeTags, setIncludeTags); setIncludeSearch(""); }}
+                  className="px-2 py-0.5 rounded-full text-[11px] border bg-muted/40 text-muted-foreground border-transparent hover:bg-muted"
+                >
+                  {tag}
+                </button>
+              ))}
+          </div>
+        )}
       </div>
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-1.5">Não contém a tag</p>
-        <div className="flex flex-wrap gap-1 max-h-28 overflow-auto">
-          {allTags.map(tag => (
-            <button
-              key={`exc-${tag}`}
-              onClick={() => toggleTag(tag, excludeTags, setExcludeTags)}
-              className={cn(
-                "px-2 py-0.5 rounded-full text-[11px] border transition-colors",
-                excludeTags.includes(tag)
-                  ? "bg-destructive/15 text-destructive border-destructive/30"
-                  : "bg-muted/40 text-muted-foreground border-transparent hover:bg-muted"
-              )}
-            >
-              {tag}
-            </button>
-          ))}
+        {/* Selected exclude tags */}
+        {excludeTags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-1.5">
+            {excludeTags.map(tag => (
+              <button key={`sel-exc-${tag}`} onClick={() => toggleTag(tag, excludeTags, setExcludeTags)} className="px-2 py-0.5 rounded-full text-[11px] border bg-destructive/15 text-destructive border-destructive/30 flex items-center gap-0.5">
+                {tag} <X className="h-2.5 w-2.5" />
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="relative">
+          <Input
+            placeholder="Digitar tag..."
+            value={excludeSearch}
+            onChange={(e) => setExcludeSearch(e.target.value)}
+            className="h-8 text-xs"
+          />
         </div>
+        {excludeSearch && (
+          <div className="flex flex-wrap gap-1 mt-1.5 max-h-24 overflow-auto">
+            {allTags
+              .filter(t => t.toLowerCase().includes(excludeSearch.toLowerCase()) && !excludeTags.includes(t))
+              .map(tag => (
+                <button
+                  key={`sug-exc-${tag}`}
+                  onClick={() => { toggleTag(tag, excludeTags, setExcludeTags); setExcludeSearch(""); }}
+                  className="px-2 py-0.5 rounded-full text-[11px] border bg-muted/40 text-muted-foreground border-transparent hover:bg-muted"
+                >
+                  {tag}
+                </button>
+              ))}
+          </div>
+        )}
       </div>
       <div className="flex items-center justify-between pt-1 border-t border-border">
         <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
