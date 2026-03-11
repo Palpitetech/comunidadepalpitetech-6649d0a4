@@ -56,3 +56,9 @@ verify_jwt = false
 
 [functions.send-push]
 verify_jwt = false
+
+[functions.process-queue]
+verify_jwt = false
+
+[functions.reset-daily-counters]
+verify_jwt = false

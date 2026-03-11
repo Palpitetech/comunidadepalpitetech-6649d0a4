@@ -155,18 +155,20 @@ export function FilaTab() {
 
   const handleProcess = async () => {
     setProcessing(true);
-    // For now, just mark all pending as "sending" to simulate processing trigger
-    const { error } = await supabase
-      .from("message_queue" as any)
-      .update({ status: "sending" })
-      .eq("status", "pending");
-    if (error) {
-      toast.error("Erro ao processar fila");
-    } else {
-      toast.success("Fila sendo processada");
+    try {
+      const { data, error } = await supabase.functions.invoke("process-queue", {
+        method: "POST",
+      });
+      if (error) throw error;
+      const processed = data?.processed ?? 0;
+      toast.success(`Fila processada: ${processed} mensagem(ns) enviada(s)`);
       fetchAll();
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Erro ao processar fila");
+    } finally {
+      setProcessing(false);
     }
-    setProcessing(false);
   };
 
   const statusBadge = (status: string) => {
