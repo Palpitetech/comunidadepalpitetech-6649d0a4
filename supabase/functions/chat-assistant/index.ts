@@ -130,6 +130,7 @@ function buildSystemPrompt(args: {
   const topicHint: Record<ChatTopicId, string> = {
     boloes: "Bolões",
     estrategias: "Estratégias e Ferramentas",
+    estrategias_duplasena: "Estratégias da Dupla Sena",
     conhecer_planos: "Conhecer os Planos",
   };
 
