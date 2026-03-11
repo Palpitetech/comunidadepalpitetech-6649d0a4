@@ -40,8 +40,6 @@ export default function AdminWhatsApp() {
           <TabsContent value="templates" className="mt-6">
             <TemplatesTab />
           </TabsContent>
-            </div>
-          </TabsContent>
 
           <TabsContent value="fila" className="mt-6">
             <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">
