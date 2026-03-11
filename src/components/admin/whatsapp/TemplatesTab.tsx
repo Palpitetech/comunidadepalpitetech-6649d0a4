@@ -57,9 +57,22 @@ export function TemplatesTab() {
     setLoading(false);
   }, []);
 
+  const fetchEventTypes = useCallback(async () => {
+    const { data } = await supabase
+      .from("events")
+      .select("event_type");
+    if (data) {
+      const unique = [...new Set(data.map((d: any) => d.event_type as string))].sort();
+      // Ensure "manual" is always present
+      if (!unique.includes("manual")) unique.push("manual");
+      setEventTypes(unique);
+    }
+  }, []);
+
   useEffect(() => {
     fetchTemplates();
-  }, [fetchTemplates]);
+    fetchEventTypes();
+  }, [fetchTemplates, fetchEventTypes]);
 
   const openCreate = () => {
     setEditingId(null);
