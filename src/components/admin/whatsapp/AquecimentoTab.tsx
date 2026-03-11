@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Loader2, Flame, MessageCircle, Users, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 /* ── Types ───────────────────────────────────────────── */
 
@@ -34,7 +35,7 @@ interface WarmingLog {
 }
 
 interface InstanceMap {
-  [id: string]: string; // id -> friendly_name
+  [id: string]: string;
 }
 
 /* ── Helpers ─────────────────────────────────────────── */
@@ -69,6 +70,7 @@ function windowEmoji(name: string): string {
 /* ── Component ───────────────────────────────────────── */
 
 export function AquecimentoTab() {
+  const isMobile = useIsMobile();
   const [schedules, setSchedules] = useState<WarmingSchedule[]>([]);
   const [logs, setLogs] = useState<WarmingLog[]>([]);
   const [instances, setInstances] = useState<InstanceMap>({});
@@ -77,12 +79,7 @@ export function AquecimentoTab() {
 
   const fetchData = useCallback(async () => {
     const now = saoPauloNow();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayStartUtc = new Date(
-      todayStart.getTime() - (-todayStart.getTimezoneOffset() * 60000) + 3 * 3600000
-    );
 
-    // Build today start ISO for SP midnight in UTC
     const spMidnight = new Date(
       Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 3, 0, 0)
     ).toISOString();
@@ -135,13 +132,11 @@ export function AquecimentoTab() {
   );
 
   const nextWindow = (() => {
-    // Find next window today
     const todayWindows = schedules
       .filter((s) => s.day_type === dayType && s.is_active && s.hour_start > currentHour)
       .sort((a, b) => a.hour_start - b.hour_start);
     if (todayWindows.length > 0) return todayWindows[0];
 
-    // Find first window tomorrow
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowType = getDayType(tomorrow);
@@ -151,7 +146,6 @@ export function AquecimentoTab() {
     return tomorrowWindows.length > 0 ? tomorrowWindows[0] : null;
   })();
 
-  // Group logs by session (from+to+window within same conversation)
   const uniqueConversations = new Set<string>();
   logs.forEach((log) => {
     const key = [log.from_instance_id, log.to_instance_id].sort().join("|") + "|" + (log.window_name || "");
@@ -169,7 +163,6 @@ export function AquecimentoTab() {
     ? format(new Date(lastLog.sent_at), "HH:mm", { locale: ptBR })
     : "";
 
-  // Build history table: group by pair+window, show count
   const historyGroups = (() => {
     const groups: Record<string, {
       firstSentAt: string;
@@ -238,12 +231,12 @@ export function AquecimentoTab() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Status Card */}
       <Card>
-        <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6">
+        <CardContent className="flex flex-col gap-3 pt-5 pb-4 sm:flex-row sm:items-center sm:justify-between sm:pt-6">
           <div className="flex items-center gap-3">
-            <span className="relative flex h-3 w-3">
+            <span className="relative flex h-3 w-3 shrink-0">
               <span
                 className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
                   activeWindow ? "bg-green-500" : "bg-muted-foreground/40"
@@ -255,14 +248,14 @@ export function AquecimentoTab() {
                 }`}
               />
             </span>
-            <div>
-              <p className="text-sm font-medium">
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-medium leading-tight">
                 {activeWindow
                   ? `${windowEmoji(activeWindow.window_name)} ${formatWindowName(activeWindow.window_name)} — ${String(activeWindow.hour_start).padStart(2, "0")}h às ${String(activeWindow.hour_end).padStart(2, "0")}h`
                   : "Nenhuma janela ativa agora"}
               </p>
               {nextWindow && !activeWindow && (
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-[11px] text-muted-foreground mt-0.5">
                   ⏰ Próxima: {formatWindowName(nextWindow.window_name)} às{" "}
                   {String(nextWindow.hour_start).padStart(2, "0")}h00
                 </p>
@@ -276,7 +269,7 @@ export function AquecimentoTab() {
                 <div>
                   <Button
                     size="sm"
-                    className="gap-1.5"
+                    className="gap-1.5 w-full sm:w-auto"
                     onClick={handleManualWarm}
                     disabled={warming || !activeWindow}
                   >
@@ -285,7 +278,7 @@ export function AquecimentoTab() {
                     ) : (
                       <Flame className="h-4 w-4" />
                     )}
-                    Aquecer Próxima Dupla
+                    Aquecer Dupla
                   </Button>
                 </div>
               </TooltipTrigger>
@@ -300,41 +293,68 @@ export function AquecimentoTab() {
       </Card>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <Card>
-          <CardContent className="pt-5 pb-4 text-center">
-            <Users className="h-5 w-5 mx-auto text-muted-foreground mb-1.5" />
-            <p className="text-2xl font-bold tabular-nums">{totalConversations}</p>
-            <p className="text-[11px] text-muted-foreground">Conversas hoje</p>
+          <CardContent className="pt-4 pb-3 sm:pt-5 sm:pb-4 text-center px-2">
+            <Users className="h-4 w-4 sm:h-5 sm:w-5 mx-auto text-muted-foreground mb-1" />
+            <p className="text-lg sm:text-2xl font-bold tabular-nums">{totalConversations}</p>
+            <p className="text-[10px] sm:text-[11px] text-muted-foreground leading-tight">Conversas</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-5 pb-4 text-center">
-            <MessageCircle className="h-5 w-5 mx-auto text-muted-foreground mb-1.5" />
-            <p className="text-2xl font-bold tabular-nums">{totalMessages}</p>
-            <p className="text-[11px] text-muted-foreground">Mensagens hoje</p>
+          <CardContent className="pt-4 pb-3 sm:pt-5 sm:pb-4 text-center px-2">
+            <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 mx-auto text-muted-foreground mb-1" />
+            <p className="text-lg sm:text-2xl font-bold tabular-nums">{totalMessages}</p>
+            <p className="text-[10px] sm:text-[11px] text-muted-foreground leading-tight">Mensagens</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-5 pb-4 text-center">
-            <Clock className="h-5 w-5 mx-auto text-muted-foreground mb-1.5" />
-            <p className="text-sm font-medium truncate">{lastPairText}</p>
-            <p className="text-[11px] text-muted-foreground">
-              {lastPairTime ? `às ${lastPairTime}` : "Nenhuma hoje"}
+          <CardContent className="pt-4 pb-3 sm:pt-5 sm:pb-4 text-center px-2">
+            <Clock className="h-4 w-4 sm:h-5 sm:w-5 mx-auto text-muted-foreground mb-1" />
+            <p className="text-xs sm:text-sm font-medium truncate">{lastPairText}</p>
+            <p className="text-[10px] sm:text-[11px] text-muted-foreground">
+              {lastPairTime ? `às ${lastPairTime}` : "Nenhuma"}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* History Table */}
+      {/* History */}
       <div>
-        <h3 className="text-sm font-semibold mb-3">Histórico de aquecimento de hoje</h3>
+        <h3 className="text-xs sm:text-sm font-semibold mb-3">Histórico de hoje</h3>
         {historyGroups.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
             <Flame className="h-8 w-8 opacity-40" />
             <p className="text-sm">Nenhum aquecimento hoje</p>
           </div>
+        ) : isMobile ? (
+          /* Mobile card list */
+          <div className="space-y-2">
+            {historyGroups.map((group, idx) => (
+              <div key={idx} className="rounded-xl border border-border bg-card p-3.5 flex items-center gap-3">
+                <div className="flex flex-col items-center shrink-0">
+                  <span className="text-sm font-bold tabular-nums">
+                    {group.firstSentAt
+                      ? format(new Date(group.firstSentAt), "HH:mm", { locale: ptBR })
+                      : "—"}
+                  </span>
+                  <Badge variant="secondary" className="text-[9px] mt-0.5 px-1.5">
+                    {group.count} msgs
+                  </Badge>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium truncate">
+                    {instances[group.fromId] || "—"} ↔ {instances[group.toId] || "—"}
+                  </p>
+                  <Badge variant="secondary" className="text-[10px] mt-1">
+                    {windowEmoji(group.windowName)} {formatWindowName(group.windowName)}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
+          /* Desktop table */
           <div className="rounded-lg border overflow-x-auto">
             <Table>
               <TableHeader>
