@@ -419,6 +419,12 @@ export function DesktopHeader() {
                     Eventos
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                  <Link to="/admin/whatsapp">
+                    <MessageCircle className="h-4 w-4" />
+                    WhatsApp
+                  </Link>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
