@@ -38,8 +38,8 @@ export default function AdminWhatsApp() {
           </TabsContent>
 
           <TabsContent value="templates" className="mt-6">
-            <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">
-              Em breve — Templates de mensagens
+            <TemplatesTab />
+          </TabsContent>
             </div>
           </TabsContent>
 
