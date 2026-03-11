@@ -1,0 +1,2 @@
+ALTER TABLE public.postagens DROP CONSTRAINT postagens_tipo_check;
+ALTER TABLE public.postagens ADD CONSTRAINT postagens_tipo_check CHECK (tipo::text = ANY (ARRAY['comentario','palpite','analise','resultado_oficial','estrategia']::text[]));
