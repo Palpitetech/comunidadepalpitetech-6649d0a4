@@ -65,3 +65,9 @@ verify_jwt = false
 
 [functions.evolution-proxy]
 verify_jwt = false
+
+[functions.warming-run]
+verify_jwt = false
+
+[functions.warming-manual]
+verify_jwt = false
