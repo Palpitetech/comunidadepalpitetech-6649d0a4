@@ -352,8 +352,7 @@ Com base no post abaixo, crie uma mensagem curta para um grupo de WhatsApp. A me
 
   // Concatenar link do post ao final
   if (baseUrl) {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const linkPost = `${supabaseUrl.replace(/\/+$/, "")}/functions/v1/og-post?id=${post.id}`;
+    const linkPost = `${baseUrl.replace(/\/+$/, "")}/comunidade/post/${post.id}`;
     return `${mensagemIa}\n\n${linkPost}`;
   }
 
