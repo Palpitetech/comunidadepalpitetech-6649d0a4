@@ -253,7 +253,7 @@ export function TemplatesTab() {
                       aria-expanded={triggerOpen}
                       className="w-full justify-between font-normal"
                     >
-                      {form.event_trigger || "Selecione o gatilho"}
+                      {form.event_trigger ? getEventLabel(form.event_trigger) : "Selecione o gatilho"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
