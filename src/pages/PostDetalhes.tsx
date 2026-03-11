@@ -80,7 +80,6 @@ export default function PostDetalhes() {
     enabled: !!user?.id,
     staleTime: Infinity,
   });
-  const commentSectionRef = useRef<HTMLDivElement>(null);
 
   const {
     post,
