@@ -362,7 +362,7 @@ async function runWarmingWindow(force = false) {
     const [instA, instB] = pairsToRun[i];
 
     try {
-      const sent = await runWarmingPair(supabase, instA, instB, window);
+      const sent = await runWarmingPair(supabase, instA, instB, window, force);
       scheduled++;
       console.log(
         `Warming pair ${instA.name} ↔ ${instB.name}: ${sent} messages sent`
