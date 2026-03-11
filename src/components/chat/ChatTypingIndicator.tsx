@@ -10,20 +10,25 @@ export function ChatTypingIndicator({ reducedMotion = false }: ChatTypingIndicat
         <span aria-hidden>...</span>
       ) : (
         <span className="inline-flex items-center gap-1" aria-hidden>
-          <span
-            className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground/60"
-            style={{ animationDelay: "0ms" }}
-          />
-          <span
-            className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground/60"
-            style={{ animationDelay: "200ms" }}
-          />
-          <span
-            className="h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground/60"
-            style={{ animationDelay: "400ms" }}
-          />
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="h-2 w-2 rounded-full bg-[#930089]"
+              style={{
+                animation: "chat-dot-wave 1.2s ease-in-out infinite",
+                animationDelay: `${i * 150}ms`,
+              }}
+            />
+          ))}
         </span>
       )}
+
+      <style>{`
+        @keyframes chat-dot-wave {
+          0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+          30% { transform: translateY(-6px); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }
