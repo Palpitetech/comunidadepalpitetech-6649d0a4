@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Heart, MessageCircle, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
@@ -21,9 +22,10 @@ interface PostCardProps {
     } | null;
   };
   onClick: () => void;
+  onPrefetch?: () => void;
 }
 
-export function PostCard({ post, onClick }: PostCardProps) {
+export const PostCard = memo(function PostCard({ post, onClick, onPrefetch }: PostCardProps) {
   const authorName = post.perfis?.nome || "Usuário";
   const initials = authorName
     .split(" ")
@@ -40,9 +42,10 @@ export function PostCard({ post, onClick }: PostCardProps) {
   return (
     <article
       onClick={onClick}
-      className="bg-card border border-border/60 rounded-xl p-3 cursor-pointer shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+      onPointerEnter={onPrefetch}
+      className="bg-card border border-border/60 rounded-xl p-3 cursor-pointer shadow-md active:scale-[0.98] transition-transform duration-150"
     >
-      {/* Header compacto: Avatar + Nome + Tempo */}
+      {/* Header compacto */}
       <div className="flex items-center gap-2 mb-2">
         <Avatar className="h-7 w-7">
           <AvatarImage src={post.perfis?.avatar_url || undefined} />
@@ -79,19 +82,21 @@ export function PostCard({ post, onClick }: PostCardProps) {
               src={post.media_url}
               alt="Mídia do post"
               className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
             />
           )}
         </div>
       )}
 
-      {/* Conteúdo resumido (se não tiver mídia) */}
+      {/* Conteúdo resumido */}
       {!post.media_url && post.conteudo && (
         <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
           {post.conteudo}
         </p>
       )}
 
-      {/* Footer: Indicadores + Botão Continue Lendo */}
+      {/* Footer */}
       <div className="flex items-center justify-between pt-1">
         <div className="flex items-center gap-3 text-muted-foreground">
           <span className="flex items-center gap-1 text-xs">
@@ -110,4 +115,4 @@ export function PostCard({ post, onClick }: PostCardProps) {
       </div>
     </article>
   );
-}
+});
