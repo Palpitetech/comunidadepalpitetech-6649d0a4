@@ -96,8 +96,8 @@ export function InstanciasTab() {
       if (Array.isArray(evoData)) {
         const statusMap = new Map<string, string>();
         for (const evo of evoData) {
-          const instanceName = evo.instance?.instanceName || evo.instanceName;
-          const connStatus = evo.instance?.status || evo.connectionStatus || evo.state;
+          const instanceName = evo.name || evo.instance?.instanceName || evo.instanceName;
+          const connStatus = evo.connectionStatus || evo.instance?.status || evo.state;
           if (instanceName) {
             statusMap.set(instanceName, connStatus === "open" ? "online" : "offline");
           }
