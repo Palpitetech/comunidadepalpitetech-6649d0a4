@@ -84,7 +84,7 @@ async function handlePrepare(
     return jsonRes({ error: "Nenhum post encontrado" }, 404);
   }
 
-  const mensagem = await generateMessage(post, env.LOVABLE_API_KEY);
+  const mensagem = await generateMessage(post, env.LOVABLE_API_KEY, env.COMMUNITY_BASE_URL);
 
   // Pick instance
   const { data: instance } = await supabase
