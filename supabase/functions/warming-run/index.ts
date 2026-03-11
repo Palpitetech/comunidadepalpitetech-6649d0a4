@@ -373,9 +373,12 @@ async function runWarmingWindow(force = false) {
       );
     }
 
-    // 3+ min gap between pair starts (skip after last, skip in force mode)
-    if (!force && i < pairsToRun.length - 1) {
-      await delay(randomInt(180_000, 300_000));
+    // Gap between pair starts (skip after last)
+    if (i < pairsToRun.length - 1) {
+      const pairDelay = force
+        ? randomInt(30_000, 60_000)
+        : randomInt(180_000, 300_000);
+      await delay(pairDelay);
     }
   }
 
