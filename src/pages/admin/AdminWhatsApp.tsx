@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Smartphone, FileText, Send, ScrollText, Flame } from "lucide-react";
+import { Smartphone, FileText, Send, ScrollText, Flame, Users } from "lucide-react";
 import { InstanciasTab } from "@/components/admin/whatsapp/InstanciasTab";
 import { TemplatesTab } from "@/components/admin/whatsapp/TemplatesTab";
 import { FilaTab } from "@/components/admin/whatsapp/FilaTab";
 import { LogsTab } from "@/components/admin/whatsapp/LogsTab";
 import { AquecimentoTab } from "@/components/admin/whatsapp/AquecimentoTab";
+import { GruposTab } from "@/components/admin/whatsapp/GruposTab";
 import { cn } from "@/lib/utils";
 
 const tabs = [
@@ -14,6 +15,7 @@ const tabs = [
   { value: "fila", label: "Fila", icon: Send },
   { value: "logs", label: "Logs", icon: ScrollText },
   { value: "aquecimento", label: "Aquecimento", icon: Flame },
+  { value: "grupos", label: "Grupos", icon: Users },
 ] as const;
 
 export default function AdminWhatsApp() {
@@ -55,6 +57,7 @@ export default function AdminWhatsApp() {
           {activeTab === "fila" && <FilaTab />}
           {activeTab === "logs" && <LogsTab />}
           {activeTab === "aquecimento" && <AquecimentoTab />}
+          {activeTab === "grupos" && <GruposTab />}
         </div>
       </div>
     </MainLayout>
