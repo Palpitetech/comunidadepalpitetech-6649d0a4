@@ -341,7 +341,15 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const result = await runWarmingWindow();
+    let force = false;
+    try {
+      const body = await req.json();
+      force = body?.force === true;
+    } catch {
+      // No body or invalid JSON — default force=false (cron behavior)
+    }
+
+    const result = await runWarmingWindow(force);
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
