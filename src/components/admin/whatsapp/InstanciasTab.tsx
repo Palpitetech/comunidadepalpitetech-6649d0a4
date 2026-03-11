@@ -310,7 +310,12 @@ export function InstanciasTab() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{instances.length} instância(s)</p>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleSyncFromEvolution} disabled={syncing}>
+            {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            Buscar Instâncias
+          </Button>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1.5" onClick={openCreate}>
               <Plus className="h-4 w-4" />
