@@ -162,6 +162,7 @@ async function handleSend(
         body: JSON.stringify({
           number: env.COMMUNITY_GROUP_JID,
           text: pending.message_generated,
+          linkPreview: false,
         }),
       },
     );
