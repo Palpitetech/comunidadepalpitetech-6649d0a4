@@ -67,7 +67,7 @@ export function useChat({ topic }: UseChatArgs) {
 
       const { data: msgs, error: msgsError } = await supabase
         .from("chat_messages")
-        .select("id, role, content, created_at, bot_persona_id")
+        .select("id, role, content, created_at, bot_persona_id, actions")
         .eq("conversation_id", id)
         .order("created_at", { ascending: true });
       if (msgsError) throw msgsError;
