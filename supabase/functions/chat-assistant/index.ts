@@ -354,8 +354,57 @@ serve(async (req) => {
 
     if (historyError) console.error("Erro ao carregar histórico:", historyError.message);
 
+    // 7b) Enriquecer contexto com dados reais do banco
+    let contextBlock = "";
+
+    if (topic === "estrategias") {
+      const { data: resultados } = await userClient
+        .from("resultados")
+        .select("concurso_id, data_sorteio, dezenas, qtd_pares, qtd_impares, qtd_moldura, qtd_repetidas, ciclo_numero, dezenas_faltantes_ciclo")
+        .order("concurso_id", { ascending: false })
+        .limit(10);
+
+      if (resultados?.length) {
+        const lines = resultados.map((r: any) =>
+          `Concurso ${r.concurso_id} — ${r.data_sorteio}\n` +
+          `  Dezenas: ${(r.dezenas || []).join(", ")}\n` +
+          `  Pares: ${r.qtd_pares} | Ímpares: ${r.qtd_impares} | Moldura: ${r.qtd_moldura} | Repetidas: ${r.qtd_repetidas}\n` +
+          `  Ciclo: ${r.ciclo_numero ?? "N/A"} | Faltantes no ciclo: ${(r.dezenas_faltantes_ciclo || []).join(", ") || "nenhuma"}`
+        ).join("\n\n");
+        contextBlock = `\n\nDADOS REAIS DOS ÚLTIMOS 10 CONCURSOS DA LOTOFÁCIL:\n${lines}`;
+      }
+    } else if (topic === "estrategias_duplasena") {
+      const { data: resultados } = await userClient
+        .from("resultados_duplasena" as any)
+        .select("concurso_id, data_sorteio, dezenas_sorteio1, dezenas_sorteio2, qtd_pares_s1, qtd_impares_s1, qtd_moldura_s1, qtd_repetidas_s1, qtd_pares_s2, qtd_impares_s2, qtd_moldura_s2, qtd_repetidas_s2")
+        .order("concurso_id", { ascending: false })
+        .limit(10);
+
+      if (resultados?.length) {
+        const lines = (resultados as any[]).map((r: any) =>
+          `Concurso ${r.concurso_id} — ${r.data_sorteio}\n` +
+          `  Sorteio 1: ${(r.dezenas_sorteio1 || []).join(", ")} | Pares: ${r.qtd_pares_s1} | Ímpares: ${r.qtd_impares_s1} | Moldura: ${r.qtd_moldura_s1} | Repetidas: ${r.qtd_repetidas_s1}\n` +
+          `  Sorteio 2: ${(r.dezenas_sorteio2 || []).join(", ")} | Pares: ${r.qtd_pares_s2} | Ímpares: ${r.qtd_impares_s2} | Moldura: ${r.qtd_moldura_s2} | Repetidas: ${r.qtd_repetidas_s2}`
+        ).join("\n\n");
+        contextBlock = `\n\nDADOS REAIS DOS ÚLTIMOS 10 CONCURSOS DA DUPLA SENA:\n${lines}`;
+      }
+    } else if (topic === "conhecer_planos") {
+      const { data: planos } = await userClient
+        .from("plans")
+        .select("name, description, price, features")
+        .eq("is_active", true)
+        .order("price", { ascending: true });
+
+      if (planos?.length) {
+        const lines = planos.map((p: any) =>
+          `- ${p.name}: R$${Number(p.price).toFixed(2)} — ${p.description || "Sem descrição"}`
+        ).join("\n");
+        contextBlock = `\n\nPLANOS DISPONÍVEIS ATUALMENTE:\n${lines}`;
+      }
+    }
+
     const systemPrompt = buildSystemPrompt({
-      botSystemPrompt: chosenBot.system_prompt,
+      botSystemPrompt: chosenBot.system_prompt + contextBlock,
       topic,
       userFirstName: firstName,
     });
