@@ -28,6 +28,46 @@ interface FormData {
 
 const emptyForm: FormData = { name: "", content: "", event_trigger: "manual" };
 
+const EVENT_MASKS: Record<string, string> = {
+  // Events table
+  novo_cadastro: "Novo Cadastro",
+  compra_aprovada: "Compra Aprovada",
+  pix_gerado: "PIX Gerado",
+  pix_expirado: "PIX Expirado",
+  boleto_gerado: "Boleto Gerado",
+  boleto_expirado: "Boleto Expirado",
+  assinatura_cancelada: "Assinatura Cancelada",
+  assinatura_inadimplente: "Inadimplente",
+  checkout_abandonado: "Checkout Abandonado",
+  carrinho_abandonado: "Carrinho Abandonado",
+  // Kirvano events
+  SALE_APPROVED: "Venda Aprovada",
+  SALE_REFUSED: "Venda Recusada",
+  SALE_CHARGEBACK: "Chargeback",
+  SALE_REFUNDED: "Reembolso",
+  BANK_SLIP_GENERATED: "Boleto Gerado",
+  BANK_SLIP_EXPIRED: "Boleto Expirado",
+  PIX_GENERATED: "PIX Gerado",
+  PIX_EXPIRED: "PIX Expirado",
+  SUBSCRIPTION_CANCELED: "Assinatura Cancelada",
+  SUBSCRIPTION_OVERDUE: "Inadimplente",
+  SUBSCRIPTION_RENEWED: "Assinatura Renovada",
+  SUBSCRIPTION_REACTIVATED: "Assinatura Reativada",
+  SUBSCRIPTION_TRIAL_STARTED: "Teste Iniciado",
+  SUBSCRIPTION_TRIAL_ENDED: "Teste Encerrado",
+  CHECKOUT_ABANDONED: "Checkout Abandonado",
+  ABANDONED_CART: "Carrinho Abandonado",
+  SUBSCRIPTION_EXPIRED: "Assinatura Expirada",
+  // Special
+  manual: "Manual",
+  lead_created: "Lead Cadastrado",
+  sale_confirmed: "Venda Confirmada",
+};
+
+function getEventLabel(eventType: string): string {
+  return EVENT_MASKS[eventType] || eventType;
+}
+
 const VARIABLES = ["{{nome}}", "{{telefone}}", "{{produto}}"];
 
 export function TemplatesTab() {
