@@ -49,12 +49,37 @@ function PostSkeleton() {
 export default function PostDetalhes() {
   const isMobile = useIsMobile();
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuthContext();
   const isAuthenticated = !!user;
   const { data: subscription } = useMySubscription(user?.id);
   const isFreePlan = !subscription || subscription.status === "inativa";
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const commentSectionRef = useRef<HTMLDivElement>(null);
+
+  // Capture referral code from shared URL
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref && ref.length === 6) {
+      localStorage.setItem("referral_code", ref);
+    }
+  }, [searchParams]);
+
+  // Fetch current user's referral code for sharing
+  const { data: myReferralCode } = useQuery({
+    queryKey: ["my-referral-code", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("perfis")
+        .select("referral_code")
+        .eq("id", user!.id)
+        .single();
+      return data?.referral_code || null;
+    },
+    enabled: !!user?.id,
+    staleTime: Infinity,
+  });
   const commentSectionRef = useRef<HTMLDivElement>(null);
 
   const {
