@@ -219,12 +219,24 @@ async function runWarmingPair(
 
 /* ── runWarmingWindow ────────────────────────────────── */
 
-async function runWarmingWindow() {
+async function runWarmingWindow(force = false) {
   const supabase = getSupabase();
 
-  const window = await getCurrentWindow(supabase);
-  if (!window) {
-    return { skipped: "no active window" };
+  let window: any = null;
+
+  if (!force) {
+    window = await getCurrentWindow(supabase);
+    if (!window) {
+      return { skipped: "no active window" };
+    }
+  } else {
+    // In force mode, use a synthetic window config
+    window = {
+      window_name: "manual_test",
+      min_messages: 2,
+      max_messages: 4,
+      theme: "conversa casual entre amigos sobre o dia a dia",
+    };
   }
 
   // Get online instances ordered by last_message_at ASC (who waited longest first)
@@ -245,33 +257,40 @@ async function runWarmingWindow() {
     return { skipped: "no valid pairs could be formed" };
   }
 
-  // Check which pairs already talked today in this window
-  const now = saoPauloNow();
-  const todayStart = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  );
-  const todayStartUtc = new Date(
-    todayStart.getTime() + 3 * 60 * 60 * 1000
-  ).toISOString();
+  let pendingPairs: [any, any][];
 
-  const { data: todayLogs } = await supabase
-    .from("warming_logs")
-    .select("from_instance_id, to_instance_id")
-    .eq("window_name", window.window_name)
-    .gte("sent_at", todayStartUtc);
+  if (force) {
+    // In force mode, skip "already talked today" check — use all pairs
+    pendingPairs = pairs;
+  } else {
+    // Check which pairs already talked today in this window
+    const now = saoPauloNow();
+    const todayStart = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+    );
+    const todayStartUtc = new Date(
+      todayStart.getTime() + 3 * 60 * 60 * 1000
+    ).toISOString();
 
-  const donePairs = new Set<string>();
-  if (todayLogs) {
-    for (const log of todayLogs) {
-      donePairs.add(
-        [log.from_instance_id, log.to_instance_id].sort().join("|")
-      );
+    const { data: todayLogs } = await supabase
+      .from("warming_logs")
+      .select("from_instance_id, to_instance_id")
+      .eq("window_name", window.window_name)
+      .gte("sent_at", todayStartUtc);
+
+    const donePairs = new Set<string>();
+    if (todayLogs) {
+      for (const log of todayLogs) {
+        donePairs.add(
+          [log.from_instance_id, log.to_instance_id].sort().join("|")
+        );
+      }
     }
-  }
 
-  const pendingPairs = pairs.filter(
-    ([a, b]) => !donePairs.has(pairKey(a, b))
-  );
+    pendingPairs = pairs.filter(
+      ([a, b]) => !donePairs.has(pairKey(a, b))
+    );
+  }
 
   if (pendingPairs.length === 0) {
     return { skipped: "all pairs already warmed today in this window" };
@@ -285,11 +304,13 @@ async function runWarmingWindow() {
     );
   }
 
-  // Run pairs sequentially with 3+ min gap between starts
+  // In force mode, only run the first pair for a quick test
+  const pairsToRun = force ? [pendingPairs[0]] : pendingPairs;
+
   let scheduled = 0;
 
-  for (let i = 0; i < pendingPairs.length; i++) {
-    const [instA, instB] = pendingPairs[i];
+  for (let i = 0; i < pairsToRun.length; i++) {
+    const [instA, instB] = pairsToRun[i];
 
     try {
       const sent = await runWarmingPair(supabase, instA, instB, window);
@@ -303,13 +324,13 @@ async function runWarmingWindow() {
       );
     }
 
-    // 3+ min gap between pair starts (skip after last)
-    if (i < pendingPairs.length - 1) {
+    // 3+ min gap between pair starts (skip after last, skip in force mode)
+    if (!force && i < pairsToRun.length - 1) {
       await delay(randomInt(180_000, 300_000));
     }
   }
 
-  return { scheduled, window_name: window.window_name };
+  return { scheduled, window_name: window.window_name, forced: force };
 }
 
 /* ── Handler ─────────────────────────────────────────── */
