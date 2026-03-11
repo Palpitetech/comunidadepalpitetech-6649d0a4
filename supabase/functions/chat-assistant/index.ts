@@ -282,33 +282,47 @@ serve(async (req) => {
     });
     if (insertUserMsgError) throw insertUserMsgError;
 
-    // 4) Verificar permissão — chat exige chat_estatisticas (VIP) para todos exceto conhecer_planos
-    if (topic !== "conhecer_planos") {
-      const hasVipChat = hasFeature(features, "chat_estatisticas");
-      if (!hasVipChat) {
+    // 4) Verificar permissão e limite diário
+    const isVip = hasFeature(features, "chat_estatisticas");
+    const FREE_DAILY_LIMIT = 3;
+    const todayStr = formatSaoPauloDay(new Date());
+    let currentCount = 0;
+
+    if (topic !== "conhecer_planos" && !isVip) {
+      // Buscar uso de hoje
+      const { data: usageRow } = await adminClient
+        .from("chat_daily_usage")
+        .select("count")
+        .eq("user_id", userId)
+        .eq("topic", topic)
+        .eq("day", todayStr)
+        .maybeSingle();
+
+      currentCount = (usageRow?.count as number) ?? 0;
+
+      if (currentCount >= FREE_DAILY_LIMIT) {
         const name = firstName ? `, ${firstName}` : "";
         const reply =
-          `Opa${name}! 👑 O chat de análises é exclusivo para membros do Plano Anual VIP. ` +
-          `Com ele você conversa diretamente com nossa IA sobre estatísticas, estratégias e seus palpites usando dados reais dos concursos.\n\n` +
-          `Quer conhecer o plano? É só me dizer!`;
-        const { error: insertAssistantError } = await userClient.from("chat_messages").insert({
+          `Você atingiu o limite de ${FREE_DAILY_LIMIT} mensagens diárias${name}. 🔒\n\n` +
+          `No Plano Anual VIP você tem acesso ilimitado à IA de análise, todos os dias, sem restrições.\n\n` +
+          `Mais de 47.000 linhas de código à sua disposição sem limites. Quer desbloquear?`;
+        await userClient.from("chat_messages").insert({
           user_id: userId,
           conversation_id: convId,
           role: "assistant",
           content: reply,
           bot_persona_id: null,
-          actions: { upgrade: true, plan: "anual-vip" },
+          actions: { upgrade: true, plan: "anual-vip", limit_reached: true },
         });
-        if (insertAssistantError) throw insertAssistantError;
 
-        return new Response(JSON.stringify({ conversation_id: convId, remaining_today: null }), {
+        return new Response(JSON.stringify({
+          conversation_id: convId,
+          usage: { count: currentCount, limit: FREE_DAILY_LIMIT, is_vip: false },
+        }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
     }
-
-    // 5) Limite diário removido (sem mais tema de estatísticas com limite)
-    let remainingToday: number | null = null;
 
     // 6) Seleção do bot por tag
     const tag = TOPIC_TO_BOT_TAG[topic];
