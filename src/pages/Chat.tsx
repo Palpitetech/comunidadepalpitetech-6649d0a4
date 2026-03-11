@@ -24,6 +24,7 @@ import { ArrowLeft, Send, Sparkles } from "lucide-react";
 
 export default function Chat() {
   const isMobile = useIsMobile();
+  const { profile } = useAuthContext();
   const { hasPermission } = usePermissions();
   const [selectedTopic, setSelectedTopic] = useState<ChatTopicId | null>(null);
   const [pendingStarter, setPendingStarter] = useState<string | null>(null);
