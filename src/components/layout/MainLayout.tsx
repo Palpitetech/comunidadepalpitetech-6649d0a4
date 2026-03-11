@@ -35,7 +35,7 @@ export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRigh
     <div className="min-h-screen flex flex-col bg-background" style={{ paddingBottom: isMobile ? 'env(safe-area-inset-bottom, 0px)' : undefined }}>
       {/* Desktop: Header completo / Mobile: PageHeader se pageTitle fornecido */}
       {!isMobile && <DesktopHeader />}
-      {isMobile && pageTitle && (
+      {isMobile && pageTitle !== undefined && (
         <PageHeader 
           title={pageTitle} 
           breadcrumb={breadcrumb}
