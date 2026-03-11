@@ -302,11 +302,11 @@ export function InstanciasTab() {
 
       let imported = 0;
       for (const evo of evoData) {
-        const instanceName = evo.instance?.instanceName || evo.instanceName;
+        const instanceName = evo.name || evo.instance?.instanceName || evo.instanceName;
         if (!instanceName || existingIds.has(instanceName)) continue;
 
-        const connStatus = evo.instance?.status || evo.connectionStatus || evo.state;
-        const phone = evo.instance?.owner || evo.owner || "";
+        const connStatus = evo.connectionStatus || evo.instance?.status || evo.state;
+        const phone = evo.ownerJid || evo.instance?.owner || evo.owner || "";
 
         await supabase.from("whatsapp_instances" as any).insert({
           name: instanceName,
