@@ -472,24 +472,36 @@ export type Database = {
       community_group_logs: {
         Row: {
           id: string
+          instance_evolution_id: string | null
           instance_id: string | null
+          message_generated: string | null
           message_sent: string | null
           post_id: string | null
+          scheduled_for: string | null
           sent_at: string | null
+          status: string
         }
         Insert: {
           id?: string
+          instance_evolution_id?: string | null
           instance_id?: string | null
+          message_generated?: string | null
           message_sent?: string | null
           post_id?: string | null
+          scheduled_for?: string | null
           sent_at?: string | null
+          status?: string
         }
         Update: {
           id?: string
+          instance_evolution_id?: string | null
           instance_id?: string | null
+          message_generated?: string | null
           message_sent?: string | null
           post_id?: string | null
+          scheduled_for?: string | null
           sent_at?: string | null
+          status?: string
         }
         Relationships: [
           {
