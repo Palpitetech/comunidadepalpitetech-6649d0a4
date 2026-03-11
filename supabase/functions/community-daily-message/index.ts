@@ -38,26 +38,34 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+  let bodyParams: any = {};
+  try { bodyParams = await req.json(); } catch { /* empty body is fine */ }
+  const skipDelay = bodyParams?.skip_delay === true;
+  const skipDedup = bodyParams?.skip_dedup === true;
+
   try {
     // 1. Check if already sent today
-    const todayStart = new Date();
-    todayStart.setUTCHours(0, 0, 0, 0);
+    if (!skipDedup) {
+      const todayStart = new Date();
+      todayStart.setUTCHours(0, 0, 0, 0);
 
-    const { data: existingLog } = await supabase
-      .from("community_group_logs")
-      .select("id")
-      .gte("sent_at", todayStart.toISOString())
-      .limit(1);
+      const { data: existingLog } = await supabase
+        .from("community_group_logs")
+        .select("id")
+        .gte("sent_at", todayStart.toISOString())
+        .limit(1);
 
-    if (existingLog && existingLog.length > 0) {
-      return new Response(JSON.stringify({ message: "Mensagem já enviada hoje" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (existingLog && existingLog.length > 0) {
+        return new Response(JSON.stringify({ message: "Mensagem já enviada hoje" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // 2. Find the most recent non-comment post
     const today = new Date().toISOString().slice(0, 10);
 
+    // Try non-comment posts first, then fall back to any main post
     let { data: post } = await supabase
       .from("postagens")
       .select("id, titulo, conteudo, tipo, created_at")
@@ -69,7 +77,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (!post) {
-      const { data: fallback } = await supabase
+      const { data: fallbackTyped } = await supabase
         .from("postagens")
         .select("id, titulo, conteudo, tipo, created_at")
         .neq("tipo", "comentario")
@@ -77,7 +85,19 @@ Deno.serve(async (req) => {
         .order("created_at", { ascending: false })
         .limit(1)
         .single();
-      post = fallback;
+      post = fallbackTyped;
+    }
+
+    // If still no post, use any main post (including tipo=comentario)
+    if (!post) {
+      const { data: fallbackAny } = await supabase
+        .from("postagens")
+        .select("id, titulo, conteudo, tipo, created_at")
+        .is("parent_id", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      post = fallbackAny;
     }
 
     if (!post) {
@@ -147,13 +167,15 @@ Com base no post abaixo, crie uma mensagem curta para um grupo de WhatsApp. A me
       throw new Error("Nenhuma instância online disponível");
     }
 
-    // 5. Random delay 0-120 minutes (via setTimeout-like approach)
-    const delayMinutes = Math.floor(Math.random() * 121);
-    const delayMs = delayMinutes * 60 * 1000;
-
-    if (delayMs > 0) {
-      console.log(`Aguardando ${delayMinutes} minutos antes de enviar...`);
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    // 5. Random delay 0-120 minutes (skip if testing)
+    let delayMinutes = 0;
+    if (!skipDelay) {
+      delayMinutes = Math.floor(Math.random() * 121);
+      const delayMs = delayMinutes * 60 * 1000;
+      if (delayMs > 0) {
+        console.log(`Aguardando ${delayMinutes} minutos antes de enviar...`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
     }
 
     // 6. Send message via Evolution API
