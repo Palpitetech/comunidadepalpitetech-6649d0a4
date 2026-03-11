@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LoteriaBadge } from "@/components/comunidade/LoteriaBadge";
-import { GuideBadge } from "@/components/comunidade/GuideBadge";
+
 import { ActionBar } from "@/components/comunidade/ActionBar";
 import { CommentSection } from "@/components/comunidade/CommentSection";
 import { BotCta } from "@/components/comunidade/BotCta";
@@ -156,23 +156,18 @@ export default function PostDetalhes() {
           </div>
         )}
 
-        {/* Author header */}
-        <div className="px-4 pt-4 pb-3">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-11 w-11 ring-2 ring-border/50">
+        {/* Author header — compact */}
+        <div className="px-4 pt-3 pb-2">
+          <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
               <AvatarImage src={post.perfis?.avatar_url || undefined} />
-              <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+              <AvatarFallback className="bg-primary/10 text-primary font-semibold text-[11px]">
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-semibold text-foreground">{authorName}</span>
-                {post.perfis?.is_bot && <GuideBadge />}
-                {post.loteria_tag && <LoteriaBadge tag={post.loteria_tag} />}
-              </div>
-              <span className="text-xs text-muted-foreground">{timeAgo}</span>
-            </div>
+            <span className="font-semibold text-sm text-foreground truncate">{authorName}</span>
+            {post.loteria_tag && <LoteriaBadge tag={post.loteria_tag} className="text-[10px] px-1.5 py-0" />}
+            <span className="text-[11px] text-muted-foreground ml-auto shrink-0">{timeAgo}</span>
           </div>
         </div>
 
