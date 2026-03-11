@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, ScrollText } from "lucide-react";
+import { Loader2, ScrollText, Filter, X } from "lucide-react";
 import { format, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SendLog {
   id: string;
@@ -33,6 +34,7 @@ const STATUS_OPTIONS = [
 ];
 
 export function LogsTab() {
+  const isMobile = useIsMobile();
   const [logs, setLogs] = useState<SendLog[]>([]);
   const [instances, setInstances] = useState<InstanceOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,6 +43,7 @@ export function LogsTab() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -67,7 +70,6 @@ export function LogsTab() {
     }));
     setLogs(rawLogs);
 
-    // Count today
     const todayStart = startOfDay(new Date()).toISOString();
     const count = rawLogs.filter((l) => l.sent_at && l.sent_at >= todayStart).length;
     setTodayCount(count);
@@ -92,7 +94,7 @@ export function LogsTab() {
     }
   };
 
-  const formatDate = (d: string | null) =>
+  const formatDateStr = (d: string | null) =>
     d ? format(new Date(d), "dd/MM/yy HH:mm", { locale: ptBR }) : "—";
 
   const filtered = logs.filter((log) => {
@@ -122,67 +124,109 @@ export function LogsTab() {
 
   return (
     <div className="space-y-4">
-      {/* Today counter */}
-      <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 flex items-center gap-2">
-        <span className="text-2xl font-bold tabular-nums">{todayCount}</span>
-        <span className="text-sm text-muted-foreground">mensagens enviadas hoje</span>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 flex-wrap">
-        <Select value={filterInstance} onValueChange={setFilterInstance}>
-          <SelectTrigger className="w-[160px] h-9 text-xs">
-            <SelectValue placeholder="Instância" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas instâncias</SelectItem>
-            {instances.map((i) => (
-              <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[130px] h-9 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_OPTIONS.map((s) => (
-              <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <div className="flex items-center gap-1.5">
-          <Input
-            type="date"
-            className="w-[140px] h-9 text-xs"
-            value={filterDateFrom}
-            onChange={(e) => setFilterDateFrom(e.target.value)}
-          />
-          <span className="text-xs text-muted-foreground">a</span>
-          <Input
-            type="date"
-            className="w-[140px] h-9 text-xs"
-            value={filterDateTo}
-            onChange={(e) => setFilterDateTo(e.target.value)}
-          />
+      {/* Today counter + filter toggle */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 flex items-center gap-2 flex-1">
+          <span className="text-xl sm:text-2xl font-bold tabular-nums">{todayCount}</span>
+          <span className="text-xs sm:text-sm text-muted-foreground">msgs enviadas hoje</span>
         </div>
-
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" className="text-xs h-9" onClick={clearFilters}>
-            Limpar filtros
-          </Button>
-        )}
+        <Button
+          variant={hasActiveFilters ? "default" : "outline"}
+          size="sm"
+          className="gap-1.5 text-xs shrink-0"
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          <Filter className="h-3.5 w-3.5" />
+          Filtros
+          {hasActiveFilters && <span className="tabular-nums">({filtered.length})</span>}
+        </Button>
       </div>
 
-      {/* Table */}
+      {/* Collapsible filters */}
+      {showFilters && (
+        <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg border border-border bg-muted/30">
+          <Select value={filterInstance} onValueChange={setFilterInstance}>
+            <SelectTrigger className="w-[140px] h-8 text-xs">
+              <SelectValue placeholder="Instância" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              {instances.map((i) => (
+                <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-[110px] h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((s) => (
+                <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex items-center gap-1.5">
+            <Input
+              type="date"
+              className="w-[130px] h-8 text-xs"
+              value={filterDateFrom}
+              onChange={(e) => setFilterDateFrom(e.target.value)}
+              placeholder="De"
+            />
+            <span className="text-xs text-muted-foreground">a</span>
+            <Input
+              type="date"
+              className="w-[130px] h-8 text-xs"
+              value={filterDateTo}
+              onChange={(e) => setFilterDateTo(e.target.value)}
+              placeholder="Até"
+            />
+          </div>
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={clearFilters}>
+              <X className="h-3 w-3" /> Limpar
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Content */}
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
           <ScrollText className="h-8 w-8 opacity-40" />
           <p className="text-sm">Nenhum log encontrado</p>
         </div>
+      ) : isMobile ? (
+        /* Mobile card list */
+        <div className="space-y-2">
+          {filtered.slice(0, 50).map((log) => (
+            <div key={log.id} className="rounded-xl border border-border bg-card p-3.5 space-y-1.5">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium tabular-nums">{log.recipient_phone}</p>
+                  <p className="text-[11px] text-muted-foreground">{log.instance_name}</p>
+                </div>
+                {statusBadge(log.status)}
+              </div>
+              {log.message_content && (
+                <p className="text-[11px] text-muted-foreground line-clamp-2">
+                  {log.message_content}
+                </p>
+              )}
+              <p className="text-[11px] text-muted-foreground tabular-nums">
+                {formatDateStr(log.sent_at)}
+              </p>
+            </div>
+          ))}
+          {filtered.length > 50 && (
+            <p className="text-xs text-muted-foreground text-center py-2">
+              Mostrando 50 de {filtered.length} registros
+            </p>
+          )}
+        </div>
       ) : (
+        /* Desktop table */
         <div className="rounded-lg border overflow-x-auto">
           <Table>
             <TableHeader>
@@ -197,7 +241,7 @@ export function LogsTab() {
             <TableBody>
               {filtered.map((log) => (
                 <TableRow key={log.id}>
-                  <TableCell className="text-xs tabular-nums whitespace-nowrap">{formatDate(log.sent_at)}</TableCell>
+                  <TableCell className="text-xs tabular-nums whitespace-nowrap">{formatDateStr(log.sent_at)}</TableCell>
                   <TableCell className="text-xs">{log.instance_name}</TableCell>
                   <TableCell className="text-xs">{log.recipient_phone}</TableCell>
                   <TableCell className="text-xs max-w-[200px] truncate">

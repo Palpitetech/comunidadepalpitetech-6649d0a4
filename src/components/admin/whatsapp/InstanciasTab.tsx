@@ -90,7 +90,6 @@ export function InstanciasTab() {
 
     const localInstances = (data as any[]) || [];
 
-    // Sync status from Evolution API
     try {
       const evoData = await callEvolution("fetchInstances");
       if (Array.isArray(evoData)) {
@@ -103,7 +102,6 @@ export function InstanciasTab() {
           }
         }
 
-        // Update statuses in DB
         for (const inst of localInstances) {
           const evoStatus = statusMap.get(inst.evolution_instance_id);
           if (evoStatus && evoStatus !== inst.status) {
@@ -198,7 +196,6 @@ export function InstanciasTab() {
       const data = await callEvolution("connect", inst.evolution_instance_id);
       const base64 = data?.base64 || data?.qrcode?.base64 || data?.qr || null;
       if (!base64) {
-        // Already connected
         toast.success("Instância já conectada!");
         await supabase.from("whatsapp_instances" as any).update({ status: "online" }).eq("id", inst.id);
         setQrDialogOpen(false);
@@ -332,7 +329,6 @@ export function InstanciasTab() {
     }
   };
 
-
   const statusBadge = (status: string) => {
     switch (status) {
       case "online":
@@ -354,54 +350,56 @@ export function InstanciasTab() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{instances.length} instância(s)</p>
+      {/* Header - mobile-friendly stacked layout */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs sm:text-sm text-muted-foreground">{instances.length} instância(s)</p>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleSyncFromEvolution} disabled={syncing}>
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs flex-1 sm:flex-none" onClick={handleSyncFromEvolution} disabled={syncing}>
             {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-            Buscar Instâncias
+            <span className="hidden sm:inline">Buscar Instâncias</span>
+            <span className="sm:hidden">Buscar</span>
           </Button>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="gap-1.5" onClick={openCreate}>
-              <Plus className="h-4 w-4" />
-              Nova Instância
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>{editingId ? "Editar Instância" : "Nova Instância"}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 pt-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="name">Apelido *</Label>
-                <Input id="name" placeholder="Ex: Chip Principal" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} maxLength={100} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="friendly_name">Nome de amigo *</Label>
-                <Input id="friendly_name" placeholder="Ex: Carlos" value={form.friendly_name} onChange={(e) => setForm((f) => ({ ...f, friendly_name: e.target.value }))} maxLength={100} />
-                <p className="text-xs text-muted-foreground">Este nome será usado nas conversas de aquecimento</p>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="phone_number">Número de telefone *</Label>
-                <Input id="phone_number" placeholder="5511999999999" value={form.phone_number} onChange={(e) => setForm((f) => ({ ...f, phone_number: e.target.value }))} maxLength={20} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="evolution_id">ID da instância na Evolution API *</Label>
-                <Input id="evolution_id" placeholder="Ex: instance_abc123" value={form.evolution_instance_id} onChange={(e) => setForm((f) => ({ ...f, evolution_instance_id: e.target.value }))} maxLength={200} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="daily_limit">Limite diário de mensagens *</Label>
-                <Input id="daily_limit" type="number" min={1} value={form.daily_limit} onChange={(e) => setForm((f) => ({ ...f, daily_limit: parseInt(e.target.value) || 1 }))} />
-              </div>
-              <Button className="w-full" onClick={handleSave} disabled={saving}>
-                {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                {editingId ? "Salvar Alterações" : "Criar Instância"}
+            <DialogTrigger asChild>
+              <Button size="sm" className="gap-1.5 text-xs flex-1 sm:flex-none" onClick={openCreate}>
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Nova Instância</span>
+                <span className="sm:hidden">Nova</span>
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>{editingId ? "Editar Instância" : "Nova Instância"}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="name">Apelido *</Label>
+                  <Input id="name" placeholder="Ex: Chip Principal" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} maxLength={100} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="friendly_name">Nome de amigo *</Label>
+                  <Input id="friendly_name" placeholder="Ex: Carlos" value={form.friendly_name} onChange={(e) => setForm((f) => ({ ...f, friendly_name: e.target.value }))} maxLength={100} />
+                  <p className="text-xs text-muted-foreground">Este nome será usado nas conversas de aquecimento</p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="phone_number">Número de telefone *</Label>
+                  <Input id="phone_number" placeholder="5511999999999" value={form.phone_number} onChange={(e) => setForm((f) => ({ ...f, phone_number: e.target.value }))} maxLength={20} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="evolution_id">ID da instância na Evolution API *</Label>
+                  <Input id="evolution_id" placeholder="Ex: instance_abc123" value={form.evolution_instance_id} onChange={(e) => setForm((f) => ({ ...f, evolution_instance_id: e.target.value }))} maxLength={200} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="daily_limit">Limite diário de mensagens *</Label>
+                  <Input id="daily_limit" type="number" min={1} value={form.daily_limit} onChange={(e) => setForm((f) => ({ ...f, daily_limit: parseInt(e.target.value) || 1 }))} />
+                </div>
+                <Button className="w-full" onClick={handleSave} disabled={saving}>
+                  {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  {editingId ? "Salvar Alterações" : "Criar Instância"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -419,7 +417,7 @@ export function InstanciasTab() {
                 <img
                   src={qrData.startsWith("data:") ? qrData : `data:image/png;base64,${qrData}`}
                   alt="QR Code"
-                  className="w-64 h-64 rounded-lg border"
+                  className="w-56 h-56 sm:w-64 sm:h-64 rounded-lg border"
                 />
                 <p className="text-sm text-muted-foreground text-center">
                   Escaneie o QR Code com o WhatsApp no celular
@@ -468,19 +466,19 @@ export function InstanciasTab() {
             const pct = inst.daily_limit > 0 ? Math.min((inst.messages_sent_today / inst.daily_limit) * 100, 100) : 0;
             const currentAction = actionLoading[inst.id];
             return (
-              <div key={inst.id} className="rounded-xl border border-border bg-card p-4 space-y-3">
+              <div key={inst.id} className="rounded-xl border border-border bg-card p-3.5 sm:p-4 space-y-3">
                 {/* Top */}
                 <div className="flex items-start justify-between">
                   <div className="min-w-0">
-                    <h3 className="text-lg font-semibold truncate">{inst.friendly_name}</h3>
-                    <p className="text-xs text-muted-foreground truncate">{inst.name} · {inst.phone_number}</p>
+                    <h3 className="text-base sm:text-lg font-semibold truncate">{inst.friendly_name}</h3>
+                    <p className="text-[11px] text-muted-foreground truncate">{inst.name} · {inst.phone_number}</p>
                   </div>
                   {statusBadge(inst.status)}
                 </div>
 
                 {/* Progress */}
                 <div className="space-y-1">
-                  <div className="flex justify-between text-xs text-muted-foreground">
+                  <div className="flex justify-between text-[11px] text-muted-foreground">
                     <span>Enviadas hoje</span>
                     <span className="tabular-nums">{inst.messages_sent_today}/{inst.daily_limit}</span>
                   </div>
@@ -488,67 +486,67 @@ export function InstanciasTab() {
                 </div>
 
                 {/* Last message */}
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   Última msg:{" "}
                   {inst.last_message_at
                     ? format(new Date(inst.last_message_at), "dd/MM/yyyy HH:mm", { locale: ptBR })
                     : "—"}
                 </p>
 
-                {/* Action buttons row 1 - Evolution actions */}
-                <div className="grid grid-cols-2 gap-1.5">
+                {/* Action buttons - Evolution actions */}
+                <div className="grid grid-cols-4 gap-1.5">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-1 text-xs"
+                    className="gap-1 text-[11px] h-8 px-2"
                     onClick={() => handleConnect(inst)}
                     disabled={!!currentAction}
                   >
-                    <QrCode className="h-3.5 w-3.5" />
-                    Conectar
+                    <QrCode className="h-3.5 w-3.5 shrink-0" />
+                    <span className="hidden sm:inline">Conectar</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-1 text-xs"
+                    className="gap-1 text-[11px] h-8 px-2"
                     onClick={() => handleCheckStatus(inst)}
                     disabled={!!currentAction}
                   >
-                    {currentAction === "status" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-                    Status
+                    {currentAction === "status" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 shrink-0" />}
+                    <span className="hidden sm:inline">Status</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-1 text-xs"
+                    className="gap-1 text-[11px] h-8 px-2"
                     onClick={() => handleRestart(inst)}
                     disabled={!!currentAction}
                   >
-                    {currentAction === "restart" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Power className="h-3.5 w-3.5" />}
-                    Reiniciar
+                    {currentAction === "restart" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Power className="h-3.5 w-3.5 shrink-0" />}
+                    <span className="hidden sm:inline">Reiniciar</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-1 text-xs"
+                    className="gap-1 text-[11px] h-8 px-2"
                     onClick={() => handleLogout(inst)}
                     disabled={!!currentAction}
                   >
-                    {currentAction === "logout" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LogOut className="h-3.5 w-3.5" />}
-                    Deslogar
+                    {currentAction === "logout" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LogOut className="h-3.5 w-3.5 shrink-0" />}
+                    <span className="hidden sm:inline">Deslogar</span>
                   </Button>
                 </div>
 
-                {/* Action buttons row 2 - CRUD */}
+                {/* CRUD buttons */}
                 <div className="flex gap-2 pt-1 border-t border-border">
-                  <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs mt-2" onClick={() => openEdit(inst)}>
+                  <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs mt-2 h-8" onClick={() => openEdit(inst)}>
                     <Pencil className="h-3.5 w-3.5" />
                     Editar
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-1.5 text-xs text-destructive hover:text-destructive mt-2"
+                    className="gap-1.5 text-xs text-destructive hover:text-destructive mt-2 h-8"
                     onClick={() => setDeleteConfirm(inst)}
                     disabled={!!currentAction}
                   >
