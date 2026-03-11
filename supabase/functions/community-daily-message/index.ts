@@ -162,6 +162,7 @@ async function handleSend(
         body: JSON.stringify({
           number: env.COMMUNITY_GROUP_JID,
           text: pending.message_generated,
+          linkPreview: false,
         }),
       },
     );
@@ -236,7 +237,7 @@ async function handleTest(
     {
       method: "POST",
       headers: { "Content-Type": "application/json", apikey: env.EVOLUTION_API_KEY },
-      body: JSON.stringify({ number: env.COMMUNITY_GROUP_JID, text: mensagem }),
+      body: JSON.stringify({ number: env.COMMUNITY_GROUP_JID, text: mensagem, linkPreview: false }),
     },
   );
 
