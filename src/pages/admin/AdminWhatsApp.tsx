@@ -57,6 +57,7 @@ export default function AdminWhatsApp() {
           {activeTab === "instancias" && <InstanciasTab />}
           {activeTab === "templates" && <TemplatesTab />}
           {activeTab === "fila" && <FilaTab />}
+          {activeTab === "disparo" && <DisparoManualTab />}
           {activeTab === "logs" && <LogsTab />}
           {activeTab === "aquecimento" && <AquecimentoTab />}
           {activeTab === "grupos" && <GruposTab />}
