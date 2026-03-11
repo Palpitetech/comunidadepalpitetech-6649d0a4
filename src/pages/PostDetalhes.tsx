@@ -267,6 +267,7 @@ export default function PostDetalhes() {
             commentsCount={commentsCount}
             onCommentsClick={scrollToComments}
             postContent={post.conteudo}
+            referralCode={myReferralCode}
           />
         </div>
 
