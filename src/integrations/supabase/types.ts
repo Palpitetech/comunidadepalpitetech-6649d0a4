@@ -1890,6 +1890,69 @@ export type Database = {
         }
         Relationships: []
       }
+      warming_scheduled_messages: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          from_evolution_id: string
+          from_instance_id: string
+          id: string
+          message_content: string
+          pair_session_id: string
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+          to_instance_id: string
+          to_phone_number: string
+          window_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          from_evolution_id: string
+          from_instance_id: string
+          id?: string
+          message_content: string
+          pair_session_id: string
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string
+          to_instance_id: string
+          to_phone_number: string
+          window_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          from_evolution_id?: string
+          from_instance_id?: string
+          id?: string
+          message_content?: string
+          pair_session_id?: string
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          to_instance_id?: string
+          to_phone_number?: string
+          window_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warming_scheduled_messages_from_instance_id_fkey"
+            columns: ["from_instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warming_scheduled_messages_to_instance_id_fkey"
+            columns: ["to_instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_instances: {
         Row: {
           created_at: string | null
