@@ -38,21 +38,28 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+  let bodyParams: any = {};
+  try { bodyParams = await req.json(); } catch { /* empty body is fine */ }
+  const skipDelay = bodyParams?.skip_delay === true;
+  const skipDedup = bodyParams?.skip_dedup === true;
+
   try {
     // 1. Check if already sent today
-    const todayStart = new Date();
-    todayStart.setUTCHours(0, 0, 0, 0);
+    if (!skipDedup) {
+      const todayStart = new Date();
+      todayStart.setUTCHours(0, 0, 0, 0);
 
-    const { data: existingLog } = await supabase
-      .from("community_group_logs")
-      .select("id")
-      .gte("sent_at", todayStart.toISOString())
-      .limit(1);
+      const { data: existingLog } = await supabase
+        .from("community_group_logs")
+        .select("id")
+        .gte("sent_at", todayStart.toISOString())
+        .limit(1);
 
-    if (existingLog && existingLog.length > 0) {
-      return new Response(JSON.stringify({ message: "Mensagem já enviada hoje" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (existingLog && existingLog.length > 0) {
+        return new Response(JSON.stringify({ message: "Mensagem já enviada hoje" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // 2. Find the most recent non-comment post
