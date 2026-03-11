@@ -37,15 +37,10 @@ export function ChatQuickReplies({ topics, onPick }: ChatQuickRepliesProps) {
           <p className="text-xs text-muted-foreground mb-2">Escolha a loteria:</p>
           <div className="space-y-2">
             {topics.map((t) => {
-              const colorMap: Record<string, string> = {
-                "🟢": "text-[#00a651]",
-                "🔵": "text-[#1a4b8c]",
-                "🟡": "text-[#d4a017]",
-              };
               const dotMap: Record<string, string> = {
-                "🟢": "bg-[#00a651]",
-                "🔵": "bg-[#1a4b8c]",
-                "🟡": "bg-[#d4a017]",
+                "🟢": "bg-[#930089]",
+                "🔵": "bg-[#209869]",
+                "🟡": "bg-[#c1272d]",
               };
               return (
               <button
