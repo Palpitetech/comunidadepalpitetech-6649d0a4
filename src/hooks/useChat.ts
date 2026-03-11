@@ -4,12 +4,18 @@ import type { ChatTopicId } from "@/lib/chatTopics";
 
 export type ChatRole = "user" | "assistant";
 
+export interface ChatMessageActions {
+  upgrade?: boolean;
+  plan?: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: ChatRole;
   content: string;
   created_at: string;
   bot_persona_id?: string | null;
+  actions?: ChatMessageActions | null;
 }
 
 interface UseChatArgs {
@@ -61,7 +67,7 @@ export function useChat({ topic }: UseChatArgs) {
 
       const { data: msgs, error: msgsError } = await supabase
         .from("chat_messages")
-        .select("id, role, content, created_at, bot_persona_id")
+        .select("id, role, content, created_at, bot_persona_id, actions")
         .eq("conversation_id", id)
         .order("created_at", { ascending: true });
       if (msgsError) throw msgsError;
@@ -125,7 +131,7 @@ export function useChat({ topic }: UseChatArgs) {
         if (convIdToLoad) {
           const { data: msgs, error: msgsError } = await supabase
             .from("chat_messages")
-            .select("id, role, content, created_at, bot_persona_id")
+            .select("id, role, content, created_at, bot_persona_id, actions")
             .eq("conversation_id", convIdToLoad)
             .order("created_at", { ascending: true });
           if (msgsError) throw msgsError;

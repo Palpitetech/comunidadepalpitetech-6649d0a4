@@ -1,5 +1,8 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { UpgradeModal } from "@/components/shared/UpgradeModal";
+import type { ChatMessageActions } from "@/hooks/useChat";
 
 export type ChatBubbleRole = "user" | "assistant";
 
@@ -12,6 +15,7 @@ interface ChatMessageBubbleProps {
   clickable?: boolean;
   onClick?: () => void;
   className?: string;
+  actions?: ChatMessageActions | null;
 }
 
 export function ChatMessageBubble({
@@ -23,8 +27,10 @@ export function ChatMessageBubble({
   clickable = false,
   onClick,
   className,
+  actions,
 }: ChatMessageBubbleProps) {
   const isUser = role === "user";
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const bubbleClassName = cn(
     "chat-bubble",
@@ -41,6 +47,18 @@ export function ChatMessageBubble({
       ) : (
         <div className="whitespace-pre-wrap break-words">{content}</div>
       )}
+
+      {actions?.upgrade && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-3 w-full border-[hsl(var(--vip))] text-[hsl(var(--vip))] hover:bg-[hsl(var(--vip))]/10 font-semibold"
+          onClick={() => setUpgradeOpen(true)}
+        >
+          👑 Conhecer Plano Anual VIP
+        </Button>
+      )}
+
       {timeLabel ? (
         <div
           className={cn(
@@ -51,6 +69,15 @@ export function ChatMessageBubble({
           {timeLabel}
         </div>
       ) : null}
+
+      {actions?.upgrade && (
+        <UpgradeModal
+          open={upgradeOpen}
+          onOpenChange={setUpgradeOpen}
+          featureLabel="Chat com IA"
+          variant="vip"
+        />
+      )}
     </>
   );
 

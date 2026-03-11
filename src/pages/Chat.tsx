@@ -168,6 +168,7 @@ export default function Chat() {
                                 role="assistant"
                                 content={m.content}
                                 timeLabel={timeLabel}
+                                actions={m.actions}
                               />
                             </div>
                           ) : (

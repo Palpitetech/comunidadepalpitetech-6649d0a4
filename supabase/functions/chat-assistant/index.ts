@@ -276,23 +276,29 @@ serve(async (req) => {
     });
     if (insertUserMsgError) throw insertUserMsgError;
 
-    // 4) Se não tiver permissão, responder com upsell (sem IA para economizar)
-    const allowed = allowedByFeature;
+    // 4) Verificar permissão — chat exige chat_estatisticas (VIP) para todos exceto conhecer_planos
+    if (topic !== "conhecer_planos") {
+      const hasVipChat = hasFeature(features, "chat_estatisticas");
+      if (!hasVipChat) {
+        const name = firstName ? `, ${firstName}` : "";
+        const reply =
+          `Opa${name}! 👑 O chat de análises é exclusivo para membros do Plano Anual VIP. ` +
+          `Com ele você conversa diretamente com nossa IA sobre estatísticas, estratégias e seus palpites usando dados reais dos concursos.\n\n` +
+          `Quer conhecer o plano? É só me dizer!`;
+        const { error: insertAssistantError } = await userClient.from("chat_messages").insert({
+          user_id: userId,
+          conversation_id: convId,
+          role: "assistant",
+          content: reply,
+          bot_persona_id: null,
+          actions: { upgrade: true, plan: "anual-vip" },
+        });
+        if (insertAssistantError) throw insertAssistantError;
 
-    if (!allowed) {
-      const reply = upsellMessage({ firstName, topic });
-      const { error: insertAssistantError } = await userClient.from("chat_messages").insert({
-        user_id: userId,
-        conversation_id: convId,
-        role: "assistant",
-        content: reply,
-        bot_persona_id: null,
-      });
-      if (insertAssistantError) throw insertAssistantError;
-
-      return new Response(JSON.stringify({ conversation_id: convId, remaining_today: null }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+        return new Response(JSON.stringify({ conversation_id: convId, remaining_today: null }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // 5) Limite diário removido (sem mais tema de estatísticas com limite)
