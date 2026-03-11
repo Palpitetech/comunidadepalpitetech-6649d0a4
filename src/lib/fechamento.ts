@@ -82,7 +82,7 @@ export const MATRIZES_FECHAMENTO: MatrizFechamento[] = [
       [6, 7],    // Jogo 5: remove índices 6 e 7
       [4, 5],    // Jogo 6: remove índices 4 e 5
       [1, 2],    // Jogo 7: remove índices 1 e 2
-      [0, 14],   // Jogo 8: remove índices 0 e 14
+      [0, 3],    // Jogo 8: remove índices 0 e 3
     ],
   },
 
