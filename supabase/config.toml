@@ -71,3 +71,6 @@ verify_jwt = false
 
 [functions.warming-manual]
 verify_jwt = false
+
+[functions.og-post]
+verify_jwt = false
