@@ -221,6 +221,29 @@ export function AquecimentoTab() {
     }
   };
 
+  const handleTestAutomation = async () => {
+    setTesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("warming-run", {
+        method: "POST",
+        body: {},
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (data?.skipped) {
+        toast.info(`⏭️ Pulado: ${data.skipped}`);
+      } else {
+        toast.success(`✅ Automação executada: ${data.scheduled || 0} dupla(s) na janela "${data.window_name || "—"}"`);
+      }
+      fetchData();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Erro ao testar automação");
+    } finally {
+      setTesting(false);
+    }
+  };
+
   /* ── Render ────────────────────────────────────────── */
 
   if (loading) {
