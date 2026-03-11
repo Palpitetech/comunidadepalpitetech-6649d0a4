@@ -198,7 +198,8 @@ async function runWarmingPair(
   supabase: ReturnType<typeof createClient>,
   instanceA: any,
   instanceB: any,
-  window: any
+  window: any,
+  isForced = false
 ): Promise<number> {
   const count = randomInt(
     window.min_messages ?? 2,
