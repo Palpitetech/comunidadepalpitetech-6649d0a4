@@ -7,6 +7,13 @@ export type ChatRole = "user" | "assistant";
 export interface ChatMessageActions {
   upgrade?: boolean;
   plan?: string;
+  limit_reached?: boolean;
+}
+
+export interface ChatUsage {
+  count?: number;
+  limit?: number;
+  is_vip?: boolean;
 }
 
 export interface ChatMessage {
@@ -28,7 +35,7 @@ export function useChat({ topic }: UseChatArgs) {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [remainingToday, setRemainingToday] = useState<number | null>(null);
+  const [usage, setUsage] = useState<ChatUsage | null>(null);
 
   const canLoad = useMemo(() => Boolean(topic), [topic]);
 
@@ -84,7 +91,7 @@ export function useChat({ topic }: UseChatArgs) {
   useEffect(() => {
     setConversationId(null);
     setMessages([]);
-    setRemainingToday(null);
+    setUsage(null);
     if (canLoad) void loadOrCreateConversation();
   }, [canLoad, loadOrCreateConversation]);
 
@@ -122,8 +129,9 @@ export function useChat({ topic }: UseChatArgs) {
           setConversationId(data.conversation_id);
         }
 
-        if (typeof data?.remaining_today === "number") {
-          setRemainingToday(data.remaining_today);
+        // Update usage info
+        if (data?.usage) {
+          setUsage(data.usage);
         }
 
         // Recarrega histórico para garantir ordenação/ids reais
@@ -153,7 +161,7 @@ export function useChat({ topic }: UseChatArgs) {
     loading,
     sending,
     error,
-    remainingToday,
+    usage,
     reload: loadOrCreateConversation,
     sendMessage,
   };

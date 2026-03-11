@@ -10,6 +10,7 @@ import { ChatMessageBubble } from "@/components/chat/ChatMessageBubble";
 import { ChatQuickReplies } from "@/components/chat/ChatQuickReplies";
 import { ChatTypingIndicator } from "@/components/chat/ChatTypingIndicator";
 import { ChatAIGateModal } from "@/components/chat/ChatAIGateModal";
+import { UpgradeModal } from "@/components/shared/UpgradeModal";
 import { LOTTERY_TOPICS, type ChatTopicId, getChatTopic } from "@/lib/chatTopics";
 import { useChat } from "@/hooks/useChat";
 import { useAssistantTypingSimulation } from "@/hooks/useAssistantTypingSimulation";
@@ -17,7 +18,7 @@ import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { usePermissions } from "@/hooks/usePermission";
 import { cn } from "@/lib/utils";
 import { format, isSameDay, parseISO } from "date-fns";
-import { Send } from "lucide-react";
+import { Send, Sparkles } from "lucide-react";
 
 export default function Chat() {
   const isMobile = useIsMobile();
@@ -26,13 +27,14 @@ export default function Chat() {
   const [pendingStarter, setPendingStarter] = useState<string | null>(null);
   const [gateOpen, setGateOpen] = useState(false);
   const [gateLottery, setGateLottery] = useState("");
+  const [limitUpgradeOpen, setLimitUpgradeOpen] = useState(false);
 
   const topicMeta = useMemo(
     () => (selectedTopic ? getChatTopic(selectedTopic) : undefined),
     [selectedTopic]
   );
 
-  const { messages, loading, sending, error, remainingToday, sendMessage } = useChat({
+  const { messages, loading, sending, error, usage, sendMessage } = useChat({
     topic: selectedTopic,
   });
 
@@ -45,11 +47,17 @@ export default function Chat() {
 
   const showTyping = Boolean(selectedTopic) && (sending || isSimulatingTyping);
 
+  // Compute remaining messages
+  const isVip = usage?.is_vip === true;
+  const remaining = usage && !isVip && typeof usage.count === "number" && typeof usage.limit === "number"
+    ? Math.max(0, usage.limit - usage.count)
+    : null;
+  const limitReached = remaining === 0;
+
   const [draft, setDraft] = useState("");
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const handlePickTopic = async (id: ChatTopicId, title: string) => {
-    // Check permission
     if (!hasPermission("chat_estatisticas")) {
       setGateLottery(title);
       setGateOpen(true);
@@ -210,6 +218,30 @@ export default function Chat() {
             </div>
           </ScrollArea>
 
+          {/* Limit reached banner */}
+          {selectedTopic && limitReached && (
+            <div className="fixed left-0 right-0 z-50 border-t border-border bg-destructive/10 px-3 py-2 text-center bottom-[calc(env(safe-area-inset-bottom)+4rem+3.5rem)] md:bottom-[3.5rem]">
+              <p className="text-xs text-foreground mb-1.5">
+                Limite diário atingido · Plano VIP é ilimitado
+              </p>
+              <Button
+                size="sm"
+                className="gap-1.5 text-xs h-8"
+                onClick={() => setLimitUpgradeOpen(true)}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                👑 Desbloquear acesso ilimitado
+              </Button>
+            </div>
+          )}
+
+          {/* Last message warning */}
+          {selectedTopic && remaining === 1 && !limitReached && (
+            <div className="fixed left-0 right-0 z-50 border-t border-[hsl(var(--warning,40_100%_50%))]/30 bg-[hsl(var(--warning,40_100%_50%))]/10 px-3 py-1.5 text-center text-xs text-foreground bottom-[calc(env(safe-area-inset-bottom)+4rem+3.5rem)] md:bottom-[3.5rem]">
+              ⚠️ Última mensagem gratuita de hoje
+            </div>
+          )}
+
           {/* Composer */}
           <div
             className={cn(
@@ -224,7 +256,11 @@ export default function Chat() {
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder={
-                  selectedTopic ? "Digite sua mensagem..." : "Escolha uma loteria acima para começar"
+                  limitReached
+                    ? "Limite diário atingido"
+                    : selectedTopic
+                      ? "Digite sua mensagem..."
+                      : "Escolha uma loteria acima para começar"
                 }
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -232,13 +268,13 @@ export default function Chat() {
                     void handleSend();
                   }
                 }}
-                disabled={sending || !selectedTopic}
+                disabled={sending || !selectedTopic || limitReached}
               />
 
               <Button
                 className={cn("h-14 w-14 rounded-full", "btn-senior px-0")}
                 onClick={() => void handleSend()}
-                disabled={sending || !draft.trim() || !selectedTopic}
+                disabled={sending || !draft.trim() || !selectedTopic || limitReached}
                 aria-label="Enviar"
               >
                 <Send className="h-6 w-6" />
@@ -253,6 +289,14 @@ export default function Chat() {
         open={gateOpen}
         onOpenChange={setGateOpen}
         lotteryName={gateLottery}
+      />
+
+      {/* Upgrade modal from limit banner */}
+      <UpgradeModal
+        open={limitUpgradeOpen}
+        onOpenChange={setLimitUpgradeOpen}
+        featureLabel="Chat IA Ilimitado"
+        variant="vip"
       />
     </MainLayout>
   );
