@@ -209,7 +209,7 @@ async function handleSend(
 
 async function handleTest(
   supabase: any,
-  env: { EVOLUTION_API_URL?: string; EVOLUTION_API_KEY?: string; COMMUNITY_GROUP_JID?: string; LOVABLE_API_KEY?: string },
+  env: { EVOLUTION_API_URL?: string; EVOLUTION_API_KEY?: string; COMMUNITY_GROUP_JID?: string; LOVABLE_API_KEY?: string; COMMUNITY_BASE_URL?: string },
 ) {
   if (!env.LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurado");
   if (!env.EVOLUTION_API_URL || !env.EVOLUTION_API_KEY) throw new Error("Evolution API não configurada");
