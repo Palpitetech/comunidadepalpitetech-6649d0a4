@@ -76,6 +76,7 @@ export function AquecimentoTab() {
   const [instances, setInstances] = useState<InstanceMap>({});
   const [loading, setLoading] = useState(true);
   const [warming, setWarming] = useState(false);
+  const [testing, setTesting] = useState(false);
 
   const fetchData = useCallback(async () => {
     const now = saoPauloNow();
