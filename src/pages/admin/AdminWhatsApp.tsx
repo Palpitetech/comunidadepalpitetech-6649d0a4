@@ -3,6 +3,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Smartphone, FileText, Send, ScrollText } from "lucide-react";
 import { InstanciasTab } from "@/components/admin/whatsapp/InstanciasTab";
+import { TemplatesTab } from "@/components/admin/whatsapp/TemplatesTab";
 
 const tabs = [
   { value: "instancias", label: "Instâncias", icon: Smartphone },
