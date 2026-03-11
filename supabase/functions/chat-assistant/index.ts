@@ -99,7 +99,8 @@ function upsellMessage(args: { firstName?: string | null; topic: ChatTopicId }):
   const name = args.firstName ? `, ${args.firstName}` : "";
   const topicLabel: Record<ChatTopicId, string> = {
     boloes: "bolões",
-    estrategias: "estratégias e ferramentas",
+    estrategias: "estratégias e ferramentas da Lotofácil",
+    estrategias_megasena: "estratégias da Mega-Sena",
     estrategias_duplasena: "estratégias da Dupla Sena",
     conhecer_planos: "planos",
   };
