@@ -278,22 +278,28 @@ export default function Chat() {
           {/* Composer */}
           <div
             className={cn(
-              "fixed left-0 right-0 z-50 border-t border-border bg-background/80 p-3 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+              "fixed left-0 right-0 z-50 px-3 pt-2",
               "bottom-[calc(env(safe-area-inset-bottom)+4rem)]",
               "md:bottom-0"
             )}
+            style={{
+              paddingBottom: "0.75rem",
+              background: "linear-gradient(to top, hsla(0,0%,97.6%,0.92) 60%, hsla(0,0%,97.6%,0))",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+            }}
           >
-            <div className="mx-auto flex max-w-3xl gap-2 md:max-w-4xl">
-              <Input
-                className="input-senior rounded-full"
+            <div className="mx-auto flex max-w-3xl items-center gap-2.5 md:max-w-4xl">
+              <input
+                className="flex-1 h-12 rounded-full bg-white border border-[#E5E7EB] px-5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10 transition-all disabled:opacity-50"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder={
                   limitReached
                     ? "Limite diário atingido"
                     : selectedTopic
-                      ? "Digite sua mensagem..."
-                      : "Escolha uma loteria acima para começar"
+                      ? "Mensagem..."
+                      : "Escolha uma loteria acima"
                 }
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -304,14 +310,21 @@ export default function Chat() {
                 disabled={sending || !selectedTopic || limitReached}
               />
 
-              <Button
-                className={cn("h-14 w-14 rounded-full", "btn-senior px-0")}
+              <button
+                type="button"
                 onClick={() => void handleSend()}
                 disabled={sending || !draft.trim() || !selectedTopic || limitReached}
                 aria-label="Enviar"
+                className={cn(
+                  "shrink-0 flex items-center justify-center h-12 w-12 rounded-full text-white transition-all duration-150",
+                  "bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(270,70%,50%)]",
+                  sending || !draft.trim() || !selectedTopic || limitReached
+                    ? "opacity-40 shadow-none"
+                    : "opacity-100 shadow-[0_4px_16px_rgba(139,92,246,0.4)] hover:shadow-[0_6px_20px_rgba(139,92,246,0.5)] active:scale-95"
+                )}
               >
-                <Send className="h-6 w-6" />
-              </Button>
+                <Send className="h-5 w-5" />
+              </button>
             </div>
           </div>
         </div>
