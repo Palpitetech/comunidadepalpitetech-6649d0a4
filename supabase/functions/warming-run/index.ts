@@ -239,7 +239,7 @@ async function runWarmingPair(
         await supabase.from("warming_logs").insert({
           from_instance_id: fromInstance.id,
           to_instance_id: toInstance.id,
-          message_content: msg.text,
+          message_content: msg.texto,
           window_name: window.window_name,
           sent_at: new Date().toISOString(),
         });
