@@ -36,7 +36,18 @@ export function ChatQuickReplies({ topics, onPick }: ChatQuickRepliesProps) {
         <div className="border-t border-border pt-2">
           <p className="text-xs text-muted-foreground mb-2">Escolha a loteria:</p>
           <div className="space-y-2">
-            {topics.map((t) => (
+            {topics.map((t) => {
+              const colorMap: Record<string, string> = {
+                "🟢": "text-[#00a651]",
+                "🔵": "text-[#1a4b8c]",
+                "🟡": "text-[#d4a017]",
+              };
+              const dotMap: Record<string, string> = {
+                "🟢": "bg-[#00a651]",
+                "🔵": "bg-[#1a4b8c]",
+                "🟡": "bg-[#d4a017]",
+              };
+              return (
               <button
                 key={t.id}
                 type="button"
@@ -44,11 +55,14 @@ export function ChatQuickReplies({ topics, onPick }: ChatQuickRepliesProps) {
                 className="w-full rounded-xl border border-border bg-background/70 px-4 py-3 text-left text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               >
                 <span className="flex items-center gap-2">
-                  {t.emoji && <span className="text-base">{t.emoji}</span>}
+                  {t.emoji && (
+                    <span className={`inline-block h-3 w-3 rounded-full ${dotMap[t.emoji] ?? "bg-muted"}`} />
+                  )}
                   {t.title}
                 </span>
               </button>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
