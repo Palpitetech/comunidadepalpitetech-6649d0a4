@@ -365,7 +365,7 @@ serve(async (req) => {
         bot_persona_id: null,
       });
 
-      return new Response(JSON.stringify({ conversation_id: convId, remaining_today: remainingToday }), {
+      return new Response(JSON.stringify({ conversation_id: convId, usage: isVip ? { is_vip: true } : { count: currentCount, limit: FREE_DAILY_LIMIT, is_vip: false } }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
