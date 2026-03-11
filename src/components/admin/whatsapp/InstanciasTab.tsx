@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, Plus, Pencil, Trash2, Smartphone, QrCode, RefreshCw, Power, LogOut } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Smartphone, QrCode, RefreshCw, Power, LogOut, MessageSquare, Clock } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
