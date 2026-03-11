@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Smartphone, FileText, Send, ScrollText, Flame } from "lucide-react";
+import { Smartphone, FileText, Send, ScrollText, Flame, Users } from "lucide-react";
 import { InstanciasTab } from "@/components/admin/whatsapp/InstanciasTab";
 import { TemplatesTab } from "@/components/admin/whatsapp/TemplatesTab";
 import { FilaTab } from "@/components/admin/whatsapp/FilaTab";
 import { LogsTab } from "@/components/admin/whatsapp/LogsTab";
 import { AquecimentoTab } from "@/components/admin/whatsapp/AquecimentoTab";
+import { GruposTab } from "@/components/admin/whatsapp/GruposTab";
 import { cn } from "@/lib/utils";
 
 const tabs = [
