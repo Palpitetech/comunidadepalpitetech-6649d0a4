@@ -37,6 +37,8 @@ export function TemplatesTab() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormData>(emptyForm);
+  const [triggerOpen, setTriggerOpen] = useState(false);
+  const [eventTypes, setEventTypes] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const fetchTemplates = useCallback(async () => {
