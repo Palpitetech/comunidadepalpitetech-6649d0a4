@@ -62,8 +62,8 @@ export function ChatMessageBubble({
       {timeLabel ? (
         <div
           className={cn(
-            "mt-2 flex justify-end text-[0.70rem] leading-none",
-            isUser ? "text-primary-foreground/80" : "text-muted-foreground"
+            "mt-1.5 flex justify-end text-[0.6rem] leading-none opacity-60",
+            isUser ? "text-primary-foreground" : "text-muted-foreground"
           )}
         >
           {timeLabel}

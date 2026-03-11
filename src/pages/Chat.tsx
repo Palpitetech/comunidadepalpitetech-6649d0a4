@@ -18,7 +18,7 @@ import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { usePermissions } from "@/hooks/usePermission";
 import { cn } from "@/lib/utils";
 import { format, isSameDay, parseISO } from "date-fns";
-import { Send, Sparkles } from "lucide-react";
+import { ArrowLeft, Send, Sparkles } from "lucide-react";
 
 export default function Chat() {
   const isMobile = useIsMobile();
@@ -69,6 +69,12 @@ export default function Chat() {
     if (meta?.starterUserMessage) setPendingStarter(meta.starterUserMessage);
   };
 
+  const goBack = () => {
+    setSelectedTopic(null);
+    setDraft("");
+    setPendingStarter(null);
+  };
+
   useEffect(() => {
     if (!selectedTopic) return;
     if (!pendingStarter) return;
@@ -76,9 +82,10 @@ export default function Chat() {
     setPendingStarter(null);
   }, [pendingStarter, selectedTopic, sendMessage]);
 
+  // Auto-scroll suave
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [uiMessages.length, sending, loading, selectedTopic, showTyping]);
+  }, [uiMessages.length, sending, loading, selectedTopic, showTyping, isSimulatingTyping]);
 
   const handleSend = async () => {
     if (!selectedTopic) return;
@@ -88,48 +95,60 @@ export default function Chat() {
     await sendMessage(text);
   };
 
+  const topicLabels: Record<string, string> = {
+    estrategias: "Especialista Lotofácil",
+    estrategias_megasena: "Especialista Mega-Sena",
+    estrategias_duplasena: "Especialista Dupla Sena",
+    conhecer_planos: "Consultor de Planos",
+  };
+
   return (
     <MainLayout pageTitle="Chat">
-      <div className="flex h-[calc(100dvh-5rem)] flex-col overflow-hidden md:h-full bg-clovers">
-        {/* Header - Desktop only */}
-        {!isMobile && (
-          <header className="sticky top-0 z-10 border-b border-border bg-background/80 px-3 py-1.5 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-4">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex min-w-0 items-center gap-3">
-                <ChatAvatar />
-                <div className="min-w-0 leading-tight">
-                  <p className="truncate text-base font-semibold">
-                    {topicMeta ? `${topicMeta.emoji ?? ""} ${topicMeta.title}`.trim() : "Escolha uma loteria"}
+      <div className="flex h-[calc(100dvh-5rem)] flex-col overflow-hidden md:h-full" style={{ background: "#F8F9FA" }}>
+        {/* Header */}
+        {selectedTopic ? (
+          <header className="sticky top-0 z-10 border-b border-border bg-background/90 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={goBack}
+                className="shrink-0 rounded-full p-1 hover:bg-muted transition-colors"
+                aria-label="Voltar"
+              >
+                <ArrowLeft className="h-5 w-5 text-foreground" />
+              </button>
+              <ChatAvatar />
+              <div className="min-w-0 leading-tight flex-1">
+                <p className="truncate text-sm font-semibold text-foreground">
+                  {topicLabels[selectedTopic] ?? "Especialista"}
+                </p>
+                <div className="flex items-center gap-1.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
+                  </span>
+                  <p className="text-[0.6rem] text-muted-foreground">
+                    IA Avançada • Online
                   </p>
-                  {topicMeta && (
-                    <p className="text-[0.65rem] text-muted-foreground truncate">
-                      IA Avançada • +47k linhas
-                    </p>
-                  )}
                 </div>
               </div>
-
-              {selectedTopic ? (
-                <Button
-                  variant="ghost"
-                  className="h-9 rounded-full px-3 text-sm"
-                  onClick={() => {
-                    setSelectedTopic(null);
-                    setDraft("");
-                    setPendingStarter(null);
-                  }}
-                >
-                  Fechar chat
-                </Button>
-              ) : null}
             </div>
           </header>
-        )}
+        ) : !isMobile ? (
+          <header className="sticky top-0 z-10 border-b border-border bg-background/80 px-3 py-1.5 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-4">
+            <div className="flex items-center gap-3">
+              <ChatAvatar />
+              <div className="min-w-0 leading-tight">
+                <p className="truncate text-base font-semibold">Escolha uma loteria</p>
+              </div>
+            </div>
+          </header>
+        ) : null}
 
         {/* Content */}
         <div className="flex min-h-0 flex-1 flex-col">
           <ScrollArea className="flex-1">
-            <div className="chat-wallpaper px-3 py-4 pb-[calc(env(safe-area-inset-bottom)+4rem+6rem)] md:px-5 md:pb-28">
+            <div className="px-3 py-4 pb-[calc(env(safe-area-inset-bottom)+4rem+6rem)] md:px-5 md:pb-28">
               {!selectedTopic ? (
                 <div className="flex items-end gap-2">
                   <ChatAvatar />
@@ -178,7 +197,7 @@ export default function Chat() {
 
                           {isAssistant ? (
                             <div className="flex items-end gap-2">
-                              {showAvatar ? <ChatAvatar /> : <div className="h-8 w-8" />}
+                              {showAvatar ? <ChatAvatar /> : <div className="h-9 w-9" />}
                               <ChatMessageBubble
                                 role="assistant"
                                 content={m.content}
