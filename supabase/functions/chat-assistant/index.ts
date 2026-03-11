@@ -537,7 +537,23 @@ serve(async (req) => {
     });
     if (insertAssistantError) throw insertAssistantError;
 
-    return new Response(JSON.stringify({ conversation_id: convId, remaining_today: remainingToday }), {
+    // 10) Incrementar contador diário para não-VIP
+    let usageResponse: any;
+    if (isVip) {
+      usageResponse = { is_vip: true };
+    } else if (topic !== "conhecer_planos") {
+      await adminClient
+        .from("chat_daily_usage")
+        .upsert(
+          { user_id: userId, topic, day: todayStr, count: currentCount + 1 },
+          { onConflict: "user_id,topic,day" }
+        );
+      usageResponse = { count: currentCount + 1, limit: FREE_DAILY_LIMIT, is_vip: false };
+    } else {
+      usageResponse = { is_vip: false };
+    }
+
+    return new Response(JSON.stringify({ conversation_id: convId, usage: usageResponse }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
