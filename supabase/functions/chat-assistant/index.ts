@@ -134,7 +134,8 @@ function buildSystemPrompt(args: {
   const nameHint = args.userFirstName ? `O usuário se chama ${args.userFirstName}.` : "";
   const topicHint: Record<ChatTopicId, string> = {
     boloes: "Bolões",
-    estrategias: "Estratégias e Ferramentas",
+    estrategias: "Estratégias e Ferramentas da Lotofácil",
+    estrategias_megasena: "Estratégias da Mega-Sena",
     estrategias_duplasena: "Estratégias da Dupla Sena",
     conhecer_planos: "Conhecer os Planos",
   };
