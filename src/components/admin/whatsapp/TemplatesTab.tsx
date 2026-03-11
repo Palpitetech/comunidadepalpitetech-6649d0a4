@@ -195,16 +195,42 @@ export function TemplatesTab() {
               </div>
               <div className="space-y-1.5">
                 <Label>Evento gatilho *</Label>
-                <Select value={form.event_trigger} onValueChange={(v) => setForm((f) => ({ ...f, event_trigger: v }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o gatilho" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TRIGGER_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={triggerOpen} onOpenChange={setTriggerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={triggerOpen}
+                      className="w-full justify-between font-normal"
+                    >
+                      {form.event_trigger || "Selecione o gatilho"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Buscar evento..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhum evento encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          {eventTypes.map((evt) => (
+                            <CommandItem
+                              key={evt}
+                              value={evt}
+                              onSelect={(v) => {
+                                setForm((f) => ({ ...f, event_trigger: v }));
+                                setTriggerOpen(false);
+                              }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", form.event_trigger === evt ? "opacity-100" : "opacity-0")} />
+                              {evt}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="tpl-content">Conteúdo da mensagem *</Label>
