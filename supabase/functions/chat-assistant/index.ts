@@ -96,6 +96,7 @@ function upsellMessage(args: { firstName?: string | null; topic: ChatTopicId }):
   const topicLabel: Record<ChatTopicId, string> = {
     boloes: "bolões",
     estrategias: "estratégias e ferramentas",
+    estrategias_duplasena: "estratégias da Dupla Sena",
     conhecer_planos: "planos",
   };
 
