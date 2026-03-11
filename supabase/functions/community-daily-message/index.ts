@@ -304,7 +304,7 @@ async function findLatestPost(supabase: any) {
   return post;
 }
 
-async function generateMessage(post: any, apiKey: string) {
+async function generateMessage(post: any, apiKey: string, baseUrl?: string) {
   const horaAtual = new Date().toLocaleTimeString("pt-BR", {
     timeZone: "America/Sao_Paulo",
     hour: "2-digit",
@@ -326,7 +326,7 @@ async function generateMessage(post: any, apiKey: string) {
 Com base no post abaixo, crie uma mensagem curta para um grupo de WhatsApp. A mensagem deve:
 - Iniciar com uma saudação temporal natural (considere o horário atual: ${horaAtual})
 - Fazer um breve resumo do post em 2-3 frases
-- Encerrar chamando o grupo para interagir na comunidade
+- Encerrar com uma chamada para comentar no post, sem incluir o link (o link será adicionado automaticamente)
 - Tom informal e animado
 - Máximo 5 linhas no total
 - NÃO use markdown, apenas texto puro com emojis`,
@@ -346,11 +346,17 @@ Com base no post abaixo, crie uma mensagem curta para um grupo de WhatsApp. A me
   }
 
   const aiData = await aiResponse.json();
-  const mensagem = aiData.choices?.[0]?.message?.content?.trim();
+  const mensagemIa = aiData.choices?.[0]?.message?.content?.trim();
 
-  if (!mensagem) throw new Error("IA não retornou mensagem");
+  if (!mensagemIa) throw new Error("IA não retornou mensagem");
 
-  return mensagem;
+  // Concatenar link do post ao final
+  if (baseUrl) {
+    const linkPost = `${baseUrl.replace(/\/+$/, "")}/post/${post.id}`;
+    return `${mensagemIa}\n\n${linkPost}`;
+  }
+
+  return mensagemIa;
 }
 
 function jsonRes(body: any, status = 200) {
