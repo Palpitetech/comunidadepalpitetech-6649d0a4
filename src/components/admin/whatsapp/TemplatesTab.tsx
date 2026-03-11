@@ -28,6 +28,46 @@ interface FormData {
 
 const emptyForm: FormData = { name: "", content: "", event_trigger: "manual" };
 
+const EVENT_MASKS: Record<string, string> = {
+  // Events table
+  novo_cadastro: "Novo Cadastro",
+  compra_aprovada: "Compra Aprovada",
+  pix_gerado: "PIX Gerado",
+  pix_expirado: "PIX Expirado",
+  boleto_gerado: "Boleto Gerado",
+  boleto_expirado: "Boleto Expirado",
+  assinatura_cancelada: "Assinatura Cancelada",
+  assinatura_inadimplente: "Inadimplente",
+  checkout_abandonado: "Checkout Abandonado",
+  carrinho_abandonado: "Carrinho Abandonado",
+  // Kirvano events
+  SALE_APPROVED: "Venda Aprovada",
+  SALE_REFUSED: "Venda Recusada",
+  SALE_CHARGEBACK: "Chargeback",
+  SALE_REFUNDED: "Reembolso",
+  BANK_SLIP_GENERATED: "Boleto Gerado",
+  BANK_SLIP_EXPIRED: "Boleto Expirado",
+  PIX_GENERATED: "PIX Gerado",
+  PIX_EXPIRED: "PIX Expirado",
+  SUBSCRIPTION_CANCELED: "Assinatura Cancelada",
+  SUBSCRIPTION_OVERDUE: "Inadimplente",
+  SUBSCRIPTION_RENEWED: "Assinatura Renovada",
+  SUBSCRIPTION_REACTIVATED: "Assinatura Reativada",
+  SUBSCRIPTION_TRIAL_STARTED: "Teste Iniciado",
+  SUBSCRIPTION_TRIAL_ENDED: "Teste Encerrado",
+  CHECKOUT_ABANDONED: "Checkout Abandonado",
+  ABANDONED_CART: "Carrinho Abandonado",
+  SUBSCRIPTION_EXPIRED: "Assinatura Expirada",
+  // Special
+  manual: "Manual",
+  lead_created: "Lead Cadastrado",
+  sale_confirmed: "Venda Confirmada",
+};
+
+function getEventLabel(eventType: string): string {
+  return EVENT_MASKS[eventType] || eventType;
+}
+
 const VARIABLES = ["{{nome}}", "{{telefone}}", "{{produto}}"];
 
 export function TemplatesTab() {
@@ -159,14 +199,7 @@ export function TemplatesTab() {
   };
 
   const triggerBadge = (trigger: string) => {
-    switch (trigger) {
-      case "lead_created":
-        return <Badge className="bg-blue-500/15 text-blue-700 border-blue-500/30 text-[11px]">Lead</Badge>;
-      case "sale_confirmed":
-        return <Badge className="bg-green-500/15 text-green-700 border-green-500/30 text-[11px]">Venda</Badge>;
-      default:
-        return <Badge variant="secondary" className="text-[11px]">Manual</Badge>;
-    }
+    return <Badge variant="secondary" className="text-[11px]">{getEventLabel(trigger)}</Badge>;
   };
 
   if (loading) {
@@ -213,7 +246,7 @@ export function TemplatesTab() {
                       aria-expanded={triggerOpen}
                       className="w-full justify-between font-normal"
                     >
-                      {form.event_trigger || "Selecione o gatilho"}
+                      {form.event_trigger ? getEventLabel(form.event_trigger) : "Selecione o gatilho"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
@@ -226,14 +259,15 @@ export function TemplatesTab() {
                           {eventTypes.map((evt) => (
                             <CommandItem
                               key={evt}
-                              value={evt}
-                              onSelect={(v) => {
-                                setForm((f) => ({ ...f, event_trigger: v }));
+                              value={`${evt} ${getEventLabel(evt)}`}
+                              onSelect={() => {
+                                setForm((f) => ({ ...f, event_trigger: evt }));
                                 setTriggerOpen(false);
                               }}
                             >
                               <Check className={cn("mr-2 h-4 w-4", form.event_trigger === evt ? "opacity-100" : "opacity-0")} />
-                              {evt}
+                              <span>{getEventLabel(evt)}</span>
+                              <span className="ml-auto text-[10px] text-muted-foreground font-mono">{evt}</span>
                             </CommandItem>
                           ))}
                         </CommandGroup>
