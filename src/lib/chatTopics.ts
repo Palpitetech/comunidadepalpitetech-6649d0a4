@@ -1,8 +1,8 @@
 import type { FeatureKey } from "@/types/plans";
 
 export type ChatTopicId =
-  | "boloes"
   | "estrategias"
+  | "estrategias_megasena"
   | "estrategias_duplasena"
   | "conhecer_planos";
 
@@ -13,32 +13,37 @@ export interface ChatTopic {
   feature: FeatureKey;
   botTag: string;
   starterUserMessage: string;
+  /** Emoji/color indicator for the lottery */
+  emoji?: string;
 }
 
 export const CHAT_TOPICS: ChatTopic[] = [
   {
-    id: "boloes",
-    title: "Conhecer os bolões",
-    description: "Entenda como funcionam e como participar dos grupos.",
-    feature: "chat_boloes",
-    botTag: "chat_boloes",
-    starterUserMessage: "Quero conhecer os bolões disponíveis.",
+    id: "estrategias",
+    title: "Lotofácil",
+    description: "Análises, ciclos e estratégias para a Lotofácil.",
+    feature: "chat_estatisticas",
+    botTag: "chat_duvidas_ferramentas",
+    starterUserMessage: "Quero analisar a Lotofácil com dados reais.",
+    emoji: "🟢",
   },
   {
-    id: "estrategias",
-    title: "Estratégias e ferramentas",
-    description: "Dicas de estratégias e como usar as ferramentas do sistema.",
-    feature: "chat_duvidas_ferramentas",
-    botTag: "chat_duvidas_ferramentas",
-    starterUserMessage: "Quero aprender estratégias e conhecer as ferramentas.",
+    id: "estrategias_megasena",
+    title: "Mega-Sena",
+    description: "Análises, padrões e estratégias para a Mega-Sena.",
+    feature: "chat_estatisticas",
+    botTag: "chat_megasena",
+    starterUserMessage: "Quero analisar a Mega-Sena com dados reais.",
+    emoji: "🔵",
   },
   {
     id: "estrategias_duplasena",
-    title: "Dupla Sena - Estratégias",
+    title: "Dupla Sena",
     description: "Análises e estratégias exclusivas para a Dupla Sena.",
-    feature: "chat_duvidas_ferramentas",
+    feature: "chat_estatisticas",
     botTag: "chat_duplasena",
-    starterUserMessage: "Quero aprender estratégias específicas para a Dupla Sena.",
+    starterUserMessage: "Quero analisar a Dupla Sena com dados reais.",
+    emoji: "🟡",
   },
   {
     id: "conhecer_planos",
@@ -49,6 +54,9 @@ export const CHAT_TOPICS: ChatTopic[] = [
     starterUserMessage: "Quero conhecer os planos disponíveis.",
   },
 ];
+
+/** Only the lottery topics shown in the selector (excludes conhecer_planos) */
+export const LOTTERY_TOPICS = CHAT_TOPICS.filter((t) => t.id !== "conhecer_planos");
 
 export function getChatTopic(id: ChatTopicId) {
   return CHAT_TOPICS.find((t) => t.id === id);

@@ -18,12 +18,14 @@ function estimateCost(usage: { prompt_tokens?: number; completion_tokens?: numbe
 type ChatTopicId =
   | "boloes"
   | "estrategias"
+  | "estrategias_megasena"
   | "estrategias_duplasena"
   | "conhecer_planos";
 
 const TOPIC_TO_FEATURE: Record<ChatTopicId, string> = {
   boloes: "chat_boloes",
   estrategias: "chat_duvidas_ferramentas",
+  estrategias_megasena: "chat_estatisticas",
   estrategias_duplasena: "chat_duvidas_ferramentas",
   conhecer_planos: "chat_acesso_ferramentas",
 };
@@ -31,6 +33,7 @@ const TOPIC_TO_FEATURE: Record<ChatTopicId, string> = {
 const TOPIC_TO_BOT_TAG: Record<ChatTopicId, string> = {
   boloes: "chat_boloes",
   estrategias: "chat_duvidas_ferramentas",
+  estrategias_megasena: "chat_megasena",
   estrategias_duplasena: "chat_duplasena",
   conhecer_planos: "chat_upsell",
 };
@@ -39,6 +42,7 @@ function isTopicId(value: unknown): value is ChatTopicId {
   return (
     value === "boloes" ||
     value === "estrategias" ||
+    value === "estrategias_megasena" ||
     value === "estrategias_duplasena" ||
     value === "conhecer_planos"
   );
@@ -95,7 +99,8 @@ function upsellMessage(args: { firstName?: string | null; topic: ChatTopicId }):
   const name = args.firstName ? `, ${args.firstName}` : "";
   const topicLabel: Record<ChatTopicId, string> = {
     boloes: "bolões",
-    estrategias: "estratégias e ferramentas",
+    estrategias: "estratégias e ferramentas da Lotofácil",
+    estrategias_megasena: "estratégias da Mega-Sena",
     estrategias_duplasena: "estratégias da Dupla Sena",
     conhecer_planos: "planos",
   };
@@ -129,7 +134,8 @@ function buildSystemPrompt(args: {
   const nameHint = args.userFirstName ? `O usuário se chama ${args.userFirstName}.` : "";
   const topicHint: Record<ChatTopicId, string> = {
     boloes: "Bolões",
-    estrategias: "Estratégias e Ferramentas",
+    estrategias: "Estratégias e Ferramentas da Lotofácil",
+    estrategias_megasena: "Estratégias da Mega-Sena",
     estrategias_duplasena: "Estratégias da Dupla Sena",
     conhecer_planos: "Conhecer os Planos",
   };
@@ -378,6 +384,22 @@ serve(async (req) => {
           `  Ciclo: ${r.ciclo_numero ?? "N/A"} | Faltantes no ciclo: ${(r.dezenas_faltantes_ciclo || []).join(", ") || "nenhuma"}`
         ).join("\n\n");
         contextBlock = `\n\nDADOS REAIS DOS ÚLTIMOS 10 CONCURSOS DA LOTOFÁCIL:\n${lines}`;
+      }
+    } else if (topic === "estrategias_megasena") {
+      const { data: resultados } = await userClient
+        .from("resultados_megasena")
+        .select("concurso_id, data_sorteio, dezenas, acumulou, valor_estimado_proximo, qtd_pares, qtd_impares, qtd_primos, qtd_moldura, qtd_repetidas")
+        .order("concurso_id", { ascending: false })
+        .limit(10);
+
+      if (resultados?.length) {
+        const lines = (resultados as any[]).map((r: any) =>
+          `Concurso ${r.concurso_id} — ${r.data_sorteio}\n` +
+          `  Dezenas: ${(r.dezenas || []).join(", ")}\n` +
+          `  Pares: ${r.qtd_pares} | Ímpares: ${r.qtd_impares} | Primos: ${r.qtd_primos} | Moldura: ${r.qtd_moldura} | Repetidas: ${r.qtd_repetidas}\n` +
+          `  Acumulou: ${r.acumulou ? "Sim" : "Não"} | Estimado próximo: R$${r.valor_estimado_proximo ? Number(r.valor_estimado_proximo).toLocaleString("pt-BR") : "N/A"}`
+        ).join("\n\n");
+        contextBlock = `\n\nDADOS REAIS DOS ÚLTIMOS 10 CONCURSOS DA MEGA-SENA:\n${lines}`;
       }
     } else if (topic === "estrategias_duplasena") {
       const { data: resultados } = await userClient

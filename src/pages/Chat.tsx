@@ -9,20 +9,26 @@ import { ChatDaySeparator } from "@/components/chat/ChatDaySeparator";
 import { ChatMessageBubble } from "@/components/chat/ChatMessageBubble";
 import { ChatQuickReplies } from "@/components/chat/ChatQuickReplies";
 import { ChatTypingIndicator } from "@/components/chat/ChatTypingIndicator";
-import { CHAT_TOPICS, type ChatTopicId, getChatTopic } from "@/lib/chatTopics";
+import { ChatAIGateModal } from "@/components/chat/ChatAIGateModal";
+import { LOTTERY_TOPICS, type ChatTopicId, getChatTopic } from "@/lib/chatTopics";
 import { useChat } from "@/hooks/useChat";
 import { useAssistantTypingSimulation } from "@/hooks/useAssistantTypingSimulation";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { usePermissions } from "@/hooks/usePermission";
 import { cn } from "@/lib/utils";
 import { format, isSameDay, parseISO } from "date-fns";
 import { Send } from "lucide-react";
 
 export default function Chat() {
   const isMobile = useIsMobile();
+  const { hasPermission } = usePermissions();
   const [selectedTopic, setSelectedTopic] = useState<ChatTopicId | null>(null);
   const [pendingStarter, setPendingStarter] = useState<string | null>(null);
+  const [gateOpen, setGateOpen] = useState(false);
+  const [gateLottery, setGateLottery] = useState("");
+
   const topicMeta = useMemo(
-    () => (selectedTopic ? CHAT_TOPICS.find((t) => t.id === selectedTopic) : undefined),
+    () => (selectedTopic ? getChatTopic(selectedTopic) : undefined),
     [selectedTopic]
   );
 
@@ -42,7 +48,13 @@ export default function Chat() {
   const [draft, setDraft] = useState("");
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  const handlePickTopic = async (id: ChatTopicId) => {
+  const handlePickTopic = async (id: ChatTopicId, title: string) => {
+    // Check permission
+    if (!hasPermission("chat_estatisticas")) {
+      setGateLottery(title);
+      setGateOpen(true);
+      return;
+    }
     const meta = getChatTopic(id);
     setSelectedTopic(id);
     setDraft("");
@@ -70,12 +82,8 @@ export default function Chat() {
 
   return (
     <MainLayout pageTitle="Chat">
-      {/*
-        No mobile existe o menu inferior fixo (h-16). Este padding garante que o composer
-        fique sempre visível acima dele (inclui safe-area do iOS).
-      */}
       <div className="flex h-[calc(100dvh-5rem)] flex-col overflow-hidden md:h-full bg-clovers">
-        {/* Header minimalista - Desktop only */}
+        {/* Header - Desktop only */}
         {!isMobile && (
           <header className="sticky top-0 z-10 border-b border-border bg-background/80 px-3 py-1.5 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-4">
             <div className="flex items-center justify-between gap-2">
@@ -83,8 +91,13 @@ export default function Chat() {
                 <ChatAvatar />
                 <div className="min-w-0 leading-tight">
                   <p className="truncate text-base font-semibold">
-                    {topicMeta ? topicMeta.title : "Escolha um tema"}
+                    {topicMeta ? `${topicMeta.emoji ?? ""} ${topicMeta.title}`.trim() : "Escolha uma loteria"}
                   </p>
+                  {topicMeta && (
+                    <p className="text-[0.65rem] text-muted-foreground truncate">
+                      IA Avançada • +47k linhas
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -105,20 +118,16 @@ export default function Chat() {
           </header>
         )}
 
-        {/* Conteúdo */}
+        {/* Content */}
         <div className="flex min-h-0 flex-1 flex-col">
           <ScrollArea className="flex-1">
-            {/*
-              Importante: como o composer é fixed, damos padding no final do conteúdo para
-              evitar que a última mensagem fique escondida atrás dele e do menu inferior.
-            */}
             <div className="chat-wallpaper px-3 py-4 pb-[calc(env(safe-area-inset-bottom)+4rem+6rem)] md:px-5 md:pb-28">
               {!selectedTopic ? (
                 <div className="flex items-end gap-2">
                   <ChatAvatar />
                   <ChatQuickReplies
-                    topics={CHAT_TOPICS}
-                    onPick={(t) => void handlePickTopic(t.id)}
+                    topics={LOTTERY_TOPICS}
+                    onPick={(t) => void handlePickTopic(t.id, t.title)}
                   />
                 </div>
               ) : loading ? (
@@ -138,9 +147,7 @@ export default function Chat() {
                       <ChatAvatar />
                       <ChatMessageBubble
                         role="assistant"
-                        content={
-                          "Sem mensagens ainda. Se quiser, escreva uma pergunta aqui embaixo."
-                        }
+                        content="Sem mensagens ainda. Se quiser, escreva uma pergunta aqui embaixo."
                         timeLabel={format(new Date(), "HH:mm")}
                       />
                     </div>
@@ -207,9 +214,7 @@ export default function Chat() {
           <div
             className={cn(
               "fixed left-0 right-0 z-50 border-t border-border bg-background/80 p-3 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-              // Mobile: acima do menu inferior (h-16) + safe-area iOS
               "bottom-[calc(env(safe-area-inset-bottom)+4rem)]",
-              // Desktop: no rodapé
               "md:bottom-0"
             )}
           >
@@ -219,7 +224,7 @@ export default function Chat() {
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder={
-                  selectedTopic ? "Digite sua mensagem..." : "Escolha um tema acima para começar"
+                  selectedTopic ? "Digite sua mensagem..." : "Escolha uma loteria acima para começar"
                 }
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -242,6 +247,13 @@ export default function Chat() {
           </div>
         </div>
       </div>
+
+      {/* Gate modal for non-VIP users */}
+      <ChatAIGateModal
+        open={gateOpen}
+        onOpenChange={setGateOpen}
+        lotteryName={gateLottery}
+      />
     </MainLayout>
   );
 }
