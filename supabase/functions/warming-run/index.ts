@@ -216,7 +216,7 @@ async function runWarmingPair(
 
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i];
-    const isA = msg.sender === "A";
+    const isA = msg.remetente === "A";
     const fromInstance = isA ? instanceA : instanceB;
     const toInstance = isA ? instanceB : instanceA;
 
@@ -230,7 +230,7 @@ async function runWarmingPair(
         },
         body: JSON.stringify({
           number: toInstance.phone_number,
-          text: msg.text,
+          text: msg.texto,
         }),
       });
 
