@@ -2,6 +2,7 @@ import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Smartphone, FileText, Send, ScrollText } from "lucide-react";
+import { InstanciasTab } from "@/components/admin/whatsapp/InstanciasTab";
 
 const tabs = [
   { value: "instancias", label: "Instâncias", icon: Smartphone },
@@ -32,9 +33,7 @@ export default function AdminWhatsApp() {
           </TabsList>
 
           <TabsContent value="instancias" className="mt-6">
-            <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">
-              Em breve — Gerenciamento de instâncias
-            </div>
+            <InstanciasTab />
           </TabsContent>
 
           <TabsContent value="templates" className="mt-6">
