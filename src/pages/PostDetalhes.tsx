@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { ExternalLink, ArrowLeft, MessageCircle } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,9 @@ import { usePostDetails } from "@/hooks/usePostDetails";
 import { usePostActions } from "@/hooks/usePostActions";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useMySubscription } from "@/hooks/useMySubscription";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -46,6 +49,7 @@ function PostSkeleton() {
 export default function PostDetalhes() {
   const isMobile = useIsMobile();
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuthContext();
   const isAuthenticated = !!user;
@@ -53,6 +57,29 @@ export default function PostDetalhes() {
   const isFreePlan = !subscription || subscription.status === "inativa";
   const [showLoginModal, setShowLoginModal] = useState(false);
   const commentSectionRef = useRef<HTMLDivElement>(null);
+
+  // Capture referral code from shared URL
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref && ref.length === 6) {
+      localStorage.setItem("referral_code", ref);
+    }
+  }, [searchParams]);
+
+  // Fetch current user's referral code for sharing
+  const { data: myReferralCode } = useQuery({
+    queryKey: ["my-referral-code", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("perfis")
+        .select("referral_code")
+        .eq("id", user!.id)
+        .single();
+      return data?.referral_code || null;
+    },
+    enabled: !!user?.id,
+    staleTime: Infinity,
+  });
 
   const {
     post,
@@ -240,6 +267,7 @@ export default function PostDetalhes() {
             commentsCount={commentsCount}
             onCommentsClick={scrollToComments}
             postContent={post.conteudo}
+            referralCode={myReferralCode}
           />
         </div>
 

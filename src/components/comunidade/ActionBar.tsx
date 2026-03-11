@@ -11,6 +11,7 @@ interface ActionBarProps {
   commentsCount?: number;
   onCommentsClick?: () => void;
   postContent?: string;
+  referralCode?: string | null;
 }
 
 export function ActionBar({
@@ -21,16 +22,26 @@ export function ActionBar({
   commentsCount,
   onCommentsClick,
   postContent,
+  referralCode,
 }: ActionBarProps) {
+  const getShareUrl = () => {
+    const url = new URL(window.location.href);
+    if (referralCode) {
+      url.searchParams.set("ref", referralCode);
+    }
+    return url.toString();
+  };
+
   const handleShare = async () => {
+    const shareUrl = getShareUrl();
     try {
       await navigator.share({
         title: "Palpite Tech",
         text: "Confira esse palpite na comunidade!",
-        url: window.location.href,
+        url: shareUrl,
       });
     } catch {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(shareUrl);
       toast.success("Link copiado!");
     }
   };
