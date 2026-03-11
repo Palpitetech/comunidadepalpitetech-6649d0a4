@@ -187,6 +187,13 @@ export default function Chat() {
                       const isUser = m.role === "user";
                       const showUserAvatar =
                         isUser && (!prev || prev.role !== "user" || showDaySeparator);
+                      const isAssistant = !isUser;
+                      const showBotAvatar =
+                        isAssistant && (!prev || prev.role !== "assistant" || showDaySeparator);
+
+                      const userInitials = profile?.nome
+                        ? profile.nome.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+                        : "EU";
 
                       return (
                         <div key={m.id} className="space-y-2">
@@ -196,7 +203,7 @@ export default function Chat() {
 
                           {isAssistant ? (
                             <div className="flex items-end gap-2">
-                              {showAvatar ? <ChatAvatar /> : <div className="h-9 w-9" />}
+                              {showBotAvatar ? <ChatAvatar /> : <div className="h-9 w-9" />}
                               <ChatMessageBubble
                                 role="assistant"
                                 content={m.content}
@@ -205,8 +212,16 @@ export default function Chat() {
                               />
                             </div>
                           ) : (
-                            <div className="flex justify-end">
+                            <div className="flex items-end justify-end gap-2">
                               <ChatMessageBubble role="user" content={m.content} timeLabel={timeLabel} />
+                              {showUserAvatar ? (
+                                <Avatar className="h-9 w-9 shrink-0 shadow-sm">
+                                  <AvatarImage src={profile?.avatar_url || undefined} />
+                                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-semibold">
+                                    {userInitials}
+                                  </AvatarFallback>
+                                </Avatar>
+                              ) : <div className="h-9 w-9 shrink-0" />}
                             </div>
                           )}
                         </div>
