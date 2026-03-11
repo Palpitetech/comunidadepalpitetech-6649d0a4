@@ -199,14 +199,7 @@ export function TemplatesTab() {
   };
 
   const triggerBadge = (trigger: string) => {
-    switch (trigger) {
-      case "lead_created":
-        return <Badge className="bg-blue-500/15 text-blue-700 border-blue-500/30 text-[11px]">Lead</Badge>;
-      case "sale_confirmed":
-        return <Badge className="bg-green-500/15 text-green-700 border-green-500/30 text-[11px]">Venda</Badge>;
-      default:
-        return <Badge variant="secondary" className="text-[11px]">Manual</Badge>;
-    }
+    return <Badge variant="secondary" className="text-[11px]">{getEventLabel(trigger)}</Badge>;
   };
 
   if (loading) {
