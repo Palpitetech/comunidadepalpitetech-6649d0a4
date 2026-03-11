@@ -218,7 +218,7 @@ async function handleTest(
   const post = await findLatestPost(supabase);
   if (!post) return jsonRes({ error: "Nenhum post encontrado" }, 404);
 
-  const mensagem = await generateMessage(post, env.LOVABLE_API_KEY);
+  const mensagem = await generateMessage(post, env.LOVABLE_API_KEY, env.COMMUNITY_BASE_URL);
 
   const { data: instance } = await supabase
     .from("whatsapp_instances")
