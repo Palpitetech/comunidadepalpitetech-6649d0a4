@@ -385,6 +385,22 @@ serve(async (req) => {
         ).join("\n\n");
         contextBlock = `\n\nDADOS REAIS DOS ÚLTIMOS 10 CONCURSOS DA LOTOFÁCIL:\n${lines}`;
       }
+    } else if (topic === "estrategias_megasena") {
+      const { data: resultados } = await userClient
+        .from("resultados_megasena")
+        .select("concurso_id, data_sorteio, dezenas, acumulou, valor_estimado_proximo, qtd_pares, qtd_impares, qtd_primos, qtd_moldura, qtd_repetidas")
+        .order("concurso_id", { ascending: false })
+        .limit(10);
+
+      if (resultados?.length) {
+        const lines = (resultados as any[]).map((r: any) =>
+          `Concurso ${r.concurso_id} — ${r.data_sorteio}\n` +
+          `  Dezenas: ${(r.dezenas || []).join(", ")}\n` +
+          `  Pares: ${r.qtd_pares} | Ímpares: ${r.qtd_impares} | Primos: ${r.qtd_primos} | Moldura: ${r.qtd_moldura} | Repetidas: ${r.qtd_repetidas}\n` +
+          `  Acumulou: ${r.acumulou ? "Sim" : "Não"} | Estimado próximo: R$${r.valor_estimado_proximo ? Number(r.valor_estimado_proximo).toLocaleString("pt-BR") : "N/A"}`
+        ).join("\n\n");
+        contextBlock = `\n\nDADOS REAIS DOS ÚLTIMOS 10 CONCURSOS DA MEGA-SENA:\n${lines}`;
+      }
     } else if (topic === "estrategias_duplasena") {
       const { data: resultados } = await userClient
         .from("resultados_duplasena" as any)
