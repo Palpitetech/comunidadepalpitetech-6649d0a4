@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, ScrollText, Filter, X } from "lucide-react";
+import { Loader2, ScrollText, Filter, X, Send } from "lucide-react";
+import { toast } from "sonner";
 import { format, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -44,6 +45,23 @@ export function LogsTab() {
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [testingSend, setTestingSend] = useState(false);
+
+  const handleTestDailySend = async () => {
+    setTestingSend(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("community-daily-message", {
+        body: { action: "test" },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success("Mensagem enviada com sucesso no grupo!");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao enviar mensagem de teste");
+    } finally {
+      setTestingSend(false);
+    }
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -124,22 +142,34 @@ export function LogsTab() {
 
   return (
     <div className="space-y-4">
-      {/* Today counter + filter toggle */}
+      {/* Today counter + actions */}
       <div className="flex items-center justify-between gap-3">
         <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 flex items-center gap-2 flex-1">
           <span className="text-xl sm:text-2xl font-bold tabular-nums">{todayCount}</span>
           <span className="text-xs sm:text-sm text-muted-foreground">msgs enviadas hoje</span>
         </div>
-        <Button
-          variant={hasActiveFilters ? "default" : "outline"}
-          size="sm"
-          className="gap-1.5 text-xs shrink-0"
-          onClick={() => setShowFilters(!showFilters)}
-        >
-          <Filter className="h-3.5 w-3.5" />
-          Filtros
-          {hasActiveFilters && <span className="tabular-nums">({filtered.length})</span>}
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs"
+            onClick={handleTestDailySend}
+            disabled={testingSend}
+          >
+            {testingSend ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+            {isMobile ? "Testar" : "Testar Envio Diário"}
+          </Button>
+          <Button
+            variant={hasActiveFilters ? "default" : "outline"}
+            size="sm"
+            className="gap-1.5 text-xs"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Filter className="h-3.5 w-3.5" />
+            Filtros
+            {hasActiveFilters && <span className="tabular-nums">({filtered.length})</span>}
+          </Button>
+        </div>
       </div>
 
       {/* Collapsible filters */}
