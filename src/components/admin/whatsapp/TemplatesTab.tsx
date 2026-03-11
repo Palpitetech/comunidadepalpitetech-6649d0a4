@@ -68,7 +68,7 @@ function getEventLabel(eventType: string): string {
   return EVENT_MASKS[eventType] || eventType;
 }
 
-const VARIABLES = ["{{nome}}", "{{telefone}}", "{{produto}}"];
+const VARIABLES = ["{{nome}}", "{{telefone}}", "{{email}}", "{{produto}}"];
 
 export function TemplatesTab() {
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
