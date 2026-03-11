@@ -43,9 +43,7 @@ export default function AdminWhatsApp() {
           </TabsContent>
 
           <TabsContent value="fila" className="mt-6">
-            <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">
-              Em breve — Fila de envios
-            </div>
+            <FilaTab />
           </TabsContent>
 
           <TabsContent value="logs" className="mt-6">
