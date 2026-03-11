@@ -17,6 +17,7 @@ Deno.serve(async (req) => {
   const EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY");
   const COMMUNITY_GROUP_JID = Deno.env.get("COMMUNITY_GROUP_JID");
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  const COMMUNITY_BASE_URL = Deno.env.get("COMMUNITY_BASE_URL");
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
