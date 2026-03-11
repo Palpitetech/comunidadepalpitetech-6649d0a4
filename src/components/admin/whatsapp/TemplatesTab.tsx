@@ -266,14 +266,15 @@ export function TemplatesTab() {
                           {eventTypes.map((evt) => (
                             <CommandItem
                               key={evt}
-                              value={evt}
-                              onSelect={(v) => {
-                                setForm((f) => ({ ...f, event_trigger: v }));
+                              value={`${evt} ${getEventLabel(evt)}`}
+                              onSelect={() => {
+                                setForm((f) => ({ ...f, event_trigger: evt }));
                                 setTriggerOpen(false);
                               }}
                             >
                               <Check className={cn("mr-2 h-4 w-4", form.event_trigger === evt ? "opacity-100" : "opacity-0")} />
-                              {evt}
+                              <span>{getEventLabel(evt)}</span>
+                              <span className="ml-auto text-[10px] text-muted-foreground font-mono">{evt}</span>
                             </CommandItem>
                           ))}
                         </CommandGroup>
