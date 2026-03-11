@@ -56,14 +56,6 @@ export function CommentSection({
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center gap-2 pt-2">
-        <MessageCircle className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium text-foreground">
-          {commentsCount} {commentsCount === 1 ? "comentário" : "comentários"}
-        </span>
-      </div>
-
       {/* New comment input */}
       <div className="flex items-center gap-2 bg-muted/40 rounded-xl px-3 py-1 border border-border/40 focus-within:border-primary/40 focus-within:bg-muted/20 transition-all">
         <input
