@@ -18,12 +18,14 @@ function estimateCost(usage: { prompt_tokens?: number; completion_tokens?: numbe
 type ChatTopicId =
   | "boloes"
   | "estrategias"
+  | "estrategias_megasena"
   | "estrategias_duplasena"
   | "conhecer_planos";
 
 const TOPIC_TO_FEATURE: Record<ChatTopicId, string> = {
   boloes: "chat_boloes",
   estrategias: "chat_duvidas_ferramentas",
+  estrategias_megasena: "chat_estatisticas",
   estrategias_duplasena: "chat_duvidas_ferramentas",
   conhecer_planos: "chat_acesso_ferramentas",
 };
@@ -31,6 +33,7 @@ const TOPIC_TO_FEATURE: Record<ChatTopicId, string> = {
 const TOPIC_TO_BOT_TAG: Record<ChatTopicId, string> = {
   boloes: "chat_boloes",
   estrategias: "chat_duvidas_ferramentas",
+  estrategias_megasena: "chat_megasena",
   estrategias_duplasena: "chat_duplasena",
   conhecer_planos: "chat_upsell",
 };
@@ -39,6 +42,7 @@ function isTopicId(value: unknown): value is ChatTopicId {
   return (
     value === "boloes" ||
     value === "estrategias" ||
+    value === "estrategias_megasena" ||
     value === "estrategias_duplasena" ||
     value === "conhecer_planos"
   );
