@@ -58,6 +58,7 @@ Deno.serve(async (req) => {
     // 2. Find the most recent non-comment post
     const today = new Date().toISOString().slice(0, 10);
 
+    // Try non-comment posts first, then fall back to any main post
     let { data: post } = await supabase
       .from("postagens")
       .select("id, titulo, conteudo, tipo, created_at")
@@ -69,7 +70,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (!post) {
-      const { data: fallback } = await supabase
+      const { data: fallbackTyped } = await supabase
         .from("postagens")
         .select("id, titulo, conteudo, tipo, created_at")
         .neq("tipo", "comentario")
@@ -77,7 +78,19 @@ Deno.serve(async (req) => {
         .order("created_at", { ascending: false })
         .limit(1)
         .single();
-      post = fallback;
+      post = fallbackTyped;
+    }
+
+    // If still no post, use any main post (including tipo=comentario)
+    if (!post) {
+      const { data: fallbackAny } = await supabase
+        .from("postagens")
+        .select("id, titulo, conteudo, tipo, created_at")
+        .is("parent_id", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      post = fallbackAny;
     }
 
     if (!post) {
