@@ -15,6 +15,7 @@ const tabs = [
   { value: "fila", label: "Fila", icon: Send },
   { value: "logs", label: "Logs", icon: ScrollText },
   { value: "aquecimento", label: "Aquecimento", icon: Flame },
+  { value: "grupos", label: "Grupos", icon: Users },
 ] as const;
 
 export default function AdminWhatsApp() {
