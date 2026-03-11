@@ -300,16 +300,14 @@ serve(async (req) => {
     let currentCount = 0;
 
     if (topic !== "conhecer_planos" && !isVip) {
-      // Buscar uso de hoje
-      const { data: usageRow } = await adminClient
+      // Buscar uso GLOBAL de hoje (todas as loterias somadas)
+      const { data: usageRows } = await adminClient
         .from("chat_daily_usage")
         .select("count")
         .eq("user_id", userId)
-        .eq("topic", topic)
-        .eq("day", todayStr)
-        .maybeSingle();
+        .eq("day", todayStr);
 
-      currentCount = (usageRow?.count as number) ?? 0;
+      currentCount = (usageRows ?? []).reduce((sum: number, r: any) => sum + ((r.count as number) ?? 0), 0);
 
       if (currentCount >= FREE_DAILY_LIMIT) {
         const name = firstName ? `, ${firstName}` : "";
