@@ -20,7 +20,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
-import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot, Dices, Shuffle, Ticket, LayoutGrid, Target, Table2, Gift, Lock } from "lucide-react";
+import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot, Dices, Shuffle, Ticket, LayoutGrid, Target, Table2, Gift, Lock, MessageCircle } from "lucide-react";
 
 export function DesktopHeader() {
   const { isAuthenticated, profile, signOut } = useAuthContext();
@@ -417,6 +417,12 @@ export function DesktopHeader() {
                   <Link to="/admin/eventos">
                     <BarChart3 className="h-4 w-4" />
                     Eventos
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                  <Link to="/admin/whatsapp">
+                    <MessageCircle className="h-4 w-4" />
+                    WhatsApp
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>

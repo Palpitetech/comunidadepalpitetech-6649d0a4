@@ -39,6 +39,7 @@ import AdminCustos from "./pages/admin/AdminCustos";
 import AdminConvites from "./pages/admin/AdminConvites";
 import AdminVendas from "./pages/admin/AdminVendas";
 import AdminEventos from "./pages/admin/AdminEventos";
+import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
 import AnaliseDoDia from "./pages/AnaliseDoDia";
 import TabelaMovimentacao from "./pages/TabelaMovimentacao";
 import FrequenciaDezenas from "./pages/FrequenciaDezenas";
@@ -151,6 +152,7 @@ const App = () => (
             <Route path="/admin/convites" element={<AdminRoute><AdminConvites /></AdminRoute>} />
             <Route path="/admin/vendas" element={<AdminRoute><AdminVendas /></AdminRoute>} />
             <Route path="/admin/eventos" element={<AdminRoute><AdminEventos /></AdminRoute>} />
+            <Route path="/admin/whatsapp" element={<AdminRoute><AdminWhatsApp /></AdminRoute>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
