@@ -101,7 +101,7 @@ async function generateWarmingMessages(
   nameA: string,
   nameB: string,
   count: number
-): Promise<{ sender: string; text: string }[]> {
+): Promise<{ remetente: string; texto: string }[]> {
   const res = await fetch(
     "https://ai.gateway.lovable.dev/v1/chat/completions",
     {
@@ -120,12 +120,30 @@ async function generateWarmingMessages(
           },
           {
             role: "user",
-            content: `Você é ${nameA} conversando com seu amigo ${nameB} no WhatsApp.
-Tema: ${theme}.
-Gere exatamente ${count} mensagens alternando os remetentes.
-Regras: informal, linguagem brasileira, máximo 2 frases por mensagem,
-no máximo 1 emoji por mensagem, nunca mencione endereços completos.
-Formato JSON: [{"sender":"A","text":"..."},{"sender":"B","text":"..."}]`,
+            content: `Você vai criar UMA ÚNICA conversa de WhatsApp entre dois amigos: ${nameA} (A) e ${nameB} (B).
+
+As mensagens devem se RESPONDER umas às outras, como uma troca real. B responde o que A disse. A replica o que B disse. É um diálogo, não monólogos.
+
+Tema da conversa: ${theme}
+
+Retorne APENAS este JSON (sem markdown, sem explicação):
+{
+  "mensagens": [
+    { "remetente": "A", "texto": "mensagem de A" },
+    { "remetente": "B", "texto": "resposta de B" },
+    { "remetente": "A", "texto": "réplica de A" },
+    { "remetente": "B", "texto": "encerramento de B" }
+  ]
+}
+
+REGRAS:
+- Exatamente ${count} mensagens
+- A primeira mensagem DEVE ser de A
+- Cada mensagem responde a anterior
+- NÃO repita o mesmo remetente duas vezes seguidas (alterne A, B, A, B...)
+- Linguagem informal brasileira, máximo 2 frases por mensagem
+- No máximo 1 emoji por mensagem
+- Nunca mencione endereços completos`,
           },
         ],
       }),
@@ -140,11 +158,38 @@ Formato JSON: [{"sender":"A","text":"..."},{"sender":"B","text":"..."}]`,
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content ?? "";
 
-  // Extract JSON from response (handle possible markdown wrapping)
-  const jsonMatch = content.match(/\[[\s\S]*\]/);
-  if (!jsonMatch) throw new Error("AI não retornou JSON válido");
+  // Extract JSON object or array from response
+  const objMatch = content.match(/\{[\s\S]*"mensagens"[\s\S]*\}/);
+  let msgs: { remetente: string; texto: string }[];
 
-  return JSON.parse(jsonMatch[0]);
+  if (objMatch) {
+    const parsed = JSON.parse(objMatch[0]);
+    msgs = parsed.mensagens;
+  } else {
+    const arrMatch = content.match(/\[[\s\S]*\]/);
+    if (!arrMatch) throw new Error("AI não retornou JSON válido");
+    msgs = JSON.parse(arrMatch[0]);
+  }
+
+  if (!Array.isArray(msgs) || msgs.length < 2) {
+    throw new Error("Roteiro inválido: menos de 2 mensagens");
+  }
+
+  // Validate: first message must be from A
+  if (msgs[0].remetente !== "A") {
+    throw new Error("Roteiro inválido: deve começar com A");
+  }
+
+  // Validate: no consecutive same sender
+  for (let i = 1; i < msgs.length; i++) {
+    if (msgs[i].remetente === msgs[i - 1].remetente) {
+      throw new Error(
+        `Roteiro inválido: mesmo remetente consecutivo na posição ${i}`
+      );
+    }
+  }
+
+  return msgs;
 }
 
 /* ── runWarmingPair ───────────────────────────────────── */
