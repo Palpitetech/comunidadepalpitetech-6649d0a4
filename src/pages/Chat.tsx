@@ -4,6 +4,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ChatAvatar } from "@/components/chat/ChatAvatar";
 import { ChatDaySeparator } from "@/components/chat/ChatDaySeparator";
 import { ChatMessageBubble } from "@/components/chat/ChatMessageBubble";
@@ -16,12 +17,14 @@ import { useChat } from "@/hooks/useChat";
 import { useAssistantTypingSimulation } from "@/hooks/useAssistantTypingSimulation";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { usePermissions } from "@/hooks/usePermission";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { format, isSameDay, parseISO } from "date-fns";
 import { ArrowLeft, Send, Sparkles } from "lucide-react";
 
 export default function Chat() {
   const isMobile = useIsMobile();
+  const { profile } = useAuthContext();
   const { hasPermission } = usePermissions();
   const [selectedTopic, setSelectedTopic] = useState<ChatTopicId | null>(null);
   const [pendingStarter, setPendingStarter] = useState<string | null>(null);
@@ -181,9 +184,16 @@ export default function Chat() {
                       const prevDate = prev ? parseISO(prev.created_at) : null;
                       const showDaySeparator = !prevDate || !isSameDay(d, prevDate);
                       const timeLabel = format(d, "HH:mm");
-                      const isAssistant = m.role === "assistant";
-                      const showAvatar =
+                      const isUser = m.role === "user";
+                      const showUserAvatar =
+                        isUser && (!prev || prev.role !== "user" || showDaySeparator);
+                      const isAssistant = !isUser;
+                      const showBotAvatar =
                         isAssistant && (!prev || prev.role !== "assistant" || showDaySeparator);
+
+                      const userInitials = profile?.nome
+                        ? profile.nome.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+                        : "EU";
 
                       return (
                         <div key={m.id} className="space-y-2">
@@ -193,7 +203,7 @@ export default function Chat() {
 
                           {isAssistant ? (
                             <div className="flex items-end gap-2">
-                              {showAvatar ? <ChatAvatar /> : <div className="h-9 w-9" />}
+                              {showBotAvatar ? <ChatAvatar /> : <div className="h-9 w-9" />}
                               <ChatMessageBubble
                                 role="assistant"
                                 content={m.content}
@@ -202,8 +212,16 @@ export default function Chat() {
                               />
                             </div>
                           ) : (
-                            <div className="flex justify-end">
+                            <div className="flex items-end justify-end gap-2">
                               <ChatMessageBubble role="user" content={m.content} timeLabel={timeLabel} />
+                              {showUserAvatar ? (
+                                <Avatar className="h-9 w-9 shrink-0 shadow-sm">
+                                  <AvatarImage src={profile?.avatar_url || undefined} />
+                                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-semibold">
+                                    {userInitials}
+                                  </AvatarFallback>
+                                </Avatar>
+                              ) : <div className="h-9 w-9 shrink-0" />}
                             </div>
                           )}
                         </div>
