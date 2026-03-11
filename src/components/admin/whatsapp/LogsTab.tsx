@@ -1,0 +1,223 @@
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Loader2, ScrollText } from "lucide-react";
+import { format, startOfDay } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+interface SendLog {
+  id: string;
+  queue_id: string | null;
+  instance_id: string | null;
+  recipient_phone: string;
+  message_content: string | null;
+  status: string | null;
+  sent_at: string | null;
+  instance_name?: string;
+}
+
+interface InstanceOption {
+  id: string;
+  name: string;
+}
+
+const STATUS_OPTIONS = [
+  { value: "all", label: "Todos" },
+  { value: "sent", label: "Enviado" },
+  { value: "failed", label: "Falhou" },
+  { value: "sending", label: "Enviando" },
+];
+
+export function LogsTab() {
+  const [logs, setLogs] = useState<SendLog[]>([]);
+  const [instances, setInstances] = useState<InstanceOption[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [todayCount, setTodayCount] = useState(0);
+  const [filterInstance, setFilterInstance] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterDateFrom, setFilterDateFrom] = useState("");
+  const [filterDateTo, setFilterDateTo] = useState("");
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+
+    const [logsRes, instancesRes] = await Promise.all([
+      supabase
+        .from("send_logs" as any)
+        .select("*")
+        .order("sent_at", { ascending: false })
+        .limit(500),
+      supabase
+        .from("whatsapp_instances" as any)
+        .select("id, name")
+        .order("name"),
+    ]);
+
+    const instancesList: InstanceOption[] = (instancesRes.data as any[]) || [];
+    setInstances(instancesList);
+
+    const instanceMap = new Map(instancesList.map((i) => [i.id, i.name]));
+    const rawLogs: SendLog[] = ((logsRes.data as any[]) || []).map((l: any) => ({
+      ...l,
+      instance_name: l.instance_id ? instanceMap.get(l.instance_id) || "—" : "—",
+    }));
+    setLogs(rawLogs);
+
+    // Count today
+    const todayStart = startOfDay(new Date()).toISOString();
+    const count = rawLogs.filter((l) => l.sent_at && l.sent_at >= todayStart).length;
+    setTodayCount(count);
+
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const statusBadge = (status: string | null) => {
+    switch (status) {
+      case "sent":
+        return <Badge className="bg-green-500/15 text-green-700 border-green-500/30 text-[11px]">Enviado</Badge>;
+      case "failed":
+        return <Badge className="bg-red-500/15 text-red-700 border-red-500/30 text-[11px]">Falhou</Badge>;
+      case "sending":
+        return <Badge className="bg-blue-500/15 text-blue-700 border-blue-500/30 text-[11px]">Enviando</Badge>;
+      default:
+        return <Badge variant="secondary" className="text-[11px]">{status || "—"}</Badge>;
+    }
+  };
+
+  const formatDate = (d: string | null) =>
+    d ? format(new Date(d), "dd/MM/yy HH:mm", { locale: ptBR }) : "—";
+
+  const filtered = logs.filter((log) => {
+    if (filterInstance !== "all" && log.instance_id !== filterInstance) return false;
+    if (filterStatus !== "all" && log.status !== filterStatus) return false;
+    if (filterDateFrom && log.sent_at && log.sent_at.slice(0, 10) < filterDateFrom) return false;
+    if (filterDateTo && log.sent_at && log.sent_at.slice(0, 10) > filterDateTo) return false;
+    return true;
+  });
+
+  const hasActiveFilters = filterInstance !== "all" || filterStatus !== "all" || filterDateFrom || filterDateTo;
+
+  const clearFilters = () => {
+    setFilterInstance("all");
+    setFilterStatus("all");
+    setFilterDateFrom("");
+    setFilterDateTo("");
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Today counter */}
+      <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 flex items-center gap-2">
+        <span className="text-2xl font-bold tabular-nums">{todayCount}</span>
+        <span className="text-sm text-muted-foreground">mensagens enviadas hoje</span>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 flex-wrap">
+        <Select value={filterInstance} onValueChange={setFilterInstance}>
+          <SelectTrigger className="w-[160px] h-9 text-xs">
+            <SelectValue placeholder="Instância" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas instâncias</SelectItem>
+            {instances.map((i) => (
+              <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-[130px] h-9 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS_OPTIONS.map((s) => (
+              <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <div className="flex items-center gap-1.5">
+          <Input
+            type="date"
+            className="w-[140px] h-9 text-xs"
+            value={filterDateFrom}
+            onChange={(e) => setFilterDateFrom(e.target.value)}
+          />
+          <span className="text-xs text-muted-foreground">a</span>
+          <Input
+            type="date"
+            className="w-[140px] h-9 text-xs"
+            value={filterDateTo}
+            onChange={(e) => setFilterDateTo(e.target.value)}
+          />
+        </div>
+
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" className="text-xs h-9" onClick={clearFilters}>
+            Limpar filtros
+          </Button>
+        )}
+      </div>
+
+      {/* Table */}
+      {filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
+          <ScrollText className="h-8 w-8 opacity-40" />
+          <p className="text-sm">Nenhum log encontrado</p>
+        </div>
+      ) : (
+        <div className="rounded-lg border overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-xs">Data/hora</TableHead>
+                <TableHead className="text-xs">Instância</TableHead>
+                <TableHead className="text-xs">Destinatário</TableHead>
+                <TableHead className="text-xs">Mensagem</TableHead>
+                <TableHead className="text-xs">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((log) => (
+                <TableRow key={log.id}>
+                  <TableCell className="text-xs tabular-nums whitespace-nowrap">{formatDate(log.sent_at)}</TableCell>
+                  <TableCell className="text-xs">{log.instance_name}</TableCell>
+                  <TableCell className="text-xs">{log.recipient_phone}</TableCell>
+                  <TableCell className="text-xs max-w-[200px] truncate">
+                    {log.message_content
+                      ? log.message_content.length > 60
+                        ? log.message_content.slice(0, 60) + "…"
+                        : log.message_content
+                      : "—"}
+                  </TableCell>
+                  <TableCell>{statusBadge(log.status)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      <p className="text-xs text-muted-foreground text-center">
+        {filtered.length} de {logs.length} registro(s)
+      </p>
+    </div>
+  );
+}
