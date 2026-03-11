@@ -224,10 +224,7 @@ export function AquecimentoTab() {
   const handleTestAutomation = async () => {
     setTesting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("warming-run", {
-        method: "POST",
-        body: {},
-      });
+      const { data, error } = await supabase.functions.invoke("warming-run");
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       if (data?.skipped) {
