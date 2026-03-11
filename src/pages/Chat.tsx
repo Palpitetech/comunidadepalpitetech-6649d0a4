@@ -184,9 +184,9 @@ export default function Chat() {
                       const prevDate = prev ? parseISO(prev.created_at) : null;
                       const showDaySeparator = !prevDate || !isSameDay(d, prevDate);
                       const timeLabel = format(d, "HH:mm");
-                      const isAssistant = m.role === "assistant";
-                      const showAvatar =
-                        isAssistant && (!prev || prev.role !== "assistant" || showDaySeparator);
+                      const isUser = m.role === "user";
+                      const showUserAvatar =
+                        isUser && (!prev || prev.role !== "user" || showDaySeparator);
 
                       return (
                         <div key={m.id} className="space-y-2">
