@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
 
 async function handlePrepare(
   supabase: any,
-  env: { LOVABLE_API_KEY?: string },
+  env: { LOVABLE_API_KEY?: string; COMMUNITY_BASE_URL?: string },
 ) {
   if (!env.LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurado");
 
