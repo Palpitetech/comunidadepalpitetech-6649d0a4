@@ -69,7 +69,7 @@ export function CommentSection({
         <input
           ref={inputRef}
           type="text"
-          placeholder="Escreva um comentário..."
+          placeholder="Qual sua opinião?"
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           className="flex-1 bg-transparent text-sm py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none min-w-0"
