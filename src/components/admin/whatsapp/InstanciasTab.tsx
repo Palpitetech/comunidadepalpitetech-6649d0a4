@@ -63,6 +63,7 @@ export function InstanciasTab() {
   const [qrInstanceId, setQrInstanceId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<Record<string, string>>({});
   const [deleteConfirm, setDeleteConfirm] = useState<WhatsAppInstance | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   const setInstanceAction = (id: string, action: string | null) => {
     setActionLoading((prev) => {
