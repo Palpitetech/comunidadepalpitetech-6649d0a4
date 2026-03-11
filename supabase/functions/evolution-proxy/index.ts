@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, instanceName } = await req.json();
+    const { action, instanceName, number, text } = await req.json();
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -54,6 +54,11 @@ Deno.serve(async (req) => {
       case "delete":
         url = `${EVOLUTION_API_URL}/instance/delete/${instanceName}`;
         method = "DELETE";
+        break;
+      case "sendText":
+        url = `${EVOLUTION_API_URL}/message/sendText/${instanceName}`;
+        method = "POST";
+        body = JSON.stringify({ number, text });
         break;
       default:
         return new Response(
