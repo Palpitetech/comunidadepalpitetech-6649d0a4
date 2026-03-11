@@ -1,35 +1,60 @@
 
 
-# Diagnóstico: Bots Não Comentam nos Posts de Resultado
+## Plano: Substituir delay interno por agendamento em duas fases
 
-## Causa Raiz
+### Problema atual
+A edge function dorme até 120 minutos dentro da execução, consumindo recursos e arriscando timeout.
 
-A função `sync-lotofacil` cria o post da Ana com sucesso, mas **nunca chama** a Edge Function `bot-interact-with-post` depois de criar o post. Isso significa que nenhum bot é notificado para comentar.
+### Nova arquitetura
 
-Confirmações nos dados:
-- Todos os posts recentes de bots têm `bot_interactions_target: null` e `bot_interactions_done: 0` — nenhuma interação foi sequer tentada
-- A busca por `bot-interact-with-post` dentro de `sync-lotofacil` retorna zero resultados
-- Os bots Lucas, Matheus, Sistema Tech, Carlos, Fernanda e Especialista Dupla Sena **têm** `can_respond_to_bot_posts: true`, então estariam elegíveis
+**Fase 1 — Preparação (cron às 09:00 UTC):** `community-daily-message` com `action=prepare`
+- Busca o post mais recente
+- Gera a mensagem via IA
+- Seleciona a instância
+- Sorteia um horário aleatório entre 09:00 e 11:00 BRT (12:00–14:00 UTC)
+- Salva tudo em `community_group_logs` com status `scheduled` e campo `scheduled_for`
 
-O mesmo problema acontece com `generate-bot-post` e `process-scheduled-posts` — nenhum deles chama `bot-interact-with-post` após criar um post.
+**Fase 2 — Disparo (cron a cada 5 min):** `community-daily-message` com `action=send`
+- Busca registro em `community_group_logs` onde `status = 'scheduled'` e `scheduled_for <= now()`
+- Envia via Evolution API
+- Atualiza status para `sent` e preenche `sent_at`
 
-## Plano de Correção
+### Alterações no banco
 
-### 1. `sync-lotofacil/index.ts` — Chamar `bot-interact-with-post` após Ana criar post
+Migração na tabela `community_group_logs` — adicionar:
+- `status` text default `'sent'` (valores: `scheduled`, `sent`, `failed`)
+- `scheduled_for` timestamptz nullable
+- `message_generated` text nullable (mensagem pré-gerada, renomear uso de `message_sent` para após envio)
+- `instance_evolution_id` text nullable (guardar o ID da instância para envio)
 
-Após a linha 206 (onde loga sucesso), adicionar uma chamada para a Edge Function `bot-interact-with-post` passando o `post_id` do post recém-criado. Incluir um delay de 30-60 segundos para que os comentários pareçam naturais.
+### Alterações na Edge Function
 
-### 2. `generate-bot-post/index.ts` — Chamar `bot-interact-with-post` após qualquer bot criar post
+Refatorar `community-daily-message` para aceitar `action` no body:
 
-Mesma lógica: após criar o post com sucesso, invocar `bot-interact-with-post` com o novo `post_id`.
+- `action=prepare` (ou default do cron das 09:00):
+  1. Verifica dedup (já existe scheduled/sent hoje)
+  2. Busca post, gera mensagem IA, seleciona instância
+  3. Sorteia `scheduled_for` = hoje 12:00–14:00 UTC (09:00–11:00 BRT)
+  4. Insere em `community_group_logs` com status `scheduled`
 
-### 3. `process-scheduled-posts` — Verificar se já dispara interações
+- `action=send` (chamado pelo cron a cada 5 min):
+  1. Busca registro `scheduled` com `scheduled_for <= now()`
+  2. Envia via Evolution API
+  3. Atualiza para `sent`, preenche `sent_at`
+  4. Se falhar, marca `failed`
 
-Preciso verificar se essa função também deveria disparar interações. Como ela chama `generate-bot-post`, a correção no item 2 pode ser suficiente.
+- `action=test` (skip_delay + skip_dedup): executa tudo imediatamente
 
-| Arquivo | Mudança |
-|---|---|
-| `supabase/functions/sync-lotofacil/index.ts` | Após criar post da Ana, chamar `bot-interact-with-post` com delay |
-| `supabase/functions/generate-bot-post/index.ts` | Após criar post de qualquer bot, chamar `bot-interact-with-post` |
-| `supabase/functions/generate-roundtable-post/index.ts` | Verificar se já dispara (provavelmente já gera comentários internamente — não precisará de mudança) |
+### pg_cron
+
+- Manter o job existente das 09:00 UTC, adicionando `{"action":"prepare"}` no body
+- Criar novo job `community-daily-send` rodando a cada 5 minutos:
+  ```
+  */5 * * * * → POST /functions/v1/community-daily-message body={"action":"send"}
+  ```
+
+### Resultado
+- Função retorna imediatamente (sem sleep)
+- Mensagem é disparada no horário sorteado com precisão de ~5 minutos
+- Logs mostram o horário planejado vs real
 
