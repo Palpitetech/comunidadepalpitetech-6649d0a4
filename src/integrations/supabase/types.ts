@@ -885,6 +885,90 @@ export type Database = {
         }
         Relationships: []
       }
+      message_queue: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          id: string
+          instance_id: string | null
+          recipient_name: string | null
+          recipient_phone: string
+          retry_count: number | null
+          scheduled_at: string | null
+          sent_at: string | null
+          status: string | null
+          template_id: string | null
+          variables: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          instance_id?: string | null
+          recipient_name?: string | null
+          recipient_phone: string
+          retry_count?: number | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          template_id?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          instance_id?: string | null
+          recipient_name?: string | null
+          recipient_phone?: string
+          retry_count?: number | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          template_id?: string | null
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_queue_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_queue_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "message_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_templates: {
+        Row: {
+          content: string
+          created_at: string | null
+          event_trigger: string
+          id: string
+          name: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          event_trigger: string
+          id?: string
+          name: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          event_trigger?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       notificacoes_pendentes: {
         Row: {
           chave_dedup: string | null
@@ -1590,6 +1674,51 @@ export type Database = {
         }
         Relationships: []
       }
+      send_logs: {
+        Row: {
+          id: string
+          instance_id: string | null
+          message_content: string | null
+          queue_id: string | null
+          recipient_phone: string
+          sent_at: string | null
+          status: string | null
+        }
+        Insert: {
+          id?: string
+          instance_id?: string | null
+          message_content?: string | null
+          queue_id?: string | null
+          recipient_phone: string
+          sent_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          id?: string
+          instance_id?: string | null
+          message_content?: string | null
+          queue_id?: string | null
+          recipient_phone?: string
+          sent_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "send_logs_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "send_logs_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "message_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1608,6 +1737,144 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      warming_logs: {
+        Row: {
+          from_instance_id: string
+          id: string
+          message_content: string | null
+          sent_at: string | null
+          to_instance_id: string
+          window_name: string | null
+        }
+        Insert: {
+          from_instance_id: string
+          id?: string
+          message_content?: string | null
+          sent_at?: string | null
+          to_instance_id: string
+          window_name?: string | null
+        }
+        Update: {
+          from_instance_id?: string
+          id?: string
+          message_content?: string | null
+          sent_at?: string | null
+          to_instance_id?: string
+          window_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "warming_logs_from_instance_id_fkey"
+            columns: ["from_instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "warming_logs_to_instance_id_fkey"
+            columns: ["to_instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      warming_rotation: {
+        Row: {
+          id: string
+          last_pair: string | null
+          last_used_at: string | null
+          window_name: string
+        }
+        Insert: {
+          id?: string
+          last_pair?: string | null
+          last_used_at?: string | null
+          window_name: string
+        }
+        Update: {
+          id?: string
+          last_pair?: string | null
+          last_used_at?: string | null
+          window_name?: string
+        }
+        Relationships: []
+      }
+      warming_schedule: {
+        Row: {
+          day_type: string
+          hour_end: number
+          hour_start: number
+          id: string
+          is_active: boolean | null
+          max_messages: number | null
+          min_messages: number | null
+          theme: string
+          window_name: string
+        }
+        Insert: {
+          day_type: string
+          hour_end: number
+          hour_start: number
+          id?: string
+          is_active?: boolean | null
+          max_messages?: number | null
+          min_messages?: number | null
+          theme: string
+          window_name: string
+        }
+        Update: {
+          day_type?: string
+          hour_end?: number
+          hour_start?: number
+          id?: string
+          is_active?: boolean | null
+          max_messages?: number | null
+          min_messages?: number | null
+          theme?: string
+          window_name?: string
+        }
+        Relationships: []
+      }
+      whatsapp_instances: {
+        Row: {
+          created_at: string | null
+          daily_limit: number | null
+          evolution_instance_id: string
+          friendly_name: string
+          id: string
+          last_message_at: string | null
+          messages_sent_today: number | null
+          name: string
+          phone_number: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          daily_limit?: number | null
+          evolution_instance_id: string
+          friendly_name: string
+          id?: string
+          last_message_at?: string | null
+          messages_sent_today?: number | null
+          name: string
+          phone_number: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          daily_limit?: number | null
+          evolution_instance_id?: string
+          friendly_name?: string
+          id?: string
+          last_message_at?: string | null
+          messages_sent_today?: number | null
+          name?: string
+          phone_number?: string
+          status?: string | null
         }
         Relationships: []
       }
