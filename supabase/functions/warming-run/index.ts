@@ -254,9 +254,12 @@ async function runWarmingPair(
       console.error(`Warming send exception: ${err.message}`);
     }
 
-    // Delay 45-120s between messages (skip after last)
+    // Delay between messages (skip after last)
     if (i < messages.length - 1) {
-      await delay(randomInt(45_000, 120_000));
+      const msgDelay = isForced
+        ? randomInt(30_000, 60_000)
+        : randomInt(60_000, 120_000);
+      await delay(msgDelay);
     }
   }
 
