@@ -300,16 +300,14 @@ serve(async (req) => {
     let currentCount = 0;
 
     if (topic !== "conhecer_planos" && !isVip) {
-      // Buscar uso de hoje
-      const { data: usageRow } = await adminClient
+      // Buscar uso GLOBAL de hoje (todas as loterias somadas)
+      const { data: usageRows } = await adminClient
         .from("chat_daily_usage")
         .select("count")
         .eq("user_id", userId)
-        .eq("topic", topic)
-        .eq("day", todayStr)
-        .maybeSingle();
+        .eq("day", todayStr);
 
-      currentCount = (usageRow?.count as number) ?? 0;
+      currentCount = (usageRows ?? []).reduce((sum: number, r: any) => sum + ((r.count as number) ?? 0), 0);
 
       if (currentCount >= FREE_DAILY_LIMIT) {
         const name = firstName ? `, ${firstName}` : "";
@@ -553,10 +551,20 @@ serve(async (req) => {
     if (isVip) {
       usageResponse = { is_vip: true };
     } else if (topic !== "conhecer_planos") {
+      // Incrementar contador GLOBAL (topic fixo 'chat')
+      const { data: existingGlobal } = await adminClient
+        .from("chat_daily_usage")
+        .select("count")
+        .eq("user_id", userId)
+        .eq("topic", "chat")
+        .eq("day", todayStr)
+        .maybeSingle();
+
+      const globalCount = ((existingGlobal?.count as number) ?? 0) + 1;
       await adminClient
         .from("chat_daily_usage")
         .upsert(
-          { user_id: userId, topic, day: todayStr, count: currentCount + 1 },
+          { user_id: userId, topic: "chat", day: todayStr, count: globalCount },
           { onConflict: "user_id,topic,day" }
         );
       usageResponse = { count: currentCount + 1, limit: FREE_DAILY_LIMIT, is_vip: false };
