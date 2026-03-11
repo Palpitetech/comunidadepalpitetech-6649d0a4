@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -12,19 +12,25 @@ import { Pin } from "lucide-react";
 export default function Comunidade() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { data: posts, isLoading, error } = useCommunityPosts();
+  const { data: posts, isLoading, error, prefetchPost } = useCommunityPosts();
 
   const { pinnedPost, otherPosts } = useMemo(() => {
     if (!posts || posts.length === 0) return { pinnedPost: null, otherPosts: [] };
-
-    // Find the most recent "resultado_oficial" post
     const resultPost = posts.find((p) => p.tipo === "resultado_oficial");
-
     if (!resultPost) return { pinnedPost: null, otherPosts: posts };
-
     const others = posts.filter((p) => p.id !== resultPost.id);
     return { pinnedPost: resultPost, otherPosts: others };
   }, [posts]);
+
+  const handleClick = useCallback(
+    (postId: string) => navigate(`/comunidade/post/${postId}`),
+    [navigate]
+  );
+
+  const handlePrefetch = useCallback(
+    (postId: string) => prefetchPost(postId),
+    [prefetchPost]
+  );
 
   return (
     <MainLayout pageTitle="Comunidade" hideBackButton>
@@ -50,7 +56,6 @@ export default function Comunidade() {
 
         {posts && posts.length > 0 && (
           <div className="space-y-4">
-            {/* Post de resultado fixado no topo */}
             {pinnedPost && (
               <div className="relative">
                 <div className="absolute -top-2 left-3 z-10 flex items-center gap-1 bg-primary text-primary-foreground text-[10px] font-semibold px-2 py-0.5 rounded-full shadow-sm">
@@ -60,18 +65,19 @@ export default function Comunidade() {
                 <div className="ring-2 ring-primary/30 rounded-xl">
                   <PostCard
                     post={pinnedPost}
-                    onClick={() => navigate(`/comunidade/post/${pinnedPost.id}`)}
+                    onClick={() => handleClick(pinnedPost.id)}
+                    onPrefetch={() => handlePrefetch(pinnedPost.id)}
                   />
                 </div>
               </div>
             )}
 
-            {/* Demais posts */}
             {otherPosts.map((post) => (
               <PostCard
                 key={post.id}
                 post={post}
-                onClick={() => navigate(`/comunidade/post/${post.id}`)}
+                onClick={() => handleClick(post.id)}
+                onPrefetch={() => handlePrefetch(post.id)}
               />
             ))}
           </div>
