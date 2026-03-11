@@ -4,6 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Smartphone, FileText, Send, ScrollText } from "lucide-react";
 import { InstanciasTab } from "@/components/admin/whatsapp/InstanciasTab";
 import { TemplatesTab } from "@/components/admin/whatsapp/TemplatesTab";
+import { FilaTab } from "@/components/admin/whatsapp/FilaTab";
 
 const tabs = [
   { value: "instancias", label: "Instâncias", icon: Smartphone },
@@ -42,9 +43,7 @@ export default function AdminWhatsApp() {
           </TabsContent>
 
           <TabsContent value="fila" className="mt-6">
-            <div className="flex items-center justify-center py-16 text-muted-foreground text-sm">
-              Em breve — Fila de envios
-            </div>
+            <FilaTab />
           </TabsContent>
 
           <TabsContent value="logs" className="mt-6">
