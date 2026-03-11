@@ -462,102 +462,125 @@ export function InstanciasTab() {
           <p className="text-sm">Nenhuma instância cadastrada</p>
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {instances.map((inst) => {
-            const pct = inst.daily_limit > 0 ? Math.min((inst.messages_sent_today / inst.daily_limit) * 100, 100) : 0;
-            const currentAction = actionLoading[inst.id];
-            return (
-              <div key={inst.id} className="rounded-xl border border-border bg-card p-3.5 sm:p-4 space-y-3">
-                {/* Top */}
-                <div className="flex items-start justify-between">
-                  <div className="min-w-0">
-                    <h3 className="text-base sm:text-lg font-semibold truncate">{inst.friendly_name}</h3>
-                    <p className="text-[11px] text-muted-foreground truncate">{inst.name} · {inst.phone_number}</p>
+        <TooltipProvider delayDuration={300}>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {instances.map((inst) => {
+              const pct = inst.daily_limit > 0 ? Math.min((inst.messages_sent_today / inst.daily_limit) * 100, 100) : 0;
+              const currentAction = actionLoading[inst.id];
+              const status = statusConfig(inst.status);
+              const isOnline = inst.status === "online";
+
+              return (
+                <div
+                  key={inst.id}
+                  className={`rounded-xl border bg-card p-4 space-y-4 transition-shadow hover:shadow-md ${
+                    isOnline ? "border-accent/30" : "border-border"
+                  }`}
+                >
+                  {/* Header */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                      <Smartphone className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-base font-semibold truncate text-card-foreground">{inst.friendly_name}</h3>
+                      <p className="text-xs text-muted-foreground truncate">{inst.phone_number}</p>
+                    </div>
+                    <Badge className={`shrink-0 gap-1.5 text-[11px] font-medium ${status.badgeClass}`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${status.dotClass}`} />
+                      {status.label}
+                    </Badge>
                   </div>
-                  {statusBadge(inst.status)}
-                </div>
 
-                {/* Progress */}
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[11px] text-muted-foreground">
-                    <span>Enviadas hoje</span>
-                    <span className="tabular-nums">{inst.messages_sent_today}/{inst.daily_limit}</span>
+                  {/* Stats */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1.5">
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        Mensagens hoje
+                      </span>
+                      <span className="font-semibold tabular-nums text-card-foreground">
+                        {inst.messages_sent_today}
+                        <span className="text-muted-foreground font-normal">/{inst.daily_limit}</span>
+                      </span>
+                    </div>
+                    <Progress
+                      value={pct}
+                      className={`h-2 ${pct >= 90 ? "[&>div]:bg-destructive" : pct >= 70 ? "[&>div]:bg-yellow-500" : "[&>div]:bg-accent"}`}
+                    />
                   </div>
-                  <Progress value={pct} className="h-1.5" />
-                </div>
 
-                {/* Last message */}
-                <p className="text-[11px] text-muted-foreground">
-                  Última msg:{" "}
-                  {inst.last_message_at
-                    ? format(new Date(inst.last_message_at), "dd/MM/yyyy HH:mm", { locale: ptBR })
-                    : "—"}
-                </p>
+                  {/* Last message */}
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3" />
+                    {inst.last_message_at
+                      ? format(new Date(inst.last_message_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+                      : "Nenhuma mensagem enviada"}
+                  </p>
 
-                {/* Action buttons - Evolution actions */}
-                <div className="grid grid-cols-4 gap-1.5">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1 text-[11px] h-8 px-2"
-                    onClick={() => handleConnect(inst)}
-                    disabled={!!currentAction}
-                  >
-                    <QrCode className="h-3.5 w-3.5 shrink-0" />
-                    <span className="hidden sm:inline">Conectar</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1 text-[11px] h-8 px-2"
-                    onClick={() => handleCheckStatus(inst)}
-                    disabled={!!currentAction}
-                  >
-                    {currentAction === "status" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 shrink-0" />}
-                    <span className="hidden sm:inline">Status</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1 text-[11px] h-8 px-2"
-                    onClick={() => handleRestart(inst)}
-                    disabled={!!currentAction}
-                  >
-                    {currentAction === "restart" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Power className="h-3.5 w-3.5 shrink-0" />}
-                    <span className="hidden sm:inline">Reiniciar</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1 text-[11px] h-8 px-2"
-                    onClick={() => handleLogout(inst)}
-                    disabled={!!currentAction}
-                  >
-                    {currentAction === "logout" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LogOut className="h-3.5 w-3.5 shrink-0" />}
-                    <span className="hidden sm:inline">Deslogar</span>
-                  </Button>
-                </div>
+                  {/* Action buttons */}
+                  <div className="flex items-center gap-1 pt-1 border-t border-border">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleConnect(inst)} disabled={!!currentAction}>
+                          <QrCode className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Conectar (QR Code)</TooltipContent>
+                    </Tooltip>
 
-                {/* CRUD buttons */}
-                <div className="flex gap-2 pt-1 border-t border-border">
-                  <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs mt-2 h-8" onClick={() => openEdit(inst)}>
-                    <Pencil className="h-3.5 w-3.5" />
-                    Editar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 text-xs text-destructive hover:text-destructive mt-2 h-8"
-                    onClick={() => setDeleteConfirm(inst)}
-                    disabled={!!currentAction}
-                  >
-                    {currentAction === "delete" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-                  </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCheckStatus(inst)} disabled={!!currentAction}>
+                          {currentAction === "status" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Verificar status</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRestart(inst)} disabled={!!currentAction}>
+                          {currentAction === "restart" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Power className="h-4 w-4" />}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Reiniciar</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleLogout(inst)} disabled={!!currentAction}>
+                          {currentAction === "logout" ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Deslogar</TooltipContent>
+                    </Tooltip>
+
+                    <div className="flex-1" />
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(inst)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Editar</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(inst)} disabled={!!currentAction}>
+                          {currentAction === "delete" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Excluir</TooltipContent>
+                    </Tooltip>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </TooltipProvider>
       )}
     </div>
   );
