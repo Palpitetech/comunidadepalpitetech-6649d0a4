@@ -28,13 +28,13 @@ Deno.serve(async (req) => {
 
   try {
     if (action === "test") {
-      return await handleTest(supabase, { EVOLUTION_API_URL, EVOLUTION_API_KEY, COMMUNITY_GROUP_JID, LOVABLE_API_KEY });
+      return await handleTest(supabase, { EVOLUTION_API_URL, EVOLUTION_API_KEY, COMMUNITY_GROUP_JID, LOVABLE_API_KEY, COMMUNITY_BASE_URL });
     }
     if (action === "send") {
       return await handleSend(supabase, { EVOLUTION_API_URL, EVOLUTION_API_KEY, COMMUNITY_GROUP_JID });
     }
     // default: prepare
-    return await handlePrepare(supabase, { LOVABLE_API_KEY });
+    return await handlePrepare(supabase, { LOVABLE_API_KEY, COMMUNITY_BASE_URL });
   } catch (err: any) {
     console.error("community-daily-message error:", err);
     return new Response(JSON.stringify({ error: err.message }), {
