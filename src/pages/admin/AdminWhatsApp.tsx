@@ -5,6 +5,7 @@ import { Smartphone, FileText, Send, ScrollText } from "lucide-react";
 import { InstanciasTab } from "@/components/admin/whatsapp/InstanciasTab";
 import { TemplatesTab } from "@/components/admin/whatsapp/TemplatesTab";
 import { FilaTab } from "@/components/admin/whatsapp/FilaTab";
+import { LogsTab } from "@/components/admin/whatsapp/LogsTab";
 
 const tabs = [
   { value: "instancias", label: "Instâncias", icon: Smartphone },
