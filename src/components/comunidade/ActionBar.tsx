@@ -11,6 +11,7 @@ interface ActionBarProps {
   commentsCount?: number;
   onCommentsClick?: () => void;
   postContent?: string;
+  referralCode?: string | null;
 }
 
 export function ActionBar({
