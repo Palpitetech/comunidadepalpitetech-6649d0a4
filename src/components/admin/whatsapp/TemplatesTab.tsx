@@ -28,12 +28,6 @@ interface FormData {
 
 const emptyForm: FormData = { name: "", content: "", event_trigger: "manual" };
 
-const TRIGGER_OPTIONS = [
-  { value: "lead_created", label: "Lead Cadastrado" },
-  { value: "sale_confirmed", label: "Venda Confirmada" },
-  { value: "manual", label: "Manual" },
-];
-
 const VARIABLES = ["{{nome}}", "{{telefone}}", "{{produto}}"];
 
 export function TemplatesTab() {
