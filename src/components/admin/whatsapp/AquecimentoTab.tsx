@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Flame, MessageCircle, Users, Clock } from "lucide-react";
+import { Loader2, Flame, MessageCircle, Users, Clock, Play } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -76,6 +76,7 @@ export function AquecimentoTab() {
   const [instances, setInstances] = useState<InstanceMap>({});
   const [loading, setLoading] = useState(true);
   const [warming, setWarming] = useState(false);
+  const [testing, setTesting] = useState(false);
 
   const fetchData = useCallback(async () => {
     const now = saoPauloNow();
@@ -220,6 +221,29 @@ export function AquecimentoTab() {
     }
   };
 
+  const handleTestAutomation = async () => {
+    setTesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("warming-run", {
+        method: "POST",
+        body: {},
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (data?.skipped) {
+        toast.info(`⏭️ Pulado: ${data.skipped}`);
+      } else {
+        toast.success(`✅ Automação executada: ${data.scheduled || 0} dupla(s) na janela "${data.window_name || "—"}"`);
+      }
+      fetchData();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Erro ao testar automação");
+    } finally {
+      setTesting(false);
+    }
+  };
+
   /* ── Render ────────────────────────────────────────── */
 
   if (loading) {
@@ -263,32 +287,60 @@ export function AquecimentoTab() {
             </div>
           </div>
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  <Button
-                    size="sm"
-                    className="gap-1.5 w-full sm:w-auto"
-                    onClick={handleManualWarm}
-                    disabled={warming || !activeWindow}
-                  >
-                    {warming ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Flame className="h-4 w-4" />
-                    )}
-                    Aquecer Dupla
-                  </Button>
-                </div>
-              </TooltipTrigger>
-              {!activeWindow && (
+          <div className="flex gap-2 w-full sm:w-auto">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex-1 sm:flex-initial">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5 w-full"
+                      onClick={handleTestAutomation}
+                      disabled={testing}
+                    >
+                      {testing ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Play className="h-4 w-4" />
+                      )}
+                      Testar Automação
+                    </Button>
+                  </div>
+                </TooltipTrigger>
                 <TooltipContent>
-                  <p>Nenhuma janela ativa agora</p>
+                  <p>Executa warming-run como o cron faria</p>
                 </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex-1 sm:flex-initial">
+                    <Button
+                      size="sm"
+                      className="gap-1.5 w-full"
+                      onClick={handleManualWarm}
+                      disabled={warming || !activeWindow}
+                    >
+                      {warming ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Flame className="h-4 w-4" />
+                      )}
+                      Aquecer Dupla
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                {!activeWindow && (
+                  <TooltipContent>
+                    <p>Nenhuma janela ativa agora</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </CardContent>
       </Card>
 
