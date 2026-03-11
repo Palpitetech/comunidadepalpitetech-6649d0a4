@@ -333,6 +333,7 @@ export function InstanciasTab() {
   };
 
 
+  const statusBadge = (status: string) => {
     switch (status) {
       case "online":
         return <Badge className="bg-green-500/15 text-green-700 border-green-500/30 text-[11px]">Online</Badge>;
