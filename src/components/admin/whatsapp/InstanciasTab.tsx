@@ -286,7 +286,53 @@ export function InstanciasTab() {
     fetchInstances();
   };
 
-  const statusBadge = (status: string) => {
+  const handleSyncFromEvolution = async () => {
+    setSyncing(true);
+    try {
+      const evoData = await callEvolution("fetchInstances");
+      if (!Array.isArray(evoData)) {
+        toast.error("Resposta inesperada da Evolution API");
+        return;
+      }
+
+      const { data: existing } = await supabase
+        .from("whatsapp_instances" as any)
+        .select("evolution_instance_id");
+      const existingIds = new Set((existing as any[] || []).map((e: any) => e.evolution_instance_id));
+
+      let imported = 0;
+      for (const evo of evoData) {
+        const instanceName = evo.instance?.instanceName || evo.instanceName;
+        if (!instanceName || existingIds.has(instanceName)) continue;
+
+        const connStatus = evo.instance?.status || evo.connectionStatus || evo.state;
+        const phone = evo.instance?.owner || evo.owner || "";
+
+        await supabase.from("whatsapp_instances" as any).insert({
+          name: instanceName,
+          friendly_name: instanceName,
+          phone_number: phone.replace("@s.whatsapp.net", ""),
+          evolution_instance_id: instanceName,
+          status: connStatus === "open" ? "online" : "offline",
+          daily_limit: 100,
+        });
+        imported++;
+      }
+
+      if (imported > 0) {
+        toast.success(`${imported} instância(s) importada(s)`);
+      } else {
+        toast.info("Nenhuma instância nova encontrada");
+      }
+      fetchInstances();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao buscar instâncias da Evolution");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+
     switch (status) {
       case "online":
         return <Badge className="bg-green-500/15 text-green-700 border-green-500/30 text-[11px]">Online</Badge>;
