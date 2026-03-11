@@ -1,18 +1,20 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Smartphone, FileText, Send, ScrollText, Flame, Users } from "lucide-react";
+import { Smartphone, FileText, Send, ScrollText, Flame, Users, Megaphone } from "lucide-react";
 import { InstanciasTab } from "@/components/admin/whatsapp/InstanciasTab";
 import { TemplatesTab } from "@/components/admin/whatsapp/TemplatesTab";
 import { FilaTab } from "@/components/admin/whatsapp/FilaTab";
 import { LogsTab } from "@/components/admin/whatsapp/LogsTab";
 import { AquecimentoTab } from "@/components/admin/whatsapp/AquecimentoTab";
 import { GruposTab } from "@/components/admin/whatsapp/GruposTab";
+import { DisparoManualTab } from "@/components/admin/whatsapp/DisparoManualTab";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { value: "instancias", label: "Instâncias", icon: Smartphone },
   { value: "templates", label: "Templates", icon: FileText },
   { value: "fila", label: "Fila", icon: Send },
+  { value: "disparo", label: "Disparo Manual", icon: Megaphone },
   { value: "logs", label: "Logs", icon: ScrollText },
   { value: "aquecimento", label: "Aquecimento", icon: Flame },
   { value: "grupos", label: "Grupos", icon: Users },
@@ -55,6 +57,7 @@ export default function AdminWhatsApp() {
           {activeTab === "instancias" && <InstanciasTab />}
           {activeTab === "templates" && <TemplatesTab />}
           {activeTab === "fila" && <FilaTab />}
+          {activeTab === "disparo" && <DisparoManualTab />}
           {activeTab === "logs" && <LogsTab />}
           {activeTab === "aquecimento" && <AquecimentoTab />}
           {activeTab === "grupos" && <GruposTab />}
