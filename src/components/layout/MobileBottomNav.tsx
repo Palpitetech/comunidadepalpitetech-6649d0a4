@@ -46,21 +46,17 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
           <span className="text-xs mt-1 font-medium">Comunidade</span>
         </Link>
 
-        {/* Chat - Em Breve */}
+        {/* Chat */}
         <Link
-          to={isAdmin ? "/chat" : "#"}
-          onClick={(e) => handleComingSoonClick(e, "Chat")}
+          to="/chat"
           className={cn(
             "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors relative",
             isActive("/chat")
               ? "text-primary"
-              : "text-muted-foreground/50 hover:text-muted-foreground"
+              : "text-muted-foreground hover:text-primary/70"
           )}
         >
-          <div className="relative">
-            <MessageCircle className="h-6 w-6" />
-            {comingSoonBadge}
-          </div>
+          <MessageCircle className="h-6 w-6" />
           <span className="text-xs mt-1 font-medium">Chat</span>
         </Link>
 
