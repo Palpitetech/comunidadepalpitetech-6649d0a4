@@ -845,21 +845,6 @@ Deno.serve(async (req) => {
             loteria: 'Lotofácil',
           });
 
-          // Cria post da Ana diretamente (sem depender de outra edge function)
-          try {
-            await criarPostResultadoOficialAna({
-              supabase,
-              concurso: concurso.numero,
-              dezenas: concurso.dezenas,
-              indicadores,
-              cicloInfo,
-              acumulou,
-            });
-          } catch (anaErr) {
-            const msg = anaErr instanceof Error ? anaErr.message : String(anaErr);
-            console.error(`[ANA-POST] Falha ao criar post: ${msg}`);
-          }
-
           // Palpite Tech: post de resultado oficial
           try {
             await fetch(
