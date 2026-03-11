@@ -28,7 +28,6 @@ Deno.serve(async (req) => {
       "Content-Type": "application/json",
       apikey: EVOLUTION_API_KEY,
     };
-    };
 
     let url: string;
     let method = "GET";
