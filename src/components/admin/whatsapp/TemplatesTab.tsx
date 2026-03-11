@@ -58,15 +58,25 @@ export function TemplatesTab() {
   }, []);
 
   const fetchEventTypes = useCallback(async () => {
-    const { data } = await supabase
-      .from("events")
-      .select("event_type");
-    if (data) {
-      const unique = [...new Set(data.map((d: any) => d.event_type as string))].sort();
-      // Ensure "manual" is always present
-      if (!unique.includes("manual")) unique.push("manual");
-      setEventTypes(unique);
-    }
+    // Fetch from events table and kirvano_webhook_logs in parallel
+    const [eventsResult, kirvanoResult] = await Promise.all([
+      supabase.from("events").select("event_type"),
+      supabase.from("kirvano_webhook_logs").select("event"),
+    ]);
+
+    const allTypes = new Set<string>();
+
+    eventsResult.data?.forEach((d: any) => {
+      if (d.event_type) allTypes.add(d.event_type);
+    });
+    kirvanoResult.data?.forEach((d: any) => {
+      if (d.event) allTypes.add(d.event);
+    });
+
+    // Ensure "manual" is always present
+    allTypes.add("manual");
+
+    setEventTypes([...allTypes].sort());
   }, []);
 
   useEffect(() => {
