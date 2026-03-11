@@ -93,14 +93,14 @@ export function usePostDetails(postId: string) {
         ? { nome: (profileResult.data as any).nome, avatar_url: (profileResult.data as any).avatar_url, is_bot: (profileResult.data as any).is_bot }
         : null;
 
-      const ctaData = ctaResult.data;
+      const ctaData = ctaResult.data as any;
 
       return {
         ...postData,
         perfis,
         cta_override_enabled: ctaData?.cta_override_enabled || false,
         cta_override_text: ctaData?.cta_override_text || null,
-        cta_override_buttons: (ctaData?.cta_override_buttons as unknown as CtaButton[]) || [],
+        cta_override_buttons: (ctaData?.cta_override_buttons as CtaButton[]) || [],
       } as PostDetails;
     },
     enabled: !!postId,
