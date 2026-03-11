@@ -198,7 +198,8 @@ async function runWarmingPair(
   supabase: ReturnType<typeof createClient>,
   instanceA: any,
   instanceB: any,
-  window: any
+  window: any,
+  isForced = false
 ): Promise<number> {
   const count = randomInt(
     window.min_messages ?? 2,
@@ -253,9 +254,12 @@ async function runWarmingPair(
       console.error(`Warming send exception: ${err.message}`);
     }
 
-    // Delay 45-120s between messages (skip after last)
+    // Delay between messages (skip after last)
     if (i < messages.length - 1) {
-      await delay(randomInt(45_000, 120_000));
+      const msgDelay = isForced
+        ? randomInt(30_000, 60_000)
+        : randomInt(60_000, 120_000);
+      await delay(msgDelay);
     }
   }
 
@@ -358,7 +362,7 @@ async function runWarmingWindow(force = false) {
     const [instA, instB] = pairsToRun[i];
 
     try {
-      const sent = await runWarmingPair(supabase, instA, instB, window);
+      const sent = await runWarmingPair(supabase, instA, instB, window, force);
       scheduled++;
       console.log(
         `Warming pair ${instA.name} ↔ ${instB.name}: ${sent} messages sent`
@@ -369,9 +373,12 @@ async function runWarmingWindow(force = false) {
       );
     }
 
-    // 3+ min gap between pair starts (skip after last, skip in force mode)
-    if (!force && i < pairsToRun.length - 1) {
-      await delay(randomInt(180_000, 300_000));
+    // Gap between pair starts (skip after last)
+    if (i < pairsToRun.length - 1) {
+      const pairDelay = force
+        ? randomInt(30_000, 60_000)
+        : randomInt(180_000, 300_000);
+      await delay(pairDelay);
     }
   }
 
