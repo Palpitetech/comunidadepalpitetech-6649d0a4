@@ -227,25 +227,29 @@ async function runWarmingWindow() {
     return { skipped: "no active window" };
   }
 
-  // Get online instances
+  // Get online instances ordered by last_message_at ASC (who waited longest first)
   const { data: instances } = await supabase
     .from("whatsapp_instances")
     .select("*")
     .eq("status", "online")
-    .order("id");
+    .order("last_message_at", { ascending: true, nullsFirst: true });
 
   if (!instances || instances.length < 2) {
     return { skipped: "less than 2 online instances" };
   }
 
-  const pairs = generatePairs(instances);
+  // Build sequential pairs from sorted list
+  const pairs = buildSequentialPairs(instances);
+
+  if (pairs.length === 0) {
+    return { skipped: "no valid pairs could be formed" };
+  }
 
   // Check which pairs already talked today in this window
   const now = saoPauloNow();
   const todayStart = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
   );
-  // Convert back to UTC for DB query
   const todayStartUtc = new Date(
     todayStart.getTime() + 3 * 60 * 60 * 1000
   ).toISOString();
@@ -271,6 +275,14 @@ async function runWarmingWindow() {
 
   if (pendingPairs.length === 0) {
     return { skipped: "all pairs already warmed today in this window" };
+  }
+
+  // Log odd-instance-out info
+  if (instances.length % 2 !== 0) {
+    const leftOut = instances[instances.length - 1];
+    console.log(
+      `[warming] Odd count (${instances.length}): ${leftOut.name} left out this round (will be prioritized next)`
+    );
   }
 
   // Run pairs sequentially with 3+ min gap between starts
