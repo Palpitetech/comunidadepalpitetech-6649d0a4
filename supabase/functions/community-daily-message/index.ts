@@ -17,6 +17,7 @@ Deno.serve(async (req) => {
   const EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY");
   const COMMUNITY_GROUP_JID = Deno.env.get("COMMUNITY_GROUP_JID");
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  const COMMUNITY_BASE_URL = Deno.env.get("COMMUNITY_BASE_URL");
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -27,13 +28,13 @@ Deno.serve(async (req) => {
 
   try {
     if (action === "test") {
-      return await handleTest(supabase, { EVOLUTION_API_URL, EVOLUTION_API_KEY, COMMUNITY_GROUP_JID, LOVABLE_API_KEY });
+      return await handleTest(supabase, { EVOLUTION_API_URL, EVOLUTION_API_KEY, COMMUNITY_GROUP_JID, LOVABLE_API_KEY, COMMUNITY_BASE_URL });
     }
     if (action === "send") {
       return await handleSend(supabase, { EVOLUTION_API_URL, EVOLUTION_API_KEY, COMMUNITY_GROUP_JID });
     }
     // default: prepare
-    return await handlePrepare(supabase, { LOVABLE_API_KEY });
+    return await handlePrepare(supabase, { LOVABLE_API_KEY, COMMUNITY_BASE_URL });
   } catch (err: any) {
     console.error("community-daily-message error:", err);
     return new Response(JSON.stringify({ error: err.message }), {
@@ -47,7 +48,7 @@ Deno.serve(async (req) => {
 
 async function handlePrepare(
   supabase: any,
-  env: { LOVABLE_API_KEY?: string },
+  env: { LOVABLE_API_KEY?: string; COMMUNITY_BASE_URL?: string },
 ) {
   if (!env.LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurado");
 
@@ -83,7 +84,7 @@ async function handlePrepare(
     return jsonRes({ error: "Nenhum post encontrado" }, 404);
   }
 
-  const mensagem = await generateMessage(post, env.LOVABLE_API_KEY);
+  const mensagem = await generateMessage(post, env.LOVABLE_API_KEY, env.COMMUNITY_BASE_URL);
 
   // Pick instance
   const { data: instance } = await supabase
@@ -208,7 +209,7 @@ async function handleSend(
 
 async function handleTest(
   supabase: any,
-  env: { EVOLUTION_API_URL?: string; EVOLUTION_API_KEY?: string; COMMUNITY_GROUP_JID?: string; LOVABLE_API_KEY?: string },
+  env: { EVOLUTION_API_URL?: string; EVOLUTION_API_KEY?: string; COMMUNITY_GROUP_JID?: string; LOVABLE_API_KEY?: string; COMMUNITY_BASE_URL?: string },
 ) {
   if (!env.LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurado");
   if (!env.EVOLUTION_API_URL || !env.EVOLUTION_API_KEY) throw new Error("Evolution API não configurada");
@@ -217,7 +218,7 @@ async function handleTest(
   const post = await findLatestPost(supabase);
   if (!post) return jsonRes({ error: "Nenhum post encontrado" }, 404);
 
-  const mensagem = await generateMessage(post, env.LOVABLE_API_KEY);
+  const mensagem = await generateMessage(post, env.LOVABLE_API_KEY, env.COMMUNITY_BASE_URL);
 
   const { data: instance } = await supabase
     .from("whatsapp_instances")
@@ -303,7 +304,7 @@ async function findLatestPost(supabase: any) {
   return post;
 }
 
-async function generateMessage(post: any, apiKey: string) {
+async function generateMessage(post: any, apiKey: string, baseUrl?: string) {
   const horaAtual = new Date().toLocaleTimeString("pt-BR", {
     timeZone: "America/Sao_Paulo",
     hour: "2-digit",
@@ -325,7 +326,7 @@ async function generateMessage(post: any, apiKey: string) {
 Com base no post abaixo, crie uma mensagem curta para um grupo de WhatsApp. A mensagem deve:
 - Iniciar com uma saudação temporal natural (considere o horário atual: ${horaAtual})
 - Fazer um breve resumo do post em 2-3 frases
-- Encerrar chamando o grupo para interagir na comunidade
+- Encerrar com uma chamada para comentar no post, sem incluir o link (o link será adicionado automaticamente)
 - Tom informal e animado
 - Máximo 5 linhas no total
 - NÃO use markdown, apenas texto puro com emojis`,
@@ -345,11 +346,17 @@ Com base no post abaixo, crie uma mensagem curta para um grupo de WhatsApp. A me
   }
 
   const aiData = await aiResponse.json();
-  const mensagem = aiData.choices?.[0]?.message?.content?.trim();
+  const mensagemIa = aiData.choices?.[0]?.message?.content?.trim();
 
-  if (!mensagem) throw new Error("IA não retornou mensagem");
+  if (!mensagemIa) throw new Error("IA não retornou mensagem");
 
-  return mensagem;
+  // Concatenar link do post ao final
+  if (baseUrl) {
+    const linkPost = `${baseUrl.replace(/\/+$/, "")}/post/${post.id}`;
+    return `${mensagemIa}\n\n${linkPost}`;
+  }
+
+  return mensagemIa;
 }
 
 function jsonRes(body: any, status = 200) {
