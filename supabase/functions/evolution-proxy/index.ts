@@ -60,6 +60,9 @@ Deno.serve(async (req) => {
         method = "POST";
         body = JSON.stringify({ number, text });
         break;
+      case "fetchGroups":
+        url = `${EVOLUTION_API_URL}/group/fetchAllGroups/${instanceName}?getParticipants=false`;
+        break;
       default:
         return new Response(
           JSON.stringify({ error: `Ação desconhecida: ${action}` }),

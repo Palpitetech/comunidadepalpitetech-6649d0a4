@@ -59,9 +59,8 @@ export function GruposTab() {
     try {
       const { data, error } = await supabase.functions.invoke("evolution-proxy", {
         body: {
-          method: "GET",
-          path: `/group/fetchAllGroups/${instance.evolution_instance_id}`,
-          queryParams: "getParticipants=false",
+          action: "fetchGroups",
+          instanceName: instance.evolution_instance_id,
         },
       });
 
