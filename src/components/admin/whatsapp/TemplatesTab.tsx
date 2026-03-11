@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -7,8 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Pencil, Trash2, FileText } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Loader2, Plus, Pencil, Trash2, FileText, ChevronsUpDown, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface MessageTemplate {
   id: string;
@@ -26,12 +28,6 @@ interface FormData {
 
 const emptyForm: FormData = { name: "", content: "", event_trigger: "manual" };
 
-const TRIGGER_OPTIONS = [
-  { value: "lead_created", label: "Lead Cadastrado" },
-  { value: "sale_confirmed", label: "Venda Confirmada" },
-  { value: "manual", label: "Manual" },
-];
-
 const VARIABLES = ["{{nome}}", "{{telefone}}", "{{produto}}"];
 
 export function TemplatesTab() {
@@ -41,6 +37,8 @@ export function TemplatesTab() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormData>(emptyForm);
+  const [triggerOpen, setTriggerOpen] = useState(false);
+  const [eventTypes, setEventTypes] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const fetchTemplates = useCallback(async () => {
@@ -59,9 +57,22 @@ export function TemplatesTab() {
     setLoading(false);
   }, []);
 
+  const fetchEventTypes = useCallback(async () => {
+    const { data } = await supabase
+      .from("events")
+      .select("event_type");
+    if (data) {
+      const unique = [...new Set(data.map((d: any) => d.event_type as string))].sort();
+      // Ensure "manual" is always present
+      if (!unique.includes("manual")) unique.push("manual");
+      setEventTypes(unique);
+    }
+  }, []);
+
   useEffect(() => {
     fetchTemplates();
-  }, [fetchTemplates]);
+    fetchEventTypes();
+  }, [fetchTemplates, fetchEventTypes]);
 
   const openCreate = () => {
     setEditingId(null);
@@ -184,16 +195,42 @@ export function TemplatesTab() {
               </div>
               <div className="space-y-1.5">
                 <Label>Evento gatilho *</Label>
-                <Select value={form.event_trigger} onValueChange={(v) => setForm((f) => ({ ...f, event_trigger: v }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o gatilho" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TRIGGER_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={triggerOpen} onOpenChange={setTriggerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={triggerOpen}
+                      className="w-full justify-between font-normal"
+                    >
+                      {form.event_trigger || "Selecione o gatilho"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Buscar evento..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhum evento encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          {eventTypes.map((evt) => (
+                            <CommandItem
+                              key={evt}
+                              value={evt}
+                              onSelect={(v) => {
+                                setForm((f) => ({ ...f, event_trigger: v }));
+                                setTriggerOpen(false);
+                              }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", form.event_trigger === evt ? "opacity-100" : "opacity-0")} />
+                              {evt}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="tpl-content">Conteúdo da mensagem *</Label>
