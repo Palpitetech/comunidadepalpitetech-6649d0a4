@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.reset-daily-counters]
 verify_jwt = false
+
+[functions.evolution-proxy]
+verify_jwt = false
