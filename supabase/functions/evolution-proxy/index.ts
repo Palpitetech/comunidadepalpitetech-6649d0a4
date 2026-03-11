@@ -22,18 +22,12 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, instanceName } = await req.json();
-
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      apikey: EVOLUTION_API_KEY,
-    };
-
     const { action, instanceName, number, text } = await req.json();
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       apikey: EVOLUTION_API_KEY,
+    };
     };
 
     let url: string;
