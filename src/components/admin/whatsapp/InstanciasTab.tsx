@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Plus, Pencil, Trash2, Smartphone } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Loader2, Plus, Pencil, Trash2, Smartphone, QrCode, RefreshCw, Power, LogOut } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -40,6 +41,15 @@ const emptyForm: FormData = {
   daily_limit: 100,
 };
 
+async function callEvolution(action: string, instanceName?: string) {
+  const { data, error } = await supabase.functions.invoke("evolution-proxy", {
+    body: { action, instanceName },
+  });
+  if (error) throw new Error(error.message || "Erro na chamada Evolution");
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
 export function InstanciasTab() {
   const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +57,21 @@ export function InstanciasTab() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormData>(emptyForm);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [qrData, setQrData] = useState<string | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrInstanceId, setQrInstanceId] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<Record<string, string>>({});
+  const [deleteConfirm, setDeleteConfirm] = useState<WhatsAppInstance | null>(null);
+
+  const setInstanceAction = (id: string, action: string | null) => {
+    setActionLoading((prev) => {
+      if (action) return { ...prev, [id]: action };
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
 
   const fetchInstances = useCallback(async () => {
     setLoading(true);
@@ -58,9 +83,42 @@ export function InstanciasTab() {
     if (error) {
       console.error(error);
       toast.error("Erro ao carregar instâncias");
-    } else {
-      setInstances((data as any[]) || []);
+      setLoading(false);
+      return;
     }
+
+    const localInstances = (data as any[]) || [];
+
+    // Sync status from Evolution API
+    try {
+      const evoData = await callEvolution("fetchInstances");
+      if (Array.isArray(evoData)) {
+        const statusMap = new Map<string, string>();
+        for (const evo of evoData) {
+          const instanceName = evo.instance?.instanceName || evo.instanceName;
+          const connStatus = evo.instance?.status || evo.connectionStatus || evo.state;
+          if (instanceName) {
+            statusMap.set(instanceName, connStatus === "open" ? "online" : "offline");
+          }
+        }
+
+        // Update statuses in DB
+        for (const inst of localInstances) {
+          const evoStatus = statusMap.get(inst.evolution_instance_id);
+          if (evoStatus && evoStatus !== inst.status) {
+            await supabase
+              .from("whatsapp_instances" as any)
+              .update({ status: evoStatus })
+              .eq("id", inst.id);
+            inst.status = evoStatus;
+          }
+        }
+      }
+    } catch (err: any) {
+      console.warn("Não foi possível sincronizar com Evolution API:", err.message);
+    }
+
+    setInstances(localInstances);
     setLoading(false);
   }, []);
 
@@ -130,18 +188,101 @@ export function InstanciasTab() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Deseja realmente excluir esta instância?")) return;
+  const handleConnect = async (inst: WhatsAppInstance) => {
+    setQrLoading(true);
+    setQrData(null);
+    setQrInstanceId(inst.id);
+    setQrDialogOpen(true);
+    try {
+      const data = await callEvolution("connect", inst.evolution_instance_id);
+      const base64 = data?.base64 || data?.qrcode?.base64 || data?.qr || null;
+      if (!base64) {
+        // Already connected
+        toast.success("Instância já conectada!");
+        await supabase.from("whatsapp_instances" as any).update({ status: "online" }).eq("id", inst.id);
+        setQrDialogOpen(false);
+        fetchInstances();
+        return;
+      }
+      setQrData(base64);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao gerar QR Code");
+      setQrDialogOpen(false);
+    } finally {
+      setQrLoading(false);
+    }
+  };
+
+  const handleCheckStatus = async (inst: WhatsAppInstance) => {
+    setInstanceAction(inst.id, "status");
+    try {
+      const data = await callEvolution("connectionState", inst.evolution_instance_id);
+      const state = data?.instance?.state || data?.state || data?.connectionStatus;
+      const newStatus = state === "open" ? "online" : "offline";
+      await supabase.from("whatsapp_instances" as any).update({ status: newStatus }).eq("id", inst.id);
+      toast.success(`Status: ${newStatus}`);
+      fetchInstances();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao verificar status");
+    } finally {
+      setInstanceAction(inst.id, null);
+    }
+  };
+
+  const handleRestart = async (inst: WhatsAppInstance) => {
+    setInstanceAction(inst.id, "restart");
+    try {
+      await callEvolution("restart", inst.evolution_instance_id);
+      toast.success("Instância reiniciada");
+      fetchInstances();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao reiniciar");
+    } finally {
+      setInstanceAction(inst.id, null);
+    }
+  };
+
+  const handleLogout = async (inst: WhatsAppInstance) => {
+    setInstanceAction(inst.id, "logout");
+    try {
+      await callEvolution("logout", inst.evolution_instance_id);
+      await supabase.from("whatsapp_instances" as any).update({ status: "offline" }).eq("id", inst.id);
+      toast.success("Instância deslogada");
+      fetchInstances();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao deslogar");
+    } finally {
+      setInstanceAction(inst.id, null);
+    }
+  };
+
+  const handleDelete = async (inst: WhatsAppInstance) => {
+    setInstanceAction(inst.id, "delete");
+    try {
+      await callEvolution("delete", inst.evolution_instance_id);
+    } catch (err: any) {
+      console.warn("Erro ao excluir na Evolution (pode já não existir):", err.message);
+    }
     const { error } = await supabase
       .from("whatsapp_instances" as any)
       .delete()
-      .eq("id", id);
+      .eq("id", inst.id);
     if (error) {
-      toast.error("Erro ao excluir");
+      toast.error("Erro ao excluir do banco");
     } else {
       toast.success("Instância excluída");
-      fetchInstances();
     }
+    setInstanceAction(inst.id, null);
+    setDeleteConfirm(null);
+    fetchInstances();
+  };
+
+  const handleQrScanned = async () => {
+    if (!qrInstanceId) return;
+    await supabase.from("whatsapp_instances" as any).update({ status: "online" }).eq("id", qrInstanceId);
+    toast.success("Instância conectada!");
+    setQrDialogOpen(false);
+    fetchInstances();
   };
 
   const statusBadge = (status: string) => {
@@ -182,54 +323,24 @@ export function InstanciasTab() {
             <div className="space-y-4 pt-2">
               <div className="space-y-1.5">
                 <Label htmlFor="name">Apelido *</Label>
-                <Input
-                  id="name"
-                  placeholder="Ex: Chip Principal"
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  maxLength={100}
-                />
+                <Input id="name" placeholder="Ex: Chip Principal" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} maxLength={100} />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="friendly_name">Nome de amigo *</Label>
-                <Input
-                  id="friendly_name"
-                  placeholder="Ex: Carlos"
-                  value={form.friendly_name}
-                  onChange={(e) => setForm((f) => ({ ...f, friendly_name: e.target.value }))}
-                  maxLength={100}
-                />
+                <Input id="friendly_name" placeholder="Ex: Carlos" value={form.friendly_name} onChange={(e) => setForm((f) => ({ ...f, friendly_name: e.target.value }))} maxLength={100} />
                 <p className="text-xs text-muted-foreground">Este nome será usado nas conversas de aquecimento</p>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="phone_number">Número de telefone *</Label>
-                <Input
-                  id="phone_number"
-                  placeholder="5511999999999"
-                  value={form.phone_number}
-                  onChange={(e) => setForm((f) => ({ ...f, phone_number: e.target.value }))}
-                  maxLength={20}
-                />
+                <Input id="phone_number" placeholder="5511999999999" value={form.phone_number} onChange={(e) => setForm((f) => ({ ...f, phone_number: e.target.value }))} maxLength={20} />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="evolution_id">ID da instância na Evolution API *</Label>
-                <Input
-                  id="evolution_id"
-                  placeholder="Ex: instance_abc123"
-                  value={form.evolution_instance_id}
-                  onChange={(e) => setForm((f) => ({ ...f, evolution_instance_id: e.target.value }))}
-                  maxLength={200}
-                />
+                <Input id="evolution_id" placeholder="Ex: instance_abc123" value={form.evolution_instance_id} onChange={(e) => setForm((f) => ({ ...f, evolution_instance_id: e.target.value }))} maxLength={200} />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="daily_limit">Limite diário de mensagens *</Label>
-                <Input
-                  id="daily_limit"
-                  type="number"
-                  min={1}
-                  value={form.daily_limit}
-                  onChange={(e) => setForm((f) => ({ ...f, daily_limit: parseInt(e.target.value) || 1 }))}
-                />
+                <Input id="daily_limit" type="number" min={1} value={form.daily_limit} onChange={(e) => setForm((f) => ({ ...f, daily_limit: parseInt(e.target.value) || 1 }))} />
               </div>
               <Button className="w-full" onClick={handleSave} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
@@ -239,6 +350,57 @@ export function InstanciasTab() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* QR Code Dialog */}
+      <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Conectar Instância</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-4">
+            {qrLoading ? (
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            ) : qrData ? (
+              <>
+                <img
+                  src={qrData.startsWith("data:") ? qrData : `data:image/png;base64,${qrData}`}
+                  alt="QR Code"
+                  className="w-64 h-64 rounded-lg border"
+                />
+                <p className="text-sm text-muted-foreground text-center">
+                  Escaneie o QR Code com o WhatsApp no celular
+                </p>
+                <Button onClick={handleQrScanned} className="w-full">
+                  Já escaneei o QR Code
+                </Button>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">Nenhum QR Code disponível</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir instância?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Isso removerá a instância "{deleteConfirm?.friendly_name}" da Evolution API e do banco de dados. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Cards */}
       {instances.length === 0 ? (
@@ -250,6 +412,7 @@ export function InstanciasTab() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {instances.map((inst) => {
             const pct = inst.daily_limit > 0 ? Math.min((inst.messages_sent_today / inst.daily_limit) * 100, 100) : 0;
+            const currentAction = actionLoading[inst.id];
             return (
               <div key={inst.id} className="rounded-xl border border-border bg-card p-4 space-y-3">
                 {/* Top */}
@@ -278,14 +441,64 @@ export function InstanciasTab() {
                     : "—"}
                 </p>
 
-                {/* Actions */}
-                <div className="flex gap-2 pt-1">
-                  <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs" onClick={() => openEdit(inst)}>
+                {/* Action buttons row 1 - Evolution actions */}
+                <div className="grid grid-cols-2 gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 text-xs"
+                    onClick={() => handleConnect(inst)}
+                    disabled={!!currentAction}
+                  >
+                    <QrCode className="h-3.5 w-3.5" />
+                    Conectar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 text-xs"
+                    onClick={() => handleCheckStatus(inst)}
+                    disabled={!!currentAction}
+                  >
+                    {currentAction === "status" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    Status
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 text-xs"
+                    onClick={() => handleRestart(inst)}
+                    disabled={!!currentAction}
+                  >
+                    {currentAction === "restart" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Power className="h-3.5 w-3.5" />}
+                    Reiniciar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 text-xs"
+                    onClick={() => handleLogout(inst)}
+                    disabled={!!currentAction}
+                  >
+                    {currentAction === "logout" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LogOut className="h-3.5 w-3.5" />}
+                    Deslogar
+                  </Button>
+                </div>
+
+                {/* Action buttons row 2 - CRUD */}
+                <div className="flex gap-2 pt-1 border-t border-border">
+                  <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs mt-2" onClick={() => openEdit(inst)}>
                     <Pencil className="h-3.5 w-3.5" />
                     Editar
                   </Button>
-                  <Button variant="outline" size="sm" className="gap-1.5 text-xs text-destructive hover:text-destructive" onClick={() => handleDelete(inst.id)}>
-                    <Trash2 className="h-3.5 w-3.5" />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs text-destructive hover:text-destructive mt-2"
+                    onClick={() => setDeleteConfirm(inst)}
+                    disabled={!!currentAction}
+                  >
+                    {currentAction === "delete" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
                   </Button>
                 </div>
               </div>
