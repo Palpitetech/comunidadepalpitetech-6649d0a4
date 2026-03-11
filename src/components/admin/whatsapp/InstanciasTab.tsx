@@ -330,14 +330,14 @@ export function InstanciasTab() {
     }
   };
 
-  const statusBadge = (status: string) => {
+  const statusConfig = (status: string) => {
     switch (status) {
       case "online":
-        return <Badge className="bg-green-500/15 text-green-700 border-green-500/30 text-[11px]">Online</Badge>;
+        return { label: "Online", dotClass: "bg-accent animate-pulse", badgeClass: "bg-accent/10 text-accent border-accent/20" };
       case "banned":
-        return <Badge className="bg-red-500/15 text-red-700 border-red-500/30 text-[11px]">Banido</Badge>;
+        return { label: "Banido", dotClass: "bg-destructive", badgeClass: "bg-destructive/10 text-destructive border-destructive/20" };
       default:
-        return <Badge className="bg-yellow-500/15 text-yellow-700 border-yellow-500/30 text-[11px]">Offline</Badge>;
+        return { label: "Offline", dotClass: "bg-muted-foreground", badgeClass: "bg-muted text-muted-foreground border-border" };
     }
   };
 
