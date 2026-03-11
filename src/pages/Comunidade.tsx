@@ -7,6 +7,7 @@ import { PostCard } from "@/components/comunidade/PostCard";
 import { PostCardSkeleton } from "@/components/comunidade/PostCardSkeleton";
 import { useCommunityPosts } from "@/hooks/useCommunityPosts";
 import { DownloadBanner } from "@/components/pwa/DownloadBanner";
+import { PWAUpdateBanner } from "@/components/pwa/PWAUpdateBanner";
 import { Pin } from "lucide-react";
 
 export default function Comunidade() {
