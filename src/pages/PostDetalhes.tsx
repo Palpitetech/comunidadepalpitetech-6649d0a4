@@ -19,7 +19,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useMySubscription } from "@/hooks/useMySubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { captureReferralFromURL } from "@/hooks/useConvites";
+
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
