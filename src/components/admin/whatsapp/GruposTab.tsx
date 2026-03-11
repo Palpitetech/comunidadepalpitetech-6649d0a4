@@ -103,12 +103,7 @@ export function GruposTab() {
             <SelectContent>
               {instances.map((inst) => (
                 <SelectItem key={inst.id} value={inst.id}>
-                  <span className="flex items-center gap-2">
-                    {inst.friendly_name}
-                    <Badge variant={inst.status === "online" ? "default" : "secondary"} className="text-[10px] px-1.5 py-0">
-                      {inst.status}
-                    </Badge>
-                  </span>
+                  {inst.friendly_name} ({inst.status})
                 </SelectItem>
               ))}
             </SelectContent>
