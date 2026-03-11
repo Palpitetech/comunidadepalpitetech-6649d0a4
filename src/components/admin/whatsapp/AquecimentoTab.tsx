@@ -287,32 +287,60 @@ export function AquecimentoTab() {
             </div>
           </div>
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  <Button
-                    size="sm"
-                    className="gap-1.5 w-full sm:w-auto"
-                    onClick={handleManualWarm}
-                    disabled={warming || !activeWindow}
-                  >
-                    {warming ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Flame className="h-4 w-4" />
-                    )}
-                    Aquecer Dupla
-                  </Button>
-                </div>
-              </TooltipTrigger>
-              {!activeWindow && (
+          <div className="flex gap-2 w-full sm:w-auto">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex-1 sm:flex-initial">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5 w-full"
+                      onClick={handleTestAutomation}
+                      disabled={testing}
+                    >
+                      {testing ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Play className="h-4 w-4" />
+                      )}
+                      Testar Automação
+                    </Button>
+                  </div>
+                </TooltipTrigger>
                 <TooltipContent>
-                  <p>Nenhuma janela ativa agora</p>
+                  <p>Executa warming-run como o cron faria</p>
                 </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex-1 sm:flex-initial">
+                    <Button
+                      size="sm"
+                      className="gap-1.5 w-full"
+                      onClick={handleManualWarm}
+                      disabled={warming || !activeWindow}
+                    >
+                      {warming ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Flame className="h-4 w-4" />
+                      )}
+                      Aquecer Dupla
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                {!activeWindow && (
+                  <TooltipContent>
+                    <p>Nenhuma janela ativa agora</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </CardContent>
       </Card>
 
