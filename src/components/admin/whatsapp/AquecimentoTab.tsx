@@ -225,14 +225,14 @@ export function AquecimentoTab() {
     setTesting(true);
     try {
       const { data, error } = await supabase.functions.invoke("warming-run", {
-        body: { force: true },
+        body: { action: "prepare", force: true },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       if (data?.skipped) {
         toast.info(`⏭️ Pulado: ${data.skipped}`);
       } else {
-        toast.success(`✅ Automação executada: ${data.scheduled || 0} dupla(s) na janela "${data.window_name || "—"}"`);
+        toast.success(`✅ Conversa agendada! ${data.scheduled || 0} mensagens serão enviadas nos próximos minutos.`);
       }
       fetchData();
     } catch (err: any) {
