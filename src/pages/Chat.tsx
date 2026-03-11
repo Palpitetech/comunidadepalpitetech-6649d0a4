@@ -253,36 +253,44 @@ export default function Chat() {
 
           {/* Limit reached banner */}
           {selectedTopic && limitReached && (
-            <div className="fixed left-0 right-0 z-50 border-t border-border bg-destructive/10 px-3 py-2 text-center bottom-[calc(env(safe-area-inset-bottom)+4rem+3.5rem)] md:bottom-[3.5rem]">
-              <p className="text-xs text-foreground mb-1.5">
-                Limite diário atingido · Plano VIP é ilimitado
+            <div
+              className="fixed left-0 right-0 z-50 px-4 py-3 text-center animate-fade-in bottom-[calc(env(safe-area-inset-bottom)+4rem+3.5rem)] md:bottom-[3.5rem]"
+              style={{
+                background: "linear-gradient(135deg, rgba(109,40,217,0.08), rgba(139,92,246,0.12))",
+                borderTop: "1px solid rgba(139,92,246,0.2)",
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
+              }}
+            >
+              <p className="text-xs text-[hsl(270,50%,50%)] mb-2.5">
+                ✨ {usage?.limit ?? 3}/{usage?.limit ?? 3} mensagens usadas hoje
               </p>
-              <Button
-                size="sm"
-                className="gap-1.5 text-xs h-8"
+              <button
+                type="button"
                 onClick={() => setLimitUpgradeOpen(true)}
+                className="w-full h-10 rounded-xl text-white text-sm font-semibold bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(270,70%,50%)] shadow-[0_4px_16px_rgba(139,92,246,0.4)] hover:shadow-[0_6px_20px_rgba(139,92,246,0.5)] active:scale-[0.98] transition-all duration-150 relative overflow-hidden"
               >
-                <Sparkles className="h-3.5 w-3.5" />
-                👑 Desbloquear acesso ilimitado
-              </Button>
-            </div>
-          )}
-
-          {/* Last message warning */}
-          {selectedTopic && remaining === 1 && !limitReached && (
-            <div className="fixed left-0 right-0 z-50 border-t border-[hsl(var(--warning,40_100%_50%))]/30 bg-[hsl(var(--warning,40_100%_50%))]/10 px-3 py-1.5 text-center text-xs text-foreground bottom-[calc(env(safe-area-inset-bottom)+4rem+3.5rem)] md:bottom-[3.5rem]">
-              ⚠️ Última mensagem gratuita de hoje
+                <span className="relative z-10">👑 Desbloquear acesso ilimitado</span>
+                <span
+                  className="absolute inset-0 z-0"
+                  style={{
+                    background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%)",
+                    animation: "shimmer 2s infinite",
+                  }}
+                />
+              </button>
             </div>
           )}
 
           {/* Composer */}
           <div
             className={cn(
-              "fixed left-0 right-0 z-50 px-3 pt-2",
+              "fixed left-0 right-0 z-50 px-3",
               "bottom-[calc(env(safe-area-inset-bottom)+4rem)]",
               "md:bottom-0"
             )}
             style={{
+              paddingTop: "0.5rem",
               paddingBottom: "0.75rem",
               background: "linear-gradient(to top, hsla(0,0%,97.6%,0.92) 60%, hsla(0,0%,97.6%,0))",
               backdropFilter: "blur(12px)",
@@ -291,7 +299,13 @@ export default function Chat() {
           >
             <div className="mx-auto flex max-w-3xl items-center gap-2.5 md:max-w-4xl">
               <input
-                className="flex-1 h-12 rounded-full bg-white border border-[#E5E7EB] px-5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10 transition-all disabled:opacity-50"
+                className={cn(
+                  "flex-1 h-12 rounded-full border px-5 text-sm outline-none transition-all duration-300",
+                  limitReached
+                    ? "bg-muted/60 border-border text-muted-foreground placeholder:italic placeholder:opacity-50 cursor-not-allowed"
+                    : "bg-white border-[#E5E7EB] text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:ring-2 focus:ring-primary/10",
+                  (!selectedTopic || sending) && !limitReached && "disabled:opacity-50"
+                )}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder={
@@ -318,14 +332,23 @@ export default function Chat() {
                 className={cn(
                   "shrink-0 flex items-center justify-center h-12 w-12 rounded-full text-white transition-all duration-150",
                   "bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(270,70%,50%)]",
-                  sending || !draft.trim() || !selectedTopic || limitReached
-                    ? "opacity-40 shadow-none"
-                    : "opacity-100 shadow-[0_4px_16px_rgba(139,92,246,0.4)] hover:shadow-[0_6px_20px_rgba(139,92,246,0.5)] active:scale-95"
+                  limitReached
+                    ? "opacity-30 shadow-none cursor-not-allowed"
+                    : sending || !draft.trim() || !selectedTopic
+                      ? "opacity-40 shadow-none"
+                      : "opacity-100 shadow-[0_4px_16px_rgba(139,92,246,0.4)] hover:shadow-[0_6px_20px_rgba(139,92,246,0.5)] active:scale-95"
                 )}
               >
                 <Send className="h-5 w-5" />
               </button>
             </div>
+
+            {/* Last message warning — below composer */}
+            {selectedTopic && remaining === 1 && !limitReached && (
+              <p className="text-center text-xs text-amber-600/80 mt-1.5 animate-fade-in">
+                ⚠️ Última mensagem gratuita de hoje
+              </p>
+            )}
           </div>
         </div>
       </div>
