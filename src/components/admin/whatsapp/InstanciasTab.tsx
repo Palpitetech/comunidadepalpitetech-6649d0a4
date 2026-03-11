@@ -63,6 +63,7 @@ export function InstanciasTab() {
   const [qrInstanceId, setQrInstanceId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<Record<string, string>>({});
   const [deleteConfirm, setDeleteConfirm] = useState<WhatsAppInstance | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   const setInstanceAction = (id: string, action: string | null) => {
     setActionLoading((prev) => {
@@ -285,6 +286,53 @@ export function InstanciasTab() {
     fetchInstances();
   };
 
+  const handleSyncFromEvolution = async () => {
+    setSyncing(true);
+    try {
+      const evoData = await callEvolution("fetchInstances");
+      if (!Array.isArray(evoData)) {
+        toast.error("Resposta inesperada da Evolution API");
+        return;
+      }
+
+      const { data: existing } = await supabase
+        .from("whatsapp_instances" as any)
+        .select("evolution_instance_id");
+      const existingIds = new Set((existing as any[] || []).map((e: any) => e.evolution_instance_id));
+
+      let imported = 0;
+      for (const evo of evoData) {
+        const instanceName = evo.instance?.instanceName || evo.instanceName;
+        if (!instanceName || existingIds.has(instanceName)) continue;
+
+        const connStatus = evo.instance?.status || evo.connectionStatus || evo.state;
+        const phone = evo.instance?.owner || evo.owner || "";
+
+        await supabase.from("whatsapp_instances" as any).insert({
+          name: instanceName,
+          friendly_name: instanceName,
+          phone_number: phone.replace("@s.whatsapp.net", ""),
+          evolution_instance_id: instanceName,
+          status: connStatus === "open" ? "online" : "offline",
+          daily_limit: 100,
+        });
+        imported++;
+      }
+
+      if (imported > 0) {
+        toast.success(`${imported} instância(s) importada(s)`);
+      } else {
+        toast.info("Nenhuma instância nova encontrada");
+      }
+      fetchInstances();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao buscar instâncias da Evolution");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+
   const statusBadge = (status: string) => {
     switch (status) {
       case "online":
@@ -309,7 +357,12 @@ export function InstanciasTab() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{instances.length} instância(s)</p>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleSyncFromEvolution} disabled={syncing}>
+            {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            Buscar Instâncias
+          </Button>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1.5" onClick={openCreate}>
               <Plus className="h-4 w-4" />
@@ -349,6 +402,7 @@ export function InstanciasTab() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* QR Code Dialog */}
