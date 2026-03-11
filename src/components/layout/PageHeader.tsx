@@ -68,7 +68,12 @@ export function PageHeader({ title, breadcrumb, onBack, rightContent, hideBackBu
             </button>
           )}
           
-          {hasBreadcrumb ? (
+          {/* When title is empty but rightContent exists, render it inline */}
+          {!title && rightContent ? (
+            <div className="min-w-0 flex-1">
+              {rightContent}
+            </div>
+          ) : hasBreadcrumb ? (
             <div className="flex items-center gap-1 min-w-0 overflow-hidden">
               {breadcrumb.map((item, index) => (
                 <div key={index} className="flex items-center gap-1 min-w-0">
@@ -91,14 +96,14 @@ export function PageHeader({ title, breadcrumb, onBack, rightContent, hideBackBu
                 {title}
               </h1>
             </div>
-          ) : (
+          ) : title ? (
             <h1 className="text-lg font-bold text-foreground truncate">
               {title}
             </h1>
-          )}
+          ) : null}
         </div>
         
-        {rightContent && (
+        {title && rightContent && (
           <div className="shrink-0">
             {rightContent}
           </div>

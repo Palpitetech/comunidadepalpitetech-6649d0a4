@@ -102,39 +102,35 @@ export default function Chat() {
     conhecer_planos: "Consultor de Planos",
   };
 
+  const chatHeaderContent = selectedTopic ? (
+    <div className="flex items-center gap-2">
+      <ChatAvatar />
+      <div className="min-w-0 leading-tight">
+        <p className="truncate text-sm font-semibold text-foreground">
+          {topicLabels[selectedTopic] ?? "Especialista"}
+        </p>
+        <div className="flex items-center gap-1.5">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
+          </span>
+          <p className="text-[0.6rem] text-muted-foreground">
+            IA Avançada • Online
+          </p>
+        </div>
+      </div>
+    </div>
+  ) : undefined;
+
   return (
-    <MainLayout pageTitle="Chat">
+    <MainLayout
+      pageTitle={selectedTopic ? "" : "Chat"}
+      onBack={selectedTopic ? goBack : undefined}
+      headerRightContent={chatHeaderContent}
+    >
       <div className="flex h-[calc(100dvh-5rem)] flex-col overflow-hidden md:h-full" style={{ background: "#F8F9FA" }}>
-        {/* Header */}
-        {selectedTopic ? (
-          <header className="sticky top-0 z-10 border-b border-border bg-background/90 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={goBack}
-                className="shrink-0 rounded-full p-1 hover:bg-muted transition-colors"
-                aria-label="Voltar"
-              >
-                <ArrowLeft className="h-5 w-5 text-foreground" />
-              </button>
-              <ChatAvatar />
-              <div className="min-w-0 leading-tight flex-1">
-                <p className="truncate text-sm font-semibold text-foreground">
-                  {topicLabels[selectedTopic] ?? "Especialista"}
-                </p>
-                <div className="flex items-center gap-1.5">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
-                  </span>
-                  <p className="text-[0.6rem] text-muted-foreground">
-                    IA Avançada • Online
-                  </p>
-                </div>
-              </div>
-            </div>
-          </header>
-        ) : !isMobile ? (
+        {/* Desktop-only header when no topic selected */}
+        {!selectedTopic && !isMobile ? (
           <header className="sticky top-0 z-10 border-b border-border bg-background/80 px-3 py-1.5 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-4">
             <div className="flex items-center gap-3">
               <ChatAvatar />
