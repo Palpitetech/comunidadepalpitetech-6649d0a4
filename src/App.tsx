@@ -95,7 +95,7 @@ const App = () => (
             {/* Rotas Protegidas - Requer Login */}
             <Route path="/home" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
             <Route path="/comunidade" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
-            <Route path="/chat" element={<AdminRoute><Chat /></AdminRoute>} />
+            <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
             <Route path="/notificacoes" element={<ProtectedRoute><Notificacoes /></ProtectedRoute>} />
             <Route path="/resultados" element={<ProtectedRoute><Resultados /></ProtectedRoute>} />
             <Route path="/tendencias" element={<ProtectedRoute><GatedPage feature="tendencias"><Tendencias /></GatedPage></ProtectedRoute>} />
