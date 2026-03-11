@@ -4,12 +4,18 @@ import type { ChatTopicId } from "@/lib/chatTopics";
 
 export type ChatRole = "user" | "assistant";
 
+export interface ChatMessageActions {
+  upgrade?: boolean;
+  plan?: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: ChatRole;
   content: string;
   created_at: string;
   bot_persona_id?: string | null;
+  actions?: ChatMessageActions | null;
 }
 
 interface UseChatArgs {
