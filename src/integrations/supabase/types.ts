@@ -469,6 +469,45 @@ export type Database = {
         }
         Relationships: []
       }
+      community_group_logs: {
+        Row: {
+          id: string
+          instance_id: string | null
+          message_sent: string | null
+          post_id: string | null
+          sent_at: string | null
+        }
+        Insert: {
+          id?: string
+          instance_id?: string | null
+          message_sent?: string | null
+          post_id?: string | null
+          sent_at?: string | null
+        }
+        Update: {
+          id?: string
+          instance_id?: string | null
+          message_sent?: string | null
+          post_id?: string | null
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_group_logs_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_group_logs_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "postagens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       convites: {
         Row: {
           converted_at: string | null
