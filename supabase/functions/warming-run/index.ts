@@ -59,68 +59,39 @@ async function getCurrentWindow(supabase: ReturnType<typeof createClient>) {
   return data[0];
 }
 
-/* ── getNextPair ─────────────────────────────────────── */
+/* ── buildSequentialPairs ─────────────────────────────── */
 
-function generatePairs(instances: any[]): [any, any][] {
+/**
+ * Forms sequential pairs from instances ordered by last_message_at ASC.
+ * Instances that waited longest get paired first.
+ * With odd count, the last instance is left out but will be
+ * prioritized next round (oldest last_message_at).
+ */
+function buildSequentialPairs(instances: any[]): [any, any][] {
   const pairs: [any, any][] = [];
-  for (let i = 0; i < instances.length; i++) {
-    for (let j = i + 1; j < instances.length; j++) {
-      pairs.push([instances[i], instances[j]]);
+  for (let i = 0; i + 1 < instances.length; i += 2) {
+    const a = instances[i];
+    const b = instances[i + 1];
+
+    // Safety: never pair an instance with itself
+    if (
+      a.id === b.id ||
+      a.phone_number === b.phone_number ||
+      a.evolution_instance_id === b.evolution_instance_id
+    ) {
+      console.error(
+        `[warming] BLOCKED self-pair: ${a.name} (${a.id}) ↔ ${b.name} (${b.id})`
+      );
+      continue;
     }
+
+    pairs.push([a, b]);
   }
   return pairs;
 }
 
 function pairKey(a: any, b: any): string {
   return [a.id, b.id].sort().join("|");
-}
-
-async function getNextPair(
-  supabase: ReturnType<typeof createClient>,
-  windowName: string
-) {
-  const { data: instances } = await supabase
-    .from("whatsapp_instances")
-    .select("*")
-    .eq("status", "online")
-    .order("id");
-
-  if (!instances || instances.length < 2) {
-    throw new Error("Nenhuma dupla disponível");
-  }
-
-  const pairs = generatePairs(instances);
-
-  // Get or create rotation record
-  const { data: rotation } = await supabase
-    .from("warming_rotation")
-    .select("*")
-    .eq("window_name", windowName)
-    .single();
-
-  let lastPairKey = rotation?.last_pair ?? "";
-
-  if (!rotation) {
-    await supabase
-      .from("warming_rotation")
-      .insert({ window_name: windowName, last_pair: "" });
-  }
-
-  // Find next pair circularly
-  const pairKeys = pairs.map(([a, b]) => pairKey(a, b));
-  let idx = pairKeys.indexOf(lastPairKey);
-  idx = (idx + 1) % pairs.length;
-
-  const chosen = pairs[idx];
-  const chosenKey = pairKeys[idx];
-
-  // Update rotation
-  await supabase
-    .from("warming_rotation")
-    .update({ last_pair: chosenKey, last_used_at: new Date().toISOString() })
-    .eq("window_name", windowName);
-
-  return { instanceA: chosen[0], instanceB: chosen[1] };
 }
 
 /* ── generateWarmingMessages ─────────────────────────── */
