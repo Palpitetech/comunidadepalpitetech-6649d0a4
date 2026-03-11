@@ -167,13 +167,15 @@ Com base no post abaixo, crie uma mensagem curta para um grupo de WhatsApp. A me
       throw new Error("Nenhuma instância online disponível");
     }
 
-    // 5. Random delay 0-120 minutes (via setTimeout-like approach)
-    const delayMinutes = Math.floor(Math.random() * 121);
-    const delayMs = delayMinutes * 60 * 1000;
-
-    if (delayMs > 0) {
-      console.log(`Aguardando ${delayMinutes} minutos antes de enviar...`);
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    // 5. Random delay 0-120 minutes (skip if testing)
+    let delayMinutes = 0;
+    if (!skipDelay) {
+      delayMinutes = Math.floor(Math.random() * 121);
+      const delayMs = delayMinutes * 60 * 1000;
+      if (delayMs > 0) {
+        console.log(`Aguardando ${delayMinutes} minutos antes de enviar...`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
     }
 
     // 6. Send message via Evolution API
