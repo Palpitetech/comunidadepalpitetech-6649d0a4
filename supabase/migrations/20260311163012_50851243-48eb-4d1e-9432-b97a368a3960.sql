@@ -1,0 +1,1 @@
+ALTER TABLE public.postagens ALTER COLUMN tipo TYPE varchar(30);
