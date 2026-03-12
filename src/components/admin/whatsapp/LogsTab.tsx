@@ -45,23 +45,6 @@ export function LogsTab() {
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  const [testingSend, setTestingSend] = useState(false);
-
-  const handleTestDailySend = async () => {
-    setTestingSend(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("community-daily-message", {
-        body: { action: "test" },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      toast.success("Mensagem enviada com sucesso no grupo!");
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao enviar mensagem de teste");
-    } finally {
-      setTestingSend(false);
-    }
-  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
