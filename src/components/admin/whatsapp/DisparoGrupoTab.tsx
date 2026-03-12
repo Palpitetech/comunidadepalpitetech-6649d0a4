@@ -209,10 +209,14 @@ export function DisparoGrupoTab() {
       return;
     }
 
-    // Validate each slot has at least 1 time
+    // Validate each slot
     for (const slot of formSlots) {
       if (slot.schedule_times.length === 0) {
         toast.error(`Slot ${slot.id.replace("slot_", "")} precisa de pelo menos 1 horário`);
+        return;
+      }
+      if (slot.message_type === "manual" && !slot.message_content.trim()) {
+        toast.error(`Slot ${slot.id.replace("slot_", "")} precisa de uma mensagem`);
         return;
       }
     }
