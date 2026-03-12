@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
@@ -18,7 +17,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, AlertTriangle, Tag, X, Copy, KeyRound } from "lucide-react";
+import {
+  Loader2, AlertTriangle, Tag, X, Copy, KeyRound, User,
+  Mail, Phone, MessageCircle, Save, StickyNote, Check,
+} from "lucide-react";
 import type { ExtendedProfile, Plan } from "@/types/plans";
 
 interface UserWithPlan extends ExtendedProfile {
@@ -31,11 +33,14 @@ interface UserDataTabProps {
 }
 
 function CopyableField({ label, value }: { label: string; value: string }) {
-  if (!value) return <span className="text-muted-foreground text-sm">—</span>;
+  const [copied, setCopied] = useState(false);
+  if (!value) return null;
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(value);
+      setCopied(true);
       toast.success(`${label} copiado!`);
+      setTimeout(() => setCopied(false), 1500);
     } catch {
       toast.error("Erro ao copiar");
     }
@@ -48,7 +53,11 @@ function CopyableField({ label, value }: { label: string; value: string }) {
       title={`Copiar ${label}`}
     >
       <span className="text-muted-foreground truncate text-sm">{value}</span>
-      <Copy className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2" />
+      {copied ? (
+        <Check className="h-3 w-3 text-primary shrink-0 ml-2" />
+      ) : (
+        <Copy className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2" />
+      )}
     </button>
   );
 }
@@ -62,7 +71,6 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
   const [isBlocked, setIsBlocked] = useState(user.is_blocked);
   const [adminNotes, setAdminNotes] = useState(user.admin_notes || "");
 
-  // State para remoção de tag com confirmação
   const [tagToRemove, setTagToRemove] = useState<string | null>(null);
   const [confirmTagName, setConfirmTagName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -102,7 +110,6 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
 
     setResettingPassword(true);
     try {
-      // 1. Reset password via edge function (sets to 123456 + sends email)
       const { data, error: fnError } = await supabase.functions.invoke("recuperar-senha", {
         body: { identificador },
       });
@@ -112,11 +119,9 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
 
       toast.success("Senha redefinida para 123456" + (data.email_enviado ? " — email enviado" : ""));
 
-      // 2. Send WhatsApp notification
       const telefone = user.whatsapp || user.celular;
       if (telefone) {
         try {
-          // Find an online instance
           const { data: instances } = await supabase
             .from("whatsapp_instances")
             .select("evolution_instance_id")
@@ -157,90 +162,117 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="nome">Nome</Label>
-          <Input
-            id="nome"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            placeholder="Nome do usuário"
-          />
-        </div>
+    <div className="space-y-5">
+      {/* Dados Pessoais */}
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <User className="h-4 w-4" /> Dados Pessoais
+        </h3>
+        <div className="bg-muted/50 rounded-lg p-3 space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="nome" className="text-xs text-muted-foreground">Nome</Label>
+            <Input
+              id="nome"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              placeholder="Nome do usuário"
+              className="h-9"
+            />
+            {user.nome && <CopyableField label="Nome" value={user.nome} />}
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <div className="flex items-center gap-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Mail className="h-3 w-3" /> Email
+            </Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="email@exemplo.com"
-              className="flex-1"
+              className="h-9"
             />
+            {user.email && <CopyableField label="Email" value={user.email} />}
           </div>
-          {user.email && <CopyableField label="Email" value={user.email} />}
-        </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="whatsapp">WhatsApp</Label>
-          <div className="flex items-center gap-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="whatsapp" className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <MessageCircle className="h-3 w-3" /> WhatsApp
+            </Label>
             <Input
               id="whatsapp"
               value={whatsapp}
               onChange={(e) => setWhatsapp(e.target.value)}
               placeholder="(11) 99999-9999"
-              className="flex-1"
+              className="h-9"
             />
+            {user.whatsapp && <CopyableField label="WhatsApp" value={user.whatsapp} />}
           </div>
-          {user.whatsapp && <CopyableField label="WhatsApp" value={user.whatsapp} />}
-        </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="celular">Celular (somente leitura)</Label>
-          <Input
-            id="celular"
-            value={user.celular || ""}
-            disabled
-            className="bg-muted"
-          />
-          {user.celular && <CopyableField label="Celular" value={user.celular} />}
-        </div>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-4">
-        <Button
-          variant="outline"
-          onClick={handleResetPassword}
-          disabled={resettingPassword || (!user.email && !user.celular)}
-          className="w-full gap-2"
-        >
-          {resettingPassword ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <KeyRound className="h-4 w-4" />
-          )}
-          Gerar Nova Senha (123456)
-        </Button>
-        <p className="text-xs text-muted-foreground text-center">
-          Redefine a senha para 123456, envia email e WhatsApp automaticamente
-        </p>
-      </div>
-
-      <Separator />
-
-      {/* Tags do usuário */}
-      {user.tags && user.tags.length > 0 && (
-        <>
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1.5">
-              <Tag className="h-3.5 w-3.5" />
-              Tags
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Phone className="h-3 w-3" /> Celular (somente leitura)
             </Label>
+            <Input value={user.celular || ""} disabled className="bg-muted h-9" />
+            {user.celular && <CopyableField label="Celular" value={user.celular} />}
+          </div>
+
+          {/* WhatsApp direct link */}
+          {(() => {
+            const phone = user.whatsapp || user.celular;
+            if (!phone) return null;
+            const digits = phone.replace(/\D/g, "");
+            const waNumber = digits.startsWith("55") ? digits : `55${digits}`;
+            return (
+              <Button variant="outline" size="sm" className="w-full gap-2 mt-1" asChild>
+                <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  Enviar WhatsApp
+                </a>
+              </Button>
+            );
+          })()}
+        </div>
+      </div>
+
+      {/* Senha */}
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <KeyRound className="h-4 w-4" /> Senha
+        </h3>
+        <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Senha padrão</span>
+            <CopyableField label="Senha" value="123456" />
+          </div>
+          <Button
+            variant="outline"
+            onClick={handleResetPassword}
+            disabled={resettingPassword || (!user.email && !user.celular)}
+            className="w-full gap-2"
+            size="sm"
+          >
+            {resettingPassword ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <KeyRound className="h-4 w-4" />
+            )}
+            Gerar Nova Senha (123456)
+          </Button>
+          <p className="text-[11px] text-muted-foreground text-center">
+            Redefine a senha para 123456, envia email e WhatsApp automaticamente
+          </p>
+        </div>
+      </div>
+
+      {/* Tags */}
+      {user.tags && user.tags.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
+            <Tag className="h-4 w-4" /> Tags
+          </h3>
+          <div className="bg-muted/50 rounded-lg p-3">
             <div className="flex flex-wrap gap-1.5">
               {user.tags.map((tag) => (
                 <Badge key={tag} variant="secondary" className="text-xs flex items-center gap-1 pr-1">
@@ -260,9 +292,42 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
               ))}
             </div>
           </div>
-          <Separator />
-        </>
+        </div>
       )}
+
+      {/* Notas */}
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <StickyNote className="h-4 w-4" /> Notas Internas
+        </h3>
+        <div className="bg-muted/50 rounded-lg p-3">
+          <Textarea
+            value={adminNotes}
+            onChange={(e) => setAdminNotes(e.target.value)}
+            placeholder="Anotações sobre este usuário..."
+            rows={3}
+            className="bg-background"
+          />
+        </div>
+      </div>
+
+      {/* Bloquear */}
+      <div className="flex items-center justify-between p-3 border rounded-lg border-destructive/50 bg-destructive/5">
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="h-5 w-5 text-destructive" />
+          <div>
+            <p className="font-medium text-sm">Bloquear Usuário</p>
+            <p className="text-xs text-muted-foreground">Impede acesso ao sistema</p>
+          </div>
+        </div>
+        <Switch checked={isBlocked} onCheckedChange={setIsBlocked} />
+      </div>
+
+      {/* Salvar */}
+      <Button onClick={handleSave} disabled={saving} className="w-full gap-2">
+        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+        Salvar Alterações
+      </Button>
 
       {/* Dialog de confirmação para remover tag */}
       <AlertDialog open={!!tagToRemove} onOpenChange={(open) => !open && setTagToRemove(null)}>
@@ -346,40 +411,6 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="notes">Notas Internas (Admin)</Label>
-          <Textarea
-            id="notes"
-            value={adminNotes}
-            onChange={(e) => setAdminNotes(e.target.value)}
-            placeholder="Anotações sobre este usuário..."
-            rows={3}
-          />
-        </div>
-
-        <div className="flex items-center justify-between p-4 border rounded-lg border-destructive/50 bg-destructive/5">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
-            <div>
-              <p className="font-medium">Bloquear Usuário</p>
-              <p className="text-sm text-muted-foreground">
-                Impede acesso ao sistema
-              </p>
-            </div>
-          </div>
-          <Switch
-            checked={isBlocked}
-            onCheckedChange={setIsBlocked}
-          />
-        </div>
-      </div>
-
-      <Button onClick={handleSave} disabled={saving} className="w-full">
-        {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-        Salvar Alterações
-      </Button>
     </div>
   );
 }
