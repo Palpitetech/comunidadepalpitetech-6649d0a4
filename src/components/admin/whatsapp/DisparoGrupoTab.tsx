@@ -398,10 +398,6 @@ export function DisparoGrupoTab() {
                     })}
                   </div>
 
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Sparkles className="h-3 w-3" />
-                    IA gera convite baseado no post mais recente
-                  </p>
 
                   {/* Last send */}
                   {lastLog && (
