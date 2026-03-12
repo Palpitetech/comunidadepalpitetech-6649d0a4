@@ -10,13 +10,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Pencil, Pause, Play, TestTube, X, Clock, Send, Trash2, Sparkles } from "lucide-react";
+import { Plus, Pencil, Pause, Play, TestTube, X, Clock, Send, Trash2, Sparkles, Bot, PenLine } from "lucide-react";
 import { format } from "date-fns";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Slot {
   id: string;
   schedule_times: string[];
   last_scheduled_index: number;
+  message_type: "ai" | "manual";
+  message_content: string;
 }
 
 interface BlastConfig {
@@ -121,7 +124,7 @@ export function DisparoGrupoTab() {
   }
 
   function createEmptySlot(index: number): Slot {
-    return { id: `slot_${index}`, schedule_times: [], last_scheduled_index: -1 };
+    return { id: `slot_${index}`, schedule_times: [], last_scheduled_index: -1, message_type: "ai", message_content: "" };
   }
 
   function openNewDialog() {
@@ -142,6 +145,8 @@ export function DisparoGrupoTab() {
       ? config.slots.map(s => ({
           ...s,
           schedule_times: (s.schedule_times || []).map(t => t.substring(0, 5)).sort(),
+          message_type: (s as any).message_type || "ai",
+          message_content: (s as any).message_content || "",
         }))
       : [createEmptySlot(1)];
     setFormSlots(slots);
@@ -204,10 +209,14 @@ export function DisparoGrupoTab() {
       return;
     }
 
-    // Validate each slot has at least 1 time
+    // Validate each slot
     for (const slot of formSlots) {
       if (slot.schedule_times.length === 0) {
         toast.error(`Slot ${slot.id.replace("slot_", "")} precisa de pelo menos 1 horário`);
+        return;
+      }
+      if (slot.message_type === "manual" && !slot.message_content.trim()) {
+        toast.error(`Slot ${slot.id.replace("slot_", "")} precisa de uma mensagem`);
         return;
       }
     }
@@ -219,6 +228,8 @@ export function DisparoGrupoTab() {
       id: s.id,
       schedule_times: s.schedule_times.map(t => t.length === 5 ? `${t}:00` : t),
       last_scheduled_index: s.last_scheduled_index ?? -1,
+      message_type: s.message_type,
+      message_content: s.message_type === "manual" ? s.message_content : "",
     }));
 
     const payload: any = {
@@ -368,8 +379,8 @@ export function DisparoGrupoTab() {
                       return (
                         <div key={slot.id} className="text-xs space-y-1">
                           <p className="text-muted-foreground flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {slot.id.replace("_", " ").toUpperCase()} → Próximo: {times[nextIdx] || "—"} ({times.length} horário{times.length !== 1 ? "s" : ""})
+                            {(slot as any).message_type === "manual" ? <PenLine className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
+                            {(slot as any).message_type === "manual" ? "✏️ Manual" : "🤖 IA"} — Próximo: {times[nextIdx] || "—"} ({times.length} horário{times.length !== 1 ? "s" : ""})
                           </p>
                           <div className="flex flex-wrap gap-1">
                             {times.map((t, i) => (
@@ -387,10 +398,6 @@ export function DisparoGrupoTab() {
                     })}
                   </div>
 
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Sparkles className="h-3 w-3" />
-                    IA gera convite baseado no post mais recente
-                  </p>
 
                   {/* Last send */}
                   {lastLog && (
@@ -614,10 +621,59 @@ export function DisparoGrupoTab() {
                       </p>
                     )}
 
-                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                      <Sparkles className="h-3 w-3" />
-                      IA gera convite no momento do envio ({slot.schedule_times.length}/10 horários)
-                    </p>
+                    {/* Message type toggle */}
+                    <div className="space-y-2 pt-1 border-t border-dashed">
+                      <Label className="text-[10px] text-muted-foreground">Tipo de mensagem</Label>
+                      <div className="flex gap-1">
+                        <Button
+                          type="button"
+                          variant={slot.message_type === "ai" ? "default" : "outline"}
+                          size="sm"
+                          className="text-[10px] h-7"
+                          onClick={() => setFormSlots(formSlots.map(s =>
+                            s.id === slot.id ? { ...s, message_type: "ai" } : s
+                          ))}
+                        >
+                          <Bot className="h-3 w-3 mr-1" />
+                          🤖 Gerada por IA
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={slot.message_type === "manual" ? "default" : "outline"}
+                          size="sm"
+                          className="text-[10px] h-7"
+                          onClick={() => setFormSlots(formSlots.map(s =>
+                            s.id === slot.id ? { ...s, message_type: "manual" } : s
+                          ))}
+                        >
+                          <PenLine className="h-3 w-3 mr-1" />
+                          ✏️ Escrever manualmente
+                        </Button>
+                      </div>
+
+                      {slot.message_type === "ai" ? (
+                        <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                          <Sparkles className="h-3 w-3" />
+                          A IA gera um convite baseado no post mais recente no momento do envio.
+                        </p>
+                      ) : (
+                        <div className="space-y-1">
+                          <Label className="text-[10px]">Mensagem *</Label>
+                          <Textarea
+                            value={slot.message_content}
+                            onChange={(e) => setFormSlots(formSlots.map(s =>
+                              s.id === slot.id ? { ...s, message_content: e.target.value } : s
+                            ))}
+                            placeholder="Digite a mensagem do grupo..."
+                            rows={4}
+                            className="text-xs"
+                          />
+                          <p className="text-[10px] text-muted-foreground">
+                            Suporta *negrito*, _itálico_, emojis
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               ))}
