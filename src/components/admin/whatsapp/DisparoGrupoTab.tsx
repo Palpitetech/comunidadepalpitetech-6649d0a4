@@ -138,6 +138,7 @@ export function DisparoGrupoTab() {
         .sort()
     );
     setFormActive(config.is_active);
+    setFormMessagesPerDay(config.messages_per_day ?? 1);
     setFormTimeInput("12:00");
     setDialogOpen(true);
   }
