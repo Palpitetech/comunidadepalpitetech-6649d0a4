@@ -74,3 +74,6 @@ verify_jwt = false
 
 [functions.og-post]
 verify_jwt = false
+
+[functions.group-blast]
+verify_jwt = false

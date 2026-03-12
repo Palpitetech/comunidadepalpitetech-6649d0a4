@@ -8,6 +8,7 @@ import { LogsTab } from "@/components/admin/whatsapp/LogsTab";
 import { AquecimentoTab } from "@/components/admin/whatsapp/AquecimentoTab";
 import { GruposTab } from "@/components/admin/whatsapp/GruposTab";
 import { DisparoManualTab } from "@/components/admin/whatsapp/DisparoManualTab";
+import { DisparoGrupoTab } from "@/components/admin/whatsapp/DisparoGrupoTab";
 import { cn } from "@/lib/utils";
 
 const tabs = [
@@ -16,6 +17,7 @@ const tabs = [
   { value: "fila", label: "Fila", icon: Send },
   { value: "disparo", label: "Disparo Manual", icon: Megaphone },
   { value: "logs", label: "Logs", icon: ScrollText },
+  { value: "disparo-grupo", label: "Disparo Grupo", icon: Send },
   { value: "aquecimento", label: "Aquecimento", icon: Flame },
   { value: "grupos", label: "Grupos", icon: Users },
 ] as const;
@@ -59,6 +61,7 @@ export default function AdminWhatsApp() {
           {activeTab === "fila" && <FilaTab />}
           {activeTab === "disparo" && <DisparoManualTab />}
           {activeTab === "logs" && <LogsTab />}
+          {activeTab === "disparo-grupo" && <DisparoGrupoTab />}
           {activeTab === "aquecimento" && <AquecimentoTab />}
           {activeTab === "grupos" && <GruposTab />}
         </div>
