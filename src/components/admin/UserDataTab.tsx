@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Mail, AlertTriangle, Tag, X } from "lucide-react";
+import { Loader2, AlertTriangle, Tag, X, Copy, KeyRound } from "lucide-react";
 import type { ExtendedProfile, Plan } from "@/types/plans";
 
 interface UserWithPlan extends ExtendedProfile {
@@ -30,9 +30,32 @@ interface UserDataTabProps {
   onUserUpdated: () => void;
 }
 
+function CopyableField({ label, value }: { label: string; value: string }) {
+  if (!value) return <span className="text-muted-foreground text-sm">—</span>;
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(`${label} copiado!`);
+    } catch {
+      toast.error("Erro ao copiar");
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="flex items-center justify-between w-full group hover:bg-accent/50 -mx-1 px-1 rounded transition-colors cursor-pointer"
+      title={`Copiar ${label}`}
+    >
+      <span className="text-muted-foreground truncate text-sm">{value}</span>
+      <Copy className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2" />
+    </button>
+  );
+}
+
 export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
   const [saving, setSaving] = useState(false);
-  const [sendingReset, setSendingReset] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
   const [nome, setNome] = useState(user.nome || "");
   const [email, setEmail] = useState(user.email || "");
   const [whatsapp, setWhatsapp] = useState(user.whatsapp || "");
@@ -70,25 +93,66 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
     }
   };
 
-  const handleSendPasswordReset = async () => {
-    if (!user.email) {
-      toast.error("Usuário não tem email cadastrado");
+  const handleResetPassword = async () => {
+    const identificador = user.email || user.celular;
+    if (!identificador) {
+      toast.error("Usuário não tem email nem celular cadastrado");
       return;
     }
 
-    setSendingReset(true);
+    setResettingPassword(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-        redirectTo: `${window.location.origin}/recuperar-senha`,
+      // 1. Reset password via edge function (sets to 123456 + sends email)
+      const { data, error: fnError } = await supabase.functions.invoke("recuperar-senha", {
+        body: { identificador },
       });
 
-      if (error) throw error;
-      toast.success("Email de redefinição enviado");
+      if (fnError) throw new Error("Erro ao redefinir senha");
+      if (!data?.sucesso) throw new Error(data?.erro || "Erro ao redefinir senha");
+
+      toast.success("Senha redefinida para 123456" + (data.email_enviado ? " — email enviado" : ""));
+
+      // 2. Send WhatsApp notification
+      const telefone = user.whatsapp || user.celular;
+      if (telefone) {
+        try {
+          // Find an online instance
+          const { data: instances } = await supabase
+            .from("whatsapp_instances")
+            .select("evolution_instance_id")
+            .eq("status", "online")
+            .limit(1);
+
+          if (instances && instances.length > 0) {
+            const numero = telefone.replace(/\D/g, "");
+            const numeroBR = numero.startsWith("55") ? numero : `55${numero}`;
+            const nomeUsuario = user.nome || "Usuário";
+
+            const mensagem = `Olá ${nomeUsuario}, tudo bem? Estou passando para confirmar que deu tudo certo com sua nova senha. Faça seu login com as credenciais abaixo:\n\n${user.email || identificador}\nSenha: 123456\n\nhttps://comunidadepalpitetech.lovable.app/login\n\nRecomendo que troque sua senha assim que acessar o sistema.`;
+
+            await supabase.functions.invoke("evolution-proxy", {
+              body: {
+                action: "sendText",
+                instanceName: instances[0].evolution_instance_id,
+                number: `${numeroBR}@s.whatsapp.net`,
+                text: mensagem,
+              },
+            });
+
+            toast.success("Mensagem WhatsApp enviada!");
+          } else {
+            toast.info("Nenhuma instância WhatsApp online — apenas email enviado");
+          }
+        } catch (whatsErr) {
+          console.error("Erro ao enviar WhatsApp:", whatsErr);
+          toast.info("WhatsApp não enviado, mas email foi");
+        }
+      }
     } catch (error: any) {
-      console.error("Erro ao enviar reset:", error);
-      toast.error(error.message || "Erro ao enviar email");
+      console.error("Erro ao redefinir senha:", error);
+      toast.error(error.message || "Erro ao redefinir senha");
     } finally {
-      setSendingReset(false);
+      setResettingPassword(false);
     }
   };
 
@@ -107,23 +171,31 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
 
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="email@exemplo.com"
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="email@exemplo.com"
+              className="flex-1"
+            />
+          </div>
+          {user.email && <CopyableField label="Email" value={user.email} />}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="whatsapp">WhatsApp</Label>
-          <Input
-            id="whatsapp"
-            value={whatsapp}
-            onChange={(e) => setWhatsapp(e.target.value)}
-            placeholder="(11) 99999-9999"
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="whatsapp"
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+              placeholder="(11) 99999-9999"
+              className="flex-1"
+            />
+          </div>
+          {user.whatsapp && <CopyableField label="WhatsApp" value={user.whatsapp} />}
         </div>
 
         <div className="space-y-2">
@@ -134,6 +206,7 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
             disabled
             className="bg-muted"
           />
+          {user.celular && <CopyableField label="Celular" value={user.celular} />}
         </div>
       </div>
 
@@ -142,17 +215,20 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
       <div className="space-y-4">
         <Button
           variant="outline"
-          onClick={handleSendPasswordReset}
-          disabled={sendingReset || !user.email}
+          onClick={handleResetPassword}
+          disabled={resettingPassword || (!user.email && !user.celular)}
           className="w-full gap-2"
         >
-          {sendingReset ? (
+          {resettingPassword ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Mail className="h-4 w-4" />
+            <KeyRound className="h-4 w-4" />
           )}
-          Enviar Email de Redefinição de Senha
+          Gerar Nova Senha (123456)
         </Button>
+        <p className="text-xs text-muted-foreground text-center">
+          Redefine a senha para 123456, envia email e WhatsApp automaticamente
+        </p>
       </div>
 
       <Separator />
@@ -233,7 +309,6 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
 
                 setRemovingTag(true);
                 try {
-                  // Verifica senha do admin re-autenticando
                   const { data: { user: currentUser } } = await supabase.auth.getUser();
                   if (!currentUser?.email) throw new Error("Sessão inválida");
 
