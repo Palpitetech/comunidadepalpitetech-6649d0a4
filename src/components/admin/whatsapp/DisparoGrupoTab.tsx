@@ -122,6 +122,7 @@ export function DisparoGrupoTab() {
     setFormMessage("");
     setFormTimes([]);
     setFormActive(true);
+    setFormMessagesPerDay(1);
     setFormTimeInput("12:00");
     setDialogOpen(true);
   }
