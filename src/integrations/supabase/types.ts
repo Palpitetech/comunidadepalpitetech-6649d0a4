@@ -693,11 +693,8 @@ export type Database = {
           group_jid: string
           id: string
           is_active: boolean | null
-          last_scheduled_index: number | null
-          message_content: string
-          messages_per_day: number | null
           name: string
-          schedule_times: string[]
+          slots: Json | null
           updated_at: string | null
         }
         Insert: {
@@ -705,11 +702,8 @@ export type Database = {
           group_jid: string
           id?: string
           is_active?: boolean | null
-          last_scheduled_index?: number | null
-          message_content: string
-          messages_per_day?: number | null
           name: string
-          schedule_times?: string[]
+          slots?: Json | null
           updated_at?: string | null
         }
         Update: {
@@ -717,11 +711,8 @@ export type Database = {
           group_jid?: string
           id?: string
           is_active?: boolean | null
-          last_scheduled_index?: number | null
-          message_content?: string
-          messages_per_day?: number | null
           name?: string
-          schedule_times?: string[]
+          slots?: Json | null
           updated_at?: string | null
         }
         Relationships: []
@@ -738,6 +729,7 @@ export type Database = {
           message_content: string
           scheduled_for: string
           sent_at: string | null
+          slot_id: string | null
           status: string | null
         }
         Insert: {
@@ -751,6 +743,7 @@ export type Database = {
           message_content: string
           scheduled_for: string
           sent_at?: string | null
+          slot_id?: string | null
           status?: string | null
         }
         Update: {
@@ -764,6 +757,7 @@ export type Database = {
           message_content?: string
           scheduled_for?: string
           sent_at?: string | null
+          slot_id?: string | null
           status?: string | null
         }
         Relationships: [

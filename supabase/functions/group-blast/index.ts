@@ -6,6 +6,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+interface Slot {
+  id: string;
+  schedule_times: string[];
+  last_scheduled_index: number;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -26,20 +32,22 @@ Deno.serve(async (req) => {
     } else if (action === "send") {
       return await handleSend(supabase, EVOLUTION_API_URL!, EVOLUTION_API_KEY!);
     } else {
-      return new Response(
-        JSON.stringify({ error: `Ação desconhecida: ${action}` }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonResponse({ error: `Ação desconhecida: ${action}` }, 400);
     }
   } catch (err: any) {
     console.error("group-blast error:", err);
-    return new Response(
-      JSON.stringify({ error: err.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse({ error: err.message }, 500);
   }
 });
 
+function jsonResponse(body: any, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+// ─── PREPARE ─────────────────────────────────────────────
 async function handlePrepare(
   supabase: any,
   opts: { force?: boolean; config_id?: string }
@@ -62,86 +70,96 @@ async function handlePrepare(
   let prepared = 0;
 
   for (const config of configs || []) {
-    const times: string[] = (config.schedule_times || []).slice().sort();
-    if (times.length === 0) continue;
+    const slots: Slot[] = config.slots ?? [];
+    if (slots.length === 0) continue;
 
-    const total = config.messages_per_day ?? 1;
-    let currentIndex = config.last_scheduled_index;
-    let prepared_for_config = 0;
+    let updatedSlots = [...slots];
 
-    for (let n = 0; n < total; n++) {
-      const nextIndex = (currentIndex + 1) % times.length;
-      const nextTime = times[nextIndex]; // e.g. "14:30:00"
+    for (let slotIdx = 0; slotIdx < slots.length; slotIdx++) {
+      const slot = slots[slotIdx];
+      const times = (slot.schedule_times || []).slice().sort();
+      if (times.length === 0) continue;
+
+      const nextIndex =
+        ((slot.last_scheduled_index ?? -1) + 1) % times.length;
+      const nextTime = times[nextIndex]; // e.g. "08:00"
 
       const [hh, mm] = nextTime.split(":");
       const now = new Date();
-      let scheduled = new Date(
-        Date.UTC(
-          now.getUTCFullYear(),
-          now.getUTCMonth(),
-          now.getUTCDate(),
-          parseInt(hh) + 3, // BRT → UTC
-          parseInt(mm),
-          0,
-          0
-        )
-      );
+      let scheduled: Date;
 
       if (opts.force) {
-        // Each test message 30s apart
-        scheduled = new Date(Date.now() + 30_000 + (n * 30_000));
+        // Each slot 30s apart
+        scheduled = new Date(Date.now() + 30_000 * (slotIdx + 1));
       } else {
-        // Check how many already scheduled today
+        scheduled = new Date(
+          Date.UTC(
+            now.getUTCFullYear(),
+            now.getUTCMonth(),
+            now.getUTCDate(),
+            parseInt(hh) + 3, // BRT → UTC
+            parseInt(mm),
+            0,
+            0
+          )
+        );
+
+        // Check if already scheduled today for this config+slot
         const todayStr = now.toISOString().split("T")[0];
         const { count } = await supabase
           .from("group_blast_logs")
           .select("id", { count: "exact", head: true })
           .eq("config_id", config.id)
+          .eq("slot_id", slot.id)
           .gte("scheduled_for", `${todayStr}T00:00:00Z`)
           .lt("scheduled_for", `${todayStr}T23:59:59Z`)
           .neq("status", "failed");
 
-        if ((count ?? 0) >= total) break;
+        if ((count ?? 0) > 0) continue; // already scheduled
       }
 
-      // Insert log
+      // Insert log WITHOUT message_content (will be generated on send)
       const { error: insertErr } = await supabase
         .from("group_blast_logs")
         .insert({
           config_id: config.id,
+          slot_id: slot.id,
           group_jid: config.group_jid,
-          message_content: config.message_content,
+          message_content: "",
           scheduled_for: scheduled.toISOString(),
           status: "pending",
         });
 
       if (insertErr) {
-        console.error(`Error inserting log for config ${config.id}:`, insertErr);
+        console.error(
+          `Error inserting log for config ${config.id} slot ${slot.id}:`,
+          insertErr
+        );
         continue;
       }
 
-      currentIndex = nextIndex;
-      prepared_for_config++;
+      // Update last_scheduled_index for this slot
+      updatedSlots = updatedSlots.map((s) =>
+        s.id === slot.id ? { ...s, last_scheduled_index: nextIndex } : s
+      );
+
+      prepared++;
     }
 
-    // Update index after all messages for this config
+    // Persist updated slot indices
     await supabase
       .from("group_blast_configs")
       .update({
-        last_scheduled_index: currentIndex,
+        slots: updatedSlots,
         updated_at: new Date().toISOString(),
       })
       .eq("id", config.id);
-
-    prepared += prepared_for_config;
   }
 
-  return new Response(
-    JSON.stringify({ prepared }),
-    { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
+  return jsonResponse({ prepared });
 }
 
+// ─── SEND ────────────────────────────────────────────────
 async function handleSend(
   supabase: any,
   evolutionUrl: string,
@@ -158,10 +176,7 @@ async function handleSend(
 
   if (logsErr) throw logsErr;
   if (!logs || logs.length === 0) {
-    return new Response(
-      JSON.stringify({ sent: 0, failed: 0, message: "Nenhum pendente" }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse({ sent: 0, failed: 0, message: "Nenhum pendente" });
   }
 
   // Fetch online instances (round-robin by last_message_at)
@@ -174,11 +189,20 @@ async function handleSend(
   if (instErr) throw instErr;
   if (!instances || instances.length === 0) {
     console.warn("group-blast send: sem instâncias online");
-    return new Response(
-      JSON.stringify({ skipped: "sem instâncias online" }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse({ skipped: "sem instâncias online" });
   }
+
+  // Fetch latest non-comment post
+  const { data: latestPost } = await supabase
+    .from("postagens")
+    .select("id, titulo, conteudo, tipo")
+    .neq("tipo", "comentario")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? "";
+  const BASE_URL = Deno.env.get("COMMUNITY_BASE_URL") ?? "";
 
   let sent = 0;
   let failed = 0;
@@ -188,6 +212,26 @@ async function handleSend(
     const instance = instances[i % instances.length];
 
     try {
+      // Generate message via AI
+      let messageContent: string | null = null;
+
+      if (latestPost) {
+        messageContent = await generateAIMessage(
+          LOVABLE_API_KEY,
+          BASE_URL,
+          latestPost
+        );
+      }
+
+      if (!messageContent) {
+        console.warn(
+          `[group-blast] Sem post ou IA falhou para log ${log.id}, skip`
+        );
+        // Leave as pending to retry later
+        continue;
+      }
+
+      // Send to group
       const res = await fetch(
         `${evolutionUrl}/message/sendText/${instance.evolution_instance_id}`,
         {
@@ -198,7 +242,7 @@ async function handleSend(
           },
           body: JSON.stringify({
             number: log.group_jid,
-            text: log.message_content,
+            text: messageContent,
             linkPreview: false,
           }),
         }
@@ -206,15 +250,18 @@ async function handleSend(
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData?.message || errData?.error || `HTTP ${res.status}`);
+        throw new Error(
+          errData?.message || errData?.error || `HTTP ${res.status}`
+        );
       }
 
-      // Mark as sent
+      // Mark as sent with the generated message
       await supabase
         .from("group_blast_logs")
         .update({
           status: "sent",
           sent_at: new Date().toISOString(),
+          message_content: messageContent,
           instance_id: instance.id,
           evolution_instance_id: instance.evolution_instance_id,
         })
@@ -240,8 +287,70 @@ async function handleSend(
     }
   }
 
-  return new Response(
-    JSON.stringify({ sent, failed }),
-    { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
+  return jsonResponse({ sent, failed });
+}
+
+// ─── AI MESSAGE GENERATION ──────────────────────────────
+async function generateAIMessage(
+  apiKey: string,
+  baseUrl: string,
+  post: { id: string; titulo: string | null; conteudo: string; tipo: string | null }
+): Promise<string | null> {
+  if (!apiKey) {
+    console.error("[group-blast] LOVABLE_API_KEY não configurada");
+    return null;
+  }
+
+  const prompt = `Você é assistente de uma comunidade de loterias.
+Crie uma mensagem curta no estilo CONVITE para o grupo de WhatsApp, convidando os membros a lerem este post.
+
+Regras:
+- Máximo 3 linhas
+- Tom animado e direto
+- Use 1 ou 2 emojis relevantes
+- Termine com o link: ${baseUrl}/comunidade/post/${post.id}
+- NÃO use saudações genéricas como "Olá"
+- NÃO use markdown (sem * ou _)
+
+Título do post: ${post.titulo ?? "Sem título"}
+Prévia: ${(post.conteudo ?? "").slice(0, 500)}`;
+
+  try {
+    const aiRes = await fetch(
+      "https://ai.gateway.lovable.dev/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-lite",
+          messages: [
+            {
+              role: "system",
+              content:
+                "Você gera mensagens curtas de convite para grupos de WhatsApp sobre posts de uma comunidade de loterias.",
+            },
+            { role: "user", content: prompt },
+          ],
+        }),
+      }
+    );
+
+    if (!aiRes.ok) {
+      console.error(
+        `[group-blast] AI gateway error: ${aiRes.status}`,
+        await aiRes.text()
+      );
+      return null;
+    }
+
+    const aiData = await aiRes.json();
+    const content = aiData?.choices?.[0]?.message?.content?.trim();
+    return content || null;
+  } catch (err: any) {
+    console.error("[group-blast] AI generation error:", err.message);
+    return null;
+  }
 }

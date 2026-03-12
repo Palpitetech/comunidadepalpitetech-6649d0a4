@@ -5,23 +5,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Pencil, Pause, Play, TestTube, X, Clock, Send } from "lucide-react";
+import { Plus, Pencil, Pause, Play, TestTube, X, Clock, Send, Trash2, Sparkles } from "lucide-react";
 import { format } from "date-fns";
+
+interface Slot {
+  id: string;
+  schedule_times: string[];
+  last_scheduled_index: number;
+}
 
 interface BlastConfig {
   id: string;
   name: string;
   group_jid: string;
-  message_content: string;
-  schedule_times: string[];
-  last_scheduled_index: number;
-  messages_per_day: number;
+  slots: Slot[];
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -30,6 +32,7 @@ interface BlastConfig {
 interface BlastLog {
   id: string;
   config_id: string;
+  slot_id: string | null;
   instance_id: string | null;
   evolution_instance_id: string | null;
   group_jid: string;
@@ -53,11 +56,9 @@ export function DisparoGrupoTab() {
   // Form state
   const [formName, setFormName] = useState("");
   const [formGroupJid, setFormGroupJid] = useState("");
-  const [formMessage, setFormMessage] = useState("");
-  const [formTimes, setFormTimes] = useState<string[]>([]);
+  const [formSlots, setFormSlots] = useState<Slot[]>([]);
   const [formActive, setFormActive] = useState(true);
-  const [formMessagesPerDay, setFormMessagesPerDay] = useState(1);
-  const [formTimeInput, setFormTimeInput] = useState("12:00");
+  const [formTimeInputs, setFormTimeInputs] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   // Last log per config
@@ -82,12 +83,16 @@ export function DisparoGrupoTab() {
       console.error(error);
       return;
     }
-    setConfigs((data as any) || []);
+    const parsed = (data || []).map((c: any) => ({
+      ...c,
+      slots: Array.isArray(c.slots) ? c.slots : [],
+    }));
+    setConfigs(parsed);
 
     // Fetch last log for each config
-    if (data && data.length > 0) {
+    if (parsed.length > 0) {
       const map: Record<string, BlastLog> = {};
-      for (const c of data) {
+      for (const c of parsed) {
         const { data: logData } = await supabase
           .from("group_blast_logs")
           .select("*")
@@ -115,15 +120,17 @@ export function DisparoGrupoTab() {
     setLogs((data as any) || []);
   }
 
+  function createEmptySlot(index: number): Slot {
+    return { id: `slot_${index}`, schedule_times: [], last_scheduled_index: -1 };
+  }
+
   function openNewDialog() {
     setEditingConfig(null);
     setFormName("");
     setFormGroupJid("");
-    setFormMessage("");
-    setFormTimes([]);
+    setFormSlots([createEmptySlot(1)]);
     setFormActive(true);
-    setFormMessagesPerDay(1);
-    setFormTimeInput("12:00");
+    setFormTimeInputs({ slot_1: "12:00" });
     setDialogOpen(true);
   }
 
@@ -131,51 +138,93 @@ export function DisparoGrupoTab() {
     setEditingConfig(config);
     setFormName(config.name);
     setFormGroupJid(config.group_jid);
-    setFormMessage(config.message_content);
-    setFormTimes(
-      (config.schedule_times || [])
-        .map((t: string) => t.substring(0, 5))
-        .sort()
-    );
+    const slots = config.slots.length > 0
+      ? config.slots.map(s => ({
+          ...s,
+          schedule_times: (s.schedule_times || []).map(t => t.substring(0, 5)).sort(),
+        }))
+      : [createEmptySlot(1)];
+    setFormSlots(slots);
     setFormActive(config.is_active);
-    setFormMessagesPerDay(config.messages_per_day ?? 1);
-    setFormTimeInput("12:00");
+    const inputs: Record<string, string> = {};
+    slots.forEach(s => { inputs[s.id] = "12:00"; });
+    setFormTimeInputs(inputs);
     setDialogOpen(true);
   }
 
-  function addTime() {
-    if (formTimes.length >= 10) {
-      toast.error("Máximo de 10 horários");
+  function addSlot() {
+    if (formSlots.length >= 3) {
+      toast.error("Máximo de 3 slots");
       return;
     }
-    if (formTimes.includes(formTimeInput)) {
-      toast.error("Horário já adicionado");
-      return;
-    }
-    setFormTimes([...formTimes, formTimeInput].sort());
+    const nextNum = formSlots.length + 1;
+    const newSlot = createEmptySlot(nextNum);
+    setFormSlots([...formSlots, newSlot]);
+    setFormTimeInputs(prev => ({ ...prev, [newSlot.id]: "12:00" }));
   }
 
-  function removeTime(t: string) {
-    setFormTimes(formTimes.filter((x) => x !== t));
+  function removeSlot(slotId: string) {
+    if (formSlots.length <= 1) {
+      toast.error("Mínimo de 1 slot");
+      return;
+    }
+    setFormSlots(formSlots.filter(s => s.id !== slotId));
+  }
+
+  function addTimeToSlot(slotId: string) {
+    const slot = formSlots.find(s => s.id === slotId);
+    if (!slot) return;
+    if (slot.schedule_times.length >= 10) {
+      toast.error("Máximo de 10 horários por slot");
+      return;
+    }
+    const timeVal = formTimeInputs[slotId] || "12:00";
+    if (slot.schedule_times.includes(timeVal)) {
+      toast.error("Horário já adicionado neste slot");
+      return;
+    }
+    setFormSlots(formSlots.map(s =>
+      s.id === slotId
+        ? { ...s, schedule_times: [...s.schedule_times, timeVal].sort() }
+        : s
+    ));
+  }
+
+  function removeTimeFromSlot(slotId: string, time: string) {
+    setFormSlots(formSlots.map(s =>
+      s.id === slotId
+        ? { ...s, schedule_times: s.schedule_times.filter(t => t !== time) }
+        : s
+    ));
   }
 
   async function handleSave() {
-    if (!formName.trim() || !formGroupJid.trim() || !formMessage.trim()) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
-    if (formTimes.length === 0) {
-      toast.error("Adicione pelo menos 1 horário");
+    if (!formName.trim() || !formGroupJid.trim()) {
+      toast.error("Preencha nome e ID do grupo");
       return;
     }
 
+    // Validate each slot has at least 1 time
+    for (const slot of formSlots) {
+      if (slot.schedule_times.length === 0) {
+        toast.error(`Slot ${slot.id.replace("slot_", "")} precisa de pelo menos 1 horário`);
+        return;
+      }
+    }
+
     setSaving(true);
-    const payload = {
+
+    // Format times with seconds for DB
+    const slotsPayload = formSlots.map(s => ({
+      id: s.id,
+      schedule_times: s.schedule_times.map(t => t.length === 5 ? `${t}:00` : t),
+      last_scheduled_index: s.last_scheduled_index ?? -1,
+    }));
+
+    const payload: any = {
       name: formName.trim(),
       group_jid: formGroupJid.trim(),
-      message_content: formMessage.trim(),
-      schedule_times: formTimes.map((t) => `${t}:00`),
-      messages_per_day: formMessagesPerDay,
+      slots: slotsPayload,
       is_active: formActive,
       updated_at: new Date().toISOString(),
     };
@@ -195,7 +244,7 @@ export function DisparoGrupoTab() {
     } else {
       const { error } = await supabase
         .from("group_blast_configs")
-        .insert({ ...payload, last_scheduled_index: 0 });
+        .insert(payload);
       if (error) {
         toast.error("Erro ao criar: " + error.message);
       } else {
@@ -221,14 +270,14 @@ export function DisparoGrupoTab() {
   }
 
   async function handleTest(config: BlastConfig) {
-    if (!confirm("Enviar mensagem agora para o grupo?")) return;
+    if (!confirm(`Enviar ${config.slots.length} mensagem(ns) de teste agora?`)) return;
 
     try {
       const { data, error } = await supabase.functions.invoke("group-blast", {
         body: { action: "prepare", force: true, config_id: config.id },
       });
       if (error) throw error;
-      toast.success(`✅ ${(config as any).messages_per_day ?? 1} mensagem(ns) agendada(s)!`);
+      toast.success(`✅ ${config.slots.length} mensagem(ns) agendada(s) para teste!`);
       setTimeout(() => fetchLogs(), 2000);
     } catch (err: any) {
       toast.error("Erro: " + err.message);
@@ -269,7 +318,7 @@ export function DisparoGrupoTab() {
         <div>
           <h2 className="text-lg font-semibold">Disparo em Grupos</h2>
           <p className="text-xs text-muted-foreground">
-            Configure mensagens automáticas com rotação de horários
+            Mensagens automáticas com IA baseadas nos posts da comunidade
           </p>
         </div>
         <Button size="sm" onClick={openNewDialog}>
@@ -288,10 +337,6 @@ export function DisparoGrupoTab() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {configs.map((config) => {
-            const times = (config.schedule_times || [])
-              .map((t: string) => t.substring(0, 5))
-              .sort();
-            const nextIndex = (config.last_scheduled_index + 1) % (times.length || 1);
             const lastLog = lastLogs[config.id];
 
             return (
@@ -315,33 +360,37 @@ export function DisparoGrupoTab() {
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {/* Messages per day + times */}
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    📨 {(config as any).messages_per_day ?? 1}x por dia | Próximo: {times[nextIndex] || "—"} (índice {nextIndex + 1}/{times.length})
-                  </p>
-
-                  {/* Times queue */}
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      Horários (fila):
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                      {times.map((t: string, i: number) => (
-                        <Badge
-                          key={t}
-                          variant={i === nextIndex ? "default" : "outline"}
-                          className={
-                            i === nextIndex
-                              ? "bg-orange-500 hover:bg-orange-600 text-white"
-                              : ""
-                          }
-                        >
-                          {t}
-                        </Badge>
-                      ))}
-                    </div>
+                  {/* Slots display */}
+                  <div className="space-y-2">
+                    {(config.slots || []).map((slot) => {
+                      const times = (slot.schedule_times || []).map(t => t.substring(0, 5)).sort();
+                      const nextIdx = ((slot.last_scheduled_index ?? -1) + 1) % (times.length || 1);
+                      return (
+                        <div key={slot.id} className="text-xs space-y-1">
+                          <p className="text-muted-foreground flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {slot.id.replace("_", " ").toUpperCase()} → Próximo: {times[nextIdx] || "—"} ({times.length} horário{times.length !== 1 ? "s" : ""})
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {times.map((t, i) => (
+                              <Badge
+                                key={t}
+                                variant={i === nextIdx ? "default" : "outline"}
+                                className={i === nextIdx ? "bg-orange-500 hover:bg-orange-600 text-white" : ""}
+                              >
+                                {t}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
+
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Sparkles className="h-3 w-3" />
+                    IA gera convite baseado no post mais recente
+                  </p>
 
                   {/* Last send */}
                   {lastLog && (
@@ -350,46 +399,24 @@ export function DisparoGrupoTab() {
                       {lastLog.sent_at
                         ? format(new Date(lastLog.sent_at), "dd/MM HH:mm")
                         : "—"}{" "}
-                      {lastLog.status === "sent"
-                        ? "✅"
-                        : lastLog.status === "pending"
-                        ? "⏳"
-                        : "❌"}
+                      {lastLog.status === "sent" ? "✅" : lastLog.status === "pending" ? "⏳" : "❌"}
                     </p>
                   )}
 
                   {/* Actions */}
                   <div className="flex gap-2 pt-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openEditDialog(config)}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => openEditDialog(config)}>
                       <Pencil className="h-3 w-3 mr-1" />
                       Editar
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => toggleActive(config)}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => toggleActive(config)}>
                       {config.is_active ? (
-                        <>
-                          <Pause className="h-3 w-3 mr-1" />
-                          Pausar
-                        </>
+                        <><Pause className="h-3 w-3 mr-1" />Pausar</>
                       ) : (
-                        <>
-                          <Play className="h-3 w-3 mr-1" />
-                          Ativar
-                        </>
+                        <><Play className="h-3 w-3 mr-1" />Ativar</>
                       )}
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleTest(config)}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => handleTest(config)}>
                       <TestTube className="h-3 w-3 mr-1" />
                       Testar
                     </Button>
@@ -428,9 +455,7 @@ export function DisparoGrupoTab() {
             <SelectContent>
               <SelectItem value="all">Todas configs</SelectItem>
               {configs.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
-                </SelectItem>
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -441,7 +466,7 @@ export function DisparoGrupoTab() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-xs">Config</TableHead>
-                <TableHead className="text-xs">Grupo</TableHead>
+                <TableHead className="text-xs">Slot</TableHead>
                 <TableHead className="text-xs">Instância</TableHead>
                 <TableHead className="text-xs">Agendado</TableHead>
                 <TableHead className="text-xs">Enviado</TableHead>
@@ -461,8 +486,8 @@ export function DisparoGrupoTab() {
                     <TableCell className="text-xs font-medium">
                       {getConfigName(log.config_id)}
                     </TableCell>
-                    <TableCell className="text-xs font-mono max-w-[120px] truncate">
-                      {log.group_jid}
+                    <TableCell className="text-xs">
+                      {log.slot_id?.replace("_", " ") || "—"}
                     </TableCell>
                     <TableCell className="text-xs font-mono">
                       {log.evolution_instance_id
@@ -473,9 +498,7 @@ export function DisparoGrupoTab() {
                       {format(new Date(log.scheduled_for), "dd/MM HH:mm")}
                     </TableCell>
                     <TableCell className="text-xs">
-                      {log.sent_at
-                        ? format(new Date(log.sent_at), "dd/MM HH:mm")
-                        : "—"}
+                      {log.sent_at ? format(new Date(log.sent_at), "dd/MM HH:mm") : "—"}
                     </TableCell>
                     <TableCell>{statusBadge(log.status)}</TableCell>
                   </TableRow>
@@ -488,13 +511,13 @@ export function DisparoGrupoTab() {
 
       {/* Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingConfig ? "Editar Configuração" : "Nova Configuração"}
             </DialogTitle>
             <DialogDescription>
-              Configure uma mensagem automática para um grupo do WhatsApp
+              A IA gera convites automáticos baseados no post mais recente da comunidade
             </DialogDescription>
           </DialogHeader>
 
@@ -504,7 +527,7 @@ export function DisparoGrupoTab() {
               <Input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                placeholder="Resultado Mega-Sena"
+                placeholder="Grupo Loteria VIP"
               />
             </div>
 
@@ -520,81 +543,88 @@ export function DisparoGrupoTab() {
               </p>
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs">Mensagem *</Label>
-              <Textarea
-                value={formMessage}
-                onChange={(e) => setFormMessage(e.target.value)}
-                placeholder="Texto da mensagem..."
-                rows={4}
-              />
-              <p className="text-[10px] text-muted-foreground">
-                Suporta *negrito*, _itálico_, emojis
-              </p>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs">Mensagens por dia *</Label>
-              <Input
-                type="number"
-                min={1}
-                max={10}
-                value={formMessagesPerDay}
-                onChange={(e) => setFormMessagesPerDay(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
-                className="w-[100px]"
-              />
-              <p className="text-[10px] text-muted-foreground">
-                Quantas vezes por dia enviar esta mensagem. Os horários serão usados em sequência.
-              </p>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs">
-                Horários de envio * ({formTimes.length}/10)
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  type="time"
-                  value={formTimeInput}
-                  onChange={(e) => setFormTimeInput(e.target.value)}
-                  className="w-[130px]"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addTime}
-                  disabled={formTimes.length >= 10}
-                >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Adicionar
-                </Button>
+            {/* Slots Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold">Slots de Envio ({formSlots.length}/3)</Label>
+                {formSlots.length < 3 && (
+                  <Button type="button" variant="outline" size="sm" onClick={addSlot}>
+                    <Plus className="h-3 w-3 mr-1" />
+                    Adicionar Slot
+                  </Button>
+                )}
               </div>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {formTimes.map((t) => (
-                  <Badge key={t} variant="secondary" className="gap-1 pr-1">
-                    {t}
-                    <button
-                      onClick={() => removeTime(t)}
-                      className="ml-0.5 rounded-full hover:bg-muted-foreground/20 p-0.5"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-              {formTimes.length === 0 && (
-                <p className="text-[10px] text-destructive">
-                  Mínimo 1 horário obrigatório
-                </p>
-              )}
+
+              {formSlots.map((slot, idx) => (
+                <Card key={slot.id} className="border-dashed">
+                  <CardContent className="p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-medium">Slot {idx + 1}</p>
+                      {formSlots.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 text-destructive"
+                          onClick={() => removeSlot(slot.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Input
+                        type="time"
+                        value={formTimeInputs[slot.id] || "12:00"}
+                        onChange={(e) =>
+                          setFormTimeInputs(prev => ({ ...prev, [slot.id]: e.target.value }))
+                        }
+                        className="w-[130px]"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addTimeToSlot(slot.id)}
+                        disabled={slot.schedule_times.length >= 10}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add
+                      </Button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1">
+                      {slot.schedule_times.map((t) => (
+                        <Badge key={t} variant="secondary" className="gap-1 pr-1">
+                          {t}
+                          <button
+                            onClick={() => removeTimeFromSlot(slot.id, t)}
+                            className="ml-0.5 rounded-full hover:bg-muted-foreground/20 p-0.5"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+
+                    {slot.schedule_times.length === 0 && (
+                      <p className="text-[10px] text-destructive">
+                        Mínimo 1 horário obrigatório
+                      </p>
+                    )}
+
+                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      IA gera convite no momento do envio ({slot.schedule_times.length}/10 horários)
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
 
             <div className="flex items-center gap-2">
-              <Switch
-                checked={formActive}
-                onCheckedChange={setFormActive}
-              />
+              <Switch checked={formActive} onCheckedChange={setFormActive} />
               <Label className="text-xs">Ativo</Label>
             </div>
           </div>
