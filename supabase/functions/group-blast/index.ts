@@ -302,15 +302,22 @@ async function generateAIMessage(
   }
 
   const prompt = `Você é assistente de uma comunidade de loterias.
-Crie uma mensagem curta no estilo CONVITE para o grupo de WhatsApp, convidando os membros a lerem este post.
+Crie uma mensagem para WhatsApp seguindo EXATAMENTE este formato:
 
-Regras:
-- Máximo 3 linhas
-- Tom animado e direto
-- Use 1 ou 2 emojis relevantes
-- Termine com o link: ${baseUrl}/comunidade/post/${post.id}
-- NÃO use saudações genéricas como "Olá"
-- NÃO use markdown (sem * ou _)
+[GANCHO — 1 linha impactante sobre o post]
+
+[RESUMO — máximo 2 linhas diretas sobre o conteúdo do post]
+
+Leia completo sem custo: ${baseUrl}/comunidade/post/${post.id}
+
+Regras obrigatórias:
+- Gancho: 1 linha curta e impactante, desperta curiosidade, sem revelar tudo
+- Resumo: máximo 2 linhas, direto ao ponto
+- Link sempre na última linha com o texto exato "Leia completo sem custo: {link}"
+- Use 1 emoji no gancho, nenhum no resto
+- NÃO use saudações como "Olá", "Oi", "Pessoal"
+- NÃO use asteriscos ou formatação markdown
+- NÃO adicione nada além do formato acima
 
 Título do post: ${post.titulo ?? "Sem título"}
 Prévia: ${(post.conteudo ?? "").slice(0, 500)}`;
