@@ -695,6 +695,7 @@ export type Database = {
           is_active: boolean | null
           last_scheduled_index: number | null
           message_content: string
+          messages_per_day: number | null
           name: string
           schedule_times: string[]
           updated_at: string | null
@@ -706,6 +707,7 @@ export type Database = {
           is_active?: boolean | null
           last_scheduled_index?: number | null
           message_content: string
+          messages_per_day?: number | null
           name: string
           schedule_times?: string[]
           updated_at?: string | null
@@ -717,6 +719,7 @@ export type Database = {
           is_active?: boolean | null
           last_scheduled_index?: number | null
           message_content?: string
+          messages_per_day?: number | null
           name?: string
           schedule_times?: string[]
           updated_at?: string | null
