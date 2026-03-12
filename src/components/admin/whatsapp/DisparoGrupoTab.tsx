@@ -228,7 +228,7 @@ export function DisparoGrupoTab() {
         body: { action: "prepare", force: true, config_id: config.id },
       });
       if (error) throw error;
-      toast.success("✅ Mensagem agendada para 30 segundos!");
+      toast.success(`✅ ${(config as any).messages_per_day ?? 1} mensagem(ns) agendada(s)!`);
       setTimeout(() => fetchLogs(), 2000);
     } catch (err: any) {
       toast.error("Erro: " + err.message);
