@@ -17,6 +17,7 @@ const tabs = [
   { value: "fila", label: "Fila", icon: Send },
   { value: "disparo", label: "Disparo Manual", icon: Megaphone },
   { value: "logs", label: "Logs", icon: ScrollText },
+  { value: "disparo-grupo", label: "Disparo Grupo", icon: Send },
   { value: "aquecimento", label: "Aquecimento", icon: Flame },
   { value: "grupos", label: "Grupos", icon: Users },
 ] as const;
