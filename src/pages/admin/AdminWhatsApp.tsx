@@ -8,6 +8,7 @@ import { LogsTab } from "@/components/admin/whatsapp/LogsTab";
 import { AquecimentoTab } from "@/components/admin/whatsapp/AquecimentoTab";
 import { GruposTab } from "@/components/admin/whatsapp/GruposTab";
 import { DisparoManualTab } from "@/components/admin/whatsapp/DisparoManualTab";
+import { DisparoGrupoTab } from "@/components/admin/whatsapp/DisparoGrupoTab";
 import { cn } from "@/lib/utils";
 
 const tabs = [
