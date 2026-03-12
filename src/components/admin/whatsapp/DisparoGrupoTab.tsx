@@ -56,6 +56,7 @@ export function DisparoGrupoTab() {
   const [formMessage, setFormMessage] = useState("");
   const [formTimes, setFormTimes] = useState<string[]>([]);
   const [formActive, setFormActive] = useState(true);
+  const [formMessagesPerDay, setFormMessagesPerDay] = useState(1);
   const [formTimeInput, setFormTimeInput] = useState("12:00");
   const [saving, setSaving] = useState(false);
 
