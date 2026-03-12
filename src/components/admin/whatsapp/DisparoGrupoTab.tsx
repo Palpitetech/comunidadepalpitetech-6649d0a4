@@ -534,6 +534,21 @@ export function DisparoGrupoTab() {
             </div>
 
             <div className="space-y-1.5">
+              <Label className="text-xs">Mensagens por dia *</Label>
+              <Input
+                type="number"
+                min={1}
+                max={10}
+                value={formMessagesPerDay}
+                onChange={(e) => setFormMessagesPerDay(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
+                className="w-[100px]"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Quantas vezes por dia enviar esta mensagem. Os horários serão usados em sequência.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
               <Label className="text-xs">
                 Horários de envio * ({formTimes.length}/10)
               </Label>
