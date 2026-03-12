@@ -379,8 +379,8 @@ export function DisparoGrupoTab() {
                       return (
                         <div key={slot.id} className="text-xs space-y-1">
                           <p className="text-muted-foreground flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {slot.id.replace("_", " ").toUpperCase()} → Próximo: {times[nextIdx] || "—"} ({times.length} horário{times.length !== 1 ? "s" : ""})
+                            {(slot as any).message_type === "manual" ? <PenLine className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
+                            {(slot as any).message_type === "manual" ? "✏️ Manual" : "🤖 IA"} — Próximo: {times[nextIdx] || "—"} ({times.length} horário{times.length !== 1 ? "s" : ""})
                           </p>
                           <div className="flex flex-wrap gap-1">
                             {times.map((t, i) => (
