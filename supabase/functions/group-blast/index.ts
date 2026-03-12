@@ -194,15 +194,6 @@ async function handleSend(
     return jsonResponse({ skipped: "sem instâncias online" });
   }
 
-  // Fetch latest non-comment post
-  const { data: latestPost } = await supabase
-    .from("postagens")
-    .select("id, titulo, conteudo, tipo")
-    .neq("tipo", "comentario")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? "";
   const BASE_URL = Deno.env.get("COMMUNITY_BASE_URL") ?? "";
 
@@ -214,22 +205,49 @@ async function handleSend(
     const instance = instances[i % instances.length];
 
     try {
-      // Generate message via AI
+      // Fetch config to get slot info
+      const { data: configData } = await supabase
+        .from("group_blast_configs")
+        .select("slots")
+        .eq("id", log.config_id)
+        .maybeSingle();
+
+      const slots: Slot[] = configData?.slots ?? [];
+      const slot = slots.find((s: Slot) => s.id === log.slot_id);
+
       let messageContent: string | null = null;
 
-      if (latestPost) {
-        messageContent = await generateAIMessage(
-          LOVABLE_API_KEY,
-          BASE_URL,
-          latestPost
-        );
+      if (slot?.message_type === "manual" && slot?.message_content?.trim()) {
+        // Use manual text from slot
+        messageContent = slot.message_content.trim();
+      } else {
+        // Generate via AI (default behavior)
+        const { data: latestPost } = await supabase
+          .from("postagens")
+          .select("id, titulo, conteudo, tipo")
+          .neq("tipo", "comentario")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (latestPost) {
+          messageContent = await generateAIMessage(
+            LOVABLE_API_KEY,
+            BASE_URL,
+            latestPost
+          );
+        }
+
+        if (!messageContent) {
+          console.warn(
+            `[group-blast] Sem post ou IA falhou para log ${log.id}, skip`
+          );
+          // Leave as pending to retry later
+          continue;
+        }
       }
 
       if (!messageContent) {
-        console.warn(
-          `[group-blast] Sem post ou IA falhou para log ${log.id}, skip`
-        );
-        // Leave as pending to retry later
         continue;
       }
 

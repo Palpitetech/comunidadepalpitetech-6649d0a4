@@ -228,6 +228,8 @@ export function DisparoGrupoTab() {
       id: s.id,
       schedule_times: s.schedule_times.map(t => t.length === 5 ? `${t}:00` : t),
       last_scheduled_index: s.last_scheduled_index ?? -1,
+      message_type: s.message_type,
+      message_content: s.message_type === "manual" ? s.message_content : "",
     }));
 
     const payload: any = {
