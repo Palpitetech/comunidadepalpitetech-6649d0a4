@@ -124,7 +124,7 @@ export function DisparoGrupoTab() {
   }
 
   function createEmptySlot(index: number): Slot {
-    return { id: `slot_${index}`, schedule_times: [], last_scheduled_index: -1 };
+    return { id: `slot_${index}`, schedule_times: [], last_scheduled_index: -1, message_type: "ai", message_content: "" };
   }
 
   function openNewDialog() {
