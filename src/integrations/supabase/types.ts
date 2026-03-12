@@ -687,6 +687,99 @@ export type Database = {
         }
         Relationships: []
       }
+      group_blast_configs: {
+        Row: {
+          created_at: string | null
+          group_jid: string
+          id: string
+          is_active: boolean | null
+          last_scheduled_index: number | null
+          message_content: string
+          name: string
+          schedule_times: string[]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          group_jid: string
+          id?: string
+          is_active?: boolean | null
+          last_scheduled_index?: number | null
+          message_content: string
+          name: string
+          schedule_times?: string[]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          group_jid?: string
+          id?: string
+          is_active?: boolean | null
+          last_scheduled_index?: number | null
+          message_content?: string
+          name?: string
+          schedule_times?: string[]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      group_blast_logs: {
+        Row: {
+          config_id: string | null
+          created_at: string | null
+          error_message: string | null
+          evolution_instance_id: string | null
+          group_jid: string
+          id: string
+          instance_id: string | null
+          message_content: string
+          scheduled_for: string
+          sent_at: string | null
+          status: string | null
+        }
+        Insert: {
+          config_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          evolution_instance_id?: string | null
+          group_jid: string
+          id?: string
+          instance_id?: string | null
+          message_content: string
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          config_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          evolution_instance_id?: string | null
+          group_jid?: string
+          id?: string
+          instance_id?: string | null
+          message_content?: string
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_blast_logs_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "group_blast_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_blast_logs_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guide_personas: {
         Row: {
           ai_model: string | null
