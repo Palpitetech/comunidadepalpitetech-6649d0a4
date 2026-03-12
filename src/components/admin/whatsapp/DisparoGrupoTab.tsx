@@ -21,6 +21,7 @@ interface BlastConfig {
   message_content: string;
   schedule_times: string[];
   last_scheduled_index: number;
+  messages_per_day: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
