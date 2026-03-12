@@ -315,6 +315,11 @@ export function DisparoGrupoTab() {
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-3">
+                  {/* Messages per day + times */}
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    📨 {(config as any).messages_per_day ?? 1}x por dia | Próximo: {times[nextIndex] || "—"} (índice {nextIndex + 1}/{times.length})
+                  </p>
+
                   {/* Times queue */}
                   <div>
                     <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
@@ -336,10 +341,6 @@ export function DisparoGrupoTab() {
                         </Badge>
                       ))}
                     </div>
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      Próximo: {times[nextIndex] || "—"} (índice{" "}
-                      {nextIndex + 1}/{times.length})
-                    </p>
                   </div>
 
                   {/* Last send */}
