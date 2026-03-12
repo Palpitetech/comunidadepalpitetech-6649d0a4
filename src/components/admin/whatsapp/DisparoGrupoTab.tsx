@@ -145,6 +145,8 @@ export function DisparoGrupoTab() {
       ? config.slots.map(s => ({
           ...s,
           schedule_times: (s.schedule_times || []).map(t => t.substring(0, 5)).sort(),
+          message_type: (s as any).message_type || "ai",
+          message_content: (s as any).message_content || "",
         }))
       : [createEmptySlot(1)];
     setFormSlots(slots);
