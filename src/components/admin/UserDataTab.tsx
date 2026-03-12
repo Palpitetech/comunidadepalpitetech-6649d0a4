@@ -33,8 +33,8 @@ interface UserDataTabProps {
 }
 
 function CopyableField({ label, value }: { label: string; value: string }) {
-  if (!value) return null;
   const [copied, setCopied] = useState(false);
+  if (!value) return null;
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(value);
