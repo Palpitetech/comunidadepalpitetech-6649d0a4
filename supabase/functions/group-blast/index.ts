@@ -65,68 +65,75 @@ async function handlePrepare(
     const times: string[] = (config.schedule_times || []).slice().sort();
     if (times.length === 0) continue;
 
-    const nextIndex = (config.last_scheduled_index + 1) % times.length;
-    const nextTime = times[nextIndex]; // e.g. "14:30:00"
+    const total = config.messages_per_day ?? 1;
+    let currentIndex = config.last_scheduled_index;
+    let prepared_for_config = 0;
 
-    // Build scheduled_for in UTC from BRT time
-    const [hh, mm] = nextTime.split(":");
-    const now = new Date();
-    const scheduled = new Date(
-      Date.UTC(
-        now.getUTCFullYear(),
-        now.getUTCMonth(),
-        now.getUTCDate(),
-        parseInt(hh) + 3, // BRT → UTC
-        parseInt(mm),
-        0,
-        0
-      )
-    );
+    for (let n = 0; n < total; n++) {
+      const nextIndex = (currentIndex + 1) % times.length;
+      const nextTime = times[nextIndex]; // e.g. "14:30:00"
 
-    // For force/test mode: schedule 30 seconds from now
-    if (opts.force) {
-      scheduled.setTime(Date.now() + 30_000);
-    } else {
-      // Check for duplicates today
-      const todayStr = now.toISOString().split("T")[0];
-      const { data: existing } = await supabase
+      const [hh, mm] = nextTime.split(":");
+      const now = new Date();
+      let scheduled = new Date(
+        Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate(),
+          parseInt(hh) + 3, // BRT → UTC
+          parseInt(mm),
+          0,
+          0
+        )
+      );
+
+      if (opts.force) {
+        // Each test message 30s apart
+        scheduled = new Date(Date.now() + 30_000 + (n * 30_000));
+      } else {
+        // Check how many already scheduled today
+        const todayStr = now.toISOString().split("T")[0];
+        const { count } = await supabase
+          .from("group_blast_logs")
+          .select("id", { count: "exact", head: true })
+          .eq("config_id", config.id)
+          .gte("scheduled_for", `${todayStr}T00:00:00Z`)
+          .lt("scheduled_for", `${todayStr}T23:59:59Z`)
+          .neq("status", "failed");
+
+        if ((count ?? 0) >= total) break;
+      }
+
+      // Insert log
+      const { error: insertErr } = await supabase
         .from("group_blast_logs")
-        .select("id")
-        .eq("config_id", config.id)
-        .gte("scheduled_for", `${todayStr}T00:00:00Z`)
-        .lt("scheduled_for", `${todayStr}T23:59:59Z`)
-        .neq("status", "failed")
-        .limit(1);
+        .insert({
+          config_id: config.id,
+          group_jid: config.group_jid,
+          message_content: config.message_content,
+          scheduled_for: scheduled.toISOString(),
+          status: "pending",
+        });
 
-      if (existing && existing.length > 0) continue;
+      if (insertErr) {
+        console.error(`Error inserting log for config ${config.id}:`, insertErr);
+        continue;
+      }
+
+      currentIndex = nextIndex;
+      prepared_for_config++;
     }
 
-    // Insert log
-    const { error: insertErr } = await supabase
-      .from("group_blast_logs")
-      .insert({
-        config_id: config.id,
-        group_jid: config.group_jid,
-        message_content: config.message_content,
-        scheduled_for: scheduled.toISOString(),
-        status: "pending",
-      });
-
-    if (insertErr) {
-      console.error(`Error inserting log for config ${config.id}:`, insertErr);
-      continue;
-    }
-
-    // Update last_scheduled_index
+    // Update index after all messages for this config
     await supabase
       .from("group_blast_configs")
       .update({
-        last_scheduled_index: nextIndex,
+        last_scheduled_index: currentIndex,
         updated_at: new Date().toISOString(),
       })
       .eq("id", config.id);
 
-    prepared++;
+    prepared += prepared_for_config;
   }
 
   return new Response(

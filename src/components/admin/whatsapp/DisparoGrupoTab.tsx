@@ -21,6 +21,7 @@ interface BlastConfig {
   message_content: string;
   schedule_times: string[];
   last_scheduled_index: number;
+  messages_per_day: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -55,6 +56,7 @@ export function DisparoGrupoTab() {
   const [formMessage, setFormMessage] = useState("");
   const [formTimes, setFormTimes] = useState<string[]>([]);
   const [formActive, setFormActive] = useState(true);
+  const [formMessagesPerDay, setFormMessagesPerDay] = useState(1);
   const [formTimeInput, setFormTimeInput] = useState("12:00");
   const [saving, setSaving] = useState(false);
 
@@ -120,6 +122,7 @@ export function DisparoGrupoTab() {
     setFormMessage("");
     setFormTimes([]);
     setFormActive(true);
+    setFormMessagesPerDay(1);
     setFormTimeInput("12:00");
     setDialogOpen(true);
   }
@@ -135,6 +138,7 @@ export function DisparoGrupoTab() {
         .sort()
     );
     setFormActive(config.is_active);
+    setFormMessagesPerDay(config.messages_per_day ?? 1);
     setFormTimeInput("12:00");
     setDialogOpen(true);
   }
@@ -171,6 +175,7 @@ export function DisparoGrupoTab() {
       group_jid: formGroupJid.trim(),
       message_content: formMessage.trim(),
       schedule_times: formTimes.map((t) => `${t}:00`),
+      messages_per_day: formMessagesPerDay,
       is_active: formActive,
       updated_at: new Date().toISOString(),
     };
@@ -223,7 +228,7 @@ export function DisparoGrupoTab() {
         body: { action: "prepare", force: true, config_id: config.id },
       });
       if (error) throw error;
-      toast.success("✅ Mensagem agendada para 30 segundos!");
+      toast.success(`✅ ${(config as any).messages_per_day ?? 1} mensagem(ns) agendada(s)!`);
       setTimeout(() => fetchLogs(), 2000);
     } catch (err: any) {
       toast.error("Erro: " + err.message);
@@ -310,6 +315,11 @@ export function DisparoGrupoTab() {
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-3">
+                  {/* Messages per day + times */}
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    📨 {(config as any).messages_per_day ?? 1}x por dia | Próximo: {times[nextIndex] || "—"} (índice {nextIndex + 1}/{times.length})
+                  </p>
+
                   {/* Times queue */}
                   <div>
                     <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
@@ -331,10 +341,6 @@ export function DisparoGrupoTab() {
                         </Badge>
                       ))}
                     </div>
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      Próximo: {times[nextIndex] || "—"} (índice{" "}
-                      {nextIndex + 1}/{times.length})
-                    </p>
                   </div>
 
                   {/* Last send */}
@@ -524,6 +530,21 @@ export function DisparoGrupoTab() {
               />
               <p className="text-[10px] text-muted-foreground">
                 Suporta *negrito*, _itálico_, emojis
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Mensagens por dia *</Label>
+              <Input
+                type="number"
+                min={1}
+                max={10}
+                value={formMessagesPerDay}
+                onChange={(e) => setFormMessagesPerDay(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
+                className="w-[100px]"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Quantas vezes por dia enviar esta mensagem. Os horários serão usados em sequência.
               </p>
             </div>
 
