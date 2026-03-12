@@ -103,6 +103,7 @@ serve(async (req) => {
       .from("guide_personas")
       .select("id, perfil_id, perfis!inner(nome)")
       .eq("ativo", true)
+      .eq("can_create_posts", true)
       .limit(1)
       .single();
 
