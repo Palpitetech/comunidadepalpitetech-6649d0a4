@@ -10,6 +10,8 @@ interface Slot {
   id: string;
   schedule_times: string[];
   last_scheduled_index: number;
+  message_type?: "ai" | "manual";
+  message_content?: string;
 }
 
 Deno.serve(async (req) => {
