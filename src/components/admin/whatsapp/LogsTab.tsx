@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, ScrollText, Filter, X, Send } from "lucide-react";
+import { Loader2, ScrollText, Filter, X } from "lucide-react";
 import { toast } from "sonner";
 import { format, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
