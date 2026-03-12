@@ -1,35 +1,50 @@
 
 
-# Diagnóstico: Bots Não Comentam nos Posts de Resultado
+## Plano: Otimizar tela Usuários com campos copiáveis e reset de senha via WhatsApp
 
-## Causa Raiz
+### O que muda
 
-A função `sync-lotofacil` cria o post da Ana com sucesso, mas **nunca chama** a Edge Function `bot-interact-with-post` depois de criar o post. Isso significa que nenhum bot é notificado para comentar.
+**1. Campos copiáveis no UserDataTab (Email e Celular)**
 
-Confirmações nos dados:
-- Todos os posts recentes de bots têm `bot_interactions_target: null` e `bot_interactions_done: 0` — nenhuma interação foi sequer tentada
-- A busca por `bot-interact-with-post` dentro de `sync-lotofacil` retorna zero resultados
-- Os bots Lucas, Matheus, Sistema Tech, Carlos, Fernanda e Especialista Dupla Sena **têm** `can_respond_to_bot_posts: true`, então estariam elegíveis
+Adicionar o padrão `CopyableField` do AdminVendas nos campos Email, WhatsApp e Celular. Ao lado de cada campo de leitura, um botao de copiar com ícone `Copy` que aparece no hover, copiando o valor para a clipboard com toast de confirmação.
 
-O mesmo problema acontece com `generate-bot-post` e `process-scheduled-posts` — nenhum deles chama `bot-interact-with-post` após criar um post.
+- Email: campo editável mantém, mas adicionar botão de cópia ao lado
+- WhatsApp: idem
+- Celular (somente leitura): adicionar botão de cópia ao lado
 
-## Plano de Correção
+**2. Botão "Gerar Nova Senha" no UserDataTab**
 
-### 1. `sync-lotofacil/index.ts` — Chamar `bot-interact-with-post` após Ana criar post
+Substituir o botão atual "Enviar Email de Redefinição de Senha" (que usa `resetPasswordForEmail`) por um botão "Gerar Nova Senha (123456)" que:
 
-Após a linha 206 (onde loga sucesso), adicionar uma chamada para a Edge Function `bot-interact-with-post` passando o `post_id` do post recém-criado. Incluir um delay de 30-60 segundos para que os comentários pareçam naturais.
+1. Chama a Edge Function `recuperar-senha` passando o email do usuário como `identificador`
+2. A função já redefine a senha para `123456` e envia email automaticamente via Resend
+3. Após sucesso, envia mensagem WhatsApp automática via `evolution-proxy` para o celular/whatsapp do usuário com o texto:
 
-### 2. `generate-bot-post/index.ts` — Chamar `bot-interact-with-post` após qualquer bot criar post
+```
+Olá [NOME], tudo bem? Estou passando para confirmar que deu tudo certo com sua nova senha. Faça seu login com as credenciais abaixo:
 
-Mesma lógica: após criar o post com sucesso, invocar `bot-interact-with-post` com o novo `post_id`.
+[EMAIL]
+Senha: 123456
 
-### 3. `process-scheduled-posts` — Verificar se já dispara interações
+https://comunidadepalpitetech.lovable.app/login
 
-Preciso verificar se essa função também deveria disparar interações. Como ela chama `generate-bot-post`, a correção no item 2 pode ser suficiente.
+Recomendo que troque sua senha assim que acessar o sistema.
+```
 
-| Arquivo | Mudança |
-|---|---|
-| `supabase/functions/sync-lotofacil/index.ts` | Após criar post da Ana, chamar `bot-interact-with-post` com delay |
-| `supabase/functions/generate-bot-post/index.ts` | Após criar post de qualquer bot, chamar `bot-interact-with-post` |
-| `supabase/functions/generate-roundtable-post/index.ts` | Verificar se já dispara (provavelmente já gera comentários internamente — não precisará de mudança) |
+**3. Lógica do envio WhatsApp**
+
+- Buscar uma instância online do `whatsapp_instances`
+- Formatar o número do destinatário (celular ou whatsapp do perfil)
+- Chamar `evolution-proxy` com action `sendText` incluindo o número formatado com `@s.whatsapp.net`
+- Se não houver instância online ou número, enviar apenas o email (já feito pela edge function) e informar no toast
+
+### Arquivos alterados
+
+- `src/components/admin/UserDataTab.tsx` — Adicionar `CopyableField`, trocar botão de reset, adicionar lógica de envio WhatsApp pós-reset
+
+### O que NÃO muda
+
+- Edge Function `recuperar-senha` (já faz tudo: reset para 123456 + email)
+- Demais tabs do UserDetailSheet
+- AdminUsuarios.tsx
 
