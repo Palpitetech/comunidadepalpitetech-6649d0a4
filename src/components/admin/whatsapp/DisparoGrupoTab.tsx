@@ -175,6 +175,7 @@ export function DisparoGrupoTab() {
       group_jid: formGroupJid.trim(),
       message_content: formMessage.trim(),
       schedule_times: formTimes.map((t) => `${t}:00`),
+      messages_per_day: formMessagesPerDay,
       is_active: formActive,
       updated_at: new Date().toISOString(),
     };
