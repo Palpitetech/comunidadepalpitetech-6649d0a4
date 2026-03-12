@@ -114,7 +114,7 @@ export function UserDetailSheet({
           </TabsList>
 
           <TabsContent value="dados" className="mt-4">
-            <UserDataTab user={user} onUserUpdated={onUserUpdated} />
+            <UserDataTab key={user.id} user={user} onUserUpdated={onUserUpdated} />
           </TabsContent>
 
           <TabsContent value="plano" className="mt-4">
