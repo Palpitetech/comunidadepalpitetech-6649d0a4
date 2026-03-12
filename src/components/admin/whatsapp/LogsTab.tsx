@@ -133,16 +133,6 @@ export function LogsTab() {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 text-xs"
-            onClick={handleTestDailySend}
-            disabled={testingSend}
-          >
-            {testingSend ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-            {isMobile ? "Testar" : "Testar Envio Diário"}
-          </Button>
-          <Button
             variant={hasActiveFilters ? "default" : "outline"}
             size="sm"
             className="gap-1.5 text-xs"
