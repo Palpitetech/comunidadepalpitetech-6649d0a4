@@ -193,7 +193,7 @@ serve(async (req) => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              from: Deno.env.get("RESEND_FROM_EMAIL") ?? "noreply@seudominio.com",
+              from: Deno.env.get("RESEND_FROM_EMAIL") ?? "Comunidade Palpite Tech <solicitacao@palpitetech.com.br>",
               to: email.trim().toLowerCase(),
               subject: "Ative sua conta e crie sua senha",
               html: `
