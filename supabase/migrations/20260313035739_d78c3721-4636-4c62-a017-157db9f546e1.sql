@@ -1,0 +1,2 @@
+ALTER TABLE public.message_templates ADD COLUMN IF NOT EXISTS delay_enabled boolean NOT NULL DEFAULT false;
+ALTER TABLE public.message_templates ADD COLUMN IF NOT EXISTS delay_minutes integer NOT NULL DEFAULT 0;
