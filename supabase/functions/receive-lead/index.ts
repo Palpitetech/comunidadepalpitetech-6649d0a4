@@ -186,11 +186,82 @@ serve(async (req) => {
       },
     });
 
+    // Send activation magic link via email (only if email exists)
+    let magicLinkStatus = "skipped";
+    if (email) {
+      try {
+        const siteUrl = Deno.env.get("SITE_URL") || "https://comunidadepalpitetech.lovable.app";
+
+        const { data: magicData, error: magicError } = await supabaseAdmin.auth.admin.generateLink({
+          type: "magiclink",
+          email: email.trim().toLowerCase(),
+          options: {
+            redirectTo: `${siteUrl}/ativar-conta`,
+          },
+        });
+
+        if (!magicError && magicData?.properties?.action_link) {
+          const resendRes = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${Deno.env.get("RESEND_API_KEY")}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: Deno.env.get("RESEND_FROM_EMAIL") ?? "noreply@seudominio.com",
+              to: email.trim().toLowerCase(),
+              subject: "Ative sua conta e crie sua senha",
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; background: #ffffff;">
+                  <h1 style="color: hsl(215, 60%, 25%); font-size: 22px; margin-bottom: 8px;">Olá, ${nome?.trim() || "bem-vindo"}!</h1>
+                  <p style="color: hsl(215, 20%, 40%); font-size: 16px; line-height: 1.6;">
+                    Sua conta foi criada. Clique no botão abaixo para ativar e criar sua senha de acesso.
+                  </p>
+                  <div style="text-align: center; margin: 32px 0;">
+                    <a href="${magicData.properties.action_link}" style="display: inline-block; background: hsl(215, 60%, 25%); color: #ffffff; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-size: 16px; font-weight: 600;">
+                      Ativar minha conta
+                    </a>
+                  </div>
+                  <p style="color: hsl(215, 20%, 60%); font-size: 13px; text-align: center;">
+                    Este link expira em 24 horas.<br/>
+                    Se não solicitou, ignore este email.
+                  </p>
+                </div>
+              `,
+            }),
+          });
+
+          magicLinkStatus = resendRes.ok ? "success" : "error";
+          await resendRes.text();
+        } else {
+          magicLinkStatus = "error";
+        }
+
+        // Log activation email event
+        await supabaseAdmin.from("system_events").insert({
+          event_type: "lead_ativacao_email_enviado",
+          description: `Email de ativação enviado para ${email}`,
+          source: source || "webhook",
+          status: magicLinkStatus,
+          metadata: {
+            user_id: userId,
+            email,
+            is_new: isNew,
+            error: magicLinkStatus === "error" ? "Falha ao enviar magic link" : null,
+          },
+        });
+      } catch (e) {
+        console.error("Magic link error:", e);
+        magicLinkStatus = "error";
+      }
+    }
+
     return json({
       success: true,
       user_id: userId,
       is_new: isNew,
       tags: mergedTags,
+      activation_email: magicLinkStatus,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Erro interno";
