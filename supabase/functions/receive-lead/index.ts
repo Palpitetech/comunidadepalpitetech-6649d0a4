@@ -167,24 +167,6 @@ serve(async (req) => {
     // Atomic increment of webhook counter
     await supabaseAdmin.rpc("increment_lead_webhook_count" as any, { webhook_id: webhook.id });
 
-    // Log event in system_events
-    await supabaseAdmin.from("system_events").insert({
-      event_type: "lead_externo",
-      description: `Lead capturado: ${nome || email || celular} via ${source || webhook.name}`,
-      source: source || "webhook",
-      status: "success",
-      metadata: {
-        user_id: userId,
-        email: email || null,
-        celular: celular || null,
-        tags: mergedTags,
-        source: source || null,
-        ip,
-        is_new: isNew,
-        webhook_id: webhook.id,
-        webhook_name: webhook.name,
-      },
-    });
 
     // Send activation magic link via email (only if email exists)
     let magicLinkStatus = "skipped";
