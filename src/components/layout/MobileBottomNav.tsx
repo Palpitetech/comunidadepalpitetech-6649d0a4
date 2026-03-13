@@ -1,4 +1,4 @@
-import { Users, Ticket, Menu, MessageCircle } from "lucide-react";
+import { Users, Ticket, Menu, MessageCircle, MessageSquare } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
