@@ -75,7 +75,7 @@ serve(async (req) => {
       },
     });
 
-    if (magicError || !magicData?.properties?.action_link) {
+    if (magicError || !magicData?.properties?.hashed_token) {
       await supabaseAdmin.from("system_events").insert({
         event_type: "lead_ativacao_email_enviado",
         description: `Erro ao gerar magic link para ${perfil.email}`,
@@ -90,9 +90,8 @@ serve(async (req) => {
       });
     }
 
-    // Extract token and build direct link
-    const actionUrl = new URL(magicData.properties.action_link);
-    const token_hash = actionUrl.searchParams.get("token") || actionUrl.hash?.match(/token=([^&]+)/)?.[1] || "";
+    // Use hashed_token directly from generateLink response
+    const token_hash = magicData.properties.hashed_token;
     const directLink = `${siteUrl}/ativar-conta?token_hash=${encodeURIComponent(token_hash)}&type=magiclink`;
 
     // Send email via Resend

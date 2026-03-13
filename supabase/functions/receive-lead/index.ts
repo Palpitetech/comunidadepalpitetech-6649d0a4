@@ -182,10 +182,8 @@ serve(async (req) => {
           },
         });
 
-        if (!magicError && magicData?.properties?.action_link) {
-          // Extract token from Supabase action_link and build direct site link
-          const actionUrl = new URL(magicData.properties.action_link);
-          const token_hash = actionUrl.searchParams.get("token") || actionUrl.hash?.match(/token=([^&]+)/)?.[1] || "";
+        if (!magicError && magicData?.properties?.hashed_token) {
+          const token_hash = magicData.properties.hashed_token;
           const directLink = `${siteUrl}/ativar-conta?token_hash=${encodeURIComponent(token_hash)}&type=magiclink`;
 
           const resendRes = await fetch("https://api.resend.com/emails", {
