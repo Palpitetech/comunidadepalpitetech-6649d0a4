@@ -90,6 +90,8 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/recuperar-senha" element={<RecuperarSenha />} />
+            <Route path="/ativar-conta" element={<AtivarConta />} />
+            <Route path="/verificar-email" element={<VerificarEmail />} />
             <Route path="/termos" element={<Termos />} />
             <Route path="/privacidade" element={<Privacidade />} />
 
