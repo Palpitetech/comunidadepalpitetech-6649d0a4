@@ -455,14 +455,6 @@ export function DesktopHeader() {
                 </Button>
               </Link>
 
-              {/* Criar Post */}
-              <Link to="/criar-post">
-                <Button className="h-10 gap-1.5 px-3 bg-accent hover:bg-accent/90 text-accent-foreground text-sm">
-                  <PlusCircle className="h-4 w-4" />
-                  <span className="hidden md:inline">Criar Post</span>
-                </Button>
-              </Link>
-
               {/* Notificações */}
               <Link to="/notificacoes">
                 <Button variant="ghost" size="icon" className="h-10 w-10">
