@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import type { ExtendedProfile, Plan } from "@/types/plans";
 
+const LOGIN_URL = "https://palpitetech.com.br/login";
+
 interface UserWithPlan extends ExtendedProfile {
   plan?: Plan | null;
 }
@@ -79,23 +81,32 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from("perfis")
-        .update({
+      const emailChanged = email.trim().toLowerCase() !== (user.email || "").toLowerCase();
+
+      const { data, error } = await supabase.functions.invoke("admin-update-user", {
+        body: {
+          user_id: user.id,
           nome: nome.trim() || null,
           email: email.trim() || null,
           whatsapp: whatsapp.trim() || null,
           is_blocked: isBlocked,
           admin_notes: adminNotes.trim() || null,
-        })
-        .eq("id", user.id);
+        },
+      });
 
-      if (error) throw error;
-      toast.success("Dados atualizados");
+      if (error) throw new Error(error.message);
+      if (!data?.sucesso) throw new Error(data?.error || "Erro ao salvar dados");
+
+      toast.success(
+        emailChanged
+          ? "Dados atualizados — email atualizado no login também"
+          : "Dados atualizados"
+      );
       onUserUpdated();
-    } catch (error: any) {
-      console.error("Erro ao salvar:", error);
-      toast.error(error.message || "Erro ao salvar dados");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro ao salvar dados";
+      console.error("Erro ao salvar:", err);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -132,8 +143,21 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
             const numero = telefone.replace(/\D/g, "");
             const numeroBR = numero.startsWith("55") ? numero : `55${numero}`;
             const nomeUsuario = user.nome || "Usuário";
+            const loginEmail = user.email || identificador;
 
-            const mensagem = `Olá ${nomeUsuario}, tudo bem? Estou passando para confirmar que deu tudo certo com sua nova senha. Faça seu login com as credenciais abaixo:\n\n${user.email || identificador}\nSenha: 123456\n\nhttps://comunidadepalpitetech.lovable.app/login\n\nRecomendo que troque sua senha assim que acessar o sistema.`;
+            const mensagem = [
+              `Olá ${nomeUsuario}! 👋`,
+              ``,
+              `Sua senha foi redefinida com sucesso. Acesse com as credenciais abaixo:`,
+              ``,
+              `📧 Email: ${loginEmail}`,
+              `🔑 Senha: 123456`,
+              ``,
+              `🔗 Link de acesso:`,
+              LOGIN_URL,
+              ``,
+              `⚠️ Recomendamos que você troque sua senha após o primeiro acesso.`,
+            ].join("\n");
 
             await supabase.functions.invoke("evolution-proxy", {
               body: {
@@ -183,7 +207,7 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
 
           <div className="space-y-1.5">
             <Label htmlFor="email" className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <Mail className="h-3 w-3" /> Email
+              <Mail className="h-3 w-3" /> Email (também atualiza o login)
             </Label>
             <Input
               id="email"
@@ -242,10 +266,9 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
           <KeyRound className="h-4 w-4" /> Senha
         </h3>
         <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Senha padrão</span>
-            <CopyableField label="Senha" value="123456" />
-          </div>
+          <p className="text-xs text-muted-foreground">
+            Redefine para 123456 e envia notificação por email e WhatsApp com o link de acesso.
+          </p>
           <Button
             variant="outline"
             onClick={handleResetPassword}
@@ -260,9 +283,6 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
             )}
             Gerar Nova Senha (123456)
           </Button>
-          <p className="text-[11px] text-muted-foreground text-center">
-            Redefine a senha para 123456, envia email e WhatsApp automaticamente
-          </p>
         </div>
       </div>
 
