@@ -101,7 +101,7 @@ serve(async (req) => {
         from: Deno.env.get("RESEND_FROM_EMAIL") ?? "noreply@seudominio.com",
         to: perfil.email,
         subject: "Ative sua conta e crie sua senha",
-        html: buildActivationEmail(perfil.email.split("@")[0], magicData.properties.action_link),
+        html: buildActivationEmail(perfil.nome || perfil.email.split("@")[0], magicData.properties.action_link),
       }),
     });
 
