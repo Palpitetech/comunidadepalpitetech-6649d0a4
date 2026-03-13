@@ -31,19 +31,19 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-[100] bg-card border-t border-border safe-area-bottom" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-      <div className="flex items-center justify-around h-16">
+      <div className="flex items-center justify-around h-14">
         {/* Comunidade */}
         <Link
           to="/comunidade"
           className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors",
+            "flex flex-col items-center justify-center flex-1 h-full py-1.5 transition-colors",
             isActive("/comunidade") || isActive("/")
               ? "text-primary"
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          <Users className="h-6 w-6" />
-          <span className="text-xs mt-1 font-medium">Comunidade</span>
+          <Users className="h-5 w-5" />
+          <span className="text-[10px] mt-0.5 font-medium leading-tight">Comunidade</span>
         </Link>
 
         {/* WhatsApp */}
@@ -51,24 +51,24 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
           href="https://chat.whatsapp.com/J89dx46Lo97G9YdAaGmR78"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors text-muted-foreground hover:text-accent"
+          className="flex flex-col items-center justify-center flex-1 h-full py-1.5 transition-colors text-muted-foreground hover:text-accent"
         >
-          <MessageSquare className="h-6 w-6" />
-          <span className="text-xs mt-1 font-medium">WhatsApp</span>
+          <MessageSquare className="h-5 w-5" />
+          <span className="text-[10px] mt-0.5 font-medium leading-tight">WhatsApp</span>
         </a>
 
         {/* Chat */}
         <Link
           to="/chat"
           className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors relative",
+            "flex flex-col items-center justify-center flex-1 h-full py-1.5 transition-colors",
             isActive("/chat")
               ? "text-primary"
               : "text-muted-foreground hover:text-primary/70"
           )}
         >
-          <MessageCircle className="h-6 w-6" />
-          <span className="text-xs mt-1 font-medium">Chat</span>
+          <MessageCircle className="h-5 w-5" />
+          <span className="text-[10px] mt-0.5 font-medium leading-tight">Chat</span>
         </Link>
 
         {/* Bolões - Em Breve */}
@@ -76,36 +76,36 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
           to={isAdmin ? "/boloes" : "#"}
           onClick={(e) => handleComingSoonClick(e, "Bolões")}
           className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors relative",
+            "flex flex-col items-center justify-center flex-1 h-full py-1.5 transition-colors relative",
             isActive("/boloes")
               ? "text-primary"
               : "text-muted-foreground/50 hover:text-muted-foreground"
           )}
         >
           <div className="relative">
-            <Ticket className="h-6 w-6" />
+            <Ticket className="h-5 w-5" />
             {comingSoonBadge}
           </div>
-          <span className="text-xs mt-1 font-medium">Bolões</span>
+          <span className="text-[10px] mt-0.5 font-medium leading-tight">Bolões</span>
         </Link>
 
         {/* Menu */}
         <button
           onClick={onMenuClick}
           className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors",
+            "flex flex-col items-center justify-center flex-1 h-full py-1.5 transition-colors",
             isAdminRoute 
               ? "text-destructive" 
               : "text-muted-foreground hover:text-foreground"
           )}
         >
           <div className="relative">
-            <Menu className="h-6 w-6" />
+            <Menu className="h-5 w-5" />
             {isAdminRoute && (
-              <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-destructive border-2 border-card" />
+              <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-destructive border-2 border-card" />
             )}
           </div>
-          <span className="text-xs mt-1 font-medium">Menu</span>
+          <span className="text-[10px] mt-0.5 font-medium leading-tight">Menu</span>
         </button>
       </div>
     </nav>
