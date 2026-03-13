@@ -341,6 +341,43 @@ export function TemplatesTab() {
                   </PopoverContent>
                 </Popover>
               </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Delay de envio</Label>
+                  <Switch
+                    checked={form.delay_enabled}
+                    onCheckedChange={(checked) => {
+                      setForm((f) => ({
+                        ...f,
+                        delay_enabled: checked,
+                        delay_minutes: checked && f.delay_minutes === 0 ? 5 : f.delay_minutes,
+                      }));
+                    }}
+                  />
+                </div>
+                {form.delay_enabled && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-muted-foreground">Enviar após:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {DELAY_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setForm((f) => ({ ...f, delay_minutes: opt.value }))}
+                          className={cn(
+                            "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+                            form.delay_minutes === opt.value
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-muted text-muted-foreground border-border hover:bg-muted/80"
+                          )}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               <div className="space-y-1.5">
                 <Label htmlFor="tpl-content">Conteúdo da mensagem *</Label>
                 <Textarea
