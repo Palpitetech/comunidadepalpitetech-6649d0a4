@@ -2336,6 +2336,10 @@ export type Database = {
         Returns: boolean
       }
       identificar_conta: { Args: { p_identificador: string }; Returns: Json }
+      increment_lead_webhook_count: {
+        Args: { webhook_id: string }
+        Returns: undefined
+      }
       process_pending_bot_replies: { Args: never; Returns: undefined }
     }
     Enums: {
