@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Loader2, Plus, Pencil, Trash2, FileText, ChevronsUpDown, Check } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, FileText, ChevronsUpDown, Check, Send, Pause, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MessageTemplate {
@@ -18,6 +18,7 @@ interface MessageTemplate {
   content: string;
   event_trigger: string;
   created_at: string;
+  is_active?: boolean;
 }
 
 interface FormData {
@@ -29,7 +30,6 @@ interface FormData {
 const emptyForm: FormData = { name: "", content: "", event_trigger: "manual" };
 
 const EVENT_MASKS: Record<string, string> = {
-  // Events table
   novo_cadastro: "Novo Cadastro",
   compra_aprovada: "Compra Aprovada",
   pix_gerado: "PIX Gerado",
@@ -40,7 +40,6 @@ const EVENT_MASKS: Record<string, string> = {
   assinatura_inadimplente: "Inadimplente",
   checkout_abandonado: "Checkout Abandonado",
   carrinho_abandonado: "Carrinho Abandonado",
-  // Kirvano events
   SALE_APPROVED: "Venda Aprovada",
   SALE_REFUSED: "Venda Recusada",
   SALE_CHARGEBACK: "Chargeback",
@@ -58,7 +57,6 @@ const EVENT_MASKS: Record<string, string> = {
   CHECKOUT_ABANDONED: "Checkout Abandonado",
   ABANDONED_CART: "Carrinho Abandonado",
   SUBSCRIPTION_EXPIRED: "Assinatura Expirada",
-  // Special
   manual: "Manual",
   lead_created: "Lead Cadastrado",
   sale_confirmed: "Venda Confirmada",
@@ -69,6 +67,7 @@ function getEventLabel(eventType: string): string {
 }
 
 const VARIABLES = ["{{nome}}", "{{telefone}}", "{{email}}", "{{produto}}"];
+const TEST_PHONE = "5516997175392";
 
 export function TemplatesTab() {
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
@@ -79,6 +78,8 @@ export function TemplatesTab() {
   const [form, setForm] = useState<FormData>(emptyForm);
   const [triggerOpen, setTriggerOpen] = useState(false);
   const [eventTypes, setEventTypes] = useState<string[]>([]);
+  const [testingId, setTestingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const fetchTemplates = useCallback(async () => {
@@ -98,24 +99,15 @@ export function TemplatesTab() {
   }, []);
 
   const fetchEventTypes = useCallback(async () => {
-    // Fetch from events table and kirvano_webhook_logs in parallel
     const [eventsResult, kirvanoResult] = await Promise.all([
       supabase.from("events").select("event_type"),
       supabase.from("kirvano_webhook_logs").select("event"),
     ]);
 
     const allTypes = new Set<string>();
-
-    eventsResult.data?.forEach((d: any) => {
-      if (d.event_type) allTypes.add(d.event_type);
-    });
-    kirvanoResult.data?.forEach((d: any) => {
-      if (d.event) allTypes.add(d.event);
-    });
-
-    // Ensure "manual" is always present
+    eventsResult.data?.forEach((d: any) => { if (d.event_type) allTypes.add(d.event_type); });
+    kirvanoResult.data?.forEach((d: any) => { if (d.event) allTypes.add(d.event); });
     allTypes.add("manual");
-
     setEventTypes([...allTypes].sort());
   }, []);
 
@@ -148,7 +140,6 @@ export function TemplatesTab() {
     const after = form.content.slice(end);
     const newContent = before + variable + after;
     setForm((f) => ({ ...f, content: newContent }));
-    // Restore cursor after variable
     requestAnimationFrame(() => {
       ta.focus();
       const pos = start + variable.length;
@@ -195,6 +186,54 @@ export function TemplatesTab() {
     } else {
       toast.success("Template excluído");
       fetchTemplates();
+    }
+  };
+
+  const handleToggleActive = async (tpl: MessageTemplate) => {
+    const newStatus = !(tpl.is_active ?? true);
+    setTogglingId(tpl.id);
+    try {
+      const { error } = await supabase
+        .from("message_templates" as any)
+        .update({ is_active: newStatus })
+        .eq("id", tpl.id);
+      if (error) throw error;
+      toast.success(newStatus ? "Template ativado" : "Template pausado");
+      fetchTemplates();
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao alterar status");
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const handleTestSend = async (tpl: MessageTemplate) => {
+    setTestingId(tpl.id);
+    try {
+      // Replace variables with test values
+      const testContent = tpl.content
+        .replace(/\{\{nome\}\}/g, "Teste")
+        .replace(/\{\{telefone\}\}/g, TEST_PHONE)
+        .replace(/\{\{email\}\}/g, "teste@teste.com")
+        .replace(/\{\{produto\}\}/g, "Produto Teste");
+
+      const { error } = await supabase.from("message_queue" as any).insert({
+        recipient_phone: TEST_PHONE,
+        recipient_name: "Teste",
+        template_id: tpl.id,
+        variables: { nome: "Teste", telefone: TEST_PHONE, email: "teste@teste.com", produto: "Produto Teste" },
+        scheduled_at: new Date().toISOString(),
+        status: "pending",
+      });
+
+      if (error) throw error;
+      toast.success(`Mensagem de teste enfileirada para ${TEST_PHONE}`);
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Erro ao enviar teste");
+    } finally {
+      setTestingId(null);
     }
   };
 
@@ -316,24 +355,78 @@ export function TemplatesTab() {
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {templates.map((tpl) => (
-            <div key={tpl.id} className="rounded-xl border border-border bg-card p-4 space-y-3">
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="text-sm font-semibold truncate">{tpl.name}</h3>
-                {triggerBadge(tpl.event_trigger)}
+          {templates.map((tpl) => {
+            const isActive = tpl.is_active ?? true;
+            return (
+              <div
+                key={tpl.id}
+                className={cn(
+                  "rounded-xl border border-border bg-card p-4 space-y-3 transition-opacity",
+                  !isActive && "opacity-60"
+                )}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="text-sm font-semibold truncate">{tpl.name}</h3>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {!isActive && (
+                      <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-300">
+                        Pausado
+                      </Badge>
+                    )}
+                    {triggerBadge(tpl.event_trigger)}
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground line-clamp-2">{tpl.content}</p>
+                <div className="flex gap-2 pt-1">
+                  <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs" onClick={() => openEdit(tpl)}>
+                    <Pencil className="h-3.5 w-3.5" />
+                    Editar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                    onClick={() => handleTestSend(tpl)}
+                    disabled={testingId === tpl.id}
+                    title="Enviar teste"
+                  >
+                    {testingId === tpl.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Send className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "gap-1.5 text-xs",
+                      isActive ? "text-amber-600 hover:text-amber-700" : "text-emerald-600 hover:text-emerald-700"
+                    )}
+                    onClick={() => handleToggleActive(tpl)}
+                    disabled={togglingId === tpl.id}
+                    title={isActive ? "Pausar" : "Ativar"}
+                  >
+                    {togglingId === tpl.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : isActive ? (
+                      <Pause className="h-3.5 w-3.5" />
+                    ) : (
+                      <Play className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs text-destructive hover:text-destructive"
+                    onClick={() => handleDelete(tpl.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground line-clamp-2">{tpl.content}</p>
-              <div className="flex gap-2 pt-1">
-                <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs" onClick={() => openEdit(tpl)}>
-                  <Pencil className="h-3.5 w-3.5" />
-                  Editar
-                </Button>
-                <Button variant="outline" size="sm" className="gap-1.5 text-xs text-destructive hover:text-destructive" onClick={() => handleDelete(tpl.id)}>
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
