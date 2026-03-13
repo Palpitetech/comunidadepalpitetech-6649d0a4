@@ -20,15 +20,32 @@ interface MessageTemplate {
   event_trigger: string;
   created_at: string;
   is_active?: boolean;
+  delay_enabled?: boolean;
+  delay_minutes?: number;
 }
 
 interface FormData {
   name: string;
   content: string;
   event_trigger: string;
+  delay_enabled: boolean;
+  delay_minutes: number;
 }
 
-const emptyForm: FormData = { name: "", content: "", event_trigger: "manual" };
+const emptyForm: FormData = { name: "", content: "", event_trigger: "manual", delay_enabled: false, delay_minutes: 0 };
+
+const DELAY_OPTIONS = [
+  { value: 2, label: "2 min" },
+  { value: 5, label: "5 min" },
+  { value: 10, label: "10 min" },
+  { value: 15, label: "15 min" },
+  { value: 1440, label: "24h" },
+];
+
+function formatDelay(minutes: number): string {
+  if (minutes === 1440) return "24h";
+  return `${minutes} min`;
+}
 
 const EVENT_MASKS: Record<string, string> = {
   novo_cadastro: "Novo Cadastro",
