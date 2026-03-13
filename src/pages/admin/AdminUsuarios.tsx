@@ -431,6 +431,11 @@ export default function AdminUsuarios() {
             </div>
           </div>
         )}
+
+        {/* Lead Webhook */}
+        <div className="border-t border-border px-6 py-4">
+          <LeadWebhookCard />
+        </div>
       </div>
 
       <UserDetailSheet
