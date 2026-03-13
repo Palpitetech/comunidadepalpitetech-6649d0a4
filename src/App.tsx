@@ -49,6 +49,8 @@ import NotFound from "./pages/NotFound";
 import Termos from "./pages/Termos";
 import Privacidade from "./pages/Privacidade";
 import Home from "./pages/Home";
+import AtivarConta from "./pages/AtivarConta";
+import VerificarEmail from "./pages/VerificarEmail";
 import ResultadosMegaSena from "./pages/megasena/ResultadosMegaSena";
 import TendenciasMegaSena from "./pages/megasena/TendenciasMegaSena";
 import FrequenciaMegaSena from "./pages/megasena/FrequenciaMegaSena";
@@ -90,6 +92,8 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/recuperar-senha" element={<RecuperarSenha />} />
+            <Route path="/ativar-conta" element={<AtivarConta />} />
+            <Route path="/verificar-email" element={<VerificarEmail />} />
             <Route path="/termos" element={<Termos />} />
             <Route path="/privacidade" element={<Privacidade />} />
 

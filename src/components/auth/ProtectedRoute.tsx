@@ -6,7 +6,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, loading } = useAuthContext();
+  const { isAuthenticated, loading, profile } = useAuthContext();
   const location = useLocation();
 
   // Enquanto carrega, mostra um loading simples
@@ -25,6 +25,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (!isAuthenticated) {
     const isHome = location.pathname === "/home" || location.pathname === "/comunidade";
     return <Navigate to={isHome ? "/" : "/login"} state={{ from: location }} replace />;
+  }
+
+  // Se email não verificado, redirecionar para verificação
+  if (profile && profile.email_verificado === false) {
+    return <Navigate to="/verificar-email" replace />;
   }
 
   return <>{children}</>;

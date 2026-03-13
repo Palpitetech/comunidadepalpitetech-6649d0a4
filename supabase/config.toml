@@ -80,3 +80,6 @@ verify_jwt = false
 
 [functions.receive-lead]
 verify_jwt = false
+
+[functions.reenviar-ativacao]
+verify_jwt = false
