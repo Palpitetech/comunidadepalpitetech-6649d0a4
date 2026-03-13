@@ -21,7 +21,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sparkles, Target, Table2, Flame, Gift } from "lucide-react";
+import { Sparkles, Target, Table2, Flame, Gift, Plug } from "lucide-react";
 import {
   ArrowLeft,
   Home,
@@ -538,6 +538,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                   <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
                     <BarChart3 className="h-5 w-5 stroke-[1.5]" />
                     Eventos
+                  </div>
+                </Link>
+                <Link to="/admin/integracoes" onClick={closeAndNavigate}>
+                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
+                    <Plug className="h-5 w-5 stroke-[1.5]" />
+                    Integrações
                   </div>
                 </Link>
               </nav>
