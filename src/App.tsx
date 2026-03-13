@@ -40,6 +40,7 @@ import AdminConvites from "./pages/admin/AdminConvites";
 import AdminVendas from "./pages/admin/AdminVendas";
 import AdminEventos from "./pages/admin/AdminEventos";
 import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
+import Integracoes from "./pages/admin/Integracoes";
 import AnaliseDoDia from "./pages/AnaliseDoDia";
 import TabelaMovimentacao from "./pages/TabelaMovimentacao";
 import FrequenciaDezenas from "./pages/FrequenciaDezenas";
@@ -153,6 +154,7 @@ const App = () => (
             <Route path="/admin/vendas" element={<AdminRoute><AdminVendas /></AdminRoute>} />
             <Route path="/admin/eventos" element={<AdminRoute><AdminEventos /></AdminRoute>} />
             <Route path="/admin/whatsapp" element={<AdminRoute><AdminWhatsApp /></AdminRoute>} />
+            <Route path="/admin/integracoes" element={<AdminRoute><Integracoes /></AdminRoute>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
