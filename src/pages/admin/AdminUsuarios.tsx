@@ -272,10 +272,6 @@ export default function AdminUsuarios() {
             </div>
           </div>
         )}
-        {/* Lead Webhook */}
-        <div className="px-1 pt-2">
-          <LeadWebhookCard />
-        </div>
       </div>
 
       {/* ======= DESKTOP — fullscreen minimal ======= */}
