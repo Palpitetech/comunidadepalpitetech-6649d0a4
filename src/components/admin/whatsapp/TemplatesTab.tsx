@@ -436,6 +436,12 @@ export function TemplatesTab() {
                         Pausado
                       </Badge>
                     )}
+                    {tpl.delay_enabled && tpl.delay_minutes && tpl.delay_minutes > 0 && (
+                      <Badge variant="outline" className="text-[10px] gap-0.5">
+                        <Timer className="h-3 w-3" />
+                        {formatDelay(tpl.delay_minutes)}
+                      </Badge>
+                    )}
                     {triggerBadge(tpl.event_trigger)}
                   </div>
                 </div>
