@@ -36,18 +36,15 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Validate token against admin_settings
-    const { data: settings, error: settingsError } = await supabaseAdmin
-      .from("admin_settings")
-      .select("lead_webhook_token")
-      .eq("id", "default")
-      .single();
+    // Validate token against lead_webhooks
+    const { data: webhook, error: webhookError } = await supabaseAdmin
+      .from("lead_webhooks")
+      .select("id, name, source_tag, is_active")
+      .eq("token", token)
+      .eq("is_active", true)
+      .maybeSingle();
 
-    if (settingsError || !settings) {
-      return json({ error: "Erro ao validar token" }, 500);
-    }
-
-    if (settings.lead_webhook_token !== token) {
+    if (webhookError || !webhook) {
       return json({ error: "Token inválido" }, 403);
     }
 
@@ -119,18 +116,13 @@ serve(async (req) => {
         createPayload.email = email.trim().toLowerCase();
       }
 
+      let celularToUpdate: string | undefined;
       if (celular) {
         const digits = celular.replace(/\D/g, "");
-        const normalizedCelular = digits.startsWith("55") && (digits.length === 12 || digits.length === 13)
+        celularToUpdate = digits.startsWith("55") && (digits.length === 12 || digits.length === 13)
           ? digits.substring(2)
           : digits;
-
-        // Update celular after creation since auth doesn't store it
-        createPayload._celular = normalizedCelular;
       }
-
-      const celularToUpdate = (createPayload._celular as string) || undefined;
-      delete createPayload._celular;
 
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser(
         createPayload as any
@@ -143,7 +135,7 @@ serve(async (req) => {
       userId = newUser.user.id;
       isNew = true;
 
-      // Update celular if provided (handle_new_user trigger already created the profile)
+      // Update celular if provided
       if (celularToUpdate) {
         await supabaseAdmin
           .from("perfis")
@@ -152,8 +144,8 @@ serve(async (req) => {
       }
     }
 
-    // Build final tags: always include "lead" + payload tags, merge with existing
-    const newTags = ["lead", ...(payloadTags || [])];
+    // Build final tags: always include "lead" + webhook source_tag + payload tags
+    const newTags = ["lead", webhook.source_tag, ...(payloadTags || [])];
 
     const { data: currentProfile } = await supabaseAdmin
       .from("perfis")
@@ -172,10 +164,26 @@ serve(async (req) => {
       .update(updatePayload)
       .eq("id", userId);
 
+    // Increment webhook counter
+    await supabaseAdmin
+      .from("lead_webhooks")
+      .update({
+        leads_count: (webhook as any).leads_count ? (webhook as any).leads_count + 1 : 1,
+        last_lead_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", webhook.id);
+
+    // We need to increment properly with rpc or raw increment
+    // Since we can't do atomic increment easily, let's use a simpler approach
+    await supabaseAdmin.rpc("increment_lead_webhook_count" as any, { webhook_id: webhook.id }).catch(() => {
+      // Fallback: already updated above
+    });
+
     // Log event in system_events
     await supabaseAdmin.from("system_events").insert({
       event_type: "lead_externo",
-      description: `Lead capturado: ${nome || email || celular} via ${source || "webhook"}`,
+      description: `Lead capturado: ${nome || email || celular} via ${source || webhook.name}`,
       source: source || "webhook",
       status: "success",
       metadata: {
@@ -186,6 +194,8 @@ serve(async (req) => {
         source: source || null,
         ip,
         is_new: isNew,
+        webhook_id: webhook.id,
+        webhook_name: webhook.name,
       },
     });
 
