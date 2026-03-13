@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
 import { TagFilterPopover } from "@/components/admin/TagFilterPopover";
 import { cn } from "@/lib/utils";
-import { LeadWebhookCard } from "@/components/admin/LeadWebhookCard";
+
 import type { Plan, PlanFeatures, ExtendedProfile } from "@/types/plans";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
