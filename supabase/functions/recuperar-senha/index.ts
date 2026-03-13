@@ -39,22 +39,23 @@ async function enviarEmailSenha(
         to: [to],
         subject: "Sua nova senha - ComunidadePalpiteTech",
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; background: #ffffff;">
             <div style="text-align: center; margin-bottom: 24px;">
-              <p style="color: #16a34a; margin: 0; font-size: 20px; font-weight: bold;">🍀 Comunidade Palpite Tech</p>
+              <p style="color: #1E3A5F; margin: 0; font-size: 22px; font-weight: bold;">🍀 Comunidade Palpite Tech</p>
             </div>
-            <h2 style="color: #333; font-size: 18px;">Recuperação de Senha</h2>
-            <p style="color: #666; font-size: 15px;">Olá, ${nome}!</p>
-            <p style="color: #666; font-size: 15px;">Sua senha foi redefinida com sucesso. Use a senha abaixo para fazer login:</p>
-            <div style="background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); padding: 24px 16px; border-radius: 12px; text-align: center; margin: 24px 0;">
-              <p style="color: rgba(255,255,255,0.9); margin: 0 0 8px 0; font-size: 13px;">Sua nova senha:</p>
-              <p style="color: white; font-size: 32px; letter-spacing: 8px; margin: 0; font-family: monospace; font-weight: bold;">${novaSenha}</p>
+            <h2 style="color: #1E3A5F; font-size: 20px; margin-bottom: 8px;">Recuperação de Senha</h2>
+            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">Olá, ${nome}!</p>
+            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">Sua senha foi redefinida com sucesso. Use a senha abaixo para fazer login:</p>
+            <div style="background-color: #1E3A5F; padding: 28px 16px; border-radius: 12px; text-align: center; margin: 24px 0;">
+              <p style="color: #ffffff; margin: 0 0 12px 0; font-size: 14px;">Sua nova senha:</p>
+              <p style="color: #ffffff; font-size: 36px; letter-spacing: 10px; margin: 0; font-family: monospace; font-weight: bold;">${novaSenha}</p>
             </div>
-            <div style="text-align: center; margin: 24px 0;">
-              <a href="https://comunidadepalpitetech.lovable.app/login" style="display: inline-block; background-color: #16a34a; color: white; text-decoration: none; font-size: 16px; font-weight: bold; padding: 14px 32px; border-radius: 10px;">Fazer Login Direto</a>
+            <div style="text-align: center; margin: 28px 0;">
+              <a href="https://www.palpitetech.com.br/login" style="display: inline-block; background-color: #1E3A5F; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; padding: 14px 32px; border-radius: 12px;">Fazer Login</a>
             </div>
-            <p style="color: #666; font-size: 13px;">⚠️ Recomendamos que você altere sua senha após o login.</p>
-            <p style="color: #999; font-size: 12px;">Se você não solicitou esta recuperação, ignore este email.</p>
+            <p style="color: #4a5568; font-size: 14px;">⚠️ Recomendamos que você altere sua senha após o login.</p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+            <p style="color: #8a94a6; font-size: 13px; text-align: center;">Se você não solicitou esta recuperação, ignore este email.</p>
           </div>
         `,
       }),
