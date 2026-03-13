@@ -164,21 +164,8 @@ serve(async (req) => {
       .update(updatePayload)
       .eq("id", userId);
 
-    // Increment webhook counter
-    await supabaseAdmin
-      .from("lead_webhooks")
-      .update({
-        leads_count: (webhook as any).leads_count ? (webhook as any).leads_count + 1 : 1,
-        last_lead_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", webhook.id);
-
-    // We need to increment properly with rpc or raw increment
-    // Since we can't do atomic increment easily, let's use a simpler approach
-    await supabaseAdmin.rpc("increment_lead_webhook_count" as any, { webhook_id: webhook.id }).catch(() => {
-      // Fallback: already updated above
-    });
+    // Atomic increment of webhook counter
+    await supabaseAdmin.rpc("increment_lead_webhook_count" as any, { webhook_id: webhook.id });
 
     // Log event in system_events
     await supabaseAdmin.from("system_events").insert({
