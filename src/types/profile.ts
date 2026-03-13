@@ -4,4 +4,5 @@ export interface Profile {
   celular: string | null;
   is_bot: boolean;
   avatar_url: string | null;
+  email_verificado: boolean | null;
 }
