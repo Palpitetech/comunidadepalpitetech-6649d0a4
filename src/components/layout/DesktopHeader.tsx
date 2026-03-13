@@ -89,6 +89,12 @@ export function DesktopHeader() {
               <span className="hidden lg:inline">Comunidade</span>
             </Button>
           </Link>
+          <a href="https://chat.whatsapp.com/J89dx46Lo97G9YdAaGmR78" target="_blank" rel="noopener noreferrer">
+            <Button variant="ghost" className="gap-1.5 h-10 px-3 text-sm text-muted-foreground hover:text-accent">
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden lg:inline">WhatsApp</span>
+            </Button>
+          </a>
 
           {/* Loterias Dropdown com Submenus */}
           <DropdownMenu>

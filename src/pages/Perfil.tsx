@@ -377,6 +377,20 @@ export default function Perfil() {
                   <ChevronRight className="h-5 w-5 text-muted-foreground" />
                 </div>
               </Link>
+
+              {/* Grupo WhatsApp */}
+              <a href="https://chat.whatsapp.com/J89dx46Lo97G9YdAaGmR78" target="_blank" rel="noopener noreferrer" className="block">
+                <div className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors">
+                  <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                    <MessageSquare className="h-5 w-5 text-green-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">Grupo WhatsApp</p>
+                    <p className="text-xs text-muted-foreground">Entre no nosso grupo</p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </a>
             </div>
           </div>
 
