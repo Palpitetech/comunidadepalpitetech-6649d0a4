@@ -90,6 +90,11 @@ serve(async (req) => {
       });
     }
 
+    // Extract token and build direct link
+    const actionUrl = new URL(magicData.properties.action_link);
+    const token_hash = actionUrl.searchParams.get("token") || actionUrl.hash?.match(/token=([^&]+)/)?.[1] || "";
+    const directLink = `${siteUrl}/ativar-conta?token_hash=${encodeURIComponent(token_hash)}&type=magiclink`;
+
     // Send email via Resend
     const resendRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -101,7 +106,7 @@ serve(async (req) => {
         from: Deno.env.get("RESEND_FROM_EMAIL") ?? "noreply@seudominio.com",
         to: perfil.email,
         subject: "Ative sua conta e crie sua senha",
-        html: buildActivationEmail(perfil.nome || perfil.email.split("@")[0], magicData.properties.action_link),
+        html: buildActivationEmail(perfil.nome || perfil.email.split("@")[0], directLink),
       }),
     });
 

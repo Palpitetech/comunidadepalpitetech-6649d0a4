@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,13 +9,36 @@ import { toast } from "@/hooks/use-toast";
 
 export default function AtivarConta() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [loading, setLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
-    const check = async () => {
+    const verifyToken = async () => {
+      const tokenHash = searchParams.get("token_hash");
+      const type = searchParams.get("type");
+
+      if (tokenHash && type) {
+        // Verify the OTP token to establish session
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: type as "magiclink",
+        });
+
+        if (error) {
+          toast({
+            title: "Link expirado ou inválido",
+            description: "Solicite um novo link de ativação.",
+            variant: "destructive",
+          });
+          navigate("/login", { replace: true });
+          return;
+        }
+      }
+
+      // Check if we have a session now
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast({
@@ -28,10 +51,11 @@ export default function AtivarConta() {
       }
       setCheckingSession(false);
     };
-    // Small delay to let Supabase process the magic link token from URL
-    const timer = setTimeout(check, 1000);
+
+    // Small delay to let Supabase process any hash fragments
+    const timer = setTimeout(verifyToken, 500);
     return () => clearTimeout(timer);
-  }, [navigate]);
+  }, [navigate, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
