@@ -142,7 +142,13 @@ export function TemplatesTab() {
 
   const openEdit = (t: MessageTemplate) => {
     setEditingId(t.id);
-    setForm({ name: t.name, content: t.content, event_trigger: t.event_trigger });
+    setForm({
+      name: t.name,
+      content: t.content,
+      event_trigger: t.event_trigger,
+      delay_enabled: t.delay_enabled ?? false,
+      delay_minutes: t.delay_minutes ?? 0,
+    });
     setDialogOpen(true);
   };
 
