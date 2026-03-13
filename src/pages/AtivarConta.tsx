@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { toast } from "@/hooks/use-toast";
 export default function AtivarConta() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { updateProfile } = useAuthContext();
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,7 +23,6 @@ export default function AtivarConta() {
       const type = searchParams.get("type");
 
       if (tokenHash && type) {
-        // Verify the OTP token to establish session
         const { error } = await supabase.auth.verifyOtp({
           token_hash: tokenHash,
           type: type as "magiclink",
@@ -38,7 +39,6 @@ export default function AtivarConta() {
         }
       }
 
-      // Check if we have a session now
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast({
@@ -52,7 +52,6 @@ export default function AtivarConta() {
       setCheckingSession(false);
     };
 
-    // Small delay to let Supabase process any hash fragments
     const timer = setTimeout(verifyToken, 500);
     return () => clearTimeout(timer);
   }, [navigate, searchParams]);
@@ -75,13 +74,8 @@ export default function AtivarConta() {
       const { error: updateError } = await supabase.auth.updateUser({ password: senha });
       if (updateError) throw updateError;
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        await supabase
-          .from("perfis")
-          .update({ email_verificado: true })
-          .eq("id", session.user.id);
-      }
+      // Update profile locally AND in DB so ProtectedRoute won't redirect back
+      await updateProfile({ email_verificado: true });
 
       toast({ title: "Conta ativada com sucesso! 🎉" });
       navigate("/comunidade", { replace: true });
