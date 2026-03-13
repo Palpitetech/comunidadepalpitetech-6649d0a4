@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
 import { TagFilterPopover } from "@/components/admin/TagFilterPopover";
 import { cn } from "@/lib/utils";
+import { LeadWebhookCard } from "@/components/admin/LeadWebhookCard";
 import type { Plan, PlanFeatures, ExtendedProfile } from "@/types/plans";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -271,6 +272,10 @@ export default function AdminUsuarios() {
             </div>
           </div>
         )}
+        {/* Lead Webhook */}
+        <div className="px-1 pt-2">
+          <LeadWebhookCard />
+        </div>
       </div>
 
       {/* ======= DESKTOP — fullscreen minimal ======= */}
@@ -426,6 +431,11 @@ export default function AdminUsuarios() {
             </div>
           </div>
         )}
+
+        {/* Lead Webhook */}
+        <div className="border-t border-border px-6 py-4">
+          <LeadWebhookCard />
+        </div>
       </div>
 
       <UserDetailSheet

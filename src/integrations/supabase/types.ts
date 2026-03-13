@@ -48,6 +48,7 @@ export type Database = {
         Row: {
           id: string
           kirvano_webhook_token: string
+          lead_webhook_token: string
           notifications_webhook_secret: string | null
           updated_at: string
           updated_by: string | null
@@ -56,6 +57,7 @@ export type Database = {
         Insert: {
           id?: string
           kirvano_webhook_token?: string
+          lead_webhook_token?: string
           notifications_webhook_secret?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -64,6 +66,7 @@ export type Database = {
         Update: {
           id?: string
           kirvano_webhook_token?: string
+          lead_webhook_token?: string
           notifications_webhook_secret?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -1859,6 +1862,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      system_events: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          source: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          source?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          source?: string | null
+          status?: string | null
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
