@@ -1131,6 +1131,7 @@ export type Database = {
           created_at: string | null
           event_trigger: string
           id: string
+          is_active: boolean
           name: string
         }
         Insert: {
@@ -1138,6 +1139,7 @@ export type Database = {
           created_at?: string | null
           event_trigger: string
           id?: string
+          is_active?: boolean
           name: string
         }
         Update: {
@@ -1145,6 +1147,7 @@ export type Database = {
           created_at?: string | null
           event_trigger?: string
           id?: string
+          is_active?: boolean
           name?: string
         }
         Relationships: []
