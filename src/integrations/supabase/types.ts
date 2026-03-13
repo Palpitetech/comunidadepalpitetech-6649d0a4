@@ -1029,6 +1029,42 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_webhooks: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          last_lead_at: string | null
+          leads_count: number | null
+          name: string
+          source_tag: string
+          token: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_lead_at?: string | null
+          leads_count?: number | null
+          name: string
+          source_tag: string
+          token?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_lead_at?: string | null
+          leads_count?: number | null
+          name?: string
+          source_tag?: string
+          token?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       message_queue: {
         Row: {
           created_at: string | null
@@ -2300,6 +2336,10 @@ export type Database = {
         Returns: boolean
       }
       identificar_conta: { Args: { p_identificador: string }; Returns: Json }
+      increment_lead_webhook_count: {
+        Args: { webhook_id: string }
+        Returns: undefined
+      }
       process_pending_bot_replies: { Args: never; Returns: undefined }
     }
     Enums: {
