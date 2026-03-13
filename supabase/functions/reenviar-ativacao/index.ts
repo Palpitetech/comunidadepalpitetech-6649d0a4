@@ -46,7 +46,7 @@ serve(async (req) => {
     // Check profile
     const { data: perfil } = await supabaseAdmin
       .from("perfis")
-      .select("email, email_verificado")
+      .select("email, email_verificado, nome")
       .eq("id", userId)
       .single();
 
