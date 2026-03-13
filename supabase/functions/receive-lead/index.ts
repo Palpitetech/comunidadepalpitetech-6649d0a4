@@ -183,6 +183,11 @@ serve(async (req) => {
         });
 
         if (!magicError && magicData?.properties?.action_link) {
+          // Extract token from Supabase action_link and build direct site link
+          const actionUrl = new URL(magicData.properties.action_link);
+          const token_hash = actionUrl.searchParams.get("token") || actionUrl.hash?.match(/token=([^&]+)/)?.[1] || "";
+          const directLink = `${siteUrl}/ativar-conta?token_hash=${encodeURIComponent(token_hash)}&type=magiclink`;
+
           const resendRes = await fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: {
@@ -200,7 +205,7 @@ serve(async (req) => {
                     Sua conta foi criada. Clique no botão abaixo para ativar e criar sua senha de acesso.
                   </p>
                   <div style="text-align: center; margin: 32px 0;">
-                    <a href="${magicData.properties.action_link}" style="display: inline-block; background-color: #1a2e4a; color: #ffffff; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-size: 16px; font-weight: 600;">
+                    <a href="${directLink}" style="display: inline-block; background-color: #1a2e4a; color: #ffffff; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-size: 16px; font-weight: 600;">
                       Ativar minha conta
                     </a>
                   </div>
