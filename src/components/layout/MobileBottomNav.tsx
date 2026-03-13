@@ -46,6 +46,17 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
           <span className="text-xs mt-1 font-medium">Comunidade</span>
         </Link>
 
+        {/* WhatsApp */}
+        <a
+          href="https://chat.whatsapp.com/J89dx46Lo97G9YdAaGmR78"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-col items-center justify-center flex-1 h-full min-w-[64px] py-2 transition-colors text-muted-foreground hover:text-green-500"
+        >
+          <MessageSquare className="h-6 w-6" />
+          <span className="text-xs mt-1 font-medium">WhatsApp</span>
+        </a>
+
         {/* Chat */}
         <Link
           to="/chat"
