@@ -20,7 +20,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
-import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot, Dices, Shuffle, Ticket, LayoutGrid, Target, Table2, Gift, Lock, MessageCircle, Plug } from "lucide-react";
+import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot, Dices, Shuffle, Ticket, LayoutGrid, Target, Table2, Gift, Lock, MessageCircle, Plug, MessageSquare } from "lucide-react";
 
 export function DesktopHeader() {
   const { isAuthenticated, profile, signOut } = useAuthContext();
@@ -89,6 +89,12 @@ export function DesktopHeader() {
               <span className="hidden lg:inline">Comunidade</span>
             </Button>
           </Link>
+          <a href="https://chat.whatsapp.com/J89dx46Lo97G9YdAaGmR78" target="_blank" rel="noopener noreferrer">
+            <Button variant="ghost" className="gap-1.5 h-10 px-3 text-sm text-muted-foreground hover:text-accent">
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden lg:inline">WhatsApp</span>
+            </Button>
+          </a>
 
           {/* Loterias Dropdown com Submenus */}
           <DropdownMenu>

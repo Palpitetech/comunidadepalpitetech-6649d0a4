@@ -222,6 +222,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                     Meus Palpites
                   </div>
                 </Link>
+                <a href="https://chat.whatsapp.com/J89dx46Lo97G9YdAaGmR78" target="_blank" rel="noopener noreferrer" onClick={closeAndNavigate}>
+                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-accent transition-colors">
+                    <MessageSquare className="h-5 w-5 stroke-[1.5]" />
+                    Grupo WhatsApp
+                  </div>
+                </a>
               </nav>
 
                {/* Accordion de Lotofácil */}
