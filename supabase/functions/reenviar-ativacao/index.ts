@@ -131,16 +131,16 @@ serve(async (req) => {
 function buildActivationEmail(nome: string, actionLink: string): string {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; background: #ffffff;">
-      <h1 style="color: hsl(215, 60%, 25%); font-size: 22px; margin-bottom: 8px;">Olá, ${nome || "bem-vindo"}!</h1>
-      <p style="color: hsl(215, 20%, 40%); font-size: 16px; line-height: 1.6;">
+      <h1 style="color: #1a2e4a; font-size: 22px; margin-bottom: 8px;">Olá, ${nome || "bem-vindo"}!</h1>
+      <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
         Sua conta foi criada. Clique no botão abaixo para ativar e criar sua senha de acesso.
       </p>
       <div style="text-align: center; margin: 32px 0;">
-        <a href="${actionLink}" style="display: inline-block; background: hsl(215, 60%, 25%); color: #ffffff; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-size: 16px; font-weight: 600;">
+        <a href="${actionLink}" style="display: inline-block; background-color: #1a2e4a; color: #ffffff; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-size: 16px; font-weight: 600;">
           Ativar minha conta
         </a>
       </div>
-      <p style="color: hsl(215, 20%, 60%); font-size: 13px; text-align: center;">
+      <p style="color: #8a94a6; font-size: 13px; text-align: center;">
         Este link expira em 24 horas.<br/>
         Se não solicitou, ignore este email.
       </p>
