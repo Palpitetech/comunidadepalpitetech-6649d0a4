@@ -182,6 +182,8 @@ export function TemplatesTab() {
         name: form.name.trim(),
         content: form.content.trim(),
         event_trigger: form.event_trigger,
+        delay_enabled: form.delay_enabled,
+        delay_minutes: form.delay_enabled ? form.delay_minutes : 0,
       };
       if (editingId) {
         const { error } = await supabase.from("message_templates" as any).update(payload).eq("id", editingId);
