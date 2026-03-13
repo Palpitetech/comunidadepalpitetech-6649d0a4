@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Loader2, Plus, Pencil, Trash2, FileText, ChevronsUpDown, Check, Send, Pause, Play } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Loader2, Plus, Pencil, Trash2, FileText, ChevronsUpDown, Check, Send, Pause, Play, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MessageTemplate {
@@ -19,15 +20,32 @@ interface MessageTemplate {
   event_trigger: string;
   created_at: string;
   is_active?: boolean;
+  delay_enabled?: boolean;
+  delay_minutes?: number;
 }
 
 interface FormData {
   name: string;
   content: string;
   event_trigger: string;
+  delay_enabled: boolean;
+  delay_minutes: number;
 }
 
-const emptyForm: FormData = { name: "", content: "", event_trigger: "manual" };
+const emptyForm: FormData = { name: "", content: "", event_trigger: "manual", delay_enabled: false, delay_minutes: 0 };
+
+const DELAY_OPTIONS = [
+  { value: 2, label: "2 min" },
+  { value: 5, label: "5 min" },
+  { value: 10, label: "10 min" },
+  { value: 15, label: "15 min" },
+  { value: 1440, label: "24h" },
+];
+
+function formatDelay(minutes: number): string {
+  if (minutes === 1440) return "24h";
+  return `${minutes} min`;
+}
 
 const EVENT_MASKS: Record<string, string> = {
   novo_cadastro: "Novo Cadastro",
@@ -124,7 +142,13 @@ export function TemplatesTab() {
 
   const openEdit = (t: MessageTemplate) => {
     setEditingId(t.id);
-    setForm({ name: t.name, content: t.content, event_trigger: t.event_trigger });
+    setForm({
+      name: t.name,
+      content: t.content,
+      event_trigger: t.event_trigger,
+      delay_enabled: t.delay_enabled ?? false,
+      delay_minutes: t.delay_minutes ?? 0,
+    });
     setDialogOpen(true);
   };
 
@@ -158,6 +182,8 @@ export function TemplatesTab() {
         name: form.name.trim(),
         content: form.content.trim(),
         event_trigger: form.event_trigger,
+        delay_enabled: form.delay_enabled,
+        delay_minutes: form.delay_enabled ? form.delay_minutes : 0,
       };
       if (editingId) {
         const { error } = await supabase.from("message_templates" as any).update(payload).eq("id", editingId);
@@ -315,6 +341,43 @@ export function TemplatesTab() {
                   </PopoverContent>
                 </Popover>
               </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Delay de envio</Label>
+                  <Switch
+                    checked={form.delay_enabled}
+                    onCheckedChange={(checked) => {
+                      setForm((f) => ({
+                        ...f,
+                        delay_enabled: checked,
+                        delay_minutes: checked && f.delay_minutes === 0 ? 5 : f.delay_minutes,
+                      }));
+                    }}
+                  />
+                </div>
+                {form.delay_enabled && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-muted-foreground">Enviar após:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {DELAY_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setForm((f) => ({ ...f, delay_minutes: opt.value }))}
+                          className={cn(
+                            "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+                            form.delay_minutes === opt.value
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-muted text-muted-foreground border-border hover:bg-muted/80"
+                          )}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               <div className="space-y-1.5">
                 <Label htmlFor="tpl-content">Conteúdo da mensagem *</Label>
                 <Textarea
@@ -371,6 +434,12 @@ export function TemplatesTab() {
                     {!isActive && (
                       <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-300">
                         Pausado
+                      </Badge>
+                    )}
+                    {tpl.delay_enabled && tpl.delay_minutes && tpl.delay_minutes > 0 && (
+                      <Badge variant="outline" className="text-[10px] gap-0.5">
+                        <Timer className="h-3 w-3" />
+                        {formatDelay(tpl.delay_minutes)}
                       </Badge>
                     )}
                     {triggerBadge(tpl.event_trigger)}

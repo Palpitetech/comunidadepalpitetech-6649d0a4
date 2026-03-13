@@ -1129,6 +1129,8 @@ export type Database = {
         Row: {
           content: string
           created_at: string | null
+          delay_enabled: boolean
+          delay_minutes: number
           event_trigger: string
           id: string
           is_active: boolean
@@ -1137,6 +1139,8 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string | null
+          delay_enabled?: boolean
+          delay_minutes?: number
           event_trigger: string
           id?: string
           is_active?: boolean
@@ -1145,6 +1149,8 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string | null
+          delay_enabled?: boolean
+          delay_minutes?: number
           event_trigger?: string
           id?: string
           is_active?: boolean
