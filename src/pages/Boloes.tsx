@@ -86,6 +86,12 @@ function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function formatPremio(valor: number) {
+  if (valor >= 1_000_000_000) return `R$ ${(valor / 1_000_000_000).toFixed(1)} Bi`;
+  if (valor >= 1_000_000) return `R$ ${(valor / 1_000_000).toFixed(1)} Mi`;
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
 // ─── Detail Sheet ─────────────────────────────────────
 
 interface BolaoDetailSheetProps {
