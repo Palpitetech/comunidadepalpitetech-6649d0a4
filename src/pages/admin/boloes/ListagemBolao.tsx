@@ -1,10 +1,13 @@
 import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,8 +15,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Pencil, Eye, Plus, Printer, FileCheck, Receipt, Trophy, FileText, CheckCircle2 } from "lucide-react";
+import { Loader2, Pencil, Eye, Plus, Printer, FileCheck, Receipt, Trophy, FileText, CheckCircle2, CalendarIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 const STATUS_COLORS: Record<string, string> = {
   rascunho: "bg-muted text-muted-foreground",
@@ -46,6 +50,8 @@ export default function ListagemBolao() {
   const [filtroLoteria, setFiltroLoteria] = useState("todas");
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [busca, setBusca] = useState("");
+  const [filtroTask, setFiltroTask] = useState("todas");
+  const [dataSorteio, setDataSorteio] = useState<Date | undefined>(undefined);
   const [confirmTask, setConfirmTask] = useState<{ bolaoId: string; field: string; value: boolean } | null>(null);
   const [uploadingPdfId, setUploadingPdfId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -61,7 +67,7 @@ export default function ListagemBolao() {
   const [confirmComprovantes, setConfirmComprovantes] = useState<{ bolaoId: string } | null>(null);
 
   const { data: boloes, isLoading } = useQuery({
-    queryKey: ["admin-boloes", filtroLoteria, filtroStatus, busca],
+    queryKey: ["admin-boloes", filtroLoteria, filtroStatus, busca, filtroTask, dataSorteio?.toISOString()],
     queryFn: async () => {
       let q = supabase
         .from("boloes")
@@ -71,6 +77,14 @@ export default function ListagemBolao() {
       if (filtroLoteria !== "todas") q = q.eq("loteria", filtroLoteria);
       if (filtroStatus !== "todos") q = q.eq("status", filtroStatus);
       if (busca) q = q.or(`codigo.ilike.%${busca}%,concurso_numero.ilike.%${busca}%`);
+      if (filtroTask === "task_impresso") q = q.eq("task_impresso", false);
+      if (filtroTask === "task_registrado") q = q.eq("task_registrado", false);
+      if (filtroTask === "task_comprovantes") q = q.eq("task_comprovantes", false);
+      if (filtroTask === "task_resgate") q = q.eq("task_resgate", false);
+      if (dataSorteio) {
+        const dateStr = format(dataSorteio, "yyyy-MM-dd");
+        q = q.eq("data_concurso", dateStr);
+      }
 
       const { data, error } = await q;
       if (error) throw error;
@@ -252,6 +266,48 @@ export default function ListagemBolao() {
               <SelectItem value="cancelado">Cancelado</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={filtroTask} onValueChange={setFiltroTask}>
+            <SelectTrigger className="w-36 h-9 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todas">Todas tarefas</SelectItem>
+              <SelectItem value="task_impresso">Falta Imprimir</SelectItem>
+              <SelectItem value="task_registrado">Falta Registrar</SelectItem>
+              <SelectItem value="task_comprovantes">Falta Comprovantes</SelectItem>
+              <SelectItem value="task_resgate">Falta Resgate</SelectItem>
+            </SelectContent>
+          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "h-9 text-xs w-40 justify-start font-normal",
+                  !dataSorteio && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
+                {dataSorteio ? format(dataSorteio, "dd/MM/yyyy") : "Data sorteio"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={dataSorteio}
+                onSelect={setDataSorteio}
+                locale={ptBR}
+                className={cn("p-3 pointer-events-auto")}
+              />
+              {dataSorteio && (
+                <div className="px-3 pb-3">
+                  <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => setDataSorteio(undefined)}>
+                    Limpar data
+                  </Button>
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
           <Input
             placeholder="Buscar código ou concurso..."
             value={busca}
