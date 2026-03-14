@@ -89,12 +89,14 @@ serve(async (req) => {
       celular,
       tags: payloadTags,
       source,
+      utm_source,
     } = body as {
       nome?: string;
       email?: string;
       celular?: string;
       tags?: string[];
       source?: string;
+      utm_source?: string;
     };
 
     if (!email && !celular) {
