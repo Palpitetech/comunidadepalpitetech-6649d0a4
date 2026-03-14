@@ -250,6 +250,37 @@ export default function BoloesPagamento() {
         </div>
       </div>
 
+      {/* Date Filter */}
+      <div className="flex items-center gap-2">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn("h-8 text-xs gap-1.5", !dataFiltro && "text-muted-foreground")}
+            >
+              <CalendarIcon className="h-3.5 w-3.5" />
+              {dataFiltro ? format(dataFiltro, "dd/MM/yyyy") : "Filtrar por data"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={dataFiltro}
+              onSelect={setDataFiltro}
+              locale={ptBR}
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+        {dataFiltro && (
+          <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={() => setDataFiltro(undefined)}>
+            <X className="h-3.5 w-3.5" />
+            Limpar
+          </Button>
+        )}
+      </div>
+
       {isLoading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
