@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,9 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Pencil, Eye, Plus, Printer, FileCheck, Receipt, Trophy } from "lucide-react";
+import { Loader2, Pencil, Eye, Plus, Printer, FileCheck, Receipt, Trophy, FileText, CheckCircle2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -27,6 +28,7 @@ const LOTERIA_COLORS: Record<string, string> = {
   duplasena: "bg-purple-600/20 text-purple-400",
   quina: "bg-orange-600/20 text-orange-400",
   lotomania: "bg-pink-600/20 text-pink-400",
+  diadesorte: "bg-emerald-600/20 text-emerald-400",
 };
 
 const TASK_FIELDS = [
@@ -42,6 +44,9 @@ export default function ListagemBolao() {
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [busca, setBusca] = useState("");
   const [confirmTask, setConfirmTask] = useState<{ bolaoId: string; field: string; value: boolean } | null>(null);
+  const [uploadingPdfId, setUploadingPdfId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingUploadBolao = useRef<{ id: string; codigo: string } | null>(null);
 
   const { data: boloes, isLoading } = useQuery({
     queryKey: ["admin-boloes", filtroLoteria, filtroStatus, busca],
@@ -77,6 +82,49 @@ export default function ListagemBolao() {
     setConfirmTask(null);
   };
 
+  const handlePdfClick = (bolaoId: string, codigo: string) => {
+    pendingUploadBolao.current = { id: bolaoId, codigo };
+    fileInputRef.current?.click();
+  };
+
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !pendingUploadBolao.current) return;
+
+    const { id, codigo } = pendingUploadBolao.current;
+    setUploadingPdfId(id);
+
+    try {
+      const filePath = `${codigo}.pdf`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("boloes-pdfs")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("boloes-pdfs")
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from("boloes")
+        .update({ pdf_url: urlData.publicUrl } as any)
+        .eq("id", id);
+
+      if (updateError) throw updateError;
+
+      queryClient.invalidateQueries({ queryKey: ["admin-boloes"] });
+      toast({ title: "✅ PDF enviado com sucesso!" });
+    } catch (err: any) {
+      toast({ title: "Erro ao enviar PDF", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingPdfId(null);
+      pendingUploadBolao.current = null;
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <MainLayout pageTitle="Bolões">
       <div className="px-4 py-3 md:container-senior md:py-8 space-y-3">
@@ -88,6 +136,15 @@ export default function ListagemBolao() {
             </Button>
           </Link>
         </div>
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf"
+          className="hidden"
+          onChange={handlePdfUpload}
+        />
 
         {/* Filtros */}
         <div className="flex flex-wrap gap-2">
@@ -102,6 +159,7 @@ export default function ListagemBolao() {
               <SelectItem value="duplasena">Dupla Sena</SelectItem>
               <SelectItem value="quina">Quina</SelectItem>
               <SelectItem value="lotomania">Lotomania</SelectItem>
+              <SelectItem value="diadesorte">Dia de Sorte</SelectItem>
             </SelectContent>
           </Select>
           <Select value={filtroStatus} onValueChange={setFiltroStatus}>
@@ -133,84 +191,114 @@ export default function ListagemBolao() {
         ) : !boloes?.length ? (
           <p className="text-center text-sm text-muted-foreground py-10">Nenhum bolão encontrado.</p>
         ) : (
-          <div className="space-y-1.5">
-            {boloes.map((b: any) => {
-              const arrecadado = (b.cotas_vendidas || 0) * parseFloat(b.valor_cota);
-              return (
-                <Card key={b.id} className="border-border/60">
-                  <CardContent className="py-2 px-3 space-y-1.5">
-                    {/* Row 1 */}
-                    <div className="flex items-center gap-2 flex-wrap text-sm">
-                      <span className="font-bold">{b.codigo}</span>
-                      <Badge variant="outline" className={`text-[10px] ${LOTERIA_COLORS[b.loteria] || ""}`}>
-                        {b.loteria}
-                      </Badge>
-                      <span className="text-muted-foreground text-xs">C.{b.concurso_numero}</span>
-                      <span className="text-muted-foreground text-xs">
-                        {new Date(b.data_concurso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
-                      </span>
-                      <span className="text-xs">
-                        {b.cotas_vendidas || 0}/{b.total_cotas} cotas
-                      </span>
-                      <span className="text-xs font-medium">
-                        R${arrecadado.toFixed(2)}
-                      </span>
-                      <Badge variant="outline" className={`text-[10px] ml-auto ${STATUS_COLORS[b.status] || ""}`}>
-                        {b.status}
-                      </Badge>
-                    </div>
+          <TooltipProvider>
+            <div className="space-y-1.5">
+              {boloes.map((b: any) => {
+                const arrecadado = (b.cotas_vendidas || 0) * parseFloat(b.valor_cota);
+                const hasPdf = !!b.pdf_url;
+                const isUploadingThis = uploadingPdfId === b.id;
 
-                    {/* Row 2: Tasks + Actions */}
-                    <div className="flex items-center gap-3 flex-wrap">
-                      {TASK_FIELDS.map(({ key, label, icon: Icon }) => {
-                        const checked = !!(b as any)[key];
-                        return (
-                          <Popover
-                            key={key}
-                            open={confirmTask?.bolaoId === b.id && confirmTask?.field === key}
-                            onOpenChange={(open) => {
-                              if (!open) setConfirmTask(null);
-                            }}
-                          >
-                            <PopoverTrigger asChild>
-                              <button
-                                className="flex items-center gap-1 text-[11px] cursor-pointer hover:opacity-80"
-                                onClick={() => setConfirmTask({ bolaoId: b.id, field: key, value: !checked })}
-                              >
-                                <Checkbox checked={checked} className="h-3.5 w-3.5 pointer-events-none" />
-                                <Icon className={`h-3 w-3 ${checked ? "text-green-500" : "text-muted-foreground"}`} />
-                                <span className={checked ? "text-green-500" : "text-muted-foreground"}>{label}</span>
-                              </button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-40 p-2" side="top">
-                              <p className="text-xs mb-2">Confirmar?</p>
-                              <div className="flex gap-1.5">
-                                <Button size="sm" variant="ghost" className="h-7 text-xs flex-1" onClick={() => setConfirmTask(null)}>
-                                  Cancelar
-                                </Button>
-                                <Button size="sm" className="h-7 text-xs flex-1" onClick={handleToggleTask}>
-                                  ✅
-                                </Button>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        );
-                      })}
-
-                      <div className="ml-auto flex gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7">
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7">
-                          <Eye className="h-3.5 w-3.5" />
-                        </Button>
+                return (
+                  <Card key={b.id} className="border-border/60">
+                    <CardContent className="py-2 px-3 space-y-1.5">
+                      {/* Row 1 */}
+                      <div className="flex items-center gap-2 flex-wrap text-sm">
+                        <span className="font-bold">{b.codigo}</span>
+                        <Badge variant="outline" className={`text-[10px] ${LOTERIA_COLORS[b.loteria] || ""}`}>
+                          {b.loteria}
+                        </Badge>
+                        <span className="text-muted-foreground text-xs">C.{b.concurso_numero}</span>
+                        <span className="text-muted-foreground text-xs">
+                          {new Date(b.data_concurso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+                        </span>
+                        <span className="text-xs">
+                          {b.cotas_vendidas || 0}/{b.total_cotas} cotas
+                        </span>
+                        <span className="text-xs font-medium">
+                          R${arrecadado.toFixed(2)}
+                        </span>
+                        <Badge variant="outline" className={`text-[10px] ml-auto ${STATUS_COLORS[b.status] || ""}`}>
+                          {b.status}
+                        </Badge>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+
+                      {/* Row 2: Tasks + Actions */}
+                      <div className="flex items-center gap-3 flex-wrap">
+                        {TASK_FIELDS.map(({ key, label, icon: Icon }) => {
+                          const checked = !!(b as any)[key];
+                          return (
+                            <Popover
+                              key={key}
+                              open={confirmTask?.bolaoId === b.id && confirmTask?.field === key}
+                              onOpenChange={(open) => {
+                                if (!open) setConfirmTask(null);
+                              }}
+                            >
+                              <PopoverTrigger asChild>
+                                <button
+                                  className="flex items-center gap-1 text-[11px] cursor-pointer hover:opacity-80"
+                                  onClick={() => setConfirmTask({ bolaoId: b.id, field: key, value: !checked })}
+                                >
+                                  <Checkbox checked={checked} className="h-3.5 w-3.5 pointer-events-none" />
+                                  <Icon className={`h-3 w-3 ${checked ? "text-green-500" : "text-muted-foreground"}`} />
+                                  <span className={checked ? "text-green-500" : "text-muted-foreground"}>{label}</span>
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-40 p-2" side="top">
+                                <p className="text-xs mb-2">Confirmar?</p>
+                                <div className="flex gap-1.5">
+                                  <Button size="sm" variant="ghost" className="h-7 text-xs flex-1" onClick={() => setConfirmTask(null)}>
+                                    Cancelar
+                                  </Button>
+                                  <Button size="sm" className="h-7 text-xs flex-1" onClick={handleToggleTask}>
+                                    ✅
+                                  </Button>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          );
+                        })}
+
+                        <div className="ml-auto flex gap-1">
+                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+
+                          {/* PDF Upload Button */}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => handlePdfClick(b.id, b.codigo)}
+                                disabled={isUploadingThis}
+                              >
+                                {isUploadingThis ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : hasPdf ? (
+                                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                                ) : (
+                                  <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs">
+                              {hasPdf ? "PDF já enviado — clique para substituir" : "Enviar palpites oficiais"}
+                            </TooltipContent>
+                          </Tooltip>
+
+                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </TooltipProvider>
         )}
       </div>
     </MainLayout>
