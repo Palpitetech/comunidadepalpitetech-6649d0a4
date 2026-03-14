@@ -314,7 +314,6 @@ export default function ListagemBolao() {
             onChange={(e) => setBusca(e.target.value)}
             className="h-9 text-xs flex-1 min-w-[160px]"
           />
-          />
         </div>
 
         {/* Lista */}
