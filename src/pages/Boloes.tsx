@@ -392,7 +392,7 @@ export default function Boloes() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("boloes")
-        .select("id, codigo, loteria, sigla, concurso_numero, data_concurso, total_cotas, cotas_vendidas, valor_cota, valor_premiacao, descricao_estrategia, palpites, pdf_url, status")
+        .select("id, codigo, loteria, sigla, concurso_numero, data_concurso, total_cotas, cotas_vendidas, valor_cota, valor_premiacao, descricao_estrategia, palpites, pdf_url, status, resultado_verificado, palpites_premiados")
         .in("status", ["ativo", "encerrado", "premiado"])
         .order("data_concurso", { ascending: false });
       if (error) throw error;
