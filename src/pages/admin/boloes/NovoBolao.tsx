@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 
 const LOTERIAS = [
   { value: "megasena", label: "Mega-Sena", sigla: "MS", max: 60 },
@@ -43,6 +43,45 @@ export default function NovoBolao() {
   const [palpitesTexto, setPalpitesTexto] = useState<string[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [emptyIndices, setEmptyIndices] = useState<Set<number>>(new Set());
+  const [loadingConcurso, setLoadingConcurso] = useState(false);
+  const [autoPreenchido, setAutoPreenchido] = useState(false);
+  const [semDados, setSemDados] = useState(false);
+
+  useEffect(() => {
+    setAutoPreenchido(false);
+    setSemDados(false);
+  }, [loteria]);
+
+  const handleLoteriaSelecionada = async (valor: string) => {
+    setLoteria(valor);
+    setLoadingConcurso(true);
+    setAutoPreenchido(false);
+    setSemDados(false);
+
+    try {
+      const { data, error } = await supabase
+        .from("proximos_concursos")
+        .select("*")
+        .eq("loteria", valor)
+        .maybeSingle();
+
+      if (data && data.numero_concurso && data.numero_concurso !== "0") {
+        setConcursoNumero(data.numero_concurso);
+        setDataConcurso(data.data_sorteio ?? "");
+        setValorPremiacao(data.premio_estimado?.toString() ?? "");
+        setAutoPreenchido(true);
+      } else {
+        setConcursoNumero("");
+        setDataConcurso("");
+        setValorPremiacao("");
+        setSemDados(true);
+      }
+    } catch (err) {
+      console.error("[NovoBolao] Erro ao buscar concurso:", err);
+    } finally {
+      setLoadingConcurso(false);
+    }
+  };
 
   const loteriaInfo = LOTERIAS.find((l) => l.value === loteria);
   const sigla = loteriaInfo?.sigla || "XX";
@@ -221,7 +260,7 @@ export default function NovoBolao() {
             {/* 1. Loteria */}
             <div className="space-y-1.5">
               <Label>Loteria *</Label>
-              <Select value={loteria} onValueChange={setLoteria}>
+              <Select value={loteria} onValueChange={handleLoteriaSelecionada}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   {LOTERIAS.map((l) => (
@@ -246,11 +285,17 @@ export default function NovoBolao() {
             {/* 4-5 */}
             <div className="space-y-1.5">
               <Label>Número do Concurso *</Label>
-              <Input value={concursoNumero} onChange={(e) => setConcursoNumero(e.target.value)} placeholder="3635" />
+              <div className="relative">
+                <Input value={concursoNumero} onChange={(e) => setConcursoNumero(e.target.value)} placeholder="3635" disabled={loadingConcurso} />
+                {loadingConcurso && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label>Data do Concurso *</Label>
-              <Input type="date" value={dataConcurso} onChange={(e) => setDataConcurso(e.target.value)} />
+              <div className="relative">
+                <Input type="date" value={dataConcurso} onChange={(e) => setDataConcurso(e.target.value)} disabled={loadingConcurso} />
+                {loadingConcurso && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+              </div>
             </div>
 
             {/* 6-7 */}
@@ -274,8 +319,36 @@ export default function NovoBolao() {
             </div>
             <div className="space-y-1.5">
               <Label>Valor de Premiação (R$)</Label>
-              <Input type="number" step="0.01" min={0} value={valorPremiacao} onChange={(e) => setValorPremiacao(e.target.value)} placeholder="0.00" />
+              <div className="relative">
+                <Input type="number" step="0.01" min={0} value={valorPremiacao} onChange={(e) => setValorPremiacao(e.target.value)} placeholder="0.00" disabled={loadingConcurso} />
+                {loadingConcurso && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+              </div>
             </div>
+
+            {/* Hints de auto-preenchimento */}
+            {autoPreenchido && (
+              <div className="rounded-md border border-[hsl(var(--chart-2))] bg-[hsl(var(--chart-2)/0.1)] p-3 flex items-start gap-2">
+                <CheckCircle2 className="h-4 w-4 text-[hsl(var(--chart-2))] mt-0.5 shrink-0" />
+                <div className="text-xs text-[hsl(var(--chart-2))]">
+                  <p className="font-medium">Dados preenchidos automaticamente com base no próximo concurso.</p>
+                  <p>Edite se necessário.</p>
+                </div>
+              </div>
+            )}
+            {semDados && (
+              <div className="rounded-md border border-yellow-500 bg-yellow-500/10 p-3 flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5 shrink-0" />
+                <div className="text-xs text-yellow-700">
+                  <p className="font-medium">Nenhum concurso cadastrado para esta loteria.</p>
+                  <p>
+                    Atualize em{" "}
+                    <a href="/admin/concursos" target="_blank" rel="noopener noreferrer" className="underline font-medium">
+                      Admin → Próximos Concursos
+                    </a>
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* 11. Estratégia */}
             <div className="space-y-1.5">
