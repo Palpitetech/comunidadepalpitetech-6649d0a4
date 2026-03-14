@@ -1316,6 +1316,7 @@ export type Database = {
           status_assinatura: string | null
           tags: string[]
           updated_at: string
+          utm_source: string | null
           validade_assinatura: string | null
           whatsapp: string | null
         }
@@ -1340,6 +1341,7 @@ export type Database = {
           status_assinatura?: string | null
           tags?: string[]
           updated_at?: string
+          utm_source?: string | null
           validade_assinatura?: string | null
           whatsapp?: string | null
         }
@@ -1364,6 +1366,7 @@ export type Database = {
           status_assinatura?: string | null
           tags?: string[]
           updated_at?: string
+          utm_source?: string | null
           validade_assinatura?: string | null
           whatsapp?: string | null
         }
