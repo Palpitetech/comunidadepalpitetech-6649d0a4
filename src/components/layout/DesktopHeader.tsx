@@ -116,7 +116,6 @@ export function DesktopHeader() {
               variant="ghost"
               className="gap-1.5 h-10 px-3 text-sm relative"
               onClick={() => {
-                const { toast: sonnerToast } = require("sonner");
                 sonnerToast.info("Bolões estará disponível em breve! 🚀");
               }}
             >
