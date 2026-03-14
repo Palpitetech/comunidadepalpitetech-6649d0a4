@@ -14,7 +14,7 @@ function UserStatsWidget() {
     queryKey: ["admin-user-stats"],
     queryFn: async () => {
       const [{ data: perfis }, { data: roles }, { data: plans }] = await Promise.all([
-        supabase.from("perfis").select("id, plan_id, is_bot, status_assinatura").eq("is_bot", false),
+        supabase.from("perfis").select("id, plan_id, is_bot, status_assinatura, email_verificado").eq("is_bot", false),
         supabase.from("user_roles").select("user_id, role").eq("role", "premium"),
         supabase.from("plans").select("id, name, price").order("display_order"),
       ]);
@@ -24,6 +24,8 @@ function UserStatsWidget() {
       const paidPlanIds = new Set((plans || []).filter(p => p.price > 0).map(p => p.id));
 
       const total = users.length;
+      const verificados = users.filter(u => u.email_verificado === true).length;
+      const pendentes = total - verificados;
       const pagos = users.filter(u =>
         premiumUserIds.has(u.id) ||
         (u.plan_id && paidPlanIds.has(u.plan_id)) ||
@@ -38,7 +40,7 @@ function UserStatsWidget() {
 
       const semPlano = users.filter(u => !u.plan_id).length;
 
-      return { total, pagos, free, planList, semPlano };
+      return { total, verificados, pendentes, pagos, free, planList, semPlano };
     },
   });
 
