@@ -122,6 +122,17 @@ serve(async (req) => {
       );
     }
 
+    // If user was blocked, revoke all active sessions immediately
+    if (is_blocked === true) {
+      try {
+        await supabaseAdmin.auth.admin.signOut(user_id, "global");
+        console.log(`Sessões revogadas para usuário bloqueado: ${user_id}`);
+      } catch (signOutErr) {
+        console.error(`Erro ao revogar sessões de ${user_id}:`, signOutErr);
+        // Don't fail the request — the block was applied successfully
+      }
+    }
+
     return new Response(JSON.stringify({ sucesso: true }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
