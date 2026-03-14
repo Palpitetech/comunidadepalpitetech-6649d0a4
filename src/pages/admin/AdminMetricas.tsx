@@ -163,13 +163,46 @@ export default function AdminMetricas() {
     <MainLayout pageTitle="Métricas">
       <div className="px-4 py-3 md:container md:py-8 space-y-6 max-w-4xl mx-auto">
 
-        {/* Filtro de período */}
-        <div className="flex gap-2">
-          {(["all", "30d", "7d"] as Periodo[]).map(p => (
-            <Button key={p} size="sm" variant={periodo === p ? "default" : "outline"} onClick={() => setPeriodo(p)}>
-              {p === "all" ? "Tudo" : p === "30d" ? "30 dias" : "7 dias"}
+        {/* Filtros rápidos + calendário */}
+        <div className="flex flex-wrap gap-2 items-center">
+          {([
+            { key: "all", label: "Tudo" },
+            { key: "today", label: "Hoje" },
+            { key: "yesterday", label: "Ontem" },
+            { key: "7d", label: "7 dias" },
+            { key: "14d", label: "14 dias" },
+            { key: "30d", label: "30 dias" },
+          ] as { key: QuickFilter; label: string }[]).map(({ key, label }) => (
+            <Button key={key} size="sm" variant={quickFilter === key ? "default" : "outline"} onClick={() => { setQuickFilter(key); setDateRange({ from: undefined, to: undefined }); }}>
+              {label}
             </Button>
           ))}
+
+          {/* Date range picker */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button size="sm" variant={quickFilter === "custom" ? "default" : "outline"} className="gap-1.5">
+                <CalendarIcon className="h-3.5 w-3.5" />
+                {quickFilter === "custom" && dateRange.from
+                  ? `${format(dateRange.from, "dd/MM", { locale: ptBR })}${dateRange.to ? ` – ${format(dateRange.to, "dd/MM", { locale: ptBR })}` : ""}`
+                  : "Período"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={(range) => {
+                  setDateRange({ from: range?.from, to: range?.to });
+                  setQuickFilter("custom");
+                }}
+                numberOfMonths={1}
+                locale={ptBR}
+                disabled={(date) => date > new Date()}
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* SEÇÃO 1: Cards de resumo */}
