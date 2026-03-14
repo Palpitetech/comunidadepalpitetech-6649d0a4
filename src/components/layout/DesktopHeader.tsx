@@ -534,7 +534,13 @@ export function DesktopHeader() {
                          <List className="h-4 w-4" />
                          Listagem
                        </Link>
-                     </DropdownMenuItem>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                        <Link to="/admin/boloes-pagamento">
+                          <CreditCard className="h-4 w-4" />
+                          💳 Pagamentos
+                        </Link>
+                      </DropdownMenuItem>
                      <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                        <Link to="/admin/solicitacao-resgate">
                          <Trophy className="h-4 w-4" />
