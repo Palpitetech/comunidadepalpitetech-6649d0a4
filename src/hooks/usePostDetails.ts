@@ -29,6 +29,7 @@ export interface PostComment {
 
 export interface PostDetails {
   id: string;
+  slug: string | null;
   titulo: string | null;
   conteudo: string;
   loteria_tag: string | null;
