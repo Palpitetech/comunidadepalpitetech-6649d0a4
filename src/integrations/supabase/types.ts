@@ -1522,6 +1522,7 @@ export type Database = {
           metadata: Json | null
           parent_id: string | null
           respostas_count: number | null
+          slug: string | null
           tipo: string | null
           titulo: string | null
           tool_snapshot: boolean | null
@@ -1547,6 +1548,7 @@ export type Database = {
           metadata?: Json | null
           parent_id?: string | null
           respostas_count?: number | null
+          slug?: string | null
           tipo?: string | null
           titulo?: string | null
           tool_snapshot?: boolean | null
@@ -1572,6 +1574,7 @@ export type Database = {
           metadata?: Json | null
           parent_id?: string | null
           respostas_count?: number | null
+          slug?: string | null
           tipo?: string | null
           titulo?: string | null
           tool_snapshot?: boolean | null
@@ -2336,6 +2339,7 @@ export type Database = {
       }
       claim_referral_reward: { Args: { p_reward_id: string }; Returns: Json }
       generate_referral_code: { Args: never; Returns: string }
+      generate_slug: { Args: { title: string }; Returns: string }
       get_referrer_name: { Args: { p_code: string }; Returns: string }
       has_role: {
         Args: {
