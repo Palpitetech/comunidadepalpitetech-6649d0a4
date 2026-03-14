@@ -344,7 +344,9 @@ export type Database = {
           numero_bolao: number
           pago_em: string | null
           palpites: Json | null
+          palpites_premiados: Json | null
           pdf_url: string | null
+          resultado_verificado: boolean | null
           sigla: string
           status: string | null
           task_comprovantes: boolean | null
@@ -358,6 +360,7 @@ export type Database = {
           valor_cota: number
           valor_premiacao: number | null
           valor_registro: number | null
+          verificado_em: string | null
         }
         Insert: {
           codigo: string
@@ -374,7 +377,9 @@ export type Database = {
           numero_bolao: number
           pago_em?: string | null
           palpites?: Json | null
+          palpites_premiados?: Json | null
           pdf_url?: string | null
+          resultado_verificado?: boolean | null
           sigla: string
           status?: string | null
           task_comprovantes?: boolean | null
@@ -388,6 +393,7 @@ export type Database = {
           valor_cota: number
           valor_premiacao?: number | null
           valor_registro?: number | null
+          verificado_em?: string | null
         }
         Update: {
           codigo?: string
@@ -404,7 +410,9 @@ export type Database = {
           numero_bolao?: number
           pago_em?: string | null
           palpites?: Json | null
+          palpites_premiados?: Json | null
           pdf_url?: string | null
+          resultado_verificado?: boolean | null
           sigla?: string
           status?: string | null
           task_comprovantes?: boolean | null
@@ -418,6 +426,7 @@ export type Database = {
           valor_cota?: number
           valor_premiacao?: number | null
           valor_registro?: number | null
+          verificado_em?: string | null
         }
         Relationships: []
       }
