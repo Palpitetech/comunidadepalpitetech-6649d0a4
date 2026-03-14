@@ -394,7 +394,7 @@ export default function Boloes() {
 
   return (
     <MainLayout pageTitle="Bolões">
-      <PageHeader title="Bolões" />
+      
       <div className="px-4 py-3 md:container-senior md:py-8 space-y-3 md:space-y-6">
 
         {/* Loading */}
