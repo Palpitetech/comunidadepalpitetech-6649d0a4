@@ -36,7 +36,8 @@ function copyToClipboard(text: string) {
 }
 
 export default function AdminMetricas() {
-  const [periodo, setPeriodo] = useState<Periodo>("all");
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>("all");
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
   const [sortCol, setSortCol] = useState<SortCol>("cadastros");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [destino, setDestino] = useState(`https://${BASE_URL}`);
@@ -45,17 +46,30 @@ export default function AdminMetricas() {
 
   const activeUtm = customUtm || selectedUtm;
 
+  // Compute effective date range from quick filter or custom range
+  const effectiveDateRange = useMemo(() => {
+    const now = new Date();
+    switch (quickFilter) {
+      case "today": return { from: startOfDay(now), to: undefined };
+      case "yesterday": { const y = subDays(now, 1); return { from: startOfDay(y), to: startOfDay(now) }; }
+      case "7d": return { from: subDays(now, 7), to: undefined };
+      case "14d": return { from: subDays(now, 14), to: undefined };
+      case "30d": return { from: subDays(now, 30), to: undefined };
+      case "custom": return dateRange;
+      default: return { from: undefined, to: undefined };
+    }
+  }, [quickFilter, dateRange]);
+
   const { data, isLoading } = useQuery({
-    queryKey: ["admin-metricas", periodo],
+    queryKey: ["admin-metricas", quickFilter, effectiveDateRange.from?.toISOString(), effectiveDateRange.to?.toISOString()],
     queryFn: async () => {
       let query = supabase.from("perfis").select("id, email, utm_source, status_assinatura, plan_id, is_bot, created_at").eq("is_bot", false);
 
-      if (periodo === "30d") {
-        const d = new Date(); d.setDate(d.getDate() - 30);
-        query = query.gte("created_at", d.toISOString());
-      } else if (periodo === "7d") {
-        const d = new Date(); d.setDate(d.getDate() - 7);
-        query = query.gte("created_at", d.toISOString());
+      if (effectiveDateRange.from) {
+        query = query.gte("created_at", effectiveDateRange.from.toISOString());
+      }
+      if (effectiveDateRange.to) {
+        query = query.lte("created_at", effectiveDateRange.to.toISOString());
       }
 
       const { data: perfis } = await query;
