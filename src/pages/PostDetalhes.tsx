@@ -48,7 +48,7 @@ function PostSkeleton() {
 
 export default function PostDetalhes() {
   const isMobile = useIsMobile();
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuthContext();
