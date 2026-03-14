@@ -466,29 +466,6 @@ export default function ListagemBolao() {
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
 
-                          {/* PDF Upload Button (independent) */}
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7"
-                                onClick={() => handlePdfClick(b.id, b.codigo)}
-                                disabled={isUploadingThis}
-                              >
-                                {isUploadingThis ? (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                ) : hasPdf ? (
-                                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                                ) : (
-                                  <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                                )}
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="text-xs">
-                              {hasPdf ? "PDF enviado — clique para substituir" : "Nenhum PDF enviado"}
-                            </TooltipContent>
-                          </Tooltip>
 
                           <Button variant="ghost" size="icon" className="h-7 w-7">
                             <Eye className="h-3.5 w-3.5" />
