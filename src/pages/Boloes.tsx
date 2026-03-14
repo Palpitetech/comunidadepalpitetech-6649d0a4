@@ -53,9 +53,9 @@ const LOTERIA_BADGE_COLORS: Record<string, string> = {
 };
 
 function getProgressColor(pct: number) {
-  if (pct >= 95) return "bg-destructive";
-  if (pct >= 80) return "bg-orange-500";
-  return "bg-primary";
+  if (pct >= 95) return "bg-red-400";
+  if (pct >= 80) return "bg-orange-400";
+  return "bg-emerald-500";
 }
 
 function getStatusBadge(status: string) {
