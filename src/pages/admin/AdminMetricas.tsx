@@ -422,7 +422,9 @@ export default function AdminMetricas() {
 }
 
 function PushStatsSection() {
-  const { data: pushStats, isLoading: pushLoading } = useQuery({
+  const [isSendingTest, setIsSendingTest] = useState(false);
+
+  const { data: pushStats, isLoading: pushLoading, refetch } = useQuery({
     queryKey: ["admin-push-stats"],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -431,29 +433,73 @@ function PushStatsSection() {
       const { data, error } = await supabase.functions.invoke("get-push-stats", {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
+
       if (error) throw error;
+
       return data as {
         inscritos: number;
         notificaveis: number;
+        _raw_players?: number;
+        _raw_messagable?: number;
+        _app_name?: string;
         notificacoes: Array<{
           id: string;
           titulo: string;
           enviadas: number;
           abertas: number;
           falhas: number;
-          taxa_abertura: string;
-          data: string;
+          taxa_abertura: number;
+          data: string | null;
         }>;
       };
     },
     staleTime: 60_000,
   });
 
-  function taxaColor(taxa: string) {
-    const n = parseFloat(taxa);
-    if (n >= 30) return "text-green-400";
-    if (n >= 15) return "text-yellow-400";
-    return "text-red-400";
+  function taxaColor(taxa: number) {
+    if (taxa >= 30) return "text-[hsl(var(--chart-2))]";
+    if (taxa >= 15) return "text-[hsl(var(--chart-4))]";
+    return "text-destructive";
+  }
+
+  function formatDataRelativa(value: string | null) {
+    if (!value) return "—";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "—";
+
+    const diff = differenceInCalendarDays(startOfDay(new Date()), startOfDay(date));
+    if (diff <= 0) return "hoje";
+    if (diff === 1) return "ontem";
+    return `${diff} dias atrás`;
+  }
+
+  function truncateTitle(title: string, max = 40) {
+    if (!title) return "—";
+    return title.length > max ? `${title.slice(0, max)}...` : title;
+  }
+
+  async function handleSendTestPush() {
+    try {
+      setIsSendingTest(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Não autenticado");
+
+      const { data, error } = await supabase.functions.invoke("get-push-stats", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { action: "send_test" },
+      });
+
+      if (error) throw error;
+      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+
+      toast.success("✅ Push enviado! Verifique seu dispositivo.");
+      refetch();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Falha ao enviar push de teste";
+      toast.error(`❌ Erro: ${msg}`);
+    } finally {
+      setIsSendingTest(false);
+    }
   }
 
   return (
@@ -462,11 +508,18 @@ function PushStatsSection() {
         <CardTitle className="text-base">🔔 Push Notifications</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Cards resumo */}
         {pushLoading ? (
-          <div className="grid grid-cols-2 gap-3">
-            <Skeleton className="h-24 rounded-lg" />
-            <Skeleton className="h-24 rounded-lg" />
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="h-24 rounded-lg border border-border bg-muted animate-pulse" />
+              <div className="h-24 rounded-lg border border-border bg-muted animate-pulse" />
+            </div>
+            <div className="h-8 rounded-md border border-border bg-muted animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-8 rounded-md border border-border bg-muted animate-pulse" />
+              <div className="h-8 rounded-md border border-border bg-muted animate-pulse" />
+              <div className="h-8 rounded-md border border-border bg-muted animate-pulse" />
+            </div>
           </div>
         ) : pushStats ? (
           <>
@@ -486,39 +539,55 @@ function PushStatsSection() {
                 </CardContent>
               </Card>
             </div>
+
             <p className="text-[10px] text-muted-foreground">
               Notificáveis = inscritos que não bloquearam as notificações
             </p>
 
-            {/* Tabela de notificações */}
-            {pushStats.notificacoes.length > 0 && (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Notificação</TableHead>
-                    <TableHead className="text-right">Enviadas</TableHead>
-                    <TableHead className="text-right">Abertas</TableHead>
-                    <TableHead className="text-right">Taxa</TableHead>
-                    <TableHead className="text-right">Data</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pushStats.notificacoes.map((n) => (
-                    <TableRow key={n.id}>
-                      <TableCell className="max-w-[180px] truncate text-xs font-medium">{n.titulo}</TableCell>
-                      <TableCell className="text-right text-xs">{n.enviadas.toLocaleString("pt-BR")}</TableCell>
-                      <TableCell className="text-right text-xs">{n.abertas.toLocaleString("pt-BR")}</TableCell>
-                      <TableCell className={cn("text-right text-xs font-semibold", taxaColor(n.taxa_abertura))}>
-                        {n.taxa_abertura}%
-                      </TableCell>
-                      <TableCell className="text-right text-[10px] text-muted-foreground">
-                        {n.data ? formatDistanceToNow(new Date(n.data), { addSuffix: true, locale: ptBR }) : "—"}
-                      </TableCell>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleSendTestPush}
+              disabled={isSendingTest}
+              className="w-full"
+            >
+              {isSendingTest ? "Enviando teste..." : "🔔 Enviar push de teste"}
+            </Button>
+
+            <div className="space-y-2">
+              <p className="text-sm font-semibold">Histórico de envios</p>
+
+              {pushStats.notificacoes.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Nenhuma notificação enviada ainda.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Título</TableHead>
+                      <TableHead className="text-right">Enviadas</TableHead>
+                      <TableHead className="text-right">Abertas</TableHead>
+                      <TableHead className="text-right">Taxa</TableHead>
+                      <TableHead className="text-right">Data</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+                  </TableHeader>
+                  <TableBody>
+                    {pushStats.notificacoes.map((n) => (
+                      <TableRow key={n.id}>
+                        <TableCell className="max-w-[260px] truncate text-xs font-medium">{truncateTitle(n.titulo, 40)}</TableCell>
+                        <TableCell className="text-right text-xs">{n.enviadas.toLocaleString("pt-BR")}</TableCell>
+                        <TableCell className="text-right text-xs">{n.abertas.toLocaleString("pt-BR")}</TableCell>
+                        <TableCell className={cn("text-right text-xs font-semibold", taxaColor(n.taxa_abertura))}>
+                          {n.taxa_abertura.toFixed(1)}%
+                        </TableCell>
+                        <TableCell className="text-right text-[10px] text-muted-foreground">
+                          {formatDataRelativa(n.data)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
           </>
         ) : (
           <p className="text-xs text-muted-foreground text-center py-4">Erro ao carregar dados do Push</p>
