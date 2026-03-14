@@ -44,9 +44,8 @@ export default function NovoBolao() {
   const [valorCota, setValorCota] = useState("");
   const [valorPremiacao, setValorPremiacao] = useState("");
   const [descricaoEstrategia, setDescricaoEstrategia] = useState("");
-  const [palpitesTexto, setPalpitesTexto] = useState<string[]>([]);
+  const [palpitesBruto, setPalpitesBruto] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
-  const [emptyIndices, setEmptyIndices] = useState<Set<number>>(new Set());
   const [loadingConcurso, setLoadingConcurso] = useState(false);
   const [autoPreenchido, setAutoPreenchido] = useState(false);
   const [semDados, setSemDados] = useState(false);
