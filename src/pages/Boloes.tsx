@@ -358,20 +358,62 @@ function BolaoDetailSheet({ bolao, open, onOpenChange }: BolaoDetailSheetProps) 
                 </div>
               </div>
               <div>
-                {palpites.map((p: number[], idx: number) => (
-                  <div key={idx} className={cn("py-3", idx < palpites.length - 1 && "border-b border-border/30")}>
-                    <span className="text-xs text-muted-foreground font-medium mb-2 block">
-                      Palpite {String(idx + 1).padStart(2, "0")}
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {p.map((d, j) => (
-                        <span key={j} className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-muted/50 text-xs font-mono font-medium">
-                          {String(d).padStart(2, "0")}
+                {palpites.map((p: number[], idx: number) => {
+                  // Check verification data for this palpite
+                  const verificacao = bolao.resultado_verificado && Array.isArray(bolao.palpites_premiados)
+                    ? (bolao.palpites_premiados as any[]).find((v: any) => v.palpite_index === idx)
+                    : null;
+                  const dezenasAcertadas: number[] = verificacao?.dezenas_acertadas ?? [];
+
+                  return (
+                    <div key={idx} className={cn("py-3", idx < palpites.length - 1 && "border-b border-border/30")}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs text-muted-foreground font-medium">
+                          Palpite {String(idx + 1).padStart(2, "0")}
                         </span>
-                      ))}
+                        {verificacao && verificacao.premiado && verificacao.is_ouro && (
+                          <Badge className="text-[10px] bg-yellow-500/20 text-yellow-600 border-yellow-500/30 h-5">
+                            🥇 {verificacao.faixa} — {verificacao.acertos} acertos
+                          </Badge>
+                        )}
+                        {verificacao && verificacao.premiado && !verificacao.is_ouro && (
+                          <Badge className="text-[10px] bg-emerald-500/20 text-emerald-600 border-emerald-500/30 h-5">
+                            ✅ {verificacao.faixa} — {verificacao.acertos} acertos
+                          </Badge>
+                        )}
+                        {verificacao && !verificacao.premiado && (
+                          <Badge variant="secondary" className="text-[10px] h-5">
+                            {verificacao.acertos} acertos
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {p.map((d, j) => {
+                          const acertou = dezenasAcertadas.includes(d);
+                          const isOuro = acertou && verificacao?.is_ouro;
+                          const isPremiado = acertou && verificacao?.premiado && !verificacao?.is_ouro;
+                          return (
+                            <span
+                              key={j}
+                              className={cn(
+                                "inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-mono font-medium",
+                                isOuro
+                                  ? "bg-yellow-400 text-yellow-900 ring-2 ring-yellow-500"
+                                  : isPremiado
+                                    ? "bg-emerald-500 text-white ring-2 ring-emerald-600"
+                                    : acertou
+                                      ? "bg-emerald-500 text-white ring-2 ring-emerald-600"
+                                      : "bg-muted/50"
+                              )}
+                            >
+                              {String(d).padStart(2, "0")}
+                            </span>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </TooltipProvider>
