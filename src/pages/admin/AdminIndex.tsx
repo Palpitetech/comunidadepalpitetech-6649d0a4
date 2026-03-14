@@ -3,7 +3,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
   FileText, Users, Bot, DollarSign, Gift, ShoppingCart, Crown, 
-  UserCheck, UserX, Loader2, ChevronRight, Activity, Plug, Clock
+  UserCheck, UserX, Loader2, ChevronRight, Activity, Plug, Clock, BarChart2
 } from "lucide-react";
 import { BotHealthWidget } from "@/components/admin/BotHealthWidget";
 import { useQuery } from "@tanstack/react-query";
@@ -130,6 +130,7 @@ const ADMIN_MODULES = [
   { to: "/admin/convites", icon: Gift, label: "Convites", desc: "Ranking de indicações" },
   { to: "/admin/vendas", icon: ShoppingCart, label: "Vendas", desc: "Histórico Kirvano" },
   { to: "/admin/eventos", icon: Activity, label: "Eventos", desc: "Timeline de eventos por lead" },
+  { to: "/admin/metricas", icon: BarChart2, label: "Métricas", desc: "UTM, conversão e receita" },
   { to: "/admin/integracoes", icon: Plug, label: "Integrações", desc: "Webhooks e fontes externas" },
 ];
 
