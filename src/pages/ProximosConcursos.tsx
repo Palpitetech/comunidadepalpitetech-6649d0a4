@@ -10,9 +10,12 @@ import { format, parseISO, differenceInCalendarDays, startOfDay } from "date-fns
 import { ptBR } from "date-fns/locale";
 
 const LOTERIA_META: Record<string, { emoji: string; label: string; color: string }> = {
-  lotofacil: { emoji: "🍀", label: "Lotofácil", color: "hsl(var(--chart-2))" },
   megasena: { emoji: "🎯", label: "Mega-Sena", color: "hsl(var(--chart-1))" },
+  lotofacil: { emoji: "🍀", label: "Lotofácil", color: "hsl(var(--chart-2))" },
   duplasena: { emoji: "🎲", label: "Dupla Sena", color: "hsl(var(--chart-4))" },
+  quina: { emoji: "🌟", label: "Quina", color: "hsl(var(--chart-3))" },
+  lotomania: { emoji: "🎰", label: "Lotomania", color: "hsl(var(--chart-5))" },
+  diadesorte: { emoji: "🍀", label: "Dia de Sorte", color: "hsl(var(--primary))" },
 };
 
 function formatCurrency(value: number) {
@@ -123,64 +126,97 @@ export default function ProximosConcursos() {
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
-            {concursos.map((c: any) => {
-              const meta = LOTERIA_META[c.loteria] || {
-                emoji: "🎰",
-                label: c.loteria,
-                color: "hsl(var(--primary))",
-              };
-              const premio = Number(c.premio_estimado) || 0;
+            {[...concursos]
+              .sort((a: any, b: any) => {
+                const aHasData = a.numero_concurso && a.numero_concurso !== "0";
+                const bHasData = b.numero_concurso && b.numero_concurso !== "0";
+                if (aHasData && !bHasData) return -1;
+                if (!aHasData && bHasData) return 1;
+                if (aHasData && bHasData) {
+                  return (a.data_sorteio || "").localeCompare(b.data_sorteio || "");
+                }
+                const aLabel = LOTERIA_META[a.loteria]?.label || a.loteria;
+                const bLabel = LOTERIA_META[b.loteria]?.label || b.loteria;
+                return aLabel.localeCompare(bLabel);
+              })
+              .map((c: any) => {
+                const meta = LOTERIA_META[c.loteria] || {
+                  emoji: "🎰",
+                  label: c.loteria,
+                  color: "hsl(var(--primary))",
+                };
+                const hasData = c.numero_concurso && c.numero_concurso !== "0";
+                const premio = Number(c.premio_estimado) || 0;
 
-              return (
-                <Card key={c.id} className="overflow-hidden">
-                  <div className="h-1" style={{ backgroundColor: meta.color }} />
-                  <CardContent className="p-5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold flex items-center gap-2">
-                        <span className="text-xl">{meta.emoji}</span>
-                        {meta.label}
-                      </span>
-                      {c.acumulado && (
-                        <Badge variant="destructive" className="gap-1 text-xs font-bold">
-                          <Flame className="h-3 w-3" />
-                          ACUMULADO
-                        </Badge>
-                      )}
-                    </div>
-
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">
-                        Concurso <span className="font-semibold text-foreground">{c.numero_concurso}</span>
-                      </p>
-                      {c.data_sorteio && (
-                        <p className="text-sm flex items-center gap-1.5">
-                          <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="capitalize">{formatDataSorteio(c.data_sorteio)}</span>
-                        </p>
-                      )}
-                    </div>
-
-                    {premio > 0 && (
-                      <div className="pt-1">
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Trophy className="h-3 w-3" />
-                          Prêmio estimado
-                        </p>
-                        <p className="text-xl font-bold text-foreground">
-                          {formatCurrency(premio)}
-                        </p>
+                return (
+                  <Card key={c.id} className={`overflow-hidden${!hasData ? " opacity-70" : ""}`}>
+                    <div className="h-1" style={{ backgroundColor: meta.color }} />
+                    <CardContent className="p-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-bold flex items-center gap-2">
+                          <span className="text-xl">{meta.emoji}</span>
+                          {meta.label}
+                        </span>
+                        {hasData && c.acumulado && (
+                          <Badge variant="destructive" className="gap-1 text-xs font-bold">
+                            <Flame className="h-3 w-3" />
+                            ACUMULADO
+                          </Badge>
+                        )}
                       </div>
-                    )}
 
-                    {c.updated_at && (
-                      <p className="text-[11px] text-muted-foreground/70">
-                        Atualizado: {relativeUpdated(c.updated_at)}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
+                      {hasData ? (
+                        <>
+                          <div className="space-y-1">
+                            <p className="text-sm text-muted-foreground">
+                              Concurso <span className="font-semibold text-foreground">{c.numero_concurso}</span>
+                            </p>
+                            {c.data_sorteio && (
+                              <p className="text-sm flex items-center gap-1.5">
+                                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="capitalize">{formatDataSorteio(c.data_sorteio)}</span>
+                              </p>
+                            )}
+                          </div>
+
+                          {premio > 0 && (
+                            <div className="pt-1">
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Trophy className="h-3 w-3" />
+                                Prêmio estimado
+                              </p>
+                              <p className="text-xl font-bold text-foreground">
+                                {formatCurrency(premio)}
+                              </p>
+                            </div>
+                          )}
+
+                          {c.updated_at && (
+                            <p className="text-[11px] text-muted-foreground/70">
+                              Atualizado: {relativeUpdated(c.updated_at)}
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <div className="space-y-1">
+                            <p className="text-sm text-muted-foreground">Próximo concurso</p>
+                            <p className="text-sm font-medium text-foreground">Em breve</p>
+                          </div>
+                          <div className="pt-1">
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Trophy className="h-3 w-3" />
+                              Prêmio estimado
+                            </p>
+                            <p className="text-xl font-bold text-muted-foreground">A confirmar</p>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground/70">Aguarde atualização</p>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
           </div>
         )}
       </div>
