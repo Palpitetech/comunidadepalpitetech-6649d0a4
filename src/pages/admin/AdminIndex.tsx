@@ -56,13 +56,40 @@ function UserStatsWidget() {
 
   return (
     <div className="space-y-3">
-      {/* Stats row */}
-      <div className="grid grid-cols-3 gap-2">
-        <div className="bg-muted/40 rounded-xl p-3 text-center">
-          <Users className="h-4 w-4 text-primary mx-auto mb-1" />
-          <p className="text-xl font-bold">{stats.total}</p>
-          <p className="text-[10px] text-muted-foreground">Total</p>
+      {/* Cadastros: total, verificados, pendentes */}
+      <div className="bg-muted/30 rounded-xl p-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold flex items-center gap-1.5">
+            <Users className="h-3.5 w-3.5 text-primary" /> Total cadastros
+          </p>
+          <span className="text-xl font-bold">{stats.total}</span>
         </div>
+        <div className="flex items-center justify-between text-xs">
+          <span className="flex items-center gap-1 text-muted-foreground">
+            <UserCheck className="h-3 w-3 text-green-600" /> Verificados
+          </span>
+          <span className="font-medium">
+            {stats.verificados}
+            <span className="text-muted-foreground ml-1">
+              {stats.total > 0 ? `${Math.round((stats.verificados / stats.total) * 100)}%` : "0%"}
+            </span>
+          </span>
+        </div>
+        <div className="flex items-center justify-between text-xs">
+          <span className="flex items-center gap-1 text-muted-foreground">
+            <Clock className="h-3 w-3 text-yellow-500" /> Pendentes
+          </span>
+          <span className="font-medium">
+            {stats.pendentes}
+            <span className="text-muted-foreground ml-1">
+              {stats.total > 0 ? `${Math.round((stats.pendentes / stats.total) * 100)}%` : "0%"}
+            </span>
+          </span>
+        </div>
+      </div>
+
+      {/* Pagos / Free */}
+      <div className="grid grid-cols-2 gap-2">
         <div className="bg-muted/40 rounded-xl p-3 text-center">
           <UserCheck className="h-4 w-4 text-green-600 mx-auto mb-1" />
           <p className="text-xl font-bold">{stats.pagos}</p>

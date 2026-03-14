@@ -28,8 +28,8 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to={isHome ? "/" : "/login"} state={{ from: location }} replace />;
   }
 
-  // Se perfil ainda marca não verificado e o auth também não confirma email, redireciona
-  if (profile && profile.email_verificado === false && !isAuthEmailVerified) {
+  // Se perfil marca não verificado, redireciona (fonte de verdade: perfis.email_verificado)
+  if (profile && profile.email_verificado === false) {
     return <Navigate to="/verificar-email" replace />;
   }
 
