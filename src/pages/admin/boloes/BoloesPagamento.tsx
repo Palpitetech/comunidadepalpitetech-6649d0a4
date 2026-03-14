@@ -223,7 +223,7 @@ export default function BoloesPagamento() {
 
   return (
     <div className="container max-w-5xl mx-auto py-6 px-4 space-y-4">
-      <PageHeader title="Pagamentos" subtitle="Bolões com comprovante aprovado aguardando pagamento" />
+      <PageHeader title="Pagamentos" description="Bolões com comprovante aprovado aguardando pagamento" />
 
       {/* Summary */}
       <div className="flex gap-3">
