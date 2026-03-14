@@ -300,6 +300,15 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Fire and forget: atualizar próximos concursos
+    const syncProximosSecret = Deno.env.get('NOTIFICATIONS_WEBHOOK_SECRET');
+    if (syncProximosSecret) {
+      fetch(
+        `${supabaseUrl}/functions/v1/sync-proximos-concursos?secret=${syncProximosSecret}`,
+        { method: 'POST' }
+      ).catch(err => console.error('[sync-megasena] Erro ao atualizar proximos:', err));
+    }
+
     return new Response(
       JSON.stringify({
         message: "Sincronização concluída",

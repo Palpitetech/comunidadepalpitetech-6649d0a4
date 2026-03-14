@@ -109,6 +109,7 @@ const App = () => (
             <Route path="/verificar-email" element={<VerificarEmail />} />
             <Route path="/termos" element={<Termos />} />
             <Route path="/privacidade" element={<Privacidade />} />
+            <Route path="/proximos-concursos" element={<ProximosConcursos />} />
 
             {/* Rotas Protegidas - Requer Login */}
             <Route path="/home" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />

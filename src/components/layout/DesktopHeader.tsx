@@ -95,6 +95,12 @@ export function DesktopHeader() {
               <span className="hidden lg:inline">WhatsApp</span>
             </Button>
           </a>
+          <Link to="/proximos-concursos">
+            <Button variant="ghost" className="gap-1.5 h-10 px-3 text-sm">
+              <Calendar className="h-4 w-4" />
+              <span className="hidden lg:inline">Próximos Concursos</span>
+            </Button>
+          </Link>
 
           {/* Loterias Dropdown com Submenus */}
           <DropdownMenu>
