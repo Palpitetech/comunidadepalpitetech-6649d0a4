@@ -123,21 +123,26 @@ function BolaoDetailSheet({ bolao, open, onOpenChange }: BolaoDetailSheetProps) 
   const isAtivo = bolao.status === "ativo";
 
   const handleDownloadTxt = () => {
-    const lines = [
+    const linhas = [
       `BOLÃO: ${bolao.codigo}`,
-      `LOTERIA: ${LOTERIA_LABELS[bolao.loteria] || bolao.loteria}`,
+      `LOTERIA: ${(bolao.loteria || "").toUpperCase()}`,
       `CONCURSO: ${bolao.concurso_numero}`,
-      `DATA: ${formatDate(bolao.data_concurso)}`,
+      `DATA: ${formatDateLong(bolao.data_concurso).formatted}`,
       "",
+      "PALPITES:",
+      "",
+      ...palpites.map(
+        (p: number[], i: number) =>
+          `Palpite ${String(i + 1).padStart(2, "0")}: ${p.map((n) => String(n).padStart(2, "0")).join(" - ")}`
+      ),
+      "",
+      "Gerado por Palpite Tech",
     ];
-    palpites.forEach((p: number[], i: number) => {
-      lines.push(`PALPITE ${i + 1}: ${p.map((n) => String(n).padStart(2, "0")).join("-")}`);
-    });
-    const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+    const blob = new Blob([linhas.join("\n")], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${bolao.codigo}-palpites.txt`;
+    a.download = `${bolao.codigo}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
