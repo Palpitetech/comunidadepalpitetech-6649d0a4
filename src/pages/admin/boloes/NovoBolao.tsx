@@ -43,6 +43,45 @@ export default function NovoBolao() {
   const [palpitesTexto, setPalpitesTexto] = useState<string[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [emptyIndices, setEmptyIndices] = useState<Set<number>>(new Set());
+  const [loadingConcurso, setLoadingConcurso] = useState(false);
+  const [autoPreenchido, setAutoPreenchido] = useState(false);
+  const [semDados, setSemDados] = useState(false);
+
+  useEffect(() => {
+    setAutoPreenchido(false);
+    setSemDados(false);
+  }, [loteria]);
+
+  const handleLoteriaSelecionada = async (valor: string) => {
+    setLoteria(valor);
+    setLoadingConcurso(true);
+    setAutoPreenchido(false);
+    setSemDados(false);
+
+    try {
+      const { data, error } = await supabase
+        .from("proximos_concursos")
+        .select("*")
+        .eq("loteria", valor)
+        .maybeSingle();
+
+      if (data && data.numero_concurso && data.numero_concurso !== "0") {
+        setConcursoNumero(data.numero_concurso);
+        setDataConcurso(data.data_sorteio ?? "");
+        setValorPremiacao(data.premio_estimado?.toString() ?? "");
+        setAutoPreenchido(true);
+      } else {
+        setConcursoNumero("");
+        setDataConcurso("");
+        setValorPremiacao("");
+        setSemDados(true);
+      }
+    } catch (err) {
+      console.error("[NovoBolao] Erro ao buscar concurso:", err);
+    } finally {
+      setLoadingConcurso(false);
+    }
+  };
 
   const loteriaInfo = LOTERIAS.find((l) => l.value === loteria);
   const sigla = loteriaInfo?.sigla || "XX";
