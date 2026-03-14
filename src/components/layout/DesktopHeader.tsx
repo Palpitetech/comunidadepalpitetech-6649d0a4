@@ -78,12 +78,6 @@ export function DesktopHeader() {
 
         {/* Desktop Navigation - Compacto */}
         <nav className="flex items-center gap-1">
-          <Link to="/home">
-            <Button variant="ghost" className="gap-1.5 h-10 px-3 text-sm">
-              <Home className="h-4 w-4" />
-              <span className="hidden lg:inline">Início</span>
-            </Button>
-          </Link>
           <Link to="/comunidade">
             <Button variant="ghost" className="gap-1.5 h-10 px-3 text-sm">
               <Users className="h-4 w-4" />
