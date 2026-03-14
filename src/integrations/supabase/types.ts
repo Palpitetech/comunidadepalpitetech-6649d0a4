@@ -343,6 +343,7 @@ export type Database = {
           mes_ano: string
           numero_bolao: number
           palpites: Json | null
+          pdf_url: string | null
           sigla: string
           status: string | null
           task_comprovantes: boolean | null
@@ -369,6 +370,7 @@ export type Database = {
           mes_ano: string
           numero_bolao: number
           palpites?: Json | null
+          pdf_url?: string | null
           sigla: string
           status?: string | null
           task_comprovantes?: boolean | null
@@ -395,6 +397,7 @@ export type Database = {
           mes_ano?: string
           numero_bolao?: number
           palpites?: Json | null
+          pdf_url?: string | null
           sigla?: string
           status?: string | null
           task_comprovantes?: boolean | null
