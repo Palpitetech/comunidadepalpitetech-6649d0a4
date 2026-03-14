@@ -52,27 +52,43 @@ export interface PostDetails {
   cta_override_buttons?: CtaButton[];
 }
 
-export function usePostDetails(postId: string) {
+export function usePostDetails(slugOrId: string) {
   const { user } = useAuthContext();
 
   const postQuery = useQuery({
-    queryKey: ["post", postId],
+    queryKey: ["post", slugOrId],
     queryFn: async (): Promise<PostDetails> => {
-      // Fire post + profile queries in parallel
-      const postPromise = supabase
-        .from("postagens")
-        .select(
-          `id, titulo, conteudo, loteria_tag, media_url, media_type, curtidas,
-           respostas_count, created_at, user_id, tool_snapshot,
-           external_link_url, external_link_text`
-        )
-        .eq("id", postId)
-        .single();
+      // Try slug first, then fallback to id
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
 
-      const [postResult] = await Promise.all([postPromise]);
+      let postData: any = null;
 
-      if (postResult.error) throw postResult.error;
-      const postData = postResult.data;
+      if (!isUuid) {
+        const { data } = await supabase
+          .from("postagens")
+          .select(
+            `id, slug, titulo, conteudo, loteria_tag, media_url, media_type, curtidas,
+             respostas_count, created_at, user_id, tool_snapshot,
+             external_link_url, external_link_text`
+          )
+          .eq("slug", slugOrId)
+          .maybeSingle();
+        postData = data;
+      }
+
+      if (!postData) {
+        const { data, error } = await supabase
+          .from("postagens")
+          .select(
+            `id, slug, titulo, conteudo, loteria_tag, media_url, media_type, curtidas,
+             respostas_count, created_at, user_id, tool_snapshot,
+             external_link_url, external_link_text`
+          )
+          .eq("id", isUuid ? slugOrId : slugOrId)
+          .single();
+        if (error) throw error;
+        postData = data;
+      }
 
       // Profile + CTA in parallel
       const profilePromise = supabase
