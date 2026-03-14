@@ -10,9 +10,12 @@ import { format, parseISO, differenceInCalendarDays, startOfDay } from "date-fns
 import { ptBR } from "date-fns/locale";
 
 const LOTERIA_META: Record<string, { emoji: string; label: string; color: string }> = {
-  lotofacil: { emoji: "🍀", label: "Lotofácil", color: "hsl(var(--chart-2))" },
   megasena: { emoji: "🎯", label: "Mega-Sena", color: "hsl(var(--chart-1))" },
+  lotofacil: { emoji: "🍀", label: "Lotofácil", color: "hsl(var(--chart-2))" },
   duplasena: { emoji: "🎲", label: "Dupla Sena", color: "hsl(var(--chart-4))" },
+  quina: { emoji: "🌟", label: "Quina", color: "hsl(var(--chart-3))" },
+  lotomania: { emoji: "🎰", label: "Lotomania", color: "hsl(var(--chart-5))" },
+  diadesorte: { emoji: "🍀", label: "Dia de Sorte", color: "hsl(var(--primary))" },
 };
 
 function formatCurrency(value: number) {
