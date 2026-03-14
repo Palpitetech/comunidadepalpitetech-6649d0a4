@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface CommunityPost {
   id: string;
+  slug: string | null;
   titulo: string | null;
   conteudo: string;
   loteria_tag: string | null;
@@ -28,7 +29,7 @@ async function fetchCommunityPosts(): Promise<CommunityPost[]> {
   const { data: postsData, error } = await supabase
     .from("postagens")
     .select(
-      `id, titulo, conteudo, loteria_tag, media_url, media_type, curtidas,
+      `id, slug, titulo, conteudo, loteria_tag, media_url, media_type, curtidas,
        respostas_count, created_at, user_id, tipo, tool_snapshot,
        external_link_url, external_link_text`
     )

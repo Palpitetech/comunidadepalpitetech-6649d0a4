@@ -17,6 +17,7 @@ interface SendPushBody {
   concurso_id?: number;
   // For novo_post
   post_id?: string;
+  post_slug?: string;
 }
 
 function requireWebhookSecret(req: Request): boolean {
@@ -35,8 +36,8 @@ function buildUrl(body: SendPushBody): string {
     return `${APP_BASE_URL}/resultados`;
   }
 
-  if (body.tipo === 'novo_post' && body.post_id) {
-    return `${APP_BASE_URL}/post/${body.post_id}`;
+  if (body.tipo === 'novo_post' && (body.post_slug || body.post_id)) {
+    return `${APP_BASE_URL}/comunidade/post/${body.post_slug || body.post_id}`;
   }
 
   return APP_BASE_URL;

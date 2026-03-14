@@ -29,6 +29,7 @@ export interface PostComment {
 
 export interface PostDetails {
   id: string;
+  slug: string | null;
   titulo: string | null;
   conteudo: string;
   loteria_tag: string | null;
@@ -51,27 +52,43 @@ export interface PostDetails {
   cta_override_buttons?: CtaButton[];
 }
 
-export function usePostDetails(postId: string) {
+export function usePostDetails(slugOrId: string) {
   const { user } = useAuthContext();
 
   const postQuery = useQuery({
-    queryKey: ["post", postId],
+    queryKey: ["post", slugOrId],
     queryFn: async (): Promise<PostDetails> => {
-      // Fire post + profile queries in parallel
-      const postPromise = supabase
-        .from("postagens")
-        .select(
-          `id, titulo, conteudo, loteria_tag, media_url, media_type, curtidas,
-           respostas_count, created_at, user_id, tool_snapshot,
-           external_link_url, external_link_text`
-        )
-        .eq("id", postId)
-        .single();
+      // Try slug first, then fallback to id
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
 
-      const [postResult] = await Promise.all([postPromise]);
+      let postData: any = null;
 
-      if (postResult.error) throw postResult.error;
-      const postData = postResult.data;
+      if (!isUuid) {
+        const { data } = await supabase
+          .from("postagens")
+          .select(
+            `id, slug, titulo, conteudo, loteria_tag, media_url, media_type, curtidas,
+             respostas_count, created_at, user_id, tool_snapshot,
+             external_link_url, external_link_text`
+          )
+          .eq("slug", slugOrId)
+          .maybeSingle();
+        postData = data;
+      }
+
+      if (!postData) {
+        const { data, error } = await supabase
+          .from("postagens")
+          .select(
+            `id, slug, titulo, conteudo, loteria_tag, media_url, media_type, curtidas,
+             respostas_count, created_at, user_id, tool_snapshot,
+             external_link_url, external_link_text`
+          )
+          .eq("id", isUuid ? slugOrId : slugOrId)
+          .single();
+        if (error) throw error;
+        postData = data;
+      }
 
       // Profile + CTA in parallel
       const profilePromise = supabase
@@ -103,17 +120,19 @@ export function usePostDetails(postId: string) {
         cta_override_buttons: (ctaData?.cta_override_buttons as CtaButton[]) || [],
       } as PostDetails;
     },
-    enabled: !!postId,
-    staleTime: 30_000, // 30s — post content rarely changes
+    enabled: !!slugOrId,
+    staleTime: 30_000,
   });
 
+  const resolvedPostId = postQuery.data?.id;
+
   const commentsQuery = useQuery({
-    queryKey: ["post-comments", postId],
+    queryKey: ["post-comments", resolvedPostId],
     queryFn: async () => {
       const { data: commentsData, error: commentsError } = await supabase
         .from("post_comments")
         .select("id, conteudo, created_at, user_id, parent_id")
-        .eq("post_id", postId)
+        .eq("post_id", resolvedPostId!)
         .order("created_at", { ascending: true });
 
       if (commentsError) throw commentsError;
@@ -152,24 +171,24 @@ export function usePostDetails(postId: string) {
         replies: repliesMap.get(comment.id) || [],
       }));
     },
-    enabled: !!postId,
-    staleTime: 15_000, // comments can change more frequently
+    enabled: !!resolvedPostId,
+    staleTime: 15_000,
   });
 
   const likeQuery = useQuery({
-    queryKey: ["post-like", postId, user?.id],
+    queryKey: ["post-like", resolvedPostId, user?.id],
     queryFn: async () => {
       if (!user?.id) return false;
       const { data, error } = await supabase
         .from("post_likes")
         .select("id")
-        .eq("post_id", postId)
+        .eq("post_id", resolvedPostId!)
         .eq("user_id", user.id)
         .maybeSingle();
       if (error) throw error;
       return !!data;
     },
-    enabled: !!postId && !!user?.id,
+    enabled: !!resolvedPostId && !!user?.id,
     staleTime: 30_000,
   });
 

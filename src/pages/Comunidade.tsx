@@ -24,7 +24,7 @@ export default function Comunidade() {
   }, [posts]);
 
   const handleClick = useCallback(
-    (postId: string) => navigate(`/comunidade/post/${postId}`),
+    (post: { id: string; slug: string | null }) => navigate(`/comunidade/post/${post.slug || post.id}`),
     [navigate]
   );
 
@@ -67,7 +67,7 @@ export default function Comunidade() {
                 <div className="ring-2 ring-primary/30 rounded-xl">
                   <PostCard
                     post={pinnedPost}
-                    onClick={() => handleClick(pinnedPost.id)}
+                    onClick={() => handleClick(pinnedPost)}
                     onPrefetch={() => handlePrefetch(pinnedPost.id)}
                   />
                 </div>
@@ -78,7 +78,7 @@ export default function Comunidade() {
               <PostCard
                 key={post.id}
                 post={post}
-                onClick={() => handleClick(post.id)}
+                onClick={() => handleClick(post)}
                 onPrefetch={() => handlePrefetch(post.id)}
               />
             ))}

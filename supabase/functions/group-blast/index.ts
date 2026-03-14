@@ -224,7 +224,7 @@ async function handleSend(
         // Generate via AI (default behavior)
         const { data: latestPost } = await supabase
           .from("postagens")
-          .select("id, titulo, conteudo, tipo")
+          .select("id, slug, titulo, conteudo, tipo")
           .neq("tipo", "comentario")
           .order("created_at", { ascending: false })
           .limit(1)
@@ -314,12 +314,14 @@ async function handleSend(
 async function generateAIMessage(
   apiKey: string,
   baseUrl: string,
-  post: { id: string; titulo: string | null; conteudo: string; tipo: string | null }
+  post: { id: string; slug?: string | null; titulo: string | null; conteudo: string; tipo: string | null }
 ): Promise<string | null> {
   if (!apiKey) {
     console.error("[group-blast] LOVABLE_API_KEY não configurada");
     return null;
   }
+
+  const postPath = post.slug || post.id;
 
   const prompt = `Você é assistente de uma comunidade de loterias.
 Crie uma mensagem para WhatsApp seguindo EXATAMENTE este formato:
@@ -329,7 +331,7 @@ Crie uma mensagem para WhatsApp seguindo EXATAMENTE este formato:
 [RESUMO — máximo 2 linhas diretas sobre o conteúdo do post]
 
 Vamos interagir lá na comunidade, deixe seu comentário lá 👇
-${baseUrl}/comunidade/post/${post.id}
+${baseUrl}/comunidade/post/${postPath}?utm=grupo
 
 Regras obrigatórias:
 - Gancho: 1 linha curta e impactante, desperta curiosidade, sem revelar tudo
