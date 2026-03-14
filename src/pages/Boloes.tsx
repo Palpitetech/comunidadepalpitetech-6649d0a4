@@ -16,7 +16,7 @@ import { ToastAction } from "@/components/ui/toast";
 import {
   Ticket,
   Calendar,
-  Trophy,
+  
   Lock,
   Download,
   FileText,
