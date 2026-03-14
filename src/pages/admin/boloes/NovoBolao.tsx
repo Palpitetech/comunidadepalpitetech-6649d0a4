@@ -19,8 +19,12 @@ const LOTERIAS = [
   { value: "lotomania", label: "Lotomania", sigla: "LM", max: 99, min: 0 },
 ];
 
-function parseDezenas(text: string): string[] {
-  return text.split(/[,\s]+/).filter((d) => d.trim().length > 0);
+function parsePalpitesTexto(texto: string) {
+  const linhas = texto.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
+  return linhas.map((linha) => {
+    const dezenas = linha.split(/[-,\s]+/).map((n) => n.trim()).filter((n) => /^\d+$/.test(n)).map((n) => n.padStart(2, "0"));
+    return dezenas;
+  });
 }
 
 export default function NovoBolao() {
