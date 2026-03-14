@@ -159,8 +159,19 @@ export default function AdminUsuarios() {
       case "bloqueados": return stats.bloqueados;
     }
   };
-
-
+  const getUtmBadge = (utm: string | null | undefined) => {
+    if (!utm) return null;
+    const map: Record<string, { emoji: string; label: string; color: string }> = {
+      bio: { emoji: "📱", label: "Bio", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" },
+      grupo: { emoji: "👥", label: "Grupo", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" },
+      meta: { emoji: "📣", label: "Meta", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300" },
+    };
+    const entry = map[utm];
+    if (entry) {
+      return <span className={cn("inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium", entry.color)}>{entry.emoji} {entry.label}</span>;
+    }
+    return <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground font-medium">{utm}</span>;
+  };
   if (loading) {
     return (
       <MainLayout pageTitle="Usuários" onBack={() => navigate("/admin")}>
