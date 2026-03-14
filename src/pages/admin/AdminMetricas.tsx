@@ -1,17 +1,22 @@
 import { useState, useMemo } from "react";
+import { format, subDays, startOfDay } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Users, DollarSign, TrendingUp, Copy, Loader2, ArrowUpDown } from "lucide-react";
+import { Users, DollarSign, TrendingUp, Copy, Loader2, ArrowUpDown, CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-type Periodo = "all" | "30d" | "7d";
+type QuickFilter = "all" | "today" | "yesterday" | "7d" | "14d" | "30d" | "custom";
 type SortCol = "cadastros" | "pagos" | "conversao" | "receita";
 type SortDir = "asc" | "desc";
 
@@ -31,7 +36,8 @@ function copyToClipboard(text: string) {
 }
 
 export default function AdminMetricas() {
-  const [periodo, setPeriodo] = useState<Periodo>("all");
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>("all");
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
   const [sortCol, setSortCol] = useState<SortCol>("cadastros");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [destino, setDestino] = useState(`https://${BASE_URL}`);
@@ -40,17 +46,30 @@ export default function AdminMetricas() {
 
   const activeUtm = customUtm || selectedUtm;
 
+  // Compute effective date range from quick filter or custom range
+  const effectiveDateRange = useMemo(() => {
+    const now = new Date();
+    switch (quickFilter) {
+      case "today": return { from: startOfDay(now), to: undefined };
+      case "yesterday": { const y = subDays(now, 1); return { from: startOfDay(y), to: startOfDay(now) }; }
+      case "7d": return { from: subDays(now, 7), to: undefined };
+      case "14d": return { from: subDays(now, 14), to: undefined };
+      case "30d": return { from: subDays(now, 30), to: undefined };
+      case "custom": return dateRange;
+      default: return { from: undefined, to: undefined };
+    }
+  }, [quickFilter, dateRange]);
+
   const { data, isLoading } = useQuery({
-    queryKey: ["admin-metricas", periodo],
+    queryKey: ["admin-metricas", quickFilter, effectiveDateRange.from?.toISOString(), effectiveDateRange.to?.toISOString()],
     queryFn: async () => {
       let query = supabase.from("perfis").select("id, email, utm_source, status_assinatura, plan_id, is_bot, created_at").eq("is_bot", false);
 
-      if (periodo === "30d") {
-        const d = new Date(); d.setDate(d.getDate() - 30);
-        query = query.gte("created_at", d.toISOString());
-      } else if (periodo === "7d") {
-        const d = new Date(); d.setDate(d.getDate() - 7);
-        query = query.gte("created_at", d.toISOString());
+      if (effectiveDateRange.from) {
+        query = query.gte("created_at", effectiveDateRange.from.toISOString());
+      }
+      if (effectiveDateRange.to) {
+        query = query.lte("created_at", effectiveDateRange.to.toISOString());
       }
 
       const { data: perfis } = await query;
@@ -144,13 +163,46 @@ export default function AdminMetricas() {
     <MainLayout pageTitle="Métricas">
       <div className="px-4 py-3 md:container md:py-8 space-y-6 max-w-4xl mx-auto">
 
-        {/* Filtro de período */}
-        <div className="flex gap-2">
-          {(["all", "30d", "7d"] as Periodo[]).map(p => (
-            <Button key={p} size="sm" variant={periodo === p ? "default" : "outline"} onClick={() => setPeriodo(p)}>
-              {p === "all" ? "Tudo" : p === "30d" ? "30 dias" : "7 dias"}
+        {/* Filtros rápidos + calendário */}
+        <div className="flex flex-wrap gap-2 items-center">
+          {([
+            { key: "all", label: "Tudo" },
+            { key: "today", label: "Hoje" },
+            { key: "yesterday", label: "Ontem" },
+            { key: "7d", label: "7 dias" },
+            { key: "14d", label: "14 dias" },
+            { key: "30d", label: "30 dias" },
+          ] as { key: QuickFilter; label: string }[]).map(({ key, label }) => (
+            <Button key={key} size="sm" variant={quickFilter === key ? "default" : "outline"} onClick={() => { setQuickFilter(key); setDateRange({ from: undefined, to: undefined }); }}>
+              {label}
             </Button>
           ))}
+
+          {/* Date range picker */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button size="sm" variant={quickFilter === "custom" ? "default" : "outline"} className="gap-1.5">
+                <CalendarIcon className="h-3.5 w-3.5" />
+                {quickFilter === "custom" && dateRange.from
+                  ? `${format(dateRange.from, "dd/MM", { locale: ptBR })}${dateRange.to ? ` – ${format(dateRange.to, "dd/MM", { locale: ptBR })}` : ""}`
+                  : "Período"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={(range) => {
+                  setDateRange({ from: range?.from, to: range?.to });
+                  setQuickFilter("custom");
+                }}
+                numberOfMonths={1}
+                locale={ptBR}
+                disabled={(date) => date > new Date()}
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* SEÇÃO 1: Cards de resumo */}
