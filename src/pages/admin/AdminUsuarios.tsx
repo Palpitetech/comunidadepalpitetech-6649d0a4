@@ -360,6 +360,7 @@ export default function AdminUsuarios() {
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Nome</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Email / Celular</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Plano</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Origem</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Tags</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Cadastro</TableHead>
                 <TableHead className="w-8"></TableHead>
