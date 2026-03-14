@@ -77,12 +77,18 @@ import FechamentoDuplaSena from "./pages/duplasena/FechamentoDuplaSena";
 
 const queryClient = new QueryClient();
 
+function UTMCapture() {
+  useUTM();
+  return null;
+}
+
 // Main App component
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <PermissionProvider>
       <TooltipProvider>
+        <UTMCapture />
         <CodeProtection />
         <PWAUpdateHandler />
         <Toaster />

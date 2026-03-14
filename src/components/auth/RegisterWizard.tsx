@@ -7,6 +7,8 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useVerificacao } from "@/hooks/useVerificacao";
 import { captureReferralCode, getStoredReferralCode, clearStoredReferralCode } from "@/hooks/useConvites";
+import { getStoredUTM, clearUTM } from "@/hooks/useUTM";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FormData {
   nome: string;
