@@ -8,7 +8,6 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, isAuthenticated, loading, profile } = useAuthContext();
   const location = useLocation();
-  const isAuthEmailVerified = Boolean(user?.email_confirmed_at);
 
   // Enquanto carrega, mostra um loading simples
   if (loading) {
