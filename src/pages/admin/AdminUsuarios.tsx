@@ -257,9 +257,12 @@ export default function AdminUsuarios() {
                 </div>
                 <p className="text-[11px] text-muted-foreground truncate">{user.email || user.celular || "-"}</p>
               </div>
-              <Badge variant="secondary" className={cn("text-[10px] px-1.5 py-0.5 shrink-0", user.plan && user.plan.price > 0 && "bg-primary/10 text-primary border-primary/20")}>
-                {user.plan?.name || "Free"}
-              </Badge>
+              <div className="flex items-center gap-1 shrink-0">
+                {getUtmBadge(user.utm_source)}
+                <Badge variant="secondary" className={cn("text-[10px] px-1.5 py-0.5", user.plan && user.plan.price > 0 && "bg-primary/10 text-primary border-primary/20")}>
+                  {user.plan?.name || "Free"}
+                </Badge>
+              </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
             </button>
           ))}
