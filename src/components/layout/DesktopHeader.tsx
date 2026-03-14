@@ -102,6 +102,29 @@ export function DesktopHeader() {
             </Button>
           </Link>
 
+          {/* Bolões */}
+          {isAdmin ? (
+            <Link to="/boloes">
+              <Button variant="ghost" className="gap-1.5 h-10 px-3 text-sm">
+                <Ticket className="h-4 w-4" />
+                <span className="hidden lg:inline">Bolões</span>
+              </Button>
+            </Link>
+          ) : (
+            <Button
+              variant="ghost"
+              className="gap-1.5 h-10 px-3 text-sm relative"
+              onClick={() => {
+                const { toast: sonnerToast } = require("sonner");
+                sonnerToast.info("Bolões estará disponível em breve! 🚀");
+              }}
+            >
+              <Ticket className="h-4 w-4" />
+              <span className="hidden lg:inline">Bolões</span>
+              <span className="bg-accent text-accent-foreground text-[8px] font-bold px-1 rounded leading-tight ml-1">BREVE</span>
+            </Button>
+          )}
+
           {/* Loterias Dropdown com Submenus */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
