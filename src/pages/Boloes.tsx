@@ -79,8 +79,10 @@ function formatDate(dateStr: string) {
 function formatDateLong(dateStr: string) {
   const d = new Date(dateStr + "T12:00:00");
   const weekday = d.toLocaleDateString("pt-BR", { weekday: "long" });
+  const weekdayShort = d.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "");
   const formatted = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
-  return { weekday: weekday.charAt(0).toUpperCase() + weekday.slice(1), formatted };
+  const shortFormatted = weekdayShort.charAt(0).toUpperCase() + weekdayShort.slice(1);
+  return { weekday: weekday.charAt(0).toUpperCase() + weekday.slice(1), weekdayShort: shortFormatted, formatted };
 }
 
 function formatCurrency(value: number) {
