@@ -159,8 +159,19 @@ export default function AdminUsuarios() {
       case "bloqueados": return stats.bloqueados;
     }
   };
-
-
+  const getUtmBadge = (utm: string | null | undefined) => {
+    if (!utm) return null;
+    const map: Record<string, { emoji: string; label: string; color: string }> = {
+      bio: { emoji: "📱", label: "Bio", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" },
+      grupo: { emoji: "👥", label: "Grupo", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" },
+      meta: { emoji: "📣", label: "Meta", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300" },
+    };
+    const entry = map[utm];
+    if (entry) {
+      return <span className={cn("inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium", entry.color)}>{entry.emoji} {entry.label}</span>;
+    }
+    return <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground font-medium">{utm}</span>;
+  };
   if (loading) {
     return (
       <MainLayout pageTitle="Usuários" onBack={() => navigate("/admin")}>
@@ -246,9 +257,12 @@ export default function AdminUsuarios() {
                 </div>
                 <p className="text-[11px] text-muted-foreground truncate">{user.email || user.celular || "-"}</p>
               </div>
-              <Badge variant="secondary" className={cn("text-[10px] px-1.5 py-0.5 shrink-0", user.plan && user.plan.price > 0 && "bg-primary/10 text-primary border-primary/20")}>
-                {user.plan?.name || "Free"}
-              </Badge>
+              <div className="flex items-center gap-1 shrink-0">
+                {getUtmBadge(user.utm_source)}
+                <Badge variant="secondary" className={cn("text-[10px] px-1.5 py-0.5", user.plan && user.plan.price > 0 && "bg-primary/10 text-primary border-primary/20")}>
+                  {user.plan?.name || "Free"}
+                </Badge>
+              </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
             </button>
           ))}
@@ -346,6 +360,7 @@ export default function AdminUsuarios() {
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Nome</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Email / Celular</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Plano</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Origem</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Tags</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Cadastro</TableHead>
                 <TableHead className="w-8"></TableHead>
@@ -382,6 +397,9 @@ export default function AdminUsuarios() {
                     </span>
                   </TableCell>
                   <TableCell className="py-2.5">
+                    {getUtmBadge(user.utm_source) || <span className="text-[10px] text-muted-foreground">—</span>}
+                  </TableCell>
+                  <TableCell className="py-2.5">
                     <div className="flex flex-wrap gap-1 max-w-[280px]">
                       {user.tags?.slice(0, 4).map((tag) => (
                         <span key={tag} className="inline-block px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">
@@ -405,7 +423,7 @@ export default function AdminUsuarios() {
               ))}
               {filteredUsers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-16 text-sm text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-16 text-sm text-muted-foreground">
                     {searchTerm ? "Nenhum usuário encontrado" : "Nenhum usuário cadastrado"}
                   </TableCell>
                 </TableRow>

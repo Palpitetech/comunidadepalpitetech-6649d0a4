@@ -10,6 +10,7 @@ import { AdminRoute } from "@/components/auth/AdminRoute";
 import { GatedPage } from "@/components/shared/GatedPage";
 import { CodeProtection } from "@/components/shared/CodeProtection";
 import { PWAUpdateHandler } from "@/components/pwa/PWAUpdateHandler";
+import { useUTM } from "@/hooks/useUTM";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import RecuperarSenha from "./pages/RecuperarSenha";
@@ -76,12 +77,18 @@ import FechamentoDuplaSena from "./pages/duplasena/FechamentoDuplaSena";
 
 const queryClient = new QueryClient();
 
+function UTMCapture() {
+  useUTM();
+  return null;
+}
+
 // Main App component
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <PermissionProvider>
       <TooltipProvider>
+        <UTMCapture />
         <CodeProtection />
         <PWAUpdateHandler />
         <Toaster />
