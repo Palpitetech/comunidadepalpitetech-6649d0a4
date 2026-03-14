@@ -8,10 +8,12 @@ const corsHeaders = {
 
 function converterDataBR(dataBR: string): string {
   const partes = dataBR.split("/");
-  if (partes.length === 3) {
-    return `${partes[2]}-${partes[1]}-${partes[0]}`;
-  }
+  if (partes.length === 3) return `${partes[2]}-${partes[1]}-${partes[0]}`;
   return dataBR;
+}
+
+function parseApiResponse(raw: any): any {
+  return Array.isArray(raw) ? raw[0] : raw;
 }
 
 Deno.serve(async (req) => {
@@ -35,9 +37,7 @@ Deno.serve(async (req) => {
       fromLatest = body.from_latest === true;
       limit = body.limit || 50;
       concursoEspecifico = body.concurso || null;
-    } catch {
-      // sem body
-    }
+    } catch { /* sem body */ }
 
     const TABLE = "resultados_quina";
     const LOTERIA_PARAM = "quina";
@@ -50,38 +50,35 @@ Deno.serve(async (req) => {
     const apiResponse = await fetch(latestUrl);
     if (!apiResponse.ok) throw new Error(`Erro ao buscar API: ${apiResponse.status}`);
 
-    const ultimoResultado = await apiResponse.json();
-    const ultimoConcursoAPI = ultimoResultado.numero_concurso;
+    const ultimoResultado = parseApiResponse(await apiResponse.json());
+    const ultimoConcursoAPI = parseInt(ultimoResultado.numero_concurso, 10);
     console.log(`[${LOTERIA_LABEL}] Último concurso API: ${ultimoConcursoAPI}`);
+
+    function buildRegistro(resultado: any) {
+      const dezenas = resultado.dezenas.map((d: string) => d.padStart(2, "0")).sort();
+      const dataSorteio = converterDataBR(resultado.data_concurso);
+      return {
+        concurso: parseInt(resultado.numero_concurso, 10),
+        data_sorteio: dataSorteio,
+        dezenas,
+        acumulou: resultado.acumulou ?? false,
+        valor_acumulado: resultado.valor_acumulado || 0,
+        valor_premio_principal: resultado.premiacao?.[0]?.valor_premio || resultado.premiacao?.[0]?.valor || 0,
+        data_proximo_concurso: resultado.data_proximo_concurso ? converterDataBR(resultado.data_proximo_concurso) : null,
+        valor_estimado_proximo: resultado.valor_estimado_proximo || 0,
+      };
+    }
 
     // Concurso específico
     if (concursoEspecifico) {
       const concursoUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=${LOTERIA_PARAM}&token=${API_TOKEN}&concurso=${concursoEspecifico}`;
       const res = await fetch(concursoUrl);
       if (!res.ok) throw new Error(`Erro ao buscar concurso ${concursoEspecifico}: ${res.status}`);
-
-      const resultado = await res.json();
-      const dezenas = resultado.dezenas.map((d: string) => d.padStart(2, "0")).sort();
-      const dataSorteio = converterDataBR(resultado.data_concurso);
-
-      const registro = {
-        concurso: resultado.numero_concurso,
-        data_sorteio: dataSorteio,
-        dezenas,
-        acumulou: resultado.acumulou ?? false,
-        valor_acumulado: resultado.valor_acumulado || 0,
-        valor_premio_principal: resultado.premiacao?.[0]?.valor || 0,
-        data_proximo_concurso: resultado.data_proximo_concurso ? converterDataBR(resultado.data_proximo_concurso) : null,
-        valor_estimado_proximo: resultado.valor_estimado_proximo || 0,
-      };
-
+      const resultado = parseApiResponse(await res.json());
+      const registro = buildRegistro(resultado);
       const { error } = await supabase.from(TABLE).upsert(registro, { onConflict: "concurso" });
       if (error) throw new Error(`Erro ao inserir: ${error.message}`);
-
-      return new Response(
-        JSON.stringify({ message: "Concurso sincronizado", concurso: concursoEspecifico }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ message: "Concurso sincronizado", concurso: concursoEspecifico }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // Definir concursos para buscar
@@ -94,23 +91,12 @@ Deno.serve(async (req) => {
       }
       concursosParaBuscar = concursosParaBuscar.sort((a, b) => a - b);
     } else {
-      const { data: ultimoLocal } = await supabase
-        .from(TABLE)
-        .select("concurso")
-        .order("concurso", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
+      const { data: ultimoLocal } = await supabase.from(TABLE).select("concurso").order("concurso", { ascending: false }).limit(1).maybeSingle();
       const ultimoConcursoLocal = ultimoLocal?.concurso || 0;
       console.log(`[${LOTERIA_LABEL}] Último concurso local: ${ultimoConcursoLocal}`);
-
       if (ultimoConcursoAPI <= ultimoConcursoLocal) {
-        return new Response(
-          JSON.stringify({ message: "Já está atualizado", ultimo_concurso: ultimoConcursoLocal }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return new Response(JSON.stringify({ message: "Já está atualizado", ultimo_concurso: ultimoConcursoLocal }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
-
       for (let i = ultimoConcursoLocal + 1; i <= ultimoConcursoAPI; i++) {
         concursosParaBuscar.push(i);
         if (concursosParaBuscar.length >= limit) break;
@@ -118,14 +104,10 @@ Deno.serve(async (req) => {
     }
 
     if (concursosParaBuscar.length === 0) {
-      return new Response(
-        JSON.stringify({ message: "Já está atualizado", ultimo_concurso: ultimoConcursoAPI }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ message: "Já está atualizado", ultimo_concurso: ultimoConcursoAPI }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     console.log(`[${LOTERIA_LABEL}] Buscando ${concursosParaBuscar.length} concursos...`);
-
     const resultadosParaInserir: any[] = [];
 
     for (const concursoId of concursosParaBuscar) {
@@ -137,23 +119,9 @@ Deno.serve(async (req) => {
           const concursoUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=${LOTERIA_PARAM}&token=${API_TOKEN}&concurso=${concursoId}`;
           const res = await fetch(concursoUrl);
           if (!res.ok) { console.error(`Erro ao buscar concurso ${concursoId}: ${res.status}`); continue; }
-          resultado = await res.json();
+          resultado = parseApiResponse(await res.json());
         }
-
-        const dezenas = resultado.dezenas.map((d: string) => d.padStart(2, "0")).sort();
-        const dataSorteio = converterDataBR(resultado.data_concurso);
-
-        resultadosParaInserir.push({
-          concurso: resultado.numero_concurso,
-          data_sorteio: dataSorteio,
-          dezenas,
-          acumulou: resultado.acumulou ?? false,
-          valor_acumulado: resultado.valor_acumulado || 0,
-          valor_premio_principal: resultado.premiacao?.[0]?.valor || 0,
-          data_proximo_concurso: resultado.data_proximo_concurso ? converterDataBR(resultado.data_proximo_concurso) : null,
-          valor_estimado_proximo: resultado.valor_estimado_proximo || 0,
-        });
-
+        resultadosParaInserir.push(buildRegistro(resultado));
         await new Promise(resolve => setTimeout(resolve, 300));
       } catch (err) {
         console.error(`[${LOTERIA_LABEL}] Erro concurso ${concursoId}:`, err);
@@ -165,9 +133,7 @@ Deno.serve(async (req) => {
       if (error) throw new Error(`Erro ao inserir: ${error.message}`);
     }
 
-    const ultimoConcursoInserido = resultadosParaInserir.length > 0
-      ? resultadosParaInserir[resultadosParaInserir.length - 1]?.concurso
-      : ultimoConcursoAPI;
+    const ultimoConcursoInserido = resultadosParaInserir.length > 0 ? resultadosParaInserir[resultadosParaInserir.length - 1]?.concurso : ultimoConcursoAPI;
 
     // Push notification (apenas 1 resultado novo)
     if (resultadosParaInserir.length === 1) {
@@ -175,52 +141,25 @@ Deno.serve(async (req) => {
       const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
       if (webhookSecret && supabaseAnonKey) {
         try {
-          const res = await fetch(`${supabaseUrl}/functions/v1/send-push`, {
+          await fetch(`${supabaseUrl}/functions/v1/send-push`, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${supabaseAnonKey}`,
-              "x-webhook-secret": webhookSecret,
-            },
-            body: JSON.stringify({
-              tipo: "resultado_novo",
-              titulo: `🎯 ${LOTERIA_LABEL} — Concurso ${ultimoConcursoInserido}`,
-              mensagem: `Concurso ${ultimoConcursoInserido} disponível! Confira agora.`,
-              loteria: LOTERIA_PARAM,
-              concurso_id: ultimoConcursoInserido,
-            }),
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseAnonKey}`, "x-webhook-secret": webhookSecret },
+            body: JSON.stringify({ tipo: "resultado_novo", titulo: `🎯 ${LOTERIA_LABEL} — Concurso ${ultimoConcursoInserido}`, mensagem: `Concurso ${ultimoConcursoInserido} disponível!`, loteria: LOTERIA_PARAM, concurso_id: ultimoConcursoInserido }),
           });
-          if (res.ok) console.log(`[PUSH] ✅ ${LOTERIA_LABEL} concurso ${ultimoConcursoInserido}`);
-          else console.error(`[PUSH] Falha: ${res.status}`);
-        } catch (e) {
-          console.error("[PUSH] Erro:", e);
-        }
+          console.log(`[PUSH] ✅ ${LOTERIA_LABEL} concurso ${ultimoConcursoInserido}`);
+        } catch (e) { console.error("[PUSH] Erro:", e); }
       }
     }
 
     // Fire and forget: atualizar próximos concursos
     const syncProximosSecret = Deno.env.get("NOTIFICATIONS_WEBHOOK_SECRET");
     if (syncProximosSecret) {
-      fetch(
-        `${supabaseUrl}/functions/v1/sync-proximos-concursos?secret=${syncProximosSecret}`,
-        { method: "POST" }
-      ).catch(err => console.error(`[${LOTERIA_LABEL}] Erro ao atualizar proximos:`, err));
+      fetch(`${supabaseUrl}/functions/v1/sync-proximos-concursos?secret=${syncProximosSecret}`, { method: "POST" }).catch(err => console.error(`[${LOTERIA_LABEL}] Erro proximos:`, err));
     }
 
-    return new Response(
-      JSON.stringify({
-        message: "Sincronização concluída",
-        loteria: LOTERIA_LABEL,
-        inseridos: resultadosParaInserir.length,
-        ultimo_concurso: ultimoConcursoInserido,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ message: "Sincronização concluída", loteria: LOTERIA_LABEL, inseridos: resultadosParaInserir.length, ultimo_concurso: ultimoConcursoInserido }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (error) {
-    console.error("[Quina] Erro na sincronização:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    console.error("[Quina] Erro:", error);
+    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
