@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,17 +19,17 @@ const LOTERIAS = [
   { value: "lotomania", label: "Lotomania", sigla: "LM", max: 99, min: 0 },
 ];
 
-function parsePalpitesTexto(texto: string) {
+function parsePalpitesTexto(texto: string): string[][] {
   const linhas = texto.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
-  return linhas.map((linha) => {
-    const dezenas = linha.split(/[-,\s]+/).map((n) => n.trim()).filter((n) => /^\d+$/.test(n)).map((n) => n.padStart(2, "0"));
-    return dezenas;
-  });
+  return linhas.map((linha) =>
+    linha.split(/[-,\s]+/).map((n) => n.trim()).filter((n) => /^\d+$/.test(n)).map((n) => n.padStart(2, "0"))
+  );
 }
 
 export default function NovoBolao() {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const now = new Date();
   const mesAnoDefault = String(now.getMonth() + 1).padStart(2, "0") + String(now.getFullYear());
@@ -55,6 +55,15 @@ export default function NovoBolao() {
     setSemDados(false);
   }, [loteria]);
 
+  // Auto-resize textarea
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (el) {
+      el.style.height = "auto";
+      el.style.height = Math.min(Math.max(el.scrollHeight, 200), 500) + "px";
+    }
+  }, [palpitesBruto]);
+
   const handleLoteriaSelecionada = async (valor: string) => {
     setLoteria(valor);
     setLoadingConcurso(true);
@@ -62,7 +71,7 @@ export default function NovoBolao() {
     setSemDados(false);
 
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("proximos_concursos")
         .select("*")
         .eq("loteria", valor)
@@ -88,80 +97,85 @@ export default function NovoBolao() {
 
   const loteriaInfo = LOTERIAS.find((l) => l.value === loteria);
   const sigla = loteriaInfo?.sigla || "XX";
+  const minNum = loteriaInfo?.min ?? 1;
+  const maxNum = loteriaInfo?.max ?? 60;
+  const loteriaLabel = loteriaInfo?.label ?? loteria;
 
   const codigoPreview = useMemo(() => {
     if (!sigla || sigla === "XX" || !mesAno) return "—";
     return `${sigla}-XXXX-${mesAno}`;
   }, [sigla, mesAno]);
 
-  // Sync palpites array with totalPalpites
   const count = totalPalpites || 0;
-  if (palpitesTexto.length !== count) {
-    const next = Array.from({ length: count }, (_, i) => palpitesTexto[i] || "");
-    setPalpitesTexto(next);
-    setEmptyIndices(new Set());
-    setErrors([]);
-  }
 
-  const palpiteStats = useMemo(() => {
-    return palpitesTexto.map((txt) => {
-      const dezenas = parseDezenas(txt);
-      return { count: dezenas.length, complete: dezenas.length === dezenasPorPalpite && dezenas.length > 0 };
+  // Real-time line analysis
+  const linhasAnalisadas = useMemo(() => {
+    const parsed = parsePalpitesTexto(palpitesBruto);
+    return parsed.map((dezenas, i) => {
+      const issues: { type: "error" | "warning"; msg: string }[] = [];
+      const countDez = dezenas.length;
+
+      if (countDez !== dezenasPorPalpite) {
+        const diff = dezenasPorPalpite - countDez;
+        issues.push({
+          type: "error",
+          msg: `${countDez} dezena(s)${diff > 0 ? ` (faltam ${diff})` : ` (excede em ${-diff})`}`,
+        });
+      }
+
+      const seen = new Set<string>();
+      dezenas.forEach((d) => {
+        const n = parseInt(d, 10);
+        if (isNaN(n) || n < minNum || n > maxNum) {
+          issues.push({ type: "warning", msg: `número ${d} inválido para ${loteriaLabel} (${String(minNum).padStart(2, "0")}-${String(maxNum).padStart(2, "0")})` });
+        }
+        if (seen.has(d)) {
+          issues.push({ type: "error", msg: `número ${d} repetido` });
+        }
+        seen.add(d);
+      });
+
+      const ok = issues.length === 0 && countDez === dezenasPorPalpite;
+      return { dezenas, count: countDez, ok, issues };
     });
-  }, [palpitesTexto, dezenasPorPalpite]);
+  }, [palpitesBruto, dezenasPorPalpite, minNum, maxNum, loteriaLabel]);
 
-  const completosCount = palpiteStats.filter((s) => s.complete).length;
+  const completosCount = linhasAnalisadas.filter((l) => l.ok).length;
+  const totalLinhas = linhasAnalisadas.length;
 
   function validate(): string[] {
     const errs: string[] = [];
-    const empty = new Set<number>();
 
     if (!loteria || !concursoNumero || !dataConcurso || !totalPalpites || !totalCotas || !valorCota) {
       errs.push("Preencha todos os campos obrigatórios.");
     }
 
-    // V1: quantidade preenchidos
-    const preenchidos = palpitesTexto.filter((p) => p.trim().length > 0).length;
-    if (preenchidos !== count) {
-      errs.push(`Você informou ${preenchidos} palpite(s) mas o bolão requer ${count}.`);
-      palpitesTexto.forEach((p, i) => { if (!p.trim()) empty.add(i); });
+    if (totalLinhas !== count) {
+      errs.push(`Você informou ${totalLinhas} palpite(s) mas o bolão requer ${count}.`);
     }
 
-    const minNum = loteriaInfo?.min ?? 1;
-    const maxNum = loteriaInfo?.max ?? 60;
-    const loteriaLabel = loteriaInfo?.label ?? loteria;
-
-    palpitesTexto.forEach((txt, i) => {
-      if (!txt.trim()) return;
-      const dezenas = parseDezenas(txt);
-
-      // V2: count
-      if (dezenas.length !== dezenasPorPalpite) {
-        errs.push(`Palpite ${i + 1} tem ${dezenas.length} dezena(s). Necessário: ${dezenasPorPalpite}.`);
+    linhasAnalisadas.forEach((linha, i) => {
+      if (linha.count !== dezenasPorPalpite) {
+        errs.push(`Linha ${i + 1}: ${linha.count} dezena(s). Necessário: ${dezenasPorPalpite}.`);
       }
-
-      // V3: valid numbers
-      const seen = new Set<number>();
-      dezenas.forEach((d) => {
+      const seen = new Set<string>();
+      linha.dezenas.forEach((d) => {
         const n = parseInt(d, 10);
         if (isNaN(n) || n < minNum || n > maxNum) {
-          errs.push(`Palpite ${i + 1}: número "${d}" inválido para ${loteriaLabel}.`);
+          errs.push(`Linha ${i + 1}: número "${d}" inválido para ${loteriaLabel}.`);
         }
-        // V4: duplicates
-        if (seen.has(n)) {
-          errs.push(`Palpite ${i + 1}: número ${String(n).padStart(2, "0")} aparece mais de uma vez.`);
+        if (seen.has(d)) {
+          errs.push(`Linha ${i + 1}: número ${d} repetido.`);
         }
-        seen.add(n);
+        seen.add(d);
       });
     });
 
-    setEmptyIndices(empty);
     return errs;
   }
 
   const handleSave = async (publish: boolean) => {
     setErrors([]);
-    setEmptyIndices(new Set());
 
     if (publish) {
       const errs = validate();
@@ -171,7 +185,6 @@ export default function NovoBolao() {
         return;
       }
     } else {
-      // Rascunho: only basic fields
       if (!loteria || !concursoNumero || !dataConcurso || !totalPalpites || !totalCotas || !valorCota) {
         toast({ title: "Preencha todos os campos obrigatórios", variant: "destructive" });
         return;
@@ -189,9 +202,9 @@ export default function NovoBolao() {
       const codigo = codeData as string;
       const nextNum = parseInt(codigo.split("-")[1], 10);
 
-      const palpitesArray = palpitesTexto
-        .filter((t) => t.trim())
-        .map((t) => parseDezenas(t).map((d) => parseInt(d, 10)).filter((n) => !isNaN(n)));
+      const palpitesArray = linhasAnalisadas.map((l) =>
+        l.dezenas.map((d) => parseInt(d, 10)).filter((n) => !isNaN(n))
+      );
 
       const { data: bolao, error } = await supabase
         .from("boloes")
@@ -234,23 +247,6 @@ export default function NovoBolao() {
       setSaving(false);
     }
   };
-
-  function borderClass(i: number) {
-    if (emptyIndices.has(i)) return "border-destructive";
-    const txt = palpitesTexto[i];
-    if (!txt || !txt.trim()) return "";
-    const c = parseDezenas(txt).length;
-    if (c === dezenasPorPalpite) return "border-[hsl(var(--chart-2))]";
-    return "border-destructive";
-  }
-
-  function hintColor(i: number) {
-    const txt = palpitesTexto[i];
-    if (!txt || !txt.trim()) return "text-muted-foreground";
-    const c = parseDezenas(txt).length;
-    if (c === dezenasPorPalpite) return "text-[hsl(var(--chart-2))]";
-    return "text-destructive";
-  }
 
   return (
     <MainLayout pageTitle="Novo Bolão">
@@ -359,54 +355,74 @@ export default function NovoBolao() {
               <Textarea value={descricaoEstrategia} onChange={(e) => setDescricaoEstrategia(e.target.value)} rows={3} />
             </div>
 
-            {/* 12. Palpites */}
-            <div className="space-y-3">
+            {/* 12. Palpites — textarea único */}
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Palpites do Bolão</Label>
-                {count > 0 && (
+                {count > 0 && totalLinhas > 0 && (
                   <span className="text-xs font-medium flex items-center gap-1">
-                    {completosCount === count ? (
+                    {completosCount === count && totalLinhas === count ? (
                       <CheckCircle2 className="h-3.5 w-3.5 text-[hsl(var(--chart-2))]" />
                     ) : (
                       <XCircle className="h-3.5 w-3.5 text-muted-foreground" />
                     )}
-                    <span className={completosCount === count ? "text-[hsl(var(--chart-2))]" : "text-muted-foreground"}>
-                      {completosCount}/{count} palpites completos
+                    <span className={totalLinhas === count && completosCount === count ? "text-[hsl(var(--chart-2))]" : totalLinhas !== count ? "text-destructive" : "text-muted-foreground"}>
+                      Palpites: {totalLinhas} / {count}
                     </span>
                   </span>
                 )}
               </div>
 
-              {count === 0 && (
-                <p className="text-xs text-muted-foreground">Defina a quantidade de palpites acima.</p>
-              )}
+              <textarea
+                ref={textareaRef}
+                value={palpitesBruto}
+                onChange={(e) => setPalpitesBruto(e.target.value)}
+                placeholder={`Cole um palpite por linha.\nEx:\n01-02-03-04-05-06-07-08-09-10-11-12-13-14-15\n02-03-04-05-06-07-08-09-10-11-12-13-14-15-16`}
+                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono text-xs"
+                style={{ minHeight: 200, maxHeight: 500, resize: "none", overflow: "auto" }}
+              />
+              <p className="text-xs text-muted-foreground">
+                Cole um palpite por linha. Separe os números por hífen (-), vírgula (,) ou espaço.
+              </p>
 
-              <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                {Array.from({ length: count }).map((_, i) => {
-                  const c = palpiteStats[i]?.count ?? 0;
-                  return (
-                    <div key={i} className="space-y-1">
-                      <span className="text-xs font-medium text-muted-foreground">Palpite {i + 1}</span>
-                      <Textarea
-                        value={palpitesTexto[i] || ""}
-                        onChange={(e) => {
-                          const next = [...palpitesTexto];
-                          next[i] = e.target.value;
-                          setPalpitesTexto(next);
-                        }}
-                        placeholder="Ex: 01, 02, 03, 04, 05, 06"
-                        className={`font-mono text-xs min-h-[48px] ${borderClass(i)}`}
-                        rows={2}
-                      />
-                      <span className={`text-xs ${hintColor(i)}`}>
-                        {c} / {dezenasPorPalpite} dezenas
-                        {c === dezenasPorPalpite && c > 0 && " ✅"}
-                        {c > 0 && c !== dezenasPorPalpite && " ❌"}
-                      </span>
+              {/* Feedback em tempo real */}
+              {totalLinhas > 0 && (
+                <div className="rounded-md border bg-muted/50 p-3 space-y-1.5 max-h-[250px] overflow-y-auto">
+                  {linhasAnalisadas.map((linha, i) => (
+                    <div key={i} className="flex items-start gap-1.5 text-xs">
+                      {linha.ok ? (
+                        <>
+                          <span className="text-[hsl(var(--chart-2))] shrink-0">✅</span>
+                          <span className="text-[hsl(var(--chart-2))]">
+                            Linha {i + 1}: {linha.count} dezenas
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          {linha.issues.some((x) => x.type === "warning") && !linha.issues.some((x) => x.type === "error") ? (
+                            <span className="text-yellow-600 shrink-0">⚠️</span>
+                          ) : (
+                            <span className="text-destructive shrink-0">❌</span>
+                          )}
+                          <div>
+                            <span className={linha.issues.some((x) => x.type === "error") ? "text-destructive" : "text-yellow-600"}>
+                              Linha {i + 1}: {linha.count}/{dezenasPorPalpite} dezenas
+                            </span>
+                            {linha.issues.map((issue, j) => (
+                              <span key={j} className={`block ml-3 ${issue.type === "warning" ? "text-yellow-600" : "text-destructive"}`}>
+                                — {issue.msg}
+                              </span>
+                            ))}
+                          </div>
+                        </>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
+              )}
+              {totalLinhas === 0 && palpitesBruto.trim() === "" && count > 0 && (
+                <p className="text-xs text-muted-foreground">Cole seus palpites acima.</p>
+              )}
             </div>
 
             {/* Errors */}
