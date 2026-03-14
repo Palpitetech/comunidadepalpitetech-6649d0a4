@@ -91,16 +91,23 @@ export default function BoloesPagamento() {
   const [confirmPagar, setConfirmPagar] = useState<Bolao | null>(null);
   const [confirmDesfazer, setConfirmDesfazer] = useState<Bolao | null>(null);
   const [loading, setLoading] = useState(false);
+  const [dataFiltro, setDataFiltro] = useState<Date | undefined>(undefined);
 
   const { data: boloes = [], isLoading } = useQuery({
-    queryKey: ["boloes-pagamento"],
+    queryKey: ["boloes-pagamento", dataFiltro?.toISOString()],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("boloes")
-        .select("id, codigo, loteria, sigla, concurso_numero, data_concurso, total_palpites, cotas_vendidas, valor_cota, valor_registro, task_pago, pago_em, pdf_url, status")
+        .select("id, codigo, loteria, sigla, concurso_numero, data_concurso, total_palpites, cotas_vendidas, valor_cota, valor_registro, task_pago, pago_em, pdf_url, status, updated_at")
         .eq("task_comprovantes", true)
         .order("task_pago", { ascending: true })
         .order("data_concurso", { ascending: true });
+      if (dataFiltro) {
+        const dateStr = format(dataFiltro, "yyyy-MM-dd");
+        q = q.gte("updated_at", `${dateStr}T00:00:00`)
+             .lte("updated_at", `${dateStr}T23:59:59`);
+      }
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as Bolao[];
     },
