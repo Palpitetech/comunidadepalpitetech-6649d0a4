@@ -278,9 +278,13 @@ export default function NovoBolao() {
             </div>
 
             {/* 2. Mês/Ano */}
-            <div className="space-y-1.5">
-              <Label>Mês/Ano *</Label>
-              <Input value={mesAno} onChange={(e) => setMesAno(e.target.value)} placeholder="032026" />
+            <div className="space-y-1">
+              <Label>Mês/Ano</Label>
+              <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-2 cursor-not-allowed">
+                <span className="text-sm">📅 {mesAnoLabel}</span>
+                <span className="ml-auto text-muted-foreground text-xs">🔒</span>
+              </div>
+              <p className="text-xs text-muted-foreground">Definido automaticamente pelo mês atual</p>
             </div>
 
             {/* 3. Código */}
