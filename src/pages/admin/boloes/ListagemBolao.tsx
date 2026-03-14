@@ -50,6 +50,8 @@ export default function ListagemBolao() {
   const [filtroLoteria, setFiltroLoteria] = useState("todas");
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [busca, setBusca] = useState("");
+  const [filtroTask, setFiltroTask] = useState("todas");
+  const [dataSorteio, setDataSorteio] = useState<Date | undefined>(undefined);
   const [confirmTask, setConfirmTask] = useState<{ bolaoId: string; field: string; value: boolean } | null>(null);
   const [uploadingPdfId, setUploadingPdfId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
