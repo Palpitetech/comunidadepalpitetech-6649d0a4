@@ -35,6 +35,9 @@ const LOTERIA_COLORS: Record<string, string> = {
 const TASK_FIELDS_NON_COMPROVANTES = [
   { key: "task_impresso", label: "Imprimir", icon: Printer },
   { key: "task_registrado", label: "Registrar", icon: FileCheck },
+] as const;
+
+const TASK_FIELDS_AFTER_COMPROVANTES = [
   { key: "task_resgate", label: "Resgate", icon: Trophy },
 ] as const;
 
