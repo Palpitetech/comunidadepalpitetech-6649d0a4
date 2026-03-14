@@ -342,12 +342,14 @@ export type Database = {
           loteria: string
           mes_ano: string
           numero_bolao: number
+          pago_em: string | null
           palpites: Json | null
           pdf_url: string | null
           sigla: string
           status: string | null
           task_comprovantes: boolean | null
           task_impresso: boolean | null
+          task_pago: boolean | null
           task_registrado: boolean | null
           task_resgate: boolean | null
           total_cotas: number
@@ -355,6 +357,7 @@ export type Database = {
           updated_at: string | null
           valor_cota: number
           valor_premiacao: number | null
+          valor_registro: number | null
         }
         Insert: {
           codigo: string
@@ -369,12 +372,14 @@ export type Database = {
           loteria: string
           mes_ano: string
           numero_bolao: number
+          pago_em?: string | null
           palpites?: Json | null
           pdf_url?: string | null
           sigla: string
           status?: string | null
           task_comprovantes?: boolean | null
           task_impresso?: boolean | null
+          task_pago?: boolean | null
           task_registrado?: boolean | null
           task_resgate?: boolean | null
           total_cotas: number
@@ -382,6 +387,7 @@ export type Database = {
           updated_at?: string | null
           valor_cota: number
           valor_premiacao?: number | null
+          valor_registro?: number | null
         }
         Update: {
           codigo?: string
@@ -396,12 +402,14 @@ export type Database = {
           loteria?: string
           mes_ano?: string
           numero_bolao?: number
+          pago_em?: string | null
           palpites?: Json | null
           pdf_url?: string | null
           sigla?: string
           status?: string | null
           task_comprovantes?: boolean | null
           task_impresso?: boolean | null
+          task_pago?: boolean | null
           task_registrado?: boolean | null
           task_resgate?: boolean | null
           total_cotas?: number
@@ -409,6 +417,7 @@ export type Database = {
           updated_at?: string | null
           valor_cota?: number
           valor_premiacao?: number | null
+          valor_registro?: number | null
         }
         Relationships: []
       }
