@@ -117,7 +117,7 @@ const App = () => (
             <Route path="/dezenas-por-posicao" element={<ProtectedRoute><GatedPage feature="dezenas_por_posicao"><DezenasporPosicao /></GatedPage></ProtectedRoute>} />
             <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
             <Route path="/criar-post" element={<ProtectedRoute><CriarPost /></ProtectedRoute>} />
-            <Route path="/comunidade/post/:id" element={<PostDetalhes />} />
+            <Route path="/comunidade/post/:slug" element={<PostDetalhes />} />
             <Route path="/convites" element={<ProtectedRoute><GatedPage feature="comunidade_full"><Convites /></GatedPage></ProtectedRoute>} />
             <Route path="/bloqueado" element={<Bloqueado />} />
             <Route path="/planos" element={<Planos />} />

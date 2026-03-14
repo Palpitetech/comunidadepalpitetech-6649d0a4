@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface CommunityPost {
   id: string;
+  slug: string | null;
   titulo: string | null;
   conteudo: string;
   loteria_tag: string | null;

@@ -78,7 +78,7 @@ export default function Comunidade() {
               <PostCard
                 key={post.id}
                 post={post}
-                onClick={() => handleClick(post.id)}
+                onClick={() => handleClick(post)}
                 onPrefetch={() => handlePrefetch(post.id)}
               />
             ))}
