@@ -120,8 +120,8 @@ export function usePostDetails(slugOrId: string) {
         cta_override_buttons: (ctaData?.cta_override_buttons as CtaButton[]) || [],
       } as PostDetails;
     },
-    enabled: !!postId,
-    staleTime: 30_000, // 30s — post content rarely changes
+    enabled: !!slugOrId,
+    staleTime: 30_000,
   });
 
   const commentsQuery = useQuery({
