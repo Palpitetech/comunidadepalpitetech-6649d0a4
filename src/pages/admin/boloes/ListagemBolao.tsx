@@ -67,7 +67,7 @@ export default function ListagemBolao() {
   const [confirmComprovantes, setConfirmComprovantes] = useState<{ bolaoId: string } | null>(null);
 
   const { data: boloes, isLoading } = useQuery({
-    queryKey: ["admin-boloes", filtroLoteria, filtroStatus, busca],
+    queryKey: ["admin-boloes", filtroLoteria, filtroStatus, busca, filtroTask, dataSorteio?.toISOString()],
     queryFn: async () => {
       let q = supabase
         .from("boloes")
@@ -77,6 +77,14 @@ export default function ListagemBolao() {
       if (filtroLoteria !== "todas") q = q.eq("loteria", filtroLoteria);
       if (filtroStatus !== "todos") q = q.eq("status", filtroStatus);
       if (busca) q = q.or(`codigo.ilike.%${busca}%,concurso_numero.ilike.%${busca}%`);
+      if (filtroTask === "task_impresso") q = q.eq("task_impresso", false);
+      if (filtroTask === "task_registrado") q = q.eq("task_registrado", false);
+      if (filtroTask === "task_comprovantes") q = q.eq("task_comprovantes", false);
+      if (filtroTask === "task_resgate") q = q.eq("task_resgate", false);
+      if (dataSorteio) {
+        const dateStr = format(dataSorteio, "yyyy-MM-dd");
+        q = q.eq("data_concurso", dateStr);
+      }
 
       const { data, error } = await q;
       if (error) throw error;
