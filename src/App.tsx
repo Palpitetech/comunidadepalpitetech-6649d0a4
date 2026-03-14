@@ -49,6 +49,7 @@ import ResgatesBolao from "./pages/admin/boloes/ResgatesBolao";
 import ComprasSaldo from "./pages/admin/boloes/ComprasSaldo";
 import ComprasCotas from "./pages/admin/boloes/ComprasCotas";
 import BoloesPagamento from "./pages/admin/boloes/BoloesPagamento";
+import Premiacao from "./pages/admin/boloes/Premiacao";
 import AnaliseDoDia from "./pages/AnaliseDoDia";
 import TabelaMovimentacao from "./pages/TabelaMovimentacao";
 import FrequenciaDezenas from "./pages/FrequenciaDezenas";
@@ -194,6 +195,7 @@ const App = () => (
             <Route path="/admin/compras-saldo" element={<AdminRoute><ComprasSaldo /></AdminRoute>} />
             <Route path="/admin/compras-cotas" element={<AdminRoute><ComprasCotas /></AdminRoute>} />
             <Route path="/admin/boloes-pagamento" element={<AdminRoute><BoloesPagamento /></AdminRoute>} />
+            <Route path="/admin/premiacao" element={<AdminRoute><Premiacao /></AdminRoute>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
