@@ -185,8 +185,9 @@ export default function NovoBolao() {
         return;
       }
     } else {
-      if (!loteria || !concursoNumero || !dataConcurso || !totalPalpites || !totalCotas || !valorCota) {
-        toast({ title: "Preencha todos os campos obrigatórios", variant: "destructive" });
+      // Rascunho: apenas campos básicos do bolão, sem validar palpites
+      if (!loteria || !concursoNumero || !dataConcurso || !totalCotas || !valorCota) {
+        toast({ title: "Preencha os campos obrigatórios (loteria, concurso, data, cotas e valor)", variant: "destructive" });
         return;
       }
     }
