@@ -80,6 +80,7 @@ import DesdobramentoDuplaSena from "./pages/duplasena/DesdobramentoDuplaSena";
 import FrequenciaDecenasDuplaSena from "./pages/duplasena/FrequenciaDecenasDuplaSena";
 import TabelaMovimentacaoDuplaSena from "./pages/duplasena/TabelaMovimentacaoDuplaSena";
 import FechamentoDuplaSena from "./pages/duplasena/FechamentoDuplaSena";
+import ProximosConcursos from "./pages/ProximosConcursos";
 
 const queryClient = new QueryClient();
 
