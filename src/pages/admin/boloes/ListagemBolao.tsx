@@ -266,11 +266,54 @@ export default function ListagemBolao() {
               <SelectItem value="cancelado">Cancelado</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={filtroTask} onValueChange={setFiltroTask}>
+            <SelectTrigger className="w-36 h-9 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todas">Todas tarefas</SelectItem>
+              <SelectItem value="task_impresso">Falta Imprimir</SelectItem>
+              <SelectItem value="task_registrado">Falta Registrar</SelectItem>
+              <SelectItem value="task_comprovantes">Falta Comprovantes</SelectItem>
+              <SelectItem value="task_resgate">Falta Resgate</SelectItem>
+            </SelectContent>
+          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "h-9 text-xs w-40 justify-start font-normal",
+                  !dataSorteio && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
+                {dataSorteio ? format(dataSorteio, "dd/MM/yyyy") : "Data sorteio"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={dataSorteio}
+                onSelect={setDataSorteio}
+                locale={ptBR}
+                className={cn("p-3 pointer-events-auto")}
+              />
+              {dataSorteio && (
+                <div className="px-3 pb-3">
+                  <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => setDataSorteio(undefined)}>
+                    Limpar data
+                  </Button>
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
           <Input
             placeholder="Buscar código ou concurso..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             className="h-9 text-xs flex-1 min-w-[160px]"
+          />
           />
         </div>
 
