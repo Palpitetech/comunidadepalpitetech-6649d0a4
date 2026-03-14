@@ -15,7 +15,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import PageHeader from "@/components/layout/PageHeader";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 function formatCurrency(v: number) {
   return v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
