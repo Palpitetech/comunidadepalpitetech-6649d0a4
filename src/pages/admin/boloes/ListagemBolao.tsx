@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Pencil, Eye, Plus, Printer, FileCheck, Receipt, Trophy, FileText, CheckCircle2 } from "lucide-react";
@@ -31,10 +32,9 @@ const LOTERIA_COLORS: Record<string, string> = {
   diadesorte: "bg-emerald-600/20 text-emerald-400",
 };
 
-const TASK_FIELDS = [
+const TASK_FIELDS_NON_COMPROVANTES = [
   { key: "task_impresso", label: "Imprimir", icon: Printer },
   { key: "task_registrado", label: "Registrar", icon: FileCheck },
-  { key: "task_comprovantes", label: "Comprovantes", icon: Receipt },
   { key: "task_resgate", label: "Resgate", icon: Trophy },
 ] as const;
 
@@ -47,6 +47,15 @@ export default function ListagemBolao() {
   const [uploadingPdfId, setUploadingPdfId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingUploadBolao = useRef<{ id: string; codigo: string } | null>(null);
+
+  // Comprovantes upload dialog state
+  const [uploadDialog, setUploadDialog] = useState<{ bolaoId: string; codigo: string } | null>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const comprovantesInputRef = useRef<HTMLInputElement>(null);
+
+  // Comprovantes confirm dialog (when pdf already exists)
+  const [confirmComprovantes, setConfirmComprovantes] = useState<{ bolaoId: string } | null>(null);
 
   const { data: boloes, isLoading } = useQuery({
     queryKey: ["admin-boloes", filtroLoteria, filtroStatus, busca],
@@ -82,6 +91,7 @@ export default function ListagemBolao() {
     setConfirmTask(null);
   };
 
+  // Independent PDF button (replace only, no task change)
   const handlePdfClick = (bolaoId: string, codigo: string) => {
     pendingUploadBolao.current = { id: bolaoId, codigo };
     fileInputRef.current?.click();
@@ -96,11 +106,9 @@ export default function ListagemBolao() {
 
     try {
       const filePath = `${codigo}.pdf`;
-
       const { error: uploadError } = await supabase.storage
         .from("boloes-pdfs")
         .upload(filePath, file, { upsert: true });
-
       if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage
@@ -111,7 +119,6 @@ export default function ListagemBolao() {
         .from("boloes")
         .update({ pdf_url: urlData.publicUrl } as any)
         .eq("id", id);
-
       if (updateError) throw updateError;
 
       queryClient.invalidateQueries({ queryKey: ["admin-boloes"] });
@@ -123,6 +130,73 @@ export default function ListagemBolao() {
       pendingUploadBolao.current = null;
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  };
+
+  // Comprovantes checkbox click handler
+  const handleComprovantesClick = (bolao: any) => {
+    const checked = !!bolao.task_comprovantes;
+    const hasPdf = !!bolao.pdf_url;
+
+    if (checked) {
+      // Already true → normal uncheck confirmation
+      setConfirmTask({ bolaoId: bolao.id, field: "task_comprovantes", value: false });
+    } else if (!hasPdf) {
+      // No PDF → open upload dialog
+      setUploadDialog({ bolaoId: bolao.id, codigo: bolao.codigo });
+      setUploadFile(null);
+    } else {
+      // Has PDF but task false → simple confirm
+      setConfirmComprovantes({ bolaoId: bolao.id });
+    }
+  };
+
+  // Upload + mark task
+  const handleUploadAndMark = async () => {
+    if (!uploadDialog || !uploadFile) return;
+    setIsUploading(true);
+
+    try {
+      const filePath = `${uploadDialog.codigo}.pdf`;
+      const { error: uploadError } = await supabase.storage
+        .from("boloes-pdfs")
+        .upload(filePath, uploadFile, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("boloes-pdfs")
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from("boloes")
+        .update({ pdf_url: urlData.publicUrl, task_comprovantes: true } as any)
+        .eq("id", uploadDialog.bolaoId);
+      if (updateError) throw updateError;
+
+      queryClient.invalidateQueries({ queryKey: ["admin-boloes"] });
+      toast({ title: "✅ Comprovante enviado e tarefa marcada!" });
+      setUploadDialog(null);
+      setUploadFile(null);
+    } catch (err: any) {
+      toast({ title: "Erro ao enviar comprovante", description: err.message, variant: "destructive" });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Confirm comprovantes when PDF already exists
+  const handleConfirmComprovantes = async () => {
+    if (!confirmComprovantes) return;
+    const { error } = await supabase
+      .from("boloes")
+      .update({ task_comprovantes: true } as any)
+      .eq("id", confirmComprovantes.bolaoId);
+
+    if (error) {
+      toast({ title: "Erro ao atualizar", variant: "destructive" });
+    } else {
+      queryClient.invalidateQueries({ queryKey: ["admin-boloes"] });
+    }
+    setConfirmComprovantes(null);
   };
 
   return (
@@ -137,7 +211,7 @@ export default function ListagemBolao() {
           </Link>
         </div>
 
-        {/* Hidden file input */}
+        {/* Hidden file input for independent PDF button */}
         <input
           ref={fileInputRef}
           type="file"
@@ -197,6 +271,7 @@ export default function ListagemBolao() {
                 const arrecadado = (b.cotas_vendidas || 0) * parseFloat(b.valor_cota);
                 const hasPdf = !!b.pdf_url;
                 const isUploadingThis = uploadingPdfId === b.id;
+                const comprovantesChecked = !!b.task_comprovantes;
 
                 return (
                   <Card key={b.id} className="border-border/60">
@@ -224,7 +299,8 @@ export default function ListagemBolao() {
 
                       {/* Row 2: Tasks + Actions */}
                       <div className="flex items-center gap-3 flex-wrap">
-                        {TASK_FIELDS.map(({ key, label, icon: Icon }) => {
+                        {/* Non-comprovantes tasks */}
+                        {TASK_FIELDS_NON_COMPROVANTES.map(({ key, label, icon: Icon }) => {
                           const checked = !!(b as any)[key];
                           return (
                             <Popover
@@ -259,12 +335,43 @@ export default function ListagemBolao() {
                           );
                         })}
 
+                        {/* Comprovantes task - special handling */}
+                        <Popover
+                          open={confirmTask?.bolaoId === b.id && confirmTask?.field === "task_comprovantes"}
+                          onOpenChange={(open) => {
+                            if (!open) setConfirmTask(null);
+                          }}
+                        >
+                          <PopoverTrigger asChild>
+                            <button
+                              className="flex items-center gap-1 text-[11px] cursor-pointer hover:opacity-80"
+                              onClick={() => handleComprovantesClick(b)}
+                            >
+                              <Checkbox checked={comprovantesChecked} className="h-3.5 w-3.5 pointer-events-none" />
+                              <Receipt className={`h-3 w-3 ${comprovantesChecked ? "text-green-500" : "text-muted-foreground"}`} />
+                              <span className={comprovantesChecked ? "text-green-500" : "text-muted-foreground"}>Comprovantes</span>
+                            </button>
+                          </PopoverTrigger>
+                          {/* Popover only for uncheck confirmation */}
+                          <PopoverContent className="w-40 p-2" side="top">
+                            <p className="text-xs mb-2">Desmarcar Comprovantes?</p>
+                            <div className="flex gap-1.5">
+                              <Button size="sm" variant="ghost" className="h-7 text-xs flex-1" onClick={() => setConfirmTask(null)}>
+                                Cancelar
+                              </Button>
+                              <Button size="sm" className="h-7 text-xs flex-1" onClick={handleToggleTask}>
+                                ✅
+                              </Button>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+
                         <div className="ml-auto flex gap-1">
                           <Button variant="ghost" size="icon" className="h-7 w-7">
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
 
-                          {/* PDF Upload Button */}
+                          {/* PDF Upload Button (independent) */}
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
@@ -284,7 +391,7 @@ export default function ListagemBolao() {
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent side="top" className="text-xs">
-                              {hasPdf ? "PDF já enviado — clique para substituir" : "Enviar palpites oficiais"}
+                              {hasPdf ? "PDF enviado — clique para substituir" : "Nenhum PDF enviado"}
                             </TooltipContent>
                           </Tooltip>
 
@@ -301,6 +408,73 @@ export default function ListagemBolao() {
           </TooltipProvider>
         )}
       </div>
+
+      {/* Upload Dialog (comprovantes without PDF) */}
+      <Dialog open={!!uploadDialog} onOpenChange={(open) => { if (!open) { setUploadDialog(null); setUploadFile(null); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>📄 Enviar Comprovante</DialogTitle>
+            <DialogDescription>
+              Selecione o PDF dos palpites oficiais para este bolão.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <input
+              ref={comprovantesInputRef}
+              type="file"
+              accept=".pdf"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) setUploadFile(f);
+                if (comprovantesInputRef.current) comprovantesInputRef.current.value = "";
+              }}
+            />
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => comprovantesInputRef.current?.click()}
+            >
+              Selecionar PDF
+            </Button>
+            {uploadFile && (
+              <p className="text-xs text-muted-foreground truncate">
+                📎 {uploadFile.name}
+              </p>
+            )}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="ghost" onClick={() => { setUploadDialog(null); setUploadFile(null); }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleUploadAndMark} disabled={!uploadFile || isUploading}>
+              {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Enviar e Marcar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Dialog (comprovantes with PDF already existing) */}
+      <Dialog open={!!confirmComprovantes} onOpenChange={(open) => { if (!open) setConfirmComprovantes(null); }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Confirmar tarefa?</DialogTitle>
+            <DialogDescription>
+              Marcar Comprovantes como concluído?
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">PDF já enviado: ✅</p>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="ghost" onClick={() => setConfirmComprovantes(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmComprovantes}>
+              ✅ Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 }
