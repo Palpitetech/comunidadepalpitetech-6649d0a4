@@ -182,7 +182,7 @@ serve(async (req) => {
 
     const { data: currentProfile } = await supabaseAdmin
       .from("perfis")
-      .select("tags")
+      .select("tags, utm_source")
       .eq("id", userId)
       .single();
 
@@ -191,6 +191,10 @@ serve(async (req) => {
 
     const updatePayload: Record<string, unknown> = { tags: mergedTags };
     if (nome?.trim() && isNew) updatePayload.nome = nome.trim();
+    // utm_source: nunca sobrescreve valor já existente
+    if (utm_source && !currentProfile?.utm_source) {
+      updatePayload.utm_source = utm_source;
+    }
 
     await supabaseAdmin
       .from("perfis")

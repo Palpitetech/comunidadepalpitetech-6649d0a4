@@ -91,6 +91,7 @@ export interface ExtendedProfile {
   validade_assinatura: string | null;
   cpf: string | null;
   tags: string[];
+  utm_source?: string | null;
 }
 
 // Labels amigáveis para cada feature
