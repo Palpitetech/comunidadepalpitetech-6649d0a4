@@ -124,13 +124,15 @@ export function usePostDetails(slugOrId: string) {
     staleTime: 30_000,
   });
 
+  const resolvedPostId = postQuery.data?.id;
+
   const commentsQuery = useQuery({
-    queryKey: ["post-comments", postId],
+    queryKey: ["post-comments", resolvedPostId],
     queryFn: async () => {
       const { data: commentsData, error: commentsError } = await supabase
         .from("post_comments")
         .select("id, conteudo, created_at, user_id, parent_id")
-        .eq("post_id", postId)
+        .eq("post_id", resolvedPostId!)
         .order("created_at", { ascending: true });
 
       if (commentsError) throw commentsError;
@@ -169,24 +171,24 @@ export function usePostDetails(slugOrId: string) {
         replies: repliesMap.get(comment.id) || [],
       }));
     },
-    enabled: !!postId,
-    staleTime: 15_000, // comments can change more frequently
+    enabled: !!resolvedPostId,
+    staleTime: 15_000,
   });
 
   const likeQuery = useQuery({
-    queryKey: ["post-like", postId, user?.id],
+    queryKey: ["post-like", resolvedPostId, user?.id],
     queryFn: async () => {
       if (!user?.id) return false;
       const { data, error } = await supabase
         .from("post_likes")
         .select("id")
-        .eq("post_id", postId)
+        .eq("post_id", resolvedPostId!)
         .eq("user_id", user.id)
         .maybeSingle();
       if (error) throw error;
       return !!data;
     },
-    enabled: !!postId && !!user?.id,
+    enabled: !!resolvedPostId && !!user?.id,
     staleTime: 30_000,
   });
 
