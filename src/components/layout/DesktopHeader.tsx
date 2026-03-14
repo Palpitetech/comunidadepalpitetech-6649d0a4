@@ -438,12 +438,51 @@ export function DesktopHeader() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                  <Link to="/admin/integracoes">
-                    <Plug className="h-4 w-4" />
-                    Integrações
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
+                   <Link to="/admin/integracoes">
+                     <Plug className="h-4 w-4" />
+                     Integrações
+                   </Link>
+                 </DropdownMenuItem>
+                 <DropdownMenuSeparator />
+                 <DropdownMenuSub>
+                   <DropdownMenuSubTrigger className="gap-2 py-2 cursor-pointer">
+                     <Ticket className="h-4 w-4" />
+                     Bolões
+                   </DropdownMenuSubTrigger>
+                   <DropdownMenuSubContent className="w-48 bg-popover z-50">
+                     <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                       <Link to="/admin/novo-bolao">
+                         <PlusCircle className="h-4 w-4" />
+                         Novo Bolão
+                       </Link>
+                     </DropdownMenuItem>
+                     <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                       <Link to="/admin/listagem-bolao">
+                         <List className="h-4 w-4" />
+                         Listagem
+                       </Link>
+                     </DropdownMenuItem>
+                     <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                       <Link to="/admin/solicitacao-resgate">
+                         <Trophy className="h-4 w-4" />
+                         Resgates
+                       </Link>
+                     </DropdownMenuItem>
+                     <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                       <Link to="/admin/compras-saldo">
+                         <Wallet className="h-4 w-4" />
+                         Compras de Saldo
+                       </Link>
+                     </DropdownMenuItem>
+                     <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                       <Link to="/admin/compras-cotas">
+                         <CreditCard className="h-4 w-4" />
+                         Compras de Cotas
+                       </Link>
+                     </DropdownMenuItem>
+                   </DropdownMenuSubContent>
+                 </DropdownMenuSub>
+               </DropdownMenuContent>
             </DropdownMenu>
           )}
         </nav>
