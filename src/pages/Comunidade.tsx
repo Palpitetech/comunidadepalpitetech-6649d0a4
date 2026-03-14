@@ -24,7 +24,7 @@ export default function Comunidade() {
   }, [posts]);
 
   const handleClick = useCallback(
-    (postId: string) => navigate(`/comunidade/post/${postId}`),
+    (post: { id: string; slug: string | null }) => navigate(`/comunidade/post/${post.slug || post.id}`),
     [navigate]
   );
 
