@@ -83,3 +83,6 @@ verify_jwt = false
 
 [functions.reenviar-ativacao]
 verify_jwt = false
+
+[functions.get-push-stats]
+verify_jwt = false
