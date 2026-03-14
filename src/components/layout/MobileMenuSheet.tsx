@@ -511,6 +511,75 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                     </AccordionItem>
                   </Accordion>
                 </div>
+
+               {/* Accordion de Quina */}
+               <div className="px-4">
+                 <Accordion type="single" collapsible>
+                   <AccordionItem value="quina" className="border-none">
+                     <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
+                       <div className="flex items-center gap-3">
+                         <span className="text-lg">🌟</span>
+                         <span>Quina</span>
+                       </div>
+                     </AccordionTrigger>
+                     <AccordionContent className="pb-0">
+                       <div className="pl-8 space-y-0">
+                         <Link to="/quina/resultados" onClick={closeAndNavigate}>
+                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
+                             Resultados
+                           </div>
+                         </Link>
+                       </div>
+                     </AccordionContent>
+                   </AccordionItem>
+                 </Accordion>
+               </div>
+
+               {/* Accordion de Dia de Sorte */}
+               <div className="px-4">
+                 <Accordion type="single" collapsible>
+                   <AccordionItem value="diadesorte" className="border-none">
+                     <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
+                       <div className="flex items-center gap-3">
+                         <span className="text-lg">🍀</span>
+                         <span>Dia de Sorte</span>
+                       </div>
+                     </AccordionTrigger>
+                     <AccordionContent className="pb-0">
+                       <div className="pl-8 space-y-0">
+                         <Link to="/diadesorte/resultados" onClick={closeAndNavigate}>
+                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
+                             Resultados
+                           </div>
+                         </Link>
+                       </div>
+                     </AccordionContent>
+                   </AccordionItem>
+                 </Accordion>
+               </div>
+
+               {/* Accordion de Lotomania */}
+               <div className="px-4">
+                 <Accordion type="single" collapsible>
+                   <AccordionItem value="lotomania" className="border-none">
+                     <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
+                       <div className="flex items-center gap-3">
+                         <span className="text-lg">🎰</span>
+                         <span>Lotomania</span>
+                       </div>
+                     </AccordionTrigger>
+                     <AccordionContent className="pb-0">
+                       <div className="pl-8 space-y-0">
+                         <Link to="/lotomania/resultados" onClick={closeAndNavigate}>
+                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
+                             Resultados
+                           </div>
+                         </Link>
+                       </div>
+                     </AccordionContent>
+                   </AccordionItem>
+                 </Accordion>
+               </div>
             </>
           ) : (
             /* Conteúdo Admin - Estilo com Destaque Vermelho */
