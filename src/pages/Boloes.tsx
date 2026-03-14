@@ -359,13 +359,17 @@ function BolaoDetailSheet({ bolao, open, onOpenChange }: BolaoDetailSheetProps) 
               </div>
               <div>
                 {palpites.map((p: number[], idx: number) => (
-                  <div key={idx} className={cn("flex items-center gap-2 py-1.5", idx < palpites.length - 1 && "border-b border-border/30")}>
-                    <span className="text-xs text-muted-foreground w-16 shrink-0">
+                  <div key={idx} className={cn("py-3", idx < palpites.length - 1 && "border-b border-border/30")}>
+                    <span className="text-xs text-muted-foreground font-medium mb-2 block">
                       Palpite {String(idx + 1).padStart(2, "0")}
                     </span>
-                    <span className="text-sm font-mono text-foreground">
-                      {p.map((d) => String(d).padStart(2, "0")).join(" · ")}
-                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {p.map((d, j) => (
+                        <span key={j} className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-muted/50 text-xs font-mono font-medium">
+                          {String(d).padStart(2, "0")}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
