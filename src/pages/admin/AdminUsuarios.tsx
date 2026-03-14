@@ -397,6 +397,9 @@ export default function AdminUsuarios() {
                     </span>
                   </TableCell>
                   <TableCell className="py-2.5">
+                    {getUtmBadge(user.utm_source) || <span className="text-[10px] text-muted-foreground">—</span>}
+                  </TableCell>
+                  <TableCell className="py-2.5">
                     <div className="flex flex-wrap gap-1 max-w-[280px]">
                       {user.tags?.slice(0, 4).map((tag) => (
                         <span key={tag} className="inline-block px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">
