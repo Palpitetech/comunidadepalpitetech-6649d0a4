@@ -414,7 +414,117 @@ export default function AdminMetricas() {
             </div>
           </CardContent>
         </Card>
+
+        {/* SEÇÃO 6: Push Notifications */}
+        <PushStatsSection />
       </div>
     </MainLayout>
+  );
+}
+
+function PushStatsSection() {
+  const { data: pushStats, isLoading: pushLoading } = useQuery({
+    queryKey: ["admin-push-stats"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Não autenticado");
+
+      const { data, error } = await supabase.functions.invoke("get-push-stats", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (error) throw error;
+      return data as {
+        inscritos: number;
+        notificaveis: number;
+        notificacoes: Array<{
+          id: string;
+          titulo: string;
+          enviadas: number;
+          abertas: number;
+          falhas: number;
+          taxa_abertura: string;
+          data: string;
+        }>;
+      };
+    },
+    staleTime: 60_000,
+  });
+
+  function taxaColor(taxa: string) {
+    const n = parseFloat(taxa);
+    if (n >= 30) return "text-green-400";
+    if (n >= 15) return "text-yellow-400";
+    return "text-red-400";
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">🔔 Push Notifications</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Cards resumo */}
+        {pushLoading ? (
+          <div className="grid grid-cols-2 gap-3">
+            <Skeleton className="h-24 rounded-lg" />
+            <Skeleton className="h-24 rounded-lg" />
+          </div>
+        ) : pushStats ? (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <Bell className="h-5 w-5 text-primary mx-auto mb-1" />
+                  <p className="text-2xl font-bold">{pushStats.inscritos.toLocaleString("pt-BR")}</p>
+                  <p className="text-[10px] text-muted-foreground">🔔 Inscritos</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <Smartphone className="h-5 w-5 text-primary mx-auto mb-1" />
+                  <p className="text-2xl font-bold">{pushStats.notificaveis.toLocaleString("pt-BR")}</p>
+                  <p className="text-[10px] text-muted-foreground">📲 Notificáveis</p>
+                </CardContent>
+              </Card>
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Notificáveis = inscritos que não bloquearam as notificações
+            </p>
+
+            {/* Tabela de notificações */}
+            {pushStats.notificacoes.length > 0 && (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Notificação</TableHead>
+                    <TableHead className="text-right">Enviadas</TableHead>
+                    <TableHead className="text-right">Abertas</TableHead>
+                    <TableHead className="text-right">Taxa</TableHead>
+                    <TableHead className="text-right">Data</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pushStats.notificacoes.map((n) => (
+                    <TableRow key={n.id}>
+                      <TableCell className="max-w-[180px] truncate text-xs font-medium">{n.titulo}</TableCell>
+                      <TableCell className="text-right text-xs">{n.enviadas.toLocaleString("pt-BR")}</TableCell>
+                      <TableCell className="text-right text-xs">{n.abertas.toLocaleString("pt-BR")}</TableCell>
+                      <TableCell className={cn("text-right text-xs font-semibold", taxaColor(n.taxa_abertura))}>
+                        {n.taxa_abertura}%
+                      </TableCell>
+                      <TableCell className="text-right text-[10px] text-muted-foreground">
+                        {n.data ? formatDistanceToNow(new Date(n.data), { addSuffix: true, locale: ptBR }) : "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </>
+        ) : (
+          <p className="text-xs text-muted-foreground text-center py-4">Erro ao carregar dados do Push</p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
