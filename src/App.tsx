@@ -49,6 +49,7 @@ import ResgatesBolao from "./pages/admin/boloes/ResgatesBolao";
 import ComprasSaldo from "./pages/admin/boloes/ComprasSaldo";
 import ComprasCotas from "./pages/admin/boloes/ComprasCotas";
 import BoloesPagamento from "./pages/admin/boloes/BoloesPagamento";
+import Premiacao from "./pages/admin/boloes/Premiacao";
 import AnaliseDoDia from "./pages/AnaliseDoDia";
 import TabelaMovimentacao from "./pages/TabelaMovimentacao";
 import FrequenciaDezenas from "./pages/FrequenciaDezenas";
