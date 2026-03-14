@@ -42,6 +42,7 @@ import AdminVendas from "./pages/admin/AdminVendas";
 import AdminEventos from "./pages/admin/AdminEventos";
 import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
 import Integracoes from "./pages/admin/Integracoes";
+import AdminMetricas from "./pages/admin/AdminMetricas";
 import AnaliseDoDia from "./pages/AnaliseDoDia";
 import TabelaMovimentacao from "./pages/TabelaMovimentacao";
 import FrequenciaDezenas from "./pages/FrequenciaDezenas";
