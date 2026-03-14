@@ -78,6 +78,16 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
 
       if (result?.user?.id) {
         clearStoredReferralCode();
+
+        // Salvar UTM source no perfil
+        const utm = getStoredUTM();
+        if (utm) {
+          await supabase
+            .from("perfis")
+            .update({ utm_source: utm } as any)
+            .eq("id", result.user.id);
+          clearUTM();
+        }
         
         setFormData((prev) => ({ ...prev, userId: result.user.id }));
         
