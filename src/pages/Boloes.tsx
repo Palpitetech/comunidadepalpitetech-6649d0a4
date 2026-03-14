@@ -358,14 +358,6 @@ function BolaoDetailSheet({ bolao, open, onOpenChange }: BolaoDetailSheetProps) 
               </div>
             </div>
           </TooltipProvider>
-              ) : (
-                <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" disabled>
-                  <Clock className="h-3.5 w-3.5" />
-                  Aguardando PDF
-                </Button>
-              )}
-            </div>
-          </TooltipProvider>
         </div>
       </SheetContent>
     </Sheet>
