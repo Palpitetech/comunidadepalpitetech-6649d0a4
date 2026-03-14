@@ -11,6 +11,9 @@ const LOTERIAS = [
   { key: "lotofacil", param: "lotofacil" },
   { key: "megasena", param: "megasena" },
   { key: "duplasena", param: "duplasena" },
+  { key: "quina", param: "quina" },
+  { key: "diadesorte", param: "diadesorte" },
+  { key: "lotomania", param: "lotomania" },
 ];
 
 const BASE_URL = "https://apiloterias.com.br/app/v2/resultado";
