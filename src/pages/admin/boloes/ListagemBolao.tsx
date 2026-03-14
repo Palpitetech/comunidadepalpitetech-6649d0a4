@@ -369,6 +369,42 @@ export default function ListagemBolao() {
                           </PopoverContent>
                         </Popover>
 
+                        {/* Tasks after comprovantes (Resgate) */}
+                        {TASK_FIELDS_AFTER_COMPROVANTES.map(({ key, label, icon: Icon }) => {
+                          const checked = !!(b as any)[key];
+                          return (
+                            <Popover
+                              key={key}
+                              open={confirmTask?.bolaoId === b.id && confirmTask?.field === key}
+                              onOpenChange={(open) => {
+                                if (!open) setConfirmTask(null);
+                              }}
+                            >
+                              <PopoverTrigger asChild>
+                                <button
+                                  className="flex items-center gap-1 text-[11px] cursor-pointer hover:opacity-80"
+                                  onClick={() => setConfirmTask({ bolaoId: b.id, field: key, value: !checked })}
+                                >
+                                  <Checkbox checked={checked} className="h-3.5 w-3.5 pointer-events-none" />
+                                  <Icon className={`h-3 w-3 ${checked ? "text-green-500" : "text-muted-foreground"}`} />
+                                  <span className={checked ? "text-green-500" : "text-muted-foreground"}>{label}</span>
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-40 p-2" side="top">
+                                <p className="text-xs mb-2">Confirmar?</p>
+                                <div className="flex gap-1.5">
+                                  <Button size="sm" variant="ghost" className="h-7 text-xs flex-1" onClick={() => setConfirmTask(null)}>
+                                    Cancelar
+                                  </Button>
+                                  <Button size="sm" className="h-7 text-xs flex-1" onClick={handleToggleTask}>
+                                    ✅
+                                  </Button>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          );
+                        })}
+
                         <div className="ml-auto flex gap-1">
                           <Button variant="ghost" size="icon" className="h-7 w-7">
                             <Pencil className="h-3.5 w-3.5" />
