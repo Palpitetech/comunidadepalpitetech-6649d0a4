@@ -85,10 +85,26 @@ export function UserDetailSheet({
                     Ativa
                   </Badge>
                 )}
+                {user.utm_source ? (
+                  <Badge variant="outline" className="text-[10px] md:text-xs">
+                    {user.utm_source === "bio" ? "📱 Bio" :
+                     user.utm_source === "grupo" ? "👥 Grupo" :
+                     user.utm_source === "meta" ? "📣 Meta" :
+                     user.utm_source}
+                  </Badge>
+                ) : null}
               </div>
               {user.email && (
                 <p className="text-[11px] text-muted-foreground truncate mt-0.5">{user.email}</p>
               )}
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Origem: {user.utm_source ? (
+                  user.utm_source === "bio" ? "📱 Bio" :
+                  user.utm_source === "grupo" ? "👥 Grupo" :
+                  user.utm_source === "meta" ? "📣 Meta" :
+                  user.utm_source
+                ) : "Não rastreada"}
+              </p>
             </div>
           </div>
         </SheetHeader>

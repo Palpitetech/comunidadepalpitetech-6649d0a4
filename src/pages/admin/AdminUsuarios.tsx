@@ -423,7 +423,7 @@ export default function AdminUsuarios() {
               ))}
               {filteredUsers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-16 text-sm text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-16 text-sm text-muted-foreground">
                     {searchTerm ? "Nenhum usuário encontrado" : "Nenhum usuário cadastrado"}
                   </TableCell>
                 </TableRow>
