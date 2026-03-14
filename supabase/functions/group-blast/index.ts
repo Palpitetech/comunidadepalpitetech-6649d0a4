@@ -224,7 +224,7 @@ async function handleSend(
         // Generate via AI (default behavior)
         const { data: latestPost } = await supabase
           .from("postagens")
-          .select("id, titulo, conteudo, tipo")
+          .select("id, slug, titulo, conteudo, tipo")
           .neq("tipo", "comentario")
           .order("created_at", { ascending: false })
           .limit(1)
