@@ -426,6 +426,12 @@ export function DesktopHeader() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                  <Link to="/admin/metricas">
+                    <TrendingUp className="h-4 w-4" />
+                    Métricas
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
                   <Link to="/admin/whatsapp">
                     <MessageCircle className="h-4 w-4" />
                     WhatsApp
