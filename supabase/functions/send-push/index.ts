@@ -17,6 +17,7 @@ interface SendPushBody {
   concurso_id?: number;
   // For novo_post
   post_id?: string;
+  post_slug?: string;
 }
 
 function requireWebhookSecret(req: Request): boolean {
