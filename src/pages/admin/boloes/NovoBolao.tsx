@@ -17,6 +17,7 @@ const LOTERIAS = [
   { value: "duplasena", label: "Dupla Sena", sigla: "DS", max: 50 },
   { value: "quina", label: "Quina", sigla: "QN", max: 80 },
   { value: "lotomania", label: "Lotomania", sigla: "LM", max: 99, min: 0 },
+  { value: "diadesorte", label: "Dia de Sorte", sigla: "DD", max: 31 },
 ];
 
 function parsePalpitesTexto(texto: string): string[][] {
