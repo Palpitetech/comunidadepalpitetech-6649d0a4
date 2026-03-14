@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -336,12 +337,8 @@ export default function Boloes() {
 
   return (
     <MainLayout pageTitle="Bolões">
+      <PageHeader title="Bolões" />
       <div className="px-4 py-3 md:container-senior md:py-8 space-y-3 md:space-y-6">
-        {/* Desktop title */}
-        <div className="hidden md:block">
-          <h1 className="text-3xl font-bold">Bolões</h1>
-          <p className="text-sm text-muted-foreground mt-1">Jogue em grupo e aumente suas chances</p>
-        </div>
 
         {/* Loading */}
         {isLoading ? (
