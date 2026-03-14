@@ -163,10 +163,9 @@ function BolaoDetailSheet({ bolao, open, onOpenChange }: BolaoDetailSheetProps) 
       title: "Entre em contato para adquirir",
       description: "Fale conosco pelo WhatsApp para garantir sua cota.",
       action: (
-        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => window.open(whatsappUrl, "_blank")}>
-          <MessageCircle className="h-3.5 w-3.5" />
-          Abrir WhatsApp
-        </Button>
+        <ToastAction altText="Abrir WhatsApp" onClick={() => window.open(whatsappUrl, "_blank")}>
+          Abrir WhatsApp →
+        </ToastAction>
       ),
     });
   };
