@@ -235,7 +235,7 @@ export default function Premiacao() {
         if (!dezenas || !Array.isArray(dezenas)) continue;
 
         // 3. Parse palpites
-        const palpites: number[][] = Array.isArray(bolao.palpites) ? bolao.palpites : [];
+        const palpites: number[][] = Array.isArray(bolao.palpites) ? (bolao.palpites as any) : [];
         if (!palpites.length) continue;
 
         // 4. Verificar
