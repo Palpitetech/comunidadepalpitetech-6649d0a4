@@ -31,11 +31,18 @@ export default function NovoBolao() {
   const [saving, setSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const now = new Date();
-  const mesAnoDefault = String(now.getMonth() + 1).padStart(2, "0") + String(now.getFullYear());
+  const mesAno = useMemo(() => {
+    const n = new Date();
+    return String(n.getMonth() + 1).padStart(2, "0") + String(n.getFullYear());
+  }, []);
+
+  const mesAnoLabel = useMemo(() => {
+    const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+    const n = new Date();
+    return `${meses[n.getMonth()]} / ${n.getFullYear()}`;
+  }, []);
 
   const [loteria, setLoteria] = useState("");
-  const [mesAno, setMesAno] = useState(mesAnoDefault);
   const [concursoNumero, setConcursoNumero] = useState("");
   const [dataConcurso, setDataConcurso] = useState("");
   const [totalPalpites, setTotalPalpites] = useState(0);
