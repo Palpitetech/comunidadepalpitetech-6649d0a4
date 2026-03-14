@@ -1,17 +1,22 @@
 import { useState, useMemo } from "react";
+import { format, subDays, startOfDay } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Users, DollarSign, TrendingUp, Copy, Loader2, ArrowUpDown } from "lucide-react";
+import { Users, DollarSign, TrendingUp, Copy, Loader2, ArrowUpDown, CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-type Periodo = "all" | "30d" | "7d";
+type QuickFilter = "all" | "today" | "yesterday" | "7d" | "14d" | "30d" | "custom";
 type SortCol = "cadastros" | "pagos" | "conversao" | "receita";
 type SortDir = "asc" | "desc";
 
