@@ -154,17 +154,20 @@ function BolaoDetailSheet({ bolao, open, onOpenChange }: BolaoDetailSheetProps) 
   };
 
   const handleAdquirir = () => {
-    toast({
-      title: "Em breve!",
-      description: "Em breve você poderá adquirir cotas diretamente pelo app. Entre em contato via WhatsApp.",
-    });
-  };
-
-  const handleWhatsApp = () => {
     const msg = encodeURIComponent(
       `Olá! Tenho interesse no bolão *${bolao.codigo}* (${LOTERIA_LABELS[bolao.loteria] || bolao.loteria}) para o concurso ${bolao.concurso_numero}. Valor da cota: ${formatCurrency(bolao.valor_cota)}`
     );
-    window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${msg}`, "_blank");
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMERO}?text=${msg}`;
+    toast({
+      title: "Entre em contato para adquirir",
+      description: "Fale conosco pelo WhatsApp para garantir sua cota.",
+      action: (
+        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => window.open(whatsappUrl, "_blank")}>
+          <MessageCircle className="h-3.5 w-3.5" />
+          Abrir WhatsApp
+        </Button>
+      ),
+    });
   };
 
   const dateLong = formatDateLong(bolao.data_concurso);
