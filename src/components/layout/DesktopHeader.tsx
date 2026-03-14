@@ -375,6 +375,56 @@ export function DesktopHeader() {
                    </DropdownMenuItem>
                  </DropdownMenuSubContent>
                 </DropdownMenuSub>
+
+                <DropdownMenuSeparator />
+
+                {/* Quina Submenu */}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="gap-2 py-2 cursor-pointer">
+                    <span className="text-base">🌟</span>
+                    Quina
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="w-52 bg-popover z-50">
+                    <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                      <Link to="/quina/resultados">
+                        <BarChart3 className="h-4 w-4" />
+                        Resultados
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+
+                {/* Dia de Sorte Submenu */}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="gap-2 py-2 cursor-pointer">
+                    <span className="text-base">🍀</span>
+                    Dia de Sorte
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="w-52 bg-popover z-50">
+                    <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                      <Link to="/diadesorte/resultados">
+                        <BarChart3 className="h-4 w-4" />
+                        Resultados
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+
+                {/* Lotomania Submenu */}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="gap-2 py-2 cursor-pointer">
+                    <span className="text-base">🎰</span>
+                    Lotomania
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="w-52 bg-popover z-50">
+                    <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                      <Link to="/lotomania/resultados">
+                        <BarChart3 className="h-4 w-4" />
+                        Resultados
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
              </DropdownMenuContent>
            </DropdownMenu>
 

@@ -81,6 +81,9 @@ import FrequenciaDecenasDuplaSena from "./pages/duplasena/FrequenciaDecenasDupla
 import TabelaMovimentacaoDuplaSena from "./pages/duplasena/TabelaMovimentacaoDuplaSena";
 import FechamentoDuplaSena from "./pages/duplasena/FechamentoDuplaSena";
 import ProximosConcursos from "./pages/ProximosConcursos";
+import ResultadosQuina from "./pages/quina/ResultadosQuina";
+import ResultadosDiaDeSorte from "./pages/diadesorte/ResultadosDiaDeSorte";
+import ResultadosLotomania from "./pages/lotomania/ResultadosLotomania";
 
 const queryClient = new QueryClient();
 
@@ -162,6 +165,15 @@ const App = () => (
             <Route path="/duplasena/frequencia-dezenas" element={<ProtectedRoute><GatedPage feature="frequencia_dezenas"><FrequenciaDecenasDuplaSena /></GatedPage></ProtectedRoute>} />
             <Route path="/duplasena/tabela-movimentacao" element={<ProtectedRoute><GatedPage feature="tabela_movimentacao"><TabelaMovimentacaoDuplaSena /></GatedPage></ProtectedRoute>} />
             <Route path="/duplasena/fechamento" element={<ProtectedRoute><GatedPage feature="fechamento"><FechamentoDuplaSena /></GatedPage></ProtectedRoute>} />
+            
+            {/* Rotas Quina */}
+            <Route path="/quina/resultados" element={<ProtectedRoute><ResultadosQuina /></ProtectedRoute>} />
+            
+            {/* Rotas Dia de Sorte */}
+            <Route path="/diadesorte/resultados" element={<ProtectedRoute><ResultadosDiaDeSorte /></ProtectedRoute>} />
+            
+            {/* Rotas Lotomania */}
+            <Route path="/lotomania/resultados" element={<ProtectedRoute><ResultadosLotomania /></ProtectedRoute>} />
             
             {/* Rotas Admin */}
             <Route path="/admin" element={<AdminRoute><AdminIndex /></AdminRoute>} />
