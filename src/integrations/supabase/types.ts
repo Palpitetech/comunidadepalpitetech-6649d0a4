@@ -1821,6 +1821,39 @@ export type Database = {
           },
         ]
       }
+      proximos_concursos: {
+        Row: {
+          acumulado: boolean | null
+          created_at: string | null
+          data_sorteio: string | null
+          id: string
+          loteria: string
+          numero_concurso: string
+          premio_estimado: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          acumulado?: boolean | null
+          created_at?: string | null
+          data_sorteio?: string | null
+          id?: string
+          loteria: string
+          numero_concurso: string
+          premio_estimado?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          acumulado?: boolean | null
+          created_at?: string | null
+          data_sorteio?: string | null
+          id?: string
+          loteria?: string
+          numero_concurso?: string
+          premio_estimado?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       referral_rewards: {
         Row: {
           claimed_at: string | null

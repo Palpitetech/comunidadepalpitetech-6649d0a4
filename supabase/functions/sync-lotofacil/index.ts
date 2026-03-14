@@ -888,6 +888,15 @@ Deno.serve(async (req) => {
     console.log(`[SYNC] Novos: ${resultados.novos} | Existentes: ${resultados.existentes} | Erros: ${resultados.erros.length}`);
     console.log(`[SYNC] ========================================`);
 
+    // Fire and forget: atualizar próximos concursos
+    const syncProximosSecret = Deno.env.get('NOTIFICATIONS_WEBHOOK_SECRET');
+    if (syncProximosSecret) {
+      fetch(
+        `${supabaseUrl}/functions/v1/sync-proximos-concursos?secret=${syncProximosSecret}`,
+        { method: 'POST' }
+      ).catch(err => console.error('[sync-lotofacil] Erro ao atualizar proximos:', err));
+    }
+
     return new Response(
       JSON.stringify({ 
         sucesso: true, 

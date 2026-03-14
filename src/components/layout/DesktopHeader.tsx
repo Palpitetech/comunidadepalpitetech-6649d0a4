@@ -20,7 +20,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
-import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot, Dices, Shuffle, Ticket, LayoutGrid, Target, Table2, Gift, Lock, MessageCircle, Plug, MessageSquare, Trophy, List, Wallet, CreditCard } from "lucide-react";
+import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot, Dices, Shuffle, Ticket, LayoutGrid, Target, Table2, Gift, Lock, MessageCircle, Plug, MessageSquare, Trophy, List, Wallet, CreditCard, Calendar } from "lucide-react";
 
 export function DesktopHeader() {
   const { isAuthenticated, profile, signOut } = useAuthContext();
@@ -95,6 +95,12 @@ export function DesktopHeader() {
               <span className="hidden lg:inline">WhatsApp</span>
             </Button>
           </a>
+          <Link to="/proximos-concursos">
+            <Button variant="ghost" className="gap-1.5 h-10 px-3 text-sm">
+              <Calendar className="h-4 w-4" />
+              <span className="hidden lg:inline">Próximos Concursos</span>
+            </Button>
+          </Link>
 
           {/* Loterias Dropdown com Submenus */}
           <DropdownMenu>

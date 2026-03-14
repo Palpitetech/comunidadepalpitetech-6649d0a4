@@ -80,6 +80,7 @@ import DesdobramentoDuplaSena from "./pages/duplasena/DesdobramentoDuplaSena";
 import FrequenciaDecenasDuplaSena from "./pages/duplasena/FrequenciaDecenasDuplaSena";
 import TabelaMovimentacaoDuplaSena from "./pages/duplasena/TabelaMovimentacaoDuplaSena";
 import FechamentoDuplaSena from "./pages/duplasena/FechamentoDuplaSena";
+import ProximosConcursos from "./pages/ProximosConcursos";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +110,7 @@ const App = () => (
             <Route path="/verificar-email" element={<VerificarEmail />} />
             <Route path="/termos" element={<Termos />} />
             <Route path="/privacidade" element={<Privacidade />} />
+            <Route path="/proximos-concursos" element={<ProximosConcursos />} />
 
             {/* Rotas Protegidas - Requer Login */}
             <Route path="/home" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
