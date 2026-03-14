@@ -81,6 +81,9 @@ import FrequenciaDecenasDuplaSena from "./pages/duplasena/FrequenciaDecenasDupla
 import TabelaMovimentacaoDuplaSena from "./pages/duplasena/TabelaMovimentacaoDuplaSena";
 import FechamentoDuplaSena from "./pages/duplasena/FechamentoDuplaSena";
 import ProximosConcursos from "./pages/ProximosConcursos";
+import ResultadosQuina from "./pages/quina/ResultadosQuina";
+import ResultadosDiaDeSorte from "./pages/diadesorte/ResultadosDiaDeSorte";
+import ResultadosLotomania from "./pages/lotomania/ResultadosLotomania";
 
 const queryClient = new QueryClient();
 
