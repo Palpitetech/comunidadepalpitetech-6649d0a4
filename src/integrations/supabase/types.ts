@@ -210,6 +210,205 @@ export type Database = {
           },
         ]
       }
+      bolao_cotas: {
+        Row: {
+          bolao_id: string | null
+          created_at: string | null
+          id: string
+          numero_cota: number
+          observacao: string | null
+          reservado_por: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          bolao_id?: string | null
+          created_at?: string | null
+          id?: string
+          numero_cota: number
+          observacao?: string | null
+          reservado_por?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          bolao_id?: string | null
+          created_at?: string | null
+          id?: string
+          numero_cota?: number
+          observacao?: string | null
+          reservado_por?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bolao_cotas_bolao_id_fkey"
+            columns: ["bolao_id"]
+            isOneToOne: false
+            referencedRelation: "boloes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bolao_cotas_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bolao_cotas_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_publicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bolao_cotas_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios_notificaveis_hoje"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bolao_resgates: {
+        Row: {
+          bolao_id: string | null
+          created_at: string | null
+          id: string
+          status: string | null
+          user_id: string | null
+          valor: number | null
+        }
+        Insert: {
+          bolao_id?: string | null
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          user_id?: string | null
+          valor?: number | null
+        }
+        Update: {
+          bolao_id?: string | null
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          user_id?: string | null
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bolao_resgates_bolao_id_fkey"
+            columns: ["bolao_id"]
+            isOneToOne: false
+            referencedRelation: "boloes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bolao_resgates_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bolao_resgates_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_publicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bolao_resgates_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios_notificaveis_hoje"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boloes: {
+        Row: {
+          codigo: string
+          concurso_numero: string
+          cotas_reservadas: number | null
+          cotas_vendidas: number | null
+          created_at: string | null
+          data_concurso: string
+          descricao_estrategia: string | null
+          dezenas_por_palpite: number
+          id: string
+          loteria: string
+          mes_ano: string
+          numero_bolao: number
+          palpites: Json | null
+          sigla: string
+          status: string | null
+          task_comprovantes: boolean | null
+          task_impresso: boolean | null
+          task_registrado: boolean | null
+          task_resgate: boolean | null
+          total_cotas: number
+          total_palpites: number
+          updated_at: string | null
+          valor_cota: number
+          valor_premiacao: number | null
+        }
+        Insert: {
+          codigo: string
+          concurso_numero: string
+          cotas_reservadas?: number | null
+          cotas_vendidas?: number | null
+          created_at?: string | null
+          data_concurso: string
+          descricao_estrategia?: string | null
+          dezenas_por_palpite: number
+          id?: string
+          loteria: string
+          mes_ano: string
+          numero_bolao: number
+          palpites?: Json | null
+          sigla: string
+          status?: string | null
+          task_comprovantes?: boolean | null
+          task_impresso?: boolean | null
+          task_registrado?: boolean | null
+          task_resgate?: boolean | null
+          total_cotas: number
+          total_palpites: number
+          updated_at?: string | null
+          valor_cota: number
+          valor_premiacao?: number | null
+        }
+        Update: {
+          codigo?: string
+          concurso_numero?: string
+          cotas_reservadas?: number | null
+          cotas_vendidas?: number | null
+          created_at?: string | null
+          data_concurso?: string
+          descricao_estrategia?: string | null
+          dezenas_por_palpite?: number
+          id?: string
+          loteria?: string
+          mes_ano?: string
+          numero_bolao?: number
+          palpites?: Json | null
+          sigla?: string
+          status?: string | null
+          task_comprovantes?: boolean | null
+          task_impresso?: boolean | null
+          task_registrado?: boolean | null
+          task_resgate?: boolean | null
+          total_cotas?: number
+          total_palpites?: number
+          updated_at?: string | null
+          valor_cota?: number
+          valor_premiacao?: number | null
+        }
+        Relationships: []
+      }
       bot_post_interactions: {
         Row: {
           bot_perfil_id: string
@@ -1869,6 +2068,61 @@ export type Database = {
         }
         Relationships: []
       }
+      saldo_transacoes: {
+        Row: {
+          created_at: string | null
+          descricao: string | null
+          id: string
+          referencia_id: string | null
+          status: string | null
+          tipo: string
+          user_id: string | null
+          valor: number
+        }
+        Insert: {
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          referencia_id?: string | null
+          status?: string | null
+          tipo: string
+          user_id?: string | null
+          valor: number
+        }
+        Update: {
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          referencia_id?: string | null
+          status?: string | null
+          tipo?: string
+          user_id?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saldo_transacoes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saldo_transacoes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_publicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saldo_transacoes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios_notificaveis_hoje"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       send_logs: {
         Row: {
           id: string
@@ -2341,6 +2595,10 @@ export type Database = {
         Returns: undefined
       }
       claim_referral_reward: { Args: { p_reward_id: string }; Returns: Json }
+      generate_bolao_codigo: {
+        Args: { p_mes_ano: string; p_sigla: string }
+        Returns: string
+      }
       generate_referral_code: { Args: never; Returns: string }
       generate_slug: { Args: { title: string }; Returns: string }
       get_referrer_name: { Args: { p_code: string }; Returns: string }

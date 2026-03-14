@@ -20,7 +20,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
-import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot, Dices, Shuffle, Ticket, LayoutGrid, Target, Table2, Gift, Lock, MessageCircle, Plug, MessageSquare } from "lucide-react";
+import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot, Dices, Shuffle, Ticket, LayoutGrid, Target, Table2, Gift, Lock, MessageCircle, Plug, MessageSquare, Trophy, List, Wallet, CreditCard } from "lucide-react";
 
 export function DesktopHeader() {
   const { isAuthenticated, profile, signOut } = useAuthContext();
@@ -438,12 +438,51 @@ export function DesktopHeader() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                  <Link to="/admin/integracoes">
-                    <Plug className="h-4 w-4" />
-                    Integrações
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
+                   <Link to="/admin/integracoes">
+                     <Plug className="h-4 w-4" />
+                     Integrações
+                   </Link>
+                 </DropdownMenuItem>
+                 <DropdownMenuSeparator />
+                 <DropdownMenuSub>
+                   <DropdownMenuSubTrigger className="gap-2 py-2 cursor-pointer">
+                     <Ticket className="h-4 w-4" />
+                     Bolões
+                   </DropdownMenuSubTrigger>
+                   <DropdownMenuSubContent className="w-48 bg-popover z-50">
+                     <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                       <Link to="/admin/novo-bolao">
+                         <PlusCircle className="h-4 w-4" />
+                         Novo Bolão
+                       </Link>
+                     </DropdownMenuItem>
+                     <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                       <Link to="/admin/listagem-bolao">
+                         <List className="h-4 w-4" />
+                         Listagem
+                       </Link>
+                     </DropdownMenuItem>
+                     <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                       <Link to="/admin/solicitacao-resgate">
+                         <Trophy className="h-4 w-4" />
+                         Resgates
+                       </Link>
+                     </DropdownMenuItem>
+                     <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                       <Link to="/admin/compras-saldo">
+                         <Wallet className="h-4 w-4" />
+                         Compras de Saldo
+                       </Link>
+                     </DropdownMenuItem>
+                     <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+                       <Link to="/admin/compras-cotas">
+                         <CreditCard className="h-4 w-4" />
+                         Compras de Cotas
+                       </Link>
+                     </DropdownMenuItem>
+                   </DropdownMenuSubContent>
+                 </DropdownMenuSub>
+               </DropdownMenuContent>
             </DropdownMenu>
           )}
         </nav>

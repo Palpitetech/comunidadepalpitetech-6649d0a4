@@ -43,6 +43,11 @@ import AdminEventos from "./pages/admin/AdminEventos";
 import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
 import Integracoes from "./pages/admin/Integracoes";
 import AdminMetricas from "./pages/admin/AdminMetricas";
+import NovoBolao from "./pages/admin/boloes/NovoBolao";
+import ListagemBolao from "./pages/admin/boloes/ListagemBolao";
+import ResgatesBolao from "./pages/admin/boloes/ResgatesBolao";
+import ComprasSaldo from "./pages/admin/boloes/ComprasSaldo";
+import ComprasCotas from "./pages/admin/boloes/ComprasCotas";
 import AnaliseDoDia from "./pages/AnaliseDoDia";
 import TabelaMovimentacao from "./pages/TabelaMovimentacao";
 import FrequenciaDezenas from "./pages/FrequenciaDezenas";
@@ -168,6 +173,11 @@ const App = () => (
             <Route path="/admin/whatsapp" element={<AdminRoute><AdminWhatsApp /></AdminRoute>} />
             <Route path="/admin/integracoes" element={<AdminRoute><Integracoes /></AdminRoute>} />
             <Route path="/admin/metricas" element={<AdminRoute><AdminMetricas /></AdminRoute>} />
+            <Route path="/admin/novo-bolao" element={<AdminRoute><NovoBolao /></AdminRoute>} />
+            <Route path="/admin/listagem-bolao" element={<AdminRoute><ListagemBolao /></AdminRoute>} />
+            <Route path="/admin/solicitacao-resgate" element={<AdminRoute><ResgatesBolao /></AdminRoute>} />
+            <Route path="/admin/compras-saldo" element={<AdminRoute><ComprasSaldo /></AdminRoute>} />
+            <Route path="/admin/compras-cotas" element={<AdminRoute><ComprasCotas /></AdminRoute>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
