@@ -5,7 +5,10 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle2, CreditCard, FileText, Undo2 } from "lucide-react";
+import { Loader2, CheckCircle2, CreditCard, FileText, Undo2, CalendarIcon, X } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -88,16 +91,23 @@ export default function BoloesPagamento() {
   const [confirmPagar, setConfirmPagar] = useState<Bolao | null>(null);
   const [confirmDesfazer, setConfirmDesfazer] = useState<Bolao | null>(null);
   const [loading, setLoading] = useState(false);
+  const [dataFiltro, setDataFiltro] = useState<Date | undefined>(undefined);
 
   const { data: boloes = [], isLoading } = useQuery({
-    queryKey: ["boloes-pagamento"],
+    queryKey: ["boloes-pagamento", dataFiltro?.toISOString()],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("boloes")
-        .select("id, codigo, loteria, sigla, concurso_numero, data_concurso, total_palpites, cotas_vendidas, valor_cota, valor_registro, task_pago, pago_em, pdf_url, status")
+        .select("id, codigo, loteria, sigla, concurso_numero, data_concurso, total_palpites, cotas_vendidas, valor_cota, valor_registro, task_pago, pago_em, pdf_url, status, updated_at")
         .eq("task_comprovantes", true)
         .order("task_pago", { ascending: true })
         .order("data_concurso", { ascending: true });
+      if (dataFiltro) {
+        const dateStr = format(dataFiltro, "yyyy-MM-dd");
+        q = q.gte("updated_at", `${dateStr}T00:00:00`)
+             .lte("updated_at", `${dateStr}T23:59:59`);
+      }
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as Bolao[];
     },
@@ -238,6 +248,37 @@ export default function BoloesPagamento() {
           <span className="text-muted-foreground">✅ Pagos</span>
           <span className="font-bold">{pagos.length}</span>
         </div>
+      </div>
+
+      {/* Date Filter */}
+      <div className="flex items-center gap-2">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn("h-8 text-xs gap-1.5", !dataFiltro && "text-muted-foreground")}
+            >
+              <CalendarIcon className="h-3.5 w-3.5" />
+              {dataFiltro ? format(dataFiltro, "dd/MM/yyyy") : "Filtrar por data"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={dataFiltro}
+              onSelect={setDataFiltro}
+              locale={ptBR}
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+        {dataFiltro && (
+          <Button variant="ghost" size="sm" className="h-8 text-xs gap-1" onClick={() => setDataFiltro(undefined)}>
+            <X className="h-3.5 w-3.5" />
+            Limpar
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
