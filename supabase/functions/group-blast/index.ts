@@ -314,7 +314,7 @@ async function handleSend(
 async function generateAIMessage(
   apiKey: string,
   baseUrl: string,
-  post: { id: string; titulo: string | null; conteudo: string; tipo: string | null }
+  post: { id: string; slug?: string | null; titulo: string | null; conteudo: string; tipo: string | null }
 ): Promise<string | null> {
   if (!apiKey) {
     console.error("[group-blast] LOVABLE_API_KEY não configurada");
