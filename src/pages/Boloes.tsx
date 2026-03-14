@@ -68,7 +68,12 @@ function formatDate(dateStr: string) {
   return d.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
-function formatCurrency(value: number) {
+function formatDateLong(dateStr: string) {
+  const d = new Date(dateStr + "T12:00:00");
+  const weekday = d.toLocaleDateString("pt-BR", { weekday: "long" });
+  const formatted = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return { weekday: weekday.charAt(0).toUpperCase() + weekday.slice(1), formatted };
+}
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
