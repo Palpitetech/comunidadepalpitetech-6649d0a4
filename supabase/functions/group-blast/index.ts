@@ -321,6 +321,8 @@ async function generateAIMessage(
     return null;
   }
 
+  const postPath = post.slug || post.id;
+
   const prompt = `Você é assistente de uma comunidade de loterias.
 Crie uma mensagem para WhatsApp seguindo EXATAMENTE este formato:
 
@@ -329,7 +331,7 @@ Crie uma mensagem para WhatsApp seguindo EXATAMENTE este formato:
 [RESUMO — máximo 2 linhas diretas sobre o conteúdo do post]
 
 Vamos interagir lá na comunidade, deixe seu comentário lá 👇
-${baseUrl}/comunidade/post/${post.id}
+${baseUrl}/comunidade/post/${postPath}?utm=grupo
 
 Regras obrigatórias:
 - Gancho: 1 linha curta e impactante, desperta curiosidade, sem revelar tudo

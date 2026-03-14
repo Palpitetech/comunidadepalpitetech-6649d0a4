@@ -12,25 +12,42 @@ Deno.serve(async (req) => {
   }
 
   const url = new URL(req.url);
-  const postId = url.searchParams.get("id");
+  const slugOrId = url.searchParams.get("id") || url.searchParams.get("slug");
   const COMMUNITY_BASE_URL = Deno.env.get("COMMUNITY_BASE_URL") || "";
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-  const redirectUrl = `${COMMUNITY_BASE_URL.replace(/\/+$/, "")}/comunidade/post/${postId}`;
-
-  if (!postId) {
+  if (!slugOrId) {
     return Response.redirect(COMMUNITY_BASE_URL || "https://comunidadepalpitetech.lovable.app", 302);
   }
 
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const { data: post } = await supabase
-      .from("postagens")
-      .select("id, titulo, conteudo, media_url, loteria_tag, created_at")
-      .eq("id", postId)
-      .single();
+    // Try by slug first, then by id
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
+
+    let post: any = null;
+
+    if (!isUuid) {
+      const { data } = await supabase
+        .from("postagens")
+        .select("id, slug, titulo, conteudo, media_url, loteria_tag, created_at")
+        .eq("slug", slugOrId)
+        .maybeSingle();
+      post = data;
+    }
+
+    if (!post) {
+      const { data } = await supabase
+        .from("postagens")
+        .select("id, slug, titulo, conteudo, media_url, loteria_tag, created_at")
+        .eq("id", slugOrId)
+        .maybeSingle();
+      post = data;
+    }
+
+    const redirectUrl = `${COMMUNITY_BASE_URL.replace(/\/+$/, "")}/comunidade/post/${post?.slug || slugOrId}`;
 
     if (!post) {
       return Response.redirect(redirectUrl, 302);

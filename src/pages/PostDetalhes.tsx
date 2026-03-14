@@ -89,7 +89,9 @@ export default function PostDetalhes() {
     isLiked,
     refetchLike,
     refetchPost,
-  } = usePostDetails(id || "");
+  } = usePostDetails(slug || "");
+
+  const resolvedPostId = post?.id || "";
 
   const {
     toggleLike,
@@ -98,7 +100,7 @@ export default function PostDetalhes() {
     isAddingComment,
     deleteComment,
     deletingCommentId,
-  } = usePostActions(id || "");
+  } = usePostActions(resolvedPostId);
 
   useEffect(() => {
     if (authLoading || isAuthenticated) return;
