@@ -3,7 +3,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
   FileText, Users, Bot, DollarSign, Gift, ShoppingCart, Crown, 
-  UserCheck, UserX, Loader2, ChevronRight, Activity, Plug
+  UserCheck, UserX, Loader2, ChevronRight, Activity, Plug, Clock
 } from "lucide-react";
 import { BotHealthWidget } from "@/components/admin/BotHealthWidget";
 import { useQuery } from "@tanstack/react-query";
