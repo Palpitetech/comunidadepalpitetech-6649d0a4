@@ -12,10 +12,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import {
   Ticket,
   Calendar,
-  Trophy,
+  
   Lock,
   Download,
   FileText,
@@ -86,6 +87,12 @@ function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function formatPremio(valor: number) {
+  if (valor >= 1_000_000_000) return `R$ ${(valor / 1_000_000_000).toFixed(1)} Bi`;
+  if (valor >= 1_000_000) return `R$ ${(valor / 1_000_000).toFixed(1)} Mi`;
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
 // ─── Detail Sheet ─────────────────────────────────────
 
 interface BolaoDetailSheetProps {
@@ -148,17 +155,19 @@ function BolaoDetailSheet({ bolao, open, onOpenChange }: BolaoDetailSheetProps) 
   };
 
   const handleAdquirir = () => {
-    toast({
-      title: "Em breve!",
-      description: "Em breve você poderá adquirir cotas diretamente pelo app. Entre em contato via WhatsApp.",
-    });
-  };
-
-  const handleWhatsApp = () => {
     const msg = encodeURIComponent(
       `Olá! Tenho interesse no bolão *${bolao.codigo}* (${LOTERIA_LABELS[bolao.loteria] || bolao.loteria}) para o concurso ${bolao.concurso_numero}. Valor da cota: ${formatCurrency(bolao.valor_cota)}`
     );
-    window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${msg}`, "_blank");
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMERO}?text=${msg}`;
+    toast({
+      title: "Entre em contato para adquirir",
+      description: "Fale conosco pelo WhatsApp para garantir sua cota.",
+      action: (
+        <ToastAction altText="Abrir WhatsApp" onClick={() => window.open(whatsappUrl, "_blank")}>
+          Abrir WhatsApp →
+        </ToastAction>
+      ),
+    });
   };
 
   const dateLong = formatDateLong(bolao.data_concurso);
@@ -179,117 +188,110 @@ function BolaoDetailSheet({ bolao, open, onOpenChange }: BolaoDetailSheetProps) 
           </div>
         )}
 
-        <div className="space-y-6">
-          {/* 1. HEADER */}
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-xl font-bold">{bolao.codigo}</h2>
+        <div className="flex flex-col gap-4">
+          {/* BLOCO 1 — HEADER */}
+          <div className="bg-card border rounded-2xl p-5">
+            <div className="flex items-center gap-2 flex-wrap mb-1.5">
+              <h2 className="text-2xl font-bold">{bolao.codigo}</h2>
               <Badge variant="outline" className={LOTERIA_BADGE_COLORS[bolao.loteria] || ""}>
                 {LOTERIA_LABELS[bolao.loteria] || bolao.loteria}
               </Badge>
               {getStatusBadge(bolao.status)}
             </div>
             <p className="text-sm text-muted-foreground">
-              Concurso {bolao.concurso_numero} — {dateLong.weekday}, {dateLong.formatted}
+              Concurso {bolao.concurso_numero}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {dateLong.weekday}, {dateLong.formatted}
             </p>
           </div>
 
-          <Separator />
-
-          {/* 2. GRID DE INFORMAÇÕES */}
+          {/* BLOCO 2 — GRID DE INFORMAÇÕES */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-card rounded-xl border p-4 text-center space-y-1">
-              <p className="text-xs text-muted-foreground">💰 Valor/cota</p>
+            <div className="bg-muted/40 rounded-xl p-4 text-center space-y-1">
+              <p className="text-xs text-muted-foreground">💰 Valor</p>
               <p className="text-2xl font-bold text-primary">{formatCurrency(bolao.valor_cota)}</p>
               <p className="text-xs text-muted-foreground">por cota</p>
             </div>
-            <div className="bg-card rounded-xl border p-4 text-center space-y-1">
-              <p className="text-xs text-muted-foreground">🎟️ Disponíveis</p>
+            <div className="bg-muted/40 rounded-xl p-4 text-center space-y-1">
+              <p className="text-xs text-muted-foreground">🎟️ Cotas</p>
               <p className={cn("text-2xl font-bold", esgotado ? "text-destructive" : "")}>
                 {cotasDisponiveis} / {bolao.total_cotas}
               </p>
-              <p className="text-xs text-muted-foreground">restantes</p>
+              <p className="text-xs text-muted-foreground">disponíveis</p>
             </div>
-            <div className="bg-card rounded-xl border p-4 text-center space-y-1">
-              <p className="text-xs text-muted-foreground">🏆 Prêmio est.</p>
-              <p className="text-2xl font-bold">{formatCurrency(bolao.valor_premiacao || 0)}</p>
+            <div className="bg-muted/40 rounded-xl p-4 text-center space-y-1">
+              <p className="text-xs text-muted-foreground">🏆 Prêmio</p>
+              <p className="text-2xl font-bold">{formatPremio(bolao.valor_premiacao || 0)}</p>
+              <p className="text-xs text-muted-foreground">estimado</p>
             </div>
-            <div className="bg-card rounded-xl border p-4 text-center space-y-1">
+            <div className="bg-muted/40 rounded-xl p-4 text-center space-y-1">
               <p className="text-xs text-muted-foreground">📅 Sorteio</p>
               <p className="text-2xl font-bold">{dateLong.formatted.slice(0, 5)}</p>
               <p className="text-xs text-muted-foreground">{dateLong.weekday}</p>
             </div>
           </div>
 
-          {/* 3. BARRA DE PROGRESSO */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">{pctVendido}% vendido · {cotasDisponiveis} restantes</span>
-              {esgotado && <span className="font-medium text-destructive">Esgotado</span>}
+          {/* BLOCO 3 — PROGRESSO + AÇÃO */}
+          <div className="bg-card border rounded-2xl p-5 space-y-4">
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-muted-foreground">{pctVendido}% vendido · {cotasDisponiveis} restante{cotasDisponiveis !== 1 ? "s" : ""}</span>
+                {esgotado && <span className="font-medium text-destructive">Esgotado</span>}
+              </div>
+              <div className="h-3 bg-muted rounded-full overflow-hidden">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-500 ease-out",
+                    esgotado ? "bg-muted-foreground/40" : getProgressColor(pctVendido)
+                  )}
+                  style={{ width: `${pctVendido}%` }}
+                />
+              </div>
             </div>
-            <div className="h-2.5 bg-muted rounded-full overflow-hidden">
-              <div
-                className={cn(
-                  "h-full rounded-full transition-all duration-500 ease-out",
-                  esgotado ? "bg-muted-foreground/40" : getProgressColor(pctVendido)
-                )}
-                style={{ width: `${pctVendido}%` }}
-              />
-            </div>
-          </div>
 
-          {/* 4. BOTÃO ADQUIRIR COTA */}
-          {loadingCota ? (
-            <div className="flex justify-center py-2">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : temCota ? (
-            <Button
-              variant="outline"
-              className="w-full h-14 gap-2 text-base border-green-500/40 text-green-500 cursor-default"
-              disabled
-            >
-              ✅ Você já possui uma cota
-            </Button>
-          ) : !isAtivo ? (
-            <Button className="w-full h-14 text-base" disabled>
-              Bolão Encerrado
-            </Button>
-          ) : esgotado ? (
-            <Button variant="outline" className="w-full h-14 text-base border-destructive/40 text-destructive" disabled>
-              ❌ Cotas Esgotadas
-            </Button>
-          ) : (
-            <div className="space-y-2">
+            {loadingCota ? (
+              <div className="flex justify-center py-2">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : temCota ? (
               <Button
-                className="w-full h-14 gap-2 text-base font-bold bg-gradient-to-r from-emerald-600 to-green-500 hover:from-emerald-500 hover:to-green-400 text-white shadow-lg hover:shadow-xl transition-all hover:scale-[1.01]"
+                variant="outline"
+                className="w-full h-14 gap-2 text-base border-green-500/40 text-green-500 rounded-xl cursor-default"
+                disabled
+              >
+                ✅ Você já possui uma cota
+              </Button>
+            ) : !isAtivo ? (
+              <Button className="w-full h-14 text-base rounded-xl" disabled>
+                Bolão Encerrado
+              </Button>
+            ) : esgotado ? (
+              <Button variant="outline" className="w-full h-14 text-base rounded-xl border-destructive/40 text-destructive" disabled>
+                ❌ Cotas Esgotadas
+              </Button>
+            ) : (
+              <Button
+                className="w-full h-14 gap-2 text-lg font-bold rounded-xl bg-gradient-to-r from-emerald-600 to-green-500 hover:from-emerald-500 hover:to-green-400 text-white shadow-lg hover:shadow-xl transition-all hover:scale-[1.01]"
                 onClick={handleAdquirir}
               >
                 🎟️ Adquirir Cota — {formatCurrency(bolao.valor_cota)}
               </Button>
-              <Button variant="outline" className="w-full gap-2" onClick={handleWhatsApp}>
-                <MessageCircle className="h-4 w-4" />
-                Falar no WhatsApp
-              </Button>
-            </div>
-          )}
+            )}
+          </div>
 
-          <Separator />
-
-          {/* 5. ESTRATÉGIA */}
-          <div className="bg-muted/30 rounded-xl p-4 space-y-2">
-            <h3 className="font-semibold">📋 Estratégia</h3>
+          {/* BLOCO 4 — ESTRATÉGIA */}
+          <div className="bg-card border rounded-2xl p-5">
+            <h3 className="font-semibold mb-3">📋 Estratégia</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
               {bolao.descricao_estrategia || "Estratégia não informada."}
             </p>
           </div>
 
-          <Separator />
-
-          {/* 6. PALPITES DO BOLÃO */}
+          {/* BLOCO 5 — PALPITES */}
           <TooltipProvider>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="bg-card border rounded-2xl p-5">
+              <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold">🎯 Palpites do Bolão</h3>
                 <div className="flex items-center gap-2">
                   {/* Botão Comprovante */}
@@ -348,7 +350,7 @@ function BolaoDetailSheet({ bolao, open, onOpenChange }: BolaoDetailSheetProps) 
               </div>
               <div className="space-y-1.5">
                 {palpites.map((p: number[], idx: number) => (
-                  <div key={idx} className="bg-muted/20 rounded px-3 py-2 text-sm font-mono">
+                  <div key={idx} className="bg-muted/30 rounded-lg px-3 py-2 text-sm font-mono">
                     <span className="text-muted-foreground text-xs mr-1.5">
                       Palpite {String(idx + 1).padStart(2, "0")}:
                     </span>
