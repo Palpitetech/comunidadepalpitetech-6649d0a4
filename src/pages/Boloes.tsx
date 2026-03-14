@@ -190,116 +190,114 @@ function BolaoDetailSheet({ bolao, open, onOpenChange }: BolaoDetailSheetProps) 
           </div>
         )}
 
-        <div className="flex flex-col gap-4">
-          {/* BLOCO 1 — HEADER */}
-          <div className="bg-card border rounded-2xl p-5">
-            <div className="flex items-center gap-2 flex-wrap mb-1.5">
-              <h2 className="text-2xl font-bold">{bolao.codigo}</h2>
-              <Badge variant="outline" className={LOTERIA_BADGE_COLORS[bolao.loteria] || ""}>
+        <div className="flex flex-col gap-5 px-1">
+          {/* HEADER */}
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-2xl font-bold tracking-tight">{bolao.codigo}</h2>
+              <Badge variant="outline" className={cn("rounded-full text-xs", LOTERIA_BADGE_COLORS[bolao.loteria] || "")}>
                 {LOTERIA_LABELS[bolao.loteria] || bolao.loteria}
               </Badge>
               {getStatusBadge(bolao.status)}
             </div>
-            <p className="text-sm text-muted-foreground">
-              Concurso {bolao.concurso_numero}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {dateLong.weekday}, {dateLong.formatted}
+            <p className="text-sm text-muted-foreground mt-1">
+              Concurso {bolao.concurso_numero} · {dateLong.weekdayShort}, {dateLong.formatted}
             </p>
           </div>
 
-          {/* BLOCO 2 — GRID DE INFORMAÇÕES */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-muted/40 rounded-xl p-4 text-center space-y-1">
-              <p className="text-xs text-muted-foreground">💰 Valor</p>
-              <p className="text-2xl font-bold text-primary">{formatCurrency(bolao.valor_cota)}</p>
-              <p className="text-xs text-muted-foreground">por cota</p>
+          <div className="h-px bg-border" />
+
+          {/* GRID DE INFORMAÇÕES */}
+          <div className="grid grid-cols-2 divide-x divide-y divide-border/50 border border-border/50 rounded-xl overflow-hidden">
+            <div className="px-4 py-3 text-center">
+              <p className="text-xl font-semibold tracking-tight text-primary">{formatCurrency(bolao.valor_cota)}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">por cota</p>
             </div>
-            <div className="bg-muted/40 rounded-xl p-4 text-center space-y-1">
-              <p className="text-xs text-muted-foreground">🎟️ Cotas</p>
-              <p className={cn("text-2xl font-bold", esgotado ? "text-destructive" : "")}>
-                {cotasDisponiveis} / {bolao.total_cotas}
+            <div className="px-4 py-3 text-center">
+              <p className={cn("text-xl font-semibold tracking-tight", esgotado ? "text-destructive" : "")}>
+                {cotasDisponiveis} disponível
               </p>
-              <p className="text-xs text-muted-foreground">disponíveis</p>
+              <p className="text-xs text-muted-foreground mt-0.5">de {bolao.total_cotas} cotas</p>
             </div>
-            <div className="bg-muted/40 rounded-xl p-4 text-center space-y-1">
-              <p className="text-xs text-muted-foreground">🏆 Prêmio</p>
-              <p className="text-2xl font-bold">{formatPremio(bolao.valor_premiacao || 0)}</p>
-              <p className="text-xs text-muted-foreground">estimado</p>
+            <div className="px-4 py-3 text-center">
+              <p className="text-xl font-semibold tracking-tight whitespace-nowrap">{formatPremio(bolao.valor_premiacao || 0)}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">prêm. est.</p>
             </div>
-            <div className="bg-muted/40 rounded-xl p-4 text-center space-y-1">
-              <p className="text-xs text-muted-foreground">📅 Sorteio</p>
-              <p className="text-2xl font-bold">{dateLong.formatted.slice(0, 5)}</p>
-              <p className="text-xs text-muted-foreground">{dateLong.weekday}</p>
+            <div className="px-4 py-3 text-center">
+              <p className="text-xl font-semibold tracking-tight">{dateLong.formatted.slice(0, 5)}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{dateLong.weekday}</p>
             </div>
           </div>
 
-          {/* BLOCO 3 — PROGRESSO + AÇÃO */}
-          <div className="bg-card border rounded-2xl p-5 space-y-4">
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-muted-foreground">{pctVendido}% vendido · {cotasDisponiveis} restante{cotasDisponiveis !== 1 ? "s" : ""}</span>
-                {esgotado && <span className="font-medium text-destructive">Esgotado</span>}
-              </div>
-              <div className="h-3 bg-muted rounded-full overflow-hidden">
-                <div
-                  className={cn(
-                    "h-full rounded-full transition-all duration-500 ease-out",
-                    esgotado ? "bg-muted-foreground/40" : getProgressColor(pctVendido)
-                  )}
-                  style={{ width: `${pctVendido}%` }}
-                />
-              </div>
+          {/* PROGRESSO */}
+          <div>
+            <div className="flex justify-between text-xs text-muted-foreground mb-2">
+              <span>{pctVendido}% vendido · {cotasDisponiveis} restante{cotasDisponiveis !== 1 ? "s" : ""}</span>
+              {esgotado && <span className="font-medium text-destructive">Esgotado</span>}
             </div>
-
-            {loadingCota ? (
-              <div className="flex justify-center py-2">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : temCota ? (
-              <Button
-                variant="outline"
-                className="w-full h-14 gap-2 text-base border-green-500/40 text-green-500 rounded-xl cursor-default"
-                disabled
-              >
-                ✅ Você já possui uma cota
-              </Button>
-            ) : !isAtivo ? (
-              <Button className="w-full h-14 text-base rounded-xl" disabled>
-                Bolão Encerrado
-              </Button>
-            ) : esgotado ? (
-              <Button variant="outline" className="w-full h-14 text-base rounded-xl border-destructive/40 text-destructive" disabled>
-                ❌ Cotas Esgotadas
-              </Button>
-            ) : (
-              <Button
-                className="w-full h-14 gap-2 text-lg font-bold rounded-xl bg-gradient-to-r from-emerald-600 to-green-500 hover:from-emerald-500 hover:to-green-400 text-white shadow-lg hover:shadow-xl transition-all hover:scale-[1.01]"
-                onClick={handleAdquirir}
-              >
-                🎟️ Adquirir Cota — {formatCurrency(bolao.valor_cota)}
-              </Button>
-            )}
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all duration-500 ease-out",
+                  esgotado ? "bg-muted-foreground/40" : getProgressColor(pctVendido)
+                )}
+                style={{ width: `${pctVendido}%` }}
+              />
+            </div>
           </div>
 
-          {/* BLOCO 4 — ESTRATÉGIA */}
-          <div className="bg-card border rounded-2xl p-5">
-            <h3 className="font-semibold mb-3">📋 Estratégia</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
+          {/* BOTÃO ADQUIRIR */}
+          {loadingCota ? (
+            <div className="flex justify-center py-2">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : temCota ? (
+            <Button
+              variant="ghost"
+              className="w-full h-12 gap-2 text-base text-green-500 rounded-2xl cursor-default"
+              disabled
+            >
+              ✅ Você já possui uma cota
+            </Button>
+          ) : !isAtivo ? (
+            <Button className="w-full h-12 text-base rounded-2xl bg-muted text-muted-foreground" disabled>
+              Bolão Encerrado
+            </Button>
+          ) : esgotado ? (
+            <Button className="w-full h-12 text-base rounded-2xl bg-muted text-muted-foreground" disabled>
+              Cotas Esgotadas
+            </Button>
+          ) : (
+            <Button
+              className="w-full h-12 text-base font-semibold rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm transition-all"
+              onClick={handleAdquirir}
+            >
+              Adquirir Cota · {formatCurrency(bolao.valor_cota)}
+            </Button>
+          )}
+
+          <div className="h-px bg-border" />
+
+          {/* ESTRATÉGIA */}
+          <div>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Estratégia</p>
+            <p className="text-sm leading-relaxed text-foreground/80">
               {bolao.descricao_estrategia || "Estratégia não informada."}
             </p>
           </div>
 
-          {/* BLOCO 5 — PALPITES */}
+          <div className="h-px bg-border" />
+
+          {/* PALPITES */}
           <TooltipProvider>
-            <div className="bg-card border rounded-2xl p-5">
+            <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold">🎯 Palpites do Bolão</h3>
-                <div className="flex items-center gap-2">
-                  {/* Botão Comprovante */}
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Palpites</p>
+                <div className="flex items-center gap-1.5">
+                  {/* Comprovante */}
                   {bolao.pdf_url ? (
                     temCota ? (
-                      <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" onClick={() => window.open(bolao.pdf_url, "_blank")}>
+                      <Button variant="ghost" size="sm" className="gap-1.5 h-7 text-xs hover:bg-muted/50" onClick={() => window.open(bolao.pdf_url, "_blank")}>
                         <FileText className="h-3.5 w-3.5" />
                         Comprovante
                       </Button>
@@ -307,8 +305,8 @@ function BolaoDetailSheet({ bolao, open, onOpenChange }: BolaoDetailSheetProps) 
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span>
-                            <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" disabled>
-                              <Lock className="h-3.5 w-3.5" />
+                            <Button variant="ghost" size="sm" className="gap-1.5 h-7 text-xs" disabled>
+                              <Lock className="h-3 w-3" />
                               Comprovante
                             </Button>
                           </span>
@@ -320,8 +318,8 @@ function BolaoDetailSheet({ bolao, open, onOpenChange }: BolaoDetailSheetProps) 
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span>
-                          <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" disabled>
-                            <Clock className="h-3.5 w-3.5" />
+                          <Button variant="ghost" size="sm" className="gap-1.5 h-7 text-xs" disabled>
+                            <Clock className="h-3 w-3" />
                             Comprovante
                           </Button>
                         </span>
@@ -329,9 +327,9 @@ function BolaoDetailSheet({ bolao, open, onOpenChange }: BolaoDetailSheetProps) 
                       <TooltipContent>Aguardando upload do admin</TooltipContent>
                     </Tooltip>
                   )}
-                  {/* Botão .TXT */}
+                  {/* .TXT */}
                   {temCota ? (
-                    <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" onClick={handleDownloadTxt}>
+                    <Button variant="ghost" size="sm" className="gap-1.5 h-7 text-xs hover:bg-muted/50" onClick={handleDownloadTxt}>
                       <Download className="h-3.5 w-3.5" />
                       .TXT
                     </Button>
@@ -339,8 +337,8 @@ function BolaoDetailSheet({ bolao, open, onOpenChange }: BolaoDetailSheetProps) 
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span>
-                          <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" disabled>
-                            <Lock className="h-3.5 w-3.5" />
+                          <Button variant="ghost" size="sm" className="gap-1.5 h-7 text-xs" disabled>
+                            <Lock className="h-3 w-3" />
                             .TXT
                           </Button>
                         </span>
@@ -350,13 +348,15 @@ function BolaoDetailSheet({ bolao, open, onOpenChange }: BolaoDetailSheetProps) 
                   )}
                 </div>
               </div>
-              <div className="space-y-1.5">
+              <div>
                 {palpites.map((p: number[], idx: number) => (
-                  <div key={idx} className="bg-muted/30 rounded-lg px-3 py-2 text-sm font-mono">
-                    <span className="text-muted-foreground text-xs mr-1.5">
-                      Palpite {String(idx + 1).padStart(2, "0")}:
+                  <div key={idx} className={cn("flex items-center gap-2 py-1.5", idx < palpites.length - 1 && "border-b border-border/30")}>
+                    <span className="text-xs text-muted-foreground w-16 shrink-0">
+                      Palpite {String(idx + 1).padStart(2, "0")}
                     </span>
-                    {p.map((d) => String(d).padStart(2, "0")).join(" · ")}
+                    <span className="text-sm font-mono text-foreground">
+                      {p.map((d) => String(d).padStart(2, "0")).join(" · ")}
+                    </span>
                   </div>
                 ))}
               </div>
