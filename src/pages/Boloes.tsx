@@ -287,61 +287,75 @@ function BolaoDetailSheet({ bolao, open, onOpenChange }: BolaoDetailSheetProps) 
           <Separator />
 
           {/* 6. PALPITES DO BOLÃO */}
-          <div className="space-y-3">
-            <h3 className="font-semibold">🎯 Palpites do Bolão</h3>
-            {loadingCota ? (
-              <div className="flex justify-center py-4">
-                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          <TooltipProvider>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold">🎯 Palpites do Bolão</h3>
+                {temCota ? (
+                  <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" onClick={handleDownloadTxt}>
+                    <Download className="h-3.5 w-3.5" />
+                    .TXT
+                  </Button>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" disabled>
+                          <Lock className="h-3.5 w-3.5" />
+                          .TXT
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>Adquira uma cota para baixar</TooltipContent>
+                  </Tooltip>
+                )}
               </div>
-            ) : temCota ? (
-              <div className="space-y-2">
-                <Card className="border-green-500/20 bg-green-500/5">
-                  <CardContent className="p-3 space-y-1.5">
-                    {palpites.map((p: number[], idx: number) => (
-                      <p key={idx} className="text-sm font-mono">
-                        <span className="text-muted-foreground text-xs mr-1.5">
-                          Palpite {String(idx + 1).padStart(2, "0")}:
-                        </span>
-                        {p.map((d) => String(d).padStart(2, "0")).join(" · ")}
-                      </p>
-                    ))}
-                  </CardContent>
-                </Card>
-                <Button variant="outline" size="sm" className="w-full gap-1.5" onClick={handleDownloadTxt}>
-                  <Download className="h-3.5 w-3.5" />
-                  Baixar Palpites (.txt)
-                </Button>
+              <div className="space-y-1.5">
+                {palpites.map((p: number[], idx: number) => (
+                  <div key={idx} className="bg-muted/20 rounded px-3 py-2 text-sm font-mono">
+                    <span className="text-muted-foreground text-xs mr-1.5">
+                      Palpite {String(idx + 1).padStart(2, "0")}:
+                    </span>
+                    {p.map((d) => String(d).padStart(2, "0")).join(" · ")}
+                  </div>
+                ))}
               </div>
-            ) : (
-              <Card className="border-dashed">
-                <CardContent className="py-8 text-center">
-                  <Lock className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground font-medium">
-                    Adquira uma cota para visualizar os palpites
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+            </div>
+          </TooltipProvider>
 
           <Separator />
 
-          {/* 7. PALPITES OFICIAIS */}
-          <div className="space-y-3">
-            <h3 className="font-semibold">📄 Palpites Oficiais (Comprovante)</h3>
-            {bolao.pdf_url ? (
-              temCota ? (
-                <Button variant="outline" className="w-full gap-2" onClick={() => window.open(bolao.pdf_url, "_blank")}>
-                  <FileText className="h-4 w-4" />
-                  ⬇️ Baixar Comprovante Oficial (PDF)
-                </Button>
+          {/* 7. COMPROVANTE OFICIAL */}
+          <TooltipProvider>
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">📄 Comprovante Oficial</h3>
+              {bolao.pdf_url ? (
+                temCota ? (
+                  <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" onClick={() => window.open(bolao.pdf_url, "_blank")}>
+                    <FileText className="h-3.5 w-3.5" />
+                    PDF
+                  </Button>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" disabled>
+                          <Lock className="h-3.5 w-3.5" />
+                          PDF
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>Adquira uma cota para baixar</TooltipContent>
+                  </Tooltip>
+                )
               ) : (
-                <p className="text-sm text-muted-foreground">🔒 Disponível para cotistas</p>
-              )
-            ) : (
-              <p className="text-sm text-muted-foreground">Comprovante ainda não disponível.</p>
-            )}
-          </div>
+                <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" disabled>
+                  <Clock className="h-3.5 w-3.5" />
+                  Aguardando PDF
+                </Button>
+              )}
+            </div>
+          </TooltipProvider>
         </div>
       </SheetContent>
     </Sheet>
