@@ -1969,6 +1969,48 @@ export type Database = {
         }
         Relationships: []
       }
+      resultados_diadesorte: {
+        Row: {
+          acumulou: boolean | null
+          concurso: number
+          created_at: string | null
+          data_proximo_concurso: string | null
+          data_sorteio: string
+          dezenas: string[]
+          id: string
+          mes_sorte: string | null
+          valor_acumulado: number | null
+          valor_estimado_proximo: number | null
+          valor_premio_principal: number | null
+        }
+        Insert: {
+          acumulou?: boolean | null
+          concurso: number
+          created_at?: string | null
+          data_proximo_concurso?: string | null
+          data_sorteio: string
+          dezenas: string[]
+          id?: string
+          mes_sorte?: string | null
+          valor_acumulado?: number | null
+          valor_estimado_proximo?: number | null
+          valor_premio_principal?: number | null
+        }
+        Update: {
+          acumulou?: boolean | null
+          concurso?: number
+          created_at?: string | null
+          data_proximo_concurso?: string | null
+          data_sorteio?: string
+          dezenas?: string[]
+          id?: string
+          mes_sorte?: string | null
+          valor_acumulado?: number | null
+          valor_estimado_proximo?: number | null
+          valor_premio_principal?: number | null
+        }
+        Relationships: []
+      }
       resultados_duplasena: {
         Row: {
           acumulou: boolean | null
@@ -2044,6 +2086,45 @@ export type Database = {
         }
         Relationships: []
       }
+      resultados_lotomania: {
+        Row: {
+          acumulou: boolean | null
+          concurso: number
+          created_at: string | null
+          data_proximo_concurso: string | null
+          data_sorteio: string
+          dezenas: string[]
+          id: string
+          valor_acumulado: number | null
+          valor_estimado_proximo: number | null
+          valor_premio_principal: number | null
+        }
+        Insert: {
+          acumulou?: boolean | null
+          concurso: number
+          created_at?: string | null
+          data_proximo_concurso?: string | null
+          data_sorteio: string
+          dezenas: string[]
+          id?: string
+          valor_acumulado?: number | null
+          valor_estimado_proximo?: number | null
+          valor_premio_principal?: number | null
+        }
+        Update: {
+          acumulou?: boolean | null
+          concurso?: number
+          created_at?: string | null
+          data_proximo_concurso?: string | null
+          data_sorteio?: string
+          dezenas?: string[]
+          id?: string
+          valor_acumulado?: number | null
+          valor_estimado_proximo?: number | null
+          valor_premio_principal?: number | null
+        }
+        Relationships: []
+      }
       resultados_megasena: {
         Row: {
           acumulou: boolean | null
@@ -2098,6 +2179,45 @@ export type Database = {
           qtd_repetidas?: number | null
           valor_acumulado?: number | null
           valor_estimado_proximo?: number | null
+        }
+        Relationships: []
+      }
+      resultados_quina: {
+        Row: {
+          acumulou: boolean | null
+          concurso: number
+          created_at: string | null
+          data_proximo_concurso: string | null
+          data_sorteio: string
+          dezenas: string[]
+          id: string
+          valor_acumulado: number | null
+          valor_estimado_proximo: number | null
+          valor_premio_principal: number | null
+        }
+        Insert: {
+          acumulou?: boolean | null
+          concurso: number
+          created_at?: string | null
+          data_proximo_concurso?: string | null
+          data_sorteio: string
+          dezenas: string[]
+          id?: string
+          valor_acumulado?: number | null
+          valor_estimado_proximo?: number | null
+          valor_premio_principal?: number | null
+        }
+        Update: {
+          acumulou?: boolean | null
+          concurso?: number
+          created_at?: string | null
+          data_proximo_concurso?: string | null
+          data_sorteio?: string
+          dezenas?: string[]
+          id?: string
+          valor_acumulado?: number | null
+          valor_estimado_proximo?: number | null
+          valor_premio_principal?: number | null
         }
         Relationships: []
       }
