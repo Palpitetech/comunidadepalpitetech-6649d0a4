@@ -291,24 +291,60 @@ function BolaoDetailSheet({ bolao, open, onOpenChange }: BolaoDetailSheetProps) 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold">🎯 Palpites do Bolão</h3>
-                {temCota ? (
-                  <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" onClick={handleDownloadTxt}>
-                    <Download className="h-3.5 w-3.5" />
-                    .TXT
-                  </Button>
-                ) : (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span>
-                        <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" disabled>
-                          <Lock className="h-3.5 w-3.5" />
-                          .TXT
-                        </Button>
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>Adquira uma cota para baixar</TooltipContent>
-                  </Tooltip>
-                )}
+                <div className="flex items-center gap-2">
+                  {/* Botão Comprovante */}
+                  {bolao.pdf_url ? (
+                    temCota ? (
+                      <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" onClick={() => window.open(bolao.pdf_url, "_blank")}>
+                        <FileText className="h-3.5 w-3.5" />
+                        Comprovante
+                      </Button>
+                    ) : (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>
+                            <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" disabled>
+                              <Lock className="h-3.5 w-3.5" />
+                              Comprovante
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>Adquira uma cota para baixar</TooltipContent>
+                      </Tooltip>
+                    )
+                  ) : (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span>
+                          <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" disabled>
+                            <Clock className="h-3.5 w-3.5" />
+                            Comprovante
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>Aguardando upload do admin</TooltipContent>
+                    </Tooltip>
+                  )}
+                  {/* Botão .TXT */}
+                  {temCota ? (
+                    <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" onClick={handleDownloadTxt}>
+                      <Download className="h-3.5 w-3.5" />
+                      .TXT
+                    </Button>
+                  ) : (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span>
+                          <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" disabled>
+                            <Lock className="h-3.5 w-3.5" />
+                            .TXT
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>Adquira uma cota para baixar</TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
               </div>
               <div className="space-y-1.5">
                 {palpites.map((p: number[], idx: number) => (
@@ -320,40 +356,6 @@ function BolaoDetailSheet({ bolao, open, onOpenChange }: BolaoDetailSheetProps) 
                   </div>
                 ))}
               </div>
-            </div>
-          </TooltipProvider>
-
-          <Separator />
-
-          {/* 7. COMPROVANTE OFICIAL */}
-          <TooltipProvider>
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold">📄 Comprovante Oficial</h3>
-              {bolao.pdf_url ? (
-                temCota ? (
-                  <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" onClick={() => window.open(bolao.pdf_url, "_blank")}>
-                    <FileText className="h-3.5 w-3.5" />
-                    PDF
-                  </Button>
-                ) : (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span>
-                        <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" disabled>
-                          <Lock className="h-3.5 w-3.5" />
-                          PDF
-                        </Button>
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>Adquira uma cota para baixar</TooltipContent>
-                  </Tooltip>
-                )
-              ) : (
-                <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" disabled>
-                  <Clock className="h-3.5 w-3.5" />
-                  Aguardando PDF
-                </Button>
-              )}
             </div>
           </TooltipProvider>
         </div>
