@@ -45,21 +45,13 @@ function formatarMoeda(valor: number): string {
     return `R$ ${(valor / 1_000_000).toFixed(1).replace(".", ",")} Mi`;
   }
   if (valor >= 1000) {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(valor);
+    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(valor);
   }
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(valor);
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valor);
 }
 
 function getNumeroConcurso(r: any): string | number {
-  return r.concurso_id ?? r.concurso ?? r.numero_concurso ?? "—";
+  return r.concurso ?? r.concurso_id ?? r.numero_concurso ?? "—";
 }
 
 function formatData(dataSorteio: string): string {
@@ -80,8 +72,8 @@ function normalizarPremiacao(json: any): PremiacaoNormalizada[] {
   return json.map((p: any) => ({
     faixa: String(p.faixa ?? ""),
     descricao: String(p.faixa ?? p.descricao ?? ""),
-    ganhadores: Number(p.ganhadores ?? 0),
-    valorPremio: Number(p.valor ?? p.valorPremio ?? 0),
+    ganhadores: Number(p.ganhadores ?? p.numero_ganhadores ?? 0),
+    valorPremio: Number(p.valor ?? p.valorPremio ?? p.valor_premio ?? 0),
   }));
 }
 
@@ -106,38 +98,26 @@ function DezenasBall({ value, colorClass, size = "w-10 h-10 text-sm" }: { value:
 
 function DezenasGrid({ dezenas, loteria }: { dezenas: string[]; loteria: Loteria }) {
   const color = DEZENA_COLORS[loteria];
-
   if (loteria === "lotofacil") {
     return (
       <div className="grid grid-cols-5 gap-2">
-        {dezenas.map((d, i) => (
-          <DezenasBall key={i} value={d} colorClass={color} size="w-full h-auto aspect-square text-sm" />
-        ))}
+        {dezenas.map((d, i) => <DezenasBall key={i} value={d} colorClass={color} size="w-full h-auto aspect-square text-sm" />)}
       </div>
     );
   }
-
   if (loteria === "lotomania") {
     return (
       <div className="grid grid-cols-5 gap-1.5">
-        {dezenas.map((d, i) => (
-          <DezenasBall key={i} value={d} colorClass={color} size="w-10 h-10 text-xs" />
-        ))}
+        {dezenas.map((d, i) => <DezenasBall key={i} value={d} colorClass={color} size="w-10 h-10 text-xs" />)}
       </div>
     );
   }
-
-  const ballSize = "w-12 h-12 text-base";
   return (
     <div className="flex flex-wrap gap-2">
-      {dezenas.map((d, i) => (
-        <DezenasBall key={i} value={d} colorClass={color} size={ballSize} />
-      ))}
+      {dezenas.map((d, i) => <DezenasBall key={i} value={d} colorClass={color} size="w-12 h-12 text-base" />)}
     </div>
   );
 }
-
-// ── Indicators ────────────────────────────────────────
 
 function IndicatorPill({ label }: { label: string }) {
   return (
@@ -158,14 +138,17 @@ export function ResultadoSheet({ open, onClose, resultado, loteria }: ResultadoS
   const locaisGanhadores = normalizarLocais(resultado.locais_ganhadores);
 
   const isDuplaSena = loteria === "duplasena";
+
+  // Unified table: dezenas = main draw, dezenas_sorteio2 = 2nd draw
+  // Legacy tables: dezenas_sorteio1 = main, dezenas_sorteio2 = 2nd
   const dezenasGroups: { label?: string; dezenas: string[] }[] = isDuplaSena
     ? [
-        { label: "1º Sorteio", dezenas: normalizarDezenas(resultado.dezenas_sorteio1) },
+        { label: "1º Sorteio", dezenas: normalizarDezenas(resultado.dezenas ?? resultado.dezenas_sorteio1) },
         { label: "2º Sorteio", dezenas: normalizarDezenas(resultado.dezenas_sorteio2) },
       ]
     : [{ dezenas: normalizarDezenas(resultado.dezenas) }];
 
-  // Indicators — read from whichever fields exist
+  // Indicators — unified table uses qtd_pares directly; legacy dupla uses _s1
   const pares = resultado.qtd_pares ?? resultado.qtd_pares_s1 ?? null;
   const impares = resultado.qtd_impares ?? resultado.qtd_impares_s1 ?? null;
   const moldura = resultado.qtd_moldura ?? resultado.qtd_moldura_s1 ?? null;
@@ -178,7 +161,6 @@ export function ResultadoSheet({ open, onClose, resultado, loteria }: ResultadoS
       <SheetContent side="bottom" className="h-[95vh] rounded-t-2xl p-0">
         <ScrollArea className="h-full">
           <div className="px-5 pb-8">
-            {/* ── HEADER ─────────────────────────── */}
             <SheetHeader className="text-left pt-5 pb-3">
               <div className="flex items-start justify-between">
                 <SheetTitle className="text-xl font-bold tracking-tight">
@@ -202,7 +184,6 @@ export function ResultadoSheet({ open, onClose, resultado, loteria }: ResultadoS
 
             <div className="h-px bg-border/50 mb-5" />
 
-            {/* ── DEZENAS SORTEADAS ──────────────── */}
             {dezenasGroups.map((group, idx) => (
               <section key={idx} className="mb-5">
                 <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
@@ -214,11 +195,8 @@ export function ResultadoSheet({ open, onClose, resultado, loteria }: ResultadoS
 
             <div className="h-px bg-border/50 mb-5" />
 
-            {/* ── INDICADORES ────────────────────── */}
             <section className="mb-5">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
-                Indicadores
-              </p>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">Indicadores</p>
               <div className="flex flex-wrap gap-2">
                 {pares !== null ? (
                   <>
@@ -236,20 +214,14 @@ export function ResultadoSheet({ open, onClose, resultado, loteria }: ResultadoS
 
             <div className="h-px bg-border/50 mb-5" />
 
-            {/* ── PREMIAÇÃO ──────────────────────── */}
             <section className="mb-5">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
-                Premiação
-              </p>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">Premiação</p>
               {premiacao.length > 0 ? (
                 <div>
                   {premiacao.map((premio, idx) => {
                     const isTop = idx < 2;
                     return (
-                      <div
-                        key={idx}
-                        className="flex justify-between items-center py-2.5 border-b border-border/30 last:border-0"
-                      >
+                      <div key={idx} className="flex justify-between items-center py-2.5 border-b border-border/30 last:border-0">
                         <div>
                           <span className="text-sm font-medium">{premio.descricao}</span>
                           <span className="text-muted-foreground text-xs ml-2">
@@ -257,10 +229,7 @@ export function ResultadoSheet({ open, onClose, resultado, loteria }: ResultadoS
                           </span>
                           {isTop && <span className="ml-1.5 text-xs">🥇</span>}
                         </div>
-                        <span className={cn(
-                          "font-semibold text-sm tabular-nums",
-                          isTop ? "text-yellow-600 dark:text-yellow-400" : "text-foreground"
-                        )}>
+                        <span className={cn("font-semibold text-sm tabular-nums", isTop ? "text-yellow-600 dark:text-yellow-400" : "text-foreground")}>
                           {formatarMoeda(premio.valorPremio)}
                         </span>
                       </div>
@@ -268,27 +237,17 @@ export function ResultadoSheet({ open, onClose, resultado, loteria }: ResultadoS
                   })}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  Premiação não disponível
-                </p>
+                <p className="text-sm text-muted-foreground">Premiação não disponível</p>
               )}
             </section>
 
-            {/* ── CIDADES GANHADORAS ─────────────── */}
             {locaisGanhadores.length > 0 && (
               <section className="mb-5">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
-                  Ganhadores
-                </p>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">Ganhadores</p>
                 <div>
                   {locaisGanhadores.map((local, idx) => (
-                    <div
-                      key={idx}
-                      className="flex justify-between items-center py-2 border-b border-border/30 last:border-0"
-                    >
-                      <span className="text-sm">
-                        {local.cidade}{local.uf ? `, ${local.uf}` : ""}
-                      </span>
+                    <div key={idx} className="flex justify-between items-center py-2 border-b border-border/30 last:border-0">
+                      <span className="text-sm">{local.cidade}{local.uf ? `, ${local.uf}` : ""}</span>
                       <span className="text-xs text-muted-foreground">
                         {local.ganhadores} ganhador{local.ganhadores !== 1 ? "es" : ""}
                       </span>

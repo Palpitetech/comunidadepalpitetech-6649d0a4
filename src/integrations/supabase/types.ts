@@ -2205,6 +2205,102 @@ export type Database = {
         }
         Relationships: []
       }
+      resultados_loterias: {
+        Row: {
+          acumulou: boolean | null
+          ciclo_numero: number | null
+          concurso: number
+          created_at: string | null
+          data_proximo_concurso: string | null
+          data_sorteio: string
+          dezenas: number[]
+          dezenas_faltantes_ciclo: number[] | null
+          dezenas_sorteio2: number[] | null
+          id: string
+          locais_ganhadores: Json | null
+          local_sorteio: string | null
+          loteria: string
+          mes_sorte: string | null
+          premiacao_json: Json | null
+          qtd_impares: number | null
+          qtd_impares_s2: number | null
+          qtd_moldura: number | null
+          qtd_moldura_s2: number | null
+          qtd_pares: number | null
+          qtd_pares_s2: number | null
+          qtd_primos: number | null
+          qtd_primos_s2: number | null
+          qtd_repetidas: number | null
+          qtd_repetidas_s2: number | null
+          valor_acumulado: number | null
+          valor_acumulado_especial: number | null
+          valor_estimado_proximo: number | null
+          valor_premio_principal: number | null
+        }
+        Insert: {
+          acumulou?: boolean | null
+          ciclo_numero?: number | null
+          concurso: number
+          created_at?: string | null
+          data_proximo_concurso?: string | null
+          data_sorteio: string
+          dezenas: number[]
+          dezenas_faltantes_ciclo?: number[] | null
+          dezenas_sorteio2?: number[] | null
+          id?: string
+          locais_ganhadores?: Json | null
+          local_sorteio?: string | null
+          loteria: string
+          mes_sorte?: string | null
+          premiacao_json?: Json | null
+          qtd_impares?: number | null
+          qtd_impares_s2?: number | null
+          qtd_moldura?: number | null
+          qtd_moldura_s2?: number | null
+          qtd_pares?: number | null
+          qtd_pares_s2?: number | null
+          qtd_primos?: number | null
+          qtd_primos_s2?: number | null
+          qtd_repetidas?: number | null
+          qtd_repetidas_s2?: number | null
+          valor_acumulado?: number | null
+          valor_acumulado_especial?: number | null
+          valor_estimado_proximo?: number | null
+          valor_premio_principal?: number | null
+        }
+        Update: {
+          acumulou?: boolean | null
+          ciclo_numero?: number | null
+          concurso?: number
+          created_at?: string | null
+          data_proximo_concurso?: string | null
+          data_sorteio?: string
+          dezenas?: number[]
+          dezenas_faltantes_ciclo?: number[] | null
+          dezenas_sorteio2?: number[] | null
+          id?: string
+          locais_ganhadores?: Json | null
+          local_sorteio?: string | null
+          loteria?: string
+          mes_sorte?: string | null
+          premiacao_json?: Json | null
+          qtd_impares?: number | null
+          qtd_impares_s2?: number | null
+          qtd_moldura?: number | null
+          qtd_moldura_s2?: number | null
+          qtd_pares?: number | null
+          qtd_pares_s2?: number | null
+          qtd_primos?: number | null
+          qtd_primos_s2?: number | null
+          qtd_repetidas?: number | null
+          qtd_repetidas_s2?: number | null
+          valor_acumulado?: number | null
+          valor_acumulado_especial?: number | null
+          valor_estimado_proximo?: number | null
+          valor_premio_principal?: number | null
+        }
+        Relationships: []
+      }
       resultados_lotomania: {
         Row: {
           acumulou: boolean | null
