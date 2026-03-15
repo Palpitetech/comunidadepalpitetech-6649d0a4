@@ -166,6 +166,6 @@ function ResultadoCompactoCard({ resultado, onClick }: { resultado: any; onClick
       <div className="text-left text-xs text-muted-foreground">
         {resultado.dezenas.length} dezenas sorteadas
       </div>
-    </div>
+    </button>
   );
 }
