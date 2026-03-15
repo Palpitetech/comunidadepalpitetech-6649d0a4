@@ -81,14 +81,51 @@ Deno.serve(async (req) => {
     let fromLatest = false;
     let limit = 50;
     let concursoEspecifico: number | null = null;
+    let action: string | null = null;
     try {
       const body = await req.json();
       fromLatest = body.from_latest === true;
       limit = body.limit || 50;
       concursoEspecifico = body.concurso || null;
+      action = body.action || null;
     } catch {
       // Sem body, usar defaults
     }
+
+    // ── REPROCESS HISTORY ──────────────────────────────────────
+    if (action === 'reprocess_history') {
+      console.log('[REPROCESS] Iniciando reprocessamento duplasena...');
+      const { data: existentes } = await supabase.from('resultados_loterias').select('concurso').eq('loteria', 'duplasena').order('concurso', { ascending: true });
+      if (!existentes?.length) return new Response(JSON.stringify({ success: true, reprocessados: 0 }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      let reprocessados = 0, erros = 0;
+      let prevS1: number[] = [], prevS2: number[] = [];
+      for (const item of existentes) {
+        try {
+          const res = await fetch(`https://apiloterias.com.br/app/v2/resultado?loteria=duplasena&token=${API_TOKEN}&concurso=${item.concurso}`);
+          if (!res.ok) { erros++; continue; }
+          const resultado = await res.json();
+          const s1 = resultado.dezenas.map((d: string) => parseInt(d, 10)).sort((a: number, b: number) => a - b);
+          const s2 = resultado.dezenas_2.map((d: string) => parseInt(d, 10)).sort((a: number, b: number) => a - b);
+          const indS1 = calcularIndicadores(s1, prevS1);
+          const indS2 = calcularIndicadores(s2, prevS2);
+          const reg = {
+            loteria: 'duplasena', concurso: getConcursoId(resultado), data_sorteio: converterDataBR(resultado.data_concurso),
+            dezenas: s1, dezenas_sorteio2: s2,
+            acumulou: resultado.acumulou ?? false, valor_acumulado: resultado.valor_acumulado || null,
+            valor_estimado_proximo: resultado.valor_estimado_proximo || null, local_sorteio: resultado.local_sorteio || null,
+            premiacao_json: resultado.premiacao || [], locais_ganhadores: resultado.ganhadores || [],
+            qtd_pares: indS1.qtd_pares, qtd_impares: indS1.qtd_impares, qtd_moldura: indS1.qtd_moldura, qtd_primos: indS1.qtd_primos, qtd_repetidas: indS1.qtd_repetidas,
+            qtd_pares_s2: indS2.qtd_pares, qtd_impares_s2: indS2.qtd_impares, qtd_moldura_s2: indS2.qtd_moldura, qtd_primos_s2: indS2.qtd_primos, qtd_repetidas_s2: indS2.qtd_repetidas,
+          };
+          const { error } = await supabase.from('resultados_loterias').upsert(reg, { onConflict: 'loteria,concurso' });
+          if (error) { erros++; } else { reprocessados++; }
+          prevS1 = s1; prevS2 = s2;
+          await new Promise(r => setTimeout(r, 300));
+        } catch { erros++; }
+      }
+      return new Response(JSON.stringify({ success: true, reprocessados, erros }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    // ── END REPROCESS ──────────────────────────────────────────
 
     // Buscar último resultado da API (para saber o concurso mais recente)
     const latestUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=duplasena&token=${API_TOKEN}`;
