@@ -173,6 +173,6 @@ function ResultadoCompactoCard({ resultado, onClick }: { resultado: any; onClick
       <div className="text-left text-xs text-muted-foreground mt-2">
         S1: P{resultado.qtd_pares_s1}/M{resultado.qtd_moldura_s1} | S2: P{resultado.qtd_pares_s2}/M{resultado.qtd_moldura_s2}
       </div>
-    </div>
+    </button>
   );
 }
