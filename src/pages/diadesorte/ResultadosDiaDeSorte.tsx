@@ -109,7 +109,7 @@ export default function ResultadosDiaDeSorte() {
           {!isLoading && !error && resultados.length > 0 && (
             <div className="space-y-1.5">
               {resultados.map((resultado) => (
-                <ResultadoCompactoCard key={resultado.id} resultado={resultado} />
+                <ResultadoCompactoCard key={resultado.id} resultado={resultado} onClick={() => setSelectedResultado(resultado)} />
               ))}
             </div>
           )}
