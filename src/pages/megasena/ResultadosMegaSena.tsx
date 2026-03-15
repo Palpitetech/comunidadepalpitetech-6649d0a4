@@ -13,7 +13,7 @@ import { ptBR } from "date-fns/locale";
 import { SnapshotButton } from "@/components/shared/SnapshotButton";
 import { DezenaCirculoMini } from "@/components/megasena/DezenaCirculoMini";
 import { AlertCircle } from "lucide-react";
-import { ResultadoDetalhesSheetBase } from "@/components/ResultadoDetalhesSheetBase";
+import { ResultadoSheet } from "@/components/resultados/ResultadoSheet";
 
 interface Resultado {
   id: string;
@@ -202,7 +202,7 @@ export default function ResultadosMegaSena() {
             </div>
           </div>
         )}
-        <ResultadoDetalhesSheetBase
+        <ResultadoSheet
           open={!!selectedResultado}
           onClose={() => setSelectedResultado(null)}
           resultado={selectedResultado}

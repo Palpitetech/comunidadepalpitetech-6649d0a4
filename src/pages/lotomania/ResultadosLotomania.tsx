@@ -12,7 +12,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { SnapshotButton } from "@/components/shared/SnapshotButton";
 import { cn } from "@/lib/utils";
-import { ResultadoDetalhesSheetBase } from "@/components/ResultadoDetalhesSheetBase";
+import { ResultadoSheet } from "@/components/resultados/ResultadoSheet";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -127,7 +127,7 @@ export default function ResultadosLotomania() {
             </div>
           </div>
         )}
-        <ResultadoDetalhesSheetBase
+        <ResultadoSheet
           open={!!selectedResultado}
           onClose={() => setSelectedResultado(null)}
           resultado={selectedResultado}

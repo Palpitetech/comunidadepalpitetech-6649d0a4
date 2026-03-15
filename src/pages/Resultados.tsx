@@ -5,7 +5,7 @@ import { BarChart3, Search, Calendar as CalendarIcon, X, ChevronLeft, ChevronRig
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { ResultadoCard } from "@/components/lotofacil/ResultadoCard";
-import { ResultadoDetalhesSheet } from "@/components/lotofacil/ResultadoDetalhesSheet";
+import { ResultadoSheet } from "@/components/resultados/ResultadoSheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -249,10 +249,11 @@ export default function Resultados() {
         )}
 
         {/* Sheet de Detalhes */}
-        <ResultadoDetalhesSheet
-          resultado={selectedResultado as any}
+        <ResultadoSheet
+          resultado={selectedResultado}
           open={!!selectedResultado}
-          onOpenChange={(open) => !open && setSelectedResultado(null)}
+          onClose={() => setSelectedResultado(null)}
+          loteria="lotofacil"
         />
       </div>
     </MainLayout>
