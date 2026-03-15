@@ -214,7 +214,7 @@ export default function ResultadosMegaSena() {
 }
 
 // Componente de card compacto similar ao Lotofácil
-function ResultadoCompactoCard({ resultado }: { resultado: Omit<Resultado, 'local_sorteio' | 'premiacao_json' | 'locais_ganhadores'> & Partial<Resultado> }) {
+function ResultadoCompactoCard({ resultado, onClick }: { resultado: Omit<Resultado, 'local_sorteio' | 'premiacao_json' | 'locais_ganhadores'> & Partial<Resultado>; onClick: () => void }) {
   const dataFormatada = format(
     new Date(resultado.data_sorteio + "T00:00:00"),
     "dd/MM/yyyy",
