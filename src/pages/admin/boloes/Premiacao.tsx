@@ -257,7 +257,7 @@ export default function Premiacao() {
         if (!dezenas || !Array.isArray(dezenas)) continue;
 
         // Get premiacao_json from resultado
-        const premiacaoJson = resultado.premiacao_json;
+        const premiacaoJson = (resultado as any).premiacao_json;
 
         // 3. Parse palpites
         const palpites: number[][] = Array.isArray(bolao.palpites) ? (bolao.palpites as any) : [];
