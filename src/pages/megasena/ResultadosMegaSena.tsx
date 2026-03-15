@@ -223,6 +223,7 @@ function ResultadoCompactoCard({ resultado, onClick }: { resultado: Omit<Resulta
 
   return (
     <button
+      onClick={onClick}
       className="w-full py-3 px-3 text-left hover:bg-accent/20 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/30 cursor-pointer rounded"
     >
       {/* Topo: Concurso e Data alinhados à esquerda */}
