@@ -12,7 +12,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { SnapshotButton } from "@/components/shared/SnapshotButton";
 import { DezenaCirculoMiniDuplaSena } from "@/components/duplasena/DezenaCirculoMiniDuplaSena";
-import { ResultadoDetalhesSheetBase } from "@/components/ResultadoDetalhesSheetBase";
+import { ResultadoSheet } from "@/components/resultados/ResultadoSheet";
 
 const ITEMS_PER_PAGE = 20;
 
