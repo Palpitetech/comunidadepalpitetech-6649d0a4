@@ -21,6 +21,7 @@ export default function ResultadosDuplaSena() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchConcurso, setSearchConcurso] = useState("");
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
+  const [selectedResultado, setSelectedResultado] = useState<any>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const { data: allResultados, isLoading, error } = useDuplaSenaResultados(200);
