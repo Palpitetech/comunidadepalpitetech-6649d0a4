@@ -256,12 +256,15 @@ export default function Premiacao() {
         const dezenas = resultado[regra.campo_dezenas];
         if (!dezenas || !Array.isArray(dezenas)) continue;
 
+        // Get premiacao_json from resultado
+        const premiacaoJson = resultado.premiacao_json;
+
         // 3. Parse palpites
         const palpites: number[][] = Array.isArray(bolao.palpites) ? (bolao.palpites as any) : [];
         if (!palpites.length) continue;
 
         // 4. Verificar
-        const resultadoVerificacao = verificarPalpites(palpites, dezenas, bolao.loteria);
+        const resultadoVerificacao = verificarPalpites(palpites, dezenas, bolao.loteria, premiacaoJson);
         const temPremiado = resultadoVerificacao.some((r) => r.premiado);
 
         // 5. Salvar
