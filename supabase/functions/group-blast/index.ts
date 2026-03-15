@@ -391,6 +391,7 @@ Prévia: ${(post.conteudo ?? "").slice(0, 500)}`;
   } catch (err: any) {
     console.error("[group-blast] AI generation error:", err.message);
     return null;
+  }
 }
 
 // ─── SEND NOW (manual per-slot) ─────────────────────────
@@ -445,5 +446,4 @@ async function handleSendNow(
     scheduled_for: scheduledFor,
     message: "Disparo agendado para 5 segundos",
   });
-}
 }
