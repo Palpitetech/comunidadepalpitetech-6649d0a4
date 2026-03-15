@@ -27,12 +27,14 @@ Deno.serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   try {
-    const { action, force, config_id } = await req.json();
+    const { action, force, config_id, slot_id } = await req.json();
 
     if (action === "prepare") {
       return await handlePrepare(supabase, { force, config_id });
     } else if (action === "send") {
       return await handleSend(supabase, EVOLUTION_API_URL!, EVOLUTION_API_KEY!);
+    } else if (action === "send_now") {
+      return await handleSendNow(supabase, config_id, slot_id);
     } else {
       return jsonResponse({ error: `Ação desconhecida: ${action}` }, 400);
     }
