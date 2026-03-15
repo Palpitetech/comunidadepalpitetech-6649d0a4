@@ -249,10 +249,11 @@ export default function Resultados() {
         )}
 
         {/* Sheet de Detalhes */}
-        <ResultadoDetalhesSheet
-          resultado={selectedResultado as any}
+        <ResultadoSheet
+          resultado={selectedResultado}
           open={!!selectedResultado}
-          onOpenChange={(open) => !open && setSelectedResultado(null)}
+          onClose={() => setSelectedResultado(null)}
+          loteria="lotofacil"
         />
       </div>
     </MainLayout>
