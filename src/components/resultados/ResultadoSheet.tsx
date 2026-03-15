@@ -11,8 +11,8 @@ import { cn } from "@/lib/utils";
 
 type Loteria = "lotofacil" | "megasena" | "duplasena" | "quina" | "lotomania" | "diadesorte";
 
-interface Premiacao {
-  faixa: number;
+interface PremiacaoNormalizada {
+  faixa: string;
   descricao: string;
   ganhadores: number;
   valorPremio: number;
@@ -20,7 +20,7 @@ interface Premiacao {
 
 interface LocalGanhador {
   cidade: string;
-  estado: string;
+  uf: string;
   ganhadores: number;
 }
 
@@ -58,8 +58,8 @@ function formatarMoeda(valor: number): string {
   }).format(valor);
 }
 
-function getConcursoId(r: any): number {
-  return r.concurso_id ?? r.concurso ?? 0;
+function getNumeroConcurso(r: any): string | number {
+  return r.concurso_id ?? r.concurso ?? r.numero_concurso ?? "—";
 }
 
 function formatData(dataSorteio: string): string {
@@ -70,17 +70,41 @@ function formatData(dataSorteio: string): string {
   }
 }
 
+function normalizarDezenas(raw: any[]): string[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((d: any) => String(d).padStart(2, "0"));
+}
+
+function normalizarPremiacao(json: any): PremiacaoNormalizada[] {
+  if (!Array.isArray(json)) return [];
+  return json.map((p: any) => ({
+    faixa: String(p.faixa ?? ""),
+    descricao: String(p.faixa ?? p.descricao ?? ""),
+    ganhadores: Number(p.ganhadores ?? 0),
+    valorPremio: Number(p.valor ?? p.valorPremio ?? 0),
+  }));
+}
+
+function normalizarLocais(json: any): LocalGanhador[] {
+  if (!Array.isArray(json)) return [];
+  return json.map((l: any) => ({
+    cidade: String(l.cidade ?? l.municipio ?? ""),
+    uf: String(l.uf ?? l.estado ?? ""),
+    ganhadores: Number(l.ganhadores ?? 0),
+  }));
+}
+
 // ── Dezenas Grid ──────────────────────────────────────
 
-function DezenasBall({ value, colorClass, size = "w-10 h-10 text-sm" }: { value: string | number; colorClass: string; size?: string }) {
+function DezenasBall({ value, colorClass, size = "w-10 h-10 text-sm" }: { value: string; colorClass: string; size?: string }) {
   return (
     <div className={cn("aspect-square rounded-full flex items-center justify-center font-bold", size, colorClass)}>
-      {String(value).padStart(2, "0")}
+      {value}
     </div>
   );
 }
 
-function DezenasGrid({ dezenas, loteria }: { dezenas: (string | number)[]; loteria: Loteria }) {
+function DezenasGrid({ dezenas, loteria }: { dezenas: string[]; loteria: Loteria }) {
   const color = DEZENA_COLORS[loteria];
 
   if (loteria === "lotofacil") {
@@ -103,7 +127,6 @@ function DezenasGrid({ dezenas, loteria }: { dezenas: (string | number)[]; loter
     );
   }
 
-  // megasena (6), duplasena (6 per draw), quina (5), diadesorte (7) — flex row
   const ballSize = "w-12 h-12 text-base";
   return (
     <div className="flex flex-wrap gap-2">
@@ -129,25 +152,25 @@ function IndicatorPill({ label }: { label: string }) {
 export function ResultadoSheet({ open, onClose, resultado, loteria }: ResultadoSheetProps) {
   if (!resultado) return null;
 
-  const concursoId = getConcursoId(resultado);
+  const numeroConcurso = getNumeroConcurso(resultado);
   const dataFormatada = formatData(resultado.data_sorteio);
-  const premiacoes = (resultado.premiacao_json as Premiacao[] | null) || [];
-  const locaisGanhadores = (resultado.locais_ganhadores as LocalGanhador[] | null) || [];
+  const premiacao = normalizarPremiacao(resultado.premiacao_json);
+  const locaisGanhadores = normalizarLocais(resultado.locais_ganhadores);
 
   const isDuplaSena = loteria === "duplasena";
-  const dezenasGroups: { label?: string; dezenas: (string | number)[] }[] = isDuplaSena
+  const dezenasGroups: { label?: string; dezenas: string[] }[] = isDuplaSena
     ? [
-        { label: "1º Sorteio", dezenas: resultado.dezenas_sorteio1 || [] },
-        { label: "2º Sorteio", dezenas: resultado.dezenas_sorteio2 || [] },
+        { label: "1º Sorteio", dezenas: normalizarDezenas(resultado.dezenas_sorteio1) },
+        { label: "2º Sorteio", dezenas: normalizarDezenas(resultado.dezenas_sorteio2) },
       ]
-    : [{ dezenas: resultado.dezenas || [] }];
+    : [{ dezenas: normalizarDezenas(resultado.dezenas) }];
 
-  // Indicators
+  // Indicators — read from whichever fields exist
   const pares = resultado.qtd_pares ?? resultado.qtd_pares_s1 ?? null;
   const impares = resultado.qtd_impares ?? resultado.qtd_impares_s1 ?? null;
   const moldura = resultado.qtd_moldura ?? resultado.qtd_moldura_s1 ?? null;
-  const primos = resultado.qtd_primos ?? null;
-  const repetidas = resultado.qtd_repetidas ?? null;
+  const primos = resultado.qtd_primos ?? resultado.qtd_primos_s1 ?? null;
+  const repetidas = resultado.qtd_repetidas ?? resultado.qtd_repetidas_s1 ?? null;
   const totalDezenas = dezenasGroups[0].dezenas.length;
 
   return (
@@ -159,7 +182,7 @@ export function ResultadoSheet({ open, onClose, resultado, loteria }: ResultadoS
             <SheetHeader className="text-left pt-5 pb-3">
               <div className="flex items-start justify-between">
                 <SheetTitle className="text-xl font-bold tracking-tight">
-                  Concurso #{concursoId}
+                  Concurso #{numeroConcurso}
                 </SheetTitle>
               </div>
               <p className="text-sm text-muted-foreground">{dataFormatada}</p>
@@ -218,13 +241,13 @@ export function ResultadoSheet({ open, onClose, resultado, loteria }: ResultadoS
               <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
                 Premiação
               </p>
-              {premiacoes.length > 0 ? (
+              {premiacao.length > 0 ? (
                 <div>
-                  {premiacoes.map((premio, idx) => {
+                  {premiacao.map((premio, idx) => {
                     const isTop = idx < 2;
                     return (
                       <div
-                        key={premio.faixa}
+                        key={idx}
                         className="flex justify-between items-center py-2.5 border-b border-border/30 last:border-0"
                       >
                         <div>
@@ -252,11 +275,11 @@ export function ResultadoSheet({ open, onClose, resultado, loteria }: ResultadoS
             </section>
 
             {/* ── CIDADES GANHADORAS ─────────────── */}
-            <section className="mb-5">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
-                Ganhadores
-              </p>
-              {locaisGanhadores.length > 0 ? (
+            {locaisGanhadores.length > 0 && (
+              <section className="mb-5">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
+                  Ganhadores
+                </p>
                 <div>
                   {locaisGanhadores.map((local, idx) => (
                     <div
@@ -264,7 +287,7 @@ export function ResultadoSheet({ open, onClose, resultado, loteria }: ResultadoS
                       className="flex justify-between items-center py-2 border-b border-border/30 last:border-0"
                     >
                       <span className="text-sm">
-                        {local.cidade}, {local.estado}
+                        {local.cidade}{local.uf ? `, ${local.uf}` : ""}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {local.ganhadores} ganhador{local.ganhadores !== 1 ? "es" : ""}
@@ -272,12 +295,8 @@ export function ResultadoSheet({ open, onClose, resultado, loteria }: ResultadoS
                     </div>
                   ))}
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Nenhum ganhador neste concurso.
-                </p>
-              )}
-            </section>
+              </section>
+            )}
           </div>
         </ScrollArea>
       </SheetContent>
