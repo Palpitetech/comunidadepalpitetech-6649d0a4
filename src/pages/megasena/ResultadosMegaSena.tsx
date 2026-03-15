@@ -202,7 +202,7 @@ export default function ResultadosMegaSena() {
             </div>
           </div>
         )}
-        <ResultadoDetalhesSheetBase
+        <ResultadoSheet
           open={!!selectedResultado}
           onClose={() => setSelectedResultado(null)}
           resultado={selectedResultado}

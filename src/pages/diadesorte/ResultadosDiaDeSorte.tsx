@@ -128,7 +128,7 @@ export default function ResultadosDiaDeSorte() {
             </div>
           </div>
         )}
-        <ResultadoDetalhesSheetBase
+        <ResultadoSheet
           open={!!selectedResultado}
           onClose={() => setSelectedResultado(null)}
           resultado={selectedResultado}

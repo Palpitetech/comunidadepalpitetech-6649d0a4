@@ -127,7 +127,7 @@ export default function ResultadosDuplaSena() {
             </div>
           </div>
         )}
-        <ResultadoDetalhesSheetBase
+        <ResultadoSheet
           open={!!selectedResultado}
           onClose={() => setSelectedResultado(null)}
           resultado={selectedResultado}

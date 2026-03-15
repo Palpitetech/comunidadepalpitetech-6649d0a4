@@ -127,7 +127,7 @@ export default function ResultadosQuina() {
             </div>
           </div>
         )}
-        <ResultadoDetalhesSheetBase
+        <ResultadoSheet
           open={!!selectedResultado}
           onClose={() => setSelectedResultado(null)}
           resultado={selectedResultado}
