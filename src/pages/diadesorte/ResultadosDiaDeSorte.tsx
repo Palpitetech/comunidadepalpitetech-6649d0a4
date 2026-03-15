@@ -139,11 +139,11 @@ export default function ResultadosDiaDeSorte() {
   );
 }
 
-function ResultadoCompactoCard({ resultado }: { resultado: any }) {
+function ResultadoCompactoCard({ resultado, onClick }: { resultado: any; onClick: () => void }) {
   const dataFormatada = format(new Date(resultado.data_sorteio + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR });
 
   return (
-    <div className="w-full py-3 px-3 hover:bg-accent/20 transition-colors rounded">
+    <button onClick={onClick} className="w-full py-3 px-3 text-left hover:bg-accent/20 transition-colors rounded cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/30">
       <div className="text-left mb-2 flex items-center gap-2">
         <span className="text-xs text-muted-foreground">
           #{resultado.concurso} — {dataFormatada}
