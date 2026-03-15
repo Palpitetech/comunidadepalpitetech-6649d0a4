@@ -307,6 +307,7 @@ export function DisparoGrupoTab() {
     } catch (err: any) {
       toast.error("Erro: " + err.message);
     }
+  }
 
   function getConfigName(configId: string) {
     return configs.find((c) => c.id === configId)?.name || "—";
