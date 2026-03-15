@@ -547,6 +547,68 @@ export type Database = {
           },
         ]
       }
+      carteira_movimentacoes: {
+        Row: {
+          bolao_id: string | null
+          created_at: string | null
+          created_by: string | null
+          descricao: string
+          id: string
+          referencia: string | null
+          tipo: string
+          valor: number
+        }
+        Insert: {
+          bolao_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          descricao: string
+          id?: string
+          referencia?: string | null
+          tipo: string
+          valor: number
+        }
+        Update: {
+          bolao_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          descricao?: string
+          id?: string
+          referencia?: string | null
+          tipo?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carteira_movimentacoes_bolao_id_fkey"
+            columns: ["bolao_id"]
+            isOneToOne: false
+            referencedRelation: "boloes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carteira_movimentacoes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carteira_movimentacoes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "perfis_publicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carteira_movimentacoes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "usuarios_notificaveis_hoje"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_conversations: {
         Row: {
           created_at: string
@@ -855,6 +917,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      faixas_premiacao: {
+        Row: {
+          concurso: string
+          created_at: string | null
+          faixa: string
+          ganhadores: number | null
+          id: string
+          loteria: string
+          pontos_necessarios: number
+          valor_premio: number | null
+        }
+        Insert: {
+          concurso: string
+          created_at?: string | null
+          faixa: string
+          ganhadores?: number | null
+          id?: string
+          loteria: string
+          pontos_necessarios: number
+          valor_premio?: number | null
+        }
+        Update: {
+          concurso?: string
+          created_at?: string | null
+          faixa?: string
+          ganhadores?: number | null
+          id?: string
+          loteria?: string
+          pontos_necessarios?: number
+          valor_premio?: number | null
+        }
+        Relationships: []
       }
       fechamento_auto_usage: {
         Row: {
