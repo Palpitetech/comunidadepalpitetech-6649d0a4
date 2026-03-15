@@ -72,14 +72,46 @@ Deno.serve(async (req) => {
     let fromLatest = false;
     let limit = 50;
     let concursoEspecifico: number | null = null;
+    let action: string | null = null;
     try {
       const body = await req.json();
       fromLatest = body.from_latest === true;
       limit = body.limit || 50;
       concursoEspecifico = body.concurso || null;
+      action = body.action || null;
     } catch {
       // Sem body, usar defaults
     }
+
+    // ── REPROCESS HISTORY ──────────────────────────────────────
+    if (action === 'reprocess_history') {
+      console.log('[REPROCESS] Iniciando reprocessamento megasena...');
+      const { data: existentes } = await supabase.from('resultados_loterias').select('concurso').eq('loteria', 'megasena').order('concurso', { ascending: true });
+      if (!existentes?.length) return new Response(JSON.stringify({ success: true, reprocessados: 0 }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      let reprocessados = 0, erros = 0;
+      let prevDez: number[] = [];
+      for (const item of existentes) {
+        try {
+          const res = await fetch(`https://apiloterias.com.br/app/v2/resultado?loteria=megasena&token=${API_TOKEN}&concurso=${item.concurso}`);
+          if (!res.ok) { erros++; continue; }
+          const resultado = await res.json();
+          const dezenas = resultado.dezenas.map((d: string) => parseInt(d, 10)).sort((a: number, b: number) => a - b);
+          const ind = calcularIndicadores(dezenas, prevDez);
+          const reg = {
+            loteria: 'megasena', concurso: item.concurso, data_sorteio: converterDataBR(resultado.data_concurso), dezenas,
+            acumulou: resultado.acumulou ?? false, valor_acumulado: resultado.valor_acumulado || null,
+            valor_estimado_proximo: resultado.valor_estimado_proximo || null, local_sorteio: resultado.local_sorteio || null,
+            premiacao_json: resultado.premiacao || [], locais_ganhadores: resultado.ganhadores || [], ...ind,
+          };
+          const { error } = await supabase.from('resultados_loterias').upsert(reg, { onConflict: 'loteria,concurso' });
+          if (error) { erros++; } else { reprocessados++; }
+          prevDez = dezenas;
+          await new Promise(r => setTimeout(r, 300));
+        } catch { erros++; }
+      }
+      return new Response(JSON.stringify({ success: true, reprocessados, erros }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    // ── END REPROCESS ──────────────────────────────────────────
 
     // Buscar último resultado da API (para saber o concurso mais recente)
     const latestUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=megasena&token=${API_TOKEN}&concurso=ultimos1`;

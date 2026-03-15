@@ -32,12 +32,38 @@ Deno.serve(async (req) => {
     let limit = 50;
     let fromLatest = false;
     let concursoEspecifico: number | null = null;
+    let action: string | null = null;
     try {
       const body = await req.json();
       fromLatest = body.from_latest === true;
       limit = body.limit || 50;
       concursoEspecifico = body.concurso || null;
+      action = body.action || null;
     } catch { /* sem body */ }
+
+    // ── REPROCESS HISTORY ──────────────────────────────────────
+    if (action === 'reprocess_history') {
+      const LOTERIA = 'quina';
+      console.log(`[REPROCESS] Iniciando reprocessamento ${LOTERIA}...`);
+      const { data: existentes } = await supabase.from('resultados_loterias').select('concurso').eq('loteria', LOTERIA).order('concurso', { ascending: true });
+      if (!existentes?.length) return new Response(JSON.stringify({ success: true, reprocessados: 0 }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      let reprocessados = 0, erros = 0;
+      for (const item of existentes) {
+        try {
+          const res = await fetch(`https://apiloterias.com.br/app/v2/resultado?loteria=${LOTERIA}&token=${API_TOKEN}&concurso=${item.concurso}`);
+          if (!res.ok) { erros++; continue; }
+          const resultado = parseApiResponse(await res.json());
+          const reg = buildRegistro(resultado);
+          const dezenas = reg.dezenas.map((d: any) => typeof d === 'string' ? parseInt(d, 10) : d);
+          const unified = { loteria: LOTERIA, concurso: reg.concurso, data_sorteio: reg.data_sorteio, dezenas, acumulou: reg.acumulou, valor_acumulado: reg.valor_acumulado || null, valor_estimado_proximo: reg.valor_estimado_proximo || null, valor_premio_principal: reg.valor_premio_principal || null, data_proximo_concurso: reg.data_proximo_concurso || null, premiacao_json: reg.premiacao_json || [] };
+          const { error } = await supabase.from('resultados_loterias').upsert(unified, { onConflict: 'loteria,concurso' });
+          if (error) { erros++; } else { reprocessados++; }
+          await new Promise(r => setTimeout(r, 300));
+        } catch { erros++; }
+      }
+      return new Response(JSON.stringify({ success: true, reprocessados, erros }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    // ── END REPROCESS ──────────────────────────────────────────
 
     const TABLE = "resultados_quina";
     const LOTERIA_PARAM = "quina";

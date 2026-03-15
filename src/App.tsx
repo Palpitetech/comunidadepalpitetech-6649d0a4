@@ -43,6 +43,7 @@ import AdminEventos from "./pages/admin/AdminEventos";
 import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
 import Integracoes from "./pages/admin/Integracoes";
 import AdminMetricas from "./pages/admin/AdminMetricas";
+import AdminManutencao from "./pages/admin/AdminManutencao";
 import NovoBolao from "./pages/admin/boloes/NovoBolao";
 import ListagemBolao from "./pages/admin/boloes/ListagemBolao";
 import ResgatesBolao from "./pages/admin/boloes/ResgatesBolao";
@@ -190,6 +191,7 @@ const App = () => (
             <Route path="/admin/whatsapp" element={<AdminRoute><AdminWhatsApp /></AdminRoute>} />
             <Route path="/admin/integracoes" element={<AdminRoute><Integracoes /></AdminRoute>} />
             <Route path="/admin/metricas" element={<AdminRoute><AdminMetricas /></AdminRoute>} />
+            <Route path="/admin/manutencao" element={<AdminRoute><AdminManutencao /></AdminRoute>} />
             <Route path="/admin/novo-bolao" element={<AdminRoute><NovoBolao /></AdminRoute>} />
             <Route path="/admin/listagem-bolao" element={<AdminRoute><ListagemBolao /></AdminRoute>} />
             <Route path="/admin/solicitacao-resgate" element={<AdminRoute><ResgatesBolao /></AdminRoute>} />
