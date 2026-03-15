@@ -127,6 +127,12 @@ export default function ResultadosLotomania() {
             </div>
           </div>
         )}
+        <ResultadoDetalhesSheetBase
+          open={!!selectedResultado}
+          onClose={() => setSelectedResultado(null)}
+          resultado={selectedResultado}
+          loteria="lotomania"
+        />
       </div>
     </MainLayout>
   );
