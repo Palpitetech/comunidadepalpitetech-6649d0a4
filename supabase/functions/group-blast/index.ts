@@ -106,18 +106,24 @@ async function handlePrepare(
           )
         );
 
-        // Check if already scheduled today for this config+slot
-        const todayStr = now.toISOString().split("T")[0];
+        // Check if already scheduled today (by created_at, not scheduled_for)
+        // This prevents overnight slots (scheduled_for in next day UTC)
+        // from blocking the next day's prepare run
+        const todayStartUTC = new Date();
+        todayStartUTC.setUTCHours(0, 0, 0, 0);
+        const todayEndUTC = new Date();
+        todayEndUTC.setUTCHours(23, 59, 59, 999);
+
         const { count } = await supabase
           .from("group_blast_logs")
           .select("id", { count: "exact", head: true })
           .eq("config_id", config.id)
           .eq("slot_id", slot.id)
-          .gte("scheduled_for", `${todayStr}T00:00:00Z`)
-          .lt("scheduled_for", `${todayStr}T23:59:59Z`)
+          .gte("created_at", todayStartUTC.toISOString())
+          .lt("created_at", todayEndUTC.toISOString())
           .neq("status", "failed");
 
-        if ((count ?? 0) > 0) continue; // already scheduled
+        if ((count ?? 0) > 0) continue; // already scheduled today
       }
 
       // Insert log WITHOUT message_content (will be generated on send)
