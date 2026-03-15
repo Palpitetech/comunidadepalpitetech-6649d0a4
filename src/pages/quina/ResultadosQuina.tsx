@@ -127,6 +127,12 @@ export default function ResultadosQuina() {
             </div>
           </div>
         )}
+        <ResultadoDetalhesSheetBase
+          open={!!selectedResultado}
+          onClose={() => setSelectedResultado(null)}
+          resultado={selectedResultado}
+          loteria="quina"
+        />
       </div>
     </MainLayout>
   );
