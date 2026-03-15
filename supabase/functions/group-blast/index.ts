@@ -27,12 +27,14 @@ Deno.serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   try {
-    const { action, force, config_id } = await req.json();
+    const { action, force, config_id, slot_id } = await req.json();
 
     if (action === "prepare") {
       return await handlePrepare(supabase, { force, config_id });
     } else if (action === "send") {
       return await handleSend(supabase, EVOLUTION_API_URL!, EVOLUTION_API_KEY!);
+    } else if (action === "send_now") {
+      return await handleSendNow(supabase, config_id, slot_id);
     } else {
       return jsonResponse({ error: `Ação desconhecida: ${action}` }, 400);
     }
@@ -389,5 +391,59 @@ Prévia: ${(post.conteudo ?? "").slice(0, 500)}`;
   } catch (err: any) {
     console.error("[group-blast] AI generation error:", err.message);
     return null;
+}
+
+// ─── SEND NOW (manual per-slot) ─────────────────────────
+async function handleSendNow(
+  supabase: any,
+  config_id?: string,
+  slot_id?: string
+) {
+  if (!config_id || !slot_id) {
+    return jsonResponse({ error: "config_id e slot_id obrigatórios" }, 400);
   }
+
+  const { data: config, error: cfgErr } = await supabase
+    .from("group_blast_configs")
+    .select("*")
+    .eq("id", config_id)
+    .single();
+
+  if (cfgErr || !config) {
+    return jsonResponse({ error: "Config não encontrada" }, 404);
+  }
+
+  const slots: Slot[] = config.slots ?? [];
+  const slot = slots.find((s: Slot) => s.id === slot_id);
+
+  if (!slot) {
+    return jsonResponse({ error: "Slot não encontrado" }, 404);
+  }
+
+  const scheduledFor = new Date(Date.now() + 5_000).toISOString();
+
+  const { data: log, error: logError } = await supabase
+    .from("group_blast_logs")
+    .insert({
+      config_id: config.id,
+      slot_id: slot.id,
+      group_jid: config.group_jid,
+      scheduled_for: scheduledFor,
+      status: "pending",
+      message_content: "",
+    })
+    .select()
+    .single();
+
+  if (logError) {
+    return jsonResponse({ error: logError.message }, 500);
+  }
+
+  return jsonResponse({
+    success: true,
+    log_id: log.id,
+    scheduled_for: scheduledFor,
+    message: "Disparo agendado para 5 segundos",
+  });
+}
 }

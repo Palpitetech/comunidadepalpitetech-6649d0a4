@@ -295,6 +295,20 @@ export function DisparoGrupoTab() {
     }
   }
 
+  async function handleSendNow(configId: string, slotId: string) {
+    try {
+      const { data, error } = await supabase.functions.invoke("group-blast", {
+        body: { action: "send_now", config_id: configId, slot_id: slotId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`🚀 Disparo agendado! Será enviado em ~5s.`);
+      setTimeout(() => fetchLogs(), 3000);
+    } catch (err: any) {
+      toast.error("Erro: " + err.message);
+    }
+  }
+
   function getConfigName(configId: string) {
     return configs.find((c) => c.id === configId)?.name || "—";
   }
@@ -378,10 +392,21 @@ export function DisparoGrupoTab() {
                       const nextIdx = ((slot.last_scheduled_index ?? -1) + 1) % (times.length || 1);
                       return (
                         <div key={slot.id} className="text-xs space-y-1">
-                          <p className="text-muted-foreground flex items-center gap-1">
-                            {(slot as any).message_type === "manual" ? <PenLine className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
-                            {(slot as any).message_type === "manual" ? "✏️ Manual" : "🤖 IA"} — Próximo: {times[nextIdx] || "—"} ({times.length} horário{times.length !== 1 ? "s" : ""})
-                          </p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-muted-foreground flex items-center gap-1">
+                              {(slot as any).message_type === "manual" ? <PenLine className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
+                              {(slot as any).message_type === "manual" ? "✏️ Manual" : "🤖 IA"} — Próximo: {times[nextIdx] || "—"} ({times.length} horário{times.length !== 1 ? "s" : ""})
+                            </p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-[10px]"
+                              onClick={() => handleSendNow(config.id, slot.id)}
+                            >
+                              <Send className="h-3 w-3 mr-1" />
+                              Disparar
+                            </Button>
+                          </div>
                           <div className="flex flex-wrap gap-1">
                             {times.map((t, i) => (
                               <Badge
