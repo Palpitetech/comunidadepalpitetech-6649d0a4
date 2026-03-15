@@ -127,6 +127,12 @@ export default function ResultadosDuplaSena() {
             </div>
           </div>
         )}
+        <ResultadoDetalhesSheetBase
+          open={!!selectedResultado}
+          onClose={() => setSelectedResultado(null)}
+          resultado={selectedResultado}
+          loteria="duplasena"
+        />
       </div>
     </MainLayout>
   );
