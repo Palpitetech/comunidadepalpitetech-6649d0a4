@@ -448,6 +448,11 @@ function BolaoVerificadoCard({ bolao, premiado }: { bolao: any; premiado: boolea
                 ) : (
                   <Badge className="text-[10px] bg-emerald-500/20 text-emerald-600 border-emerald-500/30">✅ {p.faixa}</Badge>
                 )}
+                {p.valor_premio > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(p.valor_premio)}
+                  </span>
+                )}
               </div>
             ))}
           </div>
