@@ -128,6 +128,12 @@ export default function ResultadosDiaDeSorte() {
             </div>
           </div>
         )}
+        <ResultadoDetalhesSheetBase
+          open={!!selectedResultado}
+          onClose={() => setSelectedResultado(null)}
+          resultado={selectedResultado}
+          loteria="diadesorte"
+        />
       </div>
     </MainLayout>
   );
