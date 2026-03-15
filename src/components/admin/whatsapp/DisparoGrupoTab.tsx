@@ -295,6 +295,19 @@ export function DisparoGrupoTab() {
     }
   }
 
+  async function handleSendNow(configId: string, slotId: string) {
+    try {
+      const { data, error } = await supabase.functions.invoke("group-blast", {
+        body: { action: "send_now", config_id: configId, slot_id: slotId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`🚀 Disparo agendado! Será enviado em ~5s.`);
+      setTimeout(() => fetchLogs(), 3000);
+    } catch (err: any) {
+      toast.error("Erro: " + err.message);
+    }
+
   function getConfigName(configId: string) {
     return configs.find((c) => c.id === configId)?.name || "—";
   }
