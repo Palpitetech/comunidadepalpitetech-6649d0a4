@@ -43,6 +43,7 @@ import AdminEventos from "./pages/admin/AdminEventos";
 import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
 import Integracoes from "./pages/admin/Integracoes";
 import AdminMetricas from "./pages/admin/AdminMetricas";
+import AdminManutencao from "./pages/admin/AdminManutencao";
 import NovoBolao from "./pages/admin/boloes/NovoBolao";
 import ListagemBolao from "./pages/admin/boloes/ListagemBolao";
 import ResgatesBolao from "./pages/admin/boloes/ResgatesBolao";
