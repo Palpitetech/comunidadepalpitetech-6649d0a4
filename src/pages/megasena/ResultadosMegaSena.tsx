@@ -202,6 +202,12 @@ export default function ResultadosMegaSena() {
             </div>
           </div>
         )}
+        <ResultadoDetalhesSheetBase
+          open={!!selectedResultado}
+          onClose={() => setSelectedResultado(null)}
+          resultado={selectedResultado}
+          loteria="megasena"
+        />
       </div>
     </MainLayout>
   );
