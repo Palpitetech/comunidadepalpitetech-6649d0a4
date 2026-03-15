@@ -40,6 +40,7 @@ export default function ResultadosMegaSena() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchConcurso, setSearchConcurso] = useState("");
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
+  const [selectedResultado, setSelectedResultado] = useState<any>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Buscar todos os resultados e fazer paginação no cliente
