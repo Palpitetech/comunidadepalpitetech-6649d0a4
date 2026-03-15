@@ -2095,6 +2095,7 @@ export type Database = {
           dezenas: string[]
           id: string
           mes_sorte: string | null
+          premiacao_json: Json | null
           valor_acumulado: number | null
           valor_estimado_proximo: number | null
           valor_premio_principal: number | null
@@ -2108,6 +2109,7 @@ export type Database = {
           dezenas: string[]
           id?: string
           mes_sorte?: string | null
+          premiacao_json?: Json | null
           valor_acumulado?: number | null
           valor_estimado_proximo?: number | null
           valor_premio_principal?: number | null
@@ -2121,6 +2123,7 @@ export type Database = {
           dezenas?: string[]
           id?: string
           mes_sorte?: string | null
+          premiacao_json?: Json | null
           valor_acumulado?: number | null
           valor_estimado_proximo?: number | null
           valor_premio_principal?: number | null
@@ -2211,6 +2214,7 @@ export type Database = {
           data_sorteio: string
           dezenas: string[]
           id: string
+          premiacao_json: Json | null
           valor_acumulado: number | null
           valor_estimado_proximo: number | null
           valor_premio_principal: number | null
@@ -2223,6 +2227,7 @@ export type Database = {
           data_sorteio: string
           dezenas: string[]
           id?: string
+          premiacao_json?: Json | null
           valor_acumulado?: number | null
           valor_estimado_proximo?: number | null
           valor_premio_principal?: number | null
@@ -2235,6 +2240,7 @@ export type Database = {
           data_sorteio?: string
           dezenas?: string[]
           id?: string
+          premiacao_json?: Json | null
           valor_acumulado?: number | null
           valor_estimado_proximo?: number | null
           valor_premio_principal?: number | null
@@ -2307,6 +2313,7 @@ export type Database = {
           data_sorteio: string
           dezenas: string[]
           id: string
+          premiacao_json: Json | null
           valor_acumulado: number | null
           valor_estimado_proximo: number | null
           valor_premio_principal: number | null
@@ -2319,6 +2326,7 @@ export type Database = {
           data_sorteio: string
           dezenas: string[]
           id?: string
+          premiacao_json?: Json | null
           valor_acumulado?: number | null
           valor_estimado_proximo?: number | null
           valor_premio_principal?: number | null
@@ -2331,6 +2339,7 @@ export type Database = {
           data_sorteio?: string
           dezenas?: string[]
           id?: string
+          premiacao_json?: Json | null
           valor_acumulado?: number | null
           valor_estimado_proximo?: number | null
           valor_premio_principal?: number | null

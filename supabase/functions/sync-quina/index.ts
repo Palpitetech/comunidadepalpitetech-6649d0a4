@@ -57,6 +57,12 @@ Deno.serve(async (req) => {
     function buildRegistro(resultado: any) {
       const dezenas = resultado.dezenas.map((d: string) => d.padStart(2, "0")).sort();
       const dataSorteio = converterDataBR(resultado.data_concurso);
+      const premiacao_json = (resultado.premiacao || []).map((p: any) => ({
+        faixa: p.faixa,
+        descricao: p.quantidade_acertos ?? p.descricao ?? `${p.faixa}ª faixa`,
+        ganhadores: p.numero_ganhadores ?? p.ganhadores ?? 0,
+        valorPremio: p.valor_premio ?? p.valorPremio ?? 0,
+      }));
       return {
         concurso: parseInt(resultado.numero_concurso, 10),
         data_sorteio: dataSorteio,
@@ -66,6 +72,7 @@ Deno.serve(async (req) => {
         valor_premio_principal: resultado.premiacao?.[0]?.valor_premio || resultado.premiacao?.[0]?.valor || 0,
         data_proximo_concurso: resultado.data_proximo_concurso ? converterDataBR(resultado.data_proximo_concurso) : null,
         valor_estimado_proximo: resultado.valor_estimado_proximo || 0,
+        premiacao_json,
       };
     }
 

@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { SnapshotButton } from "@/components/shared/SnapshotButton";
 import { cn } from "@/lib/utils";
+import { ResultadoDetalhesSheetBase } from "@/components/ResultadoDetalhesSheetBase";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -21,6 +22,7 @@ export default function ResultadosDiaDeSorte() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchConcurso, setSearchConcurso] = useState("");
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
+  const [selectedResultado, setSelectedResultado] = useState<any>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const { data: allResultados, isLoading, error } = useDiaDeSorteResultados(200);
@@ -107,7 +109,7 @@ export default function ResultadosDiaDeSorte() {
           {!isLoading && !error && resultados.length > 0 && (
             <div className="space-y-1.5">
               {resultados.map((resultado) => (
-                <ResultadoCompactoCard key={resultado.id} resultado={resultado} />
+                <ResultadoCompactoCard key={resultado.id} resultado={resultado} onClick={() => setSelectedResultado(resultado)} />
               ))}
             </div>
           )}
@@ -126,16 +128,22 @@ export default function ResultadosDiaDeSorte() {
             </div>
           </div>
         )}
+        <ResultadoDetalhesSheetBase
+          open={!!selectedResultado}
+          onClose={() => setSelectedResultado(null)}
+          resultado={selectedResultado}
+          loteria="diadesorte"
+        />
       </div>
     </MainLayout>
   );
 }
 
-function ResultadoCompactoCard({ resultado }: { resultado: any }) {
+function ResultadoCompactoCard({ resultado, onClick }: { resultado: any; onClick: () => void }) {
   const dataFormatada = format(new Date(resultado.data_sorteio + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR });
 
   return (
-    <div className="w-full py-3 px-3 hover:bg-accent/20 transition-colors rounded">
+    <button onClick={onClick} className="w-full py-3 px-3 text-left hover:bg-accent/20 transition-colors rounded cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/30">
       <div className="text-left mb-2 flex items-center gap-2">
         <span className="text-xs text-muted-foreground">
           #{resultado.concurso} — {dataFormatada}
@@ -164,6 +172,6 @@ function ResultadoCompactoCard({ resultado }: { resultado: any }) {
       <div className="text-left text-xs text-muted-foreground">
         {resultado.dezenas.length} dezenas sorteadas
       </div>
-    </div>
+    </button>
   );
 }

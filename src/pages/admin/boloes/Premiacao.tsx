@@ -93,6 +93,22 @@ const REGRAS_LOTERIA: Record<string, {
   },
 };
 
+// ─── Função auxiliar: buscar valor do prêmio pela faixa ──
+function buscarValorFaixa(
+  premiacaoJson: any[],
+  acertos: number
+): number {
+  if (!Array.isArray(premiacaoJson) || premiacaoJson.length === 0) return 0;
+  const faixa = premiacaoJson.find((p: any) => {
+    // Extrair número de acertos da descrição: "15 acertos" → 15
+    const desc = p.descricao || p.quantidade_acertos || "";
+    const match = desc.match(/(\d+)/);
+    const pontosDesc = match ? parseInt(match[1]) : 0;
+    return pontosDesc === acertos;
+  });
+  return faixa?.valorPremio ?? faixa?.valor_premio ?? 0;
+}
+
 // ─── Função de verificação ────────────────────────────
 type PalpiteVerificado = {
   palpite_index: number;
@@ -101,12 +117,14 @@ type PalpiteVerificado = {
   faixa: string | null;
   premiado: boolean;
   is_ouro: boolean;
+  valor_premio: number;
 };
 
 function verificarPalpites(
   palpites: number[][],
   dezenasResultado: (string | number)[],
-  loteria: string
+  loteria: string,
+  premiacaoJson?: any[]
 ): PalpiteVerificado[] {
   const regra = REGRAS_LOTERIA[loteria];
   if (!regra) return [];
@@ -128,10 +146,13 @@ function verificarPalpites(
         faixa: null,
         premiado: false,
         is_ouro: false,
+        valor_premio: 0,
       };
     }
 
     const faixa = regra.faixas.find((f) => f.pontos === pontos);
+    const valorPremio = premiacaoJson ? buscarValorFaixa(premiacaoJson, pontos) : 0;
+
     return {
       palpite_index: i,
       acertos: pontos,
@@ -139,6 +160,7 @@ function verificarPalpites(
       faixa: faixa?.nome ?? "Premiado",
       premiado: true,
       is_ouro: faixa?.is_ouro ?? false,
+      valor_premio: valorPremio,
     };
   });
 }
@@ -234,12 +256,15 @@ export default function Premiacao() {
         const dezenas = resultado[regra.campo_dezenas];
         if (!dezenas || !Array.isArray(dezenas)) continue;
 
+        // Get premiacao_json from resultado
+        const premiacaoJson = (resultado as any).premiacao_json;
+
         // 3. Parse palpites
         const palpites: number[][] = Array.isArray(bolao.palpites) ? (bolao.palpites as any) : [];
         if (!palpites.length) continue;
 
         // 4. Verificar
-        const resultadoVerificacao = verificarPalpites(palpites, dezenas, bolao.loteria);
+        const resultadoVerificacao = verificarPalpites(palpites, dezenas, bolao.loteria, premiacaoJson);
         const temPremiado = resultadoVerificacao.some((r) => r.premiado);
 
         // 5. Salvar
@@ -422,6 +447,11 @@ function BolaoVerificadoCard({ bolao, premiado }: { bolao: any; premiado: boolea
                   <Badge className="text-[10px] bg-yellow-500/20 text-yellow-600 border-yellow-500/30">🥇 {p.faixa}</Badge>
                 ) : (
                   <Badge className="text-[10px] bg-emerald-500/20 text-emerald-600 border-emerald-500/30">✅ {p.faixa}</Badge>
+                )}
+                {p.valor_premio > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(p.valor_premio)}
+                  </span>
                 )}
               </div>
             ))}
