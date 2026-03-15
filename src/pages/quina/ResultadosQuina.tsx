@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { BarChart3, Search, Calendar as CalendarIcon, X, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useQuinaResultados } from "@/hooks/useQuinaResultados";
+import { useResultados } from "@/hooks/useResultados";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,17 +24,14 @@ export default function ResultadosQuina() {
   const [selectedResultado, setSelectedResultado] = useState<any>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const { data: allResultados, isLoading, error } = useQuinaResultados(200);
+  const { data: allResultados, isLoading, error } = useResultados("quina", 200);
 
-  const filteredResultados = (allResultados || []).filter((resultado) => {
+  const filteredResultados = (allResultados || []).filter((r) => {
     if (searchConcurso.trim()) {
-      const concursoNum = parseInt(searchConcurso.trim());
-      if (!isNaN(concursoNum) && resultado.concurso !== concursoNum) return false;
+      const num = parseInt(searchConcurso.trim());
+      if (!isNaN(num) && r.concurso !== num) return false;
     }
-    if (dateFilter) {
-      const dateStr = format(dateFilter, "yyyy-MM-dd");
-      if (resultado.data_sorteio !== dateStr) return false;
-    }
+    if (dateFilter && r.data_sorteio !== format(dateFilter, "yyyy-MM-dd")) return false;
     return true;
   });
 
@@ -42,12 +39,7 @@ export default function ResultadosQuina() {
   const from = (currentPage - 1) * ITEMS_PER_PAGE;
   const resultados = filteredResultados.slice(from, from + ITEMS_PER_PAGE);
 
-  const handleClearFilters = () => {
-    setSearchConcurso("");
-    setDateFilter(undefined);
-    setCurrentPage(1);
-  };
-
+  const handleClearFilters = () => { setSearchConcurso(""); setDateFilter(undefined); setCurrentPage(1); };
   const hasFilters = searchConcurso.trim() || dateFilter;
 
   return (
@@ -66,13 +58,7 @@ export default function ResultadosQuina() {
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="number"
-              placeholder="Buscar concurso..."
-              value={searchConcurso}
-              onChange={(e) => { setSearchConcurso(e.target.value); setCurrentPage(1); }}
-              className="pl-10"
-            />
+            <Input type="number" placeholder="Buscar concurso..." value={searchConcurso} onChange={(e) => { setSearchConcurso(e.target.value); setCurrentPage(1); }} className="pl-10" />
           </div>
           <Popover>
             <PopoverTrigger asChild>
@@ -85,26 +71,13 @@ export default function ResultadosQuina() {
               <Calendar mode="single" selected={dateFilter} onSelect={(date) => { setDateFilter(date); setCurrentPage(1); }} locale={ptBR} initialFocus />
             </PopoverContent>
           </Popover>
-          {hasFilters && (
-            <Button variant="ghost" onClick={handleClearFilters} className="gap-1">
-              <X className="h-4 w-4" /> Limpar
-            </Button>
-          )}
+          {hasFilters && <Button variant="ghost" onClick={handleClearFilters} className="gap-1"><X className="h-4 w-4" /> Limpar</Button>}
         </div>
 
         <div ref={contentRef} className="space-y-2">
           {isLoading && Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-lg" />)}
-          {error && (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <AlertCircle className="w-10 h-10 mb-2" /><p>Erro ao carregar resultados</p>
-            </div>
-          )}
-          {!isLoading && !error && filteredResultados.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <AlertCircle className="w-10 h-10 mb-2" />
-              <p>{hasFilters ? "Nenhum resultado encontrado" : "Nenhum resultado disponível"}</p>
-            </div>
-          )}
+          {error && <div className="flex flex-col items-center justify-center py-12 text-muted-foreground"><AlertCircle className="w-10 h-10 mb-2" /><p>Erro ao carregar resultados</p></div>}
+          {!isLoading && !error && filteredResultados.length === 0 && <div className="flex flex-col items-center justify-center py-12 text-muted-foreground"><AlertCircle className="w-10 h-10 mb-2" /><p>{hasFilters ? "Nenhum resultado encontrado" : "Nenhum resultado disponível"}</p></div>}
           {!isLoading && !error && resultados.length > 0 && (
             <div className="space-y-1.5">
               {resultados.map((resultado) => (
@@ -118,21 +91,12 @@ export default function ResultadosQuina() {
           <div className="flex items-center justify-between mt-6 pt-4 border-t">
             <div className="text-sm text-muted-foreground">Página {currentPage} de {totalPages}</div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}><ChevronLeft className="h-4 w-4" /></Button>
+              <Button variant="outline" size="sm" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}><ChevronRight className="h-4 w-4" /></Button>
             </div>
           </div>
         )}
-        <ResultadoSheet
-          open={!!selectedResultado}
-          onClose={() => setSelectedResultado(null)}
-          resultado={selectedResultado}
-          loteria="quina"
-        />
+        <ResultadoSheet open={!!selectedResultado} onClose={() => setSelectedResultado(null)} resultado={selectedResultado} loteria="quina" />
       </div>
     </MainLayout>
   );
@@ -140,7 +104,6 @@ export default function ResultadosQuina() {
 
 function ResultadoCompactoCard({ resultado, onClick }: { resultado: any; onClick: () => void }) {
   const dataFormatada = format(new Date(resultado.data_sorteio + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR });
-
   return (
     <button onClick={onClick} className="w-full py-3 px-3 text-left hover:bg-accent/20 transition-colors rounded cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/30">
       <div className="text-left mb-2">
@@ -150,22 +113,13 @@ function ResultadoCompactoCard({ resultado, onClick }: { resultado: any; onClick
         </span>
       </div>
       <div className="flex justify-start gap-1.5 mb-2">
-        {resultado.dezenas.map((dezena: string, index: number) => (
-          <div
-            key={index}
-            className={cn(
-              "w-[30px] h-[30px] rounded-full flex items-center justify-center",
-              "text-sm font-semibold",
-              "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
-            )}
-          >
-            {dezena}
+        {resultado.dezenas.map((dezena: number, index: number) => (
+          <div key={index} className={cn("w-[30px] h-[30px] rounded-full flex items-center justify-center", "text-sm font-semibold", "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300")}>
+            {String(dezena).padStart(2, "0")}
           </div>
         ))}
       </div>
-      <div className="text-left text-xs text-muted-foreground">
-        {resultado.dezenas.length} dezenas sorteadas
-      </div>
+      <div className="text-left text-xs text-muted-foreground">{resultado.dezenas.length} dezenas sorteadas</div>
     </button>
   );
 }
