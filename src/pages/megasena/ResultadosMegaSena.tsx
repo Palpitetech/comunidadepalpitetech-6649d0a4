@@ -13,6 +13,7 @@ import { ptBR } from "date-fns/locale";
 import { SnapshotButton } from "@/components/shared/SnapshotButton";
 import { DezenaCirculoMini } from "@/components/megasena/DezenaCirculoMini";
 import { AlertCircle } from "lucide-react";
+import { ResultadoDetalhesSheetBase } from "@/components/ResultadoDetalhesSheetBase";
 
 interface Resultado {
   id: string;
