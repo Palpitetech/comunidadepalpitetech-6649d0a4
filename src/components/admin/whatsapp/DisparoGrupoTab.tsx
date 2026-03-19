@@ -140,7 +140,7 @@ export function DisparoGrupoTab() {
   function openEditDialog(config: BlastConfig) {
     setEditingConfig(config);
     setFormName(config.name);
-    setFormGroupJid(config.group_jid);
+    setFormGroupJids(config.group_jids.length > 0 ? config.group_jids : [""]);
     const slots = config.slots.length > 0
       ? config.slots.map(s => ({
           ...s,
