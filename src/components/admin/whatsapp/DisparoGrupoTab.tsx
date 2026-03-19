@@ -204,9 +204,9 @@ export function DisparoGrupoTab() {
   }
 
   async function handleSave() {
-    if (!formName.trim() || !formGroupJid.trim()) {
-      toast.error("Preencha nome e ID do grupo");
-      return;
+    const cleanJids = formGroupJids.map(j => j.trim()).filter(j => j !== "");
+    if (!formName.trim() || cleanJids.length === 0) {
+      toast.error("Preencha nome e pelo menos 1 ID de grupo");
     }
 
     // Validate each slot
