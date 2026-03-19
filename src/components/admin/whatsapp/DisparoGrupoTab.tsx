@@ -234,7 +234,7 @@ export function DisparoGrupoTab() {
 
     const payload: any = {
       name: formName.trim(),
-      group_jid: formGroupJid.trim(),
+      group_jids: cleanJids,
       slots: slotsPayload,
       is_active: formActive,
       updated_at: new Date().toISOString(),
