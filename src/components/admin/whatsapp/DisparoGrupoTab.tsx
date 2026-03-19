@@ -381,7 +381,7 @@ export function DisparoGrupoTab() {
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground font-mono truncate">
-                    {config.group_jid}
+                    {config.group_jids.join(", ")} ({config.group_jids.length} grupo{config.group_jids.length !== 1 ? "s" : ""})
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-3">
