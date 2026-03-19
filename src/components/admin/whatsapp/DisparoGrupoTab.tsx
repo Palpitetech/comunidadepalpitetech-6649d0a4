@@ -563,15 +563,46 @@ export function DisparoGrupoTab() {
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs">ID do Grupo *</Label>
-              <Input
-                value={formGroupJid}
-                onChange={(e) => setFormGroupJid(e.target.value)}
-                placeholder="120363XXXXXXXXXX@g.us"
-              />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Grupos ({formGroupJids.length})</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFormGroupJids([...formGroupJids, ""])}
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Grupo
+                </Button>
+              </div>
+              {formGroupJids.map((jid, idx) => (
+                <div key={idx} className="flex gap-1">
+                  <Input
+                    value={jid}
+                    onChange={(e) => {
+                      const updated = [...formGroupJids];
+                      updated[idx] = e.target.value;
+                      setFormGroupJids(updated);
+                    }}
+                    placeholder="120363XXXXXXXXXX@g.us"
+                    className="text-xs"
+                  />
+                  {formGroupJids.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 w-9 p-0 text-destructive"
+                      onClick={() => setFormGroupJids(formGroupJids.filter((_, i) => i !== idx))}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              ))}
               <p className="text-[10px] text-muted-foreground">
-                Copie o ID na aba Grupos
+                Copie o ID na aba Grupos. Adicione múltiplos grupos para enviar a mesma mensagem para todos.
               </p>
             </div>
 
