@@ -25,7 +25,7 @@ interface Slot {
 interface BlastConfig {
   id: string;
   name: string;
-  group_jid: string;
+  group_jids: string[];
   slots: Slot[];
   is_active: boolean;
   created_at: string;
@@ -58,7 +58,7 @@ export function DisparoGrupoTab() {
 
   // Form state
   const [formName, setFormName] = useState("");
-  const [formGroupJid, setFormGroupJid] = useState("");
+  const [formGroupJids, setFormGroupJids] = useState<string[]>([""]);
   const [formSlots, setFormSlots] = useState<Slot[]>([]);
   const [formActive, setFormActive] = useState(true);
   const [formTimeInputs, setFormTimeInputs] = useState<Record<string, string>>({});
@@ -130,7 +130,7 @@ export function DisparoGrupoTab() {
   function openNewDialog() {
     setEditingConfig(null);
     setFormName("");
-    setFormGroupJid("");
+    setFormGroupJids([""]);
     setFormSlots([createEmptySlot(1)]);
     setFormActive(true);
     setFormTimeInputs({ slot_1: "12:00" });
@@ -140,7 +140,7 @@ export function DisparoGrupoTab() {
   function openEditDialog(config: BlastConfig) {
     setEditingConfig(config);
     setFormName(config.name);
-    setFormGroupJid(config.group_jid);
+    setFormGroupJids(config.group_jids.length > 0 ? config.group_jids : [""]);
     const slots = config.slots.length > 0
       ? config.slots.map(s => ({
           ...s,
@@ -204,9 +204,9 @@ export function DisparoGrupoTab() {
   }
 
   async function handleSave() {
-    if (!formName.trim() || !formGroupJid.trim()) {
-      toast.error("Preencha nome e ID do grupo");
-      return;
+    const cleanJids = formGroupJids.map(j => j.trim()).filter(j => j !== "");
+    if (!formName.trim() || cleanJids.length === 0) {
+      toast.error("Preencha nome e pelo menos 1 ID de grupo");
     }
 
     // Validate each slot
@@ -234,7 +234,7 @@ export function DisparoGrupoTab() {
 
     const payload: any = {
       name: formName.trim(),
-      group_jid: formGroupJid.trim(),
+      group_jids: cleanJids,
       slots: slotsPayload,
       is_active: formActive,
       updated_at: new Date().toISOString(),
@@ -381,7 +381,7 @@ export function DisparoGrupoTab() {
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground font-mono truncate">
-                    {config.group_jid}
+                    {config.group_jids.join(", ")} ({config.group_jids.length} grupo{config.group_jids.length !== 1 ? "s" : ""})
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -563,15 +563,46 @@ export function DisparoGrupoTab() {
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs">ID do Grupo *</Label>
-              <Input
-                value={formGroupJid}
-                onChange={(e) => setFormGroupJid(e.target.value)}
-                placeholder="120363XXXXXXXXXX@g.us"
-              />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Grupos ({formGroupJids.length})</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFormGroupJids([...formGroupJids, ""])}
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Grupo
+                </Button>
+              </div>
+              {formGroupJids.map((jid, idx) => (
+                <div key={idx} className="flex gap-1">
+                  <Input
+                    value={jid}
+                    onChange={(e) => {
+                      const updated = [...formGroupJids];
+                      updated[idx] = e.target.value;
+                      setFormGroupJids(updated);
+                    }}
+                    placeholder="120363XXXXXXXXXX@g.us"
+                    className="text-xs"
+                  />
+                  {formGroupJids.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 w-9 p-0 text-destructive"
+                      onClick={() => setFormGroupJids(formGroupJids.filter((_, i) => i !== idx))}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              ))}
               <p className="text-[10px] text-muted-foreground">
-                Copie o ID na aba Grupos
+                Copie o ID na aba Grupos. Adicione múltiplos grupos para enviar a mesma mensagem para todos.
               </p>
             </div>
 
