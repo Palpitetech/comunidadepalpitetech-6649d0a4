@@ -130,7 +130,7 @@ export function DisparoGrupoTab() {
   function openNewDialog() {
     setEditingConfig(null);
     setFormName("");
-    setFormGroupJid("");
+    setFormGroupJids([""]);
     setFormSlots([createEmptySlot(1)]);
     setFormActive(true);
     setFormTimeInputs({ slot_1: "12:00" });
