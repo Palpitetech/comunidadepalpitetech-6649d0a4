@@ -58,7 +58,7 @@ export function DisparoGrupoTab() {
 
   // Form state
   const [formName, setFormName] = useState("");
-  const [formGroupJid, setFormGroupJid] = useState("");
+  const [formGroupJids, setFormGroupJids] = useState<string[]>([""]);
   const [formSlots, setFormSlots] = useState<Slot[]>([]);
   const [formActive, setFormActive] = useState(true);
   const [formTimeInputs, setFormTimeInputs] = useState<Record<string, string>>({});
