@@ -25,7 +25,7 @@ interface Slot {
 interface BlastConfig {
   id: string;
   name: string;
-  group_jid: string;
+  group_jids: string[];
   slots: Slot[];
   is_active: boolean;
   created_at: string;

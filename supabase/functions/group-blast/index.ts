@@ -77,6 +77,9 @@ async function handlePrepare(
     const slots: Slot[] = config.slots ?? [];
     if (slots.length === 0) continue;
 
+    const groupJids: string[] = config.group_jids ?? [];
+    if (groupJids.length === 0) continue;
+
     let updatedSlots = [...slots];
 
     for (let slotIdx = 0; slotIdx < slots.length; slotIdx++) {
@@ -86,74 +89,74 @@ async function handlePrepare(
 
       const nextIndex =
         ((slot.last_scheduled_index ?? -1) + 1) % times.length;
-      const nextTime = times[nextIndex]; // e.g. "08:00"
+      const nextTime = times[nextIndex];
 
       const [hh, mm] = nextTime.split(":");
       const now = new Date();
-      let scheduled: Date;
 
-      if (opts.force) {
-        // Each slot 30s apart
-        scheduled = new Date(Date.now() + 30_000 * (slotIdx + 1));
-      } else {
-        scheduled = new Date(
-          Date.UTC(
-            now.getUTCFullYear(),
-            now.getUTCMonth(),
-            now.getUTCDate(),
-            parseInt(hh) + 3, // BRT → UTC
-            parseInt(mm),
-            0,
-            0
-          )
-        );
+      for (const groupJid of groupJids) {
+        let scheduled: Date;
 
-        // Check if already scheduled today (by created_at, not scheduled_for)
-        // This prevents overnight slots (scheduled_for in next day UTC)
-        // from blocking the next day's prepare run
-        const todayStartUTC = new Date();
-        todayStartUTC.setUTCHours(0, 0, 0, 0);
-        const todayEndUTC = new Date();
-        todayEndUTC.setUTCHours(23, 59, 59, 999);
+        if (opts.force) {
+          scheduled = new Date(Date.now() + 30_000 * (slotIdx + 1));
+        } else {
+          scheduled = new Date(
+            Date.UTC(
+              now.getUTCFullYear(),
+              now.getUTCMonth(),
+              now.getUTCDate(),
+              parseInt(hh) + 3, // BRT → UTC
+              parseInt(mm),
+              0,
+              0
+            )
+          );
 
-        const { count } = await supabase
+          // Check if already scheduled today (by created_at)
+          const todayStartUTC = new Date();
+          todayStartUTC.setUTCHours(0, 0, 0, 0);
+          const todayEndUTC = new Date();
+          todayEndUTC.setUTCHours(23, 59, 59, 999);
+
+          const { count } = await supabase
+            .from("group_blast_logs")
+            .select("id", { count: "exact", head: true })
+            .eq("config_id", config.id)
+            .eq("slot_id", slot.id)
+            .eq("group_jid", groupJid)
+            .gte("created_at", todayStartUTC.toISOString())
+            .lt("created_at", todayEndUTC.toISOString())
+            .neq("status", "failed");
+
+          if ((count ?? 0) > 0) continue; // already scheduled today for this group
+        }
+
+        const { error: insertErr } = await supabase
           .from("group_blast_logs")
-          .select("id", { count: "exact", head: true })
-          .eq("config_id", config.id)
-          .eq("slot_id", slot.id)
-          .gte("created_at", todayStartUTC.toISOString())
-          .lt("created_at", todayEndUTC.toISOString())
-          .neq("status", "failed");
+          .insert({
+            config_id: config.id,
+            slot_id: slot.id,
+            group_jid: groupJid,
+            message_content: "",
+            scheduled_for: scheduled.toISOString(),
+            status: "pending",
+          });
 
-        if ((count ?? 0) > 0) continue; // already scheduled today
-      }
+        if (insertErr) {
+          console.error(
+            `Error inserting log for config ${config.id} slot ${slot.id} group ${groupJid}:`,
+            insertErr
+          );
+          continue;
+        }
 
-      // Insert log WITHOUT message_content (will be generated on send)
-      const { error: insertErr } = await supabase
-        .from("group_blast_logs")
-        .insert({
-          config_id: config.id,
-          slot_id: slot.id,
-          group_jid: config.group_jid,
-          message_content: "",
-          scheduled_for: scheduled.toISOString(),
-          status: "pending",
-        });
-
-      if (insertErr) {
-        console.error(
-          `Error inserting log for config ${config.id} slot ${slot.id}:`,
-          insertErr
-        );
-        continue;
+        prepared++;
       }
 
       // Update last_scheduled_index for this slot
       updatedSlots = updatedSlots.map((s) =>
         s.id === slot.id ? { ...s, last_scheduled_index: nextIndex } : s
       );
-
-      prepared++;
     }
 
     // Persist updated slot indices
@@ -175,7 +178,6 @@ async function handleSend(
   evolutionUrl: string,
   evolutionKey: string
 ) {
-  // Fetch pending logs that are due
   const { data: logs, error: logsErr } = await supabase
     .from("group_blast_logs")
     .select("*")
@@ -189,7 +191,6 @@ async function handleSend(
     return jsonResponse({ sent: 0, failed: 0, message: "Nenhum pendente" });
   }
 
-  // Fetch online instances (round-robin by last_message_at)
   const { data: instances, error: instErr } = await supabase
     .from("whatsapp_instances")
     .select("id, evolution_instance_id, last_message_at")
@@ -213,7 +214,6 @@ async function handleSend(
     const instance = instances[i % instances.length];
 
     try {
-      // Fetch config to get slot info
       const { data: configData } = await supabase
         .from("group_blast_configs")
         .select("slots")
@@ -226,10 +226,8 @@ async function handleSend(
       let messageContent: string | null = null;
 
       if (slot?.message_type === "manual" && slot?.message_content?.trim()) {
-        // Use manual text from slot
         messageContent = slot.message_content.trim();
       } else {
-        // Generate via AI (default behavior)
         const { data: latestPost } = await supabase
           .from("postagens")
           .select("id, slug, titulo, conteudo, tipo")
@@ -250,7 +248,6 @@ async function handleSend(
           console.warn(
             `[group-blast] Sem post ou IA falhou para log ${log.id}, skip`
           );
-          // Leave as pending to retry later
           continue;
         }
       }
@@ -259,7 +256,6 @@ async function handleSend(
         continue;
       }
 
-      // Send to group
       const res = await fetch(
         `${evolutionUrl}/message/sendText/${instance.evolution_instance_id}`,
         {
@@ -283,7 +279,6 @@ async function handleSend(
         );
       }
 
-      // Mark as sent with the generated message
       await supabase
         .from("group_blast_logs")
         .update({
@@ -295,7 +290,6 @@ async function handleSend(
         })
         .eq("id", log.id);
 
-      // Update instance last_message_at
       await supabase
         .from("whatsapp_instances")
         .update({ last_message_at: new Date().toISOString() })
@@ -421,29 +415,40 @@ async function handleSendNow(
     return jsonResponse({ error: "Slot não encontrado" }, 404);
   }
 
+  const groupJids: string[] = config.group_jids ?? [];
+  if (groupJids.length === 0) {
+    return jsonResponse({ error: "Nenhum grupo configurado" }, 400);
+  }
+
   const scheduledFor = new Date(Date.now() + 5_000).toISOString();
+  const insertedLogs: string[] = [];
 
-  const { data: log, error: logError } = await supabase
-    .from("group_blast_logs")
-    .insert({
-      config_id: config.id,
-      slot_id: slot.id,
-      group_jid: config.group_jid,
-      scheduled_for: scheduledFor,
-      status: "pending",
-      message_content: "",
-    })
-    .select()
-    .single();
+  for (const groupJid of groupJids) {
+    const { data: log, error: logError } = await supabase
+      .from("group_blast_logs")
+      .insert({
+        config_id: config.id,
+        slot_id: slot.id,
+        group_jid: groupJid,
+        scheduled_for: scheduledFor,
+        status: "pending",
+        message_content: "",
+      })
+      .select()
+      .single();
 
-  if (logError) {
-    return jsonResponse({ error: logError.message }, 500);
+    if (logError) {
+      console.error(`Error inserting send_now log for group ${groupJid}:`, logError.message);
+      continue;
+    }
+    insertedLogs.push(log.id);
   }
 
   return jsonResponse({
     success: true,
-    log_id: log.id,
+    log_ids: insertedLogs,
+    groups_count: groupJids.length,
     scheduled_for: scheduledFor,
-    message: "Disparo agendado para 5 segundos",
+    message: `Disparo agendado para ${groupJids.length} grupo(s) em 5 segundos`,
   });
 }
