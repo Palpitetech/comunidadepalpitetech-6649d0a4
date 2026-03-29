@@ -5,14 +5,16 @@ import { LoginWizard } from "@/components/auth/LoginWizard";
 import { Loader2 } from "lucide-react";
 
 export default function Auth() {
-  const { isAuthenticated, loading } = useAuthContext();
+  const { isAuthenticated, loading, profile } = useAuthContext();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAuthenticated) {
+    // Só redireciona se autenticado E email verificado
+    // Se email_verificado === false, o RegisterWizard está mostrando o OTP inline
+    if (isAuthenticated && profile?.email_verificado !== false) {
       navigate("/home", { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, profile, navigate]);
 
   if (loading) {
     return (
