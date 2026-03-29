@@ -174,243 +174,229 @@ export default function Perfil() {
 
       {/* Conteúdo scrollável */}
       <ScrollArea className="flex-1">
-        <div className="pb-24">
-          {/* Hero do perfil */}
-          <div className="relative bg-gradient-to-b from-primary/10 to-background pt-6 pb-8 px-4">
-            <div className="flex flex-col items-center">
-              <div className="relative">
-                <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
-                  <AvatarImage src={profile?.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-bold">
-                    {getInitials(profile?.nome)}
-                  </AvatarFallback>
-                </Avatar>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploadingAvatar}
-                  className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md border-2 border-background hover:bg-primary/90 transition-colors disabled:opacity-50"
-                >
-                  {isUploadingAvatar ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Camera className="h-4 w-4" />
-                  )}
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleAvatarUpload}
-                />
-              </div>
-              <h2 className="mt-4 text-xl font-bold text-foreground">{profile?.nome || "Usuário"}</h2>
-              <p className="text-sm text-muted-foreground">{user?.email}</p>
-              
-              {/* Badge de status */}
-              <div className="mt-3 flex items-center gap-2">
+        <div className="pb-8 max-w-lg mx-auto w-full">
+          {/* Hero compacto */}
+          <div className="flex items-center gap-4 px-4 py-5">
+            <div className="relative shrink-0">
+              <Avatar className="h-16 w-16 border-2 border-border shadow-sm">
+                <AvatarImage src={profile?.avatar_url || undefined} />
+                <AvatarFallback className="bg-primary text-primary-foreground text-lg font-bold">
+                  {getInitials(profile?.nome)}
+                </AvatarFallback>
+              </Avatar>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingAvatar}
+                className="absolute -bottom-0.5 -right-0.5 h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow border-2 border-background hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {isUploadingAvatar ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Camera className="h-3 w-3" />
+                )}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-bold text-foreground truncate">{profile?.nome || "Usuário"}</h2>
+              <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+              <div className="mt-1.5 flex items-center gap-1.5">
                 <Badge 
                   variant={isPremium ? "default" : "secondary"}
-                  className={isPremium ? "bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90" : ""}
+                  className={`text-[11px] h-5 ${isPremium ? "bg-primary hover:bg-primary/90" : ""}`}
                 >
                   {isPremium ? (
                     <>
-                      <Sparkles className="h-3 w-3 mr-1" />
+                      <Sparkles className="h-3 w-3 mr-0.5" />
                       Premium
                     </>
                   ) : (
                     "Grátis"
                   )}
                 </Badge>
-                <Badge variant={statusConfig.variant}>
+                <Badge variant={statusConfig.variant} className="text-[11px] h-5">
                   {statusConfig.label}
                 </Badge>
               </div>
             </div>
           </div>
 
-          {/* Seção de Assinatura */}
-          <div className="px-4 mt-6">
-            <div className="rounded-2xl border bg-card overflow-hidden">
-              <div className="p-4 bg-muted/30">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <CreditCard className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">Minha Assinatura</p>
-                    <p className="font-semibold">{isPremium ? "Plano Premium" : "Plano Grátis"}</p>
-                  </div>
-                  {diasRestantes !== null && (
-                    <Badge 
-                      variant={diasRestantes > 7 ? "outline" : diasRestantes > 0 ? "secondary" : "destructive"}
-                      className="shrink-0"
-                    >
-                      {diasRestantes > 0
-                        ? `${diasRestantes}d restantes`
-                        : diasRestantes === 0
-                          ? "Expira hoje"
-                          : `Expirou`}
-                    </Badge>
-                  )}
+          {/* Assinatura - Card compacto */}
+          <div className="px-4">
+            <div className="rounded-xl border bg-card overflow-hidden">
+              <div className="flex items-center gap-3 p-3.5">
+                <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <CreditCard className="h-4 w-4 text-primary" />
                 </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground">Plano Atual</p>
+                  <p className="font-semibold text-sm">{isPremium ? "Premium" : "Grátis"}</p>
+                </div>
+                {diasRestantes !== null && (
+                  <Badge 
+                    variant={diasRestantes > 7 ? "outline" : diasRestantes > 0 ? "secondary" : "destructive"}
+                    className="shrink-0 text-[11px]"
+                  >
+                    {diasRestantes > 0
+                      ? `${diasRestantes}d`
+                      : diasRestantes === 0
+                        ? "Hoje"
+                        : "Expirou"}
+                  </Badge>
+                )}
               </div>
 
               {subscription?.validade && (
-                <div className="px-4 py-3 border-t flex items-center gap-3">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Válido até:</span>
-                  <span className="text-sm font-medium">
-                    {format(new Date(subscription.validade), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                <div className="px-3.5 py-2.5 border-t flex items-center gap-2 bg-muted/30">
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">
+                    Até {format(new Date(subscription.validade), "dd/MM/yyyy")}
                   </span>
                 </div>
               )}
 
-              <div className="p-4 border-t space-y-2">
+              <Separator />
+              <div className="p-3">
                 <Button
-                  className="w-full h-12 text-base font-semibold gap-2"
+                  className="w-full h-10 text-sm font-semibold gap-2"
                   onClick={() => navigate("/planos")}
                 >
-                  <Sparkles className="h-5 w-5" />
+                  <Sparkles className="h-4 w-4" />
                   {isPremium ? "Renovar / Trocar Plano" : "Ver Planos"}
                 </Button>
               </div>
             </div>
           </div>
 
-          {/* Seção Dados de Acesso */}
-          <div className="px-4 mt-6">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">
+          {/* Dados de Acesso */}
+          <div className="px-4 mt-5">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
               Dados de Acesso
             </h3>
-            <div className="rounded-2xl border bg-card overflow-hidden divide-y">
-              {/* Email */}
-              <div className="flex items-center gap-4 p-4">
-                <div className="h-10 w-10 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
-                  <Mail className="h-5 w-5 text-[hsl(var(--primary))]" />
+            <div className="rounded-xl border bg-card overflow-hidden divide-y">
+              <div className="flex items-center gap-3 p-3.5">
+                <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <Mail className="h-4 w-4 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground">E-mail</p>
-                  <p className="font-medium truncate">{user?.email || "Não informado"}</p>
+                  <p className="text-[11px] text-muted-foreground">E-mail</p>
+                  <p className="text-sm font-medium truncate">{user?.email || "Não informado"}</p>
                 </div>
-                <CheckCircle2 className="h-5 w-5 text-[hsl(var(--primary))] shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
               </div>
 
-              {/* Celular */}
-              <div className="flex items-center gap-4 p-4">
-                <div className="h-10 w-10 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
-                  <Phone className="h-5 w-5 text-[hsl(var(--primary))]" />
+              <div className="flex items-center gap-3 p-3.5">
+                <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <Phone className="h-4 w-4 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground">Celular</p>
-                  <p className="font-medium">{profile?.celular || "Não informado"}</p>
+                  <p className="text-[11px] text-muted-foreground">Celular</p>
+                  <p className="text-sm font-medium">{profile?.celular || "Não informado"}</p>
                 </div>
                 {profile?.celular ? (
-                  <CheckCircle2 className="h-5 w-5 text-[hsl(var(--primary))] shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
                 ) : (
-                  <AlertCircle className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0" />
                 )}
               </div>
             </div>
           </div>
 
-          {/* Ações de Conta */}
-          <div className="px-4 mt-6">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-1">
-              Configurações da Conta
+          {/* Configurações */}
+          <div className="px-4 mt-5">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
+              Configurações
             </h3>
-            <div className="rounded-2xl border bg-card overflow-hidden divide-y">
-              {/* Alterar Celular */}
+            <div className="rounded-xl border bg-card overflow-hidden divide-y">
               <AlterarCelularDialog
                 celularAtual={profile?.celular || null}
                 onSuccess={handleCelularSuccess}
                 trigger={
-                  <button className="w-full flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors text-left">
-                    <div className="h-10 w-10 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
-                      <Phone className="h-5 w-5 text-[hsl(var(--primary))]" />
+                  <button className="w-full flex items-center gap-3 p-3.5 hover:bg-muted/50 transition-colors text-left">
+                    <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Phone className="h-4 w-4 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <p className="font-medium">{profile?.celular ? "Alterar Celular" : "Adicionar Celular"}</p>
-                      <p className="text-xs text-muted-foreground">Verificação por SMS</p>
+                      <p className="text-sm font-medium">{profile?.celular ? "Alterar Celular" : "Adicionar Celular"}</p>
+                      <p className="text-[11px] text-muted-foreground">Verificação por SMS</p>
                     </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </button>
                 }
               />
 
-              {/* Alterar Email */}
-              <button className="w-full flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors text-left">
-                <div className="h-10 w-10 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
-                  <Mail className="h-5 w-5 text-[hsl(var(--primary))]" />
+              <button className="w-full flex items-center gap-3 p-3.5 hover:bg-muted/50 transition-colors text-left">
+                <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <Mail className="h-4 w-4 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium">Alterar E-mail</p>
-                  <p className="text-xs text-muted-foreground">Verificação necessária</p>
+                  <p className="text-sm font-medium">Alterar E-mail</p>
+                  <p className="text-[11px] text-muted-foreground">Verificação necessária</p>
                 </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </button>
 
-              {/* Trocar Senha */}
               <Link to="/recuperar-senha" className="block">
-                <div className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors">
-                  <div className="h-10 w-10 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
-                    <Lock className="h-5 w-5 text-[hsl(var(--primary))]" />
+                <div className="flex items-center gap-3 p-3.5 hover:bg-muted/50 transition-colors">
+                  <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <Lock className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium">Trocar Senha</p>
-                    <p className="text-xs text-muted-foreground">Altere sua senha de acesso</p>
+                    <p className="text-sm font-medium">Trocar Senha</p>
+                    <p className="text-[11px] text-muted-foreground">Altere sua senha de acesso</p>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </div>
               </Link>
 
-              {/* Privacidade */}
               <Link to="/privacidade" className="block">
-                <div className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors">
-                  <div className="h-10 w-10 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
-                    <Shield className="h-5 w-5 text-[hsl(var(--primary))]" />
+                <div className="flex items-center gap-3 p-3.5 hover:bg-muted/50 transition-colors">
+                  <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <Shield className="h-4 w-4 text-primary" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium">Privacidade</p>
-                    <p className="text-xs text-muted-foreground">Política de privacidade</p>
+                    <p className="text-sm font-medium">Privacidade</p>
+                    <p className="text-[11px] text-muted-foreground">Política de privacidade</p>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </div>
               </Link>
 
-              {/* Grupo WhatsApp */}
               <a href="https://chat.whatsapp.com/J89dx46Lo97G9YdAaGmR78" target="_blank" rel="noopener noreferrer" className="block">
-                <div className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors">
-                  <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
-                    <MessageSquare className="h-5 w-5 text-green-500" />
+                <div className="flex items-center gap-3 p-3.5 hover:bg-muted/50 transition-colors">
+                  <div className="h-9 w-9 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+                    <MessageSquare className="h-4 w-4 text-accent" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium">Grupo WhatsApp</p>
-                    <p className="text-xs text-muted-foreground">Entre no nosso grupo</p>
+                    <p className="text-sm font-medium">Grupo WhatsApp</p>
+                    <p className="text-[11px] text-muted-foreground">Entre no nosso grupo</p>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </div>
               </a>
             </div>
           </div>
 
           {/* Zona de Perigo */}
-          <div className="px-4 mt-6">
-            <h3 className="text-sm font-semibold text-destructive uppercase tracking-wider mb-3 px-1">
-              Zona de Perigo
-            </h3>
-            <div className="rounded-2xl border border-destructive/30 bg-card overflow-hidden">
+          <div className="px-4 mt-5">
+            <div className="rounded-xl border border-destructive/20 bg-card overflow-hidden">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <button className="w-full flex items-center gap-4 p-4 hover:bg-destructive/5 transition-colors text-left">
-                    <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
-                      <Trash2 className="h-5 w-5 text-destructive" />
+                  <button className="w-full flex items-center gap-3 p-3.5 hover:bg-destructive/5 transition-colors text-left">
+                    <div className="h-9 w-9 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+                      <Trash2 className="h-4 w-4 text-destructive" />
                     </div>
                     <div className="flex-1">
-                      <p className="font-medium text-destructive">Excluir Conta</p>
-                      <p className="text-xs text-muted-foreground">Ação irreversível</p>
+                      <p className="text-sm font-medium text-destructive">Excluir Conta</p>
+                      <p className="text-[11px] text-muted-foreground">Ação irreversível</p>
                     </div>
-                    <ChevronRight className="h-5 w-5 text-destructive" />
+                    <ChevronRight className="h-4 w-4 text-destructive/50" />
                   </button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -443,11 +429,11 @@ export default function Perfil() {
             </div>
           </div>
 
-          {/* Botão de Logout */}
-          <div className="px-4 mt-8 mb-8">
+          {/* Logout */}
+          <div className="px-4 mt-6 mb-6">
             <Button 
               variant="outline" 
-              className="w-full h-12 text-base"
+              className="w-full h-10 text-sm"
               onClick={handleLogout}
             >
               Sair da Conta
