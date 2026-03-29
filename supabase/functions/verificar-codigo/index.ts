@@ -1,115 +1,144 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Content-Type": "application/json",
 };
 
+const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: corsHeaders,
+  });
+
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const { user_id, codigo, tipo } = await req.json();
+    const body = await req.json().catch(() => null);
+    const userId = String(body?.user_id ?? "").trim();
+    const codigoInformado = String(body?.codigo ?? "").trim();
+    const tipo = typeof body?.tipo === "string" ? body.tipo.trim() : "";
 
-    if (!user_id || !codigo) {
-      throw new Error('user_id e codigo são obrigatórios');
+    if (!userId || !codigoInformado) {
+      return jsonResponse({ sucesso: false, erro: "user_id e codigo são obrigatórios" }, 400);
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Configuração do Supabase não encontrada');
+      console.error("[ERRO VERIFICAÇÃO] Configuração ausente");
+      return jsonResponse({ sucesso: false, erro: "Configuração do backend não encontrada" }, 500);
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Buscar código válido mais recente
-    // Se tipo foi especificado, filtrar por tipo
     let query = supabase
-      .from('codigos_verificacao')
-      .select('*')
-      .eq('user_id', user_id)
-      .eq('usado', false)
-      .gt('expira_em', new Date().toISOString());
-    
+      .from("codigos_verificacao")
+      .select("id, codigo, tipo, tentativas, expira_em")
+      .eq("user_id", userId)
+      .eq("usado", false)
+      .gt("expira_em", new Date().toISOString());
+
     if (tipo) {
-      query = query.eq('tipo', tipo);
+      query = query.eq("tipo", tipo);
     }
 
     const { data: codigoData, error: fetchError } = await query
-      .order('created_at', { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
     if (fetchError) {
-      console.error('[ERRO] Falha ao buscar código:', fetchError);
-      throw new Error('Erro ao verificar código');
+      console.error("[ERRO VERIFICAÇÃO] Falha ao buscar código:", fetchError);
+      return jsonResponse({ sucesso: false, erro: "Erro ao verificar código" }, 500);
     }
 
     if (!codigoData) {
-      throw new Error('Código expirado ou inválido. Solicite um novo.');
+      return jsonResponse({ sucesso: false, erro: "Código expirado ou inválido. Solicite um novo." }, 400);
     }
 
-    // Verificar tentativas (máx 5)
-    if (codigoData.tentativas >= 5) {
-      // Marcar como usado para forçar novo código
+    const tentativasAtuais = Number(codigoData.tentativas ?? 0);
+    if (tentativasAtuais >= 5) {
       await supabase
-        .from('codigos_verificacao')
+        .from("codigos_verificacao")
         .update({ usado: true })
-        .eq('id', codigoData.id);
-        
-      throw new Error('Muitas tentativas incorretas. Solicite um novo código.');
+        .eq("id", codigoData.id);
+
+      return jsonResponse({ sucesso: false, erro: "Muitas tentativas incorretas. Solicite um novo código." }, 400);
     }
 
-    // Verificar se código está correto
-    if (codigoData.codigo !== codigo) {
-      // Incrementar tentativas
+    const codigoEsperado = String(codigoData.codigo ?? "").trim();
+    if (!codigoEsperado) {
+      console.error("[ERRO VERIFICAÇÃO] Código armazenado ausente para", codigoData.id);
+      return jsonResponse({ sucesso: false, erro: "Código inválido. Solicite um novo." }, 400);
+    }
+
+    if (codigoEsperado !== codigoInformado) {
+      const proximasTentativas = tentativasAtuais + 1;
+      const restantes = Math.max(0, 5 - proximasTentativas);
+
       await supabase
-        .from('codigos_verificacao')
-        .update({ tentativas: codigoData.tentativas + 1 })
-        .eq('id', codigoData.id);
+        .from("codigos_verificacao")
+        .update({
+          tentativas: proximasTentativas,
+          ...(proximasTentativas >= 5 ? { usado: true } : {}),
+        })
+        .eq("id", codigoData.id);
 
-      const restantes = 5 - (codigoData.tentativas + 1);
-      throw new Error(`Código incorreto. ${restantes} tentativa${restantes !== 1 ? 's' : ''} restante${restantes !== 1 ? 's' : ''}.`);
+      return jsonResponse(
+        {
+          sucesso: false,
+          erro:
+            proximasTentativas >= 5
+              ? "Muitas tentativas incorretas. Solicite um novo código."
+              : `Código incorreto. ${restantes} tentativa${restantes !== 1 ? "s" : ""} restante${restantes !== 1 ? "s" : ""}.`,
+        },
+        400,
+      );
     }
 
-    // Código correto - marcar como usado
-    await supabase
-      .from('codigos_verificacao')
+    const { error: markUsedError } = await supabase
+      .from("codigos_verificacao")
       .update({ usado: true })
-      .eq('id', codigoData.id);
+      .eq("id", codigoData.id);
 
-    // Atualizar perfil como verificado baseado no tipo
-    // Para alteracao_celular, não atualizamos aqui (o frontend faz após receber sucesso)
-    if (codigoData.tipo === 'email') {
-      await supabase
-        .from('perfis')
-        .update({ email_verificado: true })
-        .eq('id', user_id);
-    } else if (codigoData.tipo === 'sms') {
-      await supabase
-        .from('perfis')
-        .update({ celular_verificado: true })
-        .eq('id', user_id);
+    if (markUsedError) {
+      console.error("[ERRO VERIFICAÇÃO] Falha ao marcar código como usado:", markUsedError);
+      return jsonResponse({ sucesso: false, erro: "Erro ao finalizar verificação" }, 500);
     }
-    // Para 'alteracao_celular', 'recuperacao_email', 'recuperacao_sms' não atualizamos verificação aqui
 
-    console.log(`[VERIFICAÇÃO] Usuário ${user_id} verificado via ${codigoData.tipo} com sucesso`);
+    if (codigoData.tipo === "email") {
+      const { error: profileError } = await supabase
+        .from("perfis")
+        .update({ email_verificado: true })
+        .eq("id", userId);
 
-    return new Response(
-      JSON.stringify({ sucesso: true, mensagem: 'Código verificado com sucesso!' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+      if (profileError) {
+        console.error("[ERRO VERIFICAÇÃO] Falha ao atualizar perfil:", profileError);
+        return jsonResponse({ sucesso: false, erro: "Erro ao atualizar verificação do e-mail" }, 500);
+      }
+    } else if (codigoData.tipo === "sms") {
+      const { error: profileError } = await supabase
+        .from("perfis")
+        .update({ celular_verificado: true })
+        .eq("id", userId);
 
+      if (profileError) {
+        console.error("[ERRO VERIFICAÇÃO] Falha ao atualizar perfil:", profileError);
+        return jsonResponse({ sucesso: false, erro: "Erro ao atualizar verificação do celular" }, 500);
+      }
+    }
+
+    console.log(`[VERIFICAÇÃO] Usuário ${userId} verificado via ${codigoData.tipo} com sucesso`);
+    return jsonResponse({ sucesso: true, mensagem: "Código verificado com sucesso!" });
   } catch (error) {
-    console.error('[ERRO VERIFICAÇÃO]', error);
-    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-    return new Response(
-      JSON.stringify({ sucesso: false, erro: errorMessage }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-    );
+    console.error("[ERRO VERIFICAÇÃO] Erro inesperado:", error);
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+    return jsonResponse({ sucesso: false, erro: errorMessage }, 500);
   }
 });
