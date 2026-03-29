@@ -386,7 +386,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                 </div>
 
                {/* Accordion de Mega Sena */}
-               <div className="px-4">
+               <div className="mx-4 p-1 rounded-r-md border-l-4" style={{ borderLeftColor: "hsl(125, 70%, 40%)", backgroundColor: "hsl(125, 70%, 40%, 0.04)" }}>
                  <Accordion type="single" collapsible>
                    <AccordionItem value="megasena" className="border-none">
                      <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
