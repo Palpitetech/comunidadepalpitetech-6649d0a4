@@ -73,6 +73,7 @@ import AnaliseDoDiaMegaSena from "./pages/megasena/AnaliseDoDiaMegaSena";
 import TabelaMovimentacaoMegaSena from "./pages/megasena/TabelaMovimentacaoMegaSena";
 import FrequenciaDecenasMegaSena from "./pages/megasena/FrequenciaDecenasMegaSena";
 import DezenasporPosicaoMegaSena from "./pages/megasena/DezenasporPosicaoMegaSena";
+import HubMegaSena from "./pages/megasena/HubMegaSena";
 import ResultadosDuplaSena from "./pages/duplasena/ResultadosDuplaSena";
 import TendenciasDuplaSena from "./pages/duplasena/TendenciasDuplaSena";
 import FrequenciaDuplaSena from "./pages/duplasena/FrequenciaDuplaSena";
@@ -147,6 +148,7 @@ const App = () => (
             <Route path="/planos" element={<Planos />} />
             
             {/* Rotas Mega Sena */}
+            <Route path="/megasena" element={<ProtectedRoute><HubMegaSena /></ProtectedRoute>} />
             <Route path="/megasena/resultados" element={<ProtectedRoute><ResultadosMegaSena /></ProtectedRoute>} />
             <Route path="/megasena/tendencias" element={<ProtectedRoute><GatedPage feature="tendencias"><TendenciasMegaSena /></GatedPage></ProtectedRoute>} />
             <Route path="/megasena/frequencia" element={<ProtectedRoute><GatedPage feature="quentes_frias"><FrequenciaMegaSena /></GatedPage></ProtectedRoute>} />
