@@ -11,20 +11,44 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { user_id, admin_secret } = await req.json();
-    
-    const expectedSecret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (admin_secret !== expectedSecret) {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
+    const { user_id } = await req.json();
+
+    if (!user_id) {
+      return new Response(JSON.stringify({ error: "user_id required" }), {
+        status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    // Verify caller is admin
+    const authHeader = req.headers.get("Authorization");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    if (authHeader) {
+      const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: { user } } = await userClient.auth.getUser();
+      if (user) {
+        const adminCheck = createClient(supabaseUrl, supabaseServiceKey);
+        const { data: role } = await adminCheck
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "admin")
+          .maybeSingle();
+        if (!role) {
+          return new Response(JSON.stringify({ error: "Admin only" }), {
+            status: 403,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          });
+        }
+      }
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const tablesToClean = [
       { table: "chat_messages", column: "user_id" },
@@ -47,11 +71,7 @@ Deno.serve(async (req) => {
     const results: string[] = [];
     for (const { table, column } of tablesToClean) {
       const { error } = await supabase.from(table).delete().eq(column, user_id);
-      if (error) {
-        results.push(`${table}: ${error.message}`);
-      } else {
-        results.push(`${table}: ok`);
-      }
+      results.push(`${table}: ${error ? error.message : "ok"}`);
     }
 
     const { error: authError } = await supabase.auth.admin.deleteUser(user_id);
