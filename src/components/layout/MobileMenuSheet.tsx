@@ -21,7 +21,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sparkles, Target, Table2, Flame, Gift, Plug, Calendar } from "lucide-react";
+import { Sparkles, Target, Table2, Flame, Gift, Plug } from "lucide-react";
 import {
   ArrowLeft,
   Home,
@@ -35,7 +35,6 @@ import {
   Dices,
   Grid3X3,
   Ticket,
-  Bookmark,
   Shuffle,
   LayoutGrid,
 } from "lucide-react";
