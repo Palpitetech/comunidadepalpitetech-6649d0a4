@@ -88,6 +88,7 @@ import ProximosConcursos from "./pages/ProximosConcursos";
 import ResultadosQuina from "./pages/quina/ResultadosQuina";
 import ResultadosDiaDeSorte from "./pages/diadesorte/ResultadosDiaDeSorte";
 import ResultadosLotomania from "./pages/lotomania/ResultadosLotomania";
+import HubLotofacil from "./pages/lotofacil/HubLotofacil";
 
 const queryClient = new QueryClient();
 
