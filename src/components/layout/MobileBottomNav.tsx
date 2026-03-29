@@ -1,4 +1,4 @@
-import { Users, Menu, Calendar } from "lucide-react";
+import { Users, Menu, Calendar, MessageCircle } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
