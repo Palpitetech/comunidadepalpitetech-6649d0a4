@@ -220,7 +220,7 @@ export default function ProximosConcursos() {
                       )}
 
                       <div className="pt-2">
-                        <Button asChild variant="outline" size="sm" className="w-full gap-2 text-sm font-semibold">
+                        <Button asChild size="sm" className="w-full gap-2 text-sm font-semibold border-0" style={{ backgroundColor: meta.btnBg, color: meta.btnFg }}>
                           <Link to={meta.hub}>
                             <Dices className="h-4 w-4" />
                             Fazer Meus Palpites
