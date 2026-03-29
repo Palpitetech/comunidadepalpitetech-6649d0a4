@@ -216,6 +216,15 @@ export default function ProximosConcursos() {
                           <p className="text-[11px] text-muted-foreground/70">Aguarde atualização</p>
                         </>
                       )}
+
+                      <div className="pt-2">
+                        <Button asChild variant="outline" size="sm" className="w-full gap-2 text-sm font-semibold">
+                          <Link to={meta.hub}>
+                            <Dices className="h-4 w-4" />
+                            Fazer Meus Palpites
+                          </Link>
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 );
