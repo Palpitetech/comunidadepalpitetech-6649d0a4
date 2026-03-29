@@ -24,7 +24,6 @@ export function StepCodigoOTP({ userId, tipo, destino, nome, onVerified }: StepC
   const Icon = tipo === 'email' ? Mail : Phone;
   const tipoTexto = tipo === 'email' ? 'email' : 'celular';
 
-  // Timer de expiração do código
   useEffect(() => {
     if (!codigoEnviado || tempoRestante <= 0) return;
 
@@ -41,12 +40,11 @@ export function StepCodigoOTP({ userId, tipo, destino, nome, onVerified }: StepC
     return () => clearInterval(timer);
   }, [codigoEnviado, tempoRestante]);
 
-  // Enviar código ao montar
   useEffect(() => {
     if (!codigoEnviado && userId && destino) {
       handleEnviarCodigo();
     }
-  }, [userId, destino]);
+  }, [codigoEnviado, userId, destino]);
 
   const handleEnviarCodigo = async () => {
     resetError();
@@ -66,7 +64,7 @@ export function StepCodigoOTP({ userId, tipo, destino, nome, onVerified }: StepC
     if (codigo.length !== 6) return;
     
     resetError();
-    const result = await verificarCodigo(userId, codigo);
+    const result = await verificarCodigo(userId, codigo, tipo);
     
     if (result.sucesso) {
       onVerified();
