@@ -27,9 +27,16 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to={isHome ? "/" : "/login"} state={{ from: location }} replace />;
   }
 
-  // Se perfil marca não verificado, redireciona (fonte de verdade: perfis.email_verificado)
+  // Se perfil marca não verificado, redireciona para verificação OTP
+  // Mas NÃO redireciona se o usuário está na rota /login (onde o RegisterWizard já mostra o OTP inline)
   if (profile && profile.email_verificado === false) {
-    return <Navigate to="/verificar-email" replace />;
+    // Verificar se o referrer é a página de login/cadastro - nesse caso o RegisterWizard
+    // já está controlando o fluxo de OTP internamente, não devemos sequestrar
+    const fromLogin = location.state?.from?.pathname === "/login" || 
+                      document.referrer.includes("/login");
+    if (!fromLogin) {
+      return <Navigate to="/verificar-email" replace />;
+    }
   }
 
   return <>{children}</>;
