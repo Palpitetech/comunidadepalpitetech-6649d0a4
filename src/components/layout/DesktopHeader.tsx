@@ -200,8 +200,14 @@ export function DesktopHeader() {
                    <span className="text-base">🎱</span>
                    Mega Sena
                  </DropdownMenuSubTrigger>
-                 <DropdownMenuSubContent className="w-52 bg-popover z-50">
-                   <DropdownMenuItem className="gap-3 py-2 cursor-pointer" onClick={(e) => handleGatedClick(e, "/megasena/analise-do-dia")} asChild>
+                  <DropdownMenuSubContent className="w-52 bg-popover z-50">
+                    <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer font-semibold">
+                      <Link to="/megasena">
+                        🎱 Ver Todas as Ferramentas
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="gap-3 py-2 cursor-pointer" onClick={(e) => handleGatedClick(e, "/megasena/analise-do-dia")} asChild>
                      <Link to="/megasena/analise-do-dia">
                        <Target className="h-4 w-4" />
                        Análise do Dia
