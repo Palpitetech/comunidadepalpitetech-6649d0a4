@@ -190,7 +190,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
               </nav>
 
                {/* Accordion de Lotofácil */}
-               <div className="px-4">
+               <div className="mx-4 p-1 rounded-r-md border-l-4" style={{ borderLeftColor: "hsl(270, 60%, 50%)", backgroundColor: "hsl(270, 60%, 50%, 0.04)" }}>
                  <Accordion type="single" collapsible>
                    <AccordionItem value="ferramentas" className="border-none">
                      <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
@@ -288,7 +288,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
               </div>
 
                {/* Accordion de Dupla Sena */}
-               <div className="px-4">
+               <div className="mx-4 p-1 rounded-r-md border-l-4" style={{ borderLeftColor: "hsl(0, 75%, 55%)", backgroundColor: "hsl(0, 75%, 55%, 0.04)" }}>
                  <Accordion type="single" collapsible>
                    <AccordionItem value="duplasena" className="border-none">
                      <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
@@ -386,7 +386,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                 </div>
 
                {/* Accordion de Mega Sena */}
-               <div className="px-4">
+               <div className="mx-4 p-1 rounded-r-md border-l-4" style={{ borderLeftColor: "hsl(125, 70%, 40%)", backgroundColor: "hsl(125, 70%, 40%, 0.04)" }}>
                  <Accordion type="single" collapsible>
                    <AccordionItem value="megasena" className="border-none">
                      <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
@@ -484,7 +484,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                 </div>
 
                {/* Accordion de Quina */}
-               <div className="px-4">
+               <div className="mx-4 p-1 rounded-r-md border-l-4" style={{ borderLeftColor: "hsl(260, 65%, 45%)", backgroundColor: "hsl(260, 65%, 45%, 0.04)" }}>
                  <Accordion type="single" collapsible>
                    <AccordionItem value="quina" className="border-none">
                      <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
@@ -507,7 +507,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                </div>
 
                {/* Accordion de Dia de Sorte */}
-               <div className="px-4">
+               <div className="mx-4 p-1 rounded-r-md border-l-4" style={{ borderLeftColor: "hsl(43, 96%, 50%)", backgroundColor: "hsl(43, 96%, 50%, 0.04)" }}>
                  <Accordion type="single" collapsible>
                    <AccordionItem value="diadesorte" className="border-none">
                      <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
@@ -530,7 +530,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                </div>
 
                {/* Accordion de Lotomania */}
-               <div className="px-4">
+               <div className="mx-4 p-1 rounded-r-md border-l-4" style={{ borderLeftColor: "hsl(28, 90%, 52%)", backgroundColor: "hsl(28, 90%, 52%, 0.04)" }}>
                  <Accordion type="single" collapsible>
                    <AccordionItem value="lotomania" className="border-none">
                      <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
