@@ -1,21 +1,23 @@
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Trophy, Flame } from "lucide-react";
+import { Calendar, Trophy, Flame, Dices } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO, differenceInCalendarDays, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const LOTERIA_META: Record<string, { emoji: string; label: string; color: string }> = {
-  megasena: { emoji: "🎯", label: "Mega-Sena", color: "hsl(var(--chart-1))" },
-  lotofacil: { emoji: "🍀", label: "Lotofácil", color: "hsl(var(--chart-2))" },
-  duplasena: { emoji: "🎲", label: "Dupla Sena", color: "hsl(var(--chart-4))" },
-  quina: { emoji: "🌟", label: "Quina", color: "hsl(var(--chart-3))" },
-  lotomania: { emoji: "🎰", label: "Lotomania", color: "hsl(var(--chart-5))" },
-  diadesorte: { emoji: "🍀", label: "Dia de Sorte", color: "hsl(var(--primary))" },
+const LOTERIA_META: Record<string, { emoji: string; label: string; color: string; hub: string }> = {
+  megasena: { emoji: "🎯", label: "Mega-Sena", color: "hsl(var(--chart-1))", hub: "/megasena" },
+  lotofacil: { emoji: "🍀", label: "Lotofácil", color: "hsl(var(--chart-2))", hub: "/lotofacil" },
+  duplasena: { emoji: "🎲", label: "Dupla Sena", color: "hsl(var(--chart-4))", hub: "/duplasena" },
+  quina: { emoji: "🌟", label: "Quina", color: "hsl(var(--chart-3))", hub: "/quina/resultados" },
+  lotomania: { emoji: "🎰", label: "Lotomania", color: "hsl(var(--chart-5))", hub: "/lotomania/resultados" },
+  diadesorte: { emoji: "🍀", label: "Dia de Sorte", color: "hsl(var(--primary))", hub: "/diadesorte/resultados" },
 };
 
 function formatCurrency(value: number) {
@@ -144,6 +146,7 @@ export default function ProximosConcursos() {
                   emoji: "🎰",
                   label: c.loteria,
                   color: "hsl(var(--primary))",
+                  hub: "/comunidade",
                 };
                 const hasData = c.numero_concurso && c.numero_concurso !== "0";
                 const premio = Number(c.premio_estimado) || 0;
@@ -213,6 +216,15 @@ export default function ProximosConcursos() {
                           <p className="text-[11px] text-muted-foreground/70">Aguarde atualização</p>
                         </>
                       )}
+
+                      <div className="pt-2">
+                        <Button asChild variant="outline" size="sm" className="w-full gap-2 text-sm font-semibold">
+                          <Link to={meta.hub}>
+                            <Dices className="h-4 w-4" />
+                            Fazer Meus Palpites
+                          </Link>
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 );
