@@ -286,6 +286,7 @@ export default function Planos() {
             );
           })}
         </div>
+        </div>
 
         {paidPlans.length === 0 && (
           <div className="text-center py-16 text-muted-foreground">
