@@ -190,7 +190,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
               </nav>
 
                {/* Accordion de Lotofácil */}
-               <div className="px-4">
+               <div className="mx-4 p-1 rounded-r-md border-l-4" style={{ borderLeftColor: "hsl(270, 60%, 50%)", backgroundColor: "hsl(270, 60%, 50%, 0.04)" }}>
                  <Accordion type="single" collapsible>
                    <AccordionItem value="ferramentas" className="border-none">
                      <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
