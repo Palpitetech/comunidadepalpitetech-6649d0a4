@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { StepIndicator } from "./steps/StepIndicator";
 import { StepDadosPessoais } from "./steps/StepDadosPessoais";
 import { StepCodigoOTP } from "./steps/StepCodigoOTP";
-import { StepSucesso } from "./steps/StepSucesso";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useVerificacao } from "@/hooks/useVerificacao";
