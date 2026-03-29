@@ -189,97 +189,15 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                 </Link>
               </nav>
 
-               {/* Accordion de Lotofácil */}
-               <div className="px-4">
-                 <Accordion type="single" collapsible>
-                   <AccordionItem value="ferramentas" className="border-none">
-                     <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
-                       <div className="flex items-center gap-3">
-                         <BarChart3 className="h-5 w-5 stroke-[1.5]" />
-                         <span>Lotofácil</span>
-                       </div>
-                     </AccordionTrigger>
-                    <AccordionContent className="pb-0">
-                       <div className="pl-8 space-y-0">
-                         <Link to="/analise-do-dia" onClick={(e) => handleGatedClick(e, "/analise-do-dia")}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             <Target className="h-4 w-4" />
-                             Análise do Dia
-                             {renderBadge("/analise-do-dia")}
-                           </div>
-                         </Link>
-                         <div className="border-t border-border/50 my-1" />
-                         <Link to="/resultados" onClick={closeAndNavigate}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
-                             Resultados
-                           </div>
-                         </Link>
-                         <Link to="/tendencias" onClick={(e) => handleGatedClick(e, "/tendencias")}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             Tendências
-                             {renderBadge("/tendencias")}
-                           </div>
-                         </Link>
-                          <Link to="/frequencia" onClick={(e) => handleGatedClick(e, "/frequencia")}>
-                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                              Quentes e Frias
-                              {renderBadge("/frequencia")}
-                            </div>
-                          </Link>
-                          <Link to="/frequencia-dezenas" onClick={(e) => handleGatedClick(e, "/frequencia-dezenas")}>
-                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                              <BarChart3 className="h-4 w-4" />
-                              Frequência das Dezenas
-                              {renderBadge("/frequencia-dezenas")}
-                            </div>
-                          </Link>
-                          <Link to="/dezenas-por-posicao" onClick={(e) => handleGatedClick(e, "/dezenas-por-posicao")}>
-                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                              <Target className="h-4 w-4" />
-                              Dezenas por Posição
-                              {renderBadge("/dezenas-por-posicao")}
-                            </div>
-                          </Link>
-                          <Link to="/linhas-colunas" onClick={(e) => handleGatedClick(e, "/linhas-colunas")}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             <LayoutGrid className="h-4 w-4" />
-                             Linhas e Colunas
-                             {renderBadge("/linhas-colunas")}
-                           </div>
-                         </Link>
-                         <Link to="/tabela-movimentacao" onClick={(e) => handleGatedClick(e, "/tabela-movimentacao")}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             <Table2 className="h-4 w-4" />
-                             Tabela de Movimentação
-                             {renderBadge("/tabela-movimentacao")}
-                           </div>
-                         </Link>
-                         <Link to="/smart-gerador" onClick={(e) => handleGatedClick(e, "/smart-gerador")}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             <Dices className="h-4 w-4" />
-                             Gerador de Palpites
-                             {renderBadge("/smart-gerador")}
-                           </div>
-                        </Link>
-                         <Link to="/desdobramento" onClick={(e) => handleGatedClick(e, "/desdobramento")}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             <Shuffle className="h-4 w-4" />
-                             Desdobramento
-                             {renderBadge("/desdobramento")}
-                           </div>
-                         </Link>
-                         <Link to="/fechamento" onClick={(e) => handleGatedClick(e, "/fechamento")}>
-                           <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                             <Grid3X3 className="h-4 w-4" />
-                             Gerador de Fechamento
-                             {renderBadge("/fechamento")}
-                           </div>
-                         </Link>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </div>
+               {/* Lotofácil - Link direto para Hub */}
+               <nav className="px-4 space-y-1">
+                 <Link to="/lotofacil" onClick={closeAndNavigate}>
+                   <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
+                     <BarChart3 className="h-5 w-5 stroke-[1.5]" />
+                     Lotofácil
+                   </div>
+                 </Link>
+               </nav>
 
                {/* Accordion de Dupla Sena */}
                <div className="px-4">
