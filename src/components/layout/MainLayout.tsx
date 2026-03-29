@@ -53,23 +53,17 @@ export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRigh
         {children}
       </main>
 
-      {/* Aviso Legal */}
-      <div className={`bg-muted/50 border-t border-border px-4 py-3 ${isMobile ? 'mb-16' : ''}`}>
-        <p className="max-w-3xl mx-auto text-[10px] md:text-xs text-muted-foreground text-center leading-relaxed">
-          <strong>Aviso legal:</strong> Este site não possui qualquer vínculo com a Caixa Econômica Federal, Facebook, Instagram, Meta ou qualquer outra empresa do grupo Meta Platforms, Inc. O conteúdo apresentado tem caráter exclusivamente educacional e informativo, baseado em análises estatísticas de resultados públicos. <strong>Não garantimos premiação em nenhuma modalidade de loteria.</strong> Aposte com responsabilidade.
-        </p>
-      </div>
-
-      {/* Footer - apenas desktop */}
-      {!isMobile && (
-        <footer className="border-t border-border bg-card py-4">
-          <div className="container-senior text-center text-muted-foreground">
-            <p className="text-sm">
-              © {new Date().getFullYear()} Palpite Tech. Todos os direitos reservados.
-            </p>
-          </div>
-        </footer>
-      )}
+      {/* Footer / Rodapé */}
+      <footer className={`border-t border-border bg-card py-4 ${isMobile ? 'mb-16' : ''}`}>
+        <div className="max-w-3xl mx-auto px-4 text-center space-y-1.5">
+          <p className="text-[10px] text-muted-foreground leading-relaxed">
+            <strong>Aviso legal:</strong> Este site não possui qualquer vínculo com a Caixa Econômica Federal, Facebook, Instagram, Meta ou qualquer outra empresa do grupo Meta Platforms, Inc. O conteúdo apresentado tem caráter exclusivamente educacional e informativo, baseado em análises estatísticas de resultados públicos. <strong>Não garantimos premiação em nenhuma modalidade de loteria.</strong> Aposte com responsabilidade.
+          </p>
+          <p className="text-[10px] text-muted-foreground">
+            © {new Date().getFullYear()} Palpite Tech. Todos os direitos reservados.
+          </p>
+        </div>
+      </footer>
 
       {/* Mobile Navigation */}
       {isMobile && !hideBottomNav && (
