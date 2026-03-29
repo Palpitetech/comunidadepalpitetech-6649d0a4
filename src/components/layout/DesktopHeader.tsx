@@ -203,7 +203,7 @@ export function DesktopHeader() {
                   <DropdownMenuSubContent className="w-52 bg-popover z-50">
                     <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer font-semibold">
                       <Link to="/megasena">
-                        🎱 Ver Todas as Ferramentas
+                        🍀 Ver Todas as Ferramentas
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />

@@ -393,7 +393,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                         <div className="pl-8 space-y-0">
                          <Link to="/megasena" onClick={closeAndNavigate}>
                            <div className="py-2.5 text-[15px] text-primary font-semibold hover:text-primary/80 transition-colors flex items-center gap-2">
-                             🎱 Ver Todas as Ferramentas
+                             🍀 Ver Todas as Ferramentas
                            </div>
                          </Link>
                          <div className="border-t border-border/50 my-1" />
