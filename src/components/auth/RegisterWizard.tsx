@@ -161,8 +161,6 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
             onVerified={handleVerificado}
           />
         )}
-
-        {step === 3 && <StepSucesso />}
       </div>
     </div>
   );
