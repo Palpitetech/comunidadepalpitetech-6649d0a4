@@ -147,6 +147,8 @@ export default function ProximosConcursos() {
                   label: c.loteria,
                   color: "hsl(var(--primary))",
                   hub: "/comunidade",
+                  btnBg: "hsl(var(--primary))",
+                  btnFg: "#fff",
                 };
                 const hasData = c.numero_concurso && c.numero_concurso !== "0";
                 const premio = Number(c.premio_estimado) || 0;
