@@ -44,6 +44,20 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
           <span className="text-[10px] mt-0.5 font-medium leading-tight">Concursos</span>
         </Link>
 
+        {/* Chat */}
+        <Link
+          to="/chat"
+          className={cn(
+            "flex flex-col items-center justify-center flex-1 h-full py-1.5 transition-colors",
+            isActive("/chat")
+              ? "text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <MessageCircle className="h-5 w-5" />
+          <span className="text-[10px] mt-0.5 font-medium leading-tight">Chat</span>
+        </Link>
+
         {/* Menu */}
         <button
           onClick={onMenuClick}
