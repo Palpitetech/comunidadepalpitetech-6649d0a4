@@ -134,6 +134,13 @@ export default function Planos() {
         </div>
 
         {/* Plans */}
+        <div
+          className="rounded-xl border-l-4 p-4 md:p-5"
+          style={{
+            borderLeftColor: "hsl(var(--primary))",
+            backgroundColor: "hsl(var(--primary) / 0.04)",
+          }}
+        >
         <div className="grid gap-5 md:grid-cols-3 items-stretch">
           {paidPlans.map((plan) => {
             const isCurrent = isCurrentPlan(plan.id);
