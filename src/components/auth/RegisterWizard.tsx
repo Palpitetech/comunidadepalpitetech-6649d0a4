@@ -132,7 +132,6 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
   const steps = [
     { number: 1, label: "Dados" },
     { number: 2, label: "Código" },
-    { number: 3, label: "Pronto" },
   ];
 
   return (
