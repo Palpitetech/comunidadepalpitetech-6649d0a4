@@ -470,9 +470,9 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                  <Accordion type="single" collapsible>
                    <AccordionItem value="quina" className="border-none">
                      <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
-                       <div className="flex items-center gap-3">
-                         <span className="text-lg">🌟</span>
-                         <span>Quina</span>
+                        <div className="flex items-center gap-3">
+                          <BarChart3 className="h-5 w-5 stroke-[1.5]" />
+                          <span>Quina</span>
                        </div>
                      </AccordionTrigger>
                      <AccordionContent className="pb-0">
@@ -493,9 +493,9 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                  <Accordion type="single" collapsible>
                    <AccordionItem value="diadesorte" className="border-none">
                      <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
-                       <div className="flex items-center gap-3">
-                         <span className="text-lg">🍀</span>
-                         <span>Dia de Sorte</span>
+                        <div className="flex items-center gap-3">
+                          <BarChart3 className="h-5 w-5 stroke-[1.5]" />
+                          <span>Dia de Sorte</span>
                        </div>
                      </AccordionTrigger>
                      <AccordionContent className="pb-0">
@@ -516,9 +516,9 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                  <Accordion type="single" collapsible>
                    <AccordionItem value="lotomania" className="border-none">
                      <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
-                       <div className="flex items-center gap-3">
-                         <span className="text-lg">🎰</span>
-                         <span>Lotomania</span>
+                        <div className="flex items-center gap-3">
+                          <BarChart3 className="h-5 w-5 stroke-[1.5]" />
+                          <span>Lotomania</span>
                        </div>
                      </AccordionTrigger>
                      <AccordionContent className="pb-0">
