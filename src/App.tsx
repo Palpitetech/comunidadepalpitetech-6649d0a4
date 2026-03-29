@@ -84,6 +84,7 @@ import GeradorDuplaSena from "./pages/duplasena/GeradorDuplaSena";
 import DesdobramentoDuplaSena from "./pages/duplasena/DesdobramentoDuplaSena";
 import FrequenciaDecenasDuplaSena from "./pages/duplasena/FrequenciaDecenasDuplaSena";
 import TabelaMovimentacaoDuplaSena from "./pages/duplasena/TabelaMovimentacaoDuplaSena";
+import HubDuplaSena from "./pages/duplasena/HubDuplaSena";
 import FechamentoDuplaSena from "./pages/duplasena/FechamentoDuplaSena";
 import ProximosConcursos from "./pages/ProximosConcursos";
 import ResultadosQuina from "./pages/quina/ResultadosQuina";
