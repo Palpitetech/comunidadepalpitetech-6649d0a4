@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { StepIndicator } from "./steps/StepIndicator";
 import { StepDadosPessoais } from "./steps/StepDadosPessoais";
 import { StepCodigoOTP } from "./steps/StepCodigoOTP";
-import { StepSucesso } from "./steps/StepSucesso";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useVerificacao } from "@/hooks/useVerificacao";
@@ -133,7 +132,6 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
   const steps = [
     { number: 1, label: "Dados" },
     { number: 2, label: "Código" },
-    { number: 3, label: "Pronto" },
   ];
 
   return (
@@ -163,8 +161,6 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
             onVerified={handleVerificado}
           />
         )}
-
-        {step === 3 && <StepSucesso />}
       </div>
     </div>
   );
