@@ -73,6 +73,7 @@ import AnaliseDoDiaMegaSena from "./pages/megasena/AnaliseDoDiaMegaSena";
 import TabelaMovimentacaoMegaSena from "./pages/megasena/TabelaMovimentacaoMegaSena";
 import FrequenciaDecenasMegaSena from "./pages/megasena/FrequenciaDecenasMegaSena";
 import DezenasporPosicaoMegaSena from "./pages/megasena/DezenasporPosicaoMegaSena";
+import HubMegaSena from "./pages/megasena/HubMegaSena";
 import ResultadosDuplaSena from "./pages/duplasena/ResultadosDuplaSena";
 import TendenciasDuplaSena from "./pages/duplasena/TendenciasDuplaSena";
 import FrequenciaDuplaSena from "./pages/duplasena/FrequenciaDuplaSena";
