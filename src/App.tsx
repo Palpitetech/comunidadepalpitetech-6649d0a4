@@ -148,6 +148,7 @@ const App = () => (
             <Route path="/planos" element={<Planos />} />
             
             {/* Rotas Mega Sena */}
+            <Route path="/megasena" element={<ProtectedRoute><HubMegaSena /></ProtectedRoute>} />
             <Route path="/megasena/resultados" element={<ProtectedRoute><ResultadosMegaSena /></ProtectedRoute>} />
             <Route path="/megasena/tendencias" element={<ProtectedRoute><GatedPage feature="tendencias"><TendenciasMegaSena /></GatedPage></ProtectedRoute>} />
             <Route path="/megasena/frequencia" element={<ProtectedRoute><GatedPage feature="quentes_frias"><FrequenciaMegaSena /></GatedPage></ProtectedRoute>} />
