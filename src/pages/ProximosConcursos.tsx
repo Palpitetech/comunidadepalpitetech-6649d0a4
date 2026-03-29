@@ -11,13 +11,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO, differenceInCalendarDays, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const LOTERIA_META: Record<string, { emoji: string; label: string; color: string; hub: string }> = {
-  megasena: { emoji: "🎯", label: "Mega-Sena", color: "hsl(var(--chart-1))", hub: "/megasena" },
-  lotofacil: { emoji: "🍀", label: "Lotofácil", color: "hsl(var(--chart-2))", hub: "/lotofacil" },
-  duplasena: { emoji: "🎲", label: "Dupla Sena", color: "hsl(var(--chart-4))", hub: "/duplasena" },
-  quina: { emoji: "🌟", label: "Quina", color: "hsl(var(--chart-3))", hub: "/quina/resultados" },
-  lotomania: { emoji: "🎰", label: "Lotomania", color: "hsl(var(--chart-5))", hub: "/lotomania/resultados" },
-  diadesorte: { emoji: "🍀", label: "Dia de Sorte", color: "hsl(var(--primary))", hub: "/diadesorte/resultados" },
+const LOTERIA_META: Record<string, { emoji: string; label: string; color: string; hub: string; btnBg: string; btnFg: string }> = {
+  lotofacil: { emoji: "🍀", label: "Lotofácil", color: "hsl(var(--chart-2))", hub: "/lotofacil", btnBg: "hsl(270, 60%, 50%)", btnFg: "#fff" },
+  megasena: { emoji: "🎯", label: "Mega-Sena", color: "hsl(var(--chart-1))", hub: "/megasena", btnBg: "hsl(125, 70%, 40%)", btnFg: "#fff" },
+  duplasena: { emoji: "🎲", label: "Dupla Sena", color: "hsl(var(--chart-4))", hub: "/duplasena", btnBg: "hsl(0, 75%, 55%)", btnFg: "#fff" },
+  quina: { emoji: "🌟", label: "Quina", color: "hsl(var(--chart-3))", hub: "/quina/resultados", btnBg: "hsl(260, 65%, 45%)", btnFg: "#fff" },
+  lotomania: { emoji: "🎰", label: "Lotomania", color: "hsl(var(--chart-5))", hub: "/lotomania/resultados", btnBg: "hsl(28, 90%, 52%)", btnFg: "#fff" },
+  diadesorte: { emoji: "🍀", label: "Dia de Sorte", color: "hsl(var(--primary))", hub: "/diadesorte/resultados", btnBg: "hsl(43, 96%, 50%)", btnFg: "#1a1a1a" },
 };
 
 function formatCurrency(value: number) {
