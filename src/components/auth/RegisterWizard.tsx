@@ -127,7 +127,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
   };
 
   const handleVerificado = () => {
-    setStep(3);
+    window.location.href = "/comunidade";
   };
 
   const steps = [
