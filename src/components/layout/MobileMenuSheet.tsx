@@ -484,7 +484,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                 </div>
 
                {/* Accordion de Quina */}
-               <div className="px-4">
+               <div className="mx-4 p-1 rounded-r-md border-l-4" style={{ borderLeftColor: "hsl(260, 65%, 45%)", backgroundColor: "hsl(260, 65%, 45%, 0.04)" }}>
                  <Accordion type="single" collapsible>
                    <AccordionItem value="quina" className="border-none">
                      <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
