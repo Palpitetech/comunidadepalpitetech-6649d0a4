@@ -298,8 +298,14 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                        </div>
                      </AccordionTrigger>
                      <AccordionContent className="pb-0">
-                      <div className="pl-8 space-y-0">
-                          <Link to="/duplasena/analise-do-dia" onClick={(e) => handleGatedClick(e, "/duplasena/analise-do-dia")}>
+                       <div className="pl-8 space-y-0">
+                         <Link to="/duplasena" onClick={closeAndNavigate}>
+                           <div className="py-2.5 text-[15px] text-primary font-semibold hover:text-primary/80 transition-colors flex items-center gap-2">
+                             🍀 Ver Todas as Ferramentas
+                           </div>
+                         </Link>
+                         <div className="border-t border-border/50 my-1" />
+                           <Link to="/duplasena/analise-do-dia" onClick={(e) => handleGatedClick(e, "/duplasena/analise-do-dia")}>
                             <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
                               <Target className="h-4 w-4" />
                               Análise do Dia

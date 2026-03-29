@@ -84,6 +84,7 @@ import GeradorDuplaSena from "./pages/duplasena/GeradorDuplaSena";
 import DesdobramentoDuplaSena from "./pages/duplasena/DesdobramentoDuplaSena";
 import FrequenciaDecenasDuplaSena from "./pages/duplasena/FrequenciaDecenasDuplaSena";
 import TabelaMovimentacaoDuplaSena from "./pages/duplasena/TabelaMovimentacaoDuplaSena";
+import HubDuplaSena from "./pages/duplasena/HubDuplaSena";
 import FechamentoDuplaSena from "./pages/duplasena/FechamentoDuplaSena";
 import ProximosConcursos from "./pages/ProximosConcursos";
 import ResultadosQuina from "./pages/quina/ResultadosQuina";
@@ -162,6 +163,7 @@ const App = () => (
             <Route path="/megasena/dezenas-por-posicao" element={<ProtectedRoute><GatedPage feature="dezenas_por_posicao"><DezenasporPosicaoMegaSena /></GatedPage></ProtectedRoute>} />
             
             {/* Rotas Dupla Sena */}
+            <Route path="/duplasena" element={<ProtectedRoute><HubDuplaSena /></ProtectedRoute>} />
             <Route path="/duplasena/resultados" element={<ProtectedRoute><ResultadosDuplaSena /></ProtectedRoute>} />
             <Route path="/duplasena/tendencias" element={<ProtectedRoute><GatedPage feature="tendencias"><TendenciasDuplaSena /></GatedPage></ProtectedRoute>} />
             <Route path="/duplasena/frequencia" element={<ProtectedRoute><GatedPage feature="quentes_frias"><FrequenciaDuplaSena /></GatedPage></ProtectedRoute>} />
