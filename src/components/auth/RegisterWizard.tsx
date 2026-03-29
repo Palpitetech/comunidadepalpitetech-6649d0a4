@@ -4,7 +4,6 @@ import { StepDadosPessoais } from "./steps/StepDadosPessoais";
 import { StepCodigoOTP } from "./steps/StepCodigoOTP";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { useVerificacao } from "@/hooks/useVerificacao";
 import { captureReferralCode, getStoredReferralCode, clearStoredReferralCode } from "@/hooks/useConvites";
 import { getStoredUTM, clearUTM } from "@/hooks/useUTM";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,7 +48,6 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
 
   const { signUp } = useAuthContext();
   const { toast } = useToast();
-  const { enviarCodigo, isLoading: isEnviandoCodigo } = useVerificacao();
 
   useEffect(() => {
     captureReferralCode();
@@ -63,10 +61,8 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
     setIsLoading(true);
     try {
       const referralCode = getStoredReferralCode();
-      
-      // Celular é opcional - só passa se preenchido
       const celularLimpo = formData.celular.replace(/\D/g, "");
-      
+
       const result = await signUp(
         formData.email,
         formData.password,
@@ -78,7 +74,6 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
       if (result?.user?.id) {
         clearStoredReferralCode();
 
-        // Salvar UTM source no perfil
         const utm = getStoredUTM();
         if (utm) {
           await supabase
@@ -87,31 +82,13 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
             .eq("id", result.user.id);
           clearUTM();
         }
-        
-        setFormData((prev) => ({ ...prev, userId: result.user.id }));
-        
-        // Enviar código de verificação por email automaticamente
-        const envioResult = await enviarCodigo({
-          userId: result.user.id,
-          tipo: 'email',
-          destino: formData.email,
-          nome: formData.nome,
-        });
 
-        if (envioResult.sucesso) {
-          setStep(2);
-          toast({
-            title: "Conta criada!",
-            description: "Enviamos um código de verificação para seu e-mail.",
-          });
-        } else {
-          toast({
-            title: "Conta criada, mas houve um erro",
-            description: envioResult.erro || "Não foi possível enviar o código. Tente reenviar.",
-            variant: "destructive",
-          });
-          setStep(2); // Vai para o step de código mesmo assim para poder reenviar
-        }
+        setFormData((prev) => ({ ...prev, userId: result.user.id }));
+        setStep(2);
+        toast({
+          title: "Conta criada!",
+          description: "Vamos enviar seu código de verificação por e-mail.",
+        });
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro ao criar conta";
@@ -136,19 +113,17 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      {/* Step indicator - desktop only */}
       <div className="hidden md:block px-4 py-2 md:p-6 border-b bg-muted/30 shrink-0">
         <StepIndicator currentStep={step} steps={steps} />
       </div>
 
-      {/* Step content - fills remaining space */}
       <div className="flex flex-col flex-1 min-h-0">
         {step === 1 && (
           <StepDadosPessoais
             formData={formData}
             onFormDataChange={handleFormDataChange}
             onNext={handleCriarConta}
-            isLoading={isLoading || isEnviandoCodigo}
+            isLoading={isLoading}
           />
         )}
 
@@ -165,3 +140,4 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
     </div>
   );
 };
+
