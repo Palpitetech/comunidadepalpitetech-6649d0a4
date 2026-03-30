@@ -119,7 +119,7 @@ export function TemplatesTab() {
   const fetchEventTypes = useCallback(async () => {
     const [eventsResult, kirvanoResult] = await Promise.all([
       supabase.from("events").select("event_type"),
-      supabase.from("kirvano_webhook_logs").select("event"),
+      supabase.from("kirvano_webhook_logs_masked").select("event"),
     ]);
 
     const allTypes = new Set<string>();

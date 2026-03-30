@@ -125,7 +125,7 @@ export default function AdminVendas() {
     try {
       await supabase.rpc("audit_webhook_access");
       const { data, error } = await supabase
-        .from("kirvano_webhook_logs")
+        .from("kirvano_webhook_logs_masked")
         .select("*")
         .order("received_at", { ascending: false })
         .limit(500);

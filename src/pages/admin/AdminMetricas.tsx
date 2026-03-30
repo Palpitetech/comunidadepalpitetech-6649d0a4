@@ -74,7 +74,7 @@ export default function AdminMetricas() {
 
       const { data: perfis } = await query;
       const { data: roles } = await supabase.from("user_roles").select("user_id, role").eq("role", "premium");
-      const { data: webhookLogs } = await supabase.from("kirvano_webhook_logs").select("email, status, raw_payload").eq("status", "approved");
+      const { data: webhookLogs } = await supabase.from("kirvano_webhook_logs_masked").select("email_masked, status, raw_payload_safe").eq("status", "approved");
 
       const premiumIds = new Set((roles || []).map(r => r.user_id));
       const users = perfis || [];
