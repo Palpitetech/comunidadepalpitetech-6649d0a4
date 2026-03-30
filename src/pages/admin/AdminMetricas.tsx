@@ -82,12 +82,13 @@ export default function AdminMetricas() {
       // Build revenue map by email
       const revenueByEmail: Record<string, number> = {};
       for (const log of (webhookLogs || [])) {
-        if (!log.email) continue;
-        const payload = log.raw_payload as any;
+        const email = (log as any).email_masked || (log as any).email;
+        if (!email) continue;
+        const payload = (log as any).raw_payload_safe || (log as any).raw_payload;
         const valor = payload?.sale_amount || payload?.amount || payload?.valor || 0;
         const num = typeof valor === "string" ? parseFloat(valor) : valor;
         if (num > 0) {
-          revenueByEmail[log.email.toLowerCase()] = (revenueByEmail[log.email.toLowerCase()] || 0) + num;
+          revenueByEmail[email.toLowerCase()] = (revenueByEmail[email.toLowerCase()] || 0) + num;
         }
       }
 
