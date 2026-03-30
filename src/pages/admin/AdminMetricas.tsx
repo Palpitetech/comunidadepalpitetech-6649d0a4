@@ -74,7 +74,7 @@ export default function AdminMetricas() {
 
       const { data: perfis } = await query;
       const { data: roles } = await supabase.from("user_roles").select("user_id, role").eq("role", "premium");
-      const { data: webhookLogs } = await supabase.from("kirvano_webhook_logs").select("email, status, raw_payload").eq("status", "approved");
+      const { data: webhookLogs } = await supabase.from("kirvano_webhook_logs_masked").select("email_masked, status, raw_payload_safe").eq("status", "approved");
 
       const premiumIds = new Set((roles || []).map(r => r.user_id));
       const users = perfis || [];
@@ -82,12 +82,13 @@ export default function AdminMetricas() {
       // Build revenue map by email
       const revenueByEmail: Record<string, number> = {};
       for (const log of (webhookLogs || [])) {
-        if (!log.email) continue;
-        const payload = log.raw_payload as any;
+        const email = (log as any).email_masked || (log as any).email;
+        if (!email) continue;
+        const payload = (log as any).raw_payload_safe || (log as any).raw_payload;
         const valor = payload?.sale_amount || payload?.amount || payload?.valor || 0;
         const num = typeof valor === "string" ? parseFloat(valor) : valor;
         if (num > 0) {
-          revenueByEmail[log.email.toLowerCase()] = (revenueByEmail[log.email.toLowerCase()] || 0) + num;
+          revenueByEmail[email.toLowerCase()] = (revenueByEmail[email.toLowerCase()] || 0) + num;
         }
       }
 

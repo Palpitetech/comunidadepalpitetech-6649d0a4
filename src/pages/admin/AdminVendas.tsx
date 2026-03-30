@@ -29,7 +29,9 @@ type WebhookLog = {
   event: string | null;
   status: string | null;
   email: string | null;
+  email_masked: string | null;
   phone: string | null;
+  phone_masked: string | null;
   checkout_id: string | null;
   sale_id: string | null;
   payment_method: string | null;
@@ -39,6 +41,7 @@ type WebhookLog = {
   error: string | null;
   processed: boolean;
   raw_payload: any;
+  raw_payload_safe: any;
 };
 
 type FilterTab = "todos" | "aprovadas" | "pendentes" | "canceladas";
@@ -125,7 +128,7 @@ export default function AdminVendas() {
     try {
       await supabase.rpc("audit_webhook_access");
       const { data, error } = await supabase
-        .from("kirvano_webhook_logs")
+        .from("kirvano_webhook_logs_masked")
         .select("*")
         .order("received_at", { ascending: false })
         .limit(500);
