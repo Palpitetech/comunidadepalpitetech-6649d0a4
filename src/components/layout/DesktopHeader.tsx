@@ -571,12 +571,17 @@ export function DesktopHeader() {
         <div className="flex items-center gap-2 shrink-0">
           {isAuthenticated ? (
             <>
+              {/* Jogos Salvos */}
+              <Link to="/meus-palpites">
+                <Button variant="ghost" size="icon" className="h-10 w-10" title="Jogos Salvos">
+                  <Save className="h-5 w-5" />
+                </Button>
+              </Link>
+
               {/* Badge Convites */}
               <Link to="/convites">
-                <Button variant="outline" className="h-10 gap-1.5 px-3 text-sm border-primary/30 text-primary hover:bg-primary/10">
-                  <Gift className="h-4 w-4" />
-                  <span className="hidden md:inline">Ganhar Assinatura grátis</span>
-                  <span className="md:hidden">🎁</span>
+                <Button variant="ghost" size="icon" className="h-10 w-10" title="Ganhar Assinatura grátis">
+                  <Gift className="h-5 w-5" />
                 </Button>
               </Link>
 
