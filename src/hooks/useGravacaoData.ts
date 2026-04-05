@@ -356,6 +356,7 @@ export function useGravacaoData() {
         jogos,
         estrategiaIA,
         tendencias,
+        frequenciaDezenas,
         loading: false,
       } as GravacaoData;
     },
