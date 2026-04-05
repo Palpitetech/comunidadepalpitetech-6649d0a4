@@ -82,6 +82,37 @@ export default function GravacaoShell({ children, concurso, data }: GravacaoShel
         </div>
       )}
 
+      {/* Watermark overlay — anti-screenshot */}
+      <div
+        className="absolute inset-0 z-40 pointer-events-none overflow-hidden"
+        style={{ opacity: 0.04 }}
+      >
+        <div
+          className="absolute"
+          style={{
+            width: "200%",
+            height: "200%",
+            top: "-50%",
+            left: "-50%",
+            transform: "rotate(-30deg)",
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "60px",
+            alignContent: "flex-start",
+          }}
+        >
+          {Array.from({ length: 80 }, (_, i) => (
+            <span
+              key={i}
+              className="text-white font-bold whitespace-nowrap"
+              style={{ fontSize: "18px", letterSpacing: "0.15em" }}
+            >
+              PALPITE TECH
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* Footer CTA */}
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50 text-purple-300/40 text-[10px] md:text-xs text-center max-w-xl">
         Recebe estratégias diariamente sem custo no seu WhatsApp pelo link do 1º comentário ou da descrição.
