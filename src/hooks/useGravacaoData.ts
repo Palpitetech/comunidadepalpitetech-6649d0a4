@@ -241,6 +241,21 @@ export function useGravacaoData() {
         { label: "Soma", valor: soma, faixaMin: FAIXAS.Soma[0], faixaMax: FAIXAS.Soma[1], status: statusFromFaixa(soma, ...FAIXAS.Soma) },
       ];
 
+      // 2b. Fetch ALL concursos for tendências calculation
+      const { data: allTendData, error: tendError } = await (supabase as any)
+        .from("resultados_loterias")
+        .select("concurso, qtd_pares, qtd_primos, qtd_moldura, qtd_repetidas")
+        .eq("loteria", "lotofacil")
+        .order("concurso", { ascending: false });
+
+      if (tendError) throw tendError;
+
+      const tendencias: TendenciaIndicador[] = allTendData && allTendData.length > 0
+        ? TENDENCIA_CONFIGS.map((cfg) =>
+            calcTendenciaIndicador(allTendData, cfg, allTendData[0].concurso)
+          )
+        : [];
+
       // 3. Call generate-palpites edge function (same as Gerador & WhatsApp)
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) throw new Error("Usuário não autenticado");
