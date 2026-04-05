@@ -1,9 +1,9 @@
 import { formatarDezena } from "@/lib/lotofacil";
-import type { GravacaoJogo } from "@/hooks/useGravacaoData";
-import { Star, TrendingUp, Snowflake } from "lucide-react";
+import type { GravacaoJogo, EstrategiaIA } from "@/hooks/useGravacaoData";
 
 interface SlideTendenciasProps {
   jogos: GravacaoJogo[];
+  estrategiaIA?: EstrategiaIA;
 }
 
 const CARD_CONFIG = {
@@ -30,51 +30,72 @@ const CARD_CONFIG = {
   },
 };
 
-export default function SlideTendencias({ jogos }: SlideTendenciasProps) {
+const FALLBACK_ITEMS = [
+  { icon: "⭐", title: "Recomendado", color: "text-emerald-400", desc: "Score equilibrado: 30% frequência + 50% timing + 20% tendência." },
+  { icon: "🔼", title: "Força Histórica", color: "text-blue-400", desc: "Prioriza dezenas com maior ocorrência nos últimos concursos." },
+  { icon: "❄️", title: "Oportunidade", color: "text-cyan-400", desc: "Foca em dezenas frias com bom timing estatístico." },
+];
+
+export default function SlideTendencias({ jogos, estrategiaIA }: SlideTendenciasProps) {
   const ordered = [
     jogos.find((j) => j.tipo === "forca"),
     jogos.find((j) => j.tipo === "recomendado"),
     jogos.find((j) => j.tipo === "oportunidade"),
   ].filter(Boolean) as GravacaoJogo[];
 
-  const STRATEGY_ITEMS = [
-    {
-      icon: "⭐",
-      title: "Recomendado",
-      color: "text-emerald-400",
-      desc: "Score equilibrado: 30% frequência + 50% timing + 20% tendência. Combina força histórica com oportunidade.",
-    },
-    {
-      icon: "🔼",
-      title: "Força Histórica",
-      color: "text-blue-400",
-      desc: "Prioriza dezenas com maior ocorrência nos últimos 5 concursos. Aposta na continuidade.",
-    },
-    {
-      icon: "❄️",
-      title: "Oportunidade",
-      color: "text-cyan-400",
-      desc: "Foca em dezenas frias com bom timing estatístico. Aposta na reversão de atraso.",
-    },
-  ];
-
   return (
     <div className="flex w-full h-full items-center gap-6">
       {/* Left column — Strategy explanation (30%) */}
       <div className="flex flex-col gap-4 justify-center" style={{ width: "30%" }}>
         <p className="text-white/50 text-xs tracking-widest uppercase">Metodologia</p>
-        <div className="space-y-4">
-          {STRATEGY_ITEMS.map((item) => (
-            <div key={item.title} className="space-y-1">
-              <p className={`text-sm font-bold ${item.color}`}>
-                {item.icon} {item.title}
-              </p>
-              <p className="text-white/50 text-xs leading-relaxed">{item.desc}</p>
-            </div>
-          ))}
-        </div>
+
+        {estrategiaIA ? (
+          <div className="space-y-4">
+            {/* AI conclusion */}
+            <p className="text-white/70 text-xs leading-relaxed italic border-l-2 border-emerald-500/40 pl-3">
+              {estrategiaIA.conclusao}
+            </p>
+
+            {/* Ferramentas */}
+            {estrategiaIA.ferramentas.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-white/40 text-[10px] uppercase tracking-wider">Ferramentas</p>
+                <div className="flex flex-wrap gap-1">
+                  {estrategiaIA.ferramentas.map((f, i) => (
+                    <span key={i} className="text-[10px] bg-white/5 text-white/60 px-2 py-0.5 rounded-full border border-white/10">
+                      {f}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Filtros */}
+            {estrategiaIA.filtros_aplicados.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-white/40 text-[10px] uppercase tracking-wider">Filtros aplicados</p>
+                {estrategiaIA.filtros_aplicados.slice(0, 4).map((f, i) => (
+                  <div key={i} className="text-[10px] leading-relaxed">
+                    <span className="text-white/60 font-semibold">{f.filtro}</span>
+                    <span className="text-white/40"> → {f.valor_alvo}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {FALLBACK_ITEMS.map((item) => (
+              <div key={item.title} className="space-y-1">
+                <p className={`text-sm font-bold ${item.color}`}>{item.icon} {item.title}</p>
+                <p className="text-white/50 text-xs leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
         <p className="text-white/30 text-[10px] mt-2 border-t border-white/10 pt-2">
-          Base: últimos 5 concursos da Lotofácil
+          {estrategiaIA ? "Gerado por IA • Lotofácil" : "Base: últimos 5 concursos da Lotofácil"}
         </p>
       </div>
 
@@ -108,7 +129,6 @@ export default function SlideTendencias({ jogos }: SlideTendenciasProps) {
                 {cfg.label}
               </span>
 
-              {/* Grid dezenas */}
               <div className="grid grid-cols-5 gap-1 mt-1">
                 {jogo.dezenas.map((d) => (
                   <div
@@ -120,24 +140,17 @@ export default function SlideTendencias({ jogos }: SlideTendenciasProps) {
                 ))}
               </div>
 
-              {/* Stats */}
               <div className="w-full mt-2 space-y-0.5">
                 {statItems.map((item) => (
-                  <div
-                    key={item.label}
-                    className="flex items-center justify-between text-[10px] md:text-xs px-1"
-                  >
+                  <div key={item.label} className="flex items-center justify-between text-[10px] md:text-xs px-1">
                     <span className="text-white/40">{item.label}</span>
                     <span className="text-white/80 font-semibold">{item.value}</span>
                   </div>
                 ))}
-                {/* Quentes/Frios */}
                 {(s.quentes > 0 || s.frios > 0) && (
                   <div className="flex items-center justify-between text-[10px] md:text-xs px-1 pt-0.5 border-t border-white/10">
                     <span className="text-white/40">🔥 / ❄️</span>
-                    <span className="text-white/80 font-semibold">
-                      {s.quentes} / {s.frios}
-                    </span>
+                    <span className="text-white/80 font-semibold">{s.quentes} / {s.frios}</span>
                   </div>
                 )}
               </div>
