@@ -411,14 +411,15 @@ serve(async (req) => {
       }
     } else if (topic === "estrategias_megasena") {
       const { data: resultados } = await userClient
-        .from("resultados_megasena")
-        .select("concurso_id:concurso, data_sorteio, dezenas, acumulou, valor_estimado_proximo, qtd_pares, qtd_impares, qtd_primos, qtd_moldura, qtd_repetidas")
+        .from("resultados_loterias" as any)
+        .select("concurso, data_sorteio, dezenas, acumulou, valor_estimado_proximo, qtd_pares, qtd_impares, qtd_primos, qtd_moldura, qtd_repetidas")
+        .eq("loteria", "megasena")
         .order("concurso", { ascending: false })
         .limit(10);
 
       if (resultados?.length) {
         const lines = (resultados as any[]).map((r: any) =>
-          `Concurso ${r.concurso_id} — ${r.data_sorteio}\n` +
+          `Concurso ${r.concurso} — ${r.data_sorteio}\n` +
           `  Dezenas: ${(r.dezenas || []).join(", ")}\n` +
           `  Pares: ${r.qtd_pares} | Ímpares: ${r.qtd_impares} | Primos: ${r.qtd_primos} | Moldura: ${r.qtd_moldura} | Repetidas: ${r.qtd_repetidas}\n` +
           `  Acumulou: ${r.acumulou ? "Sim" : "Não"} | Estimado próximo: R$${r.valor_estimado_proximo ? Number(r.valor_estimado_proximo).toLocaleString("pt-BR") : "N/A"}`

@@ -133,11 +133,13 @@ serve(async (req) => {
     }
 
     // Buscar resultados da Mega Sena
-    const { data: resultados, error: resultadosError } = await supabaseAdmin
-      .from("resultados_megasena")
-      .select("concurso_id, data_sorteio, dezenas, qtd_pares, qtd_impares, qtd_moldura, qtd_primos, qtd_repetidas")
-      .order("concurso_id", { ascending: false })
+    const { data: rawResultados, error: resultadosError } = await supabaseAdmin
+      .from("resultados_loterias")
+      .select("concurso, data_sorteio, dezenas, qtd_pares, qtd_impares, qtd_moldura, qtd_primos, qtd_repetidas")
+      .eq("loteria", "megasena")
+      .order("concurso", { ascending: false })
       .limit(periodoAnalise);
+    const resultados = (rawResultados || []).map((r: any) => ({ ...r, concurso_id: r.concurso })) as ResultadoRow[];
 
     if (resultadosError || !resultados?.length) {
       console.error("Erro ao buscar resultados:", resultadosError);

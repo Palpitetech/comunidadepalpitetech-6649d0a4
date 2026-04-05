@@ -80,11 +80,13 @@ serve(async (req) => {
     }
 
     // Buscar últimos 10 concursos da Mega Sena
-    const { data: resultados, error: resultadosError } = await supabase
-      .from("resultados_megasena")
-      .select("concurso_id, dezenas, qtd_pares, qtd_impares, qtd_primos, qtd_moldura, qtd_repetidas")
-      .order("concurso_id", { ascending: false })
+    const { data: rawResultados, error: resultadosError } = await supabase
+      .from("resultados_loterias")
+      .select("concurso, dezenas, qtd_pares, qtd_impares, qtd_primos, qtd_moldura, qtd_repetidas")
+      .eq("loteria", "megasena")
+      .order("concurso", { ascending: false })
       .limit(10);
+    const resultados = (rawResultados || []).map((r: any) => ({ ...r, concurso_id: r.concurso }));
 
     if (resultadosError || !resultados?.length) {
       return new Response(
