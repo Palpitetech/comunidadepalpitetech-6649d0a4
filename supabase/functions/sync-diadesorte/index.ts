@@ -6,6 +6,35 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// ── CONSTANTES DIA DE SORTE ──
+const PRIMOS_DIADESORTE = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31];
+const MOLDURA_DIADESORTE = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+  11, 20,
+  21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+  31
+];
+const FIBONACCI_DIADESORTE = [1, 2, 3, 5, 8, 13, 21];
+
+function calcularIndicadores(dezenas: number[], dezenasAnteriores?: number[]) {
+  const sorted = [...dezenas].sort((a, b) => a - b);
+  let seqCount = 0;
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] === sorted[i - 1] + 1) seqCount++;
+  }
+  const pares = dezenas.filter(d => d % 2 === 0).length;
+  return {
+    qtd_pares: pares,
+    qtd_impares: dezenas.length - pares,
+    qtd_primos: dezenas.filter(d => PRIMOS_DIADESORTE.includes(d)).length,
+    qtd_moldura: dezenas.filter(d => MOLDURA_DIADESORTE.includes(d)).length,
+    qtd_fibonacci: dezenas.filter(d => FIBONACCI_DIADESORTE.includes(d)).length,
+    qtd_repetidas: dezenasAnteriores ? dezenas.filter(d => dezenasAnteriores.includes(d)).length : 0,
+    soma: dezenas.reduce((a, b) => a + b, 0),
+    sequencias: seqCount,
+  };
+}
+
 function converterDataBR(dataBR: string): string {
   const partes = dataBR.split("/");
   if (partes.length === 3) return `${partes[2]}-${partes[1]}-${partes[0]}`;
@@ -14,6 +43,33 @@ function converterDataBR(dataBR: string): string {
 
 function parseApiResponse(raw: any): any {
   return Array.isArray(raw) ? raw[0] : raw;
+}
+
+const LOTERIA = "diadesorte";
+const TABLE = "resultados_loterias";
+
+function buildRegistro(resultado: any, dezenas: number[], indicadores: ReturnType<typeof calcularIndicadores>) {
+  return {
+    loteria: LOTERIA,
+    concurso: parseInt(resultado.numero_concurso, 10),
+    data_sorteio: converterDataBR(resultado.data_concurso),
+    dezenas,
+    mes_sorte: resultado.mes_da_sorte || resultado.mes_sorte || null,
+    acumulou: resultado.acumulou ?? false,
+    valor_acumulado: resultado.valor_acumulado || null,
+    valor_estimado_proximo: resultado.valor_estimado_proximo || null,
+    valor_premio_principal: resultado.premiacao?.[0]?.valor_premio || resultado.premiacao?.[0]?.valor || null,
+    data_proximo_concurso: resultado.data_proximo_concurso ? converterDataBR(resultado.data_proximo_concurso) : null,
+    local_sorteio: resultado.local_sorteio || null,
+    premiacao_json: (resultado.premiacao || []).map((p: any) => ({
+      faixa: p.faixa,
+      descricao: p.quantidade_acertos ?? p.descricao ?? `${p.faixa}ª faixa`,
+      ganhadores: p.numero_ganhadores ?? p.ganhadores ?? 0,
+      valorPremio: p.valor_premio ?? p.valorPremio ?? 0,
+    })),
+    locais_ganhadores: resultado.ganhadores || [],
+    ...indicadores,
+  };
 }
 
 Deno.serve(async (req) => {
@@ -43,21 +99,22 @@ Deno.serve(async (req) => {
 
     // ── REPROCESS HISTORY ──────────────────────────────────────
     if (action === 'reprocess_history') {
-      const LOTERIA = 'diadesorte';
       console.log(`[REPROCESS] Iniciando reprocessamento ${LOTERIA}...`);
-      const { data: existentes } = await supabase.from('resultados_loterias').select('concurso').eq('loteria', LOTERIA).order('concurso', { ascending: true });
+      const { data: existentes } = await supabase.from(TABLE).select('concurso, dezenas').eq('loteria', LOTERIA).order('concurso', { ascending: true });
       if (!existentes?.length) return new Response(JSON.stringify({ success: true, reprocessados: 0 }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       let reprocessados = 0, erros = 0;
+      let prevDez: number[] = [];
       for (const item of existentes) {
         try {
           const res = await fetch(`https://apiloterias.com.br/app/v2/resultado?loteria=${LOTERIA}&token=${API_TOKEN}&concurso=${item.concurso}`);
           if (!res.ok) { erros++; continue; }
           const resultado = parseApiResponse(await res.json());
-          const reg = buildRegistro(resultado);
-          const dezenas = reg.dezenas.map((d: any) => typeof d === 'string' ? parseInt(d, 10) : d);
-          const unified = { loteria: LOTERIA, concurso: reg.concurso, data_sorteio: reg.data_sorteio, dezenas, mes_sorte: reg.mes_sorte || null, acumulou: reg.acumulou, valor_acumulado: reg.valor_acumulado || null, valor_estimado_proximo: reg.valor_estimado_proximo || null, valor_premio_principal: reg.valor_premio_principal || null, data_proximo_concurso: reg.data_proximo_concurso || null, premiacao_json: reg.premiacao_json || [] };
-          const { error } = await supabase.from('resultados_loterias').upsert(unified, { onConflict: 'loteria,concurso' });
+          const dezenas = resultado.dezenas.map((d: string) => parseInt(d, 10)).sort((a: number, b: number) => a - b);
+          const ind = calcularIndicadores(dezenas, prevDez);
+          const reg = buildRegistro(resultado, dezenas, ind);
+          const { error } = await supabase.from(TABLE).upsert(reg, { onConflict: 'loteria,concurso' });
           if (error) { erros++; } else { reprocessados++; }
+          prevDez = dezenas;
           await new Promise(r => setTimeout(r, 300));
         } catch { erros++; }
       }
@@ -65,11 +122,9 @@ Deno.serve(async (req) => {
     }
     // ── END REPROCESS ──────────────────────────────────────────
 
-    const TABLE = "resultados_diadesorte";
-    const LOTERIA_PARAM = "diadesorte";
     const LOTERIA_LABEL = "Dia de Sorte";
 
-    const latestUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=${LOTERIA_PARAM}&token=${API_TOKEN}&concurso=ultimos1`;
+    const latestUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=${LOTERIA}&token=${API_TOKEN}&concurso=ultimos1`;
     console.log(`[${LOTERIA_LABEL}] Buscando último concurso da API...`);
 
     const apiResponse = await fetch(latestUrl);
@@ -79,36 +134,16 @@ Deno.serve(async (req) => {
     const ultimoConcursoAPI = parseInt(ultimoResultado.numero_concurso, 10);
     console.log(`[${LOTERIA_LABEL}] Último concurso API: ${ultimoConcursoAPI}`);
 
-    function buildRegistro(resultado: any) {
-      const dezenas = resultado.dezenas.map((d: string) => d.padStart(2, "0")).sort();
-      const dataSorteio = converterDataBR(resultado.data_concurso);
-      const premiacao_json = (resultado.premiacao || []).map((p: any) => ({
-        faixa: p.faixa,
-        descricao: p.quantidade_acertos ?? p.descricao ?? `${p.faixa}ª faixa`,
-        ganhadores: p.numero_ganhadores ?? p.ganhadores ?? 0,
-        valorPremio: p.valor_premio ?? p.valorPremio ?? 0,
-      }));
-      return {
-        concurso: parseInt(resultado.numero_concurso, 10),
-        data_sorteio: dataSorteio,
-        dezenas,
-        mes_sorte: resultado.mes_da_sorte || resultado.mes_sorte || null,
-        acumulou: resultado.acumulou ?? false,
-        valor_acumulado: resultado.valor_acumulado || 0,
-        valor_premio_principal: resultado.premiacao?.[0]?.valor_premio || resultado.premiacao?.[0]?.valor || 0,
-        data_proximo_concurso: resultado.data_proximo_concurso ? converterDataBR(resultado.data_proximo_concurso) : null,
-        valor_estimado_proximo: resultado.valor_estimado_proximo || 0,
-        premiacao_json,
-      };
-    }
-
     if (concursoEspecifico) {
-      const concursoUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=${LOTERIA_PARAM}&token=${API_TOKEN}&concurso=${concursoEspecifico}`;
+      const concursoUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=${LOTERIA}&token=${API_TOKEN}&concurso=${concursoEspecifico}`;
       const res = await fetch(concursoUrl);
       if (!res.ok) throw new Error(`Erro ao buscar concurso ${concursoEspecifico}: ${res.status}`);
       const resultado = parseApiResponse(await res.json());
-      const registro = buildRegistro(resultado);
-      const { error } = await supabase.from(TABLE).upsert(registro, { onConflict: "concurso" });
+      const dezenas = resultado.dezenas.map((d: string) => parseInt(d, 10)).sort((a: number, b: number) => a - b);
+      const { data: anterior } = await supabase.from(TABLE).select('dezenas').eq('loteria', LOTERIA).eq('concurso', concursoEspecifico - 1).maybeSingle();
+      const ind = calcularIndicadores(dezenas, anterior?.dezenas || []);
+      const reg = buildRegistro(resultado, dezenas, ind);
+      const { error } = await supabase.from(TABLE).upsert(reg, { onConflict: 'loteria,concurso' });
       if (error) throw new Error(`Erro ao inserir: ${error.message}`);
       return new Response(JSON.stringify({ message: "Concurso sincronizado", concurso: concursoEspecifico }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -117,12 +152,12 @@ Deno.serve(async (req) => {
 
     if (fromLatest) {
       for (let i = ultimoConcursoAPI; i > ultimoConcursoAPI - limit && i > 0; i--) {
-        const { data: existe } = await supabase.from(TABLE).select("concurso").eq("concurso", i).maybeSingle();
+        const { data: existe } = await supabase.from(TABLE).select("concurso").eq("loteria", LOTERIA).eq("concurso", i).maybeSingle();
         if (!existe) concursosParaBuscar.push(i);
       }
       concursosParaBuscar = concursosParaBuscar.sort((a, b) => a - b);
     } else {
-      const { data: ultimoLocal } = await supabase.from(TABLE).select("concurso").order("concurso", { ascending: false }).limit(1).maybeSingle();
+      const { data: ultimoLocal } = await supabase.from(TABLE).select("concurso").eq("loteria", LOTERIA).order("concurso", { ascending: false }).limit(1).maybeSingle();
       const ultimoConcursoLocal = ultimoLocal?.concurso || 0;
       console.log(`[${LOTERIA_LABEL}] Último concurso local: ${ultimoConcursoLocal}`);
       if (ultimoConcursoAPI <= ultimoConcursoLocal) {
@@ -140,6 +175,11 @@ Deno.serve(async (req) => {
 
     console.log(`[${LOTERIA_LABEL}] Buscando ${concursosParaBuscar.length} concursos...`);
     const resultadosParaInserir: any[] = [];
+    const historicoMap = new Map<number, number[]>();
+
+    const primeiroConcurso = concursosParaBuscar[0];
+    const { data: anteriorPrimeiro } = await supabase.from(TABLE).select('dezenas').eq('loteria', LOTERIA).eq('concurso', primeiroConcurso - 1).maybeSingle();
+    if (anteriorPrimeiro?.dezenas) historicoMap.set(primeiroConcurso - 1, anteriorPrimeiro.dezenas);
 
     for (const concursoId of concursosParaBuscar) {
       try {
@@ -147,12 +187,16 @@ Deno.serve(async (req) => {
         if (concursoId === ultimoConcursoAPI) {
           resultado = ultimoResultado;
         } else {
-          const concursoUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=${LOTERIA_PARAM}&token=${API_TOKEN}&concurso=${concursoId}`;
+          const concursoUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=${LOTERIA}&token=${API_TOKEN}&concurso=${concursoId}`;
           const res = await fetch(concursoUrl);
           if (!res.ok) { console.error(`Erro ao buscar concurso ${concursoId}: ${res.status}`); continue; }
           resultado = parseApiResponse(await res.json());
         }
-        resultadosParaInserir.push(buildRegistro(resultado));
+        const dezenas = resultado.dezenas.map((d: string) => parseInt(d, 10)).sort((a: number, b: number) => a - b);
+        const dezenasAnteriores = historicoMap.get(concursoId - 1) || [];
+        const indicadores = calcularIndicadores(dezenas, dezenasAnteriores);
+        resultadosParaInserir.push(buildRegistro(resultado, dezenas, indicadores));
+        historicoMap.set(concursoId, dezenas);
         await new Promise(resolve => setTimeout(resolve, 300));
       } catch (err) {
         console.error(`[${LOTERIA_LABEL}] Erro concurso ${concursoId}:`, err);
@@ -160,7 +204,7 @@ Deno.serve(async (req) => {
     }
 
     if (resultadosParaInserir.length > 0) {
-      const { error } = await supabase.from(TABLE).upsert(resultadosParaInserir, { onConflict: "concurso" });
+      const { error } = await supabase.from(TABLE).upsert(resultadosParaInserir, { onConflict: "loteria,concurso" });
       if (error) throw new Error(`Erro ao inserir: ${error.message}`);
     }
 
@@ -174,7 +218,7 @@ Deno.serve(async (req) => {
           await fetch(`${supabaseUrl}/functions/v1/send-push`, {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseAnonKey}`, "x-webhook-secret": webhookSecret },
-            body: JSON.stringify({ tipo: "resultado_novo", titulo: `🍀 ${LOTERIA_LABEL} — Concurso ${ultimoConcursoInserido}`, mensagem: `Concurso ${ultimoConcursoInserido} disponível!`, loteria: LOTERIA_PARAM, concurso_id: ultimoConcursoInserido }),
+            body: JSON.stringify({ tipo: "resultado_novo", titulo: `🍀 ${LOTERIA_LABEL} — Concurso ${ultimoConcursoInserido}`, mensagem: `Concurso ${ultimoConcursoInserido} disponível!`, loteria: LOTERIA, concurso_id: ultimoConcursoInserido }),
           });
           console.log(`[PUSH] ✅ ${LOTERIA_LABEL} concurso ${ultimoConcursoInserido}`);
         } catch (e) { console.error("[PUSH] Erro:", e); }
