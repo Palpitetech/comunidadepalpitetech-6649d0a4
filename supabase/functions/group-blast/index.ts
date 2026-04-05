@@ -216,7 +216,7 @@ async function handleSend(
     try {
       const { data: configData } = await supabase
         .from("group_blast_configs")
-        .select("slots")
+        .select("slots, include_palpites, vip_group_link")
         .eq("id", log.config_id)
         .maybeSingle();
 
@@ -228,7 +228,9 @@ async function handleSend(
       if (slot?.message_type === "manual" && slot?.message_content?.trim()) {
         messageContent = slot.message_content.trim();
       } else if (slot?.message_type === "palpite") {
-        messageContent = await generatePalpiteMessage(supabase, LOVABLE_API_KEY, BASE_URL);
+        const includePalpites = configData?.include_palpites ?? true;
+        const vipGroupLink = configData?.vip_group_link || null;
+        messageContent = await generatePalpiteMessage(supabase, LOVABLE_API_KEY, BASE_URL, includePalpites, vipGroupLink);
       } else {
         const { data: latestPost } = await supabase
           .from("postagens")
