@@ -65,6 +65,10 @@ function extrairData(r: any): string {
 const LOTERIA = "megasena";
 const TABLE = "resultados_loterias";
 
+function parseApiResponse(raw: any): any {
+  return Array.isArray(raw) ? raw[0] : raw;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -138,8 +142,9 @@ Deno.serve(async (req) => {
     console.log("Buscando último concurso da API...");
     const apiResponse = await fetch(latestUrl);
     if (!apiResponse.ok) throw new Error(`Erro ao buscar API: ${apiResponse.status}`);
-    const ultimoResultado = await apiResponse.json();
+    const ultimoResultado = parseApiResponse(await apiResponse.json());
     const ultimoConcursoAPI = extrairNumeroConcurso(ultimoResultado);
+    console.log("API response keys:", Object.keys(ultimoResultado).join(", "));
     console.log("Último concurso API:", ultimoConcursoAPI);
 
     // Concurso específico
@@ -147,7 +152,7 @@ Deno.serve(async (req) => {
       const concursoUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=megasena&token=${API_TOKEN}&concurso=${concursoEspecifico}`;
       const res = await fetch(concursoUrl);
       if (!res.ok) throw new Error(`Erro ao buscar concurso ${concursoEspecifico}: ${res.status}`);
-      const resultado = await res.json();
+      const resultado = parseApiResponse(await res.json());
       const dezenas = resultado.dezenas.map((d: string) => parseInt(d, 10)).sort((a: number, b: number) => a - b);
 
       const { data: anterior } = await supabase
@@ -231,7 +236,7 @@ Deno.serve(async (req) => {
           const concursoUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=megasena&token=${API_TOKEN}&concurso=${concursoId}`;
           const res = await fetch(concursoUrl);
           if (!res.ok) { console.error(`Erro ao buscar concurso ${concursoId}: ${res.status}`); continue; }
-          resultado = await res.json();
+          resultado = parseApiResponse(await res.json());
         }
 
         const dezenas = resultado.dezenas.map((d: string) => parseInt(d, 10)).sort((a: number, b: number) => a - b);
