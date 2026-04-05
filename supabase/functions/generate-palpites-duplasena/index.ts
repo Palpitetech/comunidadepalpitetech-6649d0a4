@@ -145,11 +145,18 @@ serve(async (req) => {
     }
 
     // Buscar resultados da Dupla Sena
-    const { data: resultados, error: resultadosError } = await supabaseAdmin
-      .from("resultados_duplasena")
-      .select("concurso_id, data_sorteio, dezenas_sorteio1, dezenas_sorteio2, qtd_pares_s1, qtd_impares_s1, qtd_moldura_s1, qtd_primos_s1, qtd_repetidas_s1, qtd_pares_s2, qtd_impares_s2, qtd_moldura_s2, qtd_primos_s2, qtd_repetidas_s2")
-      .order("concurso_id", { ascending: false })
+    const { data: rawResultados, error: resultadosError } = await supabaseAdmin
+      .from("resultados_loterias")
+      .select("concurso, data_sorteio, dezenas, dezenas_sorteio2, qtd_pares, qtd_impares, qtd_moldura, qtd_primos, qtd_repetidas, qtd_pares_s2, qtd_impares_s2, qtd_moldura_s2, qtd_primos_s2, qtd_repetidas_s2")
+      .eq("loteria", "duplasena")
+      .order("concurso", { ascending: false })
       .limit(periodoAnalise);
+    const resultados = (rawResultados || []).map((r: any) => ({
+      concurso_id: r.concurso, data_sorteio: r.data_sorteio,
+      dezenas_sorteio1: r.dezenas, dezenas_sorteio2: r.dezenas_sorteio2,
+      qtd_pares_s1: r.qtd_pares, qtd_impares_s1: r.qtd_impares, qtd_moldura_s1: r.qtd_moldura, qtd_primos_s1: r.qtd_primos, qtd_repetidas_s1: r.qtd_repetidas,
+      qtd_pares_s2: r.qtd_pares_s2, qtd_impares_s2: r.qtd_impares_s2, qtd_moldura_s2: r.qtd_moldura_s2, qtd_primos_s2: r.qtd_primos_s2, qtd_repetidas_s2: r.qtd_repetidas_s2,
+    })) as ResultadoRow[];
 
     if (resultadosError || !resultados?.length) {
       console.error("Erro ao buscar resultados:", resultadosError);

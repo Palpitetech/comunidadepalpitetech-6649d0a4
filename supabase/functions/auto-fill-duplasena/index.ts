@@ -54,11 +54,16 @@ serve(async (req) => {
       });
     }
 
-    const { data: resultados, error: resultadosError } = await supabase
-      .from("resultados_duplasena")
-      .select("concurso_id, dezenas_sorteio1, dezenas_sorteio2, qtd_pares_s1, qtd_impares_s1, qtd_primos_s1, qtd_moldura_s1, qtd_repetidas_s1")
-      .order("concurso_id", { ascending: false })
+    const { data: rawResultados, error: resultadosError } = await supabase
+      .from("resultados_loterias")
+      .select("concurso, dezenas, dezenas_sorteio2, qtd_pares, qtd_impares, qtd_primos, qtd_moldura, qtd_repetidas")
+      .eq("loteria", "duplasena")
+      .order("concurso", { ascending: false })
       .limit(10);
+    const resultados = (rawResultados || []).map((r: any) => ({
+      concurso_id: r.concurso, dezenas_sorteio1: r.dezenas, dezenas_sorteio2: r.dezenas_sorteio2,
+      qtd_pares_s1: r.qtd_pares, qtd_impares_s1: r.qtd_impares, qtd_primos_s1: r.qtd_primos, qtd_moldura_s1: r.qtd_moldura, qtd_repetidas_s1: r.qtd_repetidas,
+    }));
 
     if (resultadosError || !resultados?.length) {
       return new Response(JSON.stringify({ error: "Erro ao buscar resultados da Dupla Sena" }), {

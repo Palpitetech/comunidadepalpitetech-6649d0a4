@@ -428,15 +428,16 @@ serve(async (req) => {
       }
     } else if (topic === "estrategias_duplasena") {
       const { data: resultados } = await userClient
-        .from("resultados_duplasena" as any)
-        .select("concurso_id:concurso, data_sorteio, dezenas_sorteio1, dezenas_sorteio2, qtd_pares_s1, qtd_impares_s1, qtd_moldura_s1, qtd_repetidas_s1, qtd_pares_s2, qtd_impares_s2, qtd_moldura_s2, qtd_repetidas_s2")
+        .from("resultados_loterias" as any)
+        .select("concurso, data_sorteio, dezenas, dezenas_sorteio2, qtd_pares, qtd_impares, qtd_moldura, qtd_repetidas, qtd_pares_s2, qtd_impares_s2, qtd_moldura_s2, qtd_repetidas_s2")
+        .eq("loteria", "duplasena")
         .order("concurso", { ascending: false })
         .limit(10);
 
       if (resultados?.length) {
         const lines = (resultados as any[]).map((r: any) =>
-          `Concurso ${r.concurso_id} — ${r.data_sorteio}\n` +
-          `  Sorteio 1: ${(r.dezenas_sorteio1 || []).join(", ")} | Pares: ${r.qtd_pares_s1} | Ímpares: ${r.qtd_impares_s1} | Moldura: ${r.qtd_moldura_s1} | Repetidas: ${r.qtd_repetidas_s1}\n` +
+          `Concurso ${r.concurso} — ${r.data_sorteio}\n` +
+          `  Sorteio 1: ${(r.dezenas || []).join(", ")} | Pares: ${r.qtd_pares} | Ímpares: ${r.qtd_impares} | Moldura: ${r.qtd_moldura} | Repetidas: ${r.qtd_repetidas}\n` +
           `  Sorteio 2: ${(r.dezenas_sorteio2 || []).join(", ")} | Pares: ${r.qtd_pares_s2} | Ímpares: ${r.qtd_impares_s2} | Moldura: ${r.qtd_moldura_s2} | Repetidas: ${r.qtd_repetidas_s2}`
         ).join("\n\n");
         contextBlock = `\n\nDADOS REAIS DOS ÚLTIMOS 10 CONCURSOS DA DUPLA SENA:\n${lines}`;
