@@ -469,12 +469,11 @@ async function generatePalpiteMessage(
     return null;
   }
 
-  // Fetch last 5 results
+  // Fetch last 5 results (same source as Gerador)
   const { data: resultados, error: resErr } = await supabase
-    .from("resultados_loterias")
-    .select("concurso, data_sorteio, dezenas")
-    .eq("loteria", "lotofacil")
-    .order("concurso", { ascending: false })
+    .from("resultados")
+    .select("concurso_id, data_sorteio, dezenas")
+    .order("concurso_id", { ascending: false })
     .limit(5);
 
   if (resErr || !resultados || resultados.length === 0) {
@@ -502,14 +501,14 @@ async function generatePalpiteMessage(
   const avgMoldura = resultados.reduce((s: number, r: any) => s + r.dezenas.filter((d: number) => MOLDURA_LF.includes(d)).length, 0) / resultados.length;
   const avgPrimos = resultados.reduce((s: number, r: any) => s + r.dezenas.filter((d: number) => PRIMOS_LF.includes(d)).length, 0) / resultados.length;
 
-  const concursoMin = resultados[resultados.length - 1].concurso;
-  const concursoMax = resultados[0].concurso;
+  const concursoMin = resultados[resultados.length - 1].concurso_id;
+  const concursoMax = resultados[0].concurso_id;
 
   const statsText = `Últimos 5 concursos (${concursoMin} a ${concursoMax}):
 - Dezenas quentes (≥3 aparições): ${quentes.join(", ") || "nenhuma"}
 - Dezenas frias (≤1 aparição): ${frias.join(", ") || "nenhuma"}  
 - Média pares: ${avgPares.toFixed(1)} | Média moldura: ${avgMoldura.toFixed(1)} | Média primos: ${avgPrimos.toFixed(1)}
-- Resultados: ${resultados.map((r: any) => `C${r.concurso}: [${r.dezenas.sort((a: number, b: number) => a - b).join(",")}]`).join(" | ")}`;
+- Resultados: ${resultados.map((r: any) => `C${r.concurso_id}: [${r.dezenas.sort((a: number, b: number) => a - b).join(",")}]`).join(" | ")}`;
 
   const prompt = `Você é um especialista em Lotofácil.
 Baseado na análise estatística dos 5 últimos concursos, gere EXATAMENTE 15 jogos de 15 dezenas cada (1 a 25).
