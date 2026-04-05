@@ -875,6 +875,30 @@ Deno.serve(async (req) => {
           .from('resultados')
           .insert(registro);
 
+        // ── DUAL-WRITE: resultados_loterias (tabela unificada) ──
+        const registroUnificado = {
+          loteria: 'lotofacil',
+          concurso: concurso.numero,
+          data_sorteio: concurso.data,
+          dezenas: concurso.dezenas,
+          acumulou,
+          valor_estimado_proximo,
+          valor_acumulado_especial,
+          premiacao_json,
+          locais_ganhadores,
+          local_sorteio,
+          ...indicadores,
+          ...cicloInfo,
+        };
+        const { error: upsertUnifiedError } = await supabase
+          .from('resultados_loterias')
+          .upsert(registroUnificado, { onConflict: 'loteria,concurso' });
+        if (upsertUnifiedError) {
+          console.error(`[DUAL-WRITE] Erro ao gravar em resultados_loterias concurso ${concurso.numero}: ${upsertUnifiedError.message}`);
+        } else {
+          console.log(`[DUAL-WRITE] ✅ Concurso ${concurso.numero} gravado em resultados_loterias`);
+        }
+
         if (insertError) {
           throw new Error(insertError.message);
         }
