@@ -30,11 +30,7 @@ const CARD_CONFIG = {
   },
 };
 
-const FALLBACK_ITEMS = [
-  { icon: "⭐", title: "Recomendado", color: "text-emerald-400", desc: "Score equilibrado: 30% frequência + 50% timing + 20% tendência." },
-  { icon: "🔼", title: "Força Histórica", color: "text-blue-400", desc: "Prioriza dezenas com maior ocorrência nos últimos concursos." },
-  { icon: "❄️", title: "Oportunidade", color: "text-cyan-400", desc: "Foca em dezenas frias com bom timing estatístico." },
-];
+const pad = (d: number) => d.toString().padStart(2, "0");
 
 export default function SlideTendencias({ jogos, estrategiaIA }: SlideTendenciasProps) {
   const ordered = [
@@ -45,21 +41,23 @@ export default function SlideTendencias({ jogos, estrategiaIA }: SlideTendencias
 
   return (
     <div className="flex w-full h-full items-center gap-6">
-      {/* Left column — Strategy explanation (30%) */}
-      <div className="flex flex-col gap-4 justify-center" style={{ width: "30%" }}>
-        <p className="text-white/50 text-xs tracking-widest uppercase">Metodologia</p>
+      {/* Left column — Strategy (30%) */}
+      <div className="flex flex-col gap-3 justify-center overflow-hidden" style={{ width: "30%" }}>
+        <p className="text-white/50 text-xs tracking-widest uppercase">Estratégia da IA</p>
 
         {estrategiaIA ? (
-          <div className="space-y-4">
-            {/* AI conclusion */}
-            <p className="text-white/70 text-xs leading-relaxed italic border-l-2 border-emerald-500/40 pl-3">
-              {estrategiaIA.conclusao}
-            </p>
+          <div className="space-y-3">
+            {/* Conclusão */}
+            {estrategiaIA.conclusao && (
+              <p className="text-white/70 text-xs leading-relaxed italic border-l-2 border-emerald-500/40 pl-3">
+                {estrategiaIA.conclusao}
+              </p>
+            )}
 
             {/* Ferramentas */}
             {estrategiaIA.ferramentas.length > 0 && (
               <div className="space-y-1">
-                <p className="text-white/40 text-[10px] uppercase tracking-wider">Ferramentas</p>
+                <p className="text-white/40 text-[10px] uppercase tracking-wider">🔧 Ferramentas</p>
                 <div className="flex flex-wrap gap-1">
                   {estrategiaIA.ferramentas.map((f, i) => (
                     <span key={i} className="text-[10px] bg-white/5 text-white/60 px-2 py-0.5 rounded-full border border-white/10">
@@ -70,32 +68,51 @@ export default function SlideTendencias({ jogos, estrategiaIA }: SlideTendencias
               </div>
             )}
 
-            {/* Filtros */}
+            {/* Dezenas Priorizadas */}
+            {estrategiaIA.dezenas_fixas.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-white/40 text-[10px] uppercase tracking-wider">✅ Priorizadas</p>
+                {estrategiaIA.dezenas_fixas.slice(0, 3).map((item, i) => (
+                  <div key={i} className="text-[10px] leading-relaxed">
+                    <span className="text-emerald-400 font-semibold">{item.dezenas.map(pad).join(", ")}</span>
+                    <span className="text-white/40"> — {item.motivo}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Dezenas Evitadas */}
+            {estrategiaIA.dezenas_evitadas.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-white/40 text-[10px] uppercase tracking-wider">❌ Evitadas</p>
+                {estrategiaIA.dezenas_evitadas.slice(0, 3).map((item, i) => (
+                  <div key={i} className="text-[10px] leading-relaxed">
+                    <span className="text-red-400 font-semibold">{item.dezenas.map(pad).join(", ")}</span>
+                    <span className="text-white/40"> — {item.motivo}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Filtros Aplicados */}
             {estrategiaIA.filtros_aplicados.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-white/40 text-[10px] uppercase tracking-wider">Filtros aplicados</p>
+              <div className="space-y-1">
+                <p className="text-white/40 text-[10px] uppercase tracking-wider">🎯 Filtros</p>
                 {estrategiaIA.filtros_aplicados.slice(0, 4).map((f, i) => (
                   <div key={i} className="text-[10px] leading-relaxed">
                     <span className="text-white/60 font-semibold">{f.filtro}</span>
-                    <span className="text-white/40"> → {f.valor_alvo}</span>
+                    {f.valor_alvo && <span className="text-white/40"> → {f.valor_alvo}</span>}
                   </div>
                 ))}
               </div>
             )}
           </div>
         ) : (
-          <div className="space-y-4">
-            {FALLBACK_ITEMS.map((item) => (
-              <div key={item.title} className="space-y-1">
-                <p className={`text-sm font-bold ${item.color}`}>{item.icon} {item.title}</p>
-                <p className="text-white/50 text-xs leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
+          <p className="text-white/40 text-xs">Carregando estratégia...</p>
         )}
 
-        <p className="text-white/30 text-[10px] mt-2 border-t border-white/10 pt-2">
-          {estrategiaIA ? "Gerado por IA • Lotofácil" : "Base: últimos 5 concursos da Lotofácil"}
+        <p className="text-white/30 text-[10px] mt-1 border-t border-white/10 pt-2">
+          Gerado por IA • Últimos 5 concursos
         </p>
       </div>
 
