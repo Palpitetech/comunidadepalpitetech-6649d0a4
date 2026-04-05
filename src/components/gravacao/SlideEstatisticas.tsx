@@ -140,12 +140,16 @@ export default function SlideEstatisticas({ dezenas, estatisticas, tendencias }:
                           {faixa.valor}
                         </span>
 
-                        <span className="text-white/50 text-sm min-w-[50px]">
-                          ({faixa.ocorrencias}×)
+                        <span className="text-white/50 text-sm min-w-[65px]">
+                          1 em {faixa.media}
                         </span>
 
                         <span className={`text-sm min-w-[60px] ${isProonto ? "text-emerald-400 font-semibold" : "text-white/40"}`}>
                           atraso {faixa.atraso}
+                        </span>
+
+                        <span className="text-white/40 text-sm min-w-[45px]">
+                          {((faixa.ocorrencias / tendencias.reduce((_, t2) => t2.label === indicador.label ? t2.faixas.reduce((s, f) => s + f.ocorrencias, 0) : _, 0)) * 100).toFixed(1)}%
                         </span>
 
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ml-auto ${
