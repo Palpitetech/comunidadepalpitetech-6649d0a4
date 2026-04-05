@@ -227,6 +227,8 @@ async function handleSend(
 
       if (slot?.message_type === "manual" && slot?.message_content?.trim()) {
         messageContent = slot.message_content.trim();
+      } else if (slot?.message_type === "palpite") {
+        messageContent = await generatePalpiteMessage(supabase, LOVABLE_API_KEY, BASE_URL);
       } else {
         const { data: latestPost } = await supabase
           .from("postagens")
