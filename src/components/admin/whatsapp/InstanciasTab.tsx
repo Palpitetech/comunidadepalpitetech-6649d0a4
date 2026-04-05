@@ -569,6 +569,22 @@ export function InstanciasTab() {
                     />
                   </div>
 
+                  {/* Cooldown queue info */}
+                  {(() => {
+                    const queue = Array.isArray((inst as any).cooldown_queue) ? (inst as any).cooldown_queue as number[] : [3];
+                    const idx = (inst as any).cooldown_queue_index ?? 0;
+                    const current = queue[idx % queue.length] ?? 3;
+                    return (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        <span>Descanso atual: <span className="font-semibold text-card-foreground">{current}min</span></span>
+                        {queue.length > 1 && (
+                          <span className="text-[10px]">({queue.map((v, i) => i === idx % queue.length ? `[${v}]` : v).join("→")})</span>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   {/* Last message */}
                   <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Clock className="h-3 w-3" />
