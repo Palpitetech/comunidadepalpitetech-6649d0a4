@@ -711,7 +711,7 @@ export function DisparoGrupoTab() {
                           size="sm"
                           className="text-[10px] h-7"
                           onClick={() => setFormSlots(formSlots.map(s =>
-                            s.id === slot.id ? { ...s, message_type: "palpite" as any } : s
+                            s.id === slot.id ? { ...s, message_type: "palpite" } : s
                           ))}
                         >
                           <Dices className="h-3 w-3 mr-1" />
