@@ -3,8 +3,10 @@ import { Badge } from "@/components/ui/badge";
 
 interface OpcaoPattern {
   valor: number;
-  label: string;
+  label?: string;
   porcentagem?: number;
+  ocorrencias?: number;
+  ranking?: number;
 }
 
 interface FiltroPatternSelectorProps {
