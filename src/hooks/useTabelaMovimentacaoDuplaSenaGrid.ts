@@ -43,11 +43,22 @@ export function useTabelaMovimentacaoDuplaSenaGrid(limiteConcursos = 50) {
   return useQuery({
     queryKey: ["tabela-movimentacao-duplasena-grid", limiteConcursos],
     queryFn: async (): Promise<TabelaMovimentacaoDuplaSenaGridData> => {
-      const { data, error } = await supabase
-        .from("resultados_duplasena")
-        .select("concurso_id, data_sorteio, dezenas_sorteio1, dezenas_sorteio2, qtd_impares_s1, qtd_impares_s2, qtd_repetidas_s1, qtd_repetidas_s2")
-        .order("concurso_id", { ascending: false })
+      const { data: rawData, error } = await (supabase as any)
+        .from("resultados_loterias")
+        .select("concurso, data_sorteio, dezenas, dezenas_sorteio2, qtd_impares, qtd_impares_s2, qtd_repetidas, qtd_repetidas_s2")
+        .eq("loteria", "duplasena")
+        .order("concurso", { ascending: false })
         .limit(Math.max(limiteConcursos, 200));
+      const data = (rawData || []).map((r: any) => ({
+        concurso_id: r.concurso,
+        data_sorteio: r.data_sorteio,
+        dezenas_sorteio1: r.dezenas,
+        dezenas_sorteio2: r.dezenas_sorteio2,
+        qtd_impares_s1: r.qtd_impares,
+        qtd_impares_s2: r.qtd_impares_s2,
+        qtd_repetidas_s1: r.qtd_repetidas,
+        qtd_repetidas_s2: r.qtd_repetidas_s2,
+      })) as ResultadoRow[];
 
       if (error) throw error;
       if (!data || data.length === 0) {

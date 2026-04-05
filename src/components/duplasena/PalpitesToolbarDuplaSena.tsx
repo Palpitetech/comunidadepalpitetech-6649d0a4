@@ -83,14 +83,15 @@ export function PalpitesToolbarDuplaSena({
     
     setLoadingConcursos(true);
     try {
-      const { data } = await supabase
-        .from("resultados_duplasena")
-        .select("concurso_id, data_sorteio, dezenas_sorteio1, dezenas_sorteio2")
-        .order("concurso_id", { ascending: false })
+      const { data } = await (supabase as any)
+        .from("resultados_loterias")
+        .select("concurso, data_sorteio, dezenas, dezenas_sorteio2")
+        .eq("loteria", "duplasena")
+        .order("concurso", { ascending: false })
         .limit(30);
       
       if (data) {
-        setConcursos(data);
+        setConcursos(data.map((r: any) => ({ concurso_id: r.concurso, data_sorteio: r.data_sorteio, dezenas_sorteio1: r.dezenas, dezenas_sorteio2: r.dezenas_sorteio2 })));
         setConcursosLoaded(true);
       }
     } catch (error) {

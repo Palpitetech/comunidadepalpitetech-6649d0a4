@@ -84,10 +84,11 @@ export function ResultadosFechamentoMegaSena({
 
   useEffect(() => {
     const carregarUltimoConcurso = async () => {
-      const { data } = await supabase
-        .from("resultados_megasena")
+      const { data } = await (supabase as any)
+        .from("resultados_loterias")
         .select("dezenas")
-        .order("concurso_id", { ascending: false })
+        .eq("loteria", "megasena")
+        .order("concurso", { ascending: false })
         .limit(1)
         .single();
       

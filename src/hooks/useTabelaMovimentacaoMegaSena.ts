@@ -43,11 +43,13 @@ export function useTabelaMovimentacaoMegaSena(limiteConcursos = 50) {
     queryKey: ["tabela-movimentacao-megasena", limiteConcursos],
     queryFn: async (): Promise<TabelaMovimentacaoMegaSenaData> => {
       // Buscar mais resultados para calcular ciclos históricos
-      const { data, error } = await supabase
-        .from("resultados_megasena")
-        .select("concurso_id, data_sorteio, dezenas, qtd_impares, qtd_primos, qtd_moldura, qtd_repetidas")
-        .order("concurso_id", { ascending: false })
-        .limit(Math.max(limiteConcursos, 200)); // Buscar mais para calcular ciclos
+      const { data: rawData, error } = await (supabase as any)
+        .from("resultados_loterias")
+        .select("concurso, data_sorteio, dezenas, qtd_impares, qtd_primos, qtd_moldura, qtd_repetidas")
+        .eq("loteria", "megasena")
+        .order("concurso", { ascending: false })
+        .limit(Math.max(limiteConcursos, 200));
+      const data = (rawData || []).map((r: any) => ({ ...r, concurso_id: r.concurso }));
 
       if (error) throw error;
       if (!data || data.length === 0) {

@@ -76,15 +76,16 @@ export function PastaContent({
     const fetchUltimoConcurso = async () => {
       if (isDuplaSena) {
         // Dupla Sena: combina S1 e S2
-        const { data } = await supabase
-          .from("resultados_duplasena")
-          .select("dezenas_sorteio1, dezenas_sorteio2")
-          .order("concurso_id", { ascending: false })
+        const { data } = await (supabase as any)
+          .from("resultados_loterias")
+          .select("dezenas, dezenas_sorteio2")
+          .eq("loteria", "duplasena")
+          .order("concurso", { ascending: false })
           .limit(1)
           .single();
         
         if (data) {
-          const combined = [...(data.dezenas_sorteio1 || []), ...(data.dezenas_sorteio2 || [])];
+          const combined = [...(data.dezenas || []), ...(data.dezenas_sorteio2 || [])];
           setUltimoConcursoDezenas([...new Set(combined)]);
         }
       } else {

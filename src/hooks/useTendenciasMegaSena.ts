@@ -143,16 +143,17 @@ export function useTendenciasMegaSena(periodo: number) {
     queryKey: ["tendencias-megasena", periodo],
     queryFn: async (): Promise<TendenciaMegaSena> => {
       // Buscar período + 1 para calcular repetidas
-      const { data, error } = await supabase
-        .from("resultados_megasena")
-        .select("concurso_id, dezenas, data_sorteio, qtd_pares, qtd_moldura, qtd_repetidas, qtd_primos")
-        .order("concurso_id", { ascending: false })
+      const { data, error } = await (supabase as any)
+        .from("resultados_loterias")
+        .select("concurso, dezenas, data_sorteio, qtd_pares, qtd_moldura, qtd_repetidas, qtd_primos")
+        .eq("loteria", "megasena")
+        .order("concurso", { ascending: false })
         .limit(periodo + 1);
 
       if (error) throw error;
 
-      const raw: Concurso[] = (data || []).map((r) => ({
-        concurso_id: r.concurso_id,
+      const raw: Concurso[] = (data || []).map((r: any) => ({
+        concurso_id: r.concurso,
         dezenas: r.dezenas as number[],
         data_sorteio: r.data_sorteio,
         qtd_pares: r.qtd_pares,

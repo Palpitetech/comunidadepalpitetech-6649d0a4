@@ -25,10 +25,11 @@ export function useDesdobramentoStatsMegaSena(): DesdobramentoStatsMegaSena {
   const { data: imparesData, isLoading: loadingImpares } = useQuery({
     queryKey: ["desdobramento-megasena-impares"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("resultados_megasena")
-        .select("concurso_id, qtd_pares")
-        .order("concurso_id", { ascending: false });
+      const { data, error } = await (supabase as any)
+        .from("resultados_loterias")
+        .select("concurso, qtd_pares")
+        .eq("loteria", "megasena")
+        .order("concurso", { ascending: false });
 
       if (error) throw error;
       if (!data || data.length === 0) return [];
@@ -62,10 +63,11 @@ export function useDesdobramentoStatsMegaSena(): DesdobramentoStatsMegaSena {
   const { data: multiplosDe3Data, isLoading: loadingM3 } = useQuery({
     queryKey: ["desdobramento-megasena-multiplosde3"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("resultados_megasena")
+      const { data, error } = await (supabase as any)
+        .from("resultados_loterias")
         .select("dezenas")
-        .order("concurso_id", { ascending: false });
+        .eq("loteria", "megasena")
+        .order("concurso", { ascending: false });
 
       if (error) throw error;
       if (!data || data.length === 0) return [];
@@ -95,10 +97,11 @@ export function useDesdobramentoStatsMegaSena(): DesdobramentoStatsMegaSena {
 }
 
 async function fetchStats(campo: "qtd_primos" | "qtd_repetidas" | "qtd_moldura"): Promise<EstatisticaItem[]> {
-  const { data, error } = await supabase
-    .from("resultados_megasena")
-    .select("concurso_id, qtd_primos, qtd_repetidas, qtd_moldura")
-    .order("concurso_id", { ascending: false });
+  const { data, error } = await (supabase as any)
+    .from("resultados_loterias")
+    .select("concurso, qtd_primos, qtd_repetidas, qtd_moldura")
+    .eq("loteria", "megasena")
+    .order("concurso", { ascending: false });
 
   if (error) throw error;
   if (!data || data.length === 0) return [];

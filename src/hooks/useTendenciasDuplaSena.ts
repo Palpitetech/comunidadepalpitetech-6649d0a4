@@ -166,23 +166,24 @@ export function useTendenciasDuplaSena(periodo: number) {
     queryKey: ["tendencias-duplasena", periodo],
     queryFn: async (): Promise<TendenciaDuplaSena> => {
       // Buscar período + 1 para calcular repetidas
-      const { data, error } = await supabase
-        .from("resultados_duplasena")
-        .select("concurso_id, dezenas_sorteio1, dezenas_sorteio2, data_sorteio, qtd_pares_s1, qtd_moldura_s1, qtd_repetidas_s1, qtd_primos_s1, qtd_pares_s2, qtd_moldura_s2, qtd_repetidas_s2, qtd_primos_s2")
-        .order("concurso_id", { ascending: false })
+      const { data: rawData, error } = await (supabase as any)
+        .from("resultados_loterias")
+        .select("concurso, dezenas, dezenas_sorteio2, data_sorteio, qtd_pares, qtd_moldura, qtd_repetidas, qtd_primos, qtd_pares_s2, qtd_moldura_s2, qtd_repetidas_s2, qtd_primos_s2")
+        .eq("loteria", "duplasena")
+        .order("concurso", { ascending: false })
         .limit(periodo + 1);
 
       if (error) throw error;
 
-      const raw: Concurso[] = (data || []).map((r) => ({
-        concurso_id: r.concurso_id,
-        dezenas_sorteio1: r.dezenas_sorteio1 as number[],
+      const raw: Concurso[] = (rawData || []).map((r: any) => ({
+        concurso_id: r.concurso,
+        dezenas_sorteio1: r.dezenas as number[],
         dezenas_sorteio2: r.dezenas_sorteio2 as number[],
         data_sorteio: r.data_sorteio,
-        qtd_pares_s1: r.qtd_pares_s1,
-        qtd_moldura_s1: r.qtd_moldura_s1,
-        qtd_repetidas_s1: r.qtd_repetidas_s1,
-        qtd_primos_s1: r.qtd_primos_s1,
+        qtd_pares_s1: r.qtd_pares,
+        qtd_moldura_s1: r.qtd_moldura,
+        qtd_repetidas_s1: r.qtd_repetidas,
+        qtd_primos_s1: r.qtd_primos,
         qtd_pares_s2: r.qtd_pares_s2,
         qtd_moldura_s2: r.qtd_moldura_s2,
         qtd_repetidas_s2: r.qtd_repetidas_s2,

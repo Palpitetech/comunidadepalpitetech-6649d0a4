@@ -32,10 +32,12 @@ export function TabelaLinhaColunaMegaSena({ tipo, indice }: Props) {
   const { data: estatisticas, isLoading } = useQuery({
     queryKey: [`megasena-estatisticas-${tipo}-${indice}`],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("resultados_megasena")
-        .select("concurso_id, dezenas")
-        .order("concurso_id", { ascending: false });
+      const { data: rawData, error } = await (supabase as any)
+        .from("resultados_loterias")
+        .select("concurso, dezenas")
+        .eq("loteria", "megasena")
+        .order("concurso", { ascending: false });
+      const data = (rawData || []).map((r: any) => ({ concurso_id: r.concurso, dezenas: r.dezenas }));
 
       if (error) throw error;
       if (!data || data.length === 0) return [];

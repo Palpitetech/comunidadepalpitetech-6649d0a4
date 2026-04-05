@@ -74,13 +74,14 @@ export function ResultadosFechamentoDuplaSena({
 
   useEffect(() => {
     const carregarUltimoConcurso = async () => {
-      const { data } = await supabase
-        .from("resultados_duplasena")
-        .select("dezenas_sorteio1")
-        .order("concurso_id", { ascending: false })
+      const { data } = await (supabase as any)
+        .from("resultados_loterias")
+        .select("dezenas")
+        .eq("loteria", "duplasena")
+        .order("concurso", { ascending: false })
         .limit(1)
         .single();
-      if (data?.dezenas_sorteio1) setUltimoConcurso(data.dezenas_sorteio1);
+      if (data?.dezenas) setUltimoConcurso(data.dezenas);
     };
     carregarUltimoConcurso();
   }, []);
