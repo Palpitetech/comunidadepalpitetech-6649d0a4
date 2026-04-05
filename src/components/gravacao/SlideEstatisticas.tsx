@@ -115,6 +115,7 @@ export default function SlideEstatisticas({ dezenas, estatisticas, tendencias }:
           {tendencias.map((indicador) => {
             const faixas = filtrarFaixas(indicador.faixas);
             const padrao = padraoMap.get(indicador.label) ?? new Set();
+            const totalOcorr = indicador.faixas.reduce((s, f) => s + f.ocorrencias, 0);
             return (
               <div key={indicador.label}>
                 <p className="text-white/70 text-xs font-semibold mb-2 flex items-center gap-1.5">
@@ -125,6 +126,7 @@ export default function SlideEstatisticas({ dezenas, estatisticas, tendencias }:
                   {faixas.map((faixa) => {
                     const isPadrao = padrao.has(faixa.valor);
                     const isProonto = faixa.atraso >= faixa.media;
+                    const pct = totalOcorr > 0 ? ((faixa.ocorrencias / totalOcorr) * 100).toFixed(1) : "0.0";
                     return (
                       <div
                         key={faixa.valor}
@@ -140,16 +142,16 @@ export default function SlideEstatisticas({ dezenas, estatisticas, tendencias }:
                           {faixa.valor}
                         </span>
 
-                        <span className="text-white/50 text-sm min-w-[65px]">
+                        <span className="text-white/50 text-sm min-w-[55px]">
                           1 em {faixa.media}
                         </span>
 
-                        <span className={`text-sm min-w-[60px] ${isProonto ? "text-emerald-400 font-semibold" : "text-white/40"}`}>
+                        <span className={`text-sm min-w-[55px] ${isProonto ? "text-emerald-400 font-semibold" : "text-white/40"}`}>
                           atraso {faixa.atraso}
                         </span>
 
-                        <span className="text-white/40 text-sm min-w-[45px]">
-                          {((faixa.ocorrencias / tendencias.reduce((_, t2) => t2.label === indicador.label ? t2.faixas.reduce((s, f) => s + f.ocorrencias, 0) : _, 0)) * 100).toFixed(1)}%
+                        <span className="text-white/40 text-sm min-w-[40px]">
+                          {pct}%
                         </span>
 
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ml-auto ${
