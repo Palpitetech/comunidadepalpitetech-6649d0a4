@@ -64,8 +64,8 @@ function buildRegistro(resultado: any, s1: number[], s2: number[], indS1: any, i
     local_sorteio: resultado.local_sorteio || null,
     premiacao_json: resultado.premiacao || [],
     locais_ganhadores: resultado.ganhadores || [],
-    qtd_pares: indS1.qtd_pares, qtd_impares: indS1.qtd_impares, qtd_moldura: indS1.qtd_moldura, qtd_primos: indS1.qtd_primos, qtd_repetidas: indS1.qtd_repetidas,
-    qtd_pares_s2: indS2.qtd_pares, qtd_impares_s2: indS2.qtd_impares, qtd_moldura_s2: indS2.qtd_moldura, qtd_primos_s2: indS2.qtd_primos, qtd_repetidas_s2: indS2.qtd_repetidas,
+    qtd_pares: indS1.qtd_pares, qtd_impares: indS1.qtd_impares, qtd_moldura: indS1.qtd_moldura, qtd_primos: indS1.qtd_primos, qtd_repetidas: indS1.qtd_repetidas, qtd_fibonacci: indS1.qtd_fibonacci, soma: indS1.soma, sequencias: indS1.sequencias,
+    qtd_pares_s2: indS2.qtd_pares, qtd_impares_s2: indS2.qtd_impares, qtd_moldura_s2: indS2.qtd_moldura, qtd_primos_s2: indS2.qtd_primos, qtd_repetidas_s2: indS2.qtd_repetidas, qtd_fibonacci_s2: indS2.qtd_fibonacci, soma_s2: indS2.soma, sequencias_s2: indS2.sequencias,
   };
 }
 
