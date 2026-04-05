@@ -659,6 +659,7 @@ Deno.serve(async (req) => {
     const quantidade = url.searchParams.get('quantidade');
     const concursoEspecifico = url.searchParams.get('concurso');
     const debug = url.searchParams.get('debug') === 'true';
+    const forceUpdate = url.searchParams.get('force') === 'true';
 
     let apiUrl: string;
     let modoOperacao: string;
@@ -798,7 +799,7 @@ Deno.serve(async (req) => {
           .eq('concurso', concurso.numero)
           .single();
 
-        if (existente) {
+        if (existente && !forceUpdate) {
           // LOG DE AUDITORIA: Concurso já existente
           console.log(`[AUDIT] Ignorado: Concurso ${concurso.numero} já existente`);
           resultados.existentes++;
@@ -817,31 +818,42 @@ Deno.serve(async (req) => {
           }
           continue;
         }
+        
+        if (existente && forceUpdate) {
+          console.log(`[AUDIT] Force update: Concurso ${concurso.numero}`);
+        }
 
         const indicadores = calcularIndicadores(concurso.dezenas, dezenasAnteriores);
         const cicloInfo = calcularCiclo(concurso.dezenas, dezenasAnterioresFaltantes, cicloAtual);
 
         // Extrair premiação se disponível
         const raw = concurso.raw;
-        let premiacao_json: Array<{ faixa: string; ganhadores: number; valor: number }> = [];
+        let premiacao_json: Array<{ faixa: string; descricao?: string; ganhadores: number; valorPremio: number }> = [];
         let locais_ganhadores: Array<{ cidade: string; uf: string; ganhadores: number }> = [];
         let acumulou = false;
         let valor_estimado_proximo: number | null = null;
         let valor_acumulado_especial: number | null = null;
         let local_sorteio: string | null = null;
 
-        // Tentar extrair premiação
-        if (Array.isArray(raw.premiacoes)) {
+        // Tentar extrair premiação (formato APILoterias: raw.premiacao)
+        if (Array.isArray(raw.premiacao)) {
+          premiacao_json = (raw.premiacao as Array<Record<string, unknown>>).map(p => ({
+            faixa: String(p.faixa ?? ''),
+            descricao: String(p.descricao || `${p.faixa} acertos`),
+            ganhadores: Number(p.numero_ganhadores ?? p.ganhadores ?? 0),
+            valorPremio: parseFloat(String(p.valor_premio ?? p.valor ?? p.valorPremio ?? 0))
+          }));
+        } else if (Array.isArray(raw.premiacoes)) {
           premiacao_json = (raw.premiacoes as Array<Record<string, unknown>>).map(p => ({
             faixa: `${p.acertos || p.faixa || ''} acertos`,
             ganhadores: Number(p.vencedores || p.ganhadores || 0),
-            valor: parseFloat(String(p.premio || p.valor || 0))
+            valorPremio: parseFloat(String(p.premio || p.valor || 0))
           }));
         } else if (Array.isArray(raw.listaRateioPremio)) {
           premiacao_json = (raw.listaRateioPremio as Array<Record<string, unknown>>).map(p => ({
             faixa: `${p.descricaoFaixa || p.faixa || ''} acertos`,
             ganhadores: Number(p.numeroDeGanhadores || 0),
-            valor: parseFloat(String(p.valorPremio || 0))
+            valorPremio: parseFloat(String(p.valorPremio || 0))
           }));
         }
 
