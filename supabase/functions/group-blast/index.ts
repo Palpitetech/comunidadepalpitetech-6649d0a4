@@ -465,7 +465,9 @@ const PERIODO_ANALISE = 5;
 async function generatePalpiteMessage(
   supabase: any,
   apiKey: string,
-  baseUrl: string
+  baseUrl: string,
+  includePalpites: boolean = true,
+  vipGroupLink: string | null = null
 ): Promise<string | null> {
   if (!apiKey) {
     console.error("[group-blast] LOVABLE_API_KEY não configurada");
