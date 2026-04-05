@@ -28,6 +28,8 @@ interface BlastConfig {
   group_jids: string[];
   slots: Slot[];
   is_active: boolean;
+  include_palpites: boolean;
+  vip_group_link: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -61,6 +63,8 @@ export function DisparoGrupoTab() {
   const [formGroupJids, setFormGroupJids] = useState<string[]>([""]);
   const [formSlots, setFormSlots] = useState<Slot[]>([]);
   const [formActive, setFormActive] = useState(true);
+  const [formIncludePalpites, setFormIncludePalpites] = useState(true);
+  const [formVipGroupLink, setFormVipGroupLink] = useState("");
   const [formTimeInputs, setFormTimeInputs] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
