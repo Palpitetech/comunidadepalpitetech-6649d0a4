@@ -781,11 +781,12 @@ Deno.serve(async (req) => {
       try {
         console.log(`[SYNC] Processando concurso ${concurso.numero} (${i + 1}/${concursosProcessados.length})`);
 
-        // Verificar se já existe (IDEMPOTÊNCIA)
+        // Verificar se já existe (IDEMPOTÊNCIA) — tabela unificada
         const { data: existente } = await supabase
-          .from('resultados')
+          .from('resultados_loterias')
           .select('id')
-          .eq('concurso_id', concurso.numero)
+          .eq('loteria', 'lotofacil')
+          .eq('concurso', concurso.numero)
           .single();
 
         if (existente) {
@@ -794,9 +795,10 @@ Deno.serve(async (req) => {
           resultados.existentes++;
           
           const { data: dadosExistente } = await supabase
-            .from('resultados')
+            .from('resultados_loterias')
             .select('dezenas, dezenas_faltantes_ciclo, ciclo_numero')
-            .eq('concurso_id', concurso.numero)
+            .eq('loteria', 'lotofacil')
+            .eq('concurso', concurso.numero)
             .single();
           
           if (dadosExistente) {
@@ -858,25 +860,7 @@ Deno.serve(async (req) => {
         if (raw.local) local_sorteio = String(raw.local);
         if (raw.localSorteio) local_sorteio = String(raw.localSorteio);
 
-        const registro = {
-          concurso_id: concurso.numero,
-          data_sorteio: concurso.data,
-          dezenas: concurso.dezenas,
-          ...indicadores,
-          ...cicloInfo,
-          acumulou,
-          valor_estimado_proximo,
-          valor_acumulado_especial,
-          premiacao_json,
-          locais_ganhadores,
-          local_sorteio
-        };
-
-        const { error: insertError } = await supabase
-          .from('resultados')
-          .insert(registro);
-
-        // ── DUAL-WRITE: resultados_loterias (tabela unificada) ──
+        // Gravar na tabela unificada
         const registroUnificado = {
           loteria: 'lotofacil',
           concurso: concurso.numero,
@@ -891,14 +875,10 @@ Deno.serve(async (req) => {
           ...indicadores,
           ...cicloInfo,
         };
-        const { error: upsertUnifiedError } = await supabase
+
+        const { error: insertError } = await supabase
           .from('resultados_loterias')
           .upsert(registroUnificado, { onConflict: 'loteria,concurso' });
-        if (upsertUnifiedError) {
-          console.error(`[DUAL-WRITE] Erro ao gravar em resultados_loterias concurso ${concurso.numero}: ${upsertUnifiedError.message}`);
-        } else {
-          console.log(`[DUAL-WRITE] ✅ Concurso ${concurso.numero} gravado em resultados_loterias`);
-        }
 
         if (insertError) {
           throw new Error(insertError.message);
