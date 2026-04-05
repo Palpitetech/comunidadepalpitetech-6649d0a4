@@ -501,8 +501,8 @@ async function generatePalpiteMessage(
   const avgMoldura = resultados.reduce((s: number, r: any) => s + r.dezenas.filter((d: number) => MOLDURA_LF.includes(d)).length, 0) / resultados.length;
   const avgPrimos = resultados.reduce((s: number, r: any) => s + r.dezenas.filter((d: number) => PRIMOS_LF.includes(d)).length, 0) / resultados.length;
 
-  const concursoMin = resultados[resultados.length - 1].concurso;
-  const concursoMax = resultados[0].concurso;
+  const concursoMin = resultados[resultados.length - 1].concurso_id;
+  const concursoMax = resultados[0].concurso_id;
 
   const statsText = `Últimos 5 concursos (${concursoMin} a ${concursoMax}):
 - Dezenas quentes (≥3 aparições): ${quentes.join(", ") || "nenhuma"}
