@@ -64,8 +64,8 @@ export function PastaSheet({
     const fetchUltimoConcurso = async () => {
       const { data } = await supabase
         .from("resultados_loterias")
-.eq("loteria", "lotofacil")
-.select("dezenas")
+        .eq("loteria", "lotofacil")
+        .select("dezenas")
         .order("concurso", { ascending: false })
         .limit(1)
         .single();

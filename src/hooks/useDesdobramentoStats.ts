@@ -27,8 +27,8 @@ export function useDesdobramentoStats() {
       // Para ímpares, precisamos calcular manualmente (15 - qtd_pares)
       const { data, error } = await supabase
         .from("resultados_loterias")
-.eq("loteria", "lotofacil")
-.select("concurso_id:concurso, qtd_pares")
+        .eq("loteria", "lotofacil")
+        .select("concurso_id:concurso, qtd_pares")
         .order("concurso", { ascending: false });
 
       if (error) throw error;
@@ -71,8 +71,8 @@ export function useDesdobramentoStats() {
 async function fetchStats(campo: "qtd_primos" | "qtd_repetidas" | "qtd_moldura"): Promise<EstatisticaItem[]> {
   const { data, error } = await supabase
     .from("resultados_loterias")
-.eq("loteria", "lotofacil")
-.select("concurso_id:concurso, qtd_primos, qtd_repetidas, qtd_moldura")
+    .eq("loteria", "lotofacil")
+    .select("concurso_id:concurso, qtd_primos, qtd_repetidas, qtd_moldura")
     .order("concurso", { ascending: false });
 
   if (error) throw error;

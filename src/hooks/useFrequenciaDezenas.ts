@@ -155,8 +155,8 @@ export function useFrequenciaDezenas(periodo: number) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("resultados_loterias")
-.eq("loteria", "lotofacil")
-.select("concurso_id:concurso, dezenas")
+        .eq("loteria", "lotofacil")
+        .select("concurso_id:concurso, dezenas")
         .order("concurso", { ascending: false })
         .limit(periodo);
 

@@ -48,8 +48,8 @@ export function useTabelaMovimentacao(limiteConcursos = 50) {
       // Buscar resultados
       const { data, error } = await supabase
         .from("resultados_loterias")
-.eq("loteria", "lotofacil")
-.select("concurso_id:concurso, data_sorteio, dezenas, ciclo_numero, dezenas_faltantes_ciclo, qtd_impares, qtd_primos, qtd_moldura, qtd_repetidas")
+        .eq("loteria", "lotofacil")
+        .select("concurso_id:concurso, data_sorteio, dezenas, ciclo_numero, dezenas_faltantes_ciclo, qtd_impares, qtd_primos, qtd_moldura, qtd_repetidas")
         .order("concurso", { ascending: false })
         .limit(limiteConcursos);
 
