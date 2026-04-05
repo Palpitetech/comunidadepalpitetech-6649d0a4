@@ -191,9 +191,10 @@ serve(async (req) => {
 
         // Buscar últimos resultados para contexto
         const { data: resultados } = await supabaseAdmin
-          .from("resultados")
-          .select("concurso_id, dezenas, data_sorteio")
-          .order("concurso_id", { ascending: false })
+          .from("resultados_loterias")
+.eq("loteria", "lotofacil")
+.select("concurso_id:concurso, dezenas, data_sorteio")
+          .order("concurso", { ascending: false })
           .limit(10);
 
         const contexto = resultados?.length

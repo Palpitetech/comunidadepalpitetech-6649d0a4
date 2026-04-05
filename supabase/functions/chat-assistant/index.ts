@@ -394,9 +394,10 @@ serve(async (req) => {
 
     if (topic === "estrategias") {
       const { data: resultados } = await userClient
-        .from("resultados")
-        .select("concurso_id, data_sorteio, dezenas, qtd_pares, qtd_impares, qtd_moldura, qtd_repetidas, ciclo_numero, dezenas_faltantes_ciclo")
-        .order("concurso_id", { ascending: false })
+        .from("resultados_loterias")
+.eq("loteria", "lotofacil")
+.select("concurso_id:concurso, data_sorteio, dezenas, qtd_pares, qtd_impares, qtd_moldura, qtd_repetidas, ciclo_numero, dezenas_faltantes_ciclo")
+        .order("concurso", { ascending: false })
         .limit(10);
 
       if (resultados?.length) {
@@ -411,8 +412,8 @@ serve(async (req) => {
     } else if (topic === "estrategias_megasena") {
       const { data: resultados } = await userClient
         .from("resultados_megasena")
-        .select("concurso_id, data_sorteio, dezenas, acumulou, valor_estimado_proximo, qtd_pares, qtd_impares, qtd_primos, qtd_moldura, qtd_repetidas")
-        .order("concurso_id", { ascending: false })
+        .select("concurso_id:concurso, data_sorteio, dezenas, acumulou, valor_estimado_proximo, qtd_pares, qtd_impares, qtd_primos, qtd_moldura, qtd_repetidas")
+        .order("concurso", { ascending: false })
         .limit(10);
 
       if (resultados?.length) {
@@ -427,8 +428,8 @@ serve(async (req) => {
     } else if (topic === "estrategias_duplasena") {
       const { data: resultados } = await userClient
         .from("resultados_duplasena" as any)
-        .select("concurso_id, data_sorteio, dezenas_sorteio1, dezenas_sorteio2, qtd_pares_s1, qtd_impares_s1, qtd_moldura_s1, qtd_repetidas_s1, qtd_pares_s2, qtd_impares_s2, qtd_moldura_s2, qtd_repetidas_s2")
-        .order("concurso_id", { ascending: false })
+        .select("concurso_id:concurso, data_sorteio, dezenas_sorteio1, dezenas_sorteio2, qtd_pares_s1, qtd_impares_s1, qtd_moldura_s1, qtd_repetidas_s1, qtd_pares_s2, qtd_impares_s2, qtd_moldura_s2, qtd_repetidas_s2")
+        .order("concurso", { ascending: false })
         .limit(10);
 
       if (resultados?.length) {
