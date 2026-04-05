@@ -114,17 +114,17 @@ export default function DesdobramentoDuplaSena() {
   // Buscar último sorteio (combinar dezenas de S1 e S2 para referência de repetidas)
   useEffect(() => {
     const fetchUltimoSorteio = async () => {
-      const { data } = await supabase
-        .from("resultados_duplasena")
-        .select("dezenas_sorteio1, dezenas_sorteio2")
-        .order("concurso_id", { ascending: false })
+      const { data } = await (supabase as any)
+        .from("resultados_loterias")
+        .select("dezenas, dezenas_sorteio2")
+        .eq("loteria", "duplasena")
+        .order("concurso", { ascending: false })
         .limit(1)
         .single();
       
       if (data) {
-        // Combinar dezenas únicas de ambos os sorteios
         const combinadas = [...new Set([
-          ...(data.dezenas_sorteio1 || []),
+          ...(data.dezenas || []),
           ...(data.dezenas_sorteio2 || [])
         ])];
         setUltimoSorteio(combinadas);

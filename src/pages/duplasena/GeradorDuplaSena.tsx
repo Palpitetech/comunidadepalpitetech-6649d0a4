@@ -40,16 +40,16 @@ export default function GeradorDuplaSena() {
   // Buscar último concurso
   useEffect(() => {
     const fetchUltimoConcurso = async () => {
-      const { data } = await supabase
-        .from("resultados_duplasena")
-        .select("dezenas_sorteio1, dezenas_sorteio2")
-        .order("concurso_id", { ascending: false })
+      const { data } = await (supabase as any)
+        .from("resultados_loterias")
+        .select("dezenas, dezenas_sorteio2")
+        .eq("loteria", "duplasena")
+        .order("concurso", { ascending: false })
         .limit(1)
         .single();
       
       if (data) {
-        // Combinar ambos os sorteios para destacar repetidas
-        const todasDezenas = [...(data.dezenas_sorteio1 || []), ...(data.dezenas_sorteio2 || [])];
+        const todasDezenas = [...(data.dezenas || []), ...(data.dezenas_sorteio2 || [])];
         setUltimoConcursoDezenas([...new Set(todasDezenas)]);
       }
     };
