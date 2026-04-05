@@ -454,3 +454,155 @@ async function handleSendNow(
     message: `Disparo agendado para ${groupJids.length} grupo(s) em 5 segundos`,
   });
 }
+
+// ─── PALPITE LOTOFÁCIL GENERATION ───────────────────────
+const MOLDURA_LF = [1, 2, 3, 4, 5, 6, 10, 11, 15, 16, 20, 21, 22, 23, 24, 25];
+const PRIMOS_LF = [2, 3, 5, 7, 11, 13, 17, 19, 23];
+
+async function generatePalpiteMessage(
+  supabase: any,
+  apiKey: string,
+  baseUrl: string
+): Promise<string | null> {
+  if (!apiKey) {
+    console.error("[group-blast] LOVABLE_API_KEY não configurada");
+    return null;
+  }
+
+  // Fetch last 5 results
+  const { data: resultados, error: resErr } = await supabase
+    .from("resultados_loterias")
+    .select("concurso, data_sorteio, dezenas")
+    .eq("loteria", "lotofacil")
+    .order("concurso", { ascending: false })
+    .limit(5);
+
+  if (resErr || !resultados || resultados.length === 0) {
+    console.error("[group-blast] Erro ao buscar resultados:", resErr?.message);
+    return null;
+  }
+
+  // Calculate stats
+  const freq: Record<number, number> = {};
+  for (let d = 1; d <= 25; d++) freq[d] = 0;
+  for (const r of resultados) {
+    for (const d of r.dezenas) freq[d]++;
+  }
+
+  const quentes = Object.entries(freq)
+    .filter(([, v]) => v >= 3)
+    .map(([k]) => Number(k))
+    .sort((a, b) => a - b);
+  const frias = Object.entries(freq)
+    .filter(([, v]) => v <= 1)
+    .map(([k]) => Number(k))
+    .sort((a, b) => a - b);
+
+  const avgPares = resultados.reduce((s: number, r: any) => s + r.dezenas.filter((d: number) => d % 2 === 0).length, 0) / resultados.length;
+  const avgMoldura = resultados.reduce((s: number, r: any) => s + r.dezenas.filter((d: number) => MOLDURA_LF.includes(d)).length, 0) / resultados.length;
+  const avgPrimos = resultados.reduce((s: number, r: any) => s + r.dezenas.filter((d: number) => PRIMOS_LF.includes(d)).length, 0) / resultados.length;
+
+  const concursoMin = resultados[resultados.length - 1].concurso;
+  const concursoMax = resultados[0].concurso;
+
+  const statsText = `Últimos 5 concursos (${concursoMin} a ${concursoMax}):
+- Dezenas quentes (≥3 aparições): ${quentes.join(", ") || "nenhuma"}
+- Dezenas frias (≤1 aparição): ${frias.join(", ") || "nenhuma"}  
+- Média pares: ${avgPares.toFixed(1)} | Média moldura: ${avgMoldura.toFixed(1)} | Média primos: ${avgPrimos.toFixed(1)}
+- Resultados: ${resultados.map((r: any) => `C${r.concurso}: [${r.dezenas.sort((a: number, b: number) => a - b).join(",")}]`).join(" | ")}`;
+
+  const prompt = `Você é um especialista em Lotofácil.
+Baseado na análise estatística dos 5 últimos concursos, gere EXATAMENTE 15 jogos de 15 dezenas cada (1 a 25).
+
+${statsText}
+
+Regras obrigatórias para os jogos:
+- Cada jogo deve ter EXATAMENTE 15 dezenas únicas de 1 a 25
+- Priorize dezenas quentes mas distribua frias para equilíbrio
+- Mantenha entre 7-8 pares por jogo
+- Mantenha entre 9-11 dezenas de moldura por jogo
+- Todos os 15 jogos devem ser diferentes entre si
+- Ordene as dezenas de cada jogo em ordem crescente
+- Formate cada dezena com 2 dígitos (01, 02, ... 25)
+
+Responda EXATAMENTE neste formato (sem explicação extra):
+ESTRATEGIA: [resumo de 2 linhas da estratégia usada, mencionando os concursos analisados]
+JOGO01: 01-02-03-04-05-06-07-08-09-10-11-12-13-14-15
+JOGO02: ...
+...
+JOGO15: ...`;
+
+  try {
+    const aiRes = await fetch(
+      "https://ai.gateway.lovable.dev/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            {
+              role: "system",
+              content: "Você gera palpites de Lotofácil com base em análise estatística. Siga o formato pedido rigorosamente.",
+            },
+            { role: "user", content: prompt },
+          ],
+        }),
+      }
+    );
+
+    if (!aiRes.ok) {
+      console.error(`[group-blast] AI palpite error: ${aiRes.status}`, await aiRes.text());
+      return null;
+    }
+
+    const aiData = await aiRes.json();
+    const rawContent = aiData?.choices?.[0]?.message?.content?.trim();
+    if (!rawContent) return null;
+
+    // Parse response
+    const lines = rawContent.split("\n").map((l: string) => l.trim()).filter((l: string) => l);
+    
+    let estrategia = "";
+    const jogos: string[] = [];
+
+    for (const line of lines) {
+      if (line.toUpperCase().startsWith("ESTRATEGIA:") || line.toUpperCase().startsWith("ESTRATÉGIA:")) {
+        estrategia = line.replace(/^ESTRAT[EÉ]GIA:\s*/i, "").trim();
+      } else if (/^JOGO\d{1,2}:/i.test(line)) {
+        const nums = line.replace(/^JOGO\d{1,2}:\s*/i, "").trim();
+        // Validate: must have 15 numbers
+        const dezenas = nums.split(/[-,\s]+/).map(Number).filter(n => n >= 1 && n <= 25);
+        const unique = [...new Set(dezenas)];
+        if (unique.length === 15) {
+          jogos.push(unique.sort((a, b) => a - b).map(d => String(d).padStart(2, "0")).join("-"));
+        }
+      }
+    }
+
+    if (jogos.length < 10) {
+      console.error(`[group-blast] IA retornou apenas ${jogos.length} jogos válidos`);
+      return null;
+    }
+
+    // Format WhatsApp message
+    const linkUrl = `${baseUrl}/lotofacil`;
+    let msg = `🎰 *Palpites Lotofácil — Concurso ${concursoMax + 1}*\n\n`;
+    msg += `📊 *Estratégia baseada nos 5 últimos concursos (${concursoMin} a ${concursoMax}):*\n`;
+    msg += `${estrategia || `Análise de frequência: quentes [${quentes.join(",")}], frias [${frias.join(",")}]`}\n\n`;
+
+    for (let i = 0; i < jogos.length; i++) {
+      msg += `🎯 Jogo ${String(i + 1).padStart(2, "0")}: ${jogos[i]}\n`;
+    }
+
+    msg += `\nBoa sorte! 🍀\nMais análises na comunidade 👇\n${linkUrl}?utm=grupo`;
+
+    return msg;
+  } catch (err: any) {
+    console.error("[group-blast] Palpite generation error:", err.message);
+    return null;
+  }
+}
