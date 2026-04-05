@@ -43,6 +43,7 @@ const emptyForm: FormData = {
   phone_number: "",
   evolution_instance_id: "",
   daily_limit: 100,
+  cooldown_queue: [3],
 };
 
 async function callEvolution(action: string, instanceName?: string) {
