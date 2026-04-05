@@ -49,14 +49,14 @@ export function TabelaEstatisticaGenerica({ config }: Props) {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("resultados_loterias")
-        .select(`concurso_id, ${config.campoDb}`)
+        .select(`concurso, ${config.campoDb}`)
         .eq("loteria", "lotofacil")
         .order("concurso", { ascending: false });
 
       if (error) throw error;
       if (!data || data.length === 0) return [];
 
-      const concursoMaisRecente = data[0].concurso_id;
+      const concursoMaisRecente = data[0].concurso;
       const totalConcursos = data.length;
 
       // Agrupar por quantidade
@@ -73,7 +73,7 @@ export function TabelaEstatisticaGenerica({ config }: Props) {
           agrupado.set(qtd, {
             valor: qtd,
             ocorrencias: 0,
-            ultimaOcorrencia: r.concurso_id,
+            ultimaOcorrencia: r.concurso,
           });
         }
         
