@@ -25,10 +25,22 @@ export interface DezenaScore {
   estado: "quente" | "neutro" | "frio";
 }
 
+export interface JogoStats {
+  pares: number;
+  impares: number;
+  primos: number;
+  moldura: number;
+  soma: number;
+  repetidas: number;
+  quentes: number;
+  frios: number;
+}
+
 export interface GravacaoJogo {
   dezenas: number[];
   label: string;
   tipo: "recomendado" | "forca" | "oportunidade";
+  stats: JogoStats;
 }
 
 export interface EstatisticaItem {
@@ -183,7 +195,20 @@ function montarJogo(
   return sorted.slice(0, 15).map(s => s.dezena).sort((a, b) => a - b);
 }
 
-function gerarJogos(scores: DezenaScore[]): GravacaoJogo[] {
+function calcJogoStats(dezenas: number[], scores: DezenaScore[], dezenasAnteriores?: number[]): JogoStats {
+  return {
+    pares: contarPares(dezenas),
+    impares: contarImpares(dezenas),
+    primos: contarPrimos(dezenas),
+    moldura: contarMoldura(dezenas),
+    soma: calcularSoma(dezenas),
+    repetidas: dezenasAnteriores ? contarRepetidas(dezenas, dezenasAnteriores) : 0,
+    quentes: dezenas.filter(d => scores.find(s => s.dezena === d)?.estado === "quente").length,
+    frios: dezenas.filter(d => scores.find(s => s.dezena === d)?.estado === "frio").length,
+  };
+}
+
+function gerarJogos(scores: DezenaScore[], dezenasAnteriores?: number[]): GravacaoJogo[] {
   const recomendado = montarJogo(scores, s => s.scoreFinal);
   const forca = montarJogo(scores, s => s.scoreOcorrencia);
   const oportunidade = montarJogo(
@@ -192,9 +217,9 @@ function gerarJogos(scores: DezenaScore[]): GravacaoJogo[] {
   );
 
   return [
-    { dezenas: recomendado, label: "Recomendado", tipo: "recomendado" },
-    { dezenas: forca, label: "Alternativa 1", tipo: "forca" },
-    { dezenas: oportunidade, label: "Alternativa 2", tipo: "oportunidade" },
+    { dezenas: recomendado, label: "Recomendado", tipo: "recomendado", stats: calcJogoStats(recomendado, scores, dezenasAnteriores) },
+    { dezenas: forca, label: "Alternativa 1", tipo: "forca", stats: calcJogoStats(forca, scores, dezenasAnteriores) },
+    { dezenas: oportunidade, label: "Alternativa 2", tipo: "oportunidade", stats: calcJogoStats(oportunidade, scores, dezenasAnteriores) },
   ];
 }
 
@@ -262,7 +287,7 @@ export function useGravacaoData() {
 
       // V3 scoring
       const scores = calcularScores(concursos);
-      const jogos = gerarJogos(scores);
+      const jogos = gerarJogos(scores, anterior?.dezenas);
 
       // Format date
       let dataFormatada = "";
