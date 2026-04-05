@@ -469,12 +469,11 @@ async function generatePalpiteMessage(
     return null;
   }
 
-  // Fetch last 5 results
+  // Fetch last 5 results (same source as Gerador)
   const { data: resultados, error: resErr } = await supabase
-    .from("resultados_loterias")
-    .select("concurso, data_sorteio, dezenas")
-    .eq("loteria", "lotofacil")
-    .order("concurso", { ascending: false })
+    .from("resultados")
+    .select("concurso_id, data_sorteio, dezenas")
+    .order("concurso_id", { ascending: false })
     .limit(5);
 
   if (resErr || !resultados || resultados.length === 0) {
