@@ -342,9 +342,26 @@ export function useGravacaoData() {
         dataFormatada = d.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
       }
 
-      const premiacaoFormatada = ultimo.valor_premio_principal
-        ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(ultimo.valor_premio_principal)
-        : "—";
+      // Calculate total prize from premiacao_json if available
+      let premiacaoTotal = 0;
+      const { data: premData } = await (supabase as any)
+        .from("resultados_loterias")
+        .select("premiacao_json")
+        .eq("loteria", "lotofacil")
+        .eq("concurso", ultimo.concurso)
+        .single();
+
+      if (premData?.premiacao_json && Array.isArray(premData.premiacao_json) && premData.premiacao_json.length > 0) {
+        premiacaoTotal = premData.premiacao_json.reduce((sum: number, f: any) => {
+          return sum + ((f.ganhadores ?? 0) * (f.valorPremio ?? 0));
+        }, 0);
+      }
+
+      const premiacaoFormatada = premiacaoTotal > 0
+        ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(premiacaoTotal)
+        : ultimo.valor_premio_principal
+          ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(ultimo.valor_premio_principal)
+          : "—";
 
       return {
         concurso: ultimo.concurso,
