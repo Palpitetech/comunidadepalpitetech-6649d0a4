@@ -13,6 +13,8 @@ export default function GravacaoShell({ children, concurso, data }: GravacaoShel
   const total = children.length;
   const navigate = useNavigate();
   const touchStartX = useRef(0);
+  const watermarkRows = Array.from({ length: 16 }, (_, rowIndex) => rowIndex);
+  const watermarkColumns = Array.from({ length: 10 }, (_, columnIndex) => columnIndex);
 
   const goTo = useCallback(
     (dir: 1 | -1) =>
@@ -82,34 +84,22 @@ export default function GravacaoShell({ children, concurso, data }: GravacaoShel
         </div>
       )}
 
-      {/* Watermark overlay — anti-screenshot, full page coverage */}
-      <div
-        className="absolute inset-0 pointer-events-none overflow-hidden"
-        style={{ opacity: 0.06, zIndex: 45 }}
-      >
-        <div
-          className="absolute"
-          style={{
-            width: "300%",
-            height: "300%",
-            top: "-100%",
-            left: "-100%",
-            transform: "rotate(-30deg)",
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, 220px)",
-            gridAutoRows: "50px",
-            alignItems: "center",
-            justifyItems: "center",
-          }}
-        >
-          {Array.from({ length: 200 }, (_, i) => (
-            <span
-              key={i}
-              className="text-white font-bold whitespace-nowrap"
-              style={{ fontSize: "16px", letterSpacing: "0.15em" }}
+      <div className="absolute inset-0 z-40 pointer-events-none overflow-hidden" aria-hidden="true">
+        <div className="absolute left-1/2 top-1/2 flex min-h-[180vh] w-[180vw] -translate-x-1/2 -translate-y-1/2 -rotate-[28deg] flex-col justify-center gap-8">
+          {watermarkRows.map((rowIndex) => (
+            <div
+              key={rowIndex}
+              className={`flex gap-8 whitespace-nowrap ${rowIndex % 2 === 0 ? "-translate-x-12" : "translate-x-6"}`}
             >
-              PALPITE TECH
-            </span>
+              {watermarkColumns.map((columnIndex) => (
+                <span
+                  key={`${rowIndex}-${columnIndex}`}
+                  className="text-sm font-black tracking-[0.45em] text-white/10 md:text-base"
+                >
+                  PALPITE TECH
+                </span>
+              ))}
+            </div>
           ))}
         </div>
       </div>
