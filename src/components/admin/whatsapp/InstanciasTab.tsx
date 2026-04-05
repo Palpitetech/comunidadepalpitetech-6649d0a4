@@ -401,6 +401,58 @@ export function InstanciasTab() {
                   <Label htmlFor="daily_limit">Limite diário de mensagens *</Label>
                   <Input id="daily_limit" type="number" min={1} value={form.daily_limit} onChange={(e) => setForm((f) => ({ ...f, daily_limit: parseInt(e.target.value) || 1 }))} />
                 </div>
+                <div className="space-y-2">
+                  <Label>Fila de descanso (minutos) — ciclo rotativo</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Após cada envio, a instância descansa pelo tempo atual e avança para o próximo. Máximo 10 tempos.
+                  </p>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    {form.cooldown_queue.map((val, idx) => (
+                      <div key={idx} className="flex items-center gap-1">
+                        <Input
+                          type="number"
+                          min={1}
+                          max={60}
+                          className="w-16 h-8 text-xs text-center"
+                          value={val}
+                          onChange={(e) => {
+                            const newQueue = [...form.cooldown_queue];
+                            newQueue[idx] = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
+                            setForm((f) => ({ ...f, cooldown_queue: newQueue }));
+                          }}
+                        />
+                        {form.cooldown_queue.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-destructive hover:text-destructive"
+                            onClick={() => {
+                              const newQueue = form.cooldown_queue.filter((_, i) => i !== idx);
+                              setForm((f) => ({ ...f, cooldown_queue: newQueue }));
+                            }}
+                          >
+                            ×
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                    {form.cooldown_queue.length < 10 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={() => setForm((f) => ({ ...f, cooldown_queue: [...f.cooldown_queue, 3] }))}
+                      >
+                        <Plus className="h-3 w-3 mr-1" /> Adicionar
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Ciclo: {form.cooldown_queue.map((v) => `${v}min`).join(" → ")} → volta ao início
+                  </p>
+                </div>
                 <Button className="w-full" onClick={handleSave} disabled={saving}>
                   {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                   {editingId ? "Salvar Alterações" : "Criar Instância"}
