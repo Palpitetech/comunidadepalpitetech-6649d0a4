@@ -73,7 +73,7 @@ export function TabelaEstatisticaGenerica({ config }: Props) {
           agrupado.set(qtd, {
             valor: qtd,
             ocorrencias: 0,
-            ultimaOcorrencia: r.concurso_id,
+            ultimaOcorrencia: r.concurso,
           });
         }
         
