@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
     const apiResponse = await fetch(latestUrl);
     if (!apiResponse.ok) throw new Error(`Erro ao buscar API: ${apiResponse.status}`);
     const ultimoResultado = await apiResponse.json();
-    const ultimoConcursoAPI = ultimoResultado.numero_concurso;
+    const ultimoConcursoAPI = extrairNumeroConcurso(ultimoResultado);
     console.log("Último concurso API:", ultimoConcursoAPI);
 
     // Concurso específico
