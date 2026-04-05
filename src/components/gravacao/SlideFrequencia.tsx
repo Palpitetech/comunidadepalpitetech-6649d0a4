@@ -14,7 +14,7 @@ export default function SlideFrequencia({ frequenciaDezenas }: SlideFrequenciaPr
     <div className="flex w-full h-full gap-6">
       {/* Left 30%: Grid 5x5 */}
       <div className="w-[30%] flex flex-col items-center justify-center">
-        <p className="text-white/50 text-sm mb-4 tracking-wide text-center">
+        <p className="text-purple-300/60 text-sm mb-4 tracking-wide text-center">
           Frequência — Últimos 5
         </p>
         <div className="grid grid-cols-5 gap-1.5">
@@ -62,7 +62,7 @@ export default function SlideFrequencia({ frequenciaDezenas }: SlideFrequenciaPr
       <div className="w-[70%] flex flex-col justify-center gap-6">
         {/* Quentes */}
         <div>
-          <p className="text-white/70 text-sm font-semibold mb-3 flex items-center gap-2">
+          <p className="text-purple-300 text-sm font-semibold mb-3 flex items-center gap-2">
             🔥 Dezenas Quentes
           </p>
           <div className="grid grid-cols-2 gap-1.5">
@@ -91,7 +91,7 @@ export default function SlideFrequencia({ frequenciaDezenas }: SlideFrequenciaPr
 
         {/* Frias */}
         <div>
-          <p className="text-white/70 text-sm font-semibold mb-3 flex items-center gap-2">
+          <p className="text-purple-300 text-sm font-semibold mb-3 flex items-center gap-2">
             ❄️ Dezenas Frias
           </p>
           <div className="grid grid-cols-2 gap-1.5">

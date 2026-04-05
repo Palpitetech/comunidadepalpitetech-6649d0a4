@@ -39,7 +39,7 @@ export default function GravacaoShell({ children }: GravacaoShellProps) {
   return (
     <div
       className="fixed inset-0 overflow-hidden select-none"
-      style={{ background: "#0B0F1A", width: "100vw", height: "100vh" }}
+      style={{ background: "#0D0B1F", width: "100vw", height: "100vh" }}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
@@ -52,8 +52,20 @@ export default function GravacaoShell({ children }: GravacaoShellProps) {
       </button>
 
       {/* Slide indicator */}
-      <div className="absolute bottom-4 right-6 z-50 text-white/40 text-sm font-mono">
+      <div className="absolute bottom-4 right-6 z-50 text-purple-300/50 text-sm font-mono">
         {slide + 1} / {total}
+      </div>
+
+      {/* Dot indicators */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex gap-2">
+        {Array.from({ length: total }, (_, i) => (
+          <div
+            key={i}
+            className={`w-2 h-2 rounded-full transition-all ${
+              i === slide ? "bg-purple-500 scale-125" : "bg-white/20"
+            }`}
+          />
+        ))}
       </div>
 
       {/* Slides track */}
