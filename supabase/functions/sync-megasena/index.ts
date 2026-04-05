@@ -44,6 +44,24 @@ function converterDataBR(dataBR: string): string {
   return dataBR;
 }
 
+function extrairNumeroConcurso(r: any): number {
+  if (typeof r.concurso === 'number') return r.concurso;
+  if (typeof r.concurso === 'string') return parseInt(r.concurso, 10);
+  if (typeof r.numero === 'number') return r.numero;
+  if (typeof r.numero === 'string') return parseInt(r.numero, 10);
+  if (typeof r.numero_concurso === 'number') return r.numero_concurso;
+  if (typeof r.numero_concurso === 'string') return parseInt(r.numero_concurso, 10);
+  return 0;
+}
+
+function extrairData(r: any): string {
+  const campos = ['data', 'data_sorteio', 'dataApuracao', 'dataSorteio', 'data_concurso', 'dataConcurso'];
+  for (const campo of campos) {
+    if (r[campo] && typeof r[campo] === 'string') return converterDataBR(r[campo]);
+  }
+  return new Date().toISOString().split('T')[0];
+}
+
 const LOTERIA = "megasena";
 const TABLE = "resultados_loterias";
 
@@ -76,8 +94,8 @@ Deno.serve(async (req) => {
     function buildRegistro(resultado: any, dezenas: number[], indicadores: ReturnType<typeof calcularIndicadores>) {
       return {
         loteria: LOTERIA,
-        concurso: resultado.numero_concurso,
-        data_sorteio: converterDataBR(resultado.data_concurso),
+        concurso: extrairNumeroConcurso(resultado),
+        data_sorteio: extrairData(resultado),
         dezenas,
         acumulou: resultado.acumulou ?? false,
         valor_acumulado: resultado.valor_acumulado || null,
