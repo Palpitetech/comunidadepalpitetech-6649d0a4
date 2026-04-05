@@ -137,6 +137,8 @@ export function DisparoGrupoTab() {
     setFormGroupJids([""]);
     setFormSlots([createEmptySlot(1)]);
     setFormActive(true);
+    setFormIncludePalpites(true);
+    setFormVipGroupLink("");
     setFormTimeInputs({ slot_1: "12:00" });
     setDialogOpen(true);
   }
@@ -155,6 +157,8 @@ export function DisparoGrupoTab() {
       : [createEmptySlot(1)];
     setFormSlots(slots);
     setFormActive(config.is_active);
+    setFormIncludePalpites(config.include_palpites ?? true);
+    setFormVipGroupLink(config.vip_group_link || "");
     const inputs: Record<string, string> = {};
     slots.forEach(s => { inputs[s.id] = "12:00"; });
     setFormTimeInputs(inputs);
