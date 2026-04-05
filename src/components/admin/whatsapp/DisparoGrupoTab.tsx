@@ -245,6 +245,8 @@ export function DisparoGrupoTab() {
       group_jids: cleanJids,
       slots: slotsPayload,
       is_active: formActive,
+      include_palpites: formIncludePalpites,
+      vip_group_link: formVipGroupLink.trim() || null,
       updated_at: new Date().toISOString(),
     };
 
