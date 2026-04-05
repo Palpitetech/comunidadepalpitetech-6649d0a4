@@ -2772,7 +2772,6 @@ export type Database = {
           id: string
           last_message_at: string | null
           messages_sent_today: number | null
-          min_cooldown_minutes: number
           name: string
           phone_number: string
           status: string | null
@@ -2787,7 +2786,6 @@ export type Database = {
           id?: string
           last_message_at?: string | null
           messages_sent_today?: number | null
-          min_cooldown_minutes?: number
           name: string
           phone_number: string
           status?: string | null
@@ -2802,7 +2800,6 @@ export type Database = {
           id?: string
           last_message_at?: string | null
           messages_sent_today?: number | null
-          min_cooldown_minutes?: number
           name?: string
           phone_number?: string
           status?: string | null
@@ -3004,6 +3001,10 @@ export type Database = {
         Returns: undefined
       }
       register_instance_usage: {
+        Args: { p_instance_id: string }
+        Returns: undefined
+      }
+      register_warming_usage: {
         Args: { p_instance_id: string }
         Returns: undefined
       }

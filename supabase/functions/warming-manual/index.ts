@@ -178,6 +178,8 @@ async function runWarmingPair(
 
       if (res.ok) {
         sent++;
+        // Register warming usage (advances cooldown index but does NOT consume daily quota)
+        await supabase.rpc("register_warming_usage", { p_instance_id: fromInstance.id });
         await supabase.from("warming_logs").insert({
           from_instance_id: fromInstance.id,
           to_instance_id: toInstance.id,

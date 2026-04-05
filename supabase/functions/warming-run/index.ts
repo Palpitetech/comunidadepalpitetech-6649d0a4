@@ -420,8 +420,8 @@ async function actionSend() {
           sent_at: new Date().toISOString(),
         });
 
-        // Centralized usage registration
-        await supabase.rpc("register_instance_usage", { p_instance_id: msg.from_instance_id });
+        // Warming usage: advances cooldown index but does NOT consume daily quota
+        await supabase.rpc("register_warming_usage", { p_instance_id: msg.from_instance_id });
 
         sent++;
         console.log(`[send] Sent message ${msg.id} via ${msg.from_evolution_id}`);
