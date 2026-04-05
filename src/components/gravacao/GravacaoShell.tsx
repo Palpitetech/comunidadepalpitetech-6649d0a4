@@ -84,8 +84,8 @@ export default function GravacaoShell({ children, concurso, data }: GravacaoShel
 
       {/* Watermark overlay — anti-screenshot, full page coverage */}
       <div
-        className="absolute inset-0 z-40 pointer-events-none overflow-hidden"
-        style={{ opacity: 0.04 }}
+        className="absolute inset-0 pointer-events-none overflow-hidden"
+        style={{ opacity: 0.06, zIndex: 45 }}
       >
         <div
           className="absolute"
