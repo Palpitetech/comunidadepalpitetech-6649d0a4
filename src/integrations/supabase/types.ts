@@ -2763,6 +2763,8 @@ export type Database = {
       }
       whatsapp_instances: {
         Row: {
+          cooldown_queue: Json
+          cooldown_queue_index: number
           created_at: string | null
           daily_limit: number | null
           evolution_instance_id: string
@@ -2776,6 +2778,8 @@ export type Database = {
           status: string | null
         }
         Insert: {
+          cooldown_queue?: Json
+          cooldown_queue_index?: number
           created_at?: string | null
           daily_limit?: number | null
           evolution_instance_id: string
@@ -2789,6 +2793,8 @@ export type Database = {
           status?: string | null
         }
         Update: {
+          cooldown_queue?: Json
+          cooldown_queue_index?: number
           created_at?: string | null
           daily_limit?: number | null
           evolution_instance_id?: string
