@@ -10,7 +10,7 @@ interface SlideProducaoProps {
 export default function SlideProducao({ concurso, data, premiacao }: SlideProducaoProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  const titulo = `Resultado e Análise Lotofácil #${concurso} - 3 Palpites grátis`;
+  const titulo = `RESULTADO LOTOFÁCIL HOJE #${concurso} (${data}) | Palpites Grátis`;
 
   const descricao = `🍀 Resultado Lotofácil Concurso ${concurso} | Análise Completa + 3 Palpites Grátis
 
