@@ -287,7 +287,7 @@ export function useGravacaoData() {
 
       // V3 scoring
       const scores = calcularScores(concursos);
-      const jogos = gerarJogos(scores);
+      const jogos = gerarJogos(scores, anterior?.dezenas);
 
       // Format date
       let dataFormatada = "";
