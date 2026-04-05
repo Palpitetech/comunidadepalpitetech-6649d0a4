@@ -4,9 +4,11 @@ import { ArrowLeft } from "lucide-react";
 
 interface GravacaoShellProps {
   children: ReactNode[];
+  concurso?: number;
+  data?: string;
 }
 
-export default function GravacaoShell({ children }: GravacaoShellProps) {
+export default function GravacaoShell({ children, concurso, data }: GravacaoShellProps) {
   const [slide, setSlide] = useState(0);
   const total = children.length;
   const navigate = useNavigate();
@@ -55,6 +57,30 @@ export default function GravacaoShell({ children }: GravacaoShellProps) {
       <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 text-purple-300/60 text-xs md:text-sm tracking-wide font-medium">
         Palpite Tech — Análise de tendências para Loterias Caixa
       </div>
+
+      {/* Fixed concurso header */}
+      {concurso && (
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 md:gap-3">
+          <span
+            className="text-lg md:text-2xl font-extrabold tracking-tight"
+            style={{
+              background: "linear-gradient(135deg, #A78BFA, #7C3AED)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
+            LOTOFÁCIL
+          </span>
+          <span className="text-purple-400/60 text-lg md:text-2xl font-light">—</span>
+          <span className="text-purple-300 font-bold text-lg md:text-2xl">#{concurso}</span>
+          {data && (
+            <>
+              <span className="text-purple-400/60 text-lg md:text-2xl font-light">—</span>
+              <span className="text-white/50 text-sm md:text-base capitalize">{data}</span>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Footer CTA */}
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50 text-purple-300/40 text-[10px] md:text-xs text-center max-w-xl">
