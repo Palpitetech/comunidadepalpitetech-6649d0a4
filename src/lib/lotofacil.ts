@@ -149,11 +149,15 @@ export interface IndicadoresConcurso {
   qtdMoldura: number;
   qtdPrimos: number;
   qtdRepetidas: number;
+  qtdFibonacci: number;
+  soma: number;
+  sequencias: number;
   dezenasPares: number[];
   dezenasImpares: number[];
   dezenasMoldura: number[];
   dezenasPrimos: number[];
   dezenasRepetidas: number[];
+  dezenasFibonacci: number[];
 }
 
 export function calcularIndicadores(
@@ -164,6 +168,7 @@ export function calcularIndicadores(
   const dezenasImpares = dezenas.filter(isImpar);
   const dezenasMoldura = dezenas.filter(isMoldura);
   const dezenasPrimos = dezenas.filter(isPrimo);
+  const dezenasFibonacci = dezenas.filter(isFibonacci);
   const dezenasRepetidas = dezenasAnteriores
     ? getRepetidas(dezenas, dezenasAnteriores)
     : [];
@@ -174,11 +179,15 @@ export function calcularIndicadores(
     qtdMoldura: dezenasMoldura.length,
     qtdPrimos: dezenasPrimos.length,
     qtdRepetidas: dezenasRepetidas.length,
+    qtdFibonacci: dezenasFibonacci.length,
+    soma: calcularSoma(dezenas),
+    sequencias: contarSequencias(dezenas),
     dezenasPares,
     dezenasImpares,
     dezenasMoldura,
     dezenasPrimos,
-    dezenasRepetidas
+    dezenasRepetidas,
+    dezenasFibonacci,
   };
 }
 
@@ -230,10 +239,22 @@ export function ordenarDezenas(dezenas: number[]): number[] {
 export const MULTIPLOS_DE_3_LOTOFACIL: number[] = [3, 6, 9, 12, 15, 18, 21, 24];
 
 /**
+ * Sequência de Fibonacci dentro do universo Lotofácil (1-25)
+ */
+export const FIBONACCI_LOTOFACIL: number[] = [1, 2, 3, 5, 8, 13, 21];
+
+/**
  * Verifica se um número é múltiplo de 3
  */
 export function isMultiploDe3(numero: number): boolean {
   return numero % 3 === 0;
+}
+
+/**
+ * Verifica se um número pertence à sequência de Fibonacci
+ */
+export function isFibonacci(numero: number): boolean {
+  return FIBONACCI_LOTOFACIL.includes(numero);
 }
 
 /**
@@ -244,10 +265,36 @@ export function contarMultiplosDe3(dezenas: number[]): number {
 }
 
 /**
+ * Conta quantas dezenas pertencem à sequência de Fibonacci
+ */
+export function contarFibonacci(dezenas: number[]): number {
+  return dezenas.filter(isFibonacci).length;
+}
+
+/**
  * Retorna quais dezenas são múltiplos de 3
  */
 export function getMultiplosDe3(dezenas: number[]): number[] {
   return dezenas.filter(isMultiploDe3);
+}
+
+/**
+ * Soma de todas as dezenas
+ */
+export function calcularSoma(dezenas: number[]): number {
+  return dezenas.reduce((a, b) => a + b, 0);
+}
+
+/**
+ * Conta pares consecutivos nas dezenas ordenadas
+ */
+export function contarSequencias(dezenas: number[]): number {
+  const sorted = [...dezenas].sort((a, b) => a - b);
+  let count = 0;
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] === sorted[i - 1] + 1) count++;
+  }
+  return count;
 }
 
 // =============================================================================

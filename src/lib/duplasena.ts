@@ -321,6 +321,8 @@ export interface IndicadoresSorteio {
   qtdPrimos: number;
   qtdRepetidas: number;
   qtdFibonacci: number;
+  soma: number;
+  sequencias: number;
   dezenasPares: number[];
   dezenasImpares: number[];
   dezenasMoldura: number[];
@@ -361,6 +363,8 @@ export function calcularIndicadoresSorteio(
     qtdPrimos: dezenasPrimos.length,
     qtdRepetidas: dezenasRepetidas.length,
     qtdFibonacci: dezenasFibonacci.length,
+    soma: calcularSoma(dezenas),
+    sequencias: contarSequencias(dezenas),
     dezenasPares,
     dezenasImpares,
     dezenasMoldura,
