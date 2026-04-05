@@ -6,6 +6,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const MOLDURA_LOTOFACIL = [1, 2, 3, 4, 5, 6, 10, 11, 15, 16, 20, 21, 22, 23, 24, 25];
 const PRIMOS_LOTOFACIL = [2, 3, 5, 7, 11, 13, 17, 19, 23];
+const FIBONACCI_LOTOFACIL = [1, 2, 3, 5, 8, 13, 21];
 const TOTAL_DEZENAS = 25;
 
 // =============================================================================
@@ -406,14 +407,22 @@ async function fetchWithRetry(
 // =============================================================================
 
 function calcularIndicadores(dezenas: number[], dezenasAnteriores?: number[]) {
+  const sorted = [...dezenas].sort((a, b) => a - b);
+  let seqCount = 0;
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] === sorted[i - 1] + 1) seqCount++;
+  }
   return {
     qtd_pares: dezenas.filter(d => d % 2 === 0).length,
     qtd_impares: dezenas.filter(d => d % 2 !== 0).length,
     qtd_moldura: dezenas.filter(d => MOLDURA_LOTOFACIL.includes(d)).length,
     qtd_primos: dezenas.filter(d => PRIMOS_LOTOFACIL.includes(d)).length,
+    qtd_fibonacci: dezenas.filter(d => FIBONACCI_LOTOFACIL.includes(d)).length,
     qtd_repetidas: dezenasAnteriores 
       ? dezenas.filter(d => dezenasAnteriores.includes(d)).length 
-      : 0
+      : 0,
+    soma: dezenas.reduce((a, b) => a + b, 0),
+    sequencias: seqCount,
   };
 }
 
