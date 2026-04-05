@@ -49,7 +49,7 @@ export function TabelaEstatisticaGenerica({ config }: Props) {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("resultados_loterias")
-        .select(`concurso_id, ${config.campoDb}`)
+        .select(`concurso, ${config.campoDb}`)
         .eq("loteria", "lotofacil")
         .order("concurso", { ascending: false });
 
