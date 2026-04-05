@@ -90,7 +90,8 @@ export function PalpiteCard({
     try {
       const { data } = await supabase
         .from("resultados_loterias")
-        .select("concurso_id:concurso, data_sorteio, dezenas")
+.eq("loteria", "lotofacil")
+.select("concurso_id:concurso, data_sorteio, dezenas")
         .order("concurso", { ascending: false })
         .limit(30);
       

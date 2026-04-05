@@ -34,7 +34,8 @@ export function TabelaLinhaColunaIndividual({ tipo, indice }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("resultados_loterias")
-        .select("concurso_id:concurso, dezenas")
+.eq("loteria", "lotofacil")
+.select("concurso_id:concurso, dezenas")
         .order("concurso", { ascending: false });
 
       if (error) throw error;

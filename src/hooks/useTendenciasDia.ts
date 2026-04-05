@@ -149,7 +149,8 @@ export function useTendenciasDia(periodo: number) {
       // Buscar período + 1 para calcular repetidas
       const { data, error } = await supabase
         .from("resultados_loterias")
-        .select("concurso_id:concurso, dezenas, data_sorteio, qtd_pares, qtd_moldura, qtd_repetidas, qtd_primos")
+.eq("loteria", "lotofacil")
+.select("concurso_id:concurso, dezenas, data_sorteio, qtd_pares, qtd_moldura, qtd_repetidas, qtd_primos")
         .order("concurso", { ascending: false })
         .limit(periodo + 1);
 

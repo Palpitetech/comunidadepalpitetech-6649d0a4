@@ -229,7 +229,8 @@ export default function Desdobramento() {
     const fetchUltimoSorteio = async () => {
       const { data } = await supabase
         .from("resultados_loterias")
-        .select("dezenas")
+.eq("loteria", "lotofacil")
+.select("dezenas")
         .order("concurso", { ascending: false })
         .limit(1)
         .single();
