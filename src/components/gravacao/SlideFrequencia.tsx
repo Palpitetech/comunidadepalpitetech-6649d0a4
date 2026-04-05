@@ -1,61 +1,106 @@
 import { formatarDezena } from "@/lib/lotofacil";
-import type { FrequenciaDezena } from "@/hooks/useGravacaoData";
+import type { FrequenciaDezena, DuplaFrequente } from "@/hooks/useGravacaoData";
 
 interface SlideFrequenciaProps {
   frequenciaDezenas: FrequenciaDezena[];
+  topDuplas: DuplaFrequente[];
 }
 
-export default function SlideFrequencia({ frequenciaDezenas }: SlideFrequenciaProps) {
+export default function SlideFrequencia({ frequenciaDezenas, topDuplas }: SlideFrequenciaProps) {
   const dezenaMap = new Map(frequenciaDezenas.map((f) => [f.dezena, f]));
   const quentes = frequenciaDezenas.filter((f) => f.tipo === "quente");
   const frias = frequenciaDezenas.filter((f) => f.tipo === "fria");
 
   return (
     <div className="flex w-full h-full gap-6">
-      {/* Left 30%: Grid 5x5 */}
-      <div className="w-[30%] flex flex-col items-center justify-center">
-        <p className="text-purple-300/60 text-sm mb-4 tracking-wide text-center">
-          Frequência — Últimos 5
-        </p>
-        <div className="grid grid-cols-5 gap-1.5">
-          {Array.from({ length: 25 }, (_, i) => i + 1).map((num) => {
-            const info = dezenaMap.get(num);
-            const tipo = info?.tipo ?? "neutra";
-            const bg =
-              tipo === "quente"
-                ? "bg-emerald-500 text-white"
-                : tipo === "fria"
-                ? "bg-red-500 text-white"
-                : "bg-white/5 text-white/30";
-            return (
-              <div
-                key={num}
-                className={`w-9 h-9 md:w-11 md:h-11 rounded-lg flex flex-col items-center justify-center ${bg}`}
-              >
-                <span className="text-xs md:text-sm font-bold leading-none">
-                  {formatarDezena(num)}
-                </span>
-                {info && (
-                  <span className="text-[8px] opacity-70 leading-none mt-0.5">
-                    {info.freq}×
+      {/* Left 30%: Grid 5x5 + Top Duplas */}
+      <div className="w-[30%] flex flex-col items-center justify-center gap-5">
+        <div>
+          <p className="text-purple-300/60 text-sm mb-4 tracking-wide text-center">
+            Frequência — Últimos 5
+          </p>
+          <div className="grid grid-cols-5 gap-1.5">
+            {Array.from({ length: 25 }, (_, i) => i + 1).map((num) => {
+              const info = dezenaMap.get(num);
+              const tipo = info?.tipo ?? "neutra";
+              const bg =
+                tipo === "quente"
+                  ? "bg-emerald-500 text-white"
+                  : tipo === "fria"
+                  ? "bg-red-500 text-white"
+                  : "bg-white/5 text-white/30";
+              return (
+                <div
+                  key={num}
+                  className={`w-9 h-9 md:w-11 md:h-11 rounded-lg flex flex-col items-center justify-center ${bg}`}
+                >
+                  <span className="text-xs md:text-sm font-bold leading-none">
+                    {formatarDezena(num)}
                   </span>
-                )}
-              </div>
-            );
-          })}
+                  {info && (
+                    <span className="text-[8px] opacity-70 leading-none mt-0.5">
+                      {info.freq}×
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Legend */}
+          <div className="flex items-center gap-4 mt-3">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded bg-emerald-500" />
+              <span className="text-white/50 text-[10px]">Quentes (3+)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded bg-red-500" />
+              <span className="text-white/50 text-[10px]">Frias (0–1)</span>
+            </div>
+          </div>
         </div>
 
-        {/* Legend */}
-        <div className="flex items-center gap-4 mt-4">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-emerald-500" />
-            <span className="text-white/50 text-[10px]">Quentes (3+)</span>
+        {/* Top 3 Duplas */}
+        {topDuplas.length > 0 && (
+          <div className="w-full">
+            <p className="text-purple-300 text-xs font-semibold mb-2 flex items-center gap-1.5">
+              🤝 Duplas Mais Frequentes
+            </p>
+            <div className="space-y-1.5">
+              {topDuplas.map((dupla, i) => (
+                <div
+                  key={`${dupla.d1}-${dupla.d2}`}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2"
+                  style={{
+                    background: "rgba(124, 58, 237, 0.12)",
+                    border: "1px solid rgba(124, 58, 237, 0.25)",
+                  }}
+                >
+                  <span className="text-purple-400/60 text-xs font-bold min-w-[16px]">
+                    {i + 1}º
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white"
+                      style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
+                    >
+                      {formatarDezena(dupla.d1)}
+                    </span>
+                    <span
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white"
+                      style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}
+                    >
+                      {formatarDezena(dupla.d2)}
+                    </span>
+                  </div>
+                  <span className="text-white/50 text-xs ml-auto">
+                    {dupla.freq}× em 5
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-red-500" />
-            <span className="text-white/50 text-[10px]">Frias (0–1)</span>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Right 70%: Lists */}

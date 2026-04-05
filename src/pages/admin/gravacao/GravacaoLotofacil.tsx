@@ -12,15 +12,15 @@ export default function GravacaoLotofacil() {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center" style={{ background: "#0B0F1A" }}>
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-400" />
+      <div className="fixed inset-0 flex items-center justify-center" style={{ background: "#0D0B1F" }}>
+        <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
       </div>
     );
   }
 
   if (isError || !data) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center" style={{ background: "#0B0F1A" }}>
+      <div className="fixed inset-0 flex items-center justify-center" style={{ background: "#0D0B1F" }}>
         <p className="text-red-400">Erro ao carregar dados</p>
       </div>
     );
@@ -31,7 +31,7 @@ export default function GravacaoLotofacil() {
       <SlideIntro concurso={data.concurso} data={data.data} premiacao={data.premiacao} />
       <SlideResultado dezenas={data.dezenas} />
       <SlideEstatisticas dezenas={data.dezenas} estatisticas={data.estatisticas} tendencias={data.tendencias} />
-      <SlideFrequencia frequenciaDezenas={data.frequenciaDezenas} />
+      <SlideFrequencia frequenciaDezenas={data.frequenciaDezenas} topDuplas={data.topDuplas} />
       <SlideTendencias jogos={data.jogos} estrategiaIA={data.estrategiaIA} />
     </GravacaoShell>
   );
