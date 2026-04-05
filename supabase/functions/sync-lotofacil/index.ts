@@ -659,6 +659,7 @@ Deno.serve(async (req) => {
     const quantidade = url.searchParams.get('quantidade');
     const concursoEspecifico = url.searchParams.get('concurso');
     const debug = url.searchParams.get('debug') === 'true';
+    const forceUpdate = url.searchParams.get('force') === 'true';
 
     let apiUrl: string;
     let modoOperacao: string;
@@ -798,7 +799,7 @@ Deno.serve(async (req) => {
           .eq('concurso', concurso.numero)
           .single();
 
-        if (existente) {
+        if (existente && !forceUpdate) {
           // LOG DE AUDITORIA: Concurso já existente
           console.log(`[AUDIT] Ignorado: Concurso ${concurso.numero} já existente`);
           resultados.existentes++;
@@ -816,6 +817,10 @@ Deno.serve(async (req) => {
             cicloAtual = dadosExistente.ciclo_numero;
           }
           continue;
+        }
+        
+        if (existente && forceUpdate) {
+          console.log(`[AUDIT] Force update: Concurso ${concurso.numero}`);
         }
 
         const indicadores = calcularIndicadores(concurso.dezenas, dezenasAnteriores);
