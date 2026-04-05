@@ -393,6 +393,11 @@ export function DisparoGrupoTab() {
                   <p className="text-xs text-muted-foreground font-mono truncate">
                     {config.group_jids.join(", ")} ({config.group_jids.length} grupo{config.group_jids.length !== 1 ? "s" : ""})
                   </p>
+                  {(config.slots || []).some((s: any) => s.message_type === "palpite") && (
+                    <Badge variant="outline" className="text-[10px] w-fit mt-1">
+                      {config.include_palpites ? "🎰 Com Palpites" : "📊 Só Estratégia + CTA"}
+                    </Badge>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {/* Slots display */}
