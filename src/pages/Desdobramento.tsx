@@ -227,7 +227,7 @@ export default function Desdobramento() {
   // Buscar último sorteio
   useEffect(() => {
     const fetchUltimoSorteio = async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("resultados_loterias")
         .select("dezenas")
         .eq("loteria", "lotofacil")

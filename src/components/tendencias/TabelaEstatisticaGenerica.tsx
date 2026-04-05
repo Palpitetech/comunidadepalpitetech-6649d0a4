@@ -47,7 +47,7 @@ export function TabelaEstatisticaGenerica({ config }: Props) {
   const { data: estatisticas, isLoading } = useQuery({
     queryKey: [config.queryKey],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("resultados_loterias")
         .select(`concurso_id, ${config.campoDb}`)
         .eq("loteria", "lotofacil")

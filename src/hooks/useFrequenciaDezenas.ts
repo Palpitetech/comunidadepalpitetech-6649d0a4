@@ -153,7 +153,7 @@ export function useFrequenciaDezenas(periodo: number) {
   return useQuery({
     queryKey: ["frequencia-dezenas", periodo],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("resultados_loterias")
         .select("concurso_id:concurso, dezenas")
         .eq("loteria", "lotofacil")

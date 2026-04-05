@@ -25,7 +25,7 @@ export function useDesdobramentoStats() {
     queryKey: ["desdobramento-impares"],
     queryFn: async () => {
       // Para ímpares, precisamos calcular manualmente (15 - qtd_pares)
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("resultados_loterias")
         .select("concurso_id:concurso, qtd_pares")
         .eq("loteria", "lotofacil")
@@ -69,7 +69,7 @@ export function useDesdobramentoStats() {
 }
 
 async function fetchStats(campo: "qtd_primos" | "qtd_repetidas" | "qtd_moldura"): Promise<EstatisticaItem[]> {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("resultados_loterias")
     .select("concurso_id:concurso, qtd_primos, qtd_repetidas, qtd_moldura")
     .eq("loteria", "lotofacil")

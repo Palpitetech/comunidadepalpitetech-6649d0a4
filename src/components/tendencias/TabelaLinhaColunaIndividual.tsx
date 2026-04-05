@@ -32,7 +32,7 @@ export function TabelaLinhaColunaIndividual({ tipo, indice }: Props) {
   const { data: estatisticas, isLoading } = useQuery({
     queryKey: [`estatisticas-${tipo}-${indice}`],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("resultados_loterias")
         .select("concurso_id:concurso, dezenas")
         .eq("loteria", "lotofacil")

@@ -72,7 +72,7 @@ export function BotPostTrigger({ bots, onSuccess }: BotPostTriggerProps) {
   const fetchUltimoResultado = async () => {
     setLoadingResultado(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("resultados_loterias")
         .select("concurso_id:concurso, dezenas, data_sorteio, qtd_pares, qtd_impares, qtd_moldura, qtd_primos, qtd_repetidas, ciclo_numero, dezenas_faltantes_ciclo, acumulou")
         .eq("loteria", "lotofacil")

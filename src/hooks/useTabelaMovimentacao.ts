@@ -46,7 +46,7 @@ export function useTabelaMovimentacao(limiteConcursos = 50) {
     queryKey: ["tabela-movimentacao", limiteConcursos],
     queryFn: async (): Promise<TabelaMovimentacaoData> => {
       // Buscar resultados
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("resultados_loterias")
         .select("concurso_id:concurso, data_sorteio, dezenas, ciclo_numero, dezenas_faltantes_ciclo, qtd_impares, qtd_primos, qtd_moldura, qtd_repetidas")
         .eq("loteria", "lotofacil")
