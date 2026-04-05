@@ -44,8 +44,22 @@ function converterDataBR(dataBR: string): string {
   return dataBR;
 }
 
-function getConcursoId(resultado: any): number {
-  return resultado.numero_concurso || resultado.concurso || resultado.numero;
+function extrairNumeroConcurso(r: any): number {
+  if (typeof r.concurso === 'number') return r.concurso;
+  if (typeof r.concurso === 'string') return parseInt(r.concurso, 10);
+  if (typeof r.numero === 'number') return r.numero;
+  if (typeof r.numero === 'string') return parseInt(r.numero, 10);
+  if (typeof r.numero_concurso === 'number') return r.numero_concurso;
+  if (typeof r.numero_concurso === 'string') return parseInt(r.numero_concurso, 10);
+  return 0;
+}
+
+function extrairData(r: any): string {
+  const campos = ['data', 'data_sorteio', 'dataApuracao', 'dataSorteio', 'data_concurso', 'dataConcurso'];
+  for (const campo of campos) {
+    if (r[campo] && typeof r[campo] === 'string') return converterDataBR(r[campo]);
+  }
+  return new Date().toISOString().split('T')[0];
 }
 
 const LOTERIA = "duplasena";
@@ -55,7 +69,7 @@ function buildRegistro(resultado: any, s1: number[], s2: number[], indS1: any, i
   return {
     loteria: LOTERIA,
     concurso,
-    data_sorteio: converterDataBR(resultado.data_concurso),
+    data_sorteio: extrairData(resultado),
     dezenas: s1,
     dezenas_sorteio2: s2,
     acumulou: resultado.acumulou ?? false,
@@ -126,7 +140,7 @@ Deno.serve(async (req) => {
     const apiResponse = await fetch(latestUrl);
     if (!apiResponse.ok) throw new Error(`Erro ao buscar API: ${apiResponse.status}`);
     const ultimoResultado = await apiResponse.json();
-    const ultimoConcursoAPI = getConcursoId(ultimoResultado);
+    const ultimoConcursoAPI = extrairNumeroConcurso(ultimoResultado);
     if (!ultimoConcursoAPI) throw new Error(`Não foi possível obter o número do concurso da API. Chaves: ${Object.keys(ultimoResultado).join(", ")}`);
     console.log("Último concurso Dupla Sena API:", ultimoConcursoAPI);
 
@@ -146,7 +160,7 @@ Deno.serve(async (req) => {
 
       const indS1 = calcularIndicadores(s1, anterior?.dezenas || []);
       const indS2 = calcularIndicadores(s2, anterior?.dezenas_sorteio2 || []);
-      const reg = buildRegistro(resultado, s1, s2, indS1, indS2, getConcursoId(resultado));
+      const reg = buildRegistro(resultado, s1, s2, indS1, indS2, extrairNumeroConcurso(resultado));
 
       const { error } = await supabase.from(TABLE).upsert(reg, { onConflict: "loteria,concurso" });
       if (error) throw new Error(`Erro ao inserir: ${error.message}`);
@@ -233,7 +247,7 @@ Deno.serve(async (req) => {
         const indS1 = calcularIndicadores(s1, historicoMapS1.get(concursoId - 1) || []);
         const indS2 = calcularIndicadores(s2, historicoMapS2.get(concursoId - 1) || []);
 
-        resultadosParaInserir.push(buildRegistro(resultado, s1, s2, indS1, indS2, getConcursoId(resultado)));
+        resultadosParaInserir.push(buildRegistro(resultado, s1, s2, indS1, indS2, extrairNumeroConcurso(resultado)));
         historicoMapS1.set(concursoId, s1);
         historicoMapS2.set(concursoId, s2);
         await new Promise(resolve => setTimeout(resolve, 300));

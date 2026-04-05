@@ -44,8 +44,30 @@ function converterDataBR(dataBR: string): string {
   return dataBR;
 }
 
+function extrairNumeroConcurso(r: any): number {
+  if (typeof r.concurso === 'number') return r.concurso;
+  if (typeof r.concurso === 'string') return parseInt(r.concurso, 10);
+  if (typeof r.numero === 'number') return r.numero;
+  if (typeof r.numero === 'string') return parseInt(r.numero, 10);
+  if (typeof r.numero_concurso === 'number') return r.numero_concurso;
+  if (typeof r.numero_concurso === 'string') return parseInt(r.numero_concurso, 10);
+  return 0;
+}
+
+function extrairData(r: any): string {
+  const campos = ['data', 'data_sorteio', 'dataApuracao', 'dataSorteio', 'data_concurso', 'dataConcurso'];
+  for (const campo of campos) {
+    if (r[campo] && typeof r[campo] === 'string') return converterDataBR(r[campo]);
+  }
+  return new Date().toISOString().split('T')[0];
+}
+
 const LOTERIA = "megasena";
 const TABLE = "resultados_loterias";
+
+function parseApiResponse(raw: any): any {
+  return Array.isArray(raw) ? raw[0] : raw;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -76,8 +98,8 @@ Deno.serve(async (req) => {
     function buildRegistro(resultado: any, dezenas: number[], indicadores: ReturnType<typeof calcularIndicadores>) {
       return {
         loteria: LOTERIA,
-        concurso: resultado.numero_concurso,
-        data_sorteio: converterDataBR(resultado.data_concurso),
+        concurso: extrairNumeroConcurso(resultado),
+        data_sorteio: extrairData(resultado),
         dezenas,
         acumulou: resultado.acumulou ?? false,
         valor_acumulado: resultado.valor_acumulado || null,
@@ -120,8 +142,9 @@ Deno.serve(async (req) => {
     console.log("Buscando último concurso da API...");
     const apiResponse = await fetch(latestUrl);
     if (!apiResponse.ok) throw new Error(`Erro ao buscar API: ${apiResponse.status}`);
-    const ultimoResultado = await apiResponse.json();
-    const ultimoConcursoAPI = ultimoResultado.numero_concurso;
+    const ultimoResultado = parseApiResponse(await apiResponse.json());
+    const ultimoConcursoAPI = extrairNumeroConcurso(ultimoResultado);
+    console.log("API response keys:", Object.keys(ultimoResultado).join(", "));
     console.log("Último concurso API:", ultimoConcursoAPI);
 
     // Concurso específico
@@ -129,7 +152,7 @@ Deno.serve(async (req) => {
       const concursoUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=megasena&token=${API_TOKEN}&concurso=${concursoEspecifico}`;
       const res = await fetch(concursoUrl);
       if (!res.ok) throw new Error(`Erro ao buscar concurso ${concursoEspecifico}: ${res.status}`);
-      const resultado = await res.json();
+      const resultado = parseApiResponse(await res.json());
       const dezenas = resultado.dezenas.map((d: string) => parseInt(d, 10)).sort((a: number, b: number) => a - b);
 
       const { data: anterior } = await supabase
@@ -213,7 +236,7 @@ Deno.serve(async (req) => {
           const concursoUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=megasena&token=${API_TOKEN}&concurso=${concursoId}`;
           const res = await fetch(concursoUrl);
           if (!res.ok) { console.error(`Erro ao buscar concurso ${concursoId}: ${res.status}`); continue; }
-          resultado = await res.json();
+          resultado = parseApiResponse(await res.json());
         }
 
         const dezenas = resultado.dezenas.map((d: string) => parseInt(d, 10)).sort((a: number, b: number) => a - b);
