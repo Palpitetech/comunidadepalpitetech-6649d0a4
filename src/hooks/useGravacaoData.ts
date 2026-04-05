@@ -46,6 +46,22 @@ export interface EstrategiaIA {
   dezenas_evitadas: { dezenas: number[]; motivo: string }[];
 }
 
+export interface TendenciaFaixa {
+  valor: number;
+  complementar: number;
+  ocorrencias: number;
+  atraso: number;
+  media: number;
+  isDestaque: boolean;  // atraso >= media (pronto para sair)
+  isTopOcorrencia: boolean; // top 3 ocorrências
+}
+
+export interface TendenciaIndicador {
+  label: string;
+  emoji: string;
+  faixas: TendenciaFaixa[];
+}
+
 export interface GravacaoData {
   concurso: number;
   data: string;
@@ -55,6 +71,7 @@ export interface GravacaoData {
   estatisticas: EstatisticaItem[];
   jogos: GravacaoJogo[];
   estrategiaIA?: EstrategiaIA;
+  tendencias: TendenciaIndicador[];
   loading: boolean;
 }
 
