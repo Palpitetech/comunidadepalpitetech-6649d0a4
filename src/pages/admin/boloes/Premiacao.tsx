@@ -50,8 +50,8 @@ const REGRAS_LOTERIA: Record<string, {
       { pontos: 3, nome: "4ª faixa", is_ouro: false },
     ],
     minimo: 3,
-    tabela_resultado: "resultados_duplasena",
-    campo_dezenas: "dezenas_sorteio1",
+    tabela_resultado: "resultados_loterias",
+    campo_dezenas: "dezenas",
   },
   quina: {
     dezenas_sorteadas: 5,
@@ -62,7 +62,7 @@ const REGRAS_LOTERIA: Record<string, {
       { pontos: 2, nome: "4ª faixa", is_ouro: false },
     ],
     minimo: 2,
-    tabela_resultado: "resultados_quina",
+    tabela_resultado: "resultados_loterias",
     campo_dezenas: "dezenas",
   },
   lotomania: {
@@ -76,7 +76,7 @@ const REGRAS_LOTERIA: Record<string, {
       { pontos: 0, nome: "Terno de 0", is_ouro: false },
     ],
     minimo: 0,
-    tabela_resultado: "resultados_lotomania",
+    tabela_resultado: "resultados_loterias",
     campo_dezenas: "dezenas",
   },
   diadesorte: {
@@ -88,7 +88,7 @@ const REGRAS_LOTERIA: Record<string, {
       { pontos: 4, nome: "4ª faixa", is_ouro: false },
     ],
     minimo: 4,
-    tabela_resultado: "resultados_diadesorte",
+    tabela_resultado: "resultados_loterias",
     campo_dezenas: "dezenas",
   },
 };
@@ -170,13 +170,11 @@ async function buscarResultado(loteria: string, dataConcurso: string) {
   const regra = REGRAS_LOTERIA[loteria];
   if (!regra) return null;
 
-  const tabela = regra.tabela_resultado as any;
-  const campoConcurso = tabela === "resultados" ? "data_sorteio" : "data_sorteio";
-
-  const { data, error } = await supabase
-    .from(tabela)
+  const { data, error } = await (supabase as any)
+    .from("resultados_loterias")
     .select("*")
-    .eq(campoConcurso, dataConcurso)
+    .eq("loteria", loteria)
+    .eq("data_sorteio", dataConcurso)
     .limit(1)
     .maybeSingle();
 
