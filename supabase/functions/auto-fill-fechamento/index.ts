@@ -100,8 +100,8 @@ serve(async (req) => {
     // Buscar últimos 4 concursos
     const { data: resultados, error: resultadosError } = await supabase
       .from("resultados_loterias")
-.eq("loteria", "lotofacil")
-.select("concurso_id:concurso, dezenas, qtd_pares, qtd_impares, qtd_primos, qtd_moldura, qtd_repetidas")
+        .select("concurso_id:concurso, dezenas, qtd_pares, qtd_impares, qtd_primos, qtd_moldura, qtd_repetidas")
+        .eq("loteria", "lotofacil")
       .order("concurso", { ascending: false })
       .limit(4);
 

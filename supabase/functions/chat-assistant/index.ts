@@ -395,8 +395,8 @@ serve(async (req) => {
     if (topic === "estrategias") {
       const { data: resultados } = await userClient
         .from("resultados_loterias")
-.eq("loteria", "lotofacil")
-.select("concurso_id:concurso, data_sorteio, dezenas, qtd_pares, qtd_impares, qtd_moldura, qtd_repetidas, ciclo_numero, dezenas_faltantes_ciclo")
+          .select("concurso_id:concurso, data_sorteio, dezenas, qtd_pares, qtd_impares, qtd_moldura, qtd_repetidas, ciclo_numero, dezenas_faltantes_ciclo")
+          .eq("loteria", "lotofacil")
         .order("concurso", { ascending: false })
         .limit(10);
 

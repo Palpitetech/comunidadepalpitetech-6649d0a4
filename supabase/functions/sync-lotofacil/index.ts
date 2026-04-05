@@ -588,8 +588,8 @@ Deno.serve(async (req) => {
       console.log('[REPROCESS] Iniciando reprocessamento histórico lotofacil...');
       const { data: existentes, error: fetchErr } = await supabase
         .from('resultados_loterias')
-        .select('concurso')
-        .eq('loteria', 'lotofacil')
+          .select('concurso')
+          .eq('loteria', 'lotofacil')
         .order('concurso', { ascending: true });
       if (fetchErr) throw new Error(fetchErr.message);
       if (!existentes?.length) {
@@ -759,8 +759,8 @@ Deno.serve(async (req) => {
     // Buscar último concurso salvo (tabela unificada)
     const { data: ultimoSalvo } = await supabase
       .from('resultados_loterias')
-      .select('concurso, dezenas, dezenas_faltantes_ciclo, ciclo_numero')
-      .eq('loteria', 'lotofacil')
+        .select('concurso, dezenas, dezenas_faltantes_ciclo, ciclo_numero')
+        .eq('loteria', 'lotofacil')
       .order('concurso', { ascending: false })
       .limit(1)
       .single();
@@ -784,8 +784,8 @@ Deno.serve(async (req) => {
         // Verificar se já existe (IDEMPOTÊNCIA) — tabela unificada
         const { data: existente } = await supabase
           .from('resultados_loterias')
-          .select('id')
-          .eq('loteria', 'lotofacil')
+            .select('id')
+            .eq('loteria', 'lotofacil')
           .eq('concurso', concurso.numero)
           .single();
 
@@ -796,8 +796,8 @@ Deno.serve(async (req) => {
           
           const { data: dadosExistente } = await supabase
             .from('resultados_loterias')
-            .select('dezenas, dezenas_faltantes_ciclo, ciclo_numero')
-            .eq('loteria', 'lotofacil')
+              .select('dezenas, dezenas_faltantes_ciclo, ciclo_numero')
+              .eq('loteria', 'lotofacil')
             .eq('concurso', concurso.numero)
             .single();
           
