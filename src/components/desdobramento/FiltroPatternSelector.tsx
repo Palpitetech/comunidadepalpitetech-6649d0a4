@@ -59,7 +59,7 @@ export function FiltroPatternSelector({
                 }`}
                 onClick={() => toggleValor(opcao.valor)}
               >
-                {opcao.label}
+                {opcao.label ?? opcao.valor}
                 {opcao.porcentagem !== undefined && (
                   <span className="ml-1 opacity-60">
                     {opcao.porcentagem.toFixed(0)}%
