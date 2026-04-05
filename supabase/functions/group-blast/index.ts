@@ -455,9 +455,10 @@ async function handleSendNow(
   });
 }
 
-// ─── PALPITE LOTOFÁCIL GENERATION ───────────────────────
+// ─── PALPITE LOTOFÁCIL GENERATION (RICH — same level as Gerador) ───
 const MOLDURA_LF = [1, 2, 3, 4, 5, 6, 10, 11, 15, 16, 20, 21, 22, 23, 24, 25];
 const PRIMOS_LF = [2, 3, 5, 7, 11, 13, 17, 19, 23];
+const PERIODO_ANALISE = 5;
 
 async function generatePalpiteMessage(
   supabase: any,
@@ -469,70 +470,102 @@ async function generatePalpiteMessage(
     return null;
   }
 
-  // Fetch last 5 results (same source as Gerador)
+  // Fetch last N results with ALL statistical fields (same as Gerador)
   const { data: resultados, error: resErr } = await supabase
     .from("resultados_loterias")
-      .select("concurso_id:concurso, data_sorteio, dezenas")
-      .eq("loteria", "lotofacil")
+    .select("concurso_id:concurso, data_sorteio, dezenas, qtd_pares, qtd_impares, qtd_moldura, qtd_primos, qtd_repetidas, ciclo_numero, dezenas_faltantes_ciclo")
+    .eq("loteria", "lotofacil")
     .order("concurso", { ascending: false })
-    .limit(5);
+    .limit(PERIODO_ANALISE);
 
   if (resErr || !resultados || resultados.length === 0) {
     console.error("[group-blast] Erro ao buscar resultados:", resErr?.message);
     return null;
   }
 
-  // Calculate stats
+  // Calculate frequencies (same as Gerador)
   const freq: Record<number, number> = {};
   for (let d = 1; d <= 25; d++) freq[d] = 0;
   for (const r of resultados) {
     for (const d of r.dezenas) freq[d]++;
   }
 
-  const quentes = Object.entries(freq)
-    .filter(([, v]) => v >= 3)
-    .map(([k]) => Number(k))
-    .sort((a, b) => a - b);
-  const frias = Object.entries(freq)
-    .filter(([, v]) => v <= 1)
-    .map(([k]) => Number(k))
-    .sort((a, b) => a - b);
+  const dezenasMaisFrequentes = Object.entries(freq)
+    .sort(([, a], [, b]) => (b as number) - (a as number))
+    .slice(0, 10)
+    .map(([d]) => parseInt(d));
 
-  const avgPares = resultados.reduce((s: number, r: any) => s + r.dezenas.filter((d: number) => d % 2 === 0).length, 0) / resultados.length;
-  const avgMoldura = resultados.reduce((s: number, r: any) => s + r.dezenas.filter((d: number) => MOLDURA_LF.includes(d)).length, 0) / resultados.length;
-  const avgPrimos = resultados.reduce((s: number, r: any) => s + r.dezenas.filter((d: number) => PRIMOS_LF.includes(d)).length, 0) / resultados.length;
+  const dezenasMenosFrequentes = Object.entries(freq)
+    .sort(([, a], [, b]) => (a as number) - (b as number))
+    .slice(0, 10)
+    .map(([d]) => parseInt(d));
+
+  const ultimoResultado = resultados[0];
+  const dezenasFaltantesCiclo = ultimoResultado.dezenas_faltantes_ciclo || [];
+
+  // Calculate averages (same as Gerador)
+  const mediaPares = resultados.reduce((acc: number, r: any) => acc + (r.qtd_pares || 0), 0) / resultados.length;
+  const mediaMoldura = resultados.reduce((acc: number, r: any) => acc + (r.qtd_moldura || 0), 0) / resultados.length;
+  const mediaPrimos = resultados.reduce((acc: number, r: any) => acc + (r.qtd_primos || 0), 0) / resultados.length;
+  const mediaRepetidas = resultados.reduce((acc: number, r: any) => acc + (r.qtd_repetidas || 0), 0) / resultados.length;
 
   const concursoMin = resultados[resultados.length - 1].concurso_id;
   const concursoMax = resultados[0].concurso_id;
+  const pad = (d: number) => d.toString().padStart(2, "0");
 
-  const statsText = `Últimos 5 concursos (${concursoMin} a ${concursoMax}):
-- Dezenas quentes (≥3 aparições): ${quentes.join(", ") || "nenhuma"}
-- Dezenas frias (≤1 aparição): ${frias.join(", ") || "nenhuma"}  
-- Média pares: ${avgPares.toFixed(1)} | Média moldura: ${avgMoldura.toFixed(1)} | Média primos: ${avgPrimos.toFixed(1)}
-- Resultados: ${resultados.map((r: any) => `C${r.concurso_id}: [${r.dezenas.sort((a: number, b: number) => a - b).join(",")}]`).join(" | ")}`;
+  // Build rich statistical context (same as Gerador)
+  const contextoEstatistico = `
+ANÁLISE DOS ÚLTIMOS ${PERIODO_ANALISE} CONCURSOS DA LOTOFÁCIL:
 
-  const prompt = `Você é um especialista em Lotofácil.
-Baseado na análise estatística dos 5 últimos concursos, gere EXATAMENTE 15 jogos de 15 dezenas cada (1 a 25).
+ÚLTIMO RESULTADO (Concurso ${ultimoResultado.concurso_id}):
+- Dezenas sorteadas: ${ultimoResultado.dezenas.map(pad).join(", ")}
+- Pares: ${ultimoResultado.qtd_pares} | Ímpares: ${ultimoResultado.qtd_impares}
+- Moldura: ${ultimoResultado.qtd_moldura} | Primos: ${ultimoResultado.qtd_primos}
+- Ciclo atual: ${ultimoResultado.ciclo_numero}
+- Dezenas faltantes no ciclo: ${dezenasFaltantesCiclo.length > 0 ? dezenasFaltantesCiclo.map(pad).join(", ") : "Nenhuma (ciclo completo)"}
 
-${statsText}
+FREQUÊNCIAS NOS ÚLTIMOS ${PERIODO_ANALISE} JOGOS:
+- Dezenas mais sorteadas: ${dezenasMaisFrequentes.map(d => `${pad(d)} (${freq[d]}x)`).join(", ")}
+- Dezenas menos sorteadas: ${dezenasMenosFrequentes.map(d => `${pad(d)} (${freq[d]}x)`).join(", ")}
 
-Regras obrigatórias para os jogos:
-- Cada jogo deve ter EXATAMENTE 15 dezenas únicas de 1 a 25
-- Priorize dezenas quentes mas distribua frias para equilíbrio
-- Mantenha entre 7-8 pares por jogo
-- Mantenha entre 9-11 dezenas de moldura por jogo
-- Todos os 15 jogos devem ser diferentes entre si
-- Ordene as dezenas de cada jogo em ordem crescente
-- Formate cada dezena com 2 dígitos (01, 02, ... 25)
+MÉDIAS HISTÓRICAS (${PERIODO_ANALISE} concursos):
+- Média de pares por jogo: ${mediaPares.toFixed(1)}
+- Média de dezenas na moldura: ${mediaMoldura.toFixed(1)}
+- Média de números primos: ${mediaPrimos.toFixed(1)}
+- Média de dezenas repetidas: ${mediaRepetidas.toFixed(1)}
 
-Responda EXATAMENTE neste formato (sem explicação extra):
-ESTRATEGIA: [resumo de 2 linhas da estratégia usada, mencionando os concursos analisados]
-JOGO01: 01-02-03-04-05-06-07-08-09-10-11-12-13-14-15
-JOGO02: ...
-...
-JOGO15: ...`;
+DEFINIÇÕES:
+- Moldura: dezenas nas bordas do volante [01-06, 10, 11, 15, 16, 20-25]
+- Primos: [02, 03, 05, 07, 11, 13, 17, 19, 23]
+- Pares: dezenas divisíveis por 2
+- Repetidas: dezenas que saíram no concurso anterior
+`;
+
+  const systemPrompt = `Você é um especialista em análise estatística da Lotofácil.
+
+REGRAS OBRIGATÓRIAS:
+1. Cada jogo DEVE ter EXATAMENTE 15 dezenas únicas de 01 a 25
+2. Diversifique as estratégias entre os jogos
+3. Considere o equilíbrio histórico nas suas escolhas
+4. Inclua pelo menos algumas dezenas faltantes do ciclo quando disponíveis
+5. NUNCA prometa vitória - loteria é probabilidade
+6. Seja didático e acessível na explicação
+
+Você deve usar a função generate_palpites para retornar os jogos estruturados.`;
+
+  const userPrompt = `${contextoEstatistico}
+Com base nesta análise, gere 15 jogos de Lotofácil com EXATAMENTE 15 dezenas cada.
+
+Para cada jogo, utilize uma abordagem diferente:
+- Jogo 1-3: Foco nas dezenas quentes (mais frequentes)
+- Jogo 4-6: Equilíbrio entre quentes e frias
+- Jogo 7-9: Foco nas dezenas faltantes do ciclo
+- Jogo 10-15: Combinações estratégicas variadas
+
+Explique brevemente a estratégia geral utilizada, citando dados específicos dos concursos analisados.`;
 
   try {
+    // Use tool calling (same as Gerador) for structured output
     const aiRes = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
@@ -542,14 +575,92 @@ JOGO15: ...`;
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "google/gemini-3-flash-preview",
           messages: [
-            {
-              role: "system",
-              content: "Você gera palpites de Lotofácil com base em análise estatística. Siga o formato pedido rigorosamente.",
-            },
-            { role: "user", content: prompt },
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
           ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "generate_palpites",
+                description: "Gera palpites estruturados para a Lotofácil com explicação detalhada da estratégia",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    jogos: {
+                      type: "array",
+                      description: "Lista de 15 jogos gerados, cada um com exatamente 15 dezenas",
+                      items: {
+                        type: "object",
+                        properties: {
+                          dezenas: {
+                            type: "array",
+                            description: "Array com exatamente 15 dezenas únicas de 1 a 25",
+                            items: { type: "integer", minimum: 1, maximum: 25 },
+                          },
+                        },
+                        required: ["dezenas"],
+                      },
+                    },
+                    estrategia: {
+                      type: "object",
+                      description: "Detalhes estruturados da estratégia utilizada",
+                      properties: {
+                        ferramentas: {
+                          type: "array",
+                          description: "Lista de ferramentas/metodologias utilizadas (ex: Análise de Frequência, Ciclos, Padrões Históricos)",
+                          items: { type: "string" },
+                        },
+                        dezenas_fixas: {
+                          type: "array",
+                          description: "Dezenas que foram priorizadas na geração e o motivo",
+                          items: {
+                            type: "object",
+                            properties: {
+                              dezenas: { type: "array", items: { type: "integer" } },
+                              motivo: { type: "string" },
+                            },
+                          },
+                        },
+                        dezenas_evitadas: {
+                          type: "array",
+                          description: "Dezenas que foram evitadas e o motivo",
+                          items: {
+                            type: "object",
+                            properties: {
+                              dezenas: { type: "array", items: { type: "integer" } },
+                              motivo: { type: "string" },
+                            },
+                          },
+                        },
+                        filtros_aplicados: {
+                          type: "array",
+                          description: "Filtros de padrões aplicados (ex: equilíbrio par/ímpar, distribuição na moldura)",
+                          items: {
+                            type: "object",
+                            properties: {
+                              filtro: { type: "string" },
+                              valor_alvo: { type: "string" },
+                              motivo: { type: "string" },
+                            },
+                          },
+                        },
+                        conclusao: {
+                          type: "string",
+                          description: "Resumo final da estratégia em 2-3 frases",
+                        },
+                      },
+                      required: ["ferramentas", "filtros_aplicados", "conclusao"],
+                    },
+                  },
+                  required: ["jogos", "estrategia"],
+                },
+              },
+            },
+          ],
+          tool_choice: { type: "function", function: { name: "generate_palpites" } },
         }),
       }
     );
@@ -560,42 +671,87 @@ JOGO15: ...`;
     }
 
     const aiData = await aiRes.json();
-    const rawContent = aiData?.choices?.[0]?.message?.content?.trim();
-    if (!rawContent) return null;
+    const toolCall = aiData?.choices?.[0]?.message?.tool_calls?.[0];
 
-    // Parse response
-    const lines = rawContent.split("\n").map((l: string) => l.trim()).filter((l: string) => l);
-    
-    let estrategia = "";
-    const jogos: string[] = [];
-
-    for (const line of lines) {
-      if (line.toUpperCase().startsWith("ESTRATEGIA:") || line.toUpperCase().startsWith("ESTRATÉGIA:")) {
-        estrategia = line.replace(/^ESTRAT[EÉ]GIA:\s*/i, "").trim();
-      } else if (/^JOGO\d{1,2}:/i.test(line)) {
-        const nums = line.replace(/^JOGO\d{1,2}:\s*/i, "").trim();
-        // Validate: must have 15 numbers
-        const dezenas = nums.split(/[-,\s]+/).map(Number).filter(n => n >= 1 && n <= 25);
-        const unique = [...new Set(dezenas)];
-        if (unique.length === 15) {
-          jogos.push(unique.sort((a, b) => a - b).map(d => String(d).padStart(2, "0")).join("-"));
-        }
-      }
-    }
-
-    if (jogos.length < 10) {
-      console.error(`[group-blast] IA retornou apenas ${jogos.length} jogos válidos`);
+    if (!toolCall?.function?.arguments) {
+      console.error("[group-blast] AI returned no tool call");
       return null;
     }
 
-    // Format WhatsApp message
+    const palpitesData = JSON.parse(toolCall.function.arguments);
+    const estrategia = palpitesData.estrategia;
+
+    // Validate games
+    const jogosValidos: string[] = [];
+    for (const jogo of palpitesData.jogos || []) {
+      const dezenas = (jogo.dezenas || [])
+        .map((d: number) => Math.round(d))
+        .filter((d: number) => d >= 1 && d <= 25);
+      const unique = [...new Set(dezenas)];
+      if (unique.length >= 15) {
+        jogosValidos.push(
+          unique.slice(0, 15).sort((a: number, b: number) => a - b).map((d: number) => pad(d)).join("-")
+        );
+      }
+    }
+
+    if (jogosValidos.length < 10) {
+      console.error(`[group-blast] IA retornou apenas ${jogosValidos.length} jogos válidos`);
+      return null;
+    }
+
+    // ─── Format rich WhatsApp message ───
     const linkUrl = `${baseUrl}/lotofacil`;
     let msg = `🎰 *Palpites Lotofácil — Concurso ${concursoMax + 1}*\n\n`;
-    msg += `📊 *Estratégia baseada nos 5 últimos concursos (${concursoMin} a ${concursoMax}):*\n`;
-    msg += `${estrategia || `Análise de frequência: quentes [${quentes.join(",")}], frias [${frias.join(",")}]`}\n\n`;
+    msg += `📊 *Análise baseada nos concursos ${concursoMin} a ${concursoMax}*\n\n`;
 
-    for (let i = 0; i < jogos.length; i++) {
-      msg += `🎯 Jogo ${String(i + 1).padStart(2, "0")}: ${jogos[i]}\n`;
+    // Ferramentas
+    if (estrategia?.ferramentas?.length > 0) {
+      msg += `🔧 *Ferramentas utilizadas:*\n`;
+      for (const f of estrategia.ferramentas) {
+        msg += `  • ${f}\n`;
+      }
+      msg += `\n`;
+    }
+
+    // Dezenas Priorizadas
+    if (estrategia?.dezenas_fixas?.length > 0) {
+      msg += `✅ *Dezenas Priorizadas:*\n`;
+      for (const item of estrategia.dezenas_fixas) {
+        const nums = (item.dezenas || []).map(pad).join(", ");
+        msg += `  • ${nums} — ${item.motivo}\n`;
+      }
+      msg += `\n`;
+    }
+
+    // Dezenas Evitadas
+    if (estrategia?.dezenas_evitadas?.length > 0) {
+      msg += `❌ *Dezenas Evitadas:*\n`;
+      for (const item of estrategia.dezenas_evitadas) {
+        const nums = (item.dezenas || []).map(pad).join(", ");
+        msg += `  • ${nums} — ${item.motivo}\n`;
+      }
+      msg += `\n`;
+    }
+
+    // Filtros Aplicados
+    if (estrategia?.filtros_aplicados?.length > 0) {
+      msg += `🎯 *Filtros Aplicados:*\n`;
+      for (const f of estrategia.filtros_aplicados) {
+        msg += `  • ${f.filtro}${f.valor_alvo ? ` → ${f.valor_alvo}` : ""}\n`;
+        if (f.motivo) msg += `    ${f.motivo}\n`;
+      }
+      msg += `\n`;
+    }
+
+    // Conclusão
+    if (estrategia?.conclusao) {
+      msg += `💡 *Conclusão:*\n${estrategia.conclusao}\n\n`;
+    }
+
+    // Jogos
+    for (let i = 0; i < jogosValidos.length; i++) {
+      msg += `🎯 Jogo ${String(i + 1).padStart(2, "0")}: ${jogosValidos[i]}\n`;
     }
 
     msg += `\nBoa sorte! 🍀\nMais análises na comunidade 👇\n${linkUrl}?utm=grupo`;
