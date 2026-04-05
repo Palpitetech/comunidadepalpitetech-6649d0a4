@@ -249,7 +249,26 @@ export function useGravacaoData() {
         { label: "Soma", valor: soma, faixaMin: FAIXAS.Soma[0], faixaMax: FAIXAS.Soma[1], status: statusFromFaixa(soma, ...FAIXAS.Soma) },
       ];
 
-      // 2b. Fetch ALL concursos for tendências calculation
+      // 2b. Frequência das dezenas nos últimos 5 concursos
+      const ultimos5 = concursos.slice(0, Math.min(5, concursos.length));
+      const freqMap = new Map<number, number>();
+      for (let d = 1; d <= 25; d++) freqMap.set(d, 0);
+      for (const c of ultimos5) {
+        for (const d of c.dezenas) {
+          freqMap.set(d, (freqMap.get(d) ?? 0) + 1);
+        }
+      }
+      const totalSorteios5 = ultimos5.length * 15; // 15 dezenas por sorteio
+      const frequenciaDezenas: FrequenciaDezena[] = Array.from(freqMap.entries())
+        .map(([dez, freq]) => ({
+          dezena: dez,
+          freq,
+          pct: (freq / ultimos5.length) * 100,
+          tipo: freq >= 3 ? "quente" as const : freq <= 1 ? "fria" as const : "neutra" as const,
+        }))
+        .sort((a, b) => b.freq - a.freq || a.dezena - b.dezena);
+
+      // 2c. Fetch ALL concursos for tendências calculation
       const { data: allTendData, error: tendError } = await (supabase as any)
         .from("resultados_loterias")
         .select("concurso, qtd_pares, qtd_primos, qtd_moldura, qtd_repetidas")
