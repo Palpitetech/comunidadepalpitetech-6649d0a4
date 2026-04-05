@@ -54,7 +54,7 @@ interface ConcursoRaw {
   concurso: number;
   dezenas: number[];
   data_sorteio: string | null;
-  premiacao_total: number | null;
+  valor_premio_principal: number | null;
 }
 
 function calcularAtraso(dezena: number, concursos: ConcursoRaw[]): number {
@@ -224,7 +224,7 @@ export function useGravacaoData() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("resultados_loterias")
-        .select("concurso, dezenas, data_sorteio, premiacao_total")
+        .select("concurso, dezenas, data_sorteio, valor_premio_principal")
         .eq("loteria", "lotofacil")
         .order("concurso", { ascending: false })
         .limit(10);
@@ -236,7 +236,7 @@ export function useGravacaoData() {
         concurso: r.concurso,
         dezenas: r.dezenas as number[],
         data_sorteio: r.data_sorteio,
-        premiacao_total: r.premiacao_total,
+        valor_premio_principal: r.valor_premio_principal,
       }));
 
       const ultimo = concursos[0];
@@ -277,8 +277,8 @@ export function useGravacaoData() {
       }
 
       // Format prize
-      const premiacaoFormatada = ultimo.premiacao_total
-        ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(ultimo.premiacao_total)
+      const premiacaoFormatada = ultimo.valor_premio_principal
+        ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(ultimo.valor_premio_principal)
         : "—";
 
       return {
