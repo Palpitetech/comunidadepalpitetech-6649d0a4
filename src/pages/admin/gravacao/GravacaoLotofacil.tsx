@@ -5,6 +5,7 @@ import SlideResultado from "@/components/gravacao/SlideResultado";
 import SlideEstatisticas from "@/components/gravacao/SlideEstatisticas";
 import SlideFrequencia from "@/components/gravacao/SlideFrequencia";
 import SlideTendencias from "@/components/gravacao/SlideTendencias";
+import SlideProducao from "@/components/gravacao/SlideProducao";
 import { Loader2 } from "lucide-react";
 
 export default function GravacaoLotofacil() {
@@ -33,6 +34,7 @@ export default function GravacaoLotofacil() {
       <SlideEstatisticas dezenas={data.dezenas} estatisticas={data.estatisticas} tendencias={data.tendencias} />
       <SlideFrequencia frequenciaDezenas={data.frequenciaDezenas} topDuplas={data.topDuplas} />
       <SlideTendencias jogos={data.jogos} estrategiaIA={data.estrategiaIA} />
+      <SlideProducao concurso={data.concurso} data={data.data} premiacao={data.premiacao} />
     </GravacaoShell>
   );
 }
