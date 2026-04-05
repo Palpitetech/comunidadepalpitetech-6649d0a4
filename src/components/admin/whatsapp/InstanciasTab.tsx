@@ -24,6 +24,8 @@ interface WhatsAppInstance {
   messages_sent_today: number;
   last_message_at: string | null;
   created_at: string;
+  cooldown_queue: number[];
+  cooldown_queue_index: number;
 }
 
 interface FormData {
@@ -32,6 +34,7 @@ interface FormData {
   phone_number: string;
   evolution_instance_id: string;
   daily_limit: number;
+  cooldown_queue: number[];
 }
 
 const emptyForm: FormData = {
