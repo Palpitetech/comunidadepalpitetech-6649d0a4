@@ -17,9 +17,10 @@ export function useDezenasporPosicao(periodo: number = 100) {
     queryKey: ["dezenas-posicao", periodo],
     queryFn: async (): Promise<PosicaoData[]> => {
       const { data: resultados, error } = await supabase
-        .from("resultados")
+        .from("resultados_loterias")
         .select("dezenas")
-        .order("concurso_id", { ascending: false })
+        .eq("loteria", "lotofacil")
+        .order("concurso", { ascending: false })
         .limit(periodo);
 
       if (error) throw error;

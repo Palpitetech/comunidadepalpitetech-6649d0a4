@@ -73,9 +73,10 @@ export function BotPostTrigger({ bots, onSuccess }: BotPostTriggerProps) {
     setLoadingResultado(true);
     try {
       const { data, error } = await supabase
-        .from("resultados")
-        .select("concurso_id, dezenas, data_sorteio, qtd_pares, qtd_impares, qtd_moldura, qtd_primos, qtd_repetidas, ciclo_numero, dezenas_faltantes_ciclo, acumulou")
-        .order("concurso_id", { ascending: false })
+        .from("resultados_loterias")
+        .select("concurso_id:concurso, dezenas, data_sorteio, qtd_pares, qtd_impares, qtd_moldura, qtd_primos, qtd_repetidas, ciclo_numero, dezenas_faltantes_ciclo, acumulou")
+        .eq("loteria", "lotofacil")
+        .order("concurso", { ascending: false })
         .limit(1)
         .single();
 

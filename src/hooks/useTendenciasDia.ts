@@ -148,9 +148,10 @@ export function useTendenciasDia(periodo: number) {
     queryFn: async (): Promise<TendenciaDia> => {
       // Buscar período + 1 para calcular repetidas
       const { data, error } = await supabase
-        .from("resultados")
-        .select("concurso_id, dezenas, data_sorteio, qtd_pares, qtd_moldura, qtd_repetidas, qtd_primos")
-        .order("concurso_id", { ascending: false })
+        .from("resultados_loterias")
+        .select("concurso_id:concurso, dezenas, data_sorteio, qtd_pares, qtd_moldura, qtd_repetidas, qtd_primos")
+        .eq("loteria", "lotofacil")
+        .order("concurso", { ascending: false })
         .limit(periodo + 1);
 
       if (error) throw error;

@@ -82,9 +82,10 @@ export function ResultadosFechamento({
   useEffect(() => {
     const carregarUltimoConcurso = async () => {
       const { data } = await supabase
-        .from("resultados")
+        .from("resultados_loterias")
         .select("dezenas")
-        .order("concurso_id", { ascending: false })
+        .eq("loteria", "lotofacil")
+        .order("concurso", { ascending: false })
         .limit(1)
         .single();
       

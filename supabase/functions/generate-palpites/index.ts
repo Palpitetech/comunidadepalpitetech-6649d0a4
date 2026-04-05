@@ -151,9 +151,10 @@ serve(async (req) => {
 
     // Buscar resultados para análise baseado no período selecionado
     const { data: resultados, error: resultadosError } = await supabaseAdmin
-      .from("resultados")
-      .select("concurso_id, data_sorteio, dezenas, qtd_pares, qtd_impares, qtd_moldura, qtd_primos, qtd_repetidas, ciclo_numero, dezenas_faltantes_ciclo")
-      .order("concurso_id", { ascending: false })
+      .from("resultados_loterias")
+        .select("concurso_id:concurso, data_sorteio, dezenas, qtd_pares, qtd_impares, qtd_moldura, qtd_primos, qtd_repetidas, ciclo_numero, dezenas_faltantes_ciclo")
+        .eq("loteria", "lotofacil")
+      .order("concurso", { ascending: false })
       .limit(periodoAnalise);
 
     if (resultadosError || !resultados?.length) {
