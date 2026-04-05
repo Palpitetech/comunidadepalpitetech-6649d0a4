@@ -379,7 +379,9 @@ export function useGravacaoData() {
 
       if (premData?.premiacao_json && Array.isArray(premData.premiacao_json) && premData.premiacao_json.length > 0) {
         premiacaoTotal = premData.premiacao_json.reduce((sum: number, f: any) => {
-          return sum + ((f.ganhadores ?? 0) * (f.valorPremio ?? 0));
+          const premio = f.valorPremio ?? f.valor_premio ?? f.valor ?? 0;
+          const ganhadores = f.ganhadores ?? f.numero_ganhadores ?? 0;
+          return sum + (ganhadores * premio);
         }, 0);
       }
 
