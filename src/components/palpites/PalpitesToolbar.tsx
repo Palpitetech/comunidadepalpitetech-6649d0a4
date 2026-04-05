@@ -143,11 +143,11 @@ export function PalpitesToolbar<T extends PalpiteBase>({
     
     setLoadingConcursos(true);
     try {
-      const tabela = loteria === "megasena" ? "resultados_megasena" : "resultados";
-      const { data } = await supabase
-        .from(tabela)
-        .select("concurso_id, data_sorteio, dezenas")
-        .order("concurso_id", { ascending: false })
+      const { data } = await (supabase as any)
+        .from("resultados_loterias")
+        .select("concurso_id:concurso, data_sorteio, dezenas")
+        .eq("loteria", loteria === "megasena" ? "megasena" : "lotofacil")
+        .order("concurso", { ascending: false })
         .limit(30);
       
       if (data) {

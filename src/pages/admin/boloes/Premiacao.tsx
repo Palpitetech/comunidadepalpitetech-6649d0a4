@@ -27,7 +27,7 @@ const REGRAS_LOTERIA: Record<string, {
       { pontos: 11, nome: "5ª faixa", is_ouro: false },
     ],
     minimo: 11,
-    tabela_resultado: "resultados",
+    tabela_resultado: "resultados_loterias",
     campo_dezenas: "dezenas",
   },
   megasena: {
@@ -38,7 +38,7 @@ const REGRAS_LOTERIA: Record<string, {
       { pontos: 4, nome: "Quadra", is_ouro: false },
     ],
     minimo: 4,
-    tabela_resultado: "resultados_megasena",
+    tabela_resultado: "resultados_loterias",
     campo_dezenas: "dezenas",
   },
   duplasena: {
