@@ -8,23 +8,23 @@ interface SlideTendenciasProps {
 
 const CARD_CONFIG = {
   recomendado: {
-    border: "border-emerald-500/40",
-    bg: "bg-emerald-500/10",
-    badge: "bg-emerald-500 text-white",
+    border: "border-purple-500/50",
+    bg: "bg-purple-500/10",
+    badge: "bg-purple-500 text-white",
     label: "⭐ Recomendado",
-    numBg: "bg-emerald-500/20 text-emerald-300",
+    numBg: "bg-purple-500/25 text-purple-200",
   },
   forca: {
-    border: "border-blue-500/30",
-    bg: "bg-blue-500/5",
-    badge: "bg-blue-500/80 text-white",
+    border: "border-purple-400/25",
+    bg: "bg-purple-500/5",
+    badge: "bg-purple-400/70 text-white",
     label: "🔼 Força Histórica",
     numBg: "bg-white/10 text-white/70",
   },
   oportunidade: {
-    border: "border-cyan-500/30",
-    bg: "bg-cyan-500/5",
-    badge: "bg-cyan-500/80 text-white",
+    border: "border-purple-300/20",
+    bg: "bg-purple-500/5",
+    badge: "bg-purple-300/60 text-white",
     label: "❄️ Oportunidade",
     numBg: "bg-white/10 text-white/70",
   },
@@ -43,24 +43,22 @@ export default function SlideTendencias({ jogos, estrategiaIA }: SlideTendencias
     <div className="flex w-full h-full items-center gap-6">
       {/* Left column — Strategy (30%) */}
       <div className="flex flex-col gap-3 justify-center overflow-hidden" style={{ width: "30%" }}>
-        <p className="text-white/50 text-xs tracking-widest uppercase">Estratégia da IA</p>
+        <p className="text-purple-300/60 text-xs tracking-widest uppercase">Estratégia da IA</p>
 
         {estrategiaIA ? (
           <div className="space-y-3">
-            {/* Conclusão */}
             {estrategiaIA.conclusao && (
-              <p className="text-white/70 text-xs leading-relaxed italic border-l-2 border-emerald-500/40 pl-3">
+              <p className="text-white/70 text-xs leading-relaxed italic border-l-2 border-purple-500/40 pl-3">
                 {estrategiaIA.conclusao}
               </p>
             )}
 
-            {/* Ferramentas */}
             {estrategiaIA.ferramentas.length > 0 && (
               <div className="space-y-1">
                 <p className="text-white/40 text-[10px] uppercase tracking-wider">🔧 Ferramentas</p>
                 <div className="flex flex-wrap gap-1">
                   {estrategiaIA.ferramentas.map((f, i) => (
-                    <span key={i} className="text-[10px] bg-white/5 text-white/60 px-2 py-0.5 rounded-full border border-white/10">
+                    <span key={i} className="text-[10px] bg-purple-500/10 text-purple-300/80 px-2 py-0.5 rounded-full border border-purple-500/20">
                       {f}
                     </span>
                   ))}
@@ -68,7 +66,6 @@ export default function SlideTendencias({ jogos, estrategiaIA }: SlideTendencias
               </div>
             )}
 
-            {/* Dezenas Priorizadas */}
             {estrategiaIA.dezenas_fixas.length > 0 && (
               <div className="space-y-1">
                 <p className="text-white/40 text-[10px] uppercase tracking-wider">✅ Priorizadas</p>
@@ -81,7 +78,6 @@ export default function SlideTendencias({ jogos, estrategiaIA }: SlideTendencias
               </div>
             )}
 
-            {/* Dezenas Evitadas */}
             {estrategiaIA.dezenas_evitadas.length > 0 && (
               <div className="space-y-1">
                 <p className="text-white/40 text-[10px] uppercase tracking-wider">❌ Evitadas</p>
@@ -94,7 +90,6 @@ export default function SlideTendencias({ jogos, estrategiaIA }: SlideTendencias
               </div>
             )}
 
-            {/* Filtros Aplicados */}
             {estrategiaIA.filtros_aplicados.length > 0 && (
               <div className="space-y-1">
                 <p className="text-white/40 text-[10px] uppercase tracking-wider">🎯 Filtros</p>
@@ -111,7 +106,7 @@ export default function SlideTendencias({ jogos, estrategiaIA }: SlideTendencias
           <p className="text-white/40 text-xs">Carregando estratégia...</p>
         )}
 
-        <p className="text-white/30 text-[10px] mt-1 border-t border-white/10 pt-2">
+        <p className="text-purple-300/30 text-[10px] mt-1 border-t border-purple-500/20 pt-2">
           Gerado por IA • Últimos 5 concursos
         </p>
       </div>
@@ -138,9 +133,15 @@ export default function SlideTendencias({ jogos, estrategiaIA }: SlideTendencias
               className={`
                 rounded-2xl border p-4 flex flex-col items-center gap-2
                 ${cfg.border} ${cfg.bg}
-                ${isMain ? "scale-105 shadow-2xl shadow-emerald-500/10" : ""}
+                ${isMain ? "scale-105" : ""}
               `}
-              style={{ width: isMain ? "36%" : "28%", transition: "transform 0.3s" }}
+              style={{
+                width: isMain ? "36%" : "28%",
+                transition: "transform 0.3s",
+                ...(isMain
+                  ? { boxShadow: "0 8px 32px rgba(124, 58, 237, 0.15)" }
+                  : {}),
+              }}
             >
               <span className={`text-xs font-bold px-3 py-1 rounded-full ${cfg.badge}`}>
                 {cfg.label}

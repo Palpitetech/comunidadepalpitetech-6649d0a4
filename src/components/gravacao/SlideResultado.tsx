@@ -9,7 +9,7 @@ export default function SlideResultado({ dezenas }: SlideResultadoProps) {
 
   return (
     <div className="flex flex-col items-center justify-center w-full h-full gap-6">
-      <h2 className="text-white/60 text-xl md:text-2xl font-medium tracking-wide">
+      <h2 className="text-purple-300/70 text-xl md:text-2xl font-medium tracking-wide">
         Dezenas Sorteadas
       </h2>
       <div className="grid grid-cols-5 gap-3 md:gap-5">
@@ -23,13 +23,21 @@ export default function SlideResultado({ dezenas }: SlideResultadoProps) {
                 text-xl md:text-3xl font-bold transition-all duration-500
                 ${
                   isSorteada
-                    ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 scale-100"
+                    ? "text-white shadow-lg scale-100"
                     : "bg-white/5 text-white/20"
                 }
               `}
-              style={{
-                animationDelay: isSorteada ? `${dezenas.indexOf(num) * 60}ms` : undefined,
-              }}
+              style={
+                isSorteada
+                  ? {
+                      background: "linear-gradient(135deg, #7C3AED, #6D28D9)",
+                      boxShadow: "0 8px 24px rgba(124, 58, 237, 0.3)",
+                    }
+                  : undefined
+              }
+              {...(isSorteada && {
+                "data-delay": `${dezenas.indexOf(num) * 60}ms`,
+              })}
             >
               {formatarDezena(num)}
             </div>
