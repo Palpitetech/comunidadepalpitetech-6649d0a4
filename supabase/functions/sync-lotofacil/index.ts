@@ -756,11 +756,12 @@ Deno.serve(async (req) => {
     // Ordenar do mais antigo para o mais novo
     concursosProcessados.sort((a, b) => a.numero - b.numero);
 
-    // Buscar último concurso salvo
+    // Buscar último concurso salvo (tabela unificada)
     const { data: ultimoSalvo } = await supabase
-      .from('resultados')
-      .select('concurso_id, dezenas, dezenas_faltantes_ciclo, ciclo_numero')
-      .order('concurso_id', { ascending: false })
+      .from('resultados_loterias')
+      .select('concurso, dezenas, dezenas_faltantes_ciclo, ciclo_numero')
+      .eq('loteria', 'lotofacil')
+      .order('concurso', { ascending: false })
       .limit(1)
       .single();
 
