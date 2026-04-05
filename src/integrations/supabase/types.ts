@@ -1010,28 +1010,34 @@ export type Database = {
           created_at: string | null
           group_jids: string[]
           id: string
+          include_palpites: boolean
           is_active: boolean | null
           name: string
           slots: Json | null
           updated_at: string | null
+          vip_group_link: string | null
         }
         Insert: {
           created_at?: string | null
           group_jids?: string[]
           id?: string
+          include_palpites?: boolean
           is_active?: boolean | null
           name: string
           slots?: Json | null
           updated_at?: string | null
+          vip_group_link?: string | null
         }
         Update: {
           created_at?: string | null
           group_jids?: string[]
           id?: string
+          include_palpites?: boolean
           is_active?: boolean | null
           name?: string
           slots?: Json | null
           updated_at?: string | null
+          vip_group_link?: string | null
         }
         Relationships: []
       }
