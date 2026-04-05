@@ -767,6 +767,53 @@ export function DisparoGrupoTab() {
               ))}
             </div>
 
+            {/* Palpite mode toggle */}
+            {formSlots.some(s => s.message_type === "palpite") && (
+              <div className="space-y-3 rounded-lg border border-dashed p-3">
+                <Label className="text-xs font-semibold">Modo Palpite Lotofácil</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={formIncludePalpites ? "default" : "outline"}
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => setFormIncludePalpites(true)}
+                  >
+                    🎰 Com Palpites
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={!formIncludePalpites ? "default" : "outline"}
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => setFormIncludePalpites(false)}
+                  >
+                    📊 Só Estratégia + CTA
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  {formIncludePalpites
+                    ? "Envia a estratégia completa + os 15 jogos gerados."
+                    : "Envia apenas a estratégia e um CTA para entrar no Grupo VIP."}
+                </p>
+
+                {!formIncludePalpites && (
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Link do Grupo VIP</Label>
+                    <Input
+                      value={formVipGroupLink}
+                      onChange={(e) => setFormVipGroupLink(e.target.value)}
+                      placeholder="https://chat.whatsapp.com/..."
+                      className="text-xs"
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                      Link que aparecerá no CTA para entrar no grupo VIP.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex items-center gap-2">
               <Switch checked={formActive} onCheckedChange={setFormActive} />
               <Label className="text-xs">Ativo</Label>
