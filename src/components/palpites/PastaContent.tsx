@@ -88,11 +88,12 @@ export function PastaContent({
           setUltimoConcursoDezenas([...new Set(combined)]);
         }
       } else {
-        const tabela = isMegaSena ? "resultados_megasena" : "resultados";
-        const { data } = await supabase
-          .from(tabela)
+        const loteriaKey = isMegaSena ? "megasena" : "lotofacil";
+        const { data } = await (supabase as any)
+          .from("resultados_loterias")
           .select("dezenas")
-          .order("concurso_id", { ascending: false })
+          .eq("loteria", loteriaKey)
+          .order("concurso", { ascending: false })
           .limit(1)
           .single();
         
