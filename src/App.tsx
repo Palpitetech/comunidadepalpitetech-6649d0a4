@@ -91,6 +91,7 @@ import ResultadosQuina from "./pages/quina/ResultadosQuina";
 import ResultadosDiaDeSorte from "./pages/diadesorte/ResultadosDiaDeSorte";
 import ResultadosLotomania from "./pages/lotomania/ResultadosLotomania";
 import HubLotofacil from "./pages/lotofacil/HubLotofacil";
+import GravacaoLotofacil from "./pages/admin/gravacao/GravacaoLotofacil";
 
 const queryClient = new QueryClient();
 
@@ -206,6 +207,7 @@ const App = () => (
             <Route path="/admin/boloes-pagamento" element={<AdminRoute><BoloesPagamento /></AdminRoute>} />
             <Route path="/admin/premiacao" element={<AdminRoute><Premiacao /></AdminRoute>} />
             <Route path="/admin/carteira" element={<AdminRoute><Carteira /></AdminRoute>} />
+            <Route path="/admin/gravacao/lotofacil" element={<AdminRoute><GravacaoLotofacil /></AdminRoute>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
