@@ -286,15 +286,13 @@ async function handleSend(
           status: "sent",
           sent_at: new Date().toISOString(),
           message_content: messageContent,
-          instance_id: instance.id,
+          instance_id: instance.instance_id,
           evolution_instance_id: instance.evolution_instance_id,
         })
         .eq("id", log.id);
 
-      await supabase
-        .from("whatsapp_instances")
-        .update({ last_message_at: new Date().toISOString() })
-        .eq("id", instance.id);
+      // Centralized usage registration (updates last_message_at + messages_sent_today)
+      await supabase.rpc("register_instance_usage", { p_instance_id: instance.instance_id });
 
       sent++;
     } catch (err: any) {
@@ -310,7 +308,7 @@ async function handleSend(
     }
   }
 
-  return jsonResponse({ sent, failed });
+  return jsonResponse({ sent, failed, skipped_cooldown: skippedCooldown });
 }
 
 // ─── AI MESSAGE GENERATION ──────────────────────────────
