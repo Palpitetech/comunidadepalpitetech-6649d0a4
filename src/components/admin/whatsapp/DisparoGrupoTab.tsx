@@ -28,6 +28,8 @@ interface BlastConfig {
   group_jids: string[];
   slots: Slot[];
   is_active: boolean;
+  include_palpites: boolean;
+  vip_group_link: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -61,6 +63,8 @@ export function DisparoGrupoTab() {
   const [formGroupJids, setFormGroupJids] = useState<string[]>([""]);
   const [formSlots, setFormSlots] = useState<Slot[]>([]);
   const [formActive, setFormActive] = useState(true);
+  const [formIncludePalpites, setFormIncludePalpites] = useState(true);
+  const [formVipGroupLink, setFormVipGroupLink] = useState("");
   const [formTimeInputs, setFormTimeInputs] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
@@ -133,6 +137,8 @@ export function DisparoGrupoTab() {
     setFormGroupJids([""]);
     setFormSlots([createEmptySlot(1)]);
     setFormActive(true);
+    setFormIncludePalpites(true);
+    setFormVipGroupLink("");
     setFormTimeInputs({ slot_1: "12:00" });
     setDialogOpen(true);
   }
@@ -151,6 +157,8 @@ export function DisparoGrupoTab() {
       : [createEmptySlot(1)];
     setFormSlots(slots);
     setFormActive(config.is_active);
+    setFormIncludePalpites(config.include_palpites ?? true);
+    setFormVipGroupLink(config.vip_group_link || "");
     const inputs: Record<string, string> = {};
     slots.forEach(s => { inputs[s.id] = "12:00"; });
     setFormTimeInputs(inputs);
@@ -237,6 +245,8 @@ export function DisparoGrupoTab() {
       group_jids: cleanJids,
       slots: slotsPayload,
       is_active: formActive,
+      include_palpites: formIncludePalpites,
+      vip_group_link: formVipGroupLink.trim() || null,
       updated_at: new Date().toISOString(),
     };
 
@@ -383,6 +393,11 @@ export function DisparoGrupoTab() {
                   <p className="text-xs text-muted-foreground font-mono truncate">
                     {config.group_jids.join(", ")} ({config.group_jids.length} grupo{config.group_jids.length !== 1 ? "s" : ""})
                   </p>
+                  {(config.slots || []).some((s: any) => s.message_type === "palpite") && (
+                    <Badge variant="outline" className="text-[10px] w-fit mt-1">
+                      {config.include_palpites ? "🎰 Com Palpites" : "📊 Só Estratégia + CTA"}
+                    </Badge>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {/* Slots display */}
@@ -751,6 +766,53 @@ export function DisparoGrupoTab() {
                 </Card>
               ))}
             </div>
+
+            {/* Palpite mode toggle */}
+            {formSlots.some(s => s.message_type === "palpite") && (
+              <div className="space-y-3 rounded-lg border border-dashed p-3">
+                <Label className="text-xs font-semibold">Modo Palpite Lotofácil</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={formIncludePalpites ? "default" : "outline"}
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => setFormIncludePalpites(true)}
+                  >
+                    🎰 Com Palpites
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={!formIncludePalpites ? "default" : "outline"}
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => setFormIncludePalpites(false)}
+                  >
+                    📊 Só Estratégia + CTA
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  {formIncludePalpites
+                    ? "Envia a estratégia completa + os 15 jogos gerados."
+                    : "Envia apenas a estratégia e um CTA para entrar no Grupo VIP."}
+                </p>
+
+                {!formIncludePalpites && (
+                  <div className="space-y-1">
+                    <Label className="text-[10px]">Link do Grupo VIP</Label>
+                    <Input
+                      value={formVipGroupLink}
+                      onChange={(e) => setFormVipGroupLink(e.target.value)}
+                      placeholder="https://chat.whatsapp.com/..."
+                      className="text-xs"
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                      Link que aparecerá no CTA para entrar no grupo VIP.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="flex items-center gap-2">
               <Switch checked={formActive} onCheckedChange={setFormActive} />

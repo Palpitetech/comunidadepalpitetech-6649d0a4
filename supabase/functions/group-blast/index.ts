@@ -216,7 +216,7 @@ async function handleSend(
     try {
       const { data: configData } = await supabase
         .from("group_blast_configs")
-        .select("slots")
+        .select("slots, include_palpites, vip_group_link")
         .eq("id", log.config_id)
         .maybeSingle();
 
@@ -228,7 +228,9 @@ async function handleSend(
       if (slot?.message_type === "manual" && slot?.message_content?.trim()) {
         messageContent = slot.message_content.trim();
       } else if (slot?.message_type === "palpite") {
-        messageContent = await generatePalpiteMessage(supabase, LOVABLE_API_KEY, BASE_URL);
+        const includePalpites = configData?.include_palpites ?? true;
+        const vipGroupLink = configData?.vip_group_link || null;
+        messageContent = await generatePalpiteMessage(supabase, LOVABLE_API_KEY, BASE_URL, includePalpites, vipGroupLink);
       } else {
         const { data: latestPost } = await supabase
           .from("postagens")
@@ -463,7 +465,9 @@ const PERIODO_ANALISE = 5;
 async function generatePalpiteMessage(
   supabase: any,
   apiKey: string,
-  baseUrl: string
+  baseUrl: string,
+  includePalpites: boolean = true,
+  vipGroupLink: string | null = null
 ): Promise<string | null> {
   if (!apiKey) {
     console.error("[group-blast] LOVABLE_API_KEY não configurada");
@@ -749,12 +753,25 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos do
       msg += `💡 *Conclusão:*\n${estrategia.conclusao}\n\n`;
     }
 
-    // Jogos
-    for (let i = 0; i < jogosValidos.length; i++) {
-      msg += `🎯 Jogo ${String(i + 1).padStart(2, "0")}: ${jogosValidos[i]}\n`;
+    if (includePalpites) {
+      // Modo COM palpites: lista os jogos
+      for (let i = 0; i < jogosValidos.length; i++) {
+        msg += `🎯 Jogo ${String(i + 1).padStart(2, "0")}: ${jogosValidos[i]}\n`;
+      }
+      msg += `\nBoa sorte! 🍀\nMais análises na comunidade 👇\n${linkUrl}?utm=grupo`;
+    } else {
+      // Modo SEM palpites: CTA para grupo VIP
+      msg += `━━━━━━━━━━━━━━━━━━━━\n`;
+      msg += `🎯 *QUER RECEBER OS PALPITES?*\n\n`;
+      msg += `Os 15 jogos baseados nessa estratégia são enviados diariamente no *Grupo VIP*.\n\n`;
+      if (vipGroupLink) {
+        msg += `👉 *Entre agora:* ${vipGroupLink}\n`;
+      } else {
+        msg += `👉 Fale com a gente para entrar no Grupo VIP!\n`;
+      }
+      msg += `━━━━━━━━━━━━━━━━━━━━\n`;
+      msg += `\nMais análises na comunidade 👇\n${linkUrl}?utm=grupo`;
     }
-
-    msg += `\nBoa sorte! 🍀\nMais análises na comunidade 👇\n${linkUrl}?utm=grupo`;
 
     return msg;
   } catch (err: any) {
