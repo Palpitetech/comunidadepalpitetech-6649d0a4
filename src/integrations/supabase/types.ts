@@ -2770,6 +2770,7 @@ export type Database = {
           id: string
           last_message_at: string | null
           messages_sent_today: number | null
+          min_cooldown_minutes: number
           name: string
           phone_number: string
           status: string | null
@@ -2782,6 +2783,7 @@ export type Database = {
           id?: string
           last_message_at?: string | null
           messages_sent_today?: number | null
+          min_cooldown_minutes?: number
           name: string
           phone_number: string
           status?: string | null
@@ -2794,6 +2796,7 @@ export type Database = {
           id?: string
           last_message_at?: string | null
           messages_sent_today?: number | null
+          min_cooldown_minutes?: number
           name?: string
           phone_number?: string
           status?: string | null
@@ -2993,6 +2996,18 @@ export type Database = {
       increment_lead_webhook_count: {
         Args: { webhook_id: string }
         Returns: undefined
+      }
+      register_instance_usage: {
+        Args: { p_instance_id: string }
+        Returns: undefined
+      }
+      select_best_instance: {
+        Args: never
+        Returns: {
+          evolution_instance_id: string
+          instance_id: string
+          phone_number: string
+        }[]
       }
     }
     Enums: {

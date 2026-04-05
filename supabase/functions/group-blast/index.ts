@@ -191,27 +191,24 @@ async function handleSend(
     return jsonResponse({ sent: 0, failed: 0, message: "Nenhum pendente" });
   }
 
-  const { data: instances, error: instErr } = await supabase
-    .from("whatsapp_instances")
-    .select("id, evolution_instance_id, last_message_at")
-    .eq("status", "online")
-    .order("last_message_at", { ascending: true, nullsFirst: true });
-
-  if (instErr) throw instErr;
-  if (!instances || instances.length === 0) {
-    console.warn("group-blast send: sem instâncias online");
-    return jsonResponse({ skipped: "sem instâncias online" });
-  }
-
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? "";
   const BASE_URL = Deno.env.get("COMMUNITY_BASE_URL") ?? "";
 
   let sent = 0;
   let failed = 0;
+  let skippedCooldown = 0;
 
   for (let i = 0; i < logs.length; i++) {
     const log = logs[i];
-    const instance = instances[i % instances.length];
+
+    // Use centralized function to pick best available instance
+    const { data: bestInstance, error: biErr } = await supabase.rpc("select_best_instance");
+    if (biErr || !bestInstance || bestInstance.length === 0) {
+      console.warn(`[group-blast] Nenhuma instância disponível (cooldown/limite) para log ${log.id}, adiando`);
+      skippedCooldown++;
+      continue;
+    }
+    const instance = bestInstance[0];
 
     try {
       const { data: configData } = await supabase
@@ -289,15 +286,13 @@ async function handleSend(
           status: "sent",
           sent_at: new Date().toISOString(),
           message_content: messageContent,
-          instance_id: instance.id,
+          instance_id: instance.instance_id,
           evolution_instance_id: instance.evolution_instance_id,
         })
         .eq("id", log.id);
 
-      await supabase
-        .from("whatsapp_instances")
-        .update({ last_message_at: new Date().toISOString() })
-        .eq("id", instance.id);
+      // Centralized usage registration (updates last_message_at + messages_sent_today)
+      await supabase.rpc("register_instance_usage", { p_instance_id: instance.instance_id });
 
       sent++;
     } catch (err: any) {
@@ -313,7 +308,7 @@ async function handleSend(
     }
   }
 
-  return jsonResponse({ sent, failed });
+  return jsonResponse({ sent, failed, skipped_cooldown: skippedCooldown });
 }
 
 // ─── AI MESSAGE GENERATION ──────────────────────────────
