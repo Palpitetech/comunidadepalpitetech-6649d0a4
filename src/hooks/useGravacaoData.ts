@@ -69,6 +69,12 @@ export interface FrequenciaDezena {
   tipo: "quente" | "fria" | "neutra";
 }
 
+export interface DuplaFrequente {
+  d1: number;
+  d2: number;
+  freq: number;
+}
+
 export interface GravacaoData {
   concurso: number;
   data: string;
@@ -80,6 +86,7 @@ export interface GravacaoData {
   estrategiaIA?: EstrategiaIA;
   tendencias: TendenciaIndicador[];
   frequenciaDezenas: FrequenciaDezena[];
+  topDuplas: DuplaFrequente[];
   loading: boolean;
 }
 
@@ -268,6 +275,25 @@ export function useGravacaoData() {
         }))
         .sort((a, b) => b.freq - a.freq || a.dezena - b.dezena);
 
+      // 2b2. Top 3 duplas mais frequentes nos últimos 5 concursos
+      const duplaMap = new Map<string, number>();
+      for (const c of ultimos5) {
+        const sorted = [...c.dezenas].sort((a, b) => a - b);
+        for (let i = 0; i < sorted.length; i++) {
+          for (let j = i + 1; j < sorted.length; j++) {
+            const key = `${sorted[i]}-${sorted[j]}`;
+            duplaMap.set(key, (duplaMap.get(key) ?? 0) + 1);
+          }
+        }
+      }
+      const topDuplas: DuplaFrequente[] = Array.from(duplaMap.entries())
+        .map(([key, freq]) => {
+          const [d1, d2] = key.split("-").map(Number);
+          return { d1, d2, freq };
+        })
+        .sort((a, b) => b.freq - a.freq)
+        .slice(0, 3);
+
       // 2c. Fetch ALL concursos for tendências calculation
       const { data: allTendData, error: tendError } = await (supabase as any)
         .from("resultados_loterias")
@@ -374,6 +400,7 @@ export function useGravacaoData() {
         estrategiaIA,
         tendencias,
         frequenciaDezenas,
+        topDuplas,
         loading: false,
       } as GravacaoData;
     },
