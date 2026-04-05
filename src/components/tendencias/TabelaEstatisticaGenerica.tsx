@@ -56,7 +56,7 @@ export function TabelaEstatisticaGenerica({ config }: Props) {
       if (error) throw error;
       if (!data || data.length === 0) return [];
 
-      const concursoMaisRecente = data[0].concurso_id;
+      const concursoMaisRecente = data[0].concurso;
       const totalConcursos = data.length;
 
       // Agrupar por quantidade
