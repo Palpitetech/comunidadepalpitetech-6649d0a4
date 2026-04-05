@@ -753,12 +753,25 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos do
       msg += `💡 *Conclusão:*\n${estrategia.conclusao}\n\n`;
     }
 
-    // Jogos
-    for (let i = 0; i < jogosValidos.length; i++) {
-      msg += `🎯 Jogo ${String(i + 1).padStart(2, "0")}: ${jogosValidos[i]}\n`;
+    if (includePalpites) {
+      // Modo COM palpites: lista os jogos
+      for (let i = 0; i < jogosValidos.length; i++) {
+        msg += `🎯 Jogo ${String(i + 1).padStart(2, "0")}: ${jogosValidos[i]}\n`;
+      }
+      msg += `\nBoa sorte! 🍀\nMais análises na comunidade 👇\n${linkUrl}?utm=grupo`;
+    } else {
+      // Modo SEM palpites: CTA para grupo VIP
+      msg += `━━━━━━━━━━━━━━━━━━━━\n`;
+      msg += `🎯 *QUER RECEBER OS PALPITES?*\n\n`;
+      msg += `Os 15 jogos baseados nessa estratégia são enviados diariamente no *Grupo VIP*.\n\n`;
+      if (vipGroupLink) {
+        msg += `👉 *Entre agora:* ${vipGroupLink}\n`;
+      } else {
+        msg += `👉 Fale com a gente para entrar no Grupo VIP!\n`;
+      }
+      msg += `━━━━━━━━━━━━━━━━━━━━\n`;
+      msg += `\nMais análises na comunidade 👇\n${linkUrl}?utm=grupo`;
     }
-
-    msg += `\nBoa sorte! 🍀\nMais análises na comunidade 👇\n${linkUrl}?utm=grupo`;
 
     return msg;
   } catch (err: any) {
