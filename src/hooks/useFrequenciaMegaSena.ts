@@ -170,16 +170,17 @@ export function useFrequenciaMegaSena(periodo: number) {
   return useQuery({
     queryKey: ["frequencia-megasena", periodo],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("resultados_megasena")
-        .select("concurso_id, dezenas")
-        .order("concurso_id", { ascending: false })
+      const { data, error } = await (supabase as any)
+        .from("resultados_loterias")
+        .select("concurso, dezenas")
+        .eq("loteria", "megasena")
+        .order("concurso", { ascending: false })
         .limit(periodo);
 
       if (error) throw error;
 
-      const concursos: Concurso[] = (data || []).map((r) => ({
-        concurso_id: r.concurso_id,
+      const concursos: Concurso[] = (data || []).map((r: any) => ({
+        concurso_id: r.concurso,
         dezenas: r.dezenas as number[],
       }));
 

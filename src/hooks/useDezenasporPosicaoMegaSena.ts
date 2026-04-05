@@ -16,10 +16,11 @@ export function useDezenasporPosicaoMegaSena(periodo: number = 100) {
   return useQuery({
     queryKey: ["dezenas-posicao-megasena", periodo],
     queryFn: async (): Promise<PosicaoData[]> => {
-      const { data: resultados, error } = await supabase
-        .from("resultados_megasena")
+      const { data: resultados, error } = await (supabase as any)
+        .from("resultados_loterias")
         .select("dezenas")
-        .order("concurso_id", { ascending: false })
+        .eq("loteria", "megasena")
+        .order("concurso", { ascending: false })
         .limit(periodo);
 
       if (error) throw error;

@@ -20,17 +20,18 @@ export function useMegaSenaResultados(limit: number = 50) {
   return useQuery({
     queryKey: ["megasena-resultados", limit],
     queryFn: async (): Promise<ResultadoMegaSena[]> => {
-      const { data, error } = await supabase
-        .from("resultados_megasena")
-        .select("*")
-        .order("concurso_id", { ascending: false })
+      const { data, error } = await (supabase as any)
+        .from("resultados_loterias")
+        .select("id, concurso, data_sorteio, dezenas, acumulou, valor_acumulado, valor_estimado_proximo, qtd_pares, qtd_impares, qtd_primos, qtd_moldura, qtd_repetidas")
+        .eq("loteria", "megasena")
+        .order("concurso", { ascending: false })
         .limit(limit);
 
       if (error) {
         throw new Error(error.message);
       }
 
-      return (data || []) as ResultadoMegaSena[];
+      return (data || []).map((r: any) => ({ ...r, concurso_id: r.concurso })) as ResultadoMegaSena[];
     },
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
@@ -40,10 +41,11 @@ export function useMegaSenaUltimoResultado() {
   return useQuery({
     queryKey: ["megasena-ultimo-resultado"],
     queryFn: async (): Promise<ResultadoMegaSena | null> => {
-      const { data, error } = await supabase
-        .from("resultados_megasena")
-        .select("*")
-        .order("concurso_id", { ascending: false })
+      const { data, error } = await (supabase as any)
+        .from("resultados_loterias")
+        .select("id, concurso, data_sorteio, dezenas, acumulou, valor_acumulado, valor_estimado_proximo, qtd_pares, qtd_impares, qtd_primos, qtd_moldura, qtd_repetidas")
+        .eq("loteria", "megasena")
+        .order("concurso", { ascending: false })
         .limit(1)
         .maybeSingle();
 
@@ -51,7 +53,8 @@ export function useMegaSenaUltimoResultado() {
         throw new Error(error.message);
       }
 
-      return data as ResultadoMegaSena | null;
+      if (!data) return null;
+      return { ...data, concurso_id: data.concurso } as ResultadoMegaSena | null;
     },
     staleTime: 5 * 60 * 1000,
   });
