@@ -75,10 +75,18 @@ export interface DuplaFrequente {
   freq: number;
 }
 
+export interface FaixaPremiacao {
+  faixa: string;
+  ganhadores: number;
+  valorPremio: number;
+  valorPremioFormatado: string;
+}
+
 export interface GravacaoData {
   concurso: number;
   data: string;
   premiacao: string;
+  faixasPremiacao: FaixaPremiacao[];
   dezenas: number[];
   dezenasFormatadas: string[];
   estatisticas: EstatisticaItem[];
@@ -377,24 +385,35 @@ export function useGravacaoData() {
         .eq("concurso", ultimo.concurso)
         .single();
 
+      const faixasPremiacao: FaixaPremiacao[] = [];
+      const currFmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
       if (premData?.premiacao_json && Array.isArray(premData.premiacao_json) && premData.premiacao_json.length > 0) {
-        premiacaoTotal = premData.premiacao_json.reduce((sum: number, f: any) => {
+        for (const f of premData.premiacao_json as any[]) {
           const premio = f.valorPremio ?? f.valor_premio ?? f.valor ?? 0;
           const ganhadores = f.ganhadores ?? f.numero_ganhadores ?? 0;
-          return sum + (ganhadores * premio);
-        }, 0);
+          const faixa = f.faixa ?? f.descricao ?? f.acertos ?? "";
+          premiacaoTotal += ganhadores * premio;
+          faixasPremiacao.push({
+            faixa: String(faixa),
+            ganhadores,
+            valorPremio: premio,
+            valorPremioFormatado: currFmt.format(premio),
+          });
+        }
       }
 
       const premiacaoFormatada = premiacaoTotal > 0
-        ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(premiacaoTotal)
+        ? currFmt.format(premiacaoTotal)
         : ultimo.valor_premio_principal
-          ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(ultimo.valor_premio_principal)
+          ? currFmt.format(ultimo.valor_premio_principal)
           : "—";
 
       return {
         concurso: ultimo.concurso,
         data: dataFormatada,
         premiacao: premiacaoFormatada,
+        faixasPremiacao,
         dezenas,
         dezenasFormatadas: dezenas.map(formatarDezena),
         estatisticas,
