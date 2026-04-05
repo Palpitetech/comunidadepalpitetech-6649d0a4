@@ -472,8 +472,8 @@ async function generatePalpiteMessage(
   // Fetch last 5 results (same source as Gerador)
   const { data: resultados, error: resErr } = await supabase
     .from("resultados_loterias")
-.eq("loteria", "lotofacil")
-.select("concurso_id:concurso, data_sorteio, dezenas")
+.eq("loteria", "lotofacil")
+.select("concurso_id:concurso, data_sorteio, dezenas")
     .order("concurso", { ascending: false })
     .limit(5);
 

@@ -433,8 +433,8 @@ serve(async (req) => {
     // 2. Buscar últimos resultados para análise
     const { data: resultados, error: resultadosError } = await supabaseAdmin
       .from("resultados_loterias")
-.eq("loteria", "lotofacil")
-.select("concurso_id:concurso, dezenas, data_sorteio, ciclo_numero, dezenas_faltantes_ciclo, qtd_pares, qtd_impares, qtd_repetidas, qtd_primos, qtd_moldura, acumulou")
+.eq("loteria", "lotofacil")
+.select("concurso_id:concurso, dezenas, data_sorteio, ciclo_numero, dezenas_faltantes_ciclo, qtd_pares, qtd_impares, qtd_repetidas, qtd_primos, qtd_moldura, acumulou")
       .order("concurso", { ascending: false })
       .limit(PERIODO_ANALISE);
 
