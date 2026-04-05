@@ -319,7 +319,19 @@ async function handleSend(
     }
   }
 
-  return jsonResponse({ sent, failed, skipped_cooldown: skippedCooldown });
+  // Alert: check for stuck messages (pending for > 30 min)
+  const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  const { count: stuckCount } = await supabase
+    .from("group_blast_logs")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending")
+    .lt("scheduled_for", thirtyMinAgo);
+
+  if (stuckCount && stuckCount > 0) {
+    console.warn(`[group-blast] ⚠️ ${stuckCount} mensagem(s) presa(s) há mais de 30 min`);
+  }
+
+  return jsonResponse({ sent, failed, skipped_cooldown: skippedCooldown, stuck_messages: stuckCount ?? 0 });
 }
 
 // ─── AI MESSAGE GENERATION ──────────────────────────────
