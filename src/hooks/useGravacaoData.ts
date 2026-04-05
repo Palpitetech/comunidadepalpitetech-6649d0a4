@@ -328,6 +328,7 @@ export function useGravacaoData() {
         estatisticas,
         jogos,
         estrategiaIA,
+        tendencias,
         loading: false,
       } as GravacaoData;
     },
