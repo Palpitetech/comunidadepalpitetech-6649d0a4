@@ -43,7 +43,7 @@ export default function SlideTendencias({ jogos, estrategiaIA }: SlideTendencias
     <div className="flex w-full h-full items-center gap-6">
       {/* Left column — Strategy (30%) */}
       <div className="flex flex-col gap-3 justify-center overflow-hidden" style={{ width: "30%" }}>
-        <p className="text-purple-300/60 text-xs tracking-widest uppercase">Estratégia da IA</p>
+        <p className="text-purple-300/60 text-xs tracking-widest uppercase">Estratégia</p>
 
         {estrategiaIA ? (
           <div className="space-y-3">
@@ -107,7 +107,7 @@ export default function SlideTendencias({ jogos, estrategiaIA }: SlideTendencias
         )}
 
         <p className="text-purple-300/30 text-[10px] mt-1 border-t border-purple-500/20 pt-2">
-          Gerado por IA • Últimos 5 concursos
+          Baseado nos últimos 5 concursos
         </p>
       </div>
 

@@ -21,7 +21,7 @@ Neste vídeo você encontra:
 ✅ Análise estatística completa (pares, ímpares, primos, moldura, soma)
 ✅ Frequência das dezenas nos últimos concursos
 ✅ Tendências e padrões identificados
-✅ 3 palpites gerados por inteligência artificial
+✅ 3 palpites estratégicos para o próximo concurso
 
 🔔 Ative o sininho para não perder nenhum resultado!
 📲 Receba estratégias grátis no WhatsApp pelo link do 1º comentário.
