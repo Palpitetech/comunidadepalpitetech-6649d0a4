@@ -118,8 +118,14 @@ function ResultadoCompactoCard({ resultado, onClick }: { resultado: any; onClick
         ))}
       </div>
       <div className="text-left text-xs text-muted-foreground">
-        Pares: {resultado.qtd_pares ?? "-"} | Moldura: {resultado.qtd_moldura ?? "-"} | Primos: {resultado.qtd_primos ?? "-"}
-        {resultado.qtd_repetidas && resultado.qtd_repetidas > 0 && (
+        Pares: {resultado.qtd_pares ?? "-"} | Moldura: {resultado.qtd_moldura ?? "-"} | Primos: {resultado.qtd_primos ?? "-"} | Soma: {resultado.soma ?? "-"}
+        {resultado.sequencias != null && resultado.sequencias > 0 && (
+          <span> | Seq: <span className="font-semibold">{resultado.sequencias}</span></span>
+        )}
+        {resultado.qtd_fibonacci != null && resultado.qtd_fibonacci > 0 && (
+          <span> | Fib: <span className="font-semibold">{resultado.qtd_fibonacci}</span></span>
+        )}
+        {resultado.qtd_repetidas != null && resultado.qtd_repetidas > 0 && (
           <span> | Repetidas: <span className="text-destructive font-semibold">{resultado.qtd_repetidas}</span></span>
         )}
       </div>
