@@ -2228,6 +2228,8 @@ export type Database = {
           loteria: string
           mes_sorte: string | null
           premiacao_json: Json | null
+          qtd_fibonacci: number | null
+          qtd_fibonacci_s2: number | null
           qtd_impares: number | null
           qtd_impares_s2: number | null
           qtd_moldura: number | null
@@ -2238,6 +2240,10 @@ export type Database = {
           qtd_primos_s2: number | null
           qtd_repetidas: number | null
           qtd_repetidas_s2: number | null
+          sequencias: number | null
+          sequencias_s2: number | null
+          soma: number | null
+          soma_s2: number | null
           valor_acumulado: number | null
           valor_acumulado_especial: number | null
           valor_estimado_proximo: number | null
@@ -2259,6 +2265,8 @@ export type Database = {
           loteria: string
           mes_sorte?: string | null
           premiacao_json?: Json | null
+          qtd_fibonacci?: number | null
+          qtd_fibonacci_s2?: number | null
           qtd_impares?: number | null
           qtd_impares_s2?: number | null
           qtd_moldura?: number | null
@@ -2269,6 +2277,10 @@ export type Database = {
           qtd_primos_s2?: number | null
           qtd_repetidas?: number | null
           qtd_repetidas_s2?: number | null
+          sequencias?: number | null
+          sequencias_s2?: number | null
+          soma?: number | null
+          soma_s2?: number | null
           valor_acumulado?: number | null
           valor_acumulado_especial?: number | null
           valor_estimado_proximo?: number | null
@@ -2290,6 +2302,8 @@ export type Database = {
           loteria?: string
           mes_sorte?: string | null
           premiacao_json?: Json | null
+          qtd_fibonacci?: number | null
+          qtd_fibonacci_s2?: number | null
           qtd_impares?: number | null
           qtd_impares_s2?: number | null
           qtd_moldura?: number | null
@@ -2300,6 +2314,10 @@ export type Database = {
           qtd_primos_s2?: number | null
           qtd_repetidas?: number | null
           qtd_repetidas_s2?: number | null
+          sequencias?: number | null
+          sequencias_s2?: number | null
+          soma?: number | null
+          soma_s2?: number | null
           valor_acumulado?: number | null
           valor_acumulado_especial?: number | null
           valor_estimado_proximo?: number | null
