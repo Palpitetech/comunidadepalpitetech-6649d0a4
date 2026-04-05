@@ -16,7 +16,7 @@ export function useDezenasporPosicao(periodo: number = 100) {
   return useQuery({
     queryKey: ["dezenas-posicao", periodo],
     queryFn: async (): Promise<PosicaoData[]> => {
-      const { data: resultados, error } = await supabase
+      const { data: resultados, error } = await (supabase as any)
         .from("resultados_loterias")
         .select("dezenas")
         .eq("loteria", "lotofacil")

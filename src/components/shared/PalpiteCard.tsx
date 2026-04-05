@@ -88,7 +88,7 @@ export function PalpiteCard({
     
     setLoadingConcursos(true);
     try {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("resultados_loterias")
         .select("concurso_id:concurso, data_sorteio, dezenas")
         .eq("loteria", "lotofacil")

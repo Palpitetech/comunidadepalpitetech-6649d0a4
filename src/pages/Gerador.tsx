@@ -42,7 +42,7 @@ export default function Gerador() {
   // Buscar último concurso para cálculo de repetidas
   useEffect(() => {
     const fetchUltimoConcurso = async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("resultados_loterias")
         .select("dezenas")
         .eq("loteria", "lotofacil")
