@@ -46,6 +46,22 @@ export interface EstrategiaIA {
   dezenas_evitadas: { dezenas: number[]; motivo: string }[];
 }
 
+export interface TendenciaFaixa {
+  valor: number;
+  complementar: number;
+  ocorrencias: number;
+  atraso: number;
+  media: number;
+  isDestaque: boolean;  // atraso >= media (pronto para sair)
+  isTopOcorrencia: boolean; // top 3 ocorrências
+}
+
+export interface TendenciaIndicador {
+  label: string;
+  emoji: string;
+  faixas: TendenciaFaixa[];
+}
+
 export interface GravacaoData {
   concurso: number;
   data: string;
@@ -55,6 +71,7 @@ export interface GravacaoData {
   estatisticas: EstatisticaItem[];
   jogos: GravacaoJogo[];
   estrategiaIA?: EstrategiaIA;
+  tendencias: TendenciaIndicador[];
   loading: boolean;
 }
 
@@ -112,6 +129,73 @@ function statusFromFaixa(valor: number, min: number, max: number): "dentro" | "l
   return "fora";
 }
 
+// ── Tendências helper ──
+
+type CampoTendencia = "qtd_pares" | "qtd_primos" | "qtd_moldura" | "qtd_repetidas";
+
+interface TendenciaConfig {
+  campo: CampoTendencia;
+  label: string;
+  emoji: string;
+}
+
+const TENDENCIA_CONFIGS: TendenciaConfig[] = [
+  { campo: "qtd_pares", label: "Pares/Ímpares", emoji: "🎯" },
+  { campo: "qtd_primos", label: "Primos", emoji: "🔢" },
+  { campo: "qtd_moldura", label: "Moldura/Miolo", emoji: "🖼️" },
+  { campo: "qtd_repetidas", label: "Repetidas/Novas", emoji: "🔄" },
+];
+
+function calcTendenciaIndicador(
+  allData: any[],
+  config: TendenciaConfig,
+  concursoMaisRecente: number
+): TendenciaIndicador {
+  const totalConcursos = allData.length;
+  const agrupado = new Map<number, { ocorrencias: number; ultimaOcorrencia: number }>();
+
+  for (const r of allData) {
+    const qtd = (r as Record<string, unknown>)[config.campo] as number ?? 0;
+    if (!agrupado.has(qtd)) {
+      agrupado.set(qtd, { ocorrencias: 0, ultimaOcorrencia: r.concurso });
+    }
+    const item = agrupado.get(qtd)!;
+    item.ocorrencias++;
+    if (r.concurso > item.ultimaOcorrencia) {
+      item.ultimaOcorrencia = r.concurso;
+    }
+  }
+
+  const faixasRaw = Array.from(agrupado.entries())
+    .map(([valor, item]) => ({
+      valor,
+      complementar: 15 - valor,
+      ocorrencias: item.ocorrencias,
+      atraso: concursoMaisRecente - item.ultimaOcorrencia,
+      media: Math.round(totalConcursos / item.ocorrencias),
+    }))
+    .sort((a, b) => b.ocorrencias - a.ocorrencias);
+
+  // Top 3 por ocorrências
+  const top3Set = new Set(faixasRaw.slice(0, 3).map((f) => f.valor));
+
+  // Destaque: atraso >= media (pronto para sair), top 5
+  const destaquesOrdenados = faixasRaw
+    .filter((f) => f.atraso >= f.media)
+    .sort((a, b) => b.atraso - a.atraso)
+    .slice(0, 5)
+    .map((f) => f.valor);
+  const destaqueSet = new Set(destaquesOrdenados);
+
+  const faixas: TendenciaFaixa[] = faixasRaw.map((f) => ({
+    ...f,
+    isDestaque: destaqueSet.has(f.valor),
+    isTopOcorrencia: top3Set.has(f.valor),
+  }));
+
+  return { label: config.label, emoji: config.emoji, faixas };
+}
+
 // ── Main hook ──
 
 export function useGravacaoData() {
@@ -156,6 +240,21 @@ export function useGravacaoData() {
         { label: "Ímpares", valor: impares, faixaMin: FAIXAS.Ímpares[0], faixaMax: FAIXAS.Ímpares[1], status: statusFromFaixa(impares, ...FAIXAS.Ímpares) },
         { label: "Soma", valor: soma, faixaMin: FAIXAS.Soma[0], faixaMax: FAIXAS.Soma[1], status: statusFromFaixa(soma, ...FAIXAS.Soma) },
       ];
+
+      // 2b. Fetch ALL concursos for tendências calculation
+      const { data: allTendData, error: tendError } = await (supabase as any)
+        .from("resultados_loterias")
+        .select("concurso, qtd_pares, qtd_primos, qtd_moldura, qtd_repetidas")
+        .eq("loteria", "lotofacil")
+        .order("concurso", { ascending: false });
+
+      if (tendError) throw tendError;
+
+      const tendencias: TendenciaIndicador[] = allTendData && allTendData.length > 0
+        ? TENDENCIA_CONFIGS.map((cfg) =>
+            calcTendenciaIndicador(allTendData, cfg, allTendData[0].concurso)
+          )
+        : [];
 
       // 3. Call generate-palpites edge function (same as Gerador & WhatsApp)
       const { data: sessionData } = await supabase.auth.getSession();
@@ -229,6 +328,7 @@ export function useGravacaoData() {
         estatisticas,
         jogos,
         estrategiaIA,
+        tendencias,
         loading: false,
       } as GravacaoData;
     },
