@@ -1,5 +1,5 @@
 import { formatarDezena } from "@/lib/lotofacil";
-import type { EstatisticaItem, TendenciaIndicador } from "@/hooks/useGravacaoData";
+import type { EstatisticaItem, TendenciaIndicador, TendenciaFaixa } from "@/hooks/useGravacaoData";
 
 interface SlideEstatisticasProps {
   dezenas: number[];
@@ -13,14 +13,27 @@ const STATUS_COLORS = {
   fora: { bg: "bg-red-500/15", text: "text-red-400", dot: "bg-red-400" },
 };
 
+/** Top 3 ocorrências + até 1 extra com atraso >= média = 3–4 itens */
+function filtrarFaixas(faixas: TendenciaFaixa[]): TendenciaFaixa[] {
+  const sorted = [...faixas].sort((a, b) => b.ocorrencias - a.ocorrencias);
+  const top3 = sorted.slice(0, 3);
+  const top3Vals = new Set(top3.map((f) => f.valor));
+
+  // Procurar 1 faixa extra com destaque que não esteja no top 3
+  const extra = sorted.find((f) => !top3Vals.has(f.valor) && f.atraso >= f.media);
+
+  const result = [...top3];
+  if (extra) result.push(extra);
+  return result.sort((a, b) => b.ocorrencias - a.ocorrencias);
+}
+
 export default function SlideEstatisticas({ dezenas, estatisticas, tendencias }: SlideEstatisticasProps) {
   const sorteadas = new Set(dezenas);
 
   return (
     <div className="flex w-full h-full gap-6">
-      {/* Left 30%: resultado + indicadores do concurso */}
+      {/* Left 30%: resultado + indicadores */}
       <div className="w-[30%] flex flex-col items-center justify-center gap-6">
-        {/* Mini grid */}
         <div>
           <p className="text-white/50 text-sm mb-3 tracking-wide text-center">Resultado</p>
           <div className="grid grid-cols-5 gap-1.5">
@@ -39,7 +52,6 @@ export default function SlideEstatisticas({ dezenas, estatisticas, tendencias }:
           </div>
         </div>
 
-        {/* Indicadores do concurso sorteado */}
         <div className="w-full space-y-1.5">
           <p className="text-white/50 text-xs tracking-wide text-center mb-2">Indicadores</p>
           {estatisticas.map((item) => {
@@ -60,71 +72,62 @@ export default function SlideEstatisticas({ dezenas, estatisticas, tendencias }:
         </div>
       </div>
 
-      {/* Right 70%: Tendências para o próximo concurso */}
+      {/* Right 70%: Tendências filtradas */}
       <div className="w-[70%] flex flex-col justify-center overflow-hidden">
-        <p className="text-white/50 text-sm mb-3 tracking-wide">
+        <p className="text-white/50 text-sm mb-4 tracking-wide">
           📊 Tendências — Próximo Concurso
         </p>
-        <div className="space-y-4 overflow-y-auto max-h-[calc(100%-2rem)] pr-1">
-          {tendencias.map((indicador) => (
-            <div key={indicador.label}>
-              <p className="text-white/70 text-xs font-semibold mb-1.5 flex items-center gap-1.5">
-                <span>{indicador.emoji}</span>
-                {indicador.label}
-              </p>
-              <div className="grid grid-cols-1 gap-1">
-                {indicador.faixas.map((faixa) => (
-                  <div
-                    key={faixa.valor}
-                    className={`
-                      flex items-center justify-between rounded-lg px-3 py-1.5 text-xs
-                      ${faixa.isDestaque
-                        ? "bg-emerald-500/20 border border-emerald-500/40"
-                        : "bg-white/5"
-                      }
-                    `}
-                  >
-                    {/* Valor principal + complementar */}
-                    <div className="flex items-center gap-3 min-w-[90px]">
-                      <span className={`font-bold text-sm ${faixa.isDestaque ? "text-emerald-400" : "text-white"}`}>
-                        {faixa.valor}
-                      </span>
-                      <span className="text-white/30">/ {faixa.complementar}</span>
-                    </div>
+        <div className="space-y-5">
+          {tendencias.map((indicador) => {
+            const faixas = filtrarFaixas(indicador.faixas);
+            return (
+              <div key={indicador.label}>
+                <p className="text-white/70 text-xs font-semibold mb-2 flex items-center gap-1.5">
+                  <span>{indicador.emoji}</span>
+                  {indicador.label}
+                </p>
+                <div className="space-y-1">
+                  {faixas.map((faixa) => {
+                    const isProonto = faixa.atraso >= faixa.media;
+                    return (
+                      <div
+                        key={faixa.valor}
+                        className={`
+                          flex items-center gap-4 rounded-lg px-4 py-2
+                          ${isProonto
+                            ? "bg-emerald-500/15 border border-emerald-500/30"
+                            : "bg-white/[0.04]"
+                          }
+                        `}
+                      >
+                        {/* Valor */}
+                        <span className={`font-bold text-base min-w-[28px] ${isProonto ? "text-emerald-400" : "text-white"}`}>
+                          {faixa.valor}
+                        </span>
 
-                    {/* Ocorrências (top 3 em parênteses) */}
-                    <div className="flex items-center gap-1 min-w-[70px]">
-                      <span className="text-white/40 text-[10px]">Ocorr:</span>
-                      <span className={`font-semibold ${faixa.isTopOcorrencia ? "text-amber-400" : "text-white/60"}`}>
-                        {faixa.isTopOcorrencia ? `(${faixa.ocorrencias})` : faixa.ocorrencias}
-                      </span>
-                    </div>
+                        {/* Ocorrências */}
+                        <span className="text-white/50 text-sm min-w-[50px]">
+                          ({faixa.ocorrencias}×)
+                        </span>
 
-                    {/* Atraso */}
-                    <div className="flex items-center gap-1 min-w-[70px]">
-                      <span className="text-white/40 text-[10px]">Atraso:</span>
-                      <span className={`font-semibold ${faixa.isDestaque ? "text-emerald-400" : "text-white/60"}`}>
-                        {faixa.atraso}
-                      </span>
-                    </div>
+                        {/* Atraso */}
+                        <span className={`text-sm min-w-[60px] ${isProonto ? "text-emerald-400 font-semibold" : "text-white/40"}`}>
+                          atraso {faixa.atraso}
+                        </span>
 
-                    {/* Média */}
-                    <div className="flex items-center gap-1 min-w-[60px]">
-                      <span className="text-white/40 text-[10px]">Méd:</span>
-                      <span className="text-white/50">{faixa.media}</span>
-                    </div>
-
-                    {/* Badge destaque */}
-                    {faixa.isDestaque && (
-                      <span className="text-[10px] bg-emerald-500/30 text-emerald-300 px-1.5 py-0.5 rounded font-semibold whitespace-nowrap">
-                        🔥 Pronto
-                      </span>
-                    )}
-                  </div>
-                ))}
+                        {/* Badge */}
+                        {isProonto && (
+                          <span className="text-[10px] bg-emerald-500/25 text-emerald-300 px-2 py-0.5 rounded-full font-semibold ml-auto">
+                            🔥 Pronto
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
