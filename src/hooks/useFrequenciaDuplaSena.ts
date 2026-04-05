@@ -184,11 +184,13 @@ export function useFrequenciaDuplaSena(
   return useQuery({
     queryKey: ["frequencia-duplasena", periodo],
     queryFn: async (): Promise<FrequenciaDuplaSenaResult> => {
-      const { data: resultados, error } = await supabase
-        .from("resultados_duplasena")
-        .select("concurso_id, dezenas_sorteio1, dezenas_sorteio2")
-        .order("concurso_id", { ascending: false })
+      const { data: rawResultados, error } = await (supabase as any)
+        .from("resultados_loterias")
+        .select("concurso, dezenas, dezenas_sorteio2")
+        .eq("loteria", "duplasena")
+        .order("concurso", { ascending: false })
         .limit(periodo);
+      const resultados = (rawResultados || []).map((r: any) => ({ concurso_id: r.concurso, dezenas_sorteio1: r.dezenas, dezenas_sorteio2: r.dezenas_sorteio2 }));
 
       if (error) throw error;
       if (!resultados || resultados.length === 0) {
