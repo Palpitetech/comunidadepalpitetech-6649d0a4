@@ -17,25 +17,14 @@ function getSupabase() {
 }
 
 async function selectInstance(supabase: ReturnType<typeof createClient>) {
-  const threeMinAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
-
-  // Get online instances under daily limit
-  const { data: instances, error } = await supabase
-    .from("whatsapp_instances")
-    .select("*")
-    .eq("status", "online")
-    .order("last_message_at", { ascending: true, nullsFirst: true });
-
-  if (error || !instances?.length) return null;
-
-  // Filter: under daily limit AND (never sent OR 3+ min since last)
-  const available = instances.filter((i: any) => {
-    if ((i.messages_sent_today ?? 0) >= (i.daily_limit ?? 100)) return false;
-    if (!i.last_message_at) return true;
-    return i.last_message_at <= threeMinAgo;
-  });
-
-  return available.length > 0 ? available[0] : null;
+  const { data, error } = await supabase.rpc("select_best_instance");
+  if (error || !data || data.length === 0) return null;
+  // Return in the shape the rest of the code expects
+  return {
+    id: data[0].instance_id,
+    evolution_instance_id: data[0].evolution_instance_id,
+    phone_number: data[0].phone_number,
+  };
 }
 
 function resolveTemplate(
