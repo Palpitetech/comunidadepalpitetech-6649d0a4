@@ -508,7 +508,7 @@ async function generatePalpiteMessage(
 - Dezenas quentes (≥3 aparições): ${quentes.join(", ") || "nenhuma"}
 - Dezenas frias (≤1 aparição): ${frias.join(", ") || "nenhuma"}  
 - Média pares: ${avgPares.toFixed(1)} | Média moldura: ${avgMoldura.toFixed(1)} | Média primos: ${avgPrimos.toFixed(1)}
-- Resultados: ${resultados.map((r: any) => `C${r.concurso}: [${r.dezenas.sort((a: number, b: number) => a - b).join(",")}]`).join(" | ")}`;
+- Resultados: ${resultados.map((r: any) => `C${r.concurso_id}: [${r.dezenas.sort((a: number, b: number) => a - b).join(",")}]`).join(" | ")}`;
 
   const prompt = `Você é um especialista em Lotofácil.
 Baseado na análise estatística dos 5 últimos concursos, gere EXATAMENTE 15 jogos de 15 dezenas cada (1 a 25).
