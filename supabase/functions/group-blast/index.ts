@@ -201,14 +201,25 @@ async function handleSend(
   for (let i = 0; i < logs.length; i++) {
     const log = logs[i];
 
-    // Use centralized function to pick best available instance
-    const { data: bestInstance, error: biErr } = await supabase.rpc("select_best_instance");
-    if (biErr || !bestInstance || bestInstance.length === 0) {
-      console.warn(`[group-blast] Nenhuma instância disponível (cooldown/limite) para log ${log.id}, adiando`);
+    // Retry loop: wait for an available instance (up to 3 attempts, 60s between)
+    let instance: any = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const { data: bestInstance, error: biErr } = await supabase.rpc("select_best_instance");
+      if (!biErr && bestInstance && bestInstance.length > 0) {
+        instance = bestInstance[0];
+        break;
+      }
+      if (attempt < 3) {
+        console.warn(`[group-blast] Aguardando instância disponível (tentativa ${attempt}/3) para log ${log.id}...`);
+        await new Promise((r) => setTimeout(r, 60_000));
+      }
+    }
+
+    if (!instance) {
+      console.warn(`[group-blast] Nenhuma instância disponível após 3 tentativas para log ${log.id}, permanece pending`);
       skippedCooldown++;
       continue;
     }
-    const instance = bestInstance[0];
 
     try {
       const { data: configData } = await supabase
@@ -308,7 +319,19 @@ async function handleSend(
     }
   }
 
-  return jsonResponse({ sent, failed, skipped_cooldown: skippedCooldown });
+  // Alert: check for stuck messages (pending for > 30 min)
+  const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  const { count: stuckCount } = await supabase
+    .from("group_blast_logs")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending")
+    .lt("scheduled_for", thirtyMinAgo);
+
+  if (stuckCount && stuckCount > 0) {
+    console.warn(`[group-blast] ⚠️ ${stuckCount} mensagem(s) presa(s) há mais de 30 min`);
+  }
+
+  return jsonResponse({ sent, failed, skipped_cooldown: skippedCooldown, stuck_messages: stuckCount ?? 0 });
 }
 
 // ─── AI MESSAGE GENERATION ──────────────────────────────
