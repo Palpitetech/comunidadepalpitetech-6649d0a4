@@ -2999,6 +2999,11 @@ export type Database = {
         Returns: undefined
       }
       claim_referral_reward: { Args: { p_reward_id: string }; Returns: Json }
+      count_array_overlap: {
+        Args: { a: number[]; b: number[] }
+        Returns: number
+      }
+      count_sequences: { Args: { arr: number[] }; Returns: number }
       generate_bolao_codigo: {
         Args: { p_mes_ano: string; p_sigla: string }
         Returns: string
