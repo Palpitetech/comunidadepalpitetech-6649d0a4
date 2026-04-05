@@ -82,7 +82,7 @@ export default function GravacaoShell({ children, concurso, data }: GravacaoShel
         </div>
       )}
 
-      {/* Watermark overlay — anti-screenshot */}
+      {/* Watermark overlay — anti-screenshot, full page coverage */}
       <div
         className="absolute inset-0 z-40 pointer-events-none overflow-hidden"
         style={{ opacity: 0.04 }}
@@ -90,22 +90,23 @@ export default function GravacaoShell({ children, concurso, data }: GravacaoShel
         <div
           className="absolute"
           style={{
-            width: "200%",
-            height: "200%",
-            top: "-50%",
-            left: "-50%",
+            width: "300%",
+            height: "300%",
+            top: "-100%",
+            left: "-100%",
             transform: "rotate(-30deg)",
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "60px",
-            alignContent: "flex-start",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, 220px)",
+            gridAutoRows: "50px",
+            alignItems: "center",
+            justifyItems: "center",
           }}
         >
-          {Array.from({ length: 80 }, (_, i) => (
+          {Array.from({ length: 200 }, (_, i) => (
             <span
               key={i}
               className="text-white font-bold whitespace-nowrap"
-              style={{ fontSize: "18px", letterSpacing: "0.15em" }}
+              style={{ fontSize: "16px", letterSpacing: "0.15em" }}
             >
               PALPITE TECH
             </span>
