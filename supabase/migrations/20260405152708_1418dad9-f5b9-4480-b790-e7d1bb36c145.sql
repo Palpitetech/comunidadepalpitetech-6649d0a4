@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.process_pending_bot_replies();
