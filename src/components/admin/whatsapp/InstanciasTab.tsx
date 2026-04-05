@@ -144,6 +144,7 @@ export function InstanciasTab() {
       phone_number: inst.phone_number,
       evolution_instance_id: inst.evolution_instance_id,
       daily_limit: inst.daily_limit,
+      cooldown_queue: Array.isArray(inst.cooldown_queue) ? inst.cooldown_queue : [3],
     });
     setDialogOpen(true);
   };
