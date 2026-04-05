@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Pencil, Pause, Play, TestTube, X, Clock, Send, Trash2, Sparkles, Bot, PenLine } from "lucide-react";
+import { Plus, Pencil, Pause, Play, TestTube, X, Clock, Send, Trash2, Sparkles, Bot, PenLine, Dices } from "lucide-react";
 import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -18,7 +18,7 @@ interface Slot {
   id: string;
   schedule_times: string[];
   last_scheduled_index: number;
-  message_type: "ai" | "manual";
+  message_type: "ai" | "manual" | "palpite";
   message_content: string;
 }
 
@@ -394,8 +394,8 @@ export function DisparoGrupoTab() {
                         <div key={slot.id} className="text-xs space-y-1">
                           <div className="flex items-center justify-between">
                             <p className="text-muted-foreground flex items-center gap-1">
-                              {(slot as any).message_type === "manual" ? <PenLine className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
-                              {(slot as any).message_type === "manual" ? "✏️ Manual" : "🤖 IA"} — Próximo: {times[nextIdx] || "—"} ({times.length} horário{times.length !== 1 ? "s" : ""})
+                            {(slot as any).message_type === "manual" ? <PenLine className="h-3 w-3" /> : (slot as any).message_type === "palpite" ? <Dices className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
+                              {(slot as any).message_type === "manual" ? "✏️ Manual" : (slot as any).message_type === "palpite" ? "🎰 Palpite" : "🤖 IA"} — Próximo: {times[nextIdx] || "—"} ({times.length} horário{times.length !== 1 ? "s" : ""})
                             </p>
                             <Button
                               variant="ghost"
@@ -680,7 +680,7 @@ export function DisparoGrupoTab() {
                     {/* Message type toggle */}
                     <div className="space-y-2 pt-1 border-t border-dashed">
                       <Label className="text-[10px] text-muted-foreground">Tipo de mensagem</Label>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 flex-wrap">
                         <Button
                           type="button"
                           variant={slot.message_type === "ai" ? "default" : "outline"}
@@ -705,12 +705,29 @@ export function DisparoGrupoTab() {
                           <PenLine className="h-3 w-3 mr-1" />
                           ✏️ Escrever manualmente
                         </Button>
+                        <Button
+                          type="button"
+                          variant={slot.message_type === "palpite" ? "default" : "outline"}
+                          size="sm"
+                          className="text-[10px] h-7"
+                          onClick={() => setFormSlots(formSlots.map(s =>
+                            s.id === slot.id ? { ...s, message_type: "palpite" } : s
+                          ))}
+                        >
+                          <Dices className="h-3 w-3 mr-1" />
+                          🎰 Palpite Lotofácil
+                        </Button>
                       </div>
 
                       {slot.message_type === "ai" ? (
                         <p className="text-[10px] text-muted-foreground flex items-center gap-1">
                           <Sparkles className="h-3 w-3" />
                           A IA gera um convite baseado no post mais recente no momento do envio.
+                        </p>
+                      ) : slot.message_type === "palpite" ? (
+                        <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                          <Dices className="h-3 w-3" />
+                          Gera 15 palpites com estratégia baseada nos 5 últimos concursos da Lotofácil.
                         </p>
                       ) : (
                         <div className="space-y-1">
