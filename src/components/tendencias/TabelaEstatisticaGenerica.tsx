@@ -48,9 +48,9 @@ export function TabelaEstatisticaGenerica({ config }: Props) {
     queryKey: [config.queryKey],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("resultados")
+        .from("resultados_loterias")
         .select(`concurso_id, ${config.campoDb}`)
-        .order("concurso_id", { ascending: false });
+        .order("concurso", { ascending: false });
 
       if (error) throw error;
       if (!data || data.length === 0) return [];

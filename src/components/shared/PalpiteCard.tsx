@@ -89,9 +89,9 @@ export function PalpiteCard({
     setLoadingConcursos(true);
     try {
       const { data } = await supabase
-        .from("resultados")
-        .select("concurso_id, data_sorteio, dezenas")
-        .order("concurso_id", { ascending: false })
+        .from("resultados_loterias")
+        .select("concurso_id:concurso, data_sorteio, dezenas")
+        .order("concurso", { ascending: false })
         .limit(30);
       
       if (data) {

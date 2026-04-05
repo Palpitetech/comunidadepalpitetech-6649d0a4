@@ -43,9 +43,9 @@ export default function Gerador() {
   useEffect(() => {
     const fetchUltimoConcurso = async () => {
       const { data } = await supabase
-        .from("resultados")
+        .from("resultados_loterias")
         .select("dezenas")
-        .order("concurso_id", { ascending: false })
+        .order("concurso", { ascending: false })
         .limit(1)
         .single();
       
