@@ -37,12 +37,49 @@ export default function SlideTendencias({ jogos }: SlideTendenciasProps) {
     jogos.find((j) => j.tipo === "oportunidade"),
   ].filter(Boolean) as GravacaoJogo[];
 
+  const STRATEGY_ITEMS = [
+    {
+      icon: "⭐",
+      title: "Recomendado",
+      color: "text-emerald-400",
+      desc: "Score equilibrado: 30% frequência + 50% timing + 20% tendência. Combina força histórica com oportunidade.",
+    },
+    {
+      icon: "🔼",
+      title: "Força Histórica",
+      color: "text-blue-400",
+      desc: "Prioriza dezenas com maior ocorrência nos últimos 5 concursos. Aposta na continuidade.",
+    },
+    {
+      icon: "❄️",
+      title: "Oportunidade",
+      color: "text-cyan-400",
+      desc: "Foca em dezenas frias com bom timing estatístico. Aposta na reversão de atraso.",
+    },
+  ];
+
   return (
-    <div className="flex flex-col w-full h-full justify-center gap-4">
-      <p className="text-white/50 text-sm tracking-wide text-center">
-        Tendências — Últimos 5 Concursos
-      </p>
-      <div className="flex items-stretch gap-4 justify-center">
+    <div className="flex w-full h-full items-center gap-6">
+      {/* Left column — Strategy explanation (30%) */}
+      <div className="flex flex-col gap-4 justify-center" style={{ width: "30%" }}>
+        <p className="text-white/50 text-xs tracking-widest uppercase">Metodologia</p>
+        <div className="space-y-4">
+          {STRATEGY_ITEMS.map((item) => (
+            <div key={item.title} className="space-y-1">
+              <p className={`text-sm font-bold ${item.color}`}>
+                {item.icon} {item.title}
+              </p>
+              <p className="text-white/50 text-xs leading-relaxed">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-white/30 text-[10px] mt-2 border-t border-white/10 pt-2">
+          Base: últimos 5 concursos da Lotofácil
+        </p>
+      </div>
+
+      {/* Right column — Cards (70%) */}
+      <div className="flex items-stretch gap-4 justify-center" style={{ width: "70%" }}>
         {ordered.map((jogo) => {
           const cfg = CARD_CONFIG[jogo.tipo];
           const isMain = jogo.tipo === "recomendado";
