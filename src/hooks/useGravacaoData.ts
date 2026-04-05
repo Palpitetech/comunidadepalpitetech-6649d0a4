@@ -62,6 +62,13 @@ export interface TendenciaIndicador {
   faixas: TendenciaFaixa[];
 }
 
+export interface FrequenciaDezena {
+  dezena: number;
+  freq: number;
+  pct: number;
+  tipo: "quente" | "fria" | "neutra";
+}
+
 export interface GravacaoData {
   concurso: number;
   data: string;
@@ -72,6 +79,7 @@ export interface GravacaoData {
   jogos: GravacaoJogo[];
   estrategiaIA?: EstrategiaIA;
   tendencias: TendenciaIndicador[];
+  frequenciaDezenas: FrequenciaDezena[];
   loading: boolean;
 }
 
