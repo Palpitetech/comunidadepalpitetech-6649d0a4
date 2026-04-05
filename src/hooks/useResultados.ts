@@ -30,6 +30,12 @@ export interface ResultadoUnificado {
   qtd_moldura_s2: number | null;
   qtd_primos_s2: number | null;
   qtd_repetidas_s2: number | null;
+  soma: number | null;
+  sequencias: number | null;
+  qtd_fibonacci: number | null;
+  soma_s2: number | null;
+  sequencias_s2: number | null;
+  qtd_fibonacci_s2: number | null;
   ciclo_numero: number | null;
   dezenas_faltantes_ciclo: number[] | null;
   created_at: string;

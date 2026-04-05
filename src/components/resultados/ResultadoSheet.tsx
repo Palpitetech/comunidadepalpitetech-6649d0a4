@@ -154,6 +154,9 @@ export function ResultadoSheet({ open, onClose, resultado, loteria }: ResultadoS
   const moldura = resultado.qtd_moldura ?? resultado.qtd_moldura_s1 ?? null;
   const primos = resultado.qtd_primos ?? resultado.qtd_primos_s1 ?? null;
   const repetidas = resultado.qtd_repetidas ?? resultado.qtd_repetidas_s1 ?? null;
+  const soma = resultado.soma ?? null;
+  const sequencias = resultado.sequencias ?? null;
+  const fibonacci = resultado.qtd_fibonacci ?? null;
   const totalDezenas = dezenasGroups[0].dezenas.length;
 
   return (
@@ -205,6 +208,9 @@ export function ResultadoSheet({ open, onClose, resultado, loteria }: ResultadoS
                     {moldura !== null && <IndicatorPill label={`🟡 Moldura: ${moldura}`} />}
                     {primos !== null && <IndicatorPill label={`🟢 Primos: ${primos}`} />}
                     {repetidas !== null && repetidas > 0 && <IndicatorPill label={`🔴 Repetidas: ${repetidas}`} />}
+                    {soma !== null && <IndicatorPill label={`➕ Soma: ${soma}`} />}
+                    {sequencias !== null && sequencias > 0 && <IndicatorPill label={`🔗 Sequências: ${sequencias}`} />}
+                    {fibonacci !== null && fibonacci > 0 && <IndicatorPill label={`🌀 Fibonacci: ${fibonacci}`} />}
                   </>
                 ) : (
                   <IndicatorPill label={`📊 ${totalDezenas} dezenas sorteadas`} />
