@@ -420,11 +420,8 @@ async function actionSend() {
           sent_at: new Date().toISOString(),
         });
 
-        // Update last_message_at for the sender instance
-        await supabase
-          .from("whatsapp_instances")
-          .update({ last_message_at: new Date().toISOString() })
-          .eq("id", msg.from_instance_id);
+        // Centralized usage registration
+        await supabase.rpc("register_instance_usage", { p_instance_id: msg.from_instance_id });
 
         sent++;
         console.log(`[send] Sent message ${msg.id} via ${msg.from_evolution_id}`);
