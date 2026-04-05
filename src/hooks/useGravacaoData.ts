@@ -129,6 +129,73 @@ function statusFromFaixa(valor: number, min: number, max: number): "dentro" | "l
   return "fora";
 }
 
+// ── Tendências helper ──
+
+type CampoTendencia = "qtd_pares" | "qtd_primos" | "qtd_moldura" | "qtd_repetidas";
+
+interface TendenciaConfig {
+  campo: CampoTendencia;
+  label: string;
+  emoji: string;
+}
+
+const TENDENCIA_CONFIGS: TendenciaConfig[] = [
+  { campo: "qtd_pares", label: "Pares/Ímpares", emoji: "🎯" },
+  { campo: "qtd_primos", label: "Primos", emoji: "🔢" },
+  { campo: "qtd_moldura", label: "Moldura/Miolo", emoji: "🖼️" },
+  { campo: "qtd_repetidas", label: "Repetidas/Novas", emoji: "🔄" },
+];
+
+function calcTendenciaIndicador(
+  allData: any[],
+  config: TendenciaConfig,
+  concursoMaisRecente: number
+): TendenciaIndicador {
+  const totalConcursos = allData.length;
+  const agrupado = new Map<number, { ocorrencias: number; ultimaOcorrencia: number }>();
+
+  for (const r of allData) {
+    const qtd = (r as Record<string, unknown>)[config.campo] as number ?? 0;
+    if (!agrupado.has(qtd)) {
+      agrupado.set(qtd, { ocorrencias: 0, ultimaOcorrencia: r.concurso });
+    }
+    const item = agrupado.get(qtd)!;
+    item.ocorrencias++;
+    if (r.concurso > item.ultimaOcorrencia) {
+      item.ultimaOcorrencia = r.concurso;
+    }
+  }
+
+  const faixasRaw = Array.from(agrupado.entries())
+    .map(([valor, item]) => ({
+      valor,
+      complementar: 15 - valor,
+      ocorrencias: item.ocorrencias,
+      atraso: concursoMaisRecente - item.ultimaOcorrencia,
+      media: Math.round(totalConcursos / item.ocorrencias),
+    }))
+    .sort((a, b) => b.ocorrencias - a.ocorrencias);
+
+  // Top 3 por ocorrências
+  const top3Set = new Set(faixasRaw.slice(0, 3).map((f) => f.valor));
+
+  // Destaque: atraso >= media (pronto para sair), top 5
+  const destaquesOrdenados = faixasRaw
+    .filter((f) => f.atraso >= f.media)
+    .sort((a, b) => b.atraso - a.atraso)
+    .slice(0, 5)
+    .map((f) => f.valor);
+  const destaqueSet = new Set(destaquesOrdenados);
+
+  const faixas: TendenciaFaixa[] = faixasRaw.map((f) => ({
+    ...f,
+    isDestaque: destaqueSet.has(f.valor),
+    isTopOcorrencia: top3Set.has(f.valor),
+  }));
+
+  return { label: config.label, emoji: config.emoji, faixas };
+}
+
 // ── Main hook ──
 
 export function useGravacaoData() {
