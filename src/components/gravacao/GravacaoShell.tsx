@@ -51,8 +51,18 @@ export default function GravacaoShell({ children }: GravacaoShellProps) {
         <ArrowLeft className="h-6 w-6" />
       </button>
 
+      {/* Top banner */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 text-purple-300/60 text-xs md:text-sm tracking-wide font-medium">
+        Palpite Tech — Análise de tendências para Loterias Caixa
+      </div>
+
+      {/* Footer CTA */}
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50 text-purple-300/40 text-[10px] md:text-xs text-center max-w-xl">
+        Recebe estratégias diariamente sem custo no seu WhatsApp pelo link do 1º comentário ou da descrição.
+      </div>
+
       {/* Slide indicator */}
-      <div className="absolute bottom-4 right-6 z-50 text-purple-300/50 text-sm font-mono">
+      <div className="absolute bottom-3 right-6 z-50 text-purple-300/50 text-sm font-mono">
         {slide + 1} / {total}
       </div>
 
