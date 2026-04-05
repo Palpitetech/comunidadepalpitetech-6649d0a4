@@ -13,6 +13,7 @@ const MOLDURA_DUPLASENA = [
   20, 30, 40,
   41, 42, 43, 44, 45, 46, 47, 48, 49, 50
 ];
+const FIBONACCI_DUPLASENA = [1, 2, 3, 5, 8, 13, 21, 34];
 
 function isPar(n: number): boolean { return n % 2 === 0; }
 function isPrimo(n: number): boolean { return PRIMOS_DUPLASENA.includes(n); }
@@ -20,12 +21,20 @@ function isMoldura(n: number): boolean { return MOLDURA_DUPLASENA.includes(n); }
 
 function calcularIndicadores(dezenas: number[], dezenasAnteriores?: number[]) {
   const pares = dezenas.filter(isPar).length;
+  const sorted = [...dezenas].sort((a, b) => a - b);
+  let seqCount = 0;
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] === sorted[i - 1] + 1) seqCount++;
+  }
   return {
     qtd_pares: pares,
     qtd_impares: 6 - pares,
     qtd_primos: dezenas.filter(isPrimo).length,
     qtd_moldura: dezenas.filter(isMoldura).length,
+    qtd_fibonacci: dezenas.filter(d => FIBONACCI_DUPLASENA.includes(d)).length,
     qtd_repetidas: dezenasAnteriores ? dezenas.filter(d => dezenasAnteriores.includes(d)).length : 0,
+    soma: dezenas.reduce((a, b) => a + b, 0),
+    sequencias: seqCount,
   };
 }
 
@@ -55,8 +64,8 @@ function buildRegistro(resultado: any, s1: number[], s2: number[], indS1: any, i
     local_sorteio: resultado.local_sorteio || null,
     premiacao_json: resultado.premiacao || [],
     locais_ganhadores: resultado.ganhadores || [],
-    qtd_pares: indS1.qtd_pares, qtd_impares: indS1.qtd_impares, qtd_moldura: indS1.qtd_moldura, qtd_primos: indS1.qtd_primos, qtd_repetidas: indS1.qtd_repetidas,
-    qtd_pares_s2: indS2.qtd_pares, qtd_impares_s2: indS2.qtd_impares, qtd_moldura_s2: indS2.qtd_moldura, qtd_primos_s2: indS2.qtd_primos, qtd_repetidas_s2: indS2.qtd_repetidas,
+    qtd_pares: indS1.qtd_pares, qtd_impares: indS1.qtd_impares, qtd_moldura: indS1.qtd_moldura, qtd_primos: indS1.qtd_primos, qtd_repetidas: indS1.qtd_repetidas, qtd_fibonacci: indS1.qtd_fibonacci, soma: indS1.soma, sequencias: indS1.sequencias,
+    qtd_pares_s2: indS2.qtd_pares, qtd_impares_s2: indS2.qtd_impares, qtd_moldura_s2: indS2.qtd_moldura, qtd_primos_s2: indS2.qtd_primos, qtd_repetidas_s2: indS2.qtd_repetidas, qtd_fibonacci_s2: indS2.qtd_fibonacci, soma_s2: indS2.soma, sequencias_s2: indS2.sequencias,
   };
 }
 

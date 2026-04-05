@@ -294,6 +294,29 @@ export function getDistribuicaoColunas(dezenas: number[]): string {
 }
 
 // =============================================================================
+// SOMA E SEQUÊNCIAS
+// =============================================================================
+
+/**
+ * Soma de todas as dezenas
+ */
+export function calcularSoma(dezenas: number[]): number {
+  return dezenas.reduce((a, b) => a + b, 0);
+}
+
+/**
+ * Conta pares consecutivos nas dezenas ordenadas
+ */
+export function contarSequencias(dezenas: number[]): number {
+  const sorted = [...dezenas].sort((a, b) => a - b);
+  let count = 0;
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] === sorted[i - 1] + 1) count++;
+  }
+  return count;
+}
+
+// =============================================================================
 // UTILITÁRIOS
 // =============================================================================
 
@@ -321,6 +344,8 @@ export interface IndicadoresSorteio {
   qtdPrimos: number;
   qtdRepetidas: number;
   qtdFibonacci: number;
+  soma: number;
+  sequencias: number;
   dezenasPares: number[];
   dezenasImpares: number[];
   dezenasMoldura: number[];
@@ -361,6 +386,8 @@ export function calcularIndicadoresSorteio(
     qtdPrimos: dezenasPrimos.length,
     qtdRepetidas: dezenasRepetidas.length,
     qtdFibonacci: dezenasFibonacci.length,
+    soma: calcularSoma(dezenas),
+    sequencias: contarSequencias(dezenas),
     dezenasPares,
     dezenasImpares,
     dezenasMoldura,

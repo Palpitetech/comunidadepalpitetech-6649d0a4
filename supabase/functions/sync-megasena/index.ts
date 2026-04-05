@@ -13,6 +13,7 @@ const MOLDURA_MEGASENA = [
   20, 30, 40, 50,
   51, 52, 53, 54, 55, 56, 57, 58, 59, 60
 ];
+const FIBONACCI_MEGASENA = [1, 2, 3, 5, 8, 13, 21, 34, 55];
 
 function isPar(n: number): boolean { return n % 2 === 0; }
 function isPrimo(n: number): boolean { return PRIMOS_MEGASENA.includes(n); }
@@ -20,12 +21,20 @@ function isMoldura(n: number): boolean { return MOLDURA_MEGASENA.includes(n); }
 
 function calcularIndicadores(dezenas: number[], dezenasAnteriores?: number[]) {
   const pares = dezenas.filter(isPar).length;
+  const sorted = [...dezenas].sort((a, b) => a - b);
+  let seqCount = 0;
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] === sorted[i - 1] + 1) seqCount++;
+  }
   return {
     qtd_pares: pares,
     qtd_impares: 6 - pares,
     qtd_primos: dezenas.filter(isPrimo).length,
     qtd_moldura: dezenas.filter(isMoldura).length,
+    qtd_fibonacci: dezenas.filter(d => FIBONACCI_MEGASENA.includes(d)).length,
     qtd_repetidas: dezenasAnteriores ? dezenas.filter(d => dezenasAnteriores.includes(d)).length : 0,
+    soma: dezenas.reduce((a, b) => a + b, 0),
+    sequencias: seqCount,
   };
 }
 
