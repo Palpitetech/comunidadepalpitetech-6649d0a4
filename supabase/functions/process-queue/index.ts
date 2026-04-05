@@ -125,14 +125,8 @@ async function sendMessage(
       })
       .eq("id", item.id);
 
-    // Increment instance counters
-    await supabase
-      .from("whatsapp_instances")
-      .update({
-        messages_sent_today: (instance.messages_sent_today ?? 0) + 1,
-        last_message_at: now,
-      })
-      .eq("id", instance.id);
+    // Centralized usage registration
+    await supabase.rpc("register_instance_usage", { p_instance_id: instance.id });
 
     // Insert send_log
     await supabase.from("send_logs").insert({
