@@ -166,6 +166,7 @@ export function InstanciasTab() {
             phone_number: form.phone_number.trim(),
             evolution_instance_id: form.evolution_instance_id.trim(),
             daily_limit: form.daily_limit,
+            cooldown_queue: form.cooldown_queue,
           })
           .eq("id", editingId);
         if (error) throw error;
