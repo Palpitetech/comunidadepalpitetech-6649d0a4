@@ -9,10 +9,22 @@ interface AdminRouteProps {
 
 export function AdminRoute({ children }: AdminRouteProps) {
   const { user, loading: authLoading } = useAuthContext();
-  const { isAdmin, loading: roleLoading } = useUserRole();
+  const { isAdmin, loading: roleLoading, roles } = useUserRole();
+
+  const isLoading = authLoading || roleLoading;
+
+  // Debug temporário
+  console.log("[AdminRoute]", {
+    authLoading,
+    roleLoading,
+    isLoading,
+    userId: user?.id ?? null,
+    roles,
+    isAdmin,
+  });
 
   // Aguarda carregamento
-  if (authLoading || roleLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -27,6 +39,7 @@ export function AdminRoute({ children }: AdminRouteProps) {
 
   // Não é admin
   if (!isAdmin) {
+    console.warn("[AdminRoute] Redirect to /home — user is NOT admin", { userId: user.id, roles });
     return <Navigate to="/home" replace />;
   }
 
