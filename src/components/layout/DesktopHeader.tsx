@@ -44,7 +44,7 @@ function LotteryDropdownItem({
 
 // Dados das loterias com ferramentas completas
 const LOTOFACIL_TOOLS = [
-  { to: "/lotofacil", label: "🍀 Ver Todas as Ferramentas", gated: false, bold: true },
+  { to: "/lotofacil", label: "Ver Todas as Ferramentas", gated: false, bold: true },
   { to: "/analise-do-dia", label: "Análise do Dia", icon: Target, gated: true },
   { to: "/resultados", label: "Resultados", icon: BarChart3, gated: false },
   { to: "/tendencias", label: "Tendências", icon: TrendingUp, gated: true },
@@ -59,7 +59,7 @@ const LOTOFACIL_TOOLS = [
 ];
 
 const MEGASENA_TOOLS = [
-  { to: "/megasena", label: "🍀 Ver Todas as Ferramentas", gated: false, bold: true },
+  { to: "/megasena", label: "Ver Todas as Ferramentas", gated: false, bold: true },
   { to: "/megasena/analise-do-dia", label: "Análise do Dia", icon: Target, gated: true },
   { to: "/megasena/resultados", label: "Resultados", icon: BarChart3, gated: false },
   { to: "/megasena/tendencias", label: "Tendências", icon: TrendingUp, gated: true },
@@ -74,7 +74,7 @@ const MEGASENA_TOOLS = [
 ];
 
 const DUPLASENA_TOOLS = [
-  { to: "/duplasena", label: "🍀 Ver Todas as Ferramentas", gated: false, bold: true },
+  { to: "/duplasena", label: "Ver Todas as Ferramentas", gated: false, bold: true },
   { to: "/duplasena/analise-do-dia", label: "Análise do Dia", icon: Target, gated: true },
   { to: "/duplasena/resultados", label: "Resultados", icon: BarChart3, gated: false },
   { to: "/duplasena/tendencias", label: "Tendências", icon: TrendingUp, gated: true },
@@ -104,13 +104,11 @@ interface ToolItem {
 
 function LotteryDropdown({
   name,
-  emoji,
   tools,
   handleGatedClick,
   renderBadge,
 }: {
   name: string;
-  emoji: string;
   tools: ToolItem[];
   handleGatedClick: (e: React.MouseEvent, path: string) => void;
   renderBadge: (path: string) => React.ReactNode;
@@ -119,8 +117,7 @@ function LotteryDropdown({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="gap-1 h-10 px-2.5 text-sm">
-          <span className="text-base">{emoji}</span>
-          <span className="hidden xl:inline">{name}</span>
+          {name}
           <ChevronDown className="h-3 w-3" />
         </Button>
       </DropdownMenuTrigger>
@@ -216,7 +213,6 @@ export function DesktopHeader() {
           {/* Lotofácil */}
           <LotteryDropdown
             name="Lotofácil"
-            emoji="🍀"
             tools={LOTOFACIL_TOOLS}
             handleGatedClick={handleGatedClick}
             renderBadge={renderBadge}
@@ -225,7 +221,6 @@ export function DesktopHeader() {
           {/* Mega Sena */}
           <LotteryDropdown
             name="Mega Sena"
-            emoji="🎱"
             tools={MEGASENA_TOOLS}
             handleGatedClick={handleGatedClick}
             renderBadge={renderBadge}
@@ -234,7 +229,6 @@ export function DesktopHeader() {
           {/* Dupla Sena */}
           <LotteryDropdown
             name="Dupla Sena"
-            emoji="🎯"
             tools={DUPLASENA_TOOLS}
             handleGatedClick={handleGatedClick}
             renderBadge={renderBadge}
@@ -245,8 +239,7 @@ export function DesktopHeader() {
             <DropdownMenu key={lottery.name}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="gap-1 h-10 px-2.5 text-sm">
-                  <BarChart3 className="h-4 w-4" />
-                  <span className="hidden xl:inline">{lottery.name}</span>
+                  {lottery.name}
                   <ChevronDown className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
