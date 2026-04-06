@@ -252,7 +252,7 @@ Content-Type: application/json
 
   if (loading) {
     return (
-      <AdminLayout pageTitle="Integrações" onBack={() => navigate("/admin")}>
+      <AdminLayout pageTitle="Integrações">
         <div className="flex items-center justify-center min-h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -261,7 +261,7 @@ Content-Type: application/json
   }
 
   return (
-    <AdminLayout pageTitle="Integrações" onBack={() => navigate("/admin")}>
+    <AdminLayout pageTitle="Integrações">
       <div className="px-4 py-4 md:container md:max-w-3xl md:py-8 space-y-5">
         {/* Page header */}
         <div>

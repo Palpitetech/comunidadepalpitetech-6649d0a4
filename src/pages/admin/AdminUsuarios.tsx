@@ -174,7 +174,7 @@ export default function AdminUsuarios() {
   };
   if (loading) {
     return (
-      <AdminLayout pageTitle="Usuários" onBack={() => navigate("/admin")}>
+      <AdminLayout pageTitle="Usuários">
         <div className="flex items-center justify-center min-h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -185,7 +185,7 @@ export default function AdminUsuarios() {
   return (
     <AdminLayout
       pageTitle="Usuários"
-      onBack={() => navigate("/admin")}
+     
       headerRightContent={
         <span className="text-xs text-muted-foreground font-medium">{stats.total}</span>
       }

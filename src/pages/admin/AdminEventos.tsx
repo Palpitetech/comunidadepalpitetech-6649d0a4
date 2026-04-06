@@ -123,7 +123,7 @@ export default function AdminEventos() {
 
   if (loading) {
     return (
-      <AdminLayout pageTitle="Eventos" onBack={() => navigate("/admin")}>
+      <AdminLayout pageTitle="Eventos">
         <div className="flex items-center justify-center min-h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -134,7 +134,7 @@ export default function AdminEventos() {
   return (
     <AdminLayout
       pageTitle="Eventos"
-      onBack={() => navigate("/admin")}
+     
       headerRightContent={
         <span className="text-xs text-muted-foreground font-medium">{stats.total}</span>
       }

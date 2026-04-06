@@ -205,7 +205,7 @@ export default function AdminVendas() {
 
   if (loading) {
     return (
-      <AdminLayout pageTitle="Vendas" onBack={() => navigate("/admin")}>
+      <AdminLayout pageTitle="Vendas">
         <div className="flex items-center justify-center min-h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -216,7 +216,7 @@ export default function AdminVendas() {
   return (
     <AdminLayout
       pageTitle="Vendas"
-      onBack={() => navigate("/admin")}
+     
       headerRightContent={
         <button onClick={fetchLogs} disabled={loading} className="text-muted-foreground hover:text-foreground">
           <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
