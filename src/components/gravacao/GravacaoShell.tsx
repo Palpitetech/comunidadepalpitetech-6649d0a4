@@ -94,7 +94,7 @@ export default function GravacaoShell({ children, concurso, data }: GravacaoShel
               {watermarkColumns.map((columnIndex) => (
                 <span
                   key={`${rowIndex}-${columnIndex}`}
-                  className="text-sm font-black tracking-[0.45em] text-white/10 md:text-base"
+                  className="text-sm font-black tracking-[0.45em] text-white/5 md:text-base"
                 >
                   PALPITE TECH
                 </span>
