@@ -41,7 +41,7 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
         setPlan(null);
         setCustomFeatures(null);
         setIsBlocked(false);
-        setLoading(false);
+        setRolesLoading(false);
         return;
       }
 
@@ -68,7 +68,7 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
         // Process perfil
         if (perfilRes.error) {
           console.error("Erro ao buscar perfil:", perfilRes.error);
-          setLoading(false);
+          setRolesLoading(false);
           return;
         }
 
@@ -101,11 +101,11 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
       } catch (error) {
         console.error("Erro ao buscar permissões:", error);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setRolesLoading(false);
       }
     }
 
-    setLoading(true);
+    setRolesLoading(true);
     fetchAll();
 
     return () => { cancelled = true; };
