@@ -239,8 +239,7 @@ export function DesktopHeader() {
             <DropdownMenu key={lottery.name}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="gap-1 h-10 px-2.5 text-sm">
-                  <BarChart3 className="h-4 w-4" />
-                  <span className="hidden xl:inline">{lottery.name}</span>
+                  {lottery.name}
                   <ChevronDown className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
