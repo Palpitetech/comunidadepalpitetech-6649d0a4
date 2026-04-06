@@ -72,7 +72,7 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
           className="flex flex-col items-center justify-center flex-1 h-full py-1.5 transition-colors text-muted-foreground hover:text-foreground"
         >
           <Menu className="h-5 w-5" />
-          <span className="text-[10px] mt-0.5 font-medium leading-tight">Menu</span>
+          <span className="text-[10px] mt-0.5 font-medium leading-tight">Geradores</span>
         </button>
       </div>
     </nav>
