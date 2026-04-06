@@ -44,6 +44,7 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
         setPlan(null);
         setCustomFeatures(null);
         setIsBlocked(false);
+        setFetchedForUserId(null);
         setRolesLoading(false);
         return;
       }
