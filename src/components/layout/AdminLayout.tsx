@@ -8,7 +8,7 @@ interface AdminLayoutProps {
   headerRightContent?: ReactNode;
 }
 
-export function AdminLayout({ children, pageTitle }: AdminLayoutProps) {
+export function AdminLayout({ children, pageTitle, headerRightContent }: AdminLayoutProps) {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -18,8 +18,9 @@ export function AdminLayout({ children, pageTitle }: AdminLayoutProps) {
           <header className="sticky top-0 z-40 h-14 flex items-center gap-3 border-b border-border bg-background/95 backdrop-blur px-4">
             <SidebarTrigger className="h-8 w-8" />
             {pageTitle && (
-              <h1 className="text-lg font-semibold truncate">{pageTitle}</h1>
+              <h1 className="text-lg font-semibold truncate flex-1">{pageTitle}</h1>
             )}
+            {headerRightContent && <div className="ml-auto">{headerRightContent}</div>}
           </header>
 
           {/* Content */}
