@@ -210,8 +210,36 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Admin auth validation
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Não autorizado" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const supabase = getSupabase();
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const userClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const token = authHeader.replace("Bearer ", "");
+  const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+  if (claimsError || !claimsData?.claims) {
+    return new Response(JSON.stringify({ error: "Sessão inválida" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const { data: roleData } = await supabase
+    .from("user_roles").select("role")
+    .eq("user_id", claimsData.claims.sub as string).eq("role", "admin").maybeSingle();
+  if (!roleData) {
+    return new Response(JSON.stringify({ error: "Apenas admins" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
-    const supabase = getSupabase();
     const body = await req.json().catch(() => ({}));
     const windowName = body.window_name || "manual";
 
