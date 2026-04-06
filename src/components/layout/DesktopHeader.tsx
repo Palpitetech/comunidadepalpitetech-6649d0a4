@@ -628,9 +628,27 @@ export function DesktopHeader() {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild className="gap-2 py-2 cursor-pointer">
-                    <Link to="/perfil">
+                    <Link to="/perfil/dados">
                       <User className="h-4 w-4" />
-                      Meu Perfil
+                      Dados
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="gap-2 py-2 cursor-pointer">
+                    <Link to="/perfil/transacoes">
+                      <CreditCard className="h-4 w-4" />
+                      Transações
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="gap-2 py-2 cursor-pointer">
+                    <Link to="/perfil/assinatura">
+                      <Ticket className="h-4 w-4" />
+                      Assinatura
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="gap-2 py-2 cursor-pointer">
+                    <Link to="/perfil/seguranca">
+                      <Lock className="h-4 w-4" />
+                      Segurança
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
