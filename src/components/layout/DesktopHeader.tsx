@@ -262,8 +262,8 @@ export function DesktopHeader() {
           ))}
         </nav>
 
-        {/* User Actions - fixed right */}
-        <div className="flex items-center gap-2 shrink-0 ml-auto">
+        {/* User Actions - fixo à direita */}
+        <div className="flex items-center gap-1 shrink-0 ml-2">
           {isAuthenticated ? (
             <>
               <Link to="/meus-palpites">
