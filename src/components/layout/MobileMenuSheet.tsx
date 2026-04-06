@@ -152,7 +152,6 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
 
         {/* Corpo do Menu */}
         <div className="flex-1 overflow-y-auto">
-            <>
               {/* Itens Fixos de Navegação */}
               <nav className="px-4 py-6 space-y-1">
                 <Link to="/comunidade" onClick={closeAndNavigate}>
