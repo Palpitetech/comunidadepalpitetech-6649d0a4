@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  BarChart3, Bell, LogOut, User, Wrench, TrendingUp, Flame,
+  BarChart3, LogOut, User, Wrench, TrendingUp, Flame,
   ChevronDown, Dices, Shuffle, Ticket, LayoutGrid, Target,
   Table2, Gift, Lock, CreditCard, Calendar, Save,
 } from "lucide-react";
@@ -262,23 +262,13 @@ export function DesktopHeader() {
           ))}
         </nav>
 
-        {/* User Actions */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* User Actions - fixed right */}
+        <div className="flex items-center gap-2 shrink-0 ml-auto">
           {isAuthenticated ? (
             <>
               <Link to="/meus-palpites">
                 <Button variant="ghost" size="icon" className="h-10 w-10" title="Jogos Salvos">
                   <Save className="h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/convites">
-                <Button variant="ghost" size="icon" className="h-10 w-10" title="Ganhar Assinatura grátis">
-                  <Gift className="h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/notificacoes">
-                <Button variant="ghost" size="icon" className="h-10 w-10">
-                  <Bell className="h-5 w-5" />
                 </Button>
               </Link>
 
@@ -313,6 +303,10 @@ export function DesktopHeader() {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild className="gap-2 py-2 cursor-pointer">
                     <Link to="/perfil/seguranca"><Lock className="h-4 w-4" />Segurança</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild className="gap-2 py-2 cursor-pointer">
+                    <Link to="/convites"><Gift className="h-4 w-4" />Convidar Amigos</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
