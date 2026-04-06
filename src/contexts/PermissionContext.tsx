@@ -105,7 +105,10 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
       } catch (error) {
         console.error("Erro ao buscar permissões:", error);
       } finally {
-        if (!cancelled) setRolesLoading(false);
+        if (!cancelled) {
+          setFetchedForUserId(user.id);
+          setRolesLoading(false);
+        }
       }
     }
 
