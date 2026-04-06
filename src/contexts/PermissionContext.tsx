@@ -23,13 +23,14 @@ interface PermissionContextType {
 const PermissionContext = createContext<PermissionContextType | undefined>(undefined);
 
 export function PermissionProvider({ children }: { children: React.ReactNode }) {
-  const { user, profile } = useAuthContext();
+  const { user, profile, loading: authLoading } = useAuthContext();
 
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [plan, setPlan] = useState<Plan | null>(null);
   const [customFeatures, setCustomFeatures] = useState<PlanFeatures | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [rolesLoading, setRolesLoading] = useState(true);
+  const loading = authLoading || rolesLoading;
 
   useEffect(() => {
     let cancelled = false;
