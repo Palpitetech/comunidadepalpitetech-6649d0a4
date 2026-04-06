@@ -104,13 +104,11 @@ interface ToolItem {
 
 function LotteryDropdown({
   name,
-  emoji,
   tools,
   handleGatedClick,
   renderBadge,
 }: {
   name: string;
-  emoji: string;
   tools: ToolItem[];
   handleGatedClick: (e: React.MouseEvent, path: string) => void;
   renderBadge: (path: string) => React.ReactNode;
@@ -119,8 +117,7 @@ function LotteryDropdown({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="gap-1 h-10 px-2.5 text-sm">
-          <span className="text-base">{emoji}</span>
-          <span className="hidden xl:inline">{name}</span>
+          {name}
           <ChevronDown className="h-3 w-3" />
         </Button>
       </DropdownMenuTrigger>
@@ -216,7 +213,6 @@ export function DesktopHeader() {
           {/* Lotofácil */}
           <LotteryDropdown
             name="Lotofácil"
-            emoji="🍀"
             tools={LOTOFACIL_TOOLS}
             handleGatedClick={handleGatedClick}
             renderBadge={renderBadge}
@@ -225,7 +221,6 @@ export function DesktopHeader() {
           {/* Mega Sena */}
           <LotteryDropdown
             name="Mega Sena"
-            emoji="🎱"
             tools={MEGASENA_TOOLS}
             handleGatedClick={handleGatedClick}
             renderBadge={renderBadge}
@@ -234,7 +229,6 @@ export function DesktopHeader() {
           {/* Dupla Sena */}
           <LotteryDropdown
             name="Dupla Sena"
-            emoji="🎯"
             tools={DUPLASENA_TOOLS}
             handleGatedClick={handleGatedClick}
             renderBadge={renderBadge}
