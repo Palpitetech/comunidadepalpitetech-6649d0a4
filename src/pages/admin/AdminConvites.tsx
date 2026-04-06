@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -163,16 +163,16 @@ export default function AdminConvites() {
 
   if (loading) {
     return (
-      <MainLayout>
+      <AdminLayout>
         <div className="flex items-center justify-center min-h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </MainLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <MainLayout>
+    <AdminLayout>
       <div className="container-senior py-4 md:py-8">
         <div className="mb-4 md:mb-6">
           <h1 className="text-lg md:text-senior-2xl font-bold">Convites</h1>
@@ -441,6 +441,6 @@ export default function AdminConvites() {
           </Table>
         </div>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }

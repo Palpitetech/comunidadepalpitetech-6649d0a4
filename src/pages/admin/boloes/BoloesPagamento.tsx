@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, CreditCard, FileText, CalendarIcon, X } from "lucide-react";
@@ -210,7 +210,7 @@ export default function BoloesPagamento() {
   };
 
   return (
-    <MainLayout pageTitle="Pagamentos">
+    <AdminLayout pageTitle="Pagamentos">
       <div className="max-w-5xl mx-auto py-6 px-4 space-y-4">
         <div>
           <h1 className="text-xl font-bold">Pagamentos</h1>
@@ -317,6 +317,6 @@ export default function BoloesPagamento() {
           </DialogContent>
         </Dialog>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }

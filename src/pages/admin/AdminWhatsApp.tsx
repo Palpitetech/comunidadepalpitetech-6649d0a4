@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Smartphone, FileText, Send, ScrollText, Flame, Users, Megaphone } from "lucide-react";
 import { InstanciasTab } from "@/components/admin/whatsapp/InstanciasTab";
 import { TemplatesTab } from "@/components/admin/whatsapp/TemplatesTab";
@@ -26,7 +26,7 @@ export default function AdminWhatsApp() {
   const [activeTab, setActiveTab] = useState("instancias");
 
   return (
-    <MainLayout>
+    <AdminLayout>
       <div className="container-senior py-4 sm:py-6 space-y-4 sm:space-y-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold">WhatsApp</h1>
@@ -66,6 +66,6 @@ export default function AdminWhatsApp() {
           {activeTab === "grupos" && <GruposTab />}
         </div>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }

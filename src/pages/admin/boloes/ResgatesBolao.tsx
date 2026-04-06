@@ -1,4 +1,4 @@
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
@@ -19,7 +19,7 @@ export default function ResgatesBolao() {
   });
 
   return (
-    <MainLayout pageTitle="Resgates">
+    <AdminLayout pageTitle="Resgates">
       <div className="px-4 py-3 md:container-senior md:py-8">
         <Card>
           <CardHeader>
@@ -63,6 +63,6 @@ export default function ResgatesBolao() {
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }

@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -217,7 +217,7 @@ export default function ListagemBolao() {
   };
 
   return (
-    <MainLayout pageTitle="Bolões">
+    <AdminLayout pageTitle="Bolões">
       <div className="px-4 py-3 md:container-senior md:py-8 space-y-3">
         <div className="flex items-center justify-between">
           <h1 className="hidden md:block text-2xl font-bold">Listagem de Bolões</h1>
@@ -547,6 +547,6 @@ export default function ListagemBolao() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </MainLayout>
+    </AdminLayout>
   );
 }

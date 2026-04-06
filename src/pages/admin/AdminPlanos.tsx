@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -89,16 +89,16 @@ export default function AdminPlanos() {
 
   if (loading) {
     return (
-      <MainLayout>
+      <AdminLayout>
         <div className="flex items-center justify-center min-h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </MainLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <MainLayout>
+    <AdminLayout>
       <div className="container-senior py-8 max-w-4xl mx-auto">
         <div className="mb-6">
           <KirvanoWebhookCard />
@@ -152,7 +152,7 @@ export default function AdminPlanos() {
           )}
         </div>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,16 +123,16 @@ export default function AdminEventos() {
 
   if (loading) {
     return (
-      <MainLayout pageTitle="Eventos" onBack={() => navigate("/admin")}>
+      <AdminLayout pageTitle="Eventos" onBack={() => navigate("/admin")}>
         <div className="flex items-center justify-center min-h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </MainLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <MainLayout
+    <AdminLayout
       pageTitle="Eventos"
       onBack={() => navigate("/admin")}
       headerRightContent={
@@ -366,6 +366,6 @@ export default function AdminEventos() {
           )}
         </SheetContent>
       </Sheet>
-    </MainLayout>
+    </AdminLayout>
   );
 }

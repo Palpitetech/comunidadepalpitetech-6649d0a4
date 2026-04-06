@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Loader2, MessageSquare, Bot } from "lucide-react";
@@ -40,16 +40,16 @@ export default function AdminBots() {
 
   if (loading) {
     return (
-      <MainLayout>
+      <AdminLayout>
         <div className="flex items-center justify-center min-h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </MainLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <MainLayout>
+    <AdminLayout>
       <div className="container-senior py-8 max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
@@ -128,6 +128,6 @@ export default function AdminBots() {
           onBotUpdated={refetch}
         />
       )}
-    </MainLayout>
+    </AdminLayout>
   );
 }

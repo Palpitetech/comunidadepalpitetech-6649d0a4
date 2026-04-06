@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -117,7 +117,7 @@ export default function AdminCustos() {
   };
 
   return (
-    <MainLayout>
+    <AdminLayout>
       <div className="container-senior py-6 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Controle de Custos IA</h1>
@@ -387,6 +387,6 @@ export default function AdminCustos() {
           )}
         </Tabs>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }
