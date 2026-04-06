@@ -30,7 +30,10 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
   const [customFeatures, setCustomFeatures] = useState<PlanFeatures | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
   const [rolesLoading, setRolesLoading] = useState(true);
-  const loading = authLoading || rolesLoading;
+  // Track which user_id roles were fetched for to prevent race condition
+  const [fetchedForUserId, setFetchedForUserId] = useState<string | null>(null);
+  // Loading is true if auth is loading, roles are loading, OR user changed but roles haven't been re-fetched yet
+  const loading = authLoading || rolesLoading || (!!user?.id && fetchedForUserId !== user.id);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,6 +44,7 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
         setPlan(null);
         setCustomFeatures(null);
         setIsBlocked(false);
+        setFetchedForUserId(null);
         setRolesLoading(false);
         return;
       }
@@ -101,7 +105,10 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
       } catch (error) {
         console.error("Erro ao buscar permissões:", error);
       } finally {
-        if (!cancelled) setRolesLoading(false);
+        if (!cancelled) {
+          setFetchedForUserId(user.id);
+          setRolesLoading(false);
+        }
       }
     }
 

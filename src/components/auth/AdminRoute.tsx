@@ -11,7 +11,7 @@ export function AdminRoute({ children }: AdminRouteProps) {
   const { user, loading: authLoading } = useAuthContext();
   const { isAdmin, loading: roleLoading } = useUserRole();
 
-  // Aguarda carregamento
+  // Aguarda carregamento completo (auth + roles)
   if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
