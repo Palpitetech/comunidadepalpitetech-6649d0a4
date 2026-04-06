@@ -168,7 +168,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                        <div className="pl-8 space-y-0">
                          <Link to="/lotofacil" onClick={closeAndNavigate}>
                            <div className="py-2.5 text-[15px] text-primary font-semibold hover:text-primary/80 transition-colors flex items-center gap-2">
-                             🍀 Ver Todas as Ferramentas
+                              Ver Todas as Ferramentas
                            </div>
                          </Link>
                          <div className="border-t border-border/50 my-1" />
@@ -266,7 +266,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                        <div className="pl-8 space-y-0">
                          <Link to="/duplasena" onClick={closeAndNavigate}>
                            <div className="py-2.5 text-[15px] text-primary font-semibold hover:text-primary/80 transition-colors flex items-center gap-2">
-                             🍀 Ver Todas as Ferramentas
+                              Ver Todas as Ferramentas
                            </div>
                          </Link>
                          <div className="border-t border-border/50 my-1" />
@@ -364,7 +364,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                         <div className="pl-8 space-y-0">
                          <Link to="/megasena" onClick={closeAndNavigate}>
                            <div className="py-2.5 text-[15px] text-primary font-semibold hover:text-primary/80 transition-colors flex items-center gap-2">
-                             🍀 Ver Todas as Ferramentas
+                             Ver Todas as Ferramentas
                            </div>
                          </Link>
                          <div className="border-t border-border/50 my-1" />
@@ -523,7 +523,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
           <Link to="/convites" onClick={closeAndNavigate}>
             <div className="flex items-center gap-2 text-primary font-medium text-base transition-colors hover:opacity-80">
               <Gift className="h-5 w-5" />
-              🎁 Ganhar Assinatura grátis
+               🎁 Ganhar Assinatura grátis
             </div>
           </Link>
 
