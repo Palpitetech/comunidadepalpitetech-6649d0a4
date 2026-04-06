@@ -24,7 +24,7 @@ import { Users, BarChart3, Bell, LogOut, User, Wrench, TrendingUp, Flame, Chevro
 
 export function DesktopHeader() {
   const { isAuthenticated, profile, signOut } = useAuthContext();
-  const { isAdmin } = useUserRole();
+  
   const { hasPermission } = usePermissions();
   const navigate = useNavigate();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
