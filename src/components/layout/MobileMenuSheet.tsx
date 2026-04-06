@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { useUserRole } from "@/hooks/useUserRole";
+
 import { usePermissions } from "@/hooks/usePermission";
 import { getFeatureForRoute, isVipFeature } from "@/lib/featureMap";
 import { PremiumBadge } from "@/components/shared/PremiumBadge";
@@ -46,13 +46,9 @@ interface MobileMenuSheetProps {
 
 export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
   const { isAuthenticated, profile, signOut } = useAuthContext();
-  const { isAdmin } = useUserRole();
   const { hasPermission } = usePermissions();
   const location = useLocation();
   const navigate = useNavigate();
-  const [menuMode, setMenuMode] = useState<"ferramentas" | "admin">(
-    location.pathname.startsWith('/admin') ? "admin" : "ferramentas"
-  );
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradeLabel, setUpgradeLabel] = useState<string | undefined>();
   const [upgradeVariant, setUpgradeVariant] = useState<"premium" | "vip">("premium");
