@@ -32,9 +32,9 @@ function LotteryDropdownItem({
   renderBadge: (path: string) => React.ReactNode;
 }) {
   return (
-    <DropdownMenuItem className="gap-3 py-2 cursor-pointer" onClick={(e) => onGatedClick(e, to)} asChild>
+    <DropdownMenuItem className="gap-3 py-3 cursor-pointer text-base" onClick={(e) => onGatedClick(e, to)} asChild>
       <Link to={to}>
-        {Icon && <Icon className="h-4 w-4" />}
+        {Icon && <Icon className="h-5 w-5" />}
         {label}
         {renderBadge(to)}
       </Link>
@@ -121,12 +121,12 @@ function LotteryDropdown({
           <ChevronDown className="h-3 w-3" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="center" className="w-56 p-1 bg-popover z-50 max-h-[70vh] overflow-y-auto">
+      <DropdownMenuContent align="center" className="w-64 p-1 bg-popover z-50 max-h-[70vh] overflow-y-auto">
         {tools.map((tool, idx) => (
           <div key={tool.to}>
             {idx === 1 && <DropdownMenuSeparator />}
             {tool.bold ? (
-              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer font-semibold">
+              <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer font-semibold text-base">
                 <Link to={tool.to}>{tool.label}</Link>
               </DropdownMenuItem>
             ) : tool.gated ? (
@@ -138,9 +138,9 @@ function LotteryDropdown({
                 renderBadge={renderBadge}
               />
             ) : (
-              <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+              <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base">
                 <Link to={tool.to}>
-                  {tool.icon && <tool.icon className="h-4 w-4" />}
+                  {tool.icon && <tool.icon className="h-5 w-5" />}
                   {tool.label}
                 </Link>
               </DropdownMenuItem>
@@ -243,10 +243,10 @@ export function DesktopHeader() {
                   <ChevronDown className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-48 p-1 bg-popover z-50">
-                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
+              <DropdownMenuContent align="center" className="w-56 p-1 bg-popover z-50">
+                <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base">
                   <Link to={lottery.resultsPath}>
-                    <BarChart3 className="h-4 w-4" />
+                    <BarChart3 className="h-5 w-5" />
                     Resultados
                   </Link>
                 </DropdownMenuItem>
@@ -277,36 +277,36 @@ export function DesktopHeader() {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-popover z-50">
-                  <div className="px-3 py-2">
-                    <p className="text-sm font-medium">{profile?.nome || "Usuário"}</p>
-                    <p className="text-xs text-muted-foreground truncate">
+                <DropdownMenuContent align="end" className="w-64 bg-popover z-50">
+                  <div className="px-3 py-3">
+                    <p className="text-base font-semibold">{profile?.nome || "Usuário"}</p>
+                    <p className="text-sm text-muted-foreground truncate">
                       {profile?.celular || "Sem celular"}
                     </p>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild className="gap-2 py-2 cursor-pointer">
-                    <Link to="/perfil/dados"><User className="h-4 w-4" />Dados</Link>
+                  <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base">
+                    <Link to="/perfil/dados"><User className="h-5 w-5" />Dados</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="gap-2 py-2 cursor-pointer">
-                    <Link to="/perfil/transacoes"><CreditCard className="h-4 w-4" />Transações</Link>
+                  <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base">
+                    <Link to="/perfil/transacoes"><CreditCard className="h-5 w-5" />Transações</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="gap-2 py-2 cursor-pointer">
-                    <Link to="/perfil/assinatura"><Ticket className="h-4 w-4" />Assinatura</Link>
+                  <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base">
+                    <Link to="/perfil/assinatura"><Ticket className="h-5 w-5" />Assinatura</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="gap-2 py-2 cursor-pointer">
-                    <Link to="/perfil/seguranca"><Lock className="h-4 w-4" />Segurança</Link>
+                  <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base">
+                    <Link to="/perfil/seguranca"><Lock className="h-5 w-5" />Segurança</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild className="gap-2 py-2 cursor-pointer">
-                    <Link to="/convites"><Gift className="h-4 w-4" />Convidar Amigos</Link>
+                  <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base">
+                    <Link to="/convites"><Gift className="h-5 w-5" />Convidar Amigos</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    className="gap-2 py-2 cursor-pointer text-destructive focus:text-destructive"
+                    className="gap-3 py-3 cursor-pointer text-base text-destructive focus:text-destructive"
                     onClick={handleSignOut}
                   >
-                    <LogOut className="h-4 w-4" />Sair
+                    <LogOut className="h-5 w-5" />Sair
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
