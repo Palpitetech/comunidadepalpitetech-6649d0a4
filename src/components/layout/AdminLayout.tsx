@@ -5,6 +5,7 @@ import { AdminSidebar } from "./AdminSidebar";
 interface AdminLayoutProps {
   children: ReactNode;
   pageTitle?: string;
+  headerRightContent?: ReactNode;
 }
 
 export function AdminLayout({ children, pageTitle }: AdminLayoutProps) {
