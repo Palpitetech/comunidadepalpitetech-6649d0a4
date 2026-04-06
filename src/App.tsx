@@ -104,6 +104,15 @@ function UTMCapture() {
   return null;
 }
 
+/** Normaliza paths com letras maiúsculas para minúsculas (ex: /Admin → /admin) */
+function LowercaseRedirect() {
+  const location = useLocation();
+  if (location.pathname !== location.pathname.toLowerCase()) {
+    return <Navigate to={location.pathname.toLowerCase() + location.search + location.hash} replace />;
+  }
+  return null;
+}
+
 // Main App component
 const App = () => (
   <QueryClientProvider client={queryClient}>
