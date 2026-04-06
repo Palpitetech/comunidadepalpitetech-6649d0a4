@@ -61,7 +61,7 @@ export function AssinaturaTab({ user }: AssinaturaTabProps) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs text-muted-foreground">Plano Atual</p>
-            <p className="font-semibold">{subscription?.plano || (isPremium ? "Premium" : "Grátis")}</p>
+            <p className="font-semibold">{isPremium ? "Premium" : "Grátis"}</p>
           </div>
           <Badge variant={statusConfig.variant} className="text-xs shrink-0">
             {statusConfig.label}
