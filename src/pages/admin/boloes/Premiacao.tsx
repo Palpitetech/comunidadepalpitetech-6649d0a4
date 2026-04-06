@@ -1,3 +1,4 @@
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -303,9 +304,9 @@ export default function Premiacao() {
   );
 
   return (
+    <AdminLayout pageTitle="🏆 Premiação">
     <div className="container max-w-5xl mx-auto py-6 px-4 space-y-6">
       <div>
-        <h1 className="text-xl font-bold">🏆 Premiação</h1>
         <p className="text-sm text-muted-foreground">Verificação automática de bolões premiados</p>
       </div>
 
@@ -398,6 +399,7 @@ export default function Premiacao() {
         </div>
       )}
     </div>
+    </AdminLayout>
   );
 }
 
