@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { PerfilHero } from "@/components/perfil/PerfilHero";
+
 import { AssinaturaTab } from "@/components/perfil/AssinaturaTab";
 
 export default function PerfilAssinatura() {
@@ -23,7 +23,7 @@ export default function PerfilAssinatura() {
       </header>
       <ScrollArea className="flex-1">
         <div className="pb-8 max-w-lg mx-auto w-full">
-          <PerfilHero profile={profile} user={user} />
+          
           <AssinaturaTab user={user} />
         </div>
       </ScrollArea>
