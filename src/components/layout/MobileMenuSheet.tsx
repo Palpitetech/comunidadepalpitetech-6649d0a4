@@ -150,9 +150,8 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
         </div>
 
 
-        {/* Corpo do Menu - Condicional */}
+        {/* Corpo do Menu */}
         <div className="flex-1 overflow-y-auto">
-          {menuMode === "ferramentas" ? (
             <>
               {/* Itens Fixos de Navegação */}
               <nav className="px-4 py-6 space-y-1">
@@ -526,62 +525,6 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                    </AccordionItem>
                  </Accordion>
                </div>
-            </>
-          ) : (
-            /* Conteúdo Admin - Estilo com Destaque Vermelho */
-            <div className="mx-4 mt-2 p-3 rounded-r-md bg-red-50 dark:bg-red-950/30 border-l-4 border-red-500">
-              <nav className="space-y-1">
-                <Link to="/admin/planos" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
-                    <FileText className="h-5 w-5 stroke-[1.5]" />
-                    Planos
-                  </div>
-                </Link>
-                <Link to="/admin/usuarios" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
-                    <Users className="h-5 w-5 stroke-[1.5]" />
-                    Usuários
-                  </div>
-                </Link>
-                <Link to="/admin/bots" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
-                    <Bot className="h-5 w-5 stroke-[1.5]" />
-                    Bots
-                  </div>
-                </Link>
-                <Link to="/admin/convites" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
-                    <Gift className="h-5 w-5 stroke-[1.5]" />
-                    Convites
-                  </div>
-                </Link>
-                <Link to="/admin/vendas" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
-                    <Ticket className="h-5 w-5 stroke-[1.5]" />
-                    Vendas Kirvano
-                  </div>
-                </Link>
-                <Link to="/admin/eventos" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
-                    <BarChart3 className="h-5 w-5 stroke-[1.5]" />
-                    Eventos
-                  </div>
-                </Link>
-                <Link to="/admin/metricas" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
-                    <BarChart3 className="h-5 w-5 stroke-[1.5]" />
-                    Métricas
-                  </div>
-                </Link>
-                <Link to="/admin/integracoes" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
-                    <Plug className="h-5 w-5 stroke-[1.5]" />
-                    Integrações
-                  </div>
-                </Link>
-              </nav>
-            </div>
-          )}
         </div>
 
         {/* Rodapé Minimalista */}
