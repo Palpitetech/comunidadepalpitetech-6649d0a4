@@ -1,13 +1,7 @@
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+import { Lock, LogOut, Shield, ChevronRight, MessageSquare } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import type { User } from "@supabase/supabase-js";
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Lock, LogOut, Trash2, Loader2, Shield, ChevronRight, MessageSquare } from "lucide-react";
