@@ -44,7 +44,7 @@ function LotteryDropdownItem({
 
 // Dados das loterias com ferramentas completas
 const LOTOFACIL_TOOLS = [
-  { to: "/lotofacil", label: "🍀 Ver Todas as Ferramentas", gated: false, bold: true },
+  { to: "/lotofacil", label: "Ver Todas as Ferramentas", gated: false, bold: true },
   { to: "/analise-do-dia", label: "Análise do Dia", icon: Target, gated: true },
   { to: "/resultados", label: "Resultados", icon: BarChart3, gated: false },
   { to: "/tendencias", label: "Tendências", icon: TrendingUp, gated: true },
@@ -59,7 +59,7 @@ const LOTOFACIL_TOOLS = [
 ];
 
 const MEGASENA_TOOLS = [
-  { to: "/megasena", label: "🍀 Ver Todas as Ferramentas", gated: false, bold: true },
+  { to: "/megasena", label: "Ver Todas as Ferramentas", gated: false, bold: true },
   { to: "/megasena/analise-do-dia", label: "Análise do Dia", icon: Target, gated: true },
   { to: "/megasena/resultados", label: "Resultados", icon: BarChart3, gated: false },
   { to: "/megasena/tendencias", label: "Tendências", icon: TrendingUp, gated: true },
@@ -74,7 +74,7 @@ const MEGASENA_TOOLS = [
 ];
 
 const DUPLASENA_TOOLS = [
-  { to: "/duplasena", label: "🍀 Ver Todas as Ferramentas", gated: false, bold: true },
+  { to: "/duplasena", label: "Ver Todas as Ferramentas", gated: false, bold: true },
   { to: "/duplasena/analise-do-dia", label: "Análise do Dia", icon: Target, gated: true },
   { to: "/duplasena/resultados", label: "Resultados", icon: BarChart3, gated: false },
   { to: "/duplasena/tendencias", label: "Tendências", icon: TrendingUp, gated: true },
