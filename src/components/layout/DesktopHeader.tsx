@@ -196,16 +196,16 @@ export function DesktopHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 overflow-x-hidden">
-      <div className="container-senior flex items-center justify-between py-3 gap-2">
-        {/* Logo */}
-        <Link to="/home" className="flex items-center gap-2 no-underline shrink-0">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+      <div className="flex items-center py-2 px-4 gap-1 w-full">
+        {/* Logo - fixo à esquerda */}
+        <Link to="/home" className="flex items-center gap-2 no-underline shrink-0 mr-2">
           <img src="/logo.png" alt="Palpite Tech" className="h-8 w-8 rounded-md" />
-          <span className="text-lg font-bold text-primary hidden sm:inline">Palpite Tech</span>
+          <span className="text-lg font-bold text-primary hidden xl:inline">Palpite Tech</span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="flex items-center gap-0.5 overflow-x-auto">
+        {/* Desktop Navigation - centralizado, flex-wrap para não estourar */}
+        <nav className="flex items-center gap-0.5 flex-1 justify-center flex-wrap">
           <Link to="/proximos-concursos">
             <Button variant="ghost" className="gap-1.5 h-10 px-2.5 text-sm">
               <Calendar className="h-4 w-4" />
