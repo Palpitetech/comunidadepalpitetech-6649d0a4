@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PermissionProvider } from "@/contexts/PermissionContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -104,6 +104,15 @@ function UTMCapture() {
   return null;
 }
 
+/** Normaliza paths com letras maiúsculas para minúsculas (ex: /Admin → /admin) */
+function LowercaseRedirect() {
+  const location = useLocation();
+  if (location.pathname !== location.pathname.toLowerCase()) {
+    return <Navigate to={location.pathname.toLowerCase() + location.search + location.hash} replace />;
+  }
+  return null;
+}
+
 // Main App component
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -116,6 +125,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <LowercaseRedirect />
           <Routes>
             {/* Rotas Públicas */}
             <Route path="/" element={<Home />} />

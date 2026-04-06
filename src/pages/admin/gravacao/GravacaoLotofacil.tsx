@@ -1,3 +1,4 @@
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useGravacaoData } from "@/hooks/useGravacaoData";
 import GravacaoShell from "@/components/gravacao/GravacaoShell";
 import SlideIntro from "@/components/gravacao/SlideIntro";
