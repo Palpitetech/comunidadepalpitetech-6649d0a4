@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  BarChart3, Bell, LogOut, User, Wrench, TrendingUp, Flame,
+  BarChart3, LogOut, User, Wrench, TrendingUp, Flame,
   ChevronDown, Dices, Shuffle, Ticket, LayoutGrid, Target,
   Table2, Gift, Lock, CreditCard, Calendar, Save,
 } from "lucide-react";
