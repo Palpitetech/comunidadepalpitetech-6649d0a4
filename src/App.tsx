@@ -125,6 +125,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <LowercaseRedirect />
           <Routes>
             {/* Rotas Públicas */}
             <Route path="/" element={<Home />} />
