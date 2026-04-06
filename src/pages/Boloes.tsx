@@ -20,7 +20,7 @@ export default function Boloes() {
         .in("status", ["ativo", "encerrado", "premiado"])
         .order("data_concurso", { ascending: false });
       if (error) throw error;
-      return (data || []) as BolaoPublico[];
+      return (data || []) as unknown as BolaoPublico[];
     },
   });
 
