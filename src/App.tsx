@@ -92,6 +92,10 @@ import ResultadosDiaDeSorte from "./pages/diadesorte/ResultadosDiaDeSorte";
 import ResultadosLotomania from "./pages/lotomania/ResultadosLotomania";
 import HubLotofacil from "./pages/lotofacil/HubLotofacil";
 import GravacaoLotofacil from "./pages/admin/gravacao/GravacaoLotofacil";
+import PerfilDados from "./pages/PerfilDados";
+import PerfilTransacoes from "./pages/PerfilTransacoes";
+import PerfilAssinatura from "./pages/PerfilAssinatura";
+import PerfilSeguranca from "./pages/PerfilSeguranca";
 
 const queryClient = new QueryClient();
 
@@ -143,6 +147,10 @@ const App = () => (
             <Route path="/frequencia-dezenas" element={<ProtectedRoute><GatedPage feature="frequencia_dezenas"><FrequenciaDezenas /></GatedPage></ProtectedRoute>} />
             <Route path="/dezenas-por-posicao" element={<ProtectedRoute><GatedPage feature="dezenas_por_posicao"><DezenasporPosicao /></GatedPage></ProtectedRoute>} />
             <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
+            <Route path="/perfil/dados" element={<ProtectedRoute><PerfilDados /></ProtectedRoute>} />
+            <Route path="/perfil/transacoes" element={<ProtectedRoute><PerfilTransacoes /></ProtectedRoute>} />
+            <Route path="/perfil/assinatura" element={<ProtectedRoute><PerfilAssinatura /></ProtectedRoute>} />
+            <Route path="/perfil/seguranca" element={<ProtectedRoute><PerfilSeguranca /></ProtectedRoute>} />
             <Route path="/criar-post" element={<ProtectedRoute><CriarPost /></ProtectedRoute>} />
             <Route path="/comunidade/post/:slug" element={<PostDetalhes />} />
             <Route path="/convites" element={<ProtectedRoute><GatedPage feature="comunidade_full"><Convites /></GatedPage></ProtectedRoute>} />
