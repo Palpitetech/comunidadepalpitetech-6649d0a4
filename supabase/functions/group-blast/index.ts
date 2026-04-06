@@ -23,8 +23,29 @@ Deno.serve(async (req) => {
   const EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY");
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+  // Admin auth validation
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return jsonResponse({ error: "Não autorizado" }, 401);
+  }
+  const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const token = authHeader.replace("Bearer ", "");
+  const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+  if (claimsError || !claimsData?.claims) {
+    return jsonResponse({ error: "Sessão inválida" }, 401);
+  }
+  const { data: roleData } = await supabase
+    .from("user_roles").select("role")
+    .eq("user_id", claimsData.claims.sub as string).eq("role", "admin").maybeSingle();
+  if (!roleData) {
+    return jsonResponse({ error: "Apenas admins" }, 403);
+  }
 
   try {
     const { action, force, config_id, slot_id } = await req.json();
