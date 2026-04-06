@@ -1,4 +1,4 @@
-import { Users, Menu, Calendar, MessageCircle, Save } from "lucide-react";
+import { Users, Menu, Calendar, MessageCircle, Save, Trophy } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +26,20 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
         >
           <Users className="h-5 w-5" />
           <span className="text-[10px] mt-0.5 font-medium leading-tight">Comunidade</span>
+        </Link>
+
+        <Link
+          to="/boloes"
+          className={cn(
+            "flex flex-col items-center justify-center flex-1 h-full py-1.5 transition-colors relative",
+            isActive("/boloes")
+              ? "text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <span className="absolute -top-0.5 right-1 text-[7px] font-bold text-accent bg-accent/15 rounded px-1">BREVE</span>
+          <Trophy className="h-5 w-5" />
+          <span className="text-[10px] mt-0.5 font-medium leading-tight">Bolões</span>
         </Link>
 
         <Link

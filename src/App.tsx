@@ -151,7 +151,7 @@ const App = () => (
             <Route path="/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><Desdobramento /></GatedPage></ProtectedRoute>} />
             <Route path="/fechamento" element={<ProtectedRoute><GatedPage feature="fechamento"><Fechamento /></GatedPage></ProtectedRoute>} />
             <Route path="/meus-palpites" element={<ProtectedRoute><GatedPage feature="palpites_salvos"><MeusPalpites /></GatedPage></ProtectedRoute>} />
-            <Route path="/boloes" element={<AdminRoute><Boloes /></AdminRoute>} />
+            <Route path="/boloes" element={<ProtectedRoute><Boloes /></ProtectedRoute>} />
             <Route path="/analise-do-dia" element={<ProtectedRoute><GatedPage feature="analise_do_dia"><AnaliseDoDia /></GatedPage></ProtectedRoute>} />
             <Route path="/tabela-movimentacao" element={<ProtectedRoute><GatedPage feature="tabela_movimentacao"><TabelaMovimentacao /></GatedPage></ProtectedRoute>} />
             <Route path="/frequencia-dezenas" element={<ProtectedRoute><GatedPage feature="frequencia_dezenas"><FrequenciaDezenas /></GatedPage></ProtectedRoute>} />

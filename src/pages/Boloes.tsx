@@ -6,10 +6,13 @@ import { useQuery } from "@tanstack/react-query";
 import { type BolaoPublico } from "@/lib/boloes";
 import { BolaoDetailSheet } from "@/components/boloes/BolaoDetailSheet";
 import { BolaoCard } from "@/components/boloes/BolaoCard";
+import { useUserRole } from "@/hooks/useUserRole";
+import { Trophy, Wrench } from "lucide-react";
 
 export default function Boloes() {
   const [selectedBolao, setSelectedBolao] = useState<BolaoPublico | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const { isAdmin } = useUserRole();
 
   const { data: boloes, isLoading } = useQuery({
     queryKey: ["boloes-publicos"],
@@ -22,7 +25,25 @@ export default function Boloes() {
       if (error) throw error;
       return (data || []) as unknown as BolaoPublico[];
     },
+    enabled: isAdmin,
   });
+
+  // Non-admin users see "Em desenvolvimento"
+  if (!isAdmin) {
+    return (
+      <MainLayout pageTitle="Bolões">
+        <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
+          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+            <Wrench className="h-8 w-8 text-primary" />
+          </div>
+          <h2 className="text-xl font-bold mb-2">Em desenvolvimento</h2>
+          <p className="text-base text-muted-foreground max-w-sm">
+            Os Bolões estão sendo preparados com muito carinho. Em breve você poderá participar!
+          </p>
+        </div>
+      </MainLayout>
+    );
+  }
 
   const handleOpen = (bolao: BolaoPublico) => {
     setSelectedBolao(bolao);
