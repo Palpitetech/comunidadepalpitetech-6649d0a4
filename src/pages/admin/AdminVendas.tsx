@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -205,18 +205,18 @@ export default function AdminVendas() {
 
   if (loading) {
     return (
-      <MainLayout pageTitle="Vendas" onBack={() => navigate("/admin")}>
+      <AdminLayout pageTitle="Vendas">
         <div className="flex items-center justify-center min-h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </MainLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <MainLayout
+    <AdminLayout
       pageTitle="Vendas"
-      onBack={() => navigate("/admin")}
+     
       headerRightContent={
         <button onClick={fetchLogs} disabled={loading} className="text-muted-foreground hover:text-foreground">
           <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
@@ -544,7 +544,7 @@ export default function AdminVendas() {
           )}
         </SheetContent>
       </Sheet>
-    </MainLayout>
+    </AdminLayout>
   );
 }
 

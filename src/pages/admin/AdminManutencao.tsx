@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { RefreshCw, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,7 +44,7 @@ export default function AdminManutencao() {
   };
 
   return (
-    <MainLayout>
+    <AdminLayout>
       <div className="container-senior py-4 sm:py-6 space-y-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold">Manutenção</h1>
@@ -105,6 +105,6 @@ export default function AdminManutencao() {
           })}
         </div>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }

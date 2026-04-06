@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -258,7 +258,7 @@ export default function NovoBolao() {
   };
 
   return (
-    <MainLayout pageTitle="Novo Bolão">
+    <AdminLayout pageTitle="Novo Bolão">
       <div className="px-4 py-3 md:container-senior md:py-8 max-w-2xl mx-auto">
         <Card>
           <CardHeader>
@@ -461,6 +461,6 @@ export default function NovoBolao() {
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }

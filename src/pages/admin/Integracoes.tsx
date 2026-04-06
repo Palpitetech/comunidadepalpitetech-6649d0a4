@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -252,16 +252,16 @@ Content-Type: application/json
 
   if (loading) {
     return (
-      <MainLayout pageTitle="Integrações" onBack={() => navigate("/admin")}>
+      <AdminLayout pageTitle="Integrações">
         <div className="flex items-center justify-center min-h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </MainLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <MainLayout pageTitle="Integrações" onBack={() => navigate("/admin")}>
+    <AdminLayout pageTitle="Integrações">
       <div className="px-4 py-4 md:container md:max-w-3xl md:py-8 space-y-5">
         {/* Page header */}
         <div>
@@ -580,6 +580,6 @@ Content-Type: application/json
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </MainLayout>
+    </AdminLayout>
   );
 }

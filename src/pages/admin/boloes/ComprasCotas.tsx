@@ -1,10 +1,10 @@
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Construction } from "lucide-react";
 
 export default function ComprasCotas() {
   return (
-    <MainLayout pageTitle="Compras de Cotas">
+    <AdminLayout pageTitle="Compras de Cotas">
       <div className="px-4 py-3 md:container-senior md:py-8">
         <Card>
           <CardHeader>
@@ -19,6 +19,6 @@ export default function ComprasCotas() {
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }

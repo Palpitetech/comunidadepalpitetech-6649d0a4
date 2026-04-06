@@ -1,10 +1,10 @@
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Construction } from "lucide-react";
 
 export default function ComprasSaldo() {
   return (
-    <MainLayout pageTitle="Compras de Saldo">
+    <AdminLayout pageTitle="Compras de Saldo">
       <div className="px-4 py-3 md:container-senior md:py-8">
         <Card>
           <CardHeader>
@@ -19,6 +19,6 @@ export default function ComprasSaldo() {
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }

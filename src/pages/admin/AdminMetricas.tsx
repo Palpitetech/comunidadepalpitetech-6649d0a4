@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { format, subDays, startOfDay, differenceInCalendarDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -161,7 +161,7 @@ export default function AdminMetricas() {
 </script>`;
 
   return (
-    <MainLayout pageTitle="Métricas">
+    <AdminLayout pageTitle="Métricas">
       <div className="px-4 py-3 md:container md:py-8 space-y-6 max-w-4xl mx-auto">
 
         {/* Filtros rápidos + calendário */}
@@ -418,7 +418,7 @@ export default function AdminMetricas() {
         {/* SEÇÃO 6: Push Notifications */}
         <PushStatsSection />
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }
 

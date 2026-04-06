@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -174,7 +174,7 @@ export default function Carteira() {
   };
 
   return (
-    <MainLayout pageTitle="Carteira">
+    <AdminLayout pageTitle="Carteira">
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold">💼 Carteira</h1>
@@ -309,6 +309,6 @@ export default function Carteira() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </MainLayout>
+    </AdminLayout>
   );
 }

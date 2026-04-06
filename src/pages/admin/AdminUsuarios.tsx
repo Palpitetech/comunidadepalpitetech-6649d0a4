@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -174,18 +174,18 @@ export default function AdminUsuarios() {
   };
   if (loading) {
     return (
-      <MainLayout pageTitle="Usuários" onBack={() => navigate("/admin")}>
+      <AdminLayout pageTitle="Usuários">
         <div className="flex items-center justify-center min-h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      </MainLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <MainLayout
+    <AdminLayout
       pageTitle="Usuários"
-      onBack={() => navigate("/admin")}
+     
       headerRightContent={
         <span className="text-xs text-muted-foreground font-medium">{stats.total}</span>
       }
@@ -455,6 +455,6 @@ export default function AdminUsuarios() {
         onOpenChange={setSheetOpen}
         onUserUpdated={() => fetchData()}
       />
-    </MainLayout>
+    </AdminLayout>
   );
 }

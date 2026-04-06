@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MainLayout } from "@/components/layout/MainLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
   FileText, Users, Bot, DollarSign, Gift, ShoppingCart, Crown, 
@@ -137,7 +137,7 @@ const ADMIN_MODULES = [
 
 export default function AdminIndex() {
   return (
-    <MainLayout
+    <AdminLayout
       pageTitle="Admin"
     >
       <div className="px-4 py-3 md:container-senior md:py-8 space-y-4 md:space-y-6">
@@ -179,6 +179,6 @@ export default function AdminIndex() {
           </div>
         </div>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }

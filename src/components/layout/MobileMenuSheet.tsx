@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { useUserRole } from "@/hooks/useUserRole";
+
 import { usePermissions } from "@/hooks/usePermission";
 import { getFeatureForRoute, isVipFeature } from "@/lib/featureMap";
 import { PremiumBadge } from "@/components/shared/PremiumBadge";
@@ -21,20 +21,16 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sparkles, Target, Table2, Flame, Gift, Plug } from "lucide-react";
+import { Target, Table2, Flame, Gift } from "lucide-react";
 import {
   ArrowLeft,
   Home,
   Users,
   BarChart3,
-  MessageSquare,
   MessageCircle,
   LogOut,
-  FileText,
-  Bot,
   Dices,
   Grid3X3,
-  Ticket,
   Shuffle,
   LayoutGrid,
 } from "lucide-react";
@@ -46,13 +42,9 @@ interface MobileMenuSheetProps {
 
 export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
   const { isAuthenticated, profile, signOut } = useAuthContext();
-  const { isAdmin } = useUserRole();
   const { hasPermission } = usePermissions();
   const location = useLocation();
   const navigate = useNavigate();
-  const [menuMode, setMenuMode] = useState<"ferramentas" | "admin">(
-    location.pathname.startsWith('/admin') ? "admin" : "ferramentas"
-  );
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradeLabel, setUpgradeLabel] = useState<string | undefined>();
   const [upgradeVariant, setUpgradeVariant] = useState<"premium" | "vip">("premium");
@@ -149,36 +141,9 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
           )}
         </div>
 
-        {/* Toggle Ferramentas/Admin - Apenas para Admins */}
-        {isAdmin && (
-          <div className="px-4 pt-4 mb-2">
-            <div className="flex rounded-lg p-1 bg-muted/50">
-              <button
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors
-                  ${menuMode === "ferramentas" 
-                    ? "bg-background shadow-sm text-foreground" 
-                    : "text-muted-foreground hover:text-foreground"}`}
-                onClick={() => setMenuMode("ferramentas")}
-              >
-                Ferramentas
-              </button>
-              <button
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors
-                  ${menuMode === "admin" 
-                    ? "bg-red-500 text-white shadow-sm" 
-                    : "text-muted-foreground hover:text-foreground"}`}
-                onClick={() => setMenuMode("admin")}
-              >
-                Admin
-              </button>
-            </div>
-          </div>
-        )}
 
-        {/* Corpo do Menu - Condicional */}
+        {/* Corpo do Menu */}
         <div className="flex-1 overflow-y-auto">
-          {menuMode === "ferramentas" ? (
-            <>
               {/* Itens Fixos de Navegação */}
               <nav className="px-4 py-6 space-y-1">
                 <Link to="/comunidade" onClick={closeAndNavigate}>
@@ -551,62 +516,6 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                    </AccordionItem>
                  </Accordion>
                </div>
-            </>
-          ) : (
-            /* Conteúdo Admin - Estilo com Destaque Vermelho */
-            <div className="mx-4 mt-2 p-3 rounded-r-md bg-red-50 dark:bg-red-950/30 border-l-4 border-red-500">
-              <nav className="space-y-1">
-                <Link to="/admin/planos" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
-                    <FileText className="h-5 w-5 stroke-[1.5]" />
-                    Planos
-                  </div>
-                </Link>
-                <Link to="/admin/usuarios" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
-                    <Users className="h-5 w-5 stroke-[1.5]" />
-                    Usuários
-                  </div>
-                </Link>
-                <Link to="/admin/bots" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
-                    <Bot className="h-5 w-5 stroke-[1.5]" />
-                    Bots
-                  </div>
-                </Link>
-                <Link to="/admin/convites" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
-                    <Gift className="h-5 w-5 stroke-[1.5]" />
-                    Convites
-                  </div>
-                </Link>
-                <Link to="/admin/vendas" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
-                    <Ticket className="h-5 w-5 stroke-[1.5]" />
-                    Vendas Kirvano
-                  </div>
-                </Link>
-                <Link to="/admin/eventos" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
-                    <BarChart3 className="h-5 w-5 stroke-[1.5]" />
-                    Eventos
-                  </div>
-                </Link>
-                <Link to="/admin/metricas" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
-                    <BarChart3 className="h-5 w-5 stroke-[1.5]" />
-                    Métricas
-                  </div>
-                </Link>
-                <Link to="/admin/integracoes" onClick={closeAndNavigate}>
-                  <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-red-600 transition-colors">
-                    <Plug className="h-5 w-5 stroke-[1.5]" />
-                    Integrações
-                  </div>
-                </Link>
-              </nav>
-            </div>
-          )}
         </div>
 
         {/* Rodapé Minimalista */}

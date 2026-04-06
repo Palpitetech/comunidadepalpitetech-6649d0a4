@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { useUserRole } from "@/hooks/useUserRole";
+
 import { usePermissions } from "@/hooks/usePermission";
 import { getFeatureForRoute, isVipFeature } from "@/lib/featureMap";
 import { PremiumBadge } from "@/components/shared/PremiumBadge";
@@ -20,11 +20,11 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
-import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot, Dices, Shuffle, Ticket, LayoutGrid, Target, Table2, Gift, Lock, MessageCircle, Plug, MessageSquare, Trophy, List, Wallet, CreditCard, Calendar, Save, Video } from "lucide-react";
+import { Users, BarChart3, Bell, LogOut, User, Wrench, TrendingUp, Flame, ChevronDown, Dices, Shuffle, Ticket, LayoutGrid, Target, Table2, Gift, Lock, CreditCard, Calendar, Save } from "lucide-react";
 
 export function DesktopHeader() {
   const { isAuthenticated, profile, signOut } = useAuthContext();
-  const { isAdmin } = useUserRole();
+  
   const { hasPermission } = usePermissions();
   const navigate = useNavigate();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
@@ -434,152 +434,6 @@ export function DesktopHeader() {
              </DropdownMenuContent>
            </DropdownMenu>
 
-          {/* Admin Dropdown - apenas para admins */}
-          {isAdmin && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-1.5 h-10 px-3 text-sm">
-                  <UserCog className="h-4 w-4" />
-                  <span className="hidden lg:inline">Admin</span>
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-48 p-2 bg-popover z-50">
-                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                  <Link to="/admin">
-                    <UserCog className="h-4 w-4" />
-                    Painel
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                  <Link to="/admin/planos">
-                    <FileText className="h-4 w-4" />
-                    Planos
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                  <Link to="/admin/usuarios">
-                    <Users className="h-4 w-4" />
-                    Usuários
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                  <Link to="/admin/bots">
-                    <Bot className="h-4 w-4" />
-                    Bots
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                  <Link to="/admin/convites">
-                    <Gift className="h-4 w-4" />
-                    Convites
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                  <Link to="/admin/vendas">
-                    <Ticket className="h-4 w-4" />
-                    Vendas Kirvano
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                  <Link to="/admin/eventos">
-                    <BarChart3 className="h-4 w-4" />
-                    Eventos
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                  <Link to="/admin/metricas">
-                    <TrendingUp className="h-4 w-4" />
-                    Métricas
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                  <Link to="/admin/whatsapp">
-                    <MessageCircle className="h-4 w-4" />
-                    WhatsApp
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                   <Link to="/admin/integracoes">
-                     <Plug className="h-4 w-4" />
-                     Integrações
-                   </Link>
-                 </DropdownMenuItem>
-                 <DropdownMenuSeparator />
-                 <DropdownMenuSub>
-                   <DropdownMenuSubTrigger className="gap-2 py-2 cursor-pointer">
-                     <Ticket className="h-4 w-4" />
-                     Bolões
-                   </DropdownMenuSubTrigger>
-                   <DropdownMenuSubContent className="w-48 bg-popover z-50">
-                     <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                       <Link to="/admin/novo-bolao">
-                         <PlusCircle className="h-4 w-4" />
-                         Novo Bolão
-                       </Link>
-                     </DropdownMenuItem>
-                     <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                       <Link to="/admin/listagem-bolao">
-                         <List className="h-4 w-4" />
-                         Listagem
-                       </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                        <Link to="/admin/boloes-pagamento">
-                          <CreditCard className="h-4 w-4" />
-                          💳 Pagamentos
-                         </Link>
-                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                        <Link to="/admin/premiacao">
-                          <Trophy className="h-4 w-4" />
-                          🏆 Premiação
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                        <Link to="/admin/carteira">
-                          <Wallet className="h-4 w-4" />
-                          💼 Carteira
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                       <Link to="/admin/solicitacao-resgate">
-                         <Trophy className="h-4 w-4" />
-                         Resgates
-                       </Link>
-                     </DropdownMenuItem>
-                     <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                       <Link to="/admin/compras-saldo">
-                         <Wallet className="h-4 w-4" />
-                         Compras de Saldo
-                       </Link>
-                     </DropdownMenuItem>
-                     <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                       <Link to="/admin/compras-cotas">
-                         <CreditCard className="h-4 w-4" />
-                         Compras de Cotas
-                       </Link>
-                     </DropdownMenuItem>
-                   </DropdownMenuSubContent>
-                 </DropdownMenuSub>
-                 <DropdownMenuSeparator />
-                 <DropdownMenuSub>
-                   <DropdownMenuSubTrigger className="gap-2 py-2 cursor-pointer">
-                     <Video className="h-4 w-4" />
-                     Gravação
-                   </DropdownMenuSubTrigger>
-                   <DropdownMenuSubContent className="w-48 bg-popover z-50">
-                     <DropdownMenuItem asChild className="gap-3 py-2 cursor-pointer">
-                       <Link to="/admin/gravacao/lotofacil">
-                         <BarChart3 className="h-4 w-4" />
-                         Lotofácil
-                       </Link>
-                     </DropdownMenuItem>
-                   </DropdownMenuSubContent>
-                 </DropdownMenuSub>
-               </DropdownMenuContent>
-            </DropdownMenu>
-          )}
         </nav>
 
         {/* User Actions - Compacto */}
