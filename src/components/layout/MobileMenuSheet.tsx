@@ -523,7 +523,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
           <Link to="/convites" onClick={closeAndNavigate}>
             <div className="flex items-center gap-2 text-primary font-medium text-base transition-colors hover:opacity-80">
               <Gift className="h-5 w-5" />
-               🎁 Ganhar Assinatura grátis
+               Ganhar Assinatura grátis
             </div>
           </Link>
 
