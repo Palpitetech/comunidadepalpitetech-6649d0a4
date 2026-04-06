@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { useUserRole } from "@/hooks/useUserRole";
+
 import { usePermissions } from "@/hooks/usePermission";
 import { getFeatureForRoute, isVipFeature } from "@/lib/featureMap";
 import { PremiumBadge } from "@/components/shared/PremiumBadge";
@@ -20,7 +20,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
-import { Home, Users, BarChart3, Bell, LogOut, User, PlusCircle, Wrench, TrendingUp, Flame, ChevronDown, FileText, UserCog, Bot, Dices, Shuffle, Ticket, LayoutGrid, Target, Table2, Gift, Lock, MessageCircle, Plug, MessageSquare, Trophy, List, Wallet, CreditCard, Calendar, Save, Video } from "lucide-react";
+import { Users, BarChart3, Bell, LogOut, User, Wrench, TrendingUp, Flame, ChevronDown, Dices, Shuffle, Ticket, LayoutGrid, Target, Table2, Gift, Lock, CreditCard, Calendar, Save } from "lucide-react";
 
 export function DesktopHeader() {
   const { isAuthenticated, profile, signOut } = useAuthContext();
