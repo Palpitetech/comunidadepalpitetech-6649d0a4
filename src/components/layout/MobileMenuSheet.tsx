@@ -149,31 +149,6 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
           )}
         </div>
 
-        {/* Toggle Ferramentas/Admin - Apenas para Admins */}
-        {isAdmin && (
-          <div className="px-4 pt-4 mb-2">
-            <div className="flex rounded-lg p-1 bg-muted/50">
-              <button
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors
-                  ${menuMode === "ferramentas" 
-                    ? "bg-background shadow-sm text-foreground" 
-                    : "text-muted-foreground hover:text-foreground"}`}
-                onClick={() => setMenuMode("ferramentas")}
-              >
-                Ferramentas
-              </button>
-              <button
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors
-                  ${menuMode === "admin" 
-                    ? "bg-red-500 text-white shadow-sm" 
-                    : "text-muted-foreground hover:text-foreground"}`}
-                onClick={() => setMenuMode("admin")}
-              >
-                Admin
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Corpo do Menu - Condicional */}
         <div className="flex-1 overflow-y-auto">
