@@ -321,7 +321,21 @@ export function DisparoGrupoTab() {
       setTimeout(() => fetchLogs(), 3000);
     } catch (err: any) {
       toast.error("Erro: " + err.message);
+  }
+
+  async function handleSyncMembers(configId: string) {
+    if (!confirm("Sincronizar tags de membros atuais dos grupos? Isso pode levar alguns segundos.")) return;
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-group-members", {
+        body: { config_id: configId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`✅ Sincronizado! ${data.updated} perfil(is) atualizado(s), ${data.notFound} não encontrado(s).`);
+    } catch (err: any) {
+      toast.error("Erro: " + err.message);
     }
+  }
   }
 
   function getConfigName(configId: string) {
