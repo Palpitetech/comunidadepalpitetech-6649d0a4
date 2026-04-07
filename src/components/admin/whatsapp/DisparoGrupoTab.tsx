@@ -321,6 +321,7 @@ export function DisparoGrupoTab() {
       setTimeout(() => fetchLogs(), 3000);
     } catch (err: any) {
       toast.error("Erro: " + err.message);
+    }
   }
 
   async function handleSyncMembers(configId: string) {
@@ -335,7 +336,6 @@ export function DisparoGrupoTab() {
     } catch (err: any) {
       toast.error("Erro: " + err.message);
     }
-  }
   }
 
   function getConfigName(configId: string) {
