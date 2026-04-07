@@ -183,6 +183,7 @@ async function processQueue() {
     .from("message_queue")
     .select("*")
     .eq("status", "pending")
+    .order("priority", { ascending: false })
     .order("scheduled_at", { ascending: true })
     .limit(20);
 
