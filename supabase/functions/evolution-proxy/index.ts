@@ -22,7 +22,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, instanceName, number, text } = await req.json();
+    const reqBody = await req.json();
+    const { action, instanceName, number, text } = reqBody;
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -63,6 +64,22 @@ Deno.serve(async (req) => {
       case "fetchGroups":
         url = `${EVOLUTION_API_URL}/group/fetchAllGroups/${instanceName}?getParticipants=false`;
         break;
+      case "fetchGroupParticipants": {
+        const groupJid = reqBody.groupJid || '';
+        url = `${EVOLUTION_API_URL}/group/participants/${instanceName}?groupJid=${encodeURIComponent(groupJid)}`;
+        break;
+      }
+      case "setWebhook": {
+        url = `${EVOLUTION_API_URL}/webhook/set/${instanceName}`;
+        method = "POST";
+        body = JSON.stringify({
+          enabled: reqBody.enabled ?? true,
+          url: reqBody.webhookUrl,
+          webhookByEvents: true,
+          events: reqBody.events || ["GROUP_PARTICIPANTS_UPDATE"],
+        });
+        break;
+      }
       default:
         return new Response(
           JSON.stringify({ error: `Ação desconhecida: ${action}` }),

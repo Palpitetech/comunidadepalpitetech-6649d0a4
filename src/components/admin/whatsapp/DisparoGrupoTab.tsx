@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Pencil, Pause, Play, TestTube, X, Clock, Send, Trash2, Sparkles, Bot, PenLine, Dices } from "lucide-react";
+import { Plus, Pencil, Pause, Play, TestTube, X, Clock, Send, Trash2, Sparkles, Bot, PenLine, Dices, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -30,6 +30,7 @@ interface BlastConfig {
   is_active: boolean;
   include_palpites: boolean;
   vip_group_link: string | null;
+  member_tag: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -65,6 +66,7 @@ export function DisparoGrupoTab() {
   const [formActive, setFormActive] = useState(true);
   const [formIncludePalpites, setFormIncludePalpites] = useState(true);
   const [formVipGroupLink, setFormVipGroupLink] = useState("");
+  const [formMemberTag, setFormMemberTag] = useState("");
   const [formTimeInputs, setFormTimeInputs] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
@@ -139,6 +141,7 @@ export function DisparoGrupoTab() {
     setFormActive(true);
     setFormIncludePalpites(true);
     setFormVipGroupLink("");
+    setFormMemberTag("");
     setFormTimeInputs({ slot_1: "12:00" });
     setDialogOpen(true);
   }
@@ -159,6 +162,7 @@ export function DisparoGrupoTab() {
     setFormActive(config.is_active);
     setFormIncludePalpites(config.include_palpites ?? true);
     setFormVipGroupLink(config.vip_group_link || "");
+    setFormMemberTag((config as any).member_tag || "");
     const inputs: Record<string, string> = {};
     slots.forEach(s => { inputs[s.id] = "12:00"; });
     setFormTimeInputs(inputs);
@@ -247,6 +251,7 @@ export function DisparoGrupoTab() {
       is_active: formActive,
       include_palpites: formIncludePalpites,
       vip_group_link: formVipGroupLink.trim() || null,
+      member_tag: formMemberTag.trim() || null,
       updated_at: new Date().toISOString(),
     };
 
@@ -314,6 +319,20 @@ export function DisparoGrupoTab() {
       if (data?.error) throw new Error(data.error);
       toast.success(`🚀 Disparo agendado! Será enviado em ~5s.`);
       setTimeout(() => fetchLogs(), 3000);
+    } catch (err: any) {
+      toast.error("Erro: " + err.message);
+    }
+  }
+
+  async function handleSyncMembers(configId: string) {
+    if (!confirm("Sincronizar tags de membros atuais dos grupos? Isso pode levar alguns segundos.")) return;
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-group-members", {
+        body: { config_id: configId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`✅ Sincronizado! ${data.updated} perfil(is) atualizado(s), ${data.notFound} não encontrado(s).`);
     } catch (err: any) {
       toast.error("Erro: " + err.message);
     }
@@ -398,6 +417,11 @@ export function DisparoGrupoTab() {
                       {config.include_palpites ? "🎰 Com Palpites" : "📊 Só Estratégia + CTA"}
                     </Badge>
                   )}
+                  {(config as any).member_tag && (
+                    <Badge variant="outline" className="text-[10px] w-fit mt-1">
+                      🏷️ Tag: {(config as any).member_tag}
+                    </Badge>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {/* Slots display */}
@@ -467,6 +491,12 @@ export function DisparoGrupoTab() {
                       <TestTube className="h-3 w-3 mr-1" />
                       Testar
                     </Button>
+                    {(config as any).member_tag && (
+                      <Button variant="outline" size="sm" onClick={() => handleSyncMembers(config.id)}>
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                        Sincronizar
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -817,6 +847,20 @@ export function DisparoGrupoTab() {
             <div className="flex items-center gap-2">
               <Switch checked={formActive} onCheckedChange={setFormActive} />
               <Label className="text-xs">Ativo</Label>
+            </div>
+
+            {/* Member Tag */}
+            <div className="space-y-1.5 rounded-lg border border-dashed p-3">
+              <Label className="text-xs font-semibold">🏷️ Tag de Membro</Label>
+              <Input
+                value={formMemberTag}
+                onChange={(e) => setFormMemberTag(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_'))}
+                placeholder="grupo_free"
+                className="text-xs"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Tag adicionada automaticamente nos perfis quando alguém entra no grupo e removida quando sai. Deixe vazio para desativar.
+              </p>
             </div>
           </div>
 
