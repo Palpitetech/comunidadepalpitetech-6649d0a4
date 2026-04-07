@@ -43,10 +43,12 @@ async function ensureWebhookConfigured(
           apikey: evolutionKey,
         },
         body: JSON.stringify({
-          enabled: true,
-          url: webhookUrl,
-          webhookByEvents: true,
-          events: ["GROUP_PARTICIPANTS_UPDATE"],
+          webhook: {
+            enabled: true,
+            url: webhookUrl,
+            webhookByEvents: true,
+            events: ["GROUP_PARTICIPANTS_UPDATE"],
+          },
         }),
       }
     );
@@ -146,10 +148,12 @@ Deno.serve(async (req) => {
         url = `${EVOLUTION_API_URL}/webhook/set/${instanceName}`;
         method = "POST";
         body = JSON.stringify({
-          enabled: reqBody.enabled ?? true,
-          url: reqBody.webhookUrl,
-          webhookByEvents: true,
-          events: reqBody.events || ["GROUP_PARTICIPANTS_UPDATE"],
+          webhook: {
+            enabled: reqBody.enabled ?? true,
+            url: reqBody.webhookUrl,
+            webhookByEvents: true,
+            events: reqBody.events || ["GROUP_PARTICIPANTS_UPDATE"],
+          },
         });
         break;
       }
