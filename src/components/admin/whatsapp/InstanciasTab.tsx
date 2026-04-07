@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, Plus, Pencil, Trash2, Smartphone, QrCode, RefreshCw, Power, LogOut, MessageSquare, Clock } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Smartphone, QrCode, RefreshCw, Power, LogOut, MessageSquare, Clock, Link2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -26,6 +26,7 @@ interface WhatsAppInstance {
   created_at: string;
   cooldown_queue: number[];
   cooldown_queue_index: number;
+  webhook_configured: boolean;
 }
 
 interface FormData {
@@ -549,6 +550,14 @@ export function InstanciasTab() {
                       <span className={`h-1.5 w-1.5 rounded-full ${status.dotClass}`} />
                       {status.label}
                     </Badge>
+                    {(inst as any).webhook_configured && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Link2 className="h-3.5 w-3.5 text-accent shrink-0" />
+                        </TooltipTrigger>
+                        <TooltipContent>Webhook de grupos ativo</TooltipContent>
+                      </Tooltip>
+                    )}
                   </div>
 
                   {/* Stats */}
