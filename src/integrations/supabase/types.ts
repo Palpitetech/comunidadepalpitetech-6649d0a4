@@ -2845,6 +2845,67 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_smart_links: {
+        Row: {
+          clicks: number
+          created_at: string
+          created_by: string | null
+          group_invite_code: string
+          group_name: string | null
+          id: string
+          is_active: boolean
+          original_url: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          clicks?: number
+          created_at?: string
+          created_by?: string | null
+          group_invite_code: string
+          group_name?: string | null
+          id?: string
+          is_active?: boolean
+          original_url: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          clicks?: number
+          created_at?: string
+          created_by?: string | null
+          group_invite_code?: string
+          group_name?: string | null
+          id?: string
+          is_active?: boolean
+          original_url?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_smart_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_smart_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "perfis_publicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_smart_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "usuarios_notificaveis_hoje"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       guide_personas_publico: {
@@ -3042,6 +3103,10 @@ export type Database = {
       identificar_conta: { Args: { p_identificador: string }; Returns: Json }
       increment_lead_webhook_count: {
         Args: { webhook_id: string }
+        Returns: undefined
+      }
+      increment_smart_link_clicks: {
+        Args: { p_slug: string }
         Returns: undefined
       }
       queue_templates_for_event: {

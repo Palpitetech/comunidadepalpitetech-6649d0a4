@@ -92,6 +92,7 @@ import ResultadosDiaDeSorte from "./pages/diadesorte/ResultadosDiaDeSorte";
 import ResultadosLotomania from "./pages/lotomania/ResultadosLotomania";
 import HubLotofacil from "./pages/lotofacil/HubLotofacil";
 import GravacaoLotofacil from "./pages/admin/gravacao/GravacaoLotofacil";
+import SmartLinkRedirect from "./pages/SmartLinkRedirect";
 import PerfilDados from "./pages/PerfilDados";
 import PerfilTransacoes from "./pages/PerfilTransacoes";
 import PerfilAssinatura from "./pages/PerfilAssinatura";
@@ -136,6 +137,7 @@ const App = () => (
             <Route path="/termos" element={<Termos />} />
             <Route path="/privacidade" element={<Privacidade />} />
             <Route path="/proximos-concursos" element={<ProximosConcursos />} />
+            <Route path="/g/:slug" element={<SmartLinkRedirect />} />
 
             {/* Rotas Protegidas - Requer Login */}
             <Route path="/home" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />

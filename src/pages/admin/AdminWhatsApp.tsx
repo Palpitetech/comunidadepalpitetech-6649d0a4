@@ -8,6 +8,7 @@ import { AquecimentoTab } from "@/components/admin/whatsapp/AquecimentoTab";
 import { GruposTab } from "@/components/admin/whatsapp/GruposTab";
 import { DisparoManualTab } from "@/components/admin/whatsapp/DisparoManualTab";
 import { DisparoGrupoTab } from "@/components/admin/whatsapp/DisparoGrupoTab";
+import { SmartLinksTab } from "@/components/admin/whatsapp/SmartLinksTab";
 import { WhatsAppSubSidebar, whatsappTabs } from "@/components/admin/whatsapp/WhatsAppSubSidebar";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ const TAB_TITLES: Record<string, string> = {
   "disparo-grupo": "Disparo Grupo",
   aquecimento: "Aquecimento",
   grupos: "Grupos",
+  "smart-links": "Smart Links",
 };
 
 export default function AdminWhatsApp() {
@@ -68,6 +70,7 @@ export default function AdminWhatsApp() {
               {activeTab === "disparo-grupo" && <DisparoGrupoTab />}
               {activeTab === "aquecimento" && <AquecimentoTab />}
               {activeTab === "grupos" && <GruposTab />}
+              {activeTab === "smart-links" && <SmartLinksTab />}
             </div>
           </div>
         </div>
