@@ -75,6 +75,9 @@ verify_jwt = false
 [functions.group-blast]
 verify_jwt = false
 
+[functions.group-blast-send]
+verify_jwt = false
+
 [functions.receive-lead]
 verify_jwt = false
 
