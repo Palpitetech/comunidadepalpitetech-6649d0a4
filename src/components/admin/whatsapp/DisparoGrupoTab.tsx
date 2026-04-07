@@ -141,6 +141,7 @@ export function DisparoGrupoTab() {
     setFormActive(true);
     setFormIncludePalpites(true);
     setFormVipGroupLink("");
+    setFormMemberTag("");
     setFormTimeInputs({ slot_1: "12:00" });
     setDialogOpen(true);
   }
