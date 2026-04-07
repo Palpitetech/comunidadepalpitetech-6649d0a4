@@ -26,6 +26,7 @@ interface WhatsAppInstance {
   created_at: string;
   cooldown_queue: number[];
   cooldown_queue_index: number;
+  webhook_configured: boolean;
 }
 
 interface FormData {
@@ -549,6 +550,14 @@ export function InstanciasTab() {
                       <span className={`h-1.5 w-1.5 rounded-full ${status.dotClass}`} />
                       {status.label}
                     </Badge>
+                    {(inst as any).webhook_configured && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Link2 className="h-3.5 w-3.5 text-accent shrink-0" />
+                        </TooltipTrigger>
+                        <TooltipContent>Webhook de grupos ativo</TooltipContent>
+                      </Tooltip>
+                    )}
                   </div>
 
                   {/* Stats */}
