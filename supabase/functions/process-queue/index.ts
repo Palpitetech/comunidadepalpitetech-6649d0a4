@@ -67,7 +67,7 @@ async function sendMessage(
     return { success: false, error: "Nenhuma instância disponível após 3 tentativas" };
   }
 
-  // Resolve template
+  // Resolve template or free message
   let messageText = "";
   if (item.template_id) {
     const { data: tpl } = await supabase
@@ -78,6 +78,12 @@ async function sendMessage(
     messageText = tpl
       ? resolveTemplate(tpl.content, item.variables ?? {})
       : "";
+  } else if (item.variables?.mensagem_livre) {
+    // Free-text message: resolve variables in the free message content
+    messageText = resolveTemplate(
+      String(item.variables.mensagem_livre),
+      item.variables as Record<string, string>
+    );
   }
 
   if (!messageText) {
@@ -85,11 +91,13 @@ async function sendMessage(
       .from("message_queue")
       .update({
         status: "failed",
-        error_message: "Template não encontrado ou vazio",
+        error_message: item.template_id
+          ? "Template não encontrado ou vazio"
+          : "Mensagem livre vazia",
         retry_count: (item.retry_count ?? 0) + 1,
       })
       .eq("id", item.id);
-    return { success: false, error: "Template vazio" };
+    return { success: false, error: "Mensagem vazia" };
   }
 
   // Call Evolution API
