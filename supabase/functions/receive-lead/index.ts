@@ -180,26 +180,94 @@ serve(async (req) => {
     // Build final tags: always include "lead" + webhook source_tag + payload tags
     const newTags = ["lead", webhook.source_tag, ...(payloadTags || [])];
 
+    // Wait briefly for handle_new_user trigger to complete (creates perfis row)
+    if (isNew) {
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+
     const { data: currentProfile } = await supabaseAdmin
       .from("perfis")
       .select("tags, utm_source")
       .eq("id", userId)
       .single();
 
-    const existingTags: string[] = currentProfile?.tags || [];
+    if (!currentProfile) {
+      console.error(`[receive-lead] Perfil não encontrado para user ${userId} após criação`);
+      // Retry once after another second
+      await new Promise((r) => setTimeout(r, 1500));
+      const { data: retryProfile } = await supabaseAdmin
+        .from("perfis")
+        .select("tags, utm_source")
+        .eq("id", userId)
+        .single();
+
+      if (!retryProfile) {
+        return json({ error: "Perfil não criado a tempo", user_id: userId }, 500);
+      }
+    }
+
+    const profileData = currentProfile || (await supabaseAdmin.from("perfis").select("tags, utm_source").eq("id", userId).single()).data;
+    const existingTags: string[] = profileData?.tags || [];
     const mergedTags = Array.from(new Set([...existingTags, ...newTags]));
 
     const updatePayload: Record<string, unknown> = { tags: mergedTags };
     if (nome?.trim() && isNew) updatePayload.nome = nome.trim();
-    // utm_source: nunca sobrescreve valor já existente
-    if (utm_source && !currentProfile?.utm_source) {
+    if (utm_source && !profileData?.utm_source) {
       updatePayload.utm_source = utm_source;
     }
 
-    await supabaseAdmin
+    const { error: updateError } = await supabaseAdmin
       .from("perfis")
       .update(updatePayload)
       .eq("id", userId);
+
+    if (updateError) {
+      console.error(`[receive-lead] Erro ao atualizar tags: ${updateError.message}`, {
+        userId, mergedTags, updatePayload
+      });
+
+      // Log to system_events for visibility
+      await supabaseAdmin.from("system_events").insert({
+        event_type: "lead_tag_update_error",
+        description: `Falha ao atualizar tags do lead ${email || celular}`,
+        source: source || "webhook",
+        status: "error",
+        metadata: {
+          user_id: userId,
+          attempted_tags: mergedTags,
+          error: updateError.message,
+          webhook_name: webhook.name,
+        },
+      });
+
+      return json({ error: "Falha ao salvar tags", details: updateError.message }, 500);
+    }
+
+    // Verify tags were actually persisted
+    const { data: verifyProfile } = await supabaseAdmin
+      .from("perfis")
+      .select("tags")
+      .eq("id", userId)
+      .single();
+
+    const persistedTags = verifyProfile?.tags || [];
+    const tagsOk = newTags.every((t: string) => persistedTags.includes(t));
+
+    if (!tagsOk) {
+      console.error(`[receive-lead] Tags não persistiram! Esperado: ${mergedTags}, Atual: ${persistedTags}`);
+      await supabaseAdmin.from("system_events").insert({
+        event_type: "lead_tag_persist_mismatch",
+        description: `Tags não persistiram para ${email || celular}`,
+        source: source || "webhook",
+        status: "error",
+        metadata: {
+          user_id: userId,
+          expected_tags: mergedTags,
+          actual_tags: persistedTags,
+          webhook_name: webhook.name,
+        },
+      });
+    }
 
     // Atomic increment of webhook counter
     await supabaseAdmin.rpc("increment_lead_webhook_count" as any, { webhook_id: webhook.id });
@@ -281,7 +349,8 @@ serve(async (req) => {
       success: true,
       user_id: userId,
       is_new: isNew,
-      tags: mergedTags,
+      tags: persistedTags,
+      tags_verified: tagsOk,
       activation_email: magicLinkStatus,
     });
   } catch (err: unknown) {
