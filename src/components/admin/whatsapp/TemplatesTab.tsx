@@ -118,6 +118,8 @@ export function TemplatesTab() {
   const [testingId, setTestingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [allTags, setAllTags] = useState<string[]>([]);
+  const [plans, setPlans] = useState<PlanOption[]>([]);
 
   const fetchTemplates = useCallback(async () => {
     setLoading(true);
@@ -146,6 +148,26 @@ export function TemplatesTab() {
     kirvanoResult.data?.forEach((d: any) => { if (d.event) allTypes.add(d.event); });
     allTypes.add("manual");
     setEventTypes([...allTypes].sort());
+  }, []);
+
+  const fetchTagsAndPlans = useCallback(async () => {
+    const [tagsRes, plansRes] = await Promise.all([
+      supabase.rpc("get_distinct_tags" as any),
+      supabase.from("plans").select("id, name").eq("is_active", true).order("display_order"),
+    ]);
+
+    if (tagsRes.error) {
+      const { data } = await supabase.from("perfis").select("tags");
+      if (data) {
+        const set = new Set<string>();
+        data.forEach((p: any) => (p.tags || []).forEach((t: string) => set.add(t)));
+        setAllTags([...set].sort());
+      }
+    } else {
+      setAllTags(((tagsRes.data as any[]) || []).map((r: any) => r.tag || r).sort());
+    }
+
+    setPlans((plansRes.data as any[]) || []);
   }, []);
 
   useEffect(() => {
