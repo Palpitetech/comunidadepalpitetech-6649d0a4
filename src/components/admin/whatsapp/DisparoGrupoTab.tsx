@@ -251,6 +251,7 @@ export function DisparoGrupoTab() {
       is_active: formActive,
       include_palpites: formIncludePalpites,
       vip_group_link: formVipGroupLink.trim() || null,
+      member_tag: formMemberTag.trim() || null,
       updated_at: new Date().toISOString(),
     };
 
