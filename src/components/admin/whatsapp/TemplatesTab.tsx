@@ -190,6 +190,10 @@ export function TemplatesTab() {
       event_trigger: t.event_trigger,
       delay_enabled: t.delay_enabled ?? false,
       delay_minutes: t.delay_minutes ?? 0,
+      include_tags: t.include_tags ?? [],
+      exclude_tags: t.exclude_tags ?? [],
+      plan_ids: t.plan_ids ?? [],
+      tags_match_mode: (t.tags_match_mode as "any" | "all") ?? "any",
     });
     setDialogOpen(true);
   };
