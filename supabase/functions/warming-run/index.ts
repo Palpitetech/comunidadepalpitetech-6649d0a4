@@ -457,7 +457,7 @@ async function actionSend() {
     }
   }
 
-  return { action: "send", sent, processed: messages.length };
+  return { action: "send", sent, processed: messages.length, skippedCooldown };
 }
 
 /* ── Handler ─────────────────────────────────────────── */
