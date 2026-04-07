@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
-import { Smartphone, FileText, Send, ScrollText, Flame, Users, Megaphone } from "lucide-react";
 import { InstanciasTab } from "@/components/admin/whatsapp/InstanciasTab";
 import { TemplatesTab } from "@/components/admin/whatsapp/TemplatesTab";
 import { FilaTab } from "@/components/admin/whatsapp/FilaTab";
@@ -12,51 +11,64 @@ import { DisparoGrupoTab } from "@/components/admin/whatsapp/DisparoGrupoTab";
 import { WhatsAppSubSidebar, whatsappTabs } from "@/components/admin/whatsapp/WhatsAppSubSidebar";
 import { cn } from "@/lib/utils";
 
+const TAB_TITLES: Record<string, string> = {
+  instancias: "Instâncias",
+  templates: "Templates",
+  fila: "Fila de Envio",
+  disparo: "Disparo Manual",
+  logs: "Logs",
+  "disparo-grupo": "Disparo Grupo",
+  aquecimento: "Aquecimento",
+  grupos: "Grupos",
+};
+
 export default function AdminWhatsApp() {
   const [activeTab, setActiveTab] = useState("instancias");
 
   return (
-    <AdminLayout>
-      <div className="container-senior py-4 sm:py-6 space-y-4 sm:space-y-6">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold">WhatsApp</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">Gerencie instâncias, templates e envios</p>
+    <AdminLayout pageTitle="WhatsApp">
+      {/* Mobile: pill tabs */}
+      <div className="overflow-x-auto px-4 pt-3 no-scrollbar md:hidden">
+        <div className="flex gap-1.5 min-w-max">
+          {whatsappTabs.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setActiveTab(tab.value)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors border",
+                activeTab === tab.value
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-card text-muted-foreground border-border hover:bg-secondary"
+              )}
+            >
+              <tab.icon className="h-3.5 w-3.5" />
+              {tab.label}
+            </button>
+          ))}
         </div>
+      </div>
 
-        {/* Mobile: pill tabs (horizontal scroll) */}
-        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar md:hidden">
-          <div className="flex gap-1.5 min-w-max sm:min-w-0 sm:flex-wrap">
-            {whatsappTabs.map((tab) => (
-              <button
-                key={tab.value}
-                onClick={() => setActiveTab(tab.value)}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors border",
-                  activeTab === tab.value
-                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                    : "bg-card text-muted-foreground border-border hover:bg-secondary"
-                )}
-              >
-                <tab.icon className="h-3.5 w-3.5" />
-                {tab.label}
-              </button>
-            ))}
+      {/* Layout: sub-sidebar + content */}
+      <div className="flex flex-1 min-h-0">
+        <WhatsAppSubSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+
+        <div className="flex-1 min-w-0 overflow-auto">
+          {/* Content header (desktop only) */}
+          <div className="hidden md:flex items-center gap-2 px-5 lg:px-6 pt-5 lg:pt-6 pb-1">
+            <h2 className="text-lg font-semibold">{TAB_TITLES[activeTab] || activeTab}</h2>
           </div>
-        </div>
 
-        {/* Desktop: sidebar + content | Mobile: content only */}
-        <div className="flex gap-0 md:gap-0 md:-mx-4">
-          <WhatsAppSubSidebar activeTab={activeTab} onTabChange={setActiveTab} />
-
-          <div className="flex-1 md:px-5">
-            {activeTab === "instancias" && <InstanciasTab />}
-            {activeTab === "templates" && <TemplatesTab />}
-            {activeTab === "fila" && <FilaTab />}
-            {activeTab === "disparo" && <DisparoManualTab />}
-            {activeTab === "logs" && <LogsTab />}
-            {activeTab === "disparo-grupo" && <DisparoGrupoTab />}
-            {activeTab === "aquecimento" && <AquecimentoTab />}
-            {activeTab === "grupos" && <GruposTab />}
+          <div className="p-4 md:px-5 md:pb-6 lg:px-6">
+            <div className="max-w-5xl">
+              {activeTab === "instancias" && <InstanciasTab />}
+              {activeTab === "templates" && <TemplatesTab />}
+              {activeTab === "fila" && <FilaTab />}
+              {activeTab === "disparo" && <DisparoManualTab />}
+              {activeTab === "logs" && <LogsTab />}
+              {activeTab === "disparo-grupo" && <DisparoGrupoTab />}
+              {activeTab === "aquecimento" && <AquecimentoTab />}
+              {activeTab === "grupos" && <GruposTab />}
+            </div>
           </div>
         </div>
       </div>
