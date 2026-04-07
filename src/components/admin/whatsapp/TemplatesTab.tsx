@@ -336,10 +336,11 @@ export function TemplatesTab() {
               Novo Template
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-lg max-h-[85vh]">
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Template" : "Novo Template"}</DialogTitle>
             </DialogHeader>
+            <ScrollArea className="max-h-[calc(85vh-80px)] pr-3">
             <div className="space-y-4 pt-2">
               <div className="space-y-1.5">
                 <Label htmlFor="tpl-name">Nome do template *</Label>
@@ -452,11 +453,26 @@ export function TemplatesTab() {
                   ))}
                 </div>
               </div>
+
+              <TemplateSegmentationSection
+                allTags={allTags}
+                includeTags={form.include_tags}
+                excludeTags={form.exclude_tags}
+                tagsMatchMode={form.tags_match_mode}
+                planIds={form.plan_ids}
+                plans={plans}
+                onIncludeTagsChange={(tags) => setForm((f) => ({ ...f, include_tags: tags }))}
+                onExcludeTagsChange={(tags) => setForm((f) => ({ ...f, exclude_tags: tags }))}
+                onTagsMatchModeChange={(mode) => setForm((f) => ({ ...f, tags_match_mode: mode }))}
+                onPlanIdsChange={(ids) => setForm((f) => ({ ...f, plan_ids: ids }))}
+              />
+
               <Button className="w-full" onClick={handleSave} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                 {editingId ? "Salvar Alterações" : "Criar Template"}
               </Button>
             </div>
+            </ScrollArea>
           </DialogContent>
         </Dialog>
       </div>
