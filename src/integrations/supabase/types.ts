@@ -3105,6 +3105,10 @@ export type Database = {
         Args: { webhook_id: string }
         Returns: undefined
       }
+      increment_smart_link_clicks: {
+        Args: { p_slug: string }
+        Returns: undefined
+      }
       queue_templates_for_event: {
         Args: {
           p_event_trigger: string
