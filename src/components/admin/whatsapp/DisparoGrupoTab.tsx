@@ -30,6 +30,7 @@ interface BlastConfig {
   is_active: boolean;
   include_palpites: boolean;
   vip_group_link: string | null;
+  member_tag: string | null;
   created_at: string;
   updated_at: string;
 }
