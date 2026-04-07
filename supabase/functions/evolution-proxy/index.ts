@@ -157,6 +157,11 @@ Deno.serve(async (req) => {
         });
         break;
       }
+      case "groupInviteCode": {
+        const gjid = reqBody.groupJid || '';
+        url = `${EVOLUTION_API_URL}/group/inviteCode/${instanceName}?groupJid=${encodeURIComponent(gjid)}`;
+        break;
+      }
       default:
         return new Response(
           JSON.stringify({ error: `Ação desconhecida: ${action}` }),
