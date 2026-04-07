@@ -3038,6 +3038,17 @@ export type Database = {
         Args: { webhook_id: string }
         Returns: undefined
       }
+      queue_templates_for_event: {
+        Args: {
+          p_event_trigger: string
+          p_name: string
+          p_phone: string
+          p_priority?: number
+          p_user_id: string
+          p_variables?: Json
+        }
+        Returns: number
+      }
       register_instance_usage: {
         Args: { p_instance_id: string }
         Returns: undefined
