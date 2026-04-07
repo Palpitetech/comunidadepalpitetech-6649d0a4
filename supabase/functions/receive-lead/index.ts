@@ -349,7 +349,8 @@ serve(async (req) => {
       success: true,
       user_id: userId,
       is_new: isNew,
-      tags: mergedTags,
+      tags: persistedTags,
+      tags_verified: tagsOk,
       activation_email: magicLinkStatus,
     });
   } catch (err: unknown) {
