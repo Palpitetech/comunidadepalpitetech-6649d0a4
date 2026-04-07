@@ -2811,6 +2811,7 @@ export type Database = {
           name: string
           phone_number: string
           status: string | null
+          webhook_configured: boolean
         }
         Insert: {
           cooldown_queue?: Json
@@ -2825,6 +2826,7 @@ export type Database = {
           name: string
           phone_number: string
           status?: string | null
+          webhook_configured?: boolean
         }
         Update: {
           cooldown_queue?: Json
@@ -2839,6 +2841,7 @@ export type Database = {
           name?: string
           phone_number?: string
           status?: string | null
+          webhook_configured?: boolean
         }
         Relationships: []
       }
