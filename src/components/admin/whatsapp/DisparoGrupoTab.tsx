@@ -66,6 +66,7 @@ export function DisparoGrupoTab() {
   const [formActive, setFormActive] = useState(true);
   const [formIncludePalpites, setFormIncludePalpites] = useState(true);
   const [formVipGroupLink, setFormVipGroupLink] = useState("");
+  const [formMemberTag, setFormMemberTag] = useState("");
   const [formTimeInputs, setFormTimeInputs] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
