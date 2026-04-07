@@ -249,6 +249,7 @@ export function useDisparoManual() {
           variables,
           status: "pending",
           scheduled_at: now,
+          priority: 0, // Manual bulk = lowest priority
         };
       });
 

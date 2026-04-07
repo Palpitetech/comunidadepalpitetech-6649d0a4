@@ -388,9 +388,21 @@ async function actionSend() {
   }
 
   let sent = 0;
+  let skippedCooldown = 0;
 
   for (const msg of messages) {
     try {
+      // Check if from_instance is available (respects cooldown)
+      const { data: bestInstances } = await supabase.rpc("select_best_instance");
+      const availableIds = new Set((bestInstances || []).map((i: any) => i.instance_id));
+
+      if (!availableIds.has(msg.from_instance_id)) {
+        // Instance is in cooldown — skip for now (will be retried next cycle)
+        skippedCooldown++;
+        console.log(`[send] Skipped message ${msg.id}: instance ${msg.from_evolution_id} in cooldown`);
+        continue;
+      }
+
       const url = `${EVOLUTION_API_URL}/message/sendText/${msg.from_evolution_id}`;
       const res = await fetch(url, {
         method: "POST",
@@ -445,7 +457,7 @@ async function actionSend() {
     }
   }
 
-  return { action: "send", sent, processed: messages.length };
+  return { action: "send", sent, processed: messages.length, skippedCooldown };
 }
 
 /* ── Handler ─────────────────────────────────────────── */

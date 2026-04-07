@@ -67,7 +67,7 @@ async function sendMessage(
     return { success: false, error: "Nenhuma instância disponível após 3 tentativas" };
   }
 
-  // Resolve template
+  // Resolve template or free message
   let messageText = "";
   if (item.template_id) {
     const { data: tpl } = await supabase
@@ -78,6 +78,12 @@ async function sendMessage(
     messageText = tpl
       ? resolveTemplate(tpl.content, item.variables ?? {})
       : "";
+  } else if (item.variables?.mensagem_livre) {
+    // Free-text message: resolve variables in the free message content
+    messageText = resolveTemplate(
+      String(item.variables.mensagem_livre),
+      item.variables as Record<string, string>
+    );
   }
 
   if (!messageText) {
@@ -85,11 +91,13 @@ async function sendMessage(
       .from("message_queue")
       .update({
         status: "failed",
-        error_message: "Template não encontrado ou vazio",
+        error_message: item.template_id
+          ? "Template não encontrado ou vazio"
+          : "Mensagem livre vazia",
         retry_count: (item.retry_count ?? 0) + 1,
       })
       .eq("id", item.id);
-    return { success: false, error: "Template vazio" };
+    return { success: false, error: "Mensagem vazia" };
   }
 
   // Call Evolution API
@@ -175,8 +183,9 @@ async function processQueue() {
     .from("message_queue")
     .select("*")
     .eq("status", "pending")
+    .order("priority", { ascending: false })
     .order("scheduled_at", { ascending: true })
-    .limit(5);
+    .limit(20);
 
   if (error) {
     return { processed: 0, errors: [error.message] };
@@ -194,9 +203,9 @@ async function processQueue() {
       errors.push(result.error);
     }
 
-    // Random delay 3-5 min between messages (skip after last)
+    // Short safety delay between messages (instance cooldown handles the rest)
     if (i < items.length - 1) {
-      await randomDelay(3 * 60 * 1000, 5 * 60 * 1000);
+      await randomDelay(5_000, 10_000);
     }
   }
 

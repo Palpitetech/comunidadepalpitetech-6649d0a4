@@ -1392,6 +1392,7 @@ export type Database = {
           error_message: string | null
           id: string
           instance_id: string | null
+          priority: number
           recipient_name: string | null
           recipient_phone: string
           retry_count: number | null
@@ -1406,6 +1407,7 @@ export type Database = {
           error_message?: string | null
           id?: string
           instance_id?: string | null
+          priority?: number
           recipient_name?: string | null
           recipient_phone: string
           retry_count?: number | null
@@ -1420,6 +1422,7 @@ export type Database = {
           error_message?: string | null
           id?: string
           instance_id?: string | null
+          priority?: number
           recipient_name?: string | null
           recipient_phone?: string
           retry_count?: number | null
