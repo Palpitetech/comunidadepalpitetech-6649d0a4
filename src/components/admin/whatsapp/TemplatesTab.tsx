@@ -173,7 +173,8 @@ export function TemplatesTab() {
   useEffect(() => {
     fetchTemplates();
     fetchEventTypes();
-  }, [fetchTemplates, fetchEventTypes]);
+    fetchTagsAndPlans();
+  }, [fetchTemplates, fetchEventTypes, fetchTagsAndPlans]);
 
   const openCreate = () => {
     setEditingId(null);
