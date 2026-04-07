@@ -5,6 +5,7 @@ import { MobileBottomNav } from "./MobileBottomNav";
 import { MobileMenuSheet } from "./MobileMenuSheet";
 import { PageHeader } from "./PageHeader";
 import { PushNotificationBanner } from "@/components/pwa/PushNotificationBanner";
+import { RequireCelularModal } from "@/components/shared/RequireCelularModal";
 
 interface BreadcrumbItem {
   label: string;
@@ -47,6 +48,9 @@ export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRigh
 
       {/* Push Notification Banner */}
       <PushNotificationBanner />
+
+      {/* Require celular modal */}
+      <RequireCelularModal />
 
       {/* Main Content */}
       <main className={`flex-1 ${isMobile ? 'pb-20' : ''}`}>
