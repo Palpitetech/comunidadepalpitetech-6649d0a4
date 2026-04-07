@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
           const { data: perfil } = await supabase
             .from("perfis")
             .select("id, tags")
-            .or(`celular.eq.${phone},whatsapp.eq.${phone}`)
+            .or(`celular.eq.${phone},whatsapp.eq.${phone},celular.eq.55${phone},whatsapp.eq.55${phone}`)
             .limit(1)
             .single();
 
