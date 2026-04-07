@@ -1,4 +1,4 @@
-import { Smartphone, FileText, Send, ScrollText, Flame, Users, Megaphone, MessageSquare } from "lucide-react";
+import { Smartphone, FileText, Send, ScrollText, Flame, Users, Megaphone, MessageSquare, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
@@ -10,6 +10,7 @@ const items = [
   { value: "disparo-grupo", label: "Disparo Grupo", icon: Send },
   { value: "aquecimento", label: "Aquecimento", icon: Flame },
   { value: "grupos", label: "Grupos", icon: Users },
+  { value: "smart-links", label: "Smart Links", icon: Link2 },
 ] as const;
 
 interface WhatsAppSubSidebarProps {
