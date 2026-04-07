@@ -67,7 +67,7 @@ export const RegisterWizard: React.FC<RegisterWizardProps> = ({ initialData }) =
         formData.email,
         formData.password,
         formData.nome,
-        celularLimpo || undefined,
+        celularLimpo,
         referralCode || undefined
       );
 
