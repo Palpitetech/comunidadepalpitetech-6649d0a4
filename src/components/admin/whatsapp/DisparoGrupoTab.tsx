@@ -403,6 +403,11 @@ export function DisparoGrupoTab() {
                       {config.include_palpites ? "🎰 Com Palpites" : "📊 Só Estratégia + CTA"}
                     </Badge>
                   )}
+                  {(config as any).member_tag && (
+                    <Badge variant="outline" className="text-[10px] w-fit mt-1">
+                      🏷️ Tag: {(config as any).member_tag}
+                    </Badge>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {/* Slots display */}
