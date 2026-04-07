@@ -27,7 +27,90 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { config_id } = await req.json();
+    const body = await req.json();
+    const { config_id, phone } = body;
+
+    const supabase = getSupabase();
+
+    // If phone provided, sync this specific phone against all configs with member_tag
+    if (phone && !config_id) {
+      const normalizedPhone = normalizePhone(phone);
+      if (!normalizedPhone) {
+        return new Response(JSON.stringify({ error: "phone inválido" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: configs } = await supabase
+        .from("group_blast_configs")
+        .select("id, name, group_jids, member_tag")
+        .not("member_tag", "is", null)
+        .eq("is_active", true);
+
+      if (!configs || configs.length === 0) {
+        return new Response(JSON.stringify({ matched: 0, message: "Nenhuma config com tag" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL")!;
+      const EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY")!;
+
+      const { data: instances } = await supabase
+        .from("whatsapp_instances")
+        .select("evolution_instance_id")
+        .eq("status", "online")
+        .limit(1);
+
+      if (!instances || instances.length === 0) {
+        return new Response(JSON.stringify({ matched: 0, message: "Sem instância online" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const instanceName = instances[0].evolution_instance_id;
+      const tagsAdded: string[] = [];
+
+      for (const cfg of configs) {
+        for (const groupJid of cfg.group_jids) {
+          try {
+            const res = await fetch(
+              `${EVOLUTION_API_URL}/group/participants/${instanceName}?groupJid=${encodeURIComponent(groupJid)}`,
+              { headers: { "Content-Type": "application/json", apikey: EVOLUTION_API_KEY } }
+            );
+            if (!res.ok) continue;
+            const data = await res.json();
+            const rawParticipants = data.participants || data || [];
+            const phones = (Array.isArray(rawParticipants) ? rawParticipants : []).map((p: any) => {
+              const id = typeof p === "string" ? p : p.id || p.jid || p.number || "";
+              return normalizePhone(id);
+            });
+
+            if (phones.includes(normalizedPhone)) {
+              // User is in this group, add tag
+              const { data: perfil } = await supabase
+                .from("perfis")
+                .select("id, tags")
+                .or(`celular.eq.${normalizedPhone},whatsapp.eq.${normalizedPhone},celular.eq.55${normalizedPhone},whatsapp.eq.55${normalizedPhone}`)
+                .limit(1)
+                .single();
+
+              if (perfil) {
+                const currentTags: string[] = perfil.tags || [];
+                if (!currentTags.includes(cfg.member_tag!)) {
+                  await supabase.from("perfis").update({ tags: [...currentTags, cfg.member_tag!] }).eq("id", perfil.id);
+                  tagsAdded.push(cfg.member_tag!);
+                }
+              }
+            }
+          } catch { /* skip */ }
+        }
+      }
+
+      return new Response(JSON.stringify({ phone: normalizedPhone, tagsAdded }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (!config_id) {
       return new Response(
