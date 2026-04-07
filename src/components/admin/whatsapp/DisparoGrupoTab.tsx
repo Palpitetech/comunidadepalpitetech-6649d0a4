@@ -823,6 +823,20 @@ export function DisparoGrupoTab() {
               <Switch checked={formActive} onCheckedChange={setFormActive} />
               <Label className="text-xs">Ativo</Label>
             </div>
+
+            {/* Member Tag */}
+            <div className="space-y-1.5 rounded-lg border border-dashed p-3">
+              <Label className="text-xs font-semibold">🏷️ Tag de Membro</Label>
+              <Input
+                value={formMemberTag}
+                onChange={(e) => setFormMemberTag(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_'))}
+                placeholder="grupo_free"
+                className="text-xs"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Tag adicionada automaticamente nos perfis quando alguém entra no grupo e removida quando sai. Deixe vazio para desativar.
+              </p>
+            </div>
           </div>
 
           <DialogFooter>
