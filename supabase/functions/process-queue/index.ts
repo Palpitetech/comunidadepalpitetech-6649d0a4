@@ -184,7 +184,7 @@ async function processQueue() {
     .select("*")
     .eq("status", "pending")
     .order("scheduled_at", { ascending: true })
-    .limit(5);
+    .limit(20);
 
   if (error) {
     return { processed: 0, errors: [error.message] };
@@ -202,9 +202,9 @@ async function processQueue() {
       errors.push(result.error);
     }
 
-    // Random delay 3-5 min between messages (skip after last)
+    // Short safety delay between messages (instance cooldown handles the rest)
     if (i < items.length - 1) {
-      await randomDelay(3 * 60 * 1000, 5 * 60 * 1000);
+      await randomDelay(5_000, 10_000);
     }
   }
 
