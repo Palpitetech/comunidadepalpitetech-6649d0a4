@@ -9,18 +9,8 @@ import { AquecimentoTab } from "@/components/admin/whatsapp/AquecimentoTab";
 import { GruposTab } from "@/components/admin/whatsapp/GruposTab";
 import { DisparoManualTab } from "@/components/admin/whatsapp/DisparoManualTab";
 import { DisparoGrupoTab } from "@/components/admin/whatsapp/DisparoGrupoTab";
+import { WhatsAppSubSidebar, whatsappTabs } from "@/components/admin/whatsapp/WhatsAppSubSidebar";
 import { cn } from "@/lib/utils";
-
-const tabs = [
-  { value: "instancias", label: "Instâncias", icon: Smartphone },
-  { value: "templates", label: "Templates", icon: FileText },
-  { value: "fila", label: "Fila", icon: Send },
-  { value: "disparo", label: "Disparo Manual", icon: Megaphone },
-  { value: "logs", label: "Logs", icon: ScrollText },
-  { value: "disparo-grupo", label: "Disparo Grupo", icon: Send },
-  { value: "aquecimento", label: "Aquecimento", icon: Flame },
-  { value: "grupos", label: "Grupos", icon: Users },
-] as const;
 
 export default function AdminWhatsApp() {
   const [activeTab, setActiveTab] = useState("instancias");
@@ -33,10 +23,10 @@ export default function AdminWhatsApp() {
           <p className="text-xs sm:text-sm text-muted-foreground">Gerencie instâncias, templates e envios</p>
         </div>
 
-        {/* Scrollable pill tabs for mobile */}
-        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar">
+        {/* Mobile: pill tabs (horizontal scroll) */}
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar md:hidden">
           <div className="flex gap-1.5 min-w-max sm:min-w-0 sm:flex-wrap">
-            {tabs.map((tab) => (
+            {whatsappTabs.map((tab) => (
               <button
                 key={tab.value}
                 onClick={() => setActiveTab(tab.value)}
@@ -54,16 +44,20 @@ export default function AdminWhatsApp() {
           </div>
         </div>
 
-        {/* Tab content */}
-        <div>
-          {activeTab === "instancias" && <InstanciasTab />}
-          {activeTab === "templates" && <TemplatesTab />}
-          {activeTab === "fila" && <FilaTab />}
-          {activeTab === "disparo" && <DisparoManualTab />}
-          {activeTab === "logs" && <LogsTab />}
-          {activeTab === "disparo-grupo" && <DisparoGrupoTab />}
-          {activeTab === "aquecimento" && <AquecimentoTab />}
-          {activeTab === "grupos" && <GruposTab />}
+        {/* Desktop: sidebar + content | Mobile: content only */}
+        <div className="flex gap-0 md:gap-0 md:-mx-4">
+          <WhatsAppSubSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+
+          <div className="flex-1 md:px-5">
+            {activeTab === "instancias" && <InstanciasTab />}
+            {activeTab === "templates" && <TemplatesTab />}
+            {activeTab === "fila" && <FilaTab />}
+            {activeTab === "disparo" && <DisparoManualTab />}
+            {activeTab === "logs" && <LogsTab />}
+            {activeTab === "disparo-grupo" && <DisparoGrupoTab />}
+            {activeTab === "aquecimento" && <AquecimentoTab />}
+            {activeTab === "grupos" && <GruposTab />}
+          </div>
         </div>
       </div>
     </AdminLayout>
