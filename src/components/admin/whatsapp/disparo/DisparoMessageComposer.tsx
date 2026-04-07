@@ -107,8 +107,8 @@ export function DisparoMessageComposer({
       {previewMessage && (
         <div className="border-t border-border pt-3 space-y-1.5">
           <Label className="text-xs text-muted-foreground">Preview (dados fictícios)</Label>
-          <div className="rounded-lg bg-green-950/30 border border-green-900/30 p-3">
-            <p className="text-xs text-green-200 whitespace-pre-wrap font-mono">
+          <div className="rounded-lg bg-muted/50 border border-border p-3">
+            <p className="text-xs text-muted-foreground whitespace-pre-wrap font-mono">
               {previewMessage}
             </p>
           </div>
