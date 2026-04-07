@@ -512,6 +512,12 @@ export function TemplatesTab() {
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground line-clamp-2">{tpl.content}</p>
+                {((tpl.include_tags && tpl.include_tags.length > 0) || (tpl.exclude_tags && tpl.exclude_tags.length > 0) || (tpl.plan_ids && tpl.plan_ids.length > 0)) && (
+                  <div className="flex items-center gap-1">
+                    <Filter className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-[10px] text-muted-foreground">Segmentado</span>
+                  </div>
+                )}
                 <div className="flex gap-2 pt-1">
                   <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs" onClick={() => openEdit(tpl)}>
                     <Pencil className="h-3.5 w-3.5" />
