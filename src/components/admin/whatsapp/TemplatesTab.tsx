@@ -10,8 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Plus, Pencil, Trash2, FileText, ChevronsUpDown, Check, Send, Pause, Play, Timer } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Loader2, Plus, Pencil, Trash2, FileText, ChevronsUpDown, Check, Send, Pause, Play, Timer, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TemplateSegmentationSection } from "./TemplateSegmentationSection";
 
 interface MessageTemplate {
   id: string;
@@ -22,6 +24,15 @@ interface MessageTemplate {
   is_active?: boolean;
   delay_enabled?: boolean;
   delay_minutes?: number;
+  include_tags?: string[];
+  exclude_tags?: string[];
+  plan_ids?: string[];
+  tags_match_mode?: string;
+}
+
+interface PlanOption {
+  id: string;
+  name: string;
 }
 
 interface FormData {
@@ -30,9 +41,17 @@ interface FormData {
   event_trigger: string;
   delay_enabled: boolean;
   delay_minutes: number;
+  include_tags: string[];
+  exclude_tags: string[];
+  plan_ids: string[];
+  tags_match_mode: "any" | "all";
 }
 
-const emptyForm: FormData = { name: "", content: "", event_trigger: "manual", delay_enabled: false, delay_minutes: 0 };
+const emptyForm: FormData = {
+  name: "", content: "", event_trigger: "manual",
+  delay_enabled: false, delay_minutes: 0,
+  include_tags: [], exclude_tags: [], plan_ids: [], tags_match_mode: "any",
+};
 
 const DELAY_OPTIONS = [
   { value: 2, label: "2 min" },
@@ -99,6 +118,8 @@ export function TemplatesTab() {
   const [testingId, setTestingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [allTags, setAllTags] = useState<string[]>([]);
+  const [plans, setPlans] = useState<PlanOption[]>([]);
 
   const fetchTemplates = useCallback(async () => {
     setLoading(true);
@@ -129,10 +150,31 @@ export function TemplatesTab() {
     setEventTypes([...allTypes].sort());
   }, []);
 
+  const fetchTagsAndPlans = useCallback(async () => {
+    const [tagsRes, plansRes] = await Promise.all([
+      supabase.rpc("get_distinct_tags" as any),
+      supabase.from("plans").select("id, name").eq("is_active", true).order("display_order"),
+    ]);
+
+    if (tagsRes.error) {
+      const { data } = await supabase.from("perfis").select("tags");
+      if (data) {
+        const set = new Set<string>();
+        data.forEach((p: any) => (p.tags || []).forEach((t: string) => set.add(t)));
+        setAllTags([...set].sort());
+      }
+    } else {
+      setAllTags(((tagsRes.data as any[]) || []).map((r: any) => r.tag || r).sort());
+    }
+
+    setPlans((plansRes.data as any[]) || []);
+  }, []);
+
   useEffect(() => {
     fetchTemplates();
     fetchEventTypes();
-  }, [fetchTemplates, fetchEventTypes]);
+    fetchTagsAndPlans();
+  }, [fetchTemplates, fetchEventTypes, fetchTagsAndPlans]);
 
   const openCreate = () => {
     setEditingId(null);
@@ -148,6 +190,10 @@ export function TemplatesTab() {
       event_trigger: t.event_trigger,
       delay_enabled: t.delay_enabled ?? false,
       delay_minutes: t.delay_minutes ?? 0,
+      include_tags: t.include_tags ?? [],
+      exclude_tags: t.exclude_tags ?? [],
+      plan_ids: t.plan_ids ?? [],
+      tags_match_mode: (t.tags_match_mode as "any" | "all") ?? "any",
     });
     setDialogOpen(true);
   };
@@ -184,6 +230,10 @@ export function TemplatesTab() {
         event_trigger: form.event_trigger,
         delay_enabled: form.delay_enabled,
         delay_minutes: form.delay_enabled ? form.delay_minutes : 0,
+        include_tags: form.include_tags,
+        exclude_tags: form.exclude_tags,
+        plan_ids: form.plan_ids,
+        tags_match_mode: form.tags_match_mode,
       };
       if (editingId) {
         const { error } = await supabase.from("message_templates" as any).update(payload).eq("id", editingId);
@@ -286,10 +336,11 @@ export function TemplatesTab() {
               Novo Template
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-lg max-h-[85vh]">
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Template" : "Novo Template"}</DialogTitle>
             </DialogHeader>
+            <ScrollArea className="max-h-[calc(85vh-80px)] pr-3">
             <div className="space-y-4 pt-2">
               <div className="space-y-1.5">
                 <Label htmlFor="tpl-name">Nome do template *</Label>
@@ -402,11 +453,26 @@ export function TemplatesTab() {
                   ))}
                 </div>
               </div>
+
+              <TemplateSegmentationSection
+                allTags={allTags}
+                includeTags={form.include_tags}
+                excludeTags={form.exclude_tags}
+                tagsMatchMode={form.tags_match_mode}
+                planIds={form.plan_ids}
+                plans={plans}
+                onIncludeTagsChange={(tags) => setForm((f) => ({ ...f, include_tags: tags }))}
+                onExcludeTagsChange={(tags) => setForm((f) => ({ ...f, exclude_tags: tags }))}
+                onTagsMatchModeChange={(mode) => setForm((f) => ({ ...f, tags_match_mode: mode }))}
+                onPlanIdsChange={(ids) => setForm((f) => ({ ...f, plan_ids: ids }))}
+              />
+
               <Button className="w-full" onClick={handleSave} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                 {editingId ? "Salvar Alterações" : "Criar Template"}
               </Button>
             </div>
+            </ScrollArea>
           </DialogContent>
         </Dialog>
       </div>
@@ -446,6 +512,12 @@ export function TemplatesTab() {
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground line-clamp-2">{tpl.content}</p>
+                {((tpl.include_tags && tpl.include_tags.length > 0) || (tpl.exclude_tags && tpl.exclude_tags.length > 0) || (tpl.plan_ids && tpl.plan_ids.length > 0)) && (
+                  <div className="flex items-center gap-1">
+                    <Filter className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-[10px] text-muted-foreground">Segmentado</span>
+                  </div>
+                )}
                 <div className="flex gap-2 pt-1">
                   <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs" onClick={() => openEdit(tpl)}>
                     <Pencil className="h-3.5 w-3.5" />

@@ -1453,9 +1453,13 @@ export type Database = {
           delay_enabled: boolean
           delay_minutes: number
           event_trigger: string
+          exclude_tags: string[]
           id: string
+          include_tags: string[]
           is_active: boolean
           name: string
+          plan_ids: string[]
+          tags_match_mode: string
         }
         Insert: {
           content: string
@@ -1463,9 +1467,13 @@ export type Database = {
           delay_enabled?: boolean
           delay_minutes?: number
           event_trigger: string
+          exclude_tags?: string[]
           id?: string
+          include_tags?: string[]
           is_active?: boolean
           name: string
+          plan_ids?: string[]
+          tags_match_mode?: string
         }
         Update: {
           content?: string
@@ -1473,9 +1481,13 @@ export type Database = {
           delay_enabled?: boolean
           delay_minutes?: number
           event_trigger?: string
+          exclude_tags?: string[]
           id?: string
+          include_tags?: string[]
           is_active?: boolean
           name?: string
+          plan_ids?: string[]
+          tags_match_mode?: string
         }
         Relationships: []
       }
@@ -3038,6 +3050,10 @@ export type Database = {
           instance_id: string
           phone_number: string
         }[]
+      }
+      should_send_template: {
+        Args: { p_template_id: string; p_user_id: string }
+        Returns: boolean
       }
     }
     Enums: {
