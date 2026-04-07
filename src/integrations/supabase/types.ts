@@ -1012,6 +1012,7 @@ export type Database = {
           id: string
           include_palpites: boolean
           is_active: boolean | null
+          member_tag: string | null
           name: string
           slots: Json | null
           updated_at: string | null
@@ -1023,6 +1024,7 @@ export type Database = {
           id?: string
           include_palpites?: boolean
           is_active?: boolean | null
+          member_tag?: string | null
           name: string
           slots?: Json | null
           updated_at?: string | null
@@ -1034,6 +1036,7 @@ export type Database = {
           id?: string
           include_palpites?: boolean
           is_active?: boolean | null
+          member_tag?: string | null
           name?: string
           slots?: Json | null
           updated_at?: string | null
