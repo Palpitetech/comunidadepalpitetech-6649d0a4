@@ -63,6 +63,23 @@ Deno.serve(async (req) => {
       case "fetchGroups":
         url = `${EVOLUTION_API_URL}/group/fetchAllGroups/${instanceName}?getParticipants=false`;
         break;
+      case "fetchGroupParticipants": {
+        const { groupJid } = await req.json().catch(() => ({}));
+        url = `${EVOLUTION_API_URL}/group/participants/${instanceName}?groupJid=${encodeURIComponent(groupJid || '')}`;
+        break;
+      }
+      case "setWebhook": {
+        const reqBody = await req.json().catch(() => ({}));
+        url = `${EVOLUTION_API_URL}/webhook/set/${instanceName}`;
+        method = "POST";
+        body = JSON.stringify({
+          enabled: reqBody.enabled ?? true,
+          url: reqBody.webhookUrl,
+          webhookByEvents: true,
+          events: reqBody.events || ["GROUP_PARTICIPANTS_UPDATE"],
+        });
+        break;
+      }
       default:
         return new Response(
           JSON.stringify({ error: `Ação desconhecida: ${action}` }),
