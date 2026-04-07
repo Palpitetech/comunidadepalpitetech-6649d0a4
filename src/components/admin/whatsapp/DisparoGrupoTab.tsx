@@ -162,6 +162,7 @@ export function DisparoGrupoTab() {
     setFormActive(config.is_active);
     setFormIncludePalpites(config.include_palpites ?? true);
     setFormVipGroupLink(config.vip_group_link || "");
+    setFormMemberTag((config as any).member_tag || "");
     const inputs: Record<string, string> = {};
     slots.forEach(s => { inputs[s.id] = "12:00"; });
     setFormTimeInputs(inputs);
