@@ -65,12 +65,11 @@ Deno.serve(async (req) => {
         url = `${EVOLUTION_API_URL}/group/fetchAllGroups/${instanceName}?getParticipants=false`;
         break;
       case "fetchGroupParticipants": {
-        const { groupJid } = await req.json().catch(() => ({}));
-        url = `${EVOLUTION_API_URL}/group/participants/${instanceName}?groupJid=${encodeURIComponent(groupJid || '')}`;
+        const groupJid = reqBody.groupJid || '';
+        url = `${EVOLUTION_API_URL}/group/participants/${instanceName}?groupJid=${encodeURIComponent(groupJid)}`;
         break;
       }
       case "setWebhook": {
-        const reqBody = await req.json().catch(() => ({}));
         url = `${EVOLUTION_API_URL}/webhook/set/${instanceName}`;
         method = "POST";
         body = JSON.stringify({
