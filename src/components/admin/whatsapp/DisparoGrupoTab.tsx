@@ -477,6 +477,12 @@ export function DisparoGrupoTab() {
                       <TestTube className="h-3 w-3 mr-1" />
                       Testar
                     </Button>
+                    {(config as any).member_tag && (
+                      <Button variant="outline" size="sm" onClick={() => handleSyncMembers(config.id)}>
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                        Sincronizar
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
