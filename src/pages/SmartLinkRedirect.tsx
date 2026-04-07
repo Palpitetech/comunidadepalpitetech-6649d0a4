@@ -35,8 +35,8 @@ export default function SmartLinkRedirect() {
       setOriginalUrl(data.original_url);
       setGroupName(data.group_name ?? "");
 
-      // Incrementar cliques (fire-and-forget, sem service role usamos RPC ou direct)
-      supabase.rpc("increment_smart_link_clicks" as any, { p_slug: slug }).catch(() => {});
+      // Incrementar cliques (fire-and-forget)
+      supabase.rpc("increment_smart_link_clicks" as any, { p_slug: slug }).then(() => {});
 
       const env = detectEnvironment();
 
