@@ -24,6 +24,15 @@ interface MessageTemplate {
   is_active?: boolean;
   delay_enabled?: boolean;
   delay_minutes?: number;
+  include_tags?: string[];
+  exclude_tags?: string[];
+  plan_ids?: string[];
+  tags_match_mode?: string;
+}
+
+interface PlanOption {
+  id: string;
+  name: string;
 }
 
 interface FormData {
@@ -32,9 +41,17 @@ interface FormData {
   event_trigger: string;
   delay_enabled: boolean;
   delay_minutes: number;
+  include_tags: string[];
+  exclude_tags: string[];
+  plan_ids: string[];
+  tags_match_mode: "any" | "all";
 }
 
-const emptyForm: FormData = { name: "", content: "", event_trigger: "manual", delay_enabled: false, delay_minutes: 0 };
+const emptyForm: FormData = {
+  name: "", content: "", event_trigger: "manual",
+  delay_enabled: false, delay_minutes: 0,
+  include_tags: [], exclude_tags: [], plan_ids: [], tags_match_mode: "any",
+};
 
 const DELAY_OPTIONS = [
   { value: 2, label: "2 min" },
