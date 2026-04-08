@@ -216,6 +216,7 @@ export function ResultadosSheetQuina({
                   isSelected={selected.has(`gerador-${globalIndex}`)}
                   onSelectChange={(checked) => handleSelectChange(globalIndex, checked)}
                   onDelete={() => handleDeleteSingle(globalIndex)}
+                  loteria="quina"
                 />
               );
             })}
