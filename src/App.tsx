@@ -97,6 +97,7 @@ import TabelaMovimentacaoQuina from "./pages/quina/TabelaMovimentacaoQuina";
 import GeradorQuina from "./pages/quina/GeradorQuina";
 import DesdobramentoQuina from "./pages/quina/DesdobramentoQuina";
 import AnaliseDoDiaQuina from "./pages/quina/AnaliseDoDiaQuina";
+import HubQuina from "./pages/quina/HubQuina";
 import ResultadosDiaDeSorte from "./pages/diadesorte/ResultadosDiaDeSorte";
 import ResultadosLotomania from "./pages/lotomania/ResultadosLotomania";
 import HubLotofacil from "./pages/lotofacil/HubLotofacil";
@@ -207,6 +208,7 @@ const App = () => (
             <Route path="/duplasena/fechamento" element={<ProtectedRoute><GatedPage feature="fechamento"><FechamentoDuplaSena /></GatedPage></ProtectedRoute>} />
             
             {/* Rotas Quina */}
+            <Route path="/quina" element={<ProtectedRoute><HubQuina /></ProtectedRoute>} />
             <Route path="/quina/resultados" element={<ProtectedRoute><ResultadosQuina /></ProtectedRoute>} />
             <Route path="/quina/tendencias" element={<ProtectedRoute><TendenciasQuina /></ProtectedRoute>} />
             <Route path="/quina/frequencia" element={<ProtectedRoute><FrequenciaQuina /></ProtectedRoute>} />
