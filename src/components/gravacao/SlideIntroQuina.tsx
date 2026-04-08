@@ -1,0 +1,80 @@
+import type { FaixaPremiacao } from "@/hooks/useGravacaoData";
+
+interface SlideIntroQuinaProps {
+  concurso: number;
+  data: string;
+  premiacao: string;
+  faixasPremiacao: FaixaPremiacao[];
+}
+
+export default function SlideIntroQuina({ concurso, data, premiacao, faixasPremiacao }: SlideIntroQuinaProps) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-6 text-center w-full h-full">
+      <p className="text-purple-400 text-lg tracking-[0.3em] uppercase font-medium">
+        Resultado
+      </p>
+      <h1
+        className="text-7xl md:text-9xl font-extrabold tracking-tight leading-none"
+        style={{
+          background: "linear-gradient(135deg, #818CF8, #6366F1, #4F46E5)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+        }}
+      >
+        QUINA
+      </h1>
+      <div className="flex items-center gap-3">
+        <span className="text-white/60 text-2xl md:text-3xl">Concurso</span>
+        <span className="text-indigo-300 font-bold text-4xl md:text-5xl">{concurso}</span>
+      </div>
+      <p className="text-white/50 text-base md:text-lg capitalize">{data}</p>
+
+      <div
+        className="mt-2 rounded-2xl px-10 py-5"
+        style={{
+          background: "rgba(99, 102, 241, 0.1)",
+          border: "1px solid rgba(99, 102, 241, 0.3)",
+        }}
+      >
+        <p className="text-indigo-400 text-sm uppercase tracking-wider mb-1">
+          Premiação Total
+        </p>
+        <p
+          className="text-3xl md:text-5xl font-bold"
+          style={{
+            background: "linear-gradient(135deg, #C7D2FE, #818CF8)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+          }}
+        >
+          {premiacao}
+        </p>
+      </div>
+
+      {faixasPremiacao.length > 0 && (
+        <div className="w-full max-w-lg space-y-1 mt-1">
+          {faixasPremiacao.map((f, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between rounded-lg px-4 py-1.5"
+              style={{
+                background: "rgba(99, 102, 241, 0.08)",
+                border: "1px solid rgba(99, 102, 241, 0.15)",
+              }}
+            >
+              <span className="text-indigo-300 text-xs font-semibold min-w-[90px] text-left">
+                {f.faixa}
+              </span>
+              <span className="text-white/50 text-xs min-w-[80px]">
+                {f.ganhadores.toLocaleString("pt-BR")} {f.ganhadores === 1 ? "ganhador" : "ganhadores"}
+              </span>
+              <span className="text-indigo-200 text-xs font-bold">
+                {f.valorPremioFormatado}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
