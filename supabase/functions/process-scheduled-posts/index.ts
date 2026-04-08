@@ -9,6 +9,7 @@ const corsHeaders = {
 interface BotSchedule {
   horarios: string[];
   dias: number[];
+  tipo_por_horario?: Record<string, string>;
 }
 
 serve(async (req) => {
