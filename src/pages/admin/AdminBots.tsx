@@ -2,10 +2,9 @@ import { useState } from "react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Loader2, MessageSquare, Bot } from "lucide-react";
+import { Loader2, MessageSquare, Bot } from "lucide-react";
 import { useBots } from "@/hooks/useBots";
 import { BotDetailSheet } from "@/components/admin/BotDetailSheet";
-// BotForm removed — bots are no longer created via UI
 import { BotPostTrigger } from "@/components/admin/BotPostTrigger";
 import { BotCategoryFolder } from "@/components/admin/BotCategoryFolder";
 import type { BotWithStats } from "@/types/bots";
