@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Plus, Loader2, MessageSquare, Bot } from "lucide-react";
 import { useBots } from "@/hooks/useBots";
 import { BotDetailSheet } from "@/components/admin/BotDetailSheet";
-import { BotForm } from "@/components/admin/BotForm";
+// BotForm removed — bots are no longer created via UI
 import { BotPostTrigger } from "@/components/admin/BotPostTrigger";
 import { BotCategoryFolder } from "@/components/admin/BotCategoryFolder";
 import type { BotWithStats } from "@/types/bots";
@@ -18,7 +18,7 @@ export default function AdminBots() {
   const chatOnlyBots = bots.filter(b => !b.can_create_posts && b.chat_enabled);
   const [selectedBot, setSelectedBot] = useState<BotWithStats | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [newBotDialogOpen, setNewBotDialogOpen] = useState(false);
+  // newBotDialogOpen removed
   const [triggerDialogOpen, setTriggerDialogOpen] = useState(false);
 
   const handleBotClick = (bot: BotWithStats) => {
