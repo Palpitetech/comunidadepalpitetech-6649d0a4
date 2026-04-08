@@ -1,0 +1,1 @@
+ALTER VIEW public.kirvano_webhook_logs_masked SET (security_invoker = on);
