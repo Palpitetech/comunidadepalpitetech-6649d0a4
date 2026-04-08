@@ -2,7 +2,9 @@ import {
   isPrimo,
   isMoldura,
   isMultiploDe3,
-  TOTAL_DEZENAS_VOLANTE
+  TOTAL_DEZENAS_VOLANTE,
+  LINHAS_GRID,
+  COLUNAS_GRID
 } from "./quina";
 
 export interface FiltrosDesdobramentoQuina {
@@ -11,6 +13,8 @@ export interface FiltrosDesdobramentoQuina {
   qtdPrimos: number[] | null;
   qtdMoldura: number[] | null;
   qtdMultiplosDe3: number[] | null;
+  linhas: number[] | null;
+  colunas: number[] | null;
   qtdDezenas: number;
   dezenasUltimoSorteio?: number[];
   dezenasFixas?: number[];
@@ -65,6 +69,30 @@ export function validarFiltrosQuina(
       filtros.dezenasUltimoSorteio!.includes(d)
     ).length;
     if (!filtros.qtdRepetidas.includes(qtdRepetidas)) return false;
+  }
+
+  // Validação de Linhas (8 linhas, 10 cols → linha = Math.ceil(d/10))
+  if (filtros.linhas !== null) {
+    const contLinhas = new Array(LINHAS_GRID).fill(0);
+    dezenas.forEach(d => {
+      const linhaIdx = Math.floor((d - 1) / COLUNAS_GRID);
+      contLinhas[linhaIdx]++;
+    });
+    for (let i = 0; i < LINHAS_GRID; i++) {
+      if (contLinhas[i] !== filtros.linhas[i]) return false;
+    }
+  }
+
+  // Validação de Colunas (10 colunas)
+  if (filtros.colunas !== null) {
+    const contColunas = new Array(COLUNAS_GRID).fill(0);
+    dezenas.forEach(d => {
+      const colIdx = (d - 1) % COLUNAS_GRID;
+      contColunas[colIdx]++;
+    });
+    for (let i = 0; i < COLUNAS_GRID; i++) {
+      if (contColunas[i] !== filtros.colunas[i]) return false;
+    }
   }
 
   return true;
