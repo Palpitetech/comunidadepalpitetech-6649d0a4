@@ -112,7 +112,7 @@ async function dispararNotificacaoResultadoNovo(params: {
 }
 
 // Cria o post de resultado oficial diretamente pela Ana (sem depender de outra edge function)
-async function criarPostResultadoOficialAna(params: {
+async function criarPostResultadoOficial(params: {
   supabase: any;
   concurso: number;
   dezenas: number[];
@@ -122,11 +122,11 @@ async function criarPostResultadoOficialAna(params: {
 }): Promise<void> {
   const { supabase, concurso, dezenas, indicadores, cicloInfo, acumulou } = params;
 
-  console.log(`[ANA-POST] Criando post de resultado para concurso ${concurso}`);
+  console.log(`[RESULT-POST] Criando post de resultado para concurso ${concurso}`);
 
   try {
-    // 1. Buscar perfil_id da Ana (is_result_author)
-    const { data: ana, error: anaError } = await supabase
+    // 1. Buscar perfil_id do autor de resultados (is_result_author = Palpite Tech)
+    const { data: author, error: authorError } = await supabase
       .from("guide_personas")
       .select("id, perfil_id, system_prompt, max_chars_post, ai_model, total_posts")
       .eq("is_result_author", true)
