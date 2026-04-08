@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { usePermissionContext } from "@/contexts/PermissionContext";
 
 import { usePermissions } from "@/hooks/usePermission";
 import { getFeatureForRoute, isVipFeature } from "@/lib/featureMap";
@@ -18,8 +19,9 @@ import {
 import {
   BarChart3, LogOut, User, Wrench, TrendingUp, Flame,
   ChevronDown, Dices, Shuffle, Ticket, LayoutGrid, Target,
-  Table2, Gift, Lock, CreditCard, Calendar, Save,
+  Table2, Gift, Lock, CreditCard, Calendar, Save, Trophy,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 // Helper: cria os itens de um dropdown de loteria
 function LotteryDropdownItem({
@@ -157,6 +159,7 @@ function LotteryDropdown({
 
 export function DesktopHeader() {
   const { isAuthenticated, profile, signOut } = useAuthContext();
+  const { isAdmin } = usePermissionContext();
   const { hasPermission } = usePermissions();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradeLabel, setUpgradeLabel] = useState<string | undefined>();
@@ -203,6 +206,27 @@ export function DesktopHeader() {
 
         {/* Desktop Navigation - centralizado, flex-wrap para não estourar */}
         <nav className="flex items-center gap-0.5 flex-1 justify-center flex-wrap">
+          {/* Bolões */}
+          {isAdmin ? (
+            <Link to="/boloes">
+              <Button variant="ghost" className="gap-1.5 h-10 px-2.5 text-sm">
+                <Trophy className="h-4 w-4" />
+                Bolões
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 ml-0.5 border-amber-500/50 text-amber-500">
+                  Em Breve
+                </Badge>
+              </Button>
+            </Link>
+          ) : (
+            <Button variant="ghost" className="gap-1.5 h-10 px-2.5 text-sm cursor-default opacity-60" disabled>
+              <Trophy className="h-4 w-4" />
+              Bolões
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 ml-0.5 border-muted-foreground/30 text-muted-foreground">
+                Em Breve
+              </Badge>
+            </Button>
+          )}
+
           <Link to="/proximos-concursos">
             <Button variant="ghost" className="gap-1.5 h-10 px-2.5 text-sm">
               <Calendar className="h-4 w-4" />
