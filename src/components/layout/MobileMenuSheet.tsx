@@ -460,6 +460,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                      </AccordionTrigger>
                       <AccordionContent className="pb-0">
                         <div className="pl-8 space-y-0">
+                          <Link to="/quina/analise-do-dia" onClick={(e) => handleGatedClick(e, "/quina/analise-do-dia")}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                              Análise do Dia
+                              {renderBadge("/quina/analise-do-dia")}
+                            </div>
+                          </Link>
                           <Link to="/quina/resultados" onClick={closeAndNavigate}>
                             <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors">
                               Resultados
