@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { FormattedContent } from "./FormattedContent";
 import { Heart, MessageCircle, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";

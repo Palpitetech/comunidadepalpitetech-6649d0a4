@@ -234,9 +234,7 @@ export default function PostDetalhes() {
 
         {/* Content body */}
         <div className="px-4 pt-3">
-          <p className="text-[15px] text-foreground leading-relaxed whitespace-pre-wrap break-words">
-            {post.conteudo}
-          </p>
+          <FormattedContent content={post.conteudo} />
         </div>
 
         {/* External link */}
