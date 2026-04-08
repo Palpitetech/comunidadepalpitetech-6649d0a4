@@ -95,6 +95,7 @@ import DezenasporPosicaoQuina from "./pages/quina/DezenasporPosicaoQuina";
 import LinhasColunasQuina from "./pages/quina/LinhasColunasQuina";
 import TabelaMovimentacaoQuina from "./pages/quina/TabelaMovimentacaoQuina";
 import GeradorQuina from "./pages/quina/GeradorQuina";
+import DesdobramentoQuina from "./pages/quina/DesdobramentoQuina";
 import ResultadosDiaDeSorte from "./pages/diadesorte/ResultadosDiaDeSorte";
 import ResultadosLotomania from "./pages/lotomania/ResultadosLotomania";
 import HubLotofacil from "./pages/lotofacil/HubLotofacil";
