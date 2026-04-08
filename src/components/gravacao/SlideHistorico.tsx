@@ -52,9 +52,8 @@ function MiniGrid({ concurso, dezenas }: { concurso: number; dezenas: number[] }
   );
 }
 
-export default function SlideHistorico({ concursos }: SlideHistoricoProps) {
-  // Show up to 12 concursos in a 4 cols x 3 rows layout
-  const items = concursos.slice(0, 12);
+export default function SlideHistorico({ concursos = [] }: SlideHistoricoProps) {
+  const items = (concursos ?? []).slice(0, 12);
 
   return (
     <div className="flex flex-col items-center justify-center w-full h-full gap-5">
