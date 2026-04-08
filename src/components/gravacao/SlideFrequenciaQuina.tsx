@@ -17,7 +17,7 @@ export default function SlideFrequenciaQuina({ frequenciaDezenas, topDuplas }: S
       <div className="w-[35%] flex flex-col items-center justify-center gap-4">
         <div>
           <p className="text-indigo-300/60 text-sm mb-3 tracking-wide text-center">
-            Frequência — Últimos 5
+            Frequência — Últimos 12
           </p>
           <div className="grid grid-cols-10 gap-[3px]">
             {Array.from({ length: 80 }, (_, i) => i + 1).map((num) => {
@@ -51,11 +51,11 @@ export default function SlideFrequenciaQuina({ frequenciaDezenas, topDuplas }: S
           <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded bg-emerald-500" />
-              <span className="text-white/50 text-[10px]">Quentes (3+)</span>
+              <span className="text-white/50 text-[10px]">Quentes (6+)</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded bg-red-500" />
-              <span className="text-white/50 text-[10px]">Frias (0–1)</span>
+              <span className="text-white/50 text-[10px]">Frias (0–2)</span>
             </div>
           </div>
         </div>
@@ -94,7 +94,7 @@ export default function SlideFrequenciaQuina({ frequenciaDezenas, topDuplas }: S
                     </span>
                   </div>
                   <span className="text-white/50 text-xs ml-auto">
-                    {dupla.freq}× em 5
+                    {dupla.freq}× em 12
                   </span>
                 </div>
               ))}
@@ -112,7 +112,7 @@ export default function SlideFrequenciaQuina({ frequenciaDezenas, topDuplas }: S
           </p>
           <div className="grid grid-cols-2 gap-1.5">
             {quentes.length === 0 ? (
-              <p className="text-white/30 text-xs col-span-2">Nenhuma dezena com 3+ aparições</p>
+              <p className="text-white/30 text-xs col-span-2">Nenhuma dezena com 6+ aparições</p>
             ) : (
               quentes.slice(0, 10).map((f) => (
                 <div
@@ -123,7 +123,7 @@ export default function SlideFrequenciaQuina({ frequenciaDezenas, topDuplas }: S
                     {formatarDezena(f.dezena)}
                   </span>
                   <span className="text-white/50 text-sm">
-                    {f.freq}× em 5
+                    {f.freq}× em 12
                   </span>
                   <span className="text-emerald-400/70 text-sm ml-auto font-medium">
                     {f.pct.toFixed(0)}%
@@ -141,7 +141,7 @@ export default function SlideFrequenciaQuina({ frequenciaDezenas, topDuplas }: S
           </p>
           <div className="grid grid-cols-2 gap-1.5">
             {frias.length === 0 ? (
-              <p className="text-white/30 text-xs col-span-2">Nenhuma dezena com 0–1 aparição</p>
+              <p className="text-white/30 text-xs col-span-2">Nenhuma dezena com 0–2 aparições</p>
             ) : (
               frias.slice(0, 10).map((f) => (
                 <div
@@ -152,7 +152,7 @@ export default function SlideFrequenciaQuina({ frequenciaDezenas, topDuplas }: S
                     {formatarDezena(f.dezena)}
                   </span>
                   <span className="text-white/50 text-sm">
-                    {f.freq}× em 5
+                    {f.freq}× em 12
                   </span>
                   <span className="text-red-400/70 text-sm ml-auto font-medium">
                     {f.pct.toFixed(0)}%
