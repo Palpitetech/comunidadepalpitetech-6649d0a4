@@ -7,7 +7,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatarDezena, contarImpares, contarMoldura, contarMultiplosDe3, contarRepetidas } from "@/lib/lotofacil";
+import * as lotofacilLib from "@/lib/lotofacil";
+import * as quinaLib from "@/lib/quina";
 import { cn } from "@/lib/utils";
 import { Trash2, Copy, Trophy, ChevronDown, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,36 +21,43 @@ interface ConcursoOption {
 }
 
 export interface PalpiteCardProps {
-  /** Número do jogo (índice) */
   index: number;
-  /** Array de dezenas do palpite */
   dezenas: number[];
-  /** Dezenas do último concurso para calcular repetidas */
   ultimoConcursoDezenas?: number[];
-  /** Dezenas fixas (exibidas em preto) */
   dezenasFixes?: number[];
-  /** Se o card está selecionado */
   isSelected?: boolean;
-  /** Callback ao mudar seleção */
   onSelectChange?: (checked: boolean) => void;
-  /** Callback ao excluir */
   onDelete?: () => void;
-  /** Callback ao copiar */
   onCopy?: () => void;
-  /** Esconder checkbox de seleção */
   hideSelection?: boolean;
-  /** Esconder estatísticas */
   hideStats?: boolean;
-  /** Label customizado (ao invés de "Jogo XX") */
   label?: string;
-  /** Data de criação (opcional) */
   createdAt?: string;
-  /** Quantidade de acertos (se já conferido) */
   acertos?: number | null;
-  /** Callback quando verificar um concurso */
   onVerificar?: (concursoId: number, acertos: number) => void;
-  /** Esconder botão de verificar */
   hideVerificar?: boolean;
+  loteria?: string;
+}
+
+function getLib(loteria: string) {
+  switch (loteria) {
+    case "quina":
+      return {
+        formatarDezena: quinaLib.formatarDezena,
+        contarImpares: quinaLib.contarImpares,
+        contarMoldura: quinaLib.contarMoldura,
+        contarMultiplosDe3: quinaLib.contarMultiplosDe3,
+        contarRepetidas: quinaLib.contarRepetidas,
+      };
+    default:
+      return {
+        formatarDezena: lotofacilLib.formatarDezena,
+        contarImpares: lotofacilLib.contarImpares,
+        contarMoldura: lotofacilLib.contarMoldura,
+        contarMultiplosDe3: lotofacilLib.contarMultiplosDe3,
+        contarRepetidas: lotofacilLib.contarRepetidas,
+      };
+  }
 }
 
 export function PalpiteCard({
@@ -68,21 +76,22 @@ export function PalpiteCard({
   acertos,
   onVerificar,
   hideVerificar = false,
+  loteria = "lotofacil",
 }: PalpiteCardProps) {
+  const lib = getLib(loteria);
   const [concursos, setConcursos] = useState<ConcursoOption[]>([]);
   const [loadingConcursos, setLoadingConcursos] = useState(false);
   const [concursosLoaded, setConcursosLoaded] = useState(false);
   const [localAcertos, setLocalAcertos] = useState<number | null>(acertos ?? null);
   const [concursoVerificado, setConcursoVerificado] = useState<number | null>(null);
 
-  const impares = contarImpares(dezenas);
-  const moldura = contarMoldura(dezenas);
-  const multiplosDe3 = contarMultiplosDe3(dezenas);
+  const impares = lib.contarImpares(dezenas);
+  const moldura = lib.contarMoldura(dezenas);
+  const multiplosDe3 = lib.contarMultiplosDe3(dezenas);
   const repetidas = ultimoConcursoDezenas.length > 0 
-    ? contarRepetidas(dezenas, ultimoConcursoDezenas) 
+    ? lib.contarRepetidas(dezenas, ultimoConcursoDezenas) 
     : 0;
 
-  // Carregar concursos quando abrir o dropdown
   const handleLoadConcursos = async () => {
     if (concursosLoaded) return;
     
@@ -91,7 +100,7 @@ export function PalpiteCard({
       const { data } = await (supabase as any)
         .from("resultados_loterias")
         .select("concurso_id:concurso, data_sorteio, dezenas")
-        .eq("loteria", "lotofacil")
+        .eq("loteria", loteria)
         .order("concurso", { ascending: false })
         .limit(30);
       
@@ -121,7 +130,6 @@ export function PalpiteCard({
     });
   };
 
-  // Dividir dezenas em 2 linhas equilibradas
   const metade = Math.ceil(dezenas.length / 2);
   const primeiraLinha = dezenas.slice(0, metade);
   const segundaLinha = dezenas.slice(metade);
@@ -145,7 +153,7 @@ export function PalpiteCard({
           : "border-border bg-card"
       )}
     >
-      {/* Header com checkbox, título e ações */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           {!hideSelection && onSelectChange && (
@@ -169,11 +177,10 @@ export function PalpiteCard({
         </div>
         
         <div className="flex items-center gap-1">
-          {/* Badge de acertos */}
           {(localAcertos !== null || (acertos !== undefined && acertos !== null)) && (
             <AcertosBadge 
               acertos={localAcertos ?? acertos ?? 0} 
-              loteria="lotofacil"
+              loteria={loteria}
               showConcurso={concursoVerificado}
             />
           )}
@@ -184,7 +191,6 @@ export function PalpiteCard({
             </span>
           )}
 
-          {/* Botão Verificar Prêmios */}
           {!hideVerificar && (
             <DropdownMenu onOpenChange={(open) => open && handleLoadConcursos()}>
               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -265,7 +271,7 @@ export function PalpiteCard({
         </div>
       </div>
 
-      {/* Dezenas - Alinhadas à esquerda */}
+      {/* Dezenas */}
       <div className="space-y-1 mb-2">
         <div className="flex flex-wrap gap-1">
           {primeiraLinha.map((dezena) => {
@@ -280,7 +286,7 @@ export function PalpiteCard({
                     : "bg-palpite-dezena text-palpite-dezena-foreground"
                 )}
               >
-                {formatarDezena(dezena)}
+                {lib.formatarDezena(dezena)}
               </span>
             );
           })}
@@ -299,7 +305,7 @@ export function PalpiteCard({
                       : "bg-palpite-dezena text-palpite-dezena-foreground"
                   )}
                 >
-                  {formatarDezena(dezena)}
+                  {lib.formatarDezena(dezena)}
                 </span>
               );
             })}
@@ -307,7 +313,7 @@ export function PalpiteCard({
         )}
       </div>
 
-      {/* Estatísticas - Linha única neutra */}
+      {/* Estatísticas */}
       {!hideStats && (
         <div className="flex items-center gap-4 text-[10px] text-muted-foreground border-t border-border/50 pt-2 mt-1">
           <span>Ímp <strong className="text-foreground">{impares}</strong></span>
