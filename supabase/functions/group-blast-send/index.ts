@@ -587,6 +587,8 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos do
 
     const linkUrl = `${baseUrl}/lotofacil`;
     let msg = `🎰 *Palpites Lotofácil — Concurso ${concursoMax + 1}*\n\n`;
+    msg += `📢 *Último Resultado (Concurso ${ultimoResultado.concurso_id}):*\n`;
+    msg += `${ultimoResultado.dezenas.sort((a: number, b: number) => a - b).map(pad).join(" - ")}\n\n`;
     msg += `📊 *Análise baseada nos concursos ${concursoMin} a ${concursoMax}*\n\n`;
 
     if (estrategia?.ferramentas?.length > 0) {
