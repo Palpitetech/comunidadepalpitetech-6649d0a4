@@ -102,6 +102,7 @@ import ResultadosDiaDeSorte from "./pages/diadesorte/ResultadosDiaDeSorte";
 import ResultadosLotomania from "./pages/lotomania/ResultadosLotomania";
 import HubLotofacil from "./pages/lotofacil/HubLotofacil";
 import GravacaoLotofacil from "./pages/admin/gravacao/GravacaoLotofacil";
+import GravacaoQuina from "./pages/admin/gravacao/GravacaoQuina";
 import SmartLinkRedirect from "./pages/SmartLinkRedirect";
 import PerfilDados from "./pages/PerfilDados";
 import PerfilTransacoes from "./pages/PerfilTransacoes";
@@ -248,6 +249,7 @@ const App = () => (
             <Route path="/admin/premiacao" element={<AdminRoute><Premiacao /></AdminRoute>} />
             <Route path="/admin/carteira" element={<AdminRoute><Carteira /></AdminRoute>} />
             <Route path="/admin/gravacao/lotofacil" element={<AdminRoute><GravacaoLotofacil /></AdminRoute>} />
+            <Route path="/admin/gravacao/quina" element={<AdminRoute><GravacaoQuina /></AdminRoute>} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
