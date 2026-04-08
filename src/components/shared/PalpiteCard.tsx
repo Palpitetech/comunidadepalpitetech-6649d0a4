@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
+import type { LoteriaType } from "./AcertosBadge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -36,7 +37,7 @@ export interface PalpiteCardProps {
   acertos?: number | null;
   onVerificar?: (concursoId: number, acertos: number) => void;
   hideVerificar?: boolean;
-  loteria?: string;
+  loteria?: LoteriaType;
 }
 
 function getLib(loteria: string) {
