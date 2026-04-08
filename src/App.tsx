@@ -92,6 +92,7 @@ import TendenciasQuina from "./pages/quina/TendenciasQuina";
 import FrequenciaQuina from "./pages/quina/FrequenciaQuina";
 import FrequenciaDezenasQuina from "./pages/quina/FrequenciaDezenasQuina";
 import DezenasporPosicaoQuina from "./pages/quina/DezenasporPosicaoQuina";
+import LinhasColunasQuina from "./pages/quina/LinhasColunasQuina";
 import ResultadosDiaDeSorte from "./pages/diadesorte/ResultadosDiaDeSorte";
 import ResultadosLotomania from "./pages/lotomania/ResultadosLotomania";
 import HubLotofacil from "./pages/lotofacil/HubLotofacil";
@@ -207,7 +208,8 @@ const App = () => (
             <Route path="/quina/frequencia" element={<ProtectedRoute><FrequenciaQuina /></ProtectedRoute>} />
             <Route path="/quina/frequencia-dezenas" element={<ProtectedRoute><FrequenciaDezenasQuina /></ProtectedRoute>} />
             <Route path="/quina/dezenas-posicao" element={<ProtectedRoute><DezenasporPosicaoQuina /></ProtectedRoute>} />
-            
+            <Route path="/quina/linhas-colunas" element={<ProtectedRoute><LinhasColunasQuina /></ProtectedRoute>} />
+
             {/* Rotas Dia de Sorte */}
             <Route path="/diadesorte/resultados" element={<ProtectedRoute><ResultadosDiaDeSorte /></ProtectedRoute>} />
             
