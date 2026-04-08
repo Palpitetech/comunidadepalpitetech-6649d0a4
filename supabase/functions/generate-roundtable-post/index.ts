@@ -573,7 +573,8 @@ Responda APENAS no formato JSON:
       .single();
 
     if (postError || !newPost) {
-      throw new Error("Erro ao criar post");
+      console.error("DB insert error:", JSON.stringify(postError));
+      throw new Error(`Erro ao criar post: ${postError?.message || 'unknown'}`);
     }
 
     console.log(`Post criado por ${authorName}: ${newPost.id}${isResultadoOficial ? ` (Concurso ${ultimoResultado.concurso_id})` : ""}`);
