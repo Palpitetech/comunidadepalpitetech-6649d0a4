@@ -501,6 +501,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                                 {renderBadge("/quina/tabela-movimentacao")}
                               </div>
                             </Link>
+                           <Link to="/quina/gerador" onClick={(e) => handleGatedClick(e, "/quina/gerador")}>
+                              <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                                Gerador
+                                {renderBadge("/quina/gerador")}
+                              </div>
+                            </Link>
                          </div>
                       </AccordionContent>
                    </AccordionItem>
