@@ -465,10 +465,16 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                               Resultados
                             </div>
                           </Link>
-                          <Link to="/quina/tendencias" onClick={(e) => handleGatedClick(e, "/quina/tendencias")}>
+                           <Link to="/quina/tendencias" onClick={(e) => handleGatedClick(e, "/quina/tendencias")}>
                             <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
                               Tendências
                               {renderBadge("/quina/tendencias")}
+                            </div>
+                          </Link>
+                          <Link to="/quina/frequencia" onClick={(e) => handleGatedClick(e, "/quina/frequencia")}>
+                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                              Quentes e Frias
+                              {renderBadge("/quina/frequencia")}
                             </div>
                           </Link>
                         </div>
