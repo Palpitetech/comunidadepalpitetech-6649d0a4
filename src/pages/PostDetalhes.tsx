@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+// ... keep existing code
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { ExternalLink, ArrowLeft, MessageCircle } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
