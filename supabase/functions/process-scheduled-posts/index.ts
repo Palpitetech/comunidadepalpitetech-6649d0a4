@@ -178,11 +178,13 @@ serve(async (req) => {
           continue;
         }
 
-        console.log(`[${guide.perfis?.nome}] ✅ Gerando post (horário: ${matchingTime})`);
+        console.log(`[${guide.perfis?.nome}] ✅ Gerando post via generate-guide-post (horário: ${matchingTime})`);
 
-        // Determinar tipo de post baseado no papel do bot
+        // Determinar tipo de post pelo mapeamento de horário ou pelo papel do bot
         let tipoPost = "geral";
-        if (guide.is_strategy_author) {
+        if (schedule.tipo_por_horario && schedule.tipo_por_horario[matchingTime]) {
+          tipoPost = schedule.tipo_por_horario[matchingTime];
+        } else if (guide.is_strategy_author) {
           tipoPost = "estrategia";
         } else if (guide.is_sales_author) {
           tipoPost = "vendas";
@@ -190,146 +192,27 @@ serve(async (req) => {
           tipoPost = "vendas_sistema";
         }
 
-        // Buscar últimos resultados para contexto
-        const { data: resultados } = await supabaseAdmin
-          .from("resultados_loterias")
-            .select("concurso_id:concurso, dezenas, data_sorteio")
-            .eq("loteria", "lotofacil")
-          .order("concurso", { ascending: false })
-          .limit(10);
-
-        const contexto = resultados?.length
-          ? `Último concurso: ${resultados[0].concurso_id} - Dezenas: [${resultados[0].dezenas.join(", ")}]`
-          : "Sem dados recentes disponíveis.";
-
-        const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-        if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurada");
-
-        // Gerar instruções específicas por tipo de post
-        const getInstrucoesTipo = (tipo: string): string => {
-          switch (tipo) {
-            case "estrategia":
-              return `OBJETIVO: Ensinar UMA técnica de análise para a comunidade.
-
-ESTRUTURA DO POST:
-1. Título da técnica (chamativo, ex: "🎯 Técnica: Equilíbrio Pares/Ímpares")
-2. Explicação simples de como funciona
-3. Exemplo prático usando dados reais: ${contexto}
-4. Convite para o usuário tentar por conta própria
-
-TÉCNICAS DISPONÍVEIS (escolha UMA):
-- Análise de dezenas quentes/frias
-- Ciclo de dezenas
-- Equilíbrio pares/ímpares
-- Duplas e trios frequentes
-- Moldura do volante
-- Sequências e saltos
-
-IMPORTANTE: NÃO dê palpites prontos, apenas ensine a técnica.`;
-
-            case "palpite_gratis":
-              return `OBJETIVO: Compartilhar UM palpite grátis para a comunidade.
-
-ESTRUTURA DO POST:
-1. Título chamativo (ex: "🎁 Palpite Grátis do Dia")
-2. Gere EXATAMENTE 15 dezenas únicas de 01 a 25 em ordem crescente
-3. Breve explicação da estratégia usada (1-2 frases)
-4. OBRIGATÓRIO incluir: "⚠️ Loteria é sorte, jogue com responsabilidade!"
-
-REGRAS:
-- Formato das dezenas: separadas por vírgula (01, 02, 03...)
-- Use os dados estatísticos para embasar: ${contexto}
-- Apenas 1 jogo por post (não abuse)
-- Seja criativo na explicação da estratégia`;
-
-            default:
-              return `Crie um post engajante sobre análise da Lotofácil.
-Contexto atual: ${contexto}`;
-          }
-        };
-
-        const instrucoesTipo = getInstrucoesTipo(tipoPost);
-
-        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        // Chamar generate-guide-post internamente
+        const generateUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-guide-post`;
+        const generateResponse = await fetch(generateUrl, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
             "Content-Type": "application/json",
+            Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
           },
-          body: JSON.stringify({
-            model: guide.ai_model || "google/gemini-3-flash-preview",
-            messages: [
-              { role: "system", content: guide.system_prompt },
-              {
-                role: "user",
-                content: `Crie um post para a comunidade Palpite Tech.
-
-TIPO: ${tipoPost}
-${instrucoesTipo}
-
-INSTRUÇÕES:
-- Máximo ${guide.max_chars_post || 400} caracteres no conteúdo
-- Título: máximo 60 caracteres
-- NUNCA prometa resultados
-- Convide à discussão
-
-Responda APENAS no formato JSON:
-{"titulo": "seu título", "conteudo": "seu conteúdo"}`
-              }
-            ]
-          }),
+          body: JSON.stringify({ tipo_post: tipoPost }),
         });
 
-        if (!aiResponse.ok) throw new Error(`Erro na API de IA: ${aiResponse.status}`);
-
-        const aiData = await aiResponse.json();
-        const content = aiData.choices?.[0]?.message?.content;
-        
-        let parsed;
-        try {
-          const jsonMatch = content.match(/\{[\s\S]*\}/);
-          parsed = JSON.parse(jsonMatch?.[0] || content);
-        } catch {
-          throw new Error("Formato de resposta inválido da IA");
+        if (!generateResponse.ok) {
+          const errBody = await generateResponse.text();
+          throw new Error(`generate-guide-post retornou ${generateResponse.status}: ${errBody}`);
         }
 
-        // Criar post
-        const { data: newPost, error: postError } = await supabaseAdmin
-          .from("postagens")
-          .insert({
-            user_id: guide.perfil_id,
-            titulo: parsed.titulo?.substring(0, 100),
-            conteudo: parsed.conteudo?.substring(0, 1000),
-            loteria_tag: "Lotofácil",
-            tipo: tipoPost,
-          })
-          .select("id")
-          .single();
+        const generateData = await generateResponse.json();
+        const postId = generateData.postId || generateData.id || "unknown";
 
-        if (postError) throw postError;
-
-        // Atualizar estatísticas
-        await supabaseAdmin
-          .from("guide_personas")
-          .update({ 
-            ultimo_post_em: new Date().toISOString(),
-            total_posts: (guide.total_posts || 0) + 1
-          })
-          .eq("id", guide.id);
-
-        processed.push(`${guide.perfis?.nome}: post ${newPost.id}`);
-        console.log(`[${guide.perfis?.nome}] Post criado: ${newPost.id}`);
-
-        // Log success
-        await supabaseAdmin
-          .from("bot_publishing_logs")
-          .insert({
-            guide_persona_id: guide.id,
-            bot_name: guide.perfis?.nome,
-            event_type: "success",
-            reason: "Scheduled post created successfully",
-            details: { post_id: newPost.id, scheduled_time: matchingTime }
-          });
+        processed.push(`${guide.perfis?.nome}: post ${postId} (${tipoPost})`);
+        console.log(`[${guide.perfis?.nome}] Post criado via generate-guide-post: ${postId} tipo=${tipoPost}`);
 
       } catch (err) {
         const errorMsg = `${guide.perfis?.nome}: ${err instanceof Error ? err.message : "Erro"}`;
