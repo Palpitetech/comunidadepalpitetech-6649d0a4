@@ -71,8 +71,31 @@ export function validarFiltrosQuina(
     if (!filtros.qtdRepetidas.includes(qtdRepetidas)) return false;
   }
 
+  // Validação de Linhas (8 linhas, 10 cols → linha = Math.ceil(d/10))
+  if (filtros.linhas !== null) {
+    const contLinhas = new Array(LINHAS_GRID).fill(0);
+    dezenas.forEach(d => {
+      const linhaIdx = Math.floor((d - 1) / COLUNAS_GRID);
+      contLinhas[linhaIdx]++;
+    });
+    for (let i = 0; i < LINHAS_GRID; i++) {
+      if (contLinhas[i] !== filtros.linhas[i]) return false;
+    }
+  }
+
+  // Validação de Colunas (10 colunas)
+  if (filtros.colunas !== null) {
+    const contColunas = new Array(COLUNAS_GRID).fill(0);
+    dezenas.forEach(d => {
+      const colIdx = (d - 1) % COLUNAS_GRID;
+      contColunas[colIdx]++;
+    });
+    for (let i = 0; i < COLUNAS_GRID; i++) {
+      if (contColunas[i] !== filtros.colunas[i]) return false;
+    }
+  }
+
   return true;
-}
 
 /**
  * Gera palpites baseados nos filtros de desdobramento Quina
