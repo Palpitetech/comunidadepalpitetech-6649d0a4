@@ -11,11 +11,13 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { getLinha, getColuna } from "@/lib/lotofacil";
+import { getLinha as getLinhaLF, getColuna as getColunaLF } from "@/lib/lotofacil";
+import { getLinha as getLinhaQ, getColuna as getColunaQ } from "@/lib/quina";
 
 interface Props {
   tipo: "linha" | "coluna";
-  indice: number; // 1 a 5
+  indice: number;
+  loteria?: "lotofacil" | "quina";
 }
 
 interface EstatisticaQtd {
