@@ -563,7 +563,15 @@ Responda APENAS no formato JSON:
     };
 
     if (isResultadoOficial && ultimoResultado) {
-      postData.concurso_referencia = ultimoResultado.concurso_id;
+      // Check if concurso exists in resultados table (FK constraint)
+      const { data: existsInResultados } = await supabaseAdmin
+        .from("resultados")
+        .select("concurso_id")
+        .eq("concurso_id", ultimoResultado.concurso_id)
+        .maybeSingle();
+      if (existsInResultados) {
+        postData.concurso_referencia = ultimoResultado.concurso_id;
+      }
     }
 
     const { data: newPost, error: postError } = await supabaseAdmin
