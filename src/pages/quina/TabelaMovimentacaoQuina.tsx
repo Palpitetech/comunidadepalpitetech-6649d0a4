@@ -318,8 +318,8 @@ export default function TabelaMovimentacaoQuina() {
                                       {String(dezena).padStart(2, "0")}
                                     </span>
                                   ) : (
-                                    <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[8px] text-muted-foreground/30">
-                                      ·
+                                    <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[8px] text-muted-foreground/20">
+                                      {String(dezena).padStart(2, "0")}
                                     </span>
                                   )}
                                 </td>
