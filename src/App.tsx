@@ -89,6 +89,7 @@ import FechamentoDuplaSena from "./pages/duplasena/FechamentoDuplaSena";
 import ProximosConcursos from "./pages/ProximosConcursos";
 import ResultadosQuina from "./pages/quina/ResultadosQuina";
 import TendenciasQuina from "./pages/quina/TendenciasQuina";
+import FrequenciaQuina from "./pages/quina/FrequenciaQuina";
 import ResultadosDiaDeSorte from "./pages/diadesorte/ResultadosDiaDeSorte";
 import ResultadosLotomania from "./pages/lotomania/ResultadosLotomania";
 import HubLotofacil from "./pages/lotofacil/HubLotofacil";
@@ -201,6 +202,7 @@ const App = () => (
             {/* Rotas Quina */}
             <Route path="/quina/resultados" element={<ProtectedRoute><ResultadosQuina /></ProtectedRoute>} />
             <Route path="/quina/tendencias" element={<ProtectedRoute><TendenciasQuina /></ProtectedRoute>} />
+            <Route path="/quina/frequencia" element={<ProtectedRoute><FrequenciaQuina /></ProtectedRoute>} />
             
             {/* Rotas Dia de Sorte */}
             <Route path="/diadesorte/resultados" element={<ProtectedRoute><ResultadosDiaDeSorte /></ProtectedRoute>} />
