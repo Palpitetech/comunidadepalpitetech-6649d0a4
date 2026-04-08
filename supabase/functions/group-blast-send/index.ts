@@ -106,11 +106,8 @@ async function handlePrepare(supabase: any, opts: any) {
           )
         );
 
-        // Check if already scheduled today
-        const todayStartUTC = new Date();
-        todayStartUTC.setUTCHours(0, 0, 0, 0);
-        const todayEndUTC = new Date();
-        todayEndUTC.setUTCHours(23, 59, 59, 999);
+        // Check if already scheduled in last 20h (prevents BRT/UTC day boundary duplication)
+        const twentyHoursAgo = new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString();
 
         const { count } = await supabase
           .from("group_blast_logs")
@@ -118,8 +115,7 @@ async function handlePrepare(supabase: any, opts: any) {
           .eq("config_id", config.id)
           .eq("slot_id", slot.id)
           .eq("group_jid", groupJid)
-          .gte("created_at", todayStartUTC.toISOString())
-          .lt("created_at", todayEndUTC.toISOString())
+          .gte("created_at", twentyHoursAgo)
           .neq("status", "failed");
 
         if ((count ?? 0) > 0) continue;
