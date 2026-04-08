@@ -96,6 +96,7 @@ export function validarFiltrosQuina(
   }
 
   return true;
+}
 
 /**
  * Gera palpites baseados nos filtros de desdobramento Quina
