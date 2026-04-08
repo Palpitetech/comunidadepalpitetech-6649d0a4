@@ -214,6 +214,7 @@ const App = () => (
             <Route path="/quina/linhas-colunas" element={<ProtectedRoute><LinhasColunasQuina /></ProtectedRoute>} />
             <Route path="/quina/tabela-movimentacao" element={<ProtectedRoute><TabelaMovimentacaoQuina /></ProtectedRoute>} />
             <Route path="/quina/gerador" element={<ProtectedRoute><GatedPage feature="gerador"><GeradorQuina /></GatedPage></ProtectedRoute>} />
+            <Route path="/quina/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><DesdobramentoQuina /></GatedPage></ProtectedRoute>} />
 
             {/* Rotas Dia de Sorte */}
             <Route path="/diadesorte/resultados" element={<ProtectedRoute><ResultadosDiaDeSorte /></ProtectedRoute>} />
