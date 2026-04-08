@@ -211,12 +211,13 @@ export function useTendenciasDiaQuina(periodo: number) {
         dezenasAnalise.push({ dezena: d, frequencia });
       }
 
+      // Quina: 5/80 → freq esperada ~6.25%. Quente ≥10%, Frio ≤3%
       const fixas = dezenasAnalise
-        .filter((d) => d.frequencia >= 70)
+        .filter((d) => d.frequencia >= 10)
         .sort((a, b) => b.frequencia - a.frequencia);
 
       const excluidas = dezenasAnalise
-        .filter((d) => d.frequencia <= 30)
+        .filter((d) => d.frequencia <= 3)
         .sort((a, b) => a.frequencia - b.frequencia);
 
       const grupos = {
