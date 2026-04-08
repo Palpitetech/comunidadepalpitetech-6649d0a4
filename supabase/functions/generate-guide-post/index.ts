@@ -241,28 +241,129 @@ Indicadores: ${ultimo.qtd_pares} pares, ${ultimo.qtd_impares} ímpares, ${ultimo
 
 // Monta instruções específicas baseadas no tipo de post
 function montarInstrucoesTipo(tipoPost: string): string {
+  const FORMATO_OBRIGATORIO = `
+FORMATO DE SAÍDA OBRIGATÓRIO:
+- Use emojis como marcadores de seção (🔥, ❄️, 🎯, 📊, 🔄, ⚡, 🤝, 💡)
+- Use **negrito** para destacar dezenas e números importantes
+- Separe seções com linha em branco
+- Use • para listas de tópicos
+- Máximo 800 caracteres no conteúdo
+- Estruture em 3-4 seções curtas e objetivas
+- Finalize com uma pergunta para engajar a comunidade`;
+
+  if (tipoPost === "analise_ciclo") {
+    return `
+CONTEXTO DO POST: Análise de CICLO da Lotofácil.
+FOCO PRINCIPAL:
+- Status atual do ciclo (número e progresso)
+- Dezenas que FALTAM para completar o ciclo (destaque em negrito)
+- Estimativa de quando o ciclo pode fechar baseado no ritmo atual
+- Histórico: quantos concursos os últimos ciclos levaram para fechar
+- Estratégia: vale apostar nas faltantes?
+
+SEÇÕES SUGERIDAS:
+🔄 Status do Ciclo → número do ciclo + progresso
+🎯 Dezenas Faltantes → listar com destaque
+💡 Estratégia → orientação sobre o ciclo
+${FORMATO_OBRIGATORIO}`;
+  }
+
+  if (tipoPost === "analise_movimentacao") {
+    return `
+CONTEXTO DO POST: Análise de MOVIMENTAÇÃO (Quentes & Frias) da Lotofácil.
+FOCO PRINCIPAL:
+- Top 5 dezenas QUENTES (mais frequentes) com percentual
+- Top 5 dezenas FRIAS (menos frequentes) com percentual
+- Dezenas com MAIOR ATRASO (ausentes há mais sorteios)
+- Score de timing: dezenas que estão "no ponto" para sair
+- Duplas e trios que aparecem juntos com frequência
+
+SEÇÕES SUGERIDAS:
+🔥 Dezenas Quentes → top 5 com percentual
+❄️ Dezenas Frias → top 5 com percentual
+⏳ Maiores Atrasos → dezenas ausentes + quantos sorteios
+🤝 Duplas Frequentes → pares que saem juntos
+${FORMATO_OBRIGATORIO}`;
+  }
+
+  if (tipoPost === "analise_pares_impares") {
+    return `
+CONTEXTO DO POST: Análise de PARES e ÍMPARES da Lotofácil.
+FOCO PRINCIPAL:
+- Distribuição par/ímpar nos últimos concursos
+- Média histórica vs último resultado
+- Tendência: está pendendo para mais pares ou mais ímpares?
+- Faixas mais comuns (ex: 7P/8I, 8P/7I)
+- Relação com dezenas de moldura
+
+SEÇÕES SUGERIDAS:
+📊 Distribuição Atual → pares vs ímpares recentes
+🎯 Média Histórica → comparação
+💡 Tendência → para onde está indo
+${FORMATO_OBRIGATORIO}`;
+  }
+
+  if (tipoPost === "analise_repetidas") {
+    return `
+CONTEXTO DO POST: Análise de DEZENAS REPETIDAS entre concursos da Lotofácil.
+FOCO PRINCIPAL:
+- Quantas dezenas se repetiram do penúltimo para o último sorteio
+- Média de repetidas nos últimos 20 concursos
+- Dezenas que têm repetido com mais frequência
+- Padrão: em quantos concursos consecutivos uma dezena costuma aparecer
+- Estratégia: apostar em repetidas ou evitá-las?
+
+SEÇÕES SUGERIDAS:
+🔁 Repetidas Recentes → quais repetiram e quantas
+📊 Média Histórica → referência de repetição
+💡 Estratégia → orientação sobre repetidas
+${FORMATO_OBRIGATORIO}`;
+  }
+
+  if (tipoPost === "analise_moldura") {
+    return `
+CONTEXTO DO POST: Análise de MOLDURA da Lotofácil.
+FOCO PRINCIPAL:
+- Quantas dezenas da moldura saíram no último sorteio vs miolo
+- Dezenas da moldura: [01-06, 10, 11, 15, 16, 20-25] (16 dezenas)
+- Dezenas do miolo: [07, 08, 09, 12, 13, 14, 17, 18, 19] (9 dezenas)
+- Média histórica de moldura nos últimos concursos
+- Duplas frequentes dentro da moldura e dentro do miolo
+
+SEÇÕES SUGERIDAS:
+🖼️ Moldura vs Miolo → distribuição atual
+📊 Média Histórica → referência
+🎯 Destaques → duplas frequentes na moldura
+💡 Estratégia → equilíbrio moldura/miolo
+${FORMATO_OBRIGATORIO}`;
+  }
+
   if (tipoPost === "pos_sorteio") {
     return `
 CONTEXTO DO POST: Acabou de sair o resultado do concurso (sorteio das 20h). Este é um post de ANÁLISE PÓS-SORTEIO.
 - Comente sobre o que aconteceu no sorteio de hoje
-- Compare com suas observações anteriores (se aplicável)
-- Analise os indicadores do resultado (pares/ímpares, primos, repetidas)
-- Destaque se alguma previsão/tendência se confirmou
-- Convide a comunidade a discutir o que observaram`;
-  } else if (tipoPost === "pre_sorteio") {
+- Analise os indicadores do resultado (pares/ímpares, primos, repetidas, moldura)
+- Destaque se alguma tendência se confirmou
+- Convide a comunidade a discutir
+${FORMATO_OBRIGATORIO}`;
+  }
+
+  if (tipoPost === "pre_sorteio") {
     return `
 CONTEXTO DO POST: O sorteio será hoje às 20h. Este é um post de ORIENTAÇÃO PRÉ-SORTEIO.
 - Compartilhe observações úteis para quem vai jogar hoje
-- Mencione tendências que tem notado nos últimos sorteios
-- Comente sobre o status do ciclo e dezenas em destaque
-- Lembre que não há garantias, mas vale observar os padrões
-- Deseje boa sorte à comunidade!`;
+- Mencione tendências e dezenas em destaque
+- Comente sobre o status do ciclo
+- Deseje boa sorte à comunidade!
+${FORMATO_OBRIGATORIO}`;
   }
+
   return `
 CONTEXTO DO POST: Post geral de análise e orientação.
-- Compartilhe insights e observações sobre os últimos resultados
-- Destaque padrões interessantes que notou
-- Convide a comunidade para discutir`;
+- Compartilhe insights sobre os últimos resultados
+- Destaque padrões interessantes
+- Convide a comunidade para discutir
+${FORMATO_OBRIGATORIO}`;
 }
 
 serve(async (req) => {
@@ -357,7 +458,7 @@ INSTRUÇÕES IMPORTANTES:
 - Reconheça que loteria envolve sorte: "claro que não há garantias, mas..."
 - Convide à discussão no final: "O que vocês acham?" ou "Alguém mais notou isso?"
 - Título: máximo 60 caracteres, chamativo mas não sensacionalista
-- Conteúdo: máximo 400 caracteres
+- Conteúdo: máximo 800 caracteres, bem estruturado com emojis e seções
 - Fale em primeira pessoa como membro da equipe Palpite Tech
 - NUNCA mencione que você é IA, bot ou modelo de linguagem
 - Seja prestativo e acolhedor, como um colega que divide o que descobriu

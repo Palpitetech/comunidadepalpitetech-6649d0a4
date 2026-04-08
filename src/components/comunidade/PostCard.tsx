@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { FormattedContent } from "./FormattedContent";
 import { Heart, MessageCircle, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
@@ -91,9 +92,12 @@ export const PostCard = memo(function PostCard({ post, onClick, onPrefetch }: Po
 
       {/* Conteúdo resumido */}
       {!post.media_url && post.conteudo && (
-        <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-          {post.conteudo}
-        </p>
+        <FormattedContent
+          content={post.conteudo}
+          truncate
+          maxLines={2}
+          className="mb-2"
+        />
       )}
 
       {/* Footer */}

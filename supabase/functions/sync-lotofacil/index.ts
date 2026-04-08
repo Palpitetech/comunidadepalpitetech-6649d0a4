@@ -176,10 +176,23 @@ ${contextoResultado}
 
 INSTRUÇÕES:
 - Título chamativo com emoji 🚨 (máximo 60 caracteres)
-- Destaque as dezenas sorteadas
-- Raio-X rápido (pares/ímpares, moldura, primos, repetidas, ciclo)
-- Máximo ${ana.max_chars_post || 600} caracteres no conteúdo
-- Finalize convidando à discussão
+- Máximo ${ana.max_chars_post || 800} caracteres no conteúdo
+
+FORMATO OBRIGATÓRIO DO CONTEÚDO:
+- Use emojis como marcadores de seção (🚨, 🎯, 📊, 🔄, 💡)
+- Use **negrito** para destacar dezenas e números importantes
+- Separe seções com linha em branco
+
+ESTRUTURA DO POST:
+🚨 Abertura → Anuncie o resultado com energia
+🎯 Dezenas → Liste as 15 dezenas em **negrito**
+📊 Raio-X → Tópicos com • para cada indicador:
+• Pares/Ímpares
+• Moldura
+• Primos
+• Repetidas
+🔄 Ciclo → Status atual do ciclo
+💬 Fechamento → Convide à discussão
 
 Responda APENAS no formato JSON:
 {"titulo": "seu título", "conteudo": "seu conteúdo"}`

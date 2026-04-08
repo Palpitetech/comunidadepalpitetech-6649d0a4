@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+// ... keep existing code
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { ExternalLink, ArrowLeft, MessageCircle } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -6,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LoteriaBadge } from "@/components/comunidade/LoteriaBadge";
+import { FormattedContent } from "@/components/comunidade/FormattedContent";
 
 import { ActionBar } from "@/components/comunidade/ActionBar";
 import { CommentSection } from "@/components/comunidade/CommentSection";
@@ -233,9 +235,7 @@ export default function PostDetalhes() {
 
         {/* Content body */}
         <div className="px-4 pt-3">
-          <p className="text-[15px] text-foreground leading-relaxed whitespace-pre-wrap break-words">
-            {post.conteudo}
-          </p>
+          <FormattedContent content={post.conteudo} />
         </div>
 
         {/* External link */}
