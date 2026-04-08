@@ -1,0 +1,1 @@
+UPDATE public.guide_personas SET ativo = true WHERE id = '018528e7-1f1d-4e43-91ac-abf5c9481211';
