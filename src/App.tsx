@@ -95,6 +95,7 @@ import DezenasporPosicaoQuina from "./pages/quina/DezenasporPosicaoQuina";
 import LinhasColunasQuina from "./pages/quina/LinhasColunasQuina";
 import TabelaMovimentacaoQuina from "./pages/quina/TabelaMovimentacaoQuina";
 import GeradorQuina from "./pages/quina/GeradorQuina";
+import DesdobramentoQuina from "./pages/quina/DesdobramentoQuina";
 import ResultadosDiaDeSorte from "./pages/diadesorte/ResultadosDiaDeSorte";
 import ResultadosLotomania from "./pages/lotomania/ResultadosLotomania";
 import HubLotofacil from "./pages/lotofacil/HubLotofacil";
@@ -213,6 +214,7 @@ const App = () => (
             <Route path="/quina/linhas-colunas" element={<ProtectedRoute><LinhasColunasQuina /></ProtectedRoute>} />
             <Route path="/quina/tabela-movimentacao" element={<ProtectedRoute><TabelaMovimentacaoQuina /></ProtectedRoute>} />
             <Route path="/quina/gerador" element={<ProtectedRoute><GatedPage feature="gerador"><GeradorQuina /></GatedPage></ProtectedRoute>} />
+            <Route path="/quina/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><DesdobramentoQuina /></GatedPage></ProtectedRoute>} />
 
             {/* Rotas Dia de Sorte */}
             <Route path="/diadesorte/resultados" element={<ProtectedRoute><ResultadosDiaDeSorte /></ProtectedRoute>} />
