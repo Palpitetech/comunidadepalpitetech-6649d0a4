@@ -57,12 +57,13 @@ serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const quantidade = Math.min(Math.max(body.quantidade || 1, 1), 250);
-    const qtdDezenas = 5; // Quina sempre 5 dezenas
+    const qtdDezenas = Math.min(Math.max(body.qtdDezenas || 5, 5), 15);
     const periodoAnalise = Math.min(Math.max(body.periodoAnalise || 50, 1), 100);
 
+    const maxFixas = qtdDezenas - 1;
     const dezenasFiexas: number[] = (body.dezenasFiexas || [])
       .filter((d: number) => d >= 1 && d <= 80)
-      .slice(0, 4);
+      .slice(0, maxFixas);
     const dezenasExcluidas: number[] = (body.dezenasExcluidas || [])
       .filter((d: number) => d >= 1 && d <= 80)
       .slice(0, 20);
@@ -221,7 +222,7 @@ PERÍODO DE ANÁLISE: ${periodoAnalise} concurso(s) - ${periodoAnalise <= 5 ? 'F
     const systemPrompt = `Você é um especialista em análise estatística da Quina.
 
 REGRAS OBRIGATÓRIAS:
-1. Cada jogo DEVE ter EXATAMENTE 5 dezenas únicas de 01 a 80
+1. Cada jogo DEVE ter EXATAMENTE ${qtdDezenas} dezenas únicas de 01 a 80
 2. As dezenas devem ser números inteiros entre 1 e 80
 3. Diversifique as estratégias entre os jogos (se houver mais de um)
 4. Considere o equilíbrio histórico nas suas escolhas
@@ -235,7 +236,7 @@ Você deve usar a função generate_palpites para retornar os jogos estruturados
 
     const userPrompt = `${contextoEstatistico}${filtrosTexto}
 
-Com base nesta análise, gere ${quantidade} jogo(s) de Quina com EXATAMENTE 5 dezenas cada (de 01 a 80).
+Com base nesta análise, gere ${quantidade} jogo(s) de Quina com EXATAMENTE ${qtdDezenas} dezenas cada (de 01 a 80).
 
 Para cada jogo, utilize uma abordagem diferente (se houver mais de um):
 - Jogo 1: Foco nas dezenas quentes (mais frequentes)
@@ -276,13 +277,13 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
                 properties: {
                   jogos: {
                     type: "array",
-                    description: "Lista de jogos gerados, cada um com exatamente 5 dezenas",
+                    description: `Lista de jogos gerados, cada um com exatamente ${qtdDezenas} dezenas`,
                     items: {
                       type: "object",
                       properties: {
                         dezenas: {
                           type: "array",
-                          description: "Array com exatamente 5 dezenas únicas de 1 a 80",
+                          description: `Array com exatamente ${qtdDezenas} dezenas únicas de 1 a 80`,
                           items: { type: "integer", minimum: 1, maximum: 80 }
                         }
                       },
@@ -387,7 +388,7 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
         total_tokens: aiUsage.total_tokens || 0,
         model: "google/gemini-3-flash-preview",
         cost_usd: estimateCost(aiUsage, "google/gemini-3-flash-preview"),
-        metadata: { quantidade, periodoAnalise, loteria: "quina" },
+        metadata: { quantidade, qtdDezenas, periodoAnalise, loteria: "quina" },
       }).then(() => {}).catch(e => console.error("Erro log:", e));
     }
 
@@ -421,10 +422,10 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
         }
       }
 
-      const dezenasUnicas = [...new Set(dezenas)].slice(0, 5);
+      const dezenasUnicas = [...new Set(dezenas)].slice(0, qtdDezenas);
 
       // Completar com dezenas aleatórias se necessário (evitando excluídas)
-      while (dezenasUnicas.length < 5) {
+      while (dezenasUnicas.length < qtdDezenas) {
         const random = Math.floor(Math.random() * 80) + 1;
         if (!dezenasUnicas.includes(random) && !dezenasExcluidas.includes(random)) {
           dezenasUnicas.push(random);

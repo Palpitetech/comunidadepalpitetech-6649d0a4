@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { QuantidadeSelector } from "@/components/gerador/QuantidadeSelector";
 import { PeriodoAnaliseSelector } from "@/components/gerador/PeriodoAnaliseSelector";
+import { DezenasQuinaSelector } from "@/components/gerador/DezenasQuinaSelector";
 import { PedidoEspecialInput } from "@/components/gerador/PedidoEspecialInput";
 import { FiltroDezenasQuinaSelector } from "@/components/gerador/FiltroDezenasQuinaSelector";
 import { ResultadosSheetQuina } from "@/components/gerador/ResultadosSheetQuina";
@@ -19,6 +20,7 @@ import { Dices, Loader2, AlertCircle, ChevronDown, ChevronUp } from "lucide-reac
 export default function GeradorQuina() {
   const isMobile = useIsMobile();
   const [quantidade, setQuantidade] = useState(3);
+  const [qtdDezenas, setQtdDezenas] = useState(5);
   const [periodoAnalise, setPeriodoAnalise] = useState(50);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
@@ -66,7 +68,7 @@ export default function GeradorQuina() {
       pedidoEspecial: pedidoEspecial.trim() || undefined,
     };
 
-    generatePalpites(quantidade, periodoAnalise, filtros);
+    generatePalpites(quantidade, qtdDezenas, periodoAnalise, filtros);
   };
 
   useEffect(() => {
@@ -79,6 +81,7 @@ export default function GeradorQuina() {
   const handleClearAll = () => {
     reset();
     setQuantidade(3);
+    setQtdDezenas(5);
     setPeriodoAnalise(50);
     setDezenasFiexasOpcao("padrao");
     setDezenasFixas([]);
@@ -118,6 +121,18 @@ export default function GeradorQuina() {
               disabled={isLoading}
             />
 
+            <DezenasQuinaSelector
+              value={qtdDezenas}
+              onChange={(v) => {
+                setQtdDezenas(v);
+                // Ajustar fixas ao novo máximo (qtdDezenas - 1)
+                if (dezenasFixas.length >= v) {
+                  setDezenasFixas(dezenasFixas.slice(0, v - 1));
+                }
+              }}
+              disabled={isLoading}
+            />
+
             <PeriodoAnaliseSelector
               value={periodoAnalise}
               onChange={setPeriodoAnalise}
@@ -146,14 +161,14 @@ export default function GeradorQuina() {
               <div className="space-y-6 pt-2">
                 <FiltroDezenasQuinaSelector
                   label="Dezenas Fixas"
-                  description="Forçar dezenas específicas em todos os jogos (máx. 4)"
+                  description={`Forçar dezenas específicas em todos os jogos (máx. ${qtdDezenas - 1})`}
                   value={dezenasFiexasOpcao}
                   onChange={setDezenasFiexasOpcao}
                   dezenasSelecionadas={dezenasFixas}
                   onDezenasChange={setDezenasFixas}
                   disabled={isLoading}
                   tipo="fixas"
-                  maxDezenas={4}
+                  maxDezenas={qtdDezenas - 1}
                 />
 
                 <FiltroDezenasQuinaSelector
