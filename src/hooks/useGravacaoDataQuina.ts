@@ -187,11 +187,11 @@ export function useGravacaoDataQuina() {
         { label: "Soma", valor: soma, faixaMin: FAIXAS.Soma[0], faixaMax: FAIXAS.Soma[1], status: statusFromFaixa(soma, ...FAIXAS.Soma) },
       ];
 
-      // 2b. Frequência das dezenas nos últimos 5 concursos
-      const ultimos5 = concursos.slice(0, Math.min(5, concursos.length));
+      // 2b. Frequência das dezenas nos últimos 12 concursos (Quina usa 12)
+      const ultimos12 = concursos.slice(0, Math.min(12, concursos.length));
       const freqMap = new Map<number, number>();
       for (let d = 1; d <= TOTAL_DEZENAS_VOLANTE; d++) freqMap.set(d, 0);
-      for (const c of ultimos5) {
+      for (const c of ultimos12) {
         for (const d of c.dezenas) {
           freqMap.set(d, (freqMap.get(d) ?? 0) + 1);
         }
@@ -200,14 +200,14 @@ export function useGravacaoDataQuina() {
         .map(([dez, freq]) => ({
           dezena: dez,
           freq,
-          pct: (freq / ultimos5.length) * 100,
-          tipo: freq >= 3 ? "quente" as const : freq <= 1 ? "fria" as const : "neutra" as const,
+          pct: (freq / ultimos12.length) * 100,
+          tipo: freq >= 6 ? "quente" as const : freq <= 2 ? "fria" as const : "neutra" as const,
         }))
         .sort((a, b) => b.freq - a.freq || a.dezena - b.dezena);
 
-      // 2b2. Top 3 duplas mais frequentes nos últimos 5 concursos
+      // 2b2. Top 3 duplas mais frequentes nos últimos 12 concursos
       const duplaMap = new Map<string, number>();
-      for (const c of ultimos5) {
+      for (const c of ultimos12) {
         const sorted = [...c.dezenas].sort((a, b) => a - b);
         for (let i = 0; i < sorted.length; i++) {
           for (let j = i + 1; j < sorted.length; j++) {
