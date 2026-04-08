@@ -26,17 +26,6 @@ export default function AdminBots() {
     setSheetOpen(true);
   };
 
-  const handleBotSaved = async (botId: string) => {
-    setNewBotDialogOpen(false);
-    
-    // Refetch and find the newly created bot
-    const updatedBots = await refetch();
-    const createdBot = updatedBots.find((b) => b.id === botId);
-    if (createdBot) {
-      setSelectedBot(createdBot);
-      setSheetOpen(true);
-    }
-  };
 
   if (loading) {
     return (
@@ -82,21 +71,6 @@ export default function AdminBots() {
               </DialogContent>
             </Dialog>
 
-            {/* Novo Bot */}
-            <Dialog open={newBotDialogOpen} onOpenChange={setNewBotDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Novo Bot
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Criar Novo Bot</DialogTitle>
-                </DialogHeader>
-                <BotForm onSaved={handleBotSaved} onCancel={() => setNewBotDialogOpen(false)} />
-              </DialogContent>
-            </Dialog>
           </div>
         </div>
 
