@@ -20,6 +20,8 @@ export interface TabelaEstatisticaConfig {
   campoDb: CampoDb;
   labelColunaPrincipal: string;
   labelColunaComplementar: string;
+  loteria?: string;
+  dezenasPorSorteio?: number;
 }
 
 interface EstatisticaItem {
@@ -47,10 +49,13 @@ export function TabelaEstatisticaGenerica({ config }: Props) {
   const { data: estatisticas, isLoading } = useQuery({
     queryKey: [config.queryKey],
     queryFn: async () => {
+      const loteria = config.loteria || "lotofacil";
+      const dezenasPorSorteio = config.dezenasPorSorteio || 15;
+
       const { data, error } = await (supabase as any)
         .from("resultados_loterias")
         .select(`concurso, ${config.campoDb}`)
-        .eq("loteria", "lotofacil")
+        .eq("loteria", loteria)
         .order("concurso", { ascending: false });
 
       if (error) throw error;
@@ -85,7 +90,7 @@ export function TabelaEstatisticaGenerica({ config }: Props) {
       const resultado: EstatisticaItem[] = Array.from(agrupado.values())
         .map((item) => ({
           valorPrincipal: item.valor,
-          valorComplementar: 15 - item.valor,
+          valorComplementar: dezenasPorSorteio - item.valor,
           ocorrencias: item.ocorrencias,
           atrasoAtual: concursoMaisRecente - item.ultimaOcorrencia,
           porcentagem: (item.ocorrencias / totalConcursos) * 100,
