@@ -323,7 +323,7 @@ export default function AnaliseDoDiaQuina() {
                 <div className="flex items-center gap-1.5 mb-2">
                   <TrendingDown className="h-4 w-4 text-destructive" />
                   <span className="text-xs font-semibold">Dezenas para Excluir</span>
-                  <span className="text-[10px] text-muted-foreground">≤30%</span>
+                  <span className="text-[10px] text-muted-foreground">≤3%</span>
                 </div>
                 <div className="grid grid-cols-4 gap-1.5">
                   {tendencias.excluidas.length > 0 ? (
@@ -345,7 +345,7 @@ export default function AnaliseDoDiaQuina() {
                       );
                     })
                   ) : (
-                    <span className="col-span-4 text-[11px] text-muted-foreground">Nenhuma dezena com ≤30% de frequência</span>
+                    <span className="col-span-4 text-[11px] text-muted-foreground">Nenhuma dezena com ≤3% de frequência</span>
                   )}
                 </div>
                 {selectedExcluidas.length > 0 && !addedGroups.excluidas && (
