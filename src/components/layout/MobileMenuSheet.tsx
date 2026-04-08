@@ -472,12 +472,18 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                             </div>
                           </Link>
                           <Link to="/quina/frequencia" onClick={(e) => handleGatedClick(e, "/quina/frequencia")}>
-                            <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-                              Quentes e Frias
-                              {renderBadge("/quina/frequencia")}
-                            </div>
-                          </Link>
-                        </div>
+                             <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                               Quentes e Frias
+                               {renderBadge("/quina/frequencia")}
+                             </div>
+                           </Link>
+                           <Link to="/quina/frequencia-dezenas" onClick={(e) => handleGatedClick(e, "/quina/frequencia-dezenas")}>
+                             <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                               Frequência Dezenas
+                               {renderBadge("/quina/frequencia-dezenas")}
+                             </div>
+                           </Link>
+                         </div>
                       </AccordionContent>
                    </AccordionItem>
                  </Accordion>
