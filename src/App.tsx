@@ -202,6 +202,7 @@ const App = () => (
             {/* Rotas Quina */}
             <Route path="/quina/resultados" element={<ProtectedRoute><ResultadosQuina /></ProtectedRoute>} />
             <Route path="/quina/tendencias" element={<ProtectedRoute><TendenciasQuina /></ProtectedRoute>} />
+            <Route path="/quina/frequencia" element={<ProtectedRoute><FrequenciaQuina /></ProtectedRoute>} />
             
             {/* Rotas Dia de Sorte */}
             <Route path="/diadesorte/resultados" element={<ProtectedRoute><ResultadosDiaDeSorte /></ProtectedRoute>} />

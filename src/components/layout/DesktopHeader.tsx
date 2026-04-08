@@ -93,6 +93,7 @@ const DUPLASENA_TOOLS = [
 const QUINA_TOOLS = [
   { to: "/quina/resultados", label: "Resultados", icon: BarChart3, gated: false },
   { to: "/quina/tendencias", label: "Tendências", icon: TrendingUp, gated: true },
+  { to: "/quina/frequencia", label: "Quentes e Frias", icon: Flame, gated: true },
 ];
 
 const SIMPLE_LOTTERIES = [
