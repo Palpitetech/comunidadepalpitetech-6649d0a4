@@ -95,6 +95,7 @@ const QUINA_TOOLS = [
   { to: "/quina/tendencias", label: "Tendências", icon: TrendingUp, gated: true },
   { to: "/quina/frequencia", label: "Quentes e Frias", icon: Flame, gated: true },
   { to: "/quina/frequencia-dezenas", label: "Frequência Dezenas", icon: LayoutGrid, gated: true },
+  { to: "/quina/dezenas-posicao", label: "Dezenas por Posição", icon: Target, gated: true },
 ];
 
 const SIMPLE_LOTTERIES = [
