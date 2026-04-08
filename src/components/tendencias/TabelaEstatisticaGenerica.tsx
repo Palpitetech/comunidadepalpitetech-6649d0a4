@@ -20,6 +20,8 @@ export interface TabelaEstatisticaConfig {
   campoDb: CampoDb;
   labelColunaPrincipal: string;
   labelColunaComplementar: string;
+  loteria?: string;
+  dezenasPorSorteio?: number;
 }
 
 interface EstatisticaItem {
