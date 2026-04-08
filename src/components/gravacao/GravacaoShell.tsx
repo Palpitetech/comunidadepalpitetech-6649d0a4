@@ -79,7 +79,6 @@ export default function GravacaoShell({ children, concurso, data, loteria = "lot
           >
             {loteriaLabel}
           </span>
-          </span>
           <span className="text-purple-400/60 text-lg md:text-2xl font-light">—</span>
           <span className="text-purple-300 font-bold text-lg md:text-2xl">#{concurso}</span>
           {data && (
