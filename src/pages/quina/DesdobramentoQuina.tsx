@@ -2,8 +2,10 @@ import { useState, useEffect, useMemo } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FiltroPatternSelector } from "@/components/desdobramento/FiltroPatternSelector";
+import { FiltroLinhasColunasQuina } from "@/components/quina/desdobramento/FiltroLinhasColunasQuina";
 import { GridDesdobramentoQuina } from "@/components/quina/desdobramento/GridDesdobramentoQuina";
 import { ModoSeletorDesdobramentoQuina } from "@/components/quina/desdobramento/ModoSeletorDesdobramentoQuina";
 import { DesdobramentoResultadosQuina } from "@/components/quina/desdobramento/DesdobramentoResultadosQuina";
@@ -56,6 +58,12 @@ export default function DesdobramentoQuina() {
   useEffect(() => { if (autoTop3Primos.length > 0 && filtroPrimos.length === 0) setFiltroPrimos(autoTop3Primos); }, [autoTop3Primos]);
   useEffect(() => { if (autoTop3Moldura.length > 0 && filtroMoldura.length === 0) setFiltroMoldura(autoTop3Moldura); }, [autoTop3Moldura]);
   useEffect(() => { if (autoTop3M3.length > 0 && filtroM3.length === 0) setFiltroM3(autoTop3M3); }, [autoTop3M3]);
+
+  // Linhas e Colunas
+  const [linhas, setLinhas] = useState<number[] | null>(null);
+  const [colunas, setColunas] = useState<number[] | null>(null);
+  const [linhasAtivo, setLinhasAtivo] = useState(false);
+  const [colunasAtivo, setColunasAtivo] = useState(false);
   
   const [qtdDezenas, setQtdDezenas] = useState(5);
   const [qtdPalpites, setQtdPalpites] = useState(10);
@@ -64,6 +72,7 @@ export default function DesdobramentoQuina() {
   const [jogosGerados, setJogosGerados] = useState<{ dezenas: number[] }[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filtrosPadroesAbertos, setFiltrosPadroesAbertos] = useState(false);
+  const [filtrosLCAbertos, setFiltrosLCAbertos] = useState(false);
   const [modoGrid, setModoGrid] = useState<"fixar" | "excluir">("fixar");
   const [dezenasFixas, setDezenasFixas] = useState<number[]>([]);
   const [dezenasExcluidas, setDezenasExcluidas] = useState<number[]>([]);
@@ -107,12 +116,19 @@ export default function DesdobramentoQuina() {
     }
   };
 
+  // Validação das somas
+  const somaLinhas = linhas ? linhas.reduce((a, b) => a + b, 0) : qtdDezenas;
+  const somaColunas = colunas ? colunas.reduce((a, b) => a + b, 0) : qtdDezenas;
+  const filtrosValidos = (!linhasAtivo || !linhas || somaLinhas === qtdDezenas) && (!colunasAtivo || !colunas || somaColunas === qtdDezenas);
+
   const filtros: FiltrosDesdobramentoQuina = useMemo(() => ({
     qtdImpares: filtroImparesAtivo ? (filtroImpares.length > 0 ? filtroImpares : autoTop3Impares) : null,
     qtdRepetidas: filtroRepetidasAtivo ? (filtroRepetidas.length > 0 ? filtroRepetidas : autoTop3Repetidas) : null,
     qtdPrimos: filtroPrimosAtivo ? (filtroPrimos.length > 0 ? filtroPrimos : autoTop3Primos) : null,
     qtdMoldura: filtroMolduraAtivo ? (filtroMoldura.length > 0 ? filtroMoldura : autoTop3Moldura) : null,
     qtdMultiplosDe3: filtroM3Ativo ? (filtroM3.length > 0 ? filtroM3 : autoTop3M3) : null,
+    linhas: linhasAtivo ? linhas : null,
+    colunas: colunasAtivo ? colunas : null,
     qtdDezenas,
     dezenasUltimoSorteio: ultimoSorteio,
     dezenasFixas,
@@ -121,20 +137,26 @@ export default function DesdobramentoQuina() {
     filtroImpares, filtroRepetidas, filtroPrimos, filtroMoldura, filtroM3,
     filtroImparesAtivo, filtroRepetidasAtivo, filtroPrimosAtivo, filtroMolduraAtivo, filtroM3Ativo,
     autoTop3Impares, autoTop3Repetidas, autoTop3Primos, autoTop3Moldura, autoTop3M3,
+    linhas, colunas, linhasAtivo, colunasAtivo,
     qtdDezenas, ultimoSorteio, dezenasFixas, dezenasExcluidas
   ]);
 
   const [estimativa, setEstimativa] = useState<number | null>(null);
   
   useEffect(() => {
+    if (!filtrosValidos) {
+      setEstimativa(null);
+      return;
+    }
     const timer = setTimeout(() => {
       const count = estimarCombinacoesValidasQuina(filtros, 500);
       setEstimativa(count);
     }, 500);
     return () => clearTimeout(timer);
-  }, [filtros]);
+  }, [filtros, filtrosValidos]);
 
   const handleGerar = () => {
+    if (!filtrosValidos) return;
     setIsGenerating(true);
     setError(null);
     
@@ -161,6 +183,8 @@ export default function DesdobramentoQuina() {
     setDezenasFixas([]);
     setDezenasExcluidas([]);
     setQtdDezenas(5);
+    setLinhas(null);
+    setColunas(null);
     setFiltroImpares(autoTop3Impares);
     setFiltroRepetidas(autoTop3Repetidas);
     setFiltroPrimos(autoTop3Primos);
@@ -179,10 +203,13 @@ export default function DesdobramentoQuina() {
     molduraEhPadrao: filtroMolduraAtivo && (filtroMoldura.length === 0 || (filtroMoldura.length === autoTop3Moldura.length && filtroMoldura.every(v => autoTop3Moldura.includes(v)))),
     multiplosDe3: filtroM3Ativo ? (filtroM3.length > 0 ? filtroM3 : autoTop3M3) : null,
     m3EhPadrao: filtroM3Ativo && (filtroM3.length === 0 || (filtroM3.length === autoTop3M3.length && filtroM3.every(v => autoTop3M3.includes(v)))),
+    linhas: linhasAtivo ? linhas : null,
+    colunas: colunasAtivo ? colunas : null,
   }), [
     filtroImpares, filtroRepetidas, filtroPrimos, filtroMoldura, filtroM3,
     filtroImparesAtivo, filtroRepetidasAtivo, filtroPrimosAtivo, filtroMolduraAtivo, filtroM3Ativo,
-    autoTop3Impares, autoTop3Repetidas, autoTop3Primos, autoTop3Moldura, autoTop3M3
+    autoTop3Impares, autoTop3Repetidas, autoTop3Primos, autoTop3Moldura, autoTop3M3,
+    linhas, colunas, linhasAtivo, colunasAtivo
   ]);
 
   if (jogosGerados && jogosGerados.length > 0) {
@@ -328,6 +355,101 @@ export default function DesdobramentoQuina() {
           </Card>
         )}
 
+        {/* Filtros de Linhas e Colunas */}
+        <button
+          type="button"
+          onClick={() => setFiltrosLCAbertos(!filtrosLCAbertos)}
+          className="w-full flex items-center justify-between py-3 px-4 text-sm font-medium bg-card border rounded-lg hover:bg-muted/50 transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>
+            </svg>
+            Filtros de Linhas e Colunas
+            {!filtrosValidos && (
+              <Badge variant="destructive" className="text-[10px]">
+                Ajustar
+              </Badge>
+            )}
+          </span>
+          {filtrosLCAbertos ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </button>
+
+        {filtrosLCAbertos && (
+          <Card>
+            <CardContent className="pt-4 pb-2">
+              <FiltroLinhasColunasQuina
+                linhas={linhas}
+                colunas={colunas}
+                onLinhasChange={setLinhas}
+                onColunasChange={setColunas}
+                qtdDezenas={qtdDezenas}
+                linhasAtivo={linhasAtivo}
+                colunasAtivo={colunasAtivo}
+                onLinhasAtivoChange={setLinhasAtivo}
+                onColunasAtivoChange={setColunasAtivo}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Erro de validação Linhas/Colunas */}
+        {!filtrosValidos && (somaLinhas > 0 || somaColunas > 0) && (
+          <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-lg text-destructive">
+            <AlertCircle className="h-5 w-5 shrink-0" />
+            <p className="text-sm">
+              A soma das linhas ({somaLinhas}) e colunas ({somaColunas}) deve ser igual a {qtdDezenas}.
+            </p>
+          </div>
+        )}
+
+        {/* Controles de quantidade — ACIMA do grid */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-1">
+            <span className="text-sm text-muted-foreground whitespace-nowrap">Gerar</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={qtdPalpites}
+              onChange={(e) => {
+                const val = parseInt(e.target.value.replace(/\D/g, ""), 10);
+                if (!isNaN(val) && val >= 1 && val <= 250) {
+                  setQtdPalpites(val);
+                } else if (e.target.value === "") {
+                  setQtdPalpites(1);
+                }
+              }}
+              onBlur={(e) => {
+                const val = parseInt(e.target.value, 10);
+                if (isNaN(val) || val < 1) setQtdPalpites(1);
+                else if (val > 250) setQtdPalpites(250);
+              }}
+              className="w-16 h-10 bg-background text-center text-base font-semibold rounded-lg border border-input focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            />
+            <span className="text-sm text-muted-foreground">palpites de</span>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-10 px-3 gap-1.5 font-semibold">
+                {qtdDezenas}
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map((n) => (
+                <DropdownMenuItem key={n} onClick={() => {
+                  setQtdDezenas(n);
+                  if (dezenasFixas.length >= n) {
+                    setDezenasFixas(dezenasFixas.slice(0, n - 1));
+                  }
+                }}>
+                  {n} dezenas
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
         {/* Seletor de modo */}
         <ModoSeletorDesdobramentoQuina
           modo={modoGrid}
@@ -345,44 +467,6 @@ export default function DesdobramentoQuina() {
           modo={modoGrid}
           onToggle={handleToggleDezena}
         />
-
-        {/* Controles de quantidade */}
-        <div className="flex items-center gap-4">
-          <div className="flex-1">
-            <label className="text-xs text-muted-foreground mb-1 block">Quantidade</label>
-            <input
-              type="number"
-              min={1}
-              max={250}
-              value={qtdPalpites}
-              onChange={(e) => setQtdPalpites(Math.min(250, Math.max(1, Number(e.target.value))))}
-              className="w-full h-10 px-3 bg-background border rounded-lg text-center font-medium"
-            />
-          </div>
-          <div className="flex-1">
-            <label className="text-xs text-muted-foreground mb-1 block">Dezenas/jogo</label>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full h-10 justify-between">
-                  {qtdDezenas}
-                  <ChevronDown className="h-4 w-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map((n) => (
-                  <DropdownMenuItem key={n} onClick={() => {
-                    setQtdDezenas(n);
-                    if (dezenasFixas.length >= n) {
-                      setDezenasFixas(dezenasFixas.slice(0, n - 1));
-                    }
-                  }}>
-                    {n} dezenas
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
 
         {/* Estimativa */}
         {estimativa !== null && (
@@ -404,7 +488,7 @@ export default function DesdobramentoQuina() {
           size="lg"
           className="w-full h-14 text-lg font-semibold"
           onClick={handleGerar}
-          disabled={isGenerating}
+          disabled={isGenerating || !filtrosValidos}
         >
           {isGenerating ? (
             <>
