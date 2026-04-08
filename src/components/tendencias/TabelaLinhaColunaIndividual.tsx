@@ -30,14 +30,17 @@ interface EstatisticaQtd {
   ranking: number;
 }
 
-export function TabelaLinhaColunaIndividual({ tipo, indice }: Props) {
+export function TabelaLinhaColunaIndividual({ tipo, indice, loteria = "lotofacil" }: Props) {
+  const getLinha = loteria === "quina" ? getLinhaQ : getLinhaLF;
+  const getColuna = loteria === "quina" ? getColunaQ : getColunaLF;
+
   const { data: estatisticas, isLoading } = useQuery({
-    queryKey: [`estatisticas-${tipo}-${indice}`],
+    queryKey: [`estatisticas-${tipo}-${indice}-${loteria}`],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("resultados_loterias")
         .select("concurso_id:concurso, dezenas")
-        .eq("loteria", "lotofacil")
+        .eq("loteria", loteria)
         .order("concurso", { ascending: false });
 
       if (error) throw error;
