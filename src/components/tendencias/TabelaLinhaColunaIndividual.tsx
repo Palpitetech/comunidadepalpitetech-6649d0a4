@@ -11,11 +11,13 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { getLinha, getColuna } from "@/lib/lotofacil";
+import { getLinha as getLinhaLF, getColuna as getColunaLF } from "@/lib/lotofacil";
+import { getLinha as getLinhaQ, getColuna as getColunaQ } from "@/lib/quina";
 
 interface Props {
   tipo: "linha" | "coluna";
-  indice: number; // 1 a 5
+  indice: number;
+  loteria?: "lotofacil" | "quina";
 }
 
 interface EstatisticaQtd {
@@ -28,14 +30,17 @@ interface EstatisticaQtd {
   ranking: number;
 }
 
-export function TabelaLinhaColunaIndividual({ tipo, indice }: Props) {
+export function TabelaLinhaColunaIndividual({ tipo, indice, loteria = "lotofacil" }: Props) {
+  const getLinha = loteria === "quina" ? getLinhaQ : getLinhaLF;
+  const getColuna = loteria === "quina" ? getColunaQ : getColunaLF;
+
   const { data: estatisticas, isLoading } = useQuery({
-    queryKey: [`estatisticas-${tipo}-${indice}`],
+    queryKey: [`estatisticas-${tipo}-${indice}-${loteria}`],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("resultados_loterias")
         .select("concurso_id:concurso, dezenas")
-        .eq("loteria", "lotofacil")
+        .eq("loteria", loteria)
         .order("concurso", { ascending: false });
 
       if (error) throw error;
