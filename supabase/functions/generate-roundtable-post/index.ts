@@ -599,11 +599,12 @@ Responda APENAS no formato JSON:
     // 8. Delay inicial antes dos comentários
     await new Promise(r => setTimeout(r, 2000));
 
-    // 9. Buscar TODOS os guias ativos (exceto o autor)
+    // 9. Buscar guias ativos COM permissão de comentar (exceto o autor)
     const { data: guides, error: guidesError } = await supabaseAdmin
       .from("guide_personas")
       .select("id, perfil_id, system_prompt, especialidade, cargo, perfis(nome)")
       .eq("ativo", true)
+      .eq("can_comment_on_posts", true)
       .neq("id", authorGuide.id)
       .order("created_at", { ascending: true });
 

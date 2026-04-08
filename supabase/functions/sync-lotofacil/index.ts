@@ -111,7 +111,7 @@ async function dispararNotificacaoResultadoNovo(params: {
   }
 }
 
-// Cria o post de resultado oficial diretamente pela Ana (sem depender de outra edge function)
+// Cria o post de resultado oficial (Palpite Tech como autor)
 async function criarPostResultadoOficial(params: {
   supabase: any;
   concurso: number;
@@ -134,7 +134,7 @@ async function criarPostResultadoOficial(params: {
       .eq("can_create_posts", true)
       .single();
 
-    if (authorError || !ana) {
+    if (authorError || !author) {
       console.error(`[RESULT-POST] ❌ Autor de resultados não encontrado ou inativo`);
       return;
     }
@@ -237,7 +237,7 @@ Responda APENAS no formato JSON:
       return;
     }
 
-    // 5. Atualizar estatísticas da Ana
+    // 5. Atualizar estatísticas do autor
     await supabase
       .from("guide_personas")
       .update({
