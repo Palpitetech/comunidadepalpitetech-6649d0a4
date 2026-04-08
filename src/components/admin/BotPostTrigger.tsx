@@ -132,32 +132,18 @@ export function BotPostTrigger({ bots, onSuccess }: BotPostTriggerProps) {
     setLoading(true);
 
     try {
-      if (selectedBot === "result_author") {
-        // Chamar edge function de resultado (generate-roundtable-post)
+      if (selectedBot === "result_author" || postType === "resultado_oficial") {
         const { data, error } = await supabase.functions.invoke("generate-roundtable-post", {
           body: { tipo_post: postType, contexto_extra: contextoExtra },
         });
-
         if (error) throw error;
-
-        if (postType === "resultado_oficial") {
-          toast.success(`Plantão publicado! Concurso ${data?.concurso_referencia || ultimoResultado?.concurso_id}`);
-        } else {
-          toast.success(`Post de resultados criado! ID: ${data?.post_id}`);
-        }
+        toast.success(`Post publicado! ${data?.titulo || ''}`);
       } else {
-        // Chamar edge function de post individual
-        const { data, error } = await supabase.functions.invoke("generate-bot-post", {
-          body: {
-            guide_id: selectedBot,
-            tipo_post: postType,
-            contexto_extra: contextoExtra,
-          },
+        const { data, error } = await supabase.functions.invoke("generate-guide-post", {
+          body: { tipo_post: postType },
         });
-
         if (error) throw error;
-
-        toast.success(`Post do bot criado! ID: ${data?.post_id}`);
+        toast.success(`Post publicado! ${data?.titulo || ''}`);
       }
 
       setPreview(null);

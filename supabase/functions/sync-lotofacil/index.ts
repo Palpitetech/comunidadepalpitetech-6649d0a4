@@ -112,7 +112,7 @@ async function dispararNotificacaoResultadoNovo(params: {
 }
 
 // Cria o post de resultado oficial diretamente pela Ana (sem depender de outra edge function)
-async function criarPostResultadoOficialAna(params: {
+async function criarPostResultadoOficial(params: {
   supabase: any;
   concurso: number;
   dezenas: number[];
@@ -122,11 +122,11 @@ async function criarPostResultadoOficialAna(params: {
 }): Promise<void> {
   const { supabase, concurso, dezenas, indicadores, cicloInfo, acumulou } = params;
 
-  console.log(`[ANA-POST] Criando post de resultado para concurso ${concurso}`);
+  console.log(`[RESULT-POST] Criando post de resultado para concurso ${concurso}`);
 
   try {
-    // 1. Buscar perfil_id da Ana (is_result_author)
-    const { data: ana, error: anaError } = await supabase
+    // 1. Buscar perfil_id do autor de resultados (is_result_author = Palpite Tech)
+    const { data: author, error: authorError } = await supabase
       .from("guide_personas")
       .select("id, perfil_id, system_prompt, max_chars_post, ai_model, total_posts")
       .eq("is_result_author", true)
@@ -134,8 +134,8 @@ async function criarPostResultadoOficialAna(params: {
       .eq("can_create_posts", true)
       .single();
 
-    if (anaError || !ana) {
-      console.error(`[ANA-POST] ❌ Bot Ana não encontrado ou inativo`);
+    if (authorError || !ana) {
+      console.error(`[RESULT-POST] ❌ Autor de resultados não encontrado ou inativo`);
       return;
     }
 
@@ -154,7 +154,7 @@ ${acumulou ? "💰 ACUMULOU!" : ""}`;
     // 3. Gerar post via IA
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
-      console.error("[ANA-POST] ❌ LOVABLE_API_KEY não configurada");
+      console.error("[RESULT-POST] ❌ LOVABLE_API_KEY não configurada");
       return;
     }
 
@@ -165,9 +165,9 @@ ${acumulou ? "💰 ACUMULOU!" : ""}`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: ana.ai_model || "google/gemini-3-flash-preview",
+        model: author.ai_model || "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: ana.system_prompt },
+          { role: "system", content: author.system_prompt },
           {
             role: "user",
             content: `Crie um post de PLANTÃO anunciando o resultado oficial da Lotofácil.
@@ -176,7 +176,7 @@ ${contextoResultado}
 
 INSTRUÇÕES:
 - Título chamativo com emoji 🚨 (máximo 60 caracteres)
-- Máximo ${ana.max_chars_post || 800} caracteres no conteúdo
+- Máximo ${author.max_chars_post || 800} caracteres no conteúdo
 
 FORMATO OBRIGATÓRIO DO CONTEÚDO:
 - Use emojis como marcadores de seção (🚨, 🎯, 📊, 🔄, 💡)
@@ -202,7 +202,7 @@ Responda APENAS no formato JSON:
     });
 
     if (!aiResponse.ok) {
-      console.error(`[ANA-POST] ❌ Erro na IA: ${aiResponse.status}`);
+      console.error(`[RESULT-POST] ❌ Erro na IA: ${aiResponse.status}`);
       return;
     }
 
@@ -214,7 +214,7 @@ Responda APENAS no formato JSON:
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       parsed = JSON.parse(jsonMatch?.[0] || content);
     } catch {
-      console.error("[ANA-POST] ❌ Formato de resposta inválido da IA");
+      console.error("[RESULT-POST] ❌ Formato de resposta inválido da IA");
       return;
     }
 
@@ -222,7 +222,7 @@ Responda APENAS no formato JSON:
     const { data: newPost, error: postError } = await supabase
       .from("postagens")
       .insert({
-        user_id: ana.perfil_id,
+        user_id: author.perfil_id,
         titulo: parsed.titulo?.substring(0, 100),
         conteudo: parsed.conteudo?.substring(0, 1000),
         loteria_tag: "Lotofácil",
@@ -233,7 +233,7 @@ Responda APENAS no formato JSON:
       .single();
 
     if (postError) {
-      console.error(`[ANA-POST] ❌ Erro ao criar post:`, postError.message);
+      console.error(`[RESULT-POST] ❌ Erro ao criar post:`, postError.message);
       return;
     }
 
@@ -242,24 +242,24 @@ Responda APENAS no formato JSON:
       .from("guide_personas")
       .update({
         ultimo_post_em: new Date().toISOString(),
-        total_posts: (ana.total_posts || 0) + 1
+        total_posts: (author.total_posts || 0) + 1
       })
-      .eq("id", ana.id);
+      .eq("id", author.id);
 
     // 6. Log de sucesso
     await supabase
       .from("bot_publishing_logs")
       .insert({
-        guide_persona_id: ana.id,
+        guide_persona_id: author.id,
         bot_name: "Ana",
         event_type: "success",
         reason: "Result post created directly by sync",
         details: { post_id: newPost.id, concurso }
       });
 
-    console.log(`[ANA-POST] ✅ Post criado com sucesso: ${newPost.id}`);
+    console.log(`[RESULT-POST] ✅ Post criado com sucesso: ${newPost.id}`);
   } catch (err) {
-    console.error(`[ANA-POST] ❌ Erro geral:`, err);
+    console.error(`[RESULT-POST] ❌ Erro geral:`, err);
   }
 }
 

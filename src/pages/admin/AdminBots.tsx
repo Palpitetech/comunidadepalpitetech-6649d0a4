@@ -2,10 +2,9 @@ import { useState } from "react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Loader2, MessageSquare, Bot } from "lucide-react";
+import { Loader2, MessageSquare, Bot } from "lucide-react";
 import { useBots } from "@/hooks/useBots";
 import { BotDetailSheet } from "@/components/admin/BotDetailSheet";
-import { BotForm } from "@/components/admin/BotForm";
 import { BotPostTrigger } from "@/components/admin/BotPostTrigger";
 import { BotCategoryFolder } from "@/components/admin/BotCategoryFolder";
 import type { BotWithStats } from "@/types/bots";
@@ -18,7 +17,7 @@ export default function AdminBots() {
   const chatOnlyBots = bots.filter(b => !b.can_create_posts && b.chat_enabled);
   const [selectedBot, setSelectedBot] = useState<BotWithStats | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [newBotDialogOpen, setNewBotDialogOpen] = useState(false);
+  // newBotDialogOpen removed
   const [triggerDialogOpen, setTriggerDialogOpen] = useState(false);
 
   const handleBotClick = (bot: BotWithStats) => {
@@ -26,17 +25,6 @@ export default function AdminBots() {
     setSheetOpen(true);
   };
 
-  const handleBotSaved = async (botId: string) => {
-    setNewBotDialogOpen(false);
-    
-    // Refetch and find the newly created bot
-    const updatedBots = await refetch();
-    const createdBot = updatedBots.find((b) => b.id === botId);
-    if (createdBot) {
-      setSelectedBot(createdBot);
-      setSheetOpen(true);
-    }
-  };
 
   if (loading) {
     return (
@@ -82,21 +70,6 @@ export default function AdminBots() {
               </DialogContent>
             </Dialog>
 
-            {/* Novo Bot */}
-            <Dialog open={newBotDialogOpen} onOpenChange={setNewBotDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Novo Bot
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Criar Novo Bot</DialogTitle>
-                </DialogHeader>
-                <BotForm onSaved={handleBotSaved} onCancel={() => setNewBotDialogOpen(false)} />
-              </DialogContent>
-            </Dialog>
           </div>
         </div>
 

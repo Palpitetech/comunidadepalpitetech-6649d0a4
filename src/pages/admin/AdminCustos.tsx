@@ -17,11 +17,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const FUNCTION_LABELS: Record<string, string> = {
-  "generate-bot-post": "Post de Bot",
-  "bot-interact-with-post": "Comentário de Bot",
-  "bot-reply-user": "Resposta a Usuário",
-  "generate-roundtable-post": "Mesa Redonda",
-  "generate-guide-post": "Post de Guia",
+  "generate-roundtable-post": "Post de Resultado",
+  "generate-guide-post": "Post Analítico",
   "chat-assistant": "Chat Assistente",
   "generate-palpites": "Gerador Lotofácil",
   "generate-palpites-megasena": "Gerador Mega Sena",
