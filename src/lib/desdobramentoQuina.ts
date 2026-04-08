@@ -2,7 +2,9 @@ import {
   isPrimo,
   isMoldura,
   isMultiploDe3,
-  TOTAL_DEZENAS_VOLANTE
+  TOTAL_DEZENAS_VOLANTE,
+  LINHAS_GRID,
+  COLUNAS_GRID
 } from "./quina";
 
 export interface FiltrosDesdobramentoQuina {
@@ -11,6 +13,8 @@ export interface FiltrosDesdobramentoQuina {
   qtdPrimos: number[] | null;
   qtdMoldura: number[] | null;
   qtdMultiplosDe3: number[] | null;
+  linhas: number[] | null;
+  colunas: number[] | null;
   qtdDezenas: number;
   dezenasUltimoSorteio?: number[];
   dezenasFixas?: number[];
