@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LoteriaBadge } from "@/components/comunidade/LoteriaBadge";
+import { FormattedContent } from "@/components/comunidade/FormattedContent";
 
 import { ActionBar } from "@/components/comunidade/ActionBar";
 import { CommentSection } from "@/components/comunidade/CommentSection";

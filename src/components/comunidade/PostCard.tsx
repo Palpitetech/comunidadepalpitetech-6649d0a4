@@ -92,9 +92,12 @@ export const PostCard = memo(function PostCard({ post, onClick, onPrefetch }: Po
 
       {/* Conteúdo resumido */}
       {!post.media_url && post.conteudo && (
-        <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-          {post.conteudo}
-        </p>
+        <FormattedContent
+          content={post.conteudo}
+          truncate
+          maxLines={2}
+          className="mb-2"
+        />
       )}
 
       {/* Footer */}
