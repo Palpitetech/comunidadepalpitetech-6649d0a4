@@ -90,8 +90,12 @@ const DUPLASENA_TOOLS = [
   { to: "/duplasena/fechamento", label: "Fechamento", icon: Wrench, gated: true },
 ];
 
+const QUINA_TOOLS = [
+  { to: "/quina/resultados", label: "Resultados", icon: BarChart3, gated: false },
+  { to: "/quina/tendencias", label: "Tendências", icon: TrendingUp, gated: true },
+];
+
 const SIMPLE_LOTTERIES = [
-  { name: "Quina", resultsPath: "/quina/resultados" },
   { name: "Dia de Sorte", resultsPath: "/diadesorte/resultados" },
   { name: "Lotomania", resultsPath: "/lotomania/resultados" },
 ];
@@ -258,7 +262,14 @@ export function DesktopHeader() {
             renderBadge={renderBadge}
           />
 
-          {/* Loterias simples (só resultados) */}
+          {/* Quina */}
+          <LotteryDropdown
+            name="Quina"
+            tools={QUINA_TOOLS}
+            handleGatedClick={handleGatedClick}
+            renderBadge={renderBadge}
+          />
+
           {SIMPLE_LOTTERIES.map((lottery) => (
             <DropdownMenu key={lottery.name}>
               <DropdownMenuTrigger asChild>
