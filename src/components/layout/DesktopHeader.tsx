@@ -91,6 +91,7 @@ const DUPLASENA_TOOLS = [
 ];
 
 const QUINA_TOOLS = [
+  { to: "/quina/analise-do-dia", label: "Análise do Dia", icon: Target, gated: true },
   { to: "/quina/resultados", label: "Resultados", icon: BarChart3, gated: false },
   { to: "/quina/tendencias", label: "Tendências", icon: TrendingUp, gated: true },
   { to: "/quina/frequencia", label: "Quentes e Frias", icon: Flame, gated: true },

@@ -41,6 +41,17 @@ export const ROUTE_FEATURE_MAP: Record<string, FeatureKey> = {
   "/duplasena/desdobramento": "desdobramento",
   "/duplasena/fechamento": "fechamento",
 
+  // Quina
+  "/quina/tendencias": "tendencias",
+  "/quina/linhas-colunas": "linhas_colunas",
+  "/quina/frequencia": "quentes_frias",
+  "/quina/frequencia-dezenas": "frequencia_dezenas",
+  "/quina/dezenas-posicao": "dezenas_por_posicao",
+  "/quina/tabela-movimentacao": "tabela_movimentacao",
+  "/quina/analise-do-dia": "analise_do_dia",
+  "/quina/gerador": "gerador",
+  "/quina/desdobramento": "desdobramento",
+
   // Outros
   "/meus-palpites": "palpites_salvos",
   "/convites": "comunidade_full",
