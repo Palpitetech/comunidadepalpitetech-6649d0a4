@@ -70,6 +70,7 @@ const boloesItems = [
 
 const gravacaoItems = [
   { title: "Lotofácil", url: "/admin/gravacao/lotofacil", icon: BarChart3 },
+  { title: "Quina", url: "/admin/gravacao/quina", icon: BarChart3 },
 ];
 
 export function AdminSidebar() {
