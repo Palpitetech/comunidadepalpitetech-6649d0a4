@@ -6,9 +6,15 @@ interface GravacaoShellProps {
   children: ReactNode[];
   concurso?: number;
   data?: string;
+  loteria?: "lotofacil" | "quina";
 }
 
-export default function GravacaoShell({ children, concurso, data }: GravacaoShellProps) {
+export default function GravacaoShell({ children, concurso, data, loteria = "lotofacil" }: GravacaoShellProps) {
+  const isQuina = loteria === "quina";
+  const loteriaLabel = isQuina ? "QUINA" : "LOTOFÁCIL";
+  const gradientStyle = isQuina
+    ? "linear-gradient(135deg, #818CF8, #6366F1)"
+    : "linear-gradient(135deg, #A78BFA, #7C3AED)";
   const [slide, setSlide] = useState(0);
   const total = children.length;
   const navigate = useNavigate();
