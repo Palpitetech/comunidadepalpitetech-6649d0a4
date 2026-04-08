@@ -302,7 +302,7 @@ export default function AnaliseDoDiaQuina() {
                       );
                     })
                   ) : (
-                    <span className="col-span-4 text-[11px] text-muted-foreground">Nenhuma dezena com ≥70% de frequência</span>
+                    <span className="col-span-4 text-[11px] text-muted-foreground">Nenhuma dezena com ≥10% de frequência</span>
                   )}
                 </div>
                 {selectedFixas.length > 0 && !addedGroups.fixas && (
