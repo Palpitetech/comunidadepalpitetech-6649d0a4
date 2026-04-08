@@ -495,6 +495,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                                 {renderBadge("/quina/linhas-colunas")}
                               </div>
                             </Link>
+                           <Link to="/quina/tabela-movimentacao" onClick={(e) => handleGatedClick(e, "/quina/tabela-movimentacao")}>
+                              <div className="py-2.5 text-[15px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
+                                Tabela Movimentação
+                                {renderBadge("/quina/tabela-movimentacao")}
+                              </div>
+                            </Link>
                          </div>
                       </AccordionContent>
                    </AccordionItem>
