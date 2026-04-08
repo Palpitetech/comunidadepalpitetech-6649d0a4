@@ -57,12 +57,13 @@ serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const quantidade = Math.min(Math.max(body.quantidade || 1, 1), 250);
-    const qtdDezenas = 5; // Quina sempre 5 dezenas
+    const qtdDezenas = Math.min(Math.max(body.qtdDezenas || 5, 5), 15);
     const periodoAnalise = Math.min(Math.max(body.periodoAnalise || 50, 1), 100);
 
+    const maxFixas = qtdDezenas - 1;
     const dezenasFiexas: number[] = (body.dezenasFiexas || [])
       .filter((d: number) => d >= 1 && d <= 80)
-      .slice(0, 4);
+      .slice(0, maxFixas);
     const dezenasExcluidas: number[] = (body.dezenasExcluidas || [])
       .filter((d: number) => d >= 1 && d <= 80)
       .slice(0, 20);
