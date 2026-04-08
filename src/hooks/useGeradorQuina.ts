@@ -28,6 +28,7 @@ export function useGeradorQuina() {
 
   const generatePalpites = async (
     quantidade: number,
+    qtdDezenas: number = 5,
     periodoAnalise: number = 50,
     filtros?: FiltrosGeradorQuina
   ) => {
@@ -51,6 +52,7 @@ export function useGeradorQuina() {
           },
           body: JSON.stringify({
             quantidade,
+            qtdDezenas,
             periodoAnalise,
             dezenasFiexas: filtros?.dezenasFiexas,
             dezenasExcluidas: filtros?.dezenasExcluidas,
