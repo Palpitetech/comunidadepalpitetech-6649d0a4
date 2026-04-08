@@ -559,11 +559,19 @@ Responda APENAS no formato JSON:
       titulo: parsed.titulo.substring(0, 100),
       conteudo: parsed.conteudo.substring(0, 1000),
       loteria_tag: "Lotofácil",
-      tipo: isResultadoOficial ? "resultado" : (tipoPost || "analise"),
+      tipo: isResultadoOficial ? "resultado_oficial" : (tipoPost || "analise"),
     };
 
     if (isResultadoOficial && ultimoResultado) {
-      postData.concurso_referencia = ultimoResultado.concurso_id;
+      // Check if concurso exists in resultados table (FK constraint)
+      const { data: existsInResultados } = await supabaseAdmin
+        .from("resultados")
+        .select("concurso_id")
+        .eq("concurso_id", ultimoResultado.concurso_id)
+        .maybeSingle();
+      if (existsInResultados) {
+        postData.concurso_referencia = ultimoResultado.concurso_id;
+      }
     }
 
     const { data: newPost, error: postError } = await supabaseAdmin
@@ -573,7 +581,8 @@ Responda APENAS no formato JSON:
       .single();
 
     if (postError || !newPost) {
-      throw new Error("Erro ao criar post");
+      console.error("DB insert error:", JSON.stringify(postError));
+      throw new Error(`Erro ao criar post: ${postError?.message || 'unknown'}`);
     }
 
     console.log(`Post criado por ${authorName}: ${newPost.id}${isResultadoOficial ? ` (Concurso ${ultimoResultado.concurso_id})` : ""}`);
