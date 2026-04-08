@@ -62,7 +62,7 @@ serve(async (req) => {
 
     const dezenasFiexas: number[] = (body.dezenasFiexas || [])
       .filter((d: number) => d >= 1 && d <= 80)
-      .slice(0, 4); // Max 4 fixas para Quina (5 dezenas)
+      .slice(0, 4);
     const dezenasExcluidas: number[] = (body.dezenasExcluidas || [])
       .filter((d: number) => d >= 1 && d <= 80)
       .slice(0, 20);
@@ -77,7 +77,7 @@ serve(async (req) => {
       .single();
     const isAdmin = !!userRole;
 
-    // Verificar plano
+    // Verificar plano e feature do usuário
     const { data: perfil } = await supabaseAdmin
       .from("perfis")
       .select("plan_id, custom_features")
@@ -85,6 +85,8 @@ serve(async (req) => {
       .single();
 
     let geradorMaxPerDay = 1;
+    let hasGeradorFeature = false;
+
     if (perfil?.plan_id) {
       const { data: plan } = await supabaseAdmin
         .from("plans")
@@ -92,7 +94,17 @@ serve(async (req) => {
         .eq("id", perfil.plan_id)
         .single();
       if (plan) {
+        const features = plan.features as Record<string, boolean> || {};
+        hasGeradorFeature = features.gerador === true;
         geradorMaxPerDay = plan.gerador_max_per_day || 1;
+      }
+    }
+
+    // Verificar custom_features override
+    if (perfil?.custom_features) {
+      const customFeatures = perfil.custom_features as Record<string, boolean>;
+      if (customFeatures.gerador !== undefined) {
+        hasGeradorFeature = customFeatures.gerador;
       }
     }
 
@@ -192,7 +204,7 @@ DEFINIÇÕES DA QUINA:
 - Moldura: dezenas nas bordas do volante 8x10
 - Primos dentro do universo: ${PRIMOS_QUINA.join(', ')}
 
-PERÍODO DE ANÁLISE: ${periodoAnalise} concurso(s)
+PERÍODO DE ANÁLISE: ${periodoAnalise} concurso(s) - ${periodoAnalise <= 5 ? 'Foco em tendências recentes' : periodoAnalise <= 10 ? 'Equilíbrio recente/histórico' : 'Base histórica ampla'}
 `;
 
     let filtrosTexto = "";
@@ -203,7 +215,7 @@ PERÍODO DE ANÁLISE: ${periodoAnalise} concurso(s)
       filtrosTexto += `\nDEZENAS EXCLUÍDAS (PROIBIDAS em todos os jogos): ${dezenasExcluidas.map((d: number) => d.toString().padStart(2, '0')).join(', ')}`;
     }
     if (pedidoEspecial) {
-      filtrosTexto += `\nPEDIDO ESPECIAL DO USUÁRIO: "${pedidoEspecial}"`;
+      filtrosTexto += `\nPEDIDO ESPECIAL DO USUÁRIO: "${pedidoEspecial}" (atenda dentro das possibilidades matemáticas)`;
     }
 
     const systemPrompt = `Você é um especialista em análise estatística da Quina.
@@ -211,15 +223,15 @@ PERÍODO DE ANÁLISE: ${periodoAnalise} concurso(s)
 REGRAS OBRIGATÓRIAS:
 1. Cada jogo DEVE ter EXATAMENTE 5 dezenas únicas de 01 a 80
 2. As dezenas devem ser números inteiros entre 1 e 80
-3. Diversifique as estratégias entre os jogos
+3. Diversifique as estratégias entre os jogos (se houver mais de um)
 4. Considere o equilíbrio histórico nas suas escolhas
-5. Inclua dezenas faltantes do ciclo quando disponíveis
-6. NUNCA prometa vitória
-7. Seja didático e acessível
+5. Inclua pelo menos algumas dezenas faltantes do ciclo quando disponíveis
+6. NUNCA prometa vitória - loteria é probabilidade
+7. Seja didático e acessível na explicação
 ${dezenasFiexas.length > 0 ? `8. OBRIGATÓRIO: Todas as dezenas fixas [${dezenasFiexas.join(', ')}] DEVEM aparecer em TODOS os jogos` : ''}
 ${dezenasExcluidas.length > 0 ? `9. PROIBIDO: As dezenas excluídas [${dezenasExcluidas.join(', ')}] NÃO PODEM aparecer em nenhum jogo` : ''}
 
-Use a função generate_palpites para retornar os jogos estruturados.`;
+Você deve usar a função generate_palpites para retornar os jogos estruturados.`;
 
     const userPrompt = `${contextoEstatistico}${filtrosTexto}
 
@@ -231,7 +243,7 @@ Para cada jogo, utilize uma abordagem diferente (se houver mais de um):
 - Jogo 3: Foco nas dezenas faltantes do ciclo
 - Jogo 4+: Combinações estratégicas variadas
 
-Explique brevemente a estratégia geral utilizada.`;
+Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -258,13 +270,13 @@ Explique brevemente a estratégia geral utilizada.`;
             type: "function",
             function: {
               name: "generate_palpites",
-              description: "Gera palpites estruturados para a Quina",
+              description: "Gera palpites estruturados para a Quina com explicação detalhada da estratégia",
               parameters: {
                 type: "object",
                 properties: {
                   jogos: {
                     type: "array",
-                    description: "Lista de jogos, cada um com exatamente 5 dezenas de 1-80",
+                    description: "Lista de jogos gerados, cada um com exatamente 5 dezenas",
                     items: {
                       type: "object",
                       properties: {
@@ -279,13 +291,16 @@ Explique brevemente a estratégia geral utilizada.`;
                   },
                   estrategia: {
                     type: "object",
+                    description: "Detalhes estruturados da estratégia utilizada",
                     properties: {
                       ferramentas: {
                         type: "array",
+                        description: "Lista de ferramentas/metodologias utilizadas (ex: Análise de Frequência, Ciclos, Padrões Históricos)",
                         items: { type: "string" }
                       },
                       dezenas_fixas: {
                         type: "array",
+                        description: "Dezenas que foram priorizadas na geração e o motivo",
                         items: {
                           type: "object",
                           properties: {
@@ -296,6 +311,7 @@ Explique brevemente a estratégia geral utilizada.`;
                       },
                       dezenas_evitadas: {
                         type: "array",
+                        description: "Dezenas que foram evitadas e o motivo",
                         items: {
                           type: "object",
                           properties: {
@@ -306,6 +322,7 @@ Explique brevemente a estratégia geral utilizada.`;
                       },
                       filtros_aplicados: {
                         type: "array",
+                        description: "Filtros de padrões aplicados (ex: equilíbrio par/ímpar, distribuição na moldura)",
                         items: {
                           type: "object",
                           properties: {
@@ -315,7 +332,10 @@ Explique brevemente a estratégia geral utilizada.`;
                           }
                         }
                       },
-                      conclusao: { type: "string" }
+                      conclusao: {
+                        type: "string",
+                        description: "Resumo final da estratégia em 2-3 frases"
+                      }
                     },
                     required: ["ferramentas", "filtros_aplicados", "conclusao"]
                   }
@@ -356,7 +376,7 @@ Explique brevemente a estratégia geral utilizada.`;
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
     const aiUsage = aiData.usage;
 
-    // Log de uso
+    // Log de uso de IA
     if (aiUsage) {
       supabaseAdmin.from("ai_usage_logs").insert({
         user_id: user.id,
@@ -372,7 +392,7 @@ Explique brevemente a estratégia geral utilizada.`;
     }
 
     if (!toolCall?.function?.arguments) {
-      return new Response(JSON.stringify({ error: "Resposta inválida" }), {
+      return new Response(JSON.stringify({ error: "Resposta inválida da IA" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -387,10 +407,12 @@ Explique brevemente a estratégia geral utilizada.`;
         .map((d: number) => Math.round(d))
         .filter((d: number) => d >= 1 && d <= 80);
 
+      // Remover dezenas excluídas
       if (dezenasExcluidas.length > 0) {
         dezenas = dezenas.filter((d: number) => !dezenasExcluidas.includes(d));
       }
 
+      // Garantir dezenas fixas presentes
       if (dezenasFiexas.length > 0) {
         for (const fixa of dezenasFiexas) {
           if (!dezenas.includes(fixa)) {
@@ -401,7 +423,7 @@ Explique brevemente a estratégia geral utilizada.`;
 
       const dezenasUnicas = [...new Set(dezenas)].slice(0, 5);
 
-      // Completar se necessário
+      // Completar com dezenas aleatórias se necessário (evitando excluídas)
       while (dezenasUnicas.length < 5) {
         const random = Math.floor(Math.random() * 80) + 1;
         if (!dezenasUnicas.includes(random) && !dezenasExcluidas.includes(random)) {
