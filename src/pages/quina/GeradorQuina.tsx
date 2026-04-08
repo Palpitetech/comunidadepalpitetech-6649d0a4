@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { QuantidadeSelector } from "@/components/gerador/QuantidadeSelector";
 import { PeriodoAnaliseSelector } from "@/components/gerador/PeriodoAnaliseSelector";
+import { DezenasQuinaSelector } from "@/components/gerador/DezenasQuinaSelector";
 import { PedidoEspecialInput } from "@/components/gerador/PedidoEspecialInput";
 import { FiltroDezenasQuinaSelector } from "@/components/gerador/FiltroDezenasQuinaSelector";
 import { ResultadosSheetQuina } from "@/components/gerador/ResultadosSheetQuina";
