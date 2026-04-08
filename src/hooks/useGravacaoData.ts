@@ -82,6 +82,11 @@ export interface FaixaPremiacao {
   valorPremioFormatado: string;
 }
 
+export interface ConcursoHistorico {
+  concurso: number;
+  dezenas: number[];
+}
+
 export interface GravacaoData {
   concurso: number;
   data: string;
@@ -95,6 +100,7 @@ export interface GravacaoData {
   tendencias: TendenciaIndicador[];
   frequenciaDezenas: FrequenciaDezena[];
   topDuplas: DuplaFrequente[];
+  historicoConcursos: ConcursoHistorico[];
   loading: boolean;
 }
 
@@ -225,13 +231,13 @@ export function useGravacaoData() {
   return useQuery({
     queryKey: ["gravacao-lotofacil"],
     queryFn: async () => {
-      // 1. Fetch last 10 concursos for stats display
+      // 1. Fetch last 12 concursos for stats display + historico slide
       const { data, error } = await (supabase as any)
         .from("resultados_loterias")
         .select("concurso, dezenas, data_sorteio, valor_premio_principal")
         .eq("loteria", "lotofacil")
         .order("concurso", { ascending: false })
-        .limit(10);
+        .limit(12);
 
       if (error) throw error;
       if (!data || data.length === 0) throw new Error("Sem dados");
@@ -409,6 +415,12 @@ export function useGravacaoData() {
           ? currFmt.format(ultimo.valor_premio_principal)
           : "—";
 
+      // Build historico (all 12 concursos, sorted desc)
+      const historicoConcursos: ConcursoHistorico[] = concursos.map(c => ({
+        concurso: c.concurso,
+        dezenas: [...c.dezenas].sort((a, b) => a - b),
+      }));
+
       return {
         concurso: ultimo.concurso,
         data: dataFormatada,
@@ -422,6 +434,7 @@ export function useGravacaoData() {
         tendencias,
         frequenciaDezenas,
         topDuplas,
+        historicoConcursos,
         loading: false,
       } as GravacaoData;
     },

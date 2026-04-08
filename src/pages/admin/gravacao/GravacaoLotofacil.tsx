@@ -1,8 +1,8 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useGravacaoData } from "@/hooks/useGravacaoData";
 import GravacaoShell from "@/components/gravacao/GravacaoShell";
 import SlideIntro from "@/components/gravacao/SlideIntro";
 import SlideResultado from "@/components/gravacao/SlideResultado";
+import SlideHistorico from "@/components/gravacao/SlideHistorico";
 import SlideEstatisticas from "@/components/gravacao/SlideEstatisticas";
 import SlideFrequencia from "@/components/gravacao/SlideFrequencia";
 import SlideTendencias from "@/components/gravacao/SlideTendencias";
@@ -32,6 +32,7 @@ export default function GravacaoLotofacil() {
     <GravacaoShell concurso={data.concurso} data={data.data}>
       <SlideIntro concurso={data.concurso} data={data.data} premiacao={data.premiacao} faixasPremiacao={data.faixasPremiacao} />
       <SlideResultado dezenas={data.dezenas} />
+      <SlideHistorico concursos={data.historicoConcursos} />
       <SlideEstatisticas dezenas={data.dezenas} estatisticas={data.estatisticas} tendencias={data.tendencias} />
       <SlideFrequencia frequenciaDezenas={data.frequenciaDezenas} topDuplas={data.topDuplas} />
       <SlideTendencias jogos={data.jogos} estrategiaIA={data.estrategiaIA} />
