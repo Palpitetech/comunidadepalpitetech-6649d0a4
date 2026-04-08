@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-export type LoteriaType = "lotofacil" | "megasena" | "duplasena";
+export type LoteriaType = "lotofacil" | "megasena" | "duplasena" | "quina";
 
 interface AcertosBadgeProps {
   acertos: number;
@@ -50,6 +50,8 @@ function getLoteriaConfig(loteria: LoteriaType, acertos: number) {
       return getMegaSenaConfig(acertos);
     case "duplasena":
       return getDuplaSenaConfig(acertos);
+    case "quina":
+      return getQuinaConfig(acertos);
     default:
       return null;
   }
@@ -115,6 +117,26 @@ function getDuplaSenaConfig(acertos: number) {
   return { className, isPremio, isMaximo };
 }
 
+function getQuinaConfig(acertos: number) {
+  // Quina: 2-5 acertos são premiados
+  const isPremio = acertos >= 2;
+  const isMaximo = acertos === 5;
+
+  let className = "bg-muted text-muted-foreground";
+  
+  if (isMaximo) {
+    className = "bg-indigo-500 text-white animate-pulse shadow-lg";
+  } else if (acertos === 4) {
+    className = "bg-indigo-600 text-white";
+  } else if (acertos === 3) {
+    className = "bg-indigo-700 text-white";
+  } else if (acertos === 2) {
+    className = "bg-indigo-800 text-indigo-50";
+  }
+
+  return { className, isPremio, isMaximo };
+}
+
 /**
  * Verifica se o número de acertos é premiado para a loteria
  */
@@ -126,6 +148,8 @@ export function isPremiadoNaLoteria(acertos: number, loteria: LoteriaType): bool
       return acertos >= 4;
     case "duplasena":
       return acertos >= 3;
+    case "quina":
+      return acertos >= 2;
     default:
       return false;
   }
