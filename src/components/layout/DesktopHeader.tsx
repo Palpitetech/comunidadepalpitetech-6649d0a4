@@ -98,6 +98,7 @@ const QUINA_TOOLS = [
   { to: "/quina/dezenas-posicao", label: "Dezenas por Posição", icon: Target, gated: true },
   { to: "/quina/linhas-colunas", label: "Linhas e Colunas", icon: LayoutGrid, gated: true },
   { to: "/quina/tabela-movimentacao", label: "Tabela Movimentação", icon: Table2, gated: true },
+  { to: "/quina/gerador", label: "Gerador", icon: Dices, gated: true },
 ];
 
 const SIMPLE_LOTTERIES = [
