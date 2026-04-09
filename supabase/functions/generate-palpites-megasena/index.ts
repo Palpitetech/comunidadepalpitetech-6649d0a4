@@ -57,7 +57,7 @@ serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const quantidade = Math.min(Math.max(body.quantidade || 1, 1), 250);
-    const periodoAnalise = Math.min(Math.max(body.periodoAnalise || 50, 1), 100);
+    const periodoAnalise = Math.min(Math.max(body.periodoAnalise || 50, 1), 500);
     
     const dezenasFiexas: number[] = (body.dezenasFiexas || [])
       .filter((d: number) => d >= 1 && d <= TOTAL_DEZENAS)
