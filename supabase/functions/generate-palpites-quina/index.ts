@@ -58,7 +58,7 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const quantidade = Math.min(Math.max(body.quantidade || 1, 1), 250);
     const qtdDezenas = Math.min(Math.max(body.qtdDezenas || 5, 5), 15);
-    const periodoAnalise = Math.min(Math.max(body.periodoAnalise || 50, 1), 100);
+    const periodoAnalise = Math.min(Math.max(body.periodoAnalise || 50, 1), 500);
 
     const maxFixas = qtdDezenas - 1;
     const dezenasFiexas: number[] = (body.dezenasFiexas || [])
