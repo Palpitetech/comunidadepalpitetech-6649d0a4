@@ -175,7 +175,7 @@ function LotteryDropdown({
   );
 }
 
-export function DesktopHeader() {
+export function DesktopHeader({ pageTitle, breadcrumb }: DesktopHeaderProps) {
   const { isAuthenticated, profile, signOut } = useAuthContext();
   const { isAdmin } = usePermissionContext();
   const { hasPermission } = usePermissions();
