@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Gem, ArrowRight, Check, Sparkles, Loader2, Zap, AlertCircle } from "lucide-react";
@@ -19,9 +20,11 @@ interface UpgradeModalProps {
 
 export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "premium" }: UpgradeModalProps) {
   const { user } = useAuthContext();
+  const navigate = useNavigate();
   const { isPremium } = usePermissionContext();
   const { data: subscription, refetch } = useMySubscription(user?.id);
   const [activatingTrial, setActivatingTrial] = useState(false);
+  const activatingRef = useRef(false);
 
   // Se o usuário já é premium mas está vendo o modal, provavelmente quer VIP (ilimitado)
   const effectiveVariant = (isPremium && variant !== "vip") ? "vip" : variant;
@@ -37,7 +40,24 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
     if (!user) return;
     
     setActivatingTrial(true);
+    activatingRef.current = true;
     try {
+      // Verifique se tem Whatsapp cadastrado
+      const { data: profile, error: profileError } = await supabase
+        .from("perfis")
+        .select("whatsapp")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (!profile?.whatsapp) {
+        toast.info("Você precisa cadastrar seu WhatsApp para ativar o teste grátis.");
+        navigate("/perfil"); // Pede para cadastrar
+        onOpenChange(false);
+        return;
+      }
+
       const trialPlanId = 'b3a2a9e3-8e3b-4e3b-8e3b-8e3b8e3b8e3b';
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 3);
@@ -47,7 +67,7 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
         .update({
           plan_id: trialPlanId,
           status_assinatura: "ativa",
-          validade_assinatura: expiresAt.toISOString(),
+          validate_assinatura: expiresAt.toISOString(),
           trial_used: true
         })
         .eq("id", user.id);
@@ -57,12 +77,23 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
       toast.success("Teste grátis ativado com sucesso! Aproveite 3 dias de acesso total.");
       await refetch();
       onOpenChange(false);
+      
+      // Abre o gerador
+      navigate("/smart-gerador");
     } catch (error) {
       console.error("Erro ao ativar trial:", error);
       toast.error("Erro ao ativar teste grátis. Tente novamente mais tarde.");
+      activatingRef.current = false;
     } finally {
       setActivatingTrial(false);
     }
+  };
+
+  const handleClose = (isOpen: boolean) => {
+    if (!isOpen && !activatingRef.current && canUseTrial) {
+      navigate("/comunidade");
+    }
+    onOpenChange(isOpen);
   };
 
   const getTitle = () => {
@@ -92,7 +123,7 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="text-center space-y-3 pb-2">
           <div className="flex flex-col items-center gap-3">
@@ -146,12 +177,12 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
                   "Estatísticas completas",
                   "Comunidade e Mesa Redonda",
                 ]
-            ).map((item) => (
-              <div key={item} className="flex items-center gap-2 text-sm text-foreground">
-                <Check className="h-3.5 w-3.5 text-accent shrink-0" />
-                {item}
-              </div>
-            ))}
+              ).map((item) => (
+                <div key={item} className="flex items-center gap-2 text-sm text-foreground">
+                  <Check className="h-3.5 w-3.5 text-accent shrink-0" />
+                  {item}
+                </div>
+              ))}
           </div>
 
           <div className="flex flex-col gap-2 pt-1">
@@ -172,17 +203,20 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
               </Button>
             )}
 
-            <Button className={`w-full gap-2 ${canUseTrial ? "h-10 text-sm" : "h-12 text-senior-base"}`} variant={canUseTrial ? "outline" : "default"} asChild>
-              <Link to="/planos" onClick={() => onOpenChange(false)}>
-                <Sparkles className="h-4 w-4" />
-                {isVip && isPremium ? "Upgrade para VIP Ilimitado" : "Ver Planos e Fazer Upgrade"}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
+            {!canUseTrial && (
+              <Button className="w-full gap-2 h-12 text-senior-base" asChild>
+                <Link to="/planos" onClick={() => onOpenChange(false)}>
+                  <Sparkles className="h-4 w-4" />
+                  {isVip && isPremium ? "Upgrade para VIP Ilimitado" : "Ver Planos e Fazer Upgrade"}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            )}
             
-            <Button variant="ghost" className="w-full text-muted-foreground" onClick={() => onOpenChange(false)}>
+            <Button variant="ghost" className="w-full text-muted-foreground" onClick={() => handleClose(false)}>
               Agora não
             </Button>
+          </div>
           </div>
           
           {canUseTrial && (
