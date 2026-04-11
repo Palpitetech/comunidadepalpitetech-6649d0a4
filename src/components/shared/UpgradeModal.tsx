@@ -217,7 +217,6 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
               Agora não
             </Button>
           </div>
-          </div>
           
           {canUseTrial && (
             <p className="text-[10px] text-center text-muted-foreground">
