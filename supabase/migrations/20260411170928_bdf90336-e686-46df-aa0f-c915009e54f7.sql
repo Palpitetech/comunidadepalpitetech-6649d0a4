@@ -1,0 +1,1 @@
+ALTER TABLE perfis ENABLE TRIGGER prevent_subscription_changes;
