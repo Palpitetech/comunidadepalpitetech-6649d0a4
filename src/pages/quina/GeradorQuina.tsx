@@ -36,6 +36,14 @@ export default function GeradorQuina() {
     }
   }, [shouldShow, setShouldShow]);
 
+  // Abrir modal de trial se for o caso
+  useEffect(() => {
+    if (shouldShow) {
+      setUpgradeOpen(true);
+      setShouldShow(false);
+    }
+  }, [shouldShow, setShouldShow]);
+
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
   const [dezenasFiexasOpcao, setDezenasFiexasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
   const [dezenasFixas, setDezenasFixas] = useState<number[]>([]);
