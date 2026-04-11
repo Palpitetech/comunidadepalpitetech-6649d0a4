@@ -10,15 +10,13 @@ export default function Vendas2() {
     <div className="min-h-screen bg-white text-black font-sans selection:bg-purple-100 overflow-x-hidden">
       {/* HEADER */}
       <header className="sticky top-0 z-50 bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
-          <div className="flex-1 flex justify-center md:justify-start">
-            <Link to="/" className="flex items-center gap-2">
-              <img src="/logo.png" alt="Logo" className="h-10 w-10 rounded-xl shadow-sm" />
-              <span className="font-bold text-xl tracking-tight text-purple-900 hidden sm:block">Palpite Tech</span>
-            </Link>
-          </div>
-          <div className="flex-shrink-0">
-            <Button variant="outline" className="border-purple-200 text-purple-900 font-bold px-6 h-12 rounded-full hover:bg-purple-50 transition-all text-lg" asChild>
+        <div className="max-w-7xl mx-auto px-4 h-20 flex items-center relative justify-center">
+          <Link to="/" className="flex items-center gap-2">
+            <img src="/logo.png" alt="Logo" className="h-10 w-10 rounded-xl shadow-sm" />
+            <span className="font-bold text-xl tracking-tight text-purple-900 hidden sm:block">Palpite Tech</span>
+          </Link>
+          <div className="absolute right-4">
+            <Button variant="outline" className="border-purple-200 text-purple-900 font-bold px-3 md:px-6 h-10 md:h-12 rounded-full hover:bg-purple-50 transition-all text-sm md:text-lg" asChild>
               <Link to={ctaLink}>Comprar agora</Link>
             </Button>
           </div>
@@ -30,8 +28,8 @@ export default function Vendas2() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center text-center md:text-left">
             <div className="space-y-8">
-              <h1 className="text-3xl md:text-5xl lg:text-6xl font-black leading-tight text-gray-900">
-                Pare de perder tempo com tabelas de Excel e sistemas confusos tentando acertar <span className="bg-purple-100 px-2 rounded-lg text-purple-900">14 e 15 pontos</span>.
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight text-gray-900">
+                Pare de perder tempo com tabelas de Excel e sistemas confusos tentando acertar <span className="inline-block bg-purple-100 px-3 py-1 rounded-xl text-purple-900 whitespace-nowrap">14 e 15 pontos</span>.
               </h1>
               <p className="text-xl md:text-2xl text-gray-700 leading-relaxed font-medium">
                 E não, não é promessa vazia. Você recebe a estratégia completa + Palpites diretamente no seu Whatsapp e ainda pode gerar seus próprios palpites usando nosso gerador inteligente, esse gerador possui mais de 50 mil linhas de código atualizado diariamente por mim criando inteligência real para seus jogos.
@@ -48,7 +46,6 @@ export default function Vendas2() {
               <div className="bg-white p-4 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-purple-50">
                 <RealGeneratorDemo />
               </div>
-              {/* Abstract decorative elements */}
               <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-purple-100/30 rounded-full blur-3xl" />
             </div>
           </div>
@@ -58,7 +55,7 @@ export default function Vendas2() {
       {/* SESSÃO 02 — DOR / IDENTIFICAÇÃO */}
       <section className="py-24 bg-[#f5f5f5]">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-black mb-12 text-gray-900">
+          <h2 className="text-3xl md:text-4xl font-black mb-12 text-gray-900 leading-tight">
             <span className="text-purple-900">A verdade é simples:</span> você está cansado de gastar dinheiro e não ter resultados.
           </h2>
           
@@ -126,7 +123,7 @@ export default function Vendas2() {
       <section className="py-24 bg-white border-y border-gray-50">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-5xl font-black mb-16 text-gray-900">Por que somos diferentes?</h2>
-          <div className="space-y-8 text-left max-w-2xl mx-auto">
+          <div className="space-y-8 text-left max-w-2xl mx-auto px-4">
             {[
               "Sem promessas de riqueza fácil, apenas estatística pura.",
               "Interface simples pensada para quem não tem paciência com tecnologia.",
@@ -251,7 +248,7 @@ export default function Vendas2() {
             Oferta de Lançamento
           </div>
           <h2 className="text-4xl md:text-6xl font-black mb-12 leading-tight">
-            Comece a transformar sua sorte em <span className="text-green-400">Estratégia</span> agora mesmo
+            Comece a transformar sua sorte em <span className="text-green-400 text-shadow-glow">Estratégia</span> agora mesmo
           </h2>
           
           <div className="bg-white text-black p-10 md:p-16 rounded-[50px] shadow-2xl border-b-[12px] border-purple-200">
@@ -263,13 +260,13 @@ export default function Vendas2() {
             </div>
             
             <div className="grid gap-4 max-w-md mx-auto">
-              <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white font-black text-3xl h-24 rounded-3xl shadow-xl shadow-green-900/20 w-full group transition-all active:scale-95" asChild>
-                <Link to={ctaLink} className="flex items-center justify-center gap-3">
+              <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white font-black text-3xl h-24 rounded-3xl shadow-xl shadow-green-900/20 w-full group transition-all active:scale-95 flex items-center justify-center gap-3" asChild>
+                <Link to={ctaLink}>
                   👉 COMPRAR AGORA
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="border-2 border-gray-200 text-gray-600 font-bold text-xl h-16 rounded-2xl w-full hover:bg-gray-50 transition-all" asChild>
-                <Link to={ctaLink}>👉 TESTAR AGORA POR 3 DIAS</Link>
+              <Button size="lg" variant="outline" className="border-2 border-gray-200 text-gray-600 font-bold text-xl h-16 rounded-2xl w-full hover:bg-gray-50 transition-all flex items-center justify-center" asChild>
+                <Link to={ctaLink}>👉 TESTAR POR 3 DIAS</Link>
               </Button>
             </div>
             
@@ -280,14 +277,14 @@ export default function Vendas2() {
               </div>
               <div className="flex items-center gap-2">
                 <Star className="w-6 h-6 fill-current" />
-                <span className="font-bold text-sm uppercase tracking-widest">50k+ Alunos</span>
+                <span className="font-bold text-sm uppercase tracking-widest">50k+ Usuários</span>
               </div>
             </div>
           </div>
           
           <div className="mt-16 bg-green-500/20 text-green-400 px-8 py-4 rounded-2xl inline-flex items-center gap-3 border border-green-500/30">
             <Star className="w-5 h-5 fill-current" />
-            <span className="font-bold text-lg">Selo: "Baixo investimento" para buscar 14 e 15 pontos</span>
+            <span className="font-bold text-lg md:text-xl">Baixo investimento para buscar 14 e 15 pontos</span>
           </div>
         </div>
       </section>
@@ -299,7 +296,7 @@ export default function Vendas2() {
             <img src="/logo.png" alt="Logo" className="h-12 w-12 rounded-2xl" />
             <span className="font-black text-2xl tracking-tighter text-purple-900">Palpite Tech</span>
           </Link>
-          <div className="flex flex-wrap justify-center gap-12 text-lg font-bold text-gray-400 mb-12">
+          <div className="flex flex-wrap justify-center gap-8 md:gap-12 text-lg font-bold text-gray-400 mb-12">
             <Link to="/termos" className="hover:text-purple-900 transition-colors">Termos</Link>
             <Link to="/privacidade" className="hover:text-purple-900 transition-colors">Privacidade</Link>
             <Link to="/login" className="hover:text-purple-900 transition-colors">Entrar</Link>
