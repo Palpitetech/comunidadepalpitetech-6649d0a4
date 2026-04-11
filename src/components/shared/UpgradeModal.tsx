@@ -62,7 +62,9 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
         .from('plans')
         .select('id')
         .in('slug', ['trial', 'teste-gratis-3-dias'])
-        .single();
+        .order('slug', { ascending: true }) // 'teste-gratis-3-dias' comes before 'trial'
+        .limit(1)
+        .maybeSingle();
 
       if (!trialPlan) {
         toast.error("Plano de teste não encontrado.");
