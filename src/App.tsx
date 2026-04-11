@@ -152,6 +152,7 @@ const App = () => (
             <Route path="/proximos-concursos" element={<ProximosConcursos />} />
             <Route path="/g/:slug" element={<SmartLinkRedirect />} />
             <Route path="/vendas" element={<Vendas />} />
+            <Route path="/vendas2" element={<Vendas2 />} />
 
             {/* Rotas Protegidas - Requer Login */}
             <Route path="/home" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
