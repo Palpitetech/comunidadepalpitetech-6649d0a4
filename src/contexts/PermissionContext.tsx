@@ -35,95 +35,120 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
   // Loading is true if auth is loading, roles are loading, OR user changed but roles haven't been re-fetched yet
   const loading = authLoading || rolesLoading || (!!user?.id && fetchedForUserId !== user.id);
 
-  useEffect(() => {
-    let cancelled = false;
+  const fetchPermissions = useCallback(async (userId: string | null) => {
+    if (!userId) {
+      setRoles([]);
+      setPlan(null);
+      setCustomFeatures(null);
+      setIsBlocked(false);
+      setFetchedForUserId(null);
+      setRolesLoading(false);
+      return;
+    }
 
-    async function fetchAll() {
-      if (!user) {
-        setRoles([]);
-        setPlan(null);
-        setCustomFeatures(null);
-        setIsBlocked(false);
-        setFetchedForUserId(null);
-        setRolesLoading(false);
+    try {
+      setRolesLoading(true);
+      
+      // Single parallel fetch for roles + perfil data
+      const [rolesRes, perfilRes] = await Promise.all([
+        supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId),
+        supabase
+          .from("perfis")
+          .select("plan_id, custom_features, is_blocked, status_assinatura, validade_assinatura")
+          .eq("id", userId)
+          .maybeSingle(),
+      ]);
+
+      // Process roles
+      const fetchedRoles = (rolesRes.data || []).map((r) => r.role as AppRole);
+      setRoles(fetchedRoles);
+
+      // Process perfil
+      if (perfilRes.error) {
+        console.error("Erro ao buscar perfil:", perfilRes.error);
         return;
       }
 
-      try {
-        // Single parallel fetch for roles + perfil data
-        const [rolesRes, perfilRes] = await Promise.all([
-          supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", user.id),
-          supabase
-            .from("perfis")
-            .select("plan_id, custom_features, is_blocked, status_assinatura, validade_assinatura")
-            .eq("id", user.id)
-            .maybeSingle(),
-        ]);
+      const perfilData = perfilRes.data;
+      setIsBlocked(perfilData?.is_blocked || false);
+      setCustomFeatures(perfilData?.custom_features as PlanFeatures | null);
 
-        if (cancelled) return;
+      // Fetch plan if assigned AND active
+      const isPlanActive = perfilData?.status_assinatura === "ativa";
+      const isExpired = perfilData?.validade_assinatura && new Date(perfilData.validade_assinatura) < new Date();
 
-        // Process roles
-        const fetchedRoles = (rolesRes.data || []).map((r) => r.role as AppRole);
-        setRoles(fetchedRoles);
+      if (perfilData?.plan_id && isPlanActive && !isExpired) {
+        const { data: planRow, error: planError } = await supabase
+          .from("plans")
+          .select("*")
+          .eq("id", perfilData.plan_id)
+          .single();
 
-        // Process perfil
-        if (perfilRes.error) {
-          console.error("Erro ao buscar perfil:", perfilRes.error);
-          setRolesLoading(false);
-          return;
-        }
-
-        const perfilData = perfilRes.data;
-        setIsBlocked(perfilData?.is_blocked || false);
-        setCustomFeatures(perfilData?.custom_features as PlanFeatures | null);
-
-        // Fetch plan if assigned AND active
-        const isPlanActive = perfilData?.status_assinatura === "ativa";
-        const isExpired = perfilData?.validade_assinatura && new Date(perfilData.validade_assinatura) < new Date();
-
-        if (perfilData?.plan_id && isPlanActive && !isExpired) {
-          const { data: planRow, error: planError } = await supabase
-            .from("plans")
-            .select("*")
-            .eq("id", perfilData.plan_id)
-            .single();
-
-          if (cancelled) return;
-
-          if (!planError && planRow) {
-            setPlan({
-              ...planRow,
-              price: Number(planRow.price),
-              features: planRow.features as PlanFeatures,
-            });
-          } else {
-            setPlan(null);
-          }
+        if (!planError && planRow) {
+          setPlan({
+            ...planRow,
+            price: Number(planRow.price),
+            features: planRow.features as PlanFeatures,
+          });
         } else {
           setPlan(null);
         }
-      } catch (error) {
-        console.error("Erro ao buscar permissões:", error);
-      } finally {
-        if (!cancelled) {
-          setFetchedForUserId(user.id);
-          setRolesLoading(false);
-        }
+      } else {
+        setPlan(null);
       }
+    } catch (error) {
+      console.error("Erro ao buscar permissões:", error);
+    } finally {
+      setFetchedForUserId(userId);
+      setRolesLoading(false);
+    }
+  }, []);
+
+  // Initial fetch and real-time subscription
+  useEffect(() => {
+    if (!user?.id) {
+      fetchPermissions(null);
+      return;
     }
 
-    setRolesLoading(true);
-    fetchAll();
+    fetchPermissions(user.id);
 
-    return () => { cancelled = true; };
-  }, [user?.id]);
+    // Listen for real-time updates to user profile (plan changes)
+    const channel = supabase
+      .channel(`profile_changes_${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'perfis',
+          filter: `id=eq.${user.id}`,
+        },
+        () => {
+          console.log("Detectada mudança no perfil, limpando cache e re-buscando...");
+          fetchPermissions(user.id);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, fetchPermissions]);
 
   const isAdmin = useMemo(() => roles.includes("admin"), [roles]);
   const isModerator = useMemo(() => roles.includes("moderator") || isAdmin, [roles, isAdmin]);
-  const isPremium = useMemo(() => roles.includes("premium") || isModerator || !!plan, [roles, isModerator, plan]);
+  const isPremium = useMemo(() => {
+    if (roles.includes("admin") || roles.includes("premium") || isModerator) return true;
+    if (!plan) return false;
+    // O plano "trial" com status ativa conta como premium
+    if (plan.slug === 'trial') return true;
+    // Planos com preço > 0 são premium (se ativos, o que já é garantido pela lógica do fetchAll)
+    return plan.price > 0;
+  }, [roles, isModerator, plan]);
 
   const hasRole = useCallback((role: AppRole) => roles.includes(role), [roles]);
 

@@ -32,15 +32,27 @@ const STATUS_CONFIG: Record<StatusAssinatura, { label: string; variant: "default
 export function UserPlanTab({ user, plans, onUserUpdated }: UserPlanTabProps) {
   const [saving, setSaving] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState(user.plan_id || "");
+  const [selectedStatus, setSelectedStatus] = useState<StatusAssinatura>((user.status_assinatura || "inativa") as StatusAssinatura);
   const [validadeManual, setValidadeManual] = useState(
     user.validade_assinatura ? format(new Date(user.validade_assinatura), "yyyy-MM-dd") : ""
   );
+
+  const handlePlanChange = (val: string) => {
+    setSelectedPlanId(val);
+    setSelectedStatus('ativa'); // Auto-set status to 'ativa' on plan change
+  };
+
+  const handleValidadeChange = (val: string) => {
+    setValidadeManual(val);
+    setSelectedStatus('ativa'); // Auto-set status to 'ativa' on validity change
+  };
 
   const handleSave = async () => {
     setSaving(true);
     try {
       const updateData: Record<string, any> = { 
-        plan_id: selectedPlanId || null 
+        plan_id: selectedPlanId || null,
+        status_assinatura: selectedStatus
       };
       
       // Só atualiza validade se foi alterada
@@ -64,20 +76,15 @@ export function UserPlanTab({ user, plans, onUserUpdated }: UserPlanTabProps) {
     }
   };
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success(`${label} copiado!`);
-  };
-
   const selectedPlan = plans.find((p) => p.id === selectedPlanId);
-  const statusAssinatura = (user.status_assinatura || "inativa") as StatusAssinatura;
-  const statusConfig = STATUS_CONFIG[statusAssinatura];
+  const statusConfig = STATUS_CONFIG[selectedStatus];
   
   const diasRestantes = user.validade_assinatura 
     ? differenceInDays(new Date(user.validade_assinatura), new Date())
     : null;
 
   const hasChanges = selectedPlanId !== user.plan_id || 
+    selectedStatus !== (user.status_assinatura || "inativa") ||
     (validadeManual && validadeManual !== (user.validade_assinatura ? format(new Date(user.validade_assinatura), "yyyy-MM-dd") : ""));
 
   return (
@@ -91,7 +98,7 @@ export function UserPlanTab({ user, plans, onUserUpdated }: UserPlanTabProps) {
         
         <div className="space-y-2">
           <Label>Selecionar Plano</Label>
-          <Select value={selectedPlanId} onValueChange={setSelectedPlanId}>
+          <Select value={selectedPlanId} onValueChange={handlePlanChange}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione um plano" />
             </SelectTrigger>
@@ -122,7 +129,7 @@ export function UserPlanTab({ user, plans, onUserUpdated }: UserPlanTabProps) {
 
       <Separator />
 
-      {/* Seção 2: Status da Assinatura */}
+      {/* Seção 2: Status da Assinatura (Exibição) */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-muted-foreground" />
@@ -136,7 +143,7 @@ export function UserPlanTab({ user, plans, onUserUpdated }: UserPlanTabProps) {
                 <CreditCard className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-sm font-medium">Status</p>
+                <p className="text-sm font-medium">Status Atual</p>
                 <p className="text-xs text-muted-foreground">Estado atual da assinatura</p>
               </div>
             </div>
@@ -187,17 +194,36 @@ export function UserPlanTab({ user, plans, onUserUpdated }: UserPlanTabProps) {
           <h3 className="font-medium">Ações Manuais</h3>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="validade-manual">Estender Validade (Cortesia)</Label>
-          <Input
-            id="validade-manual"
-            type="date"
-            value={validadeManual}
-            onChange={(e) => setValidadeManual(e.target.value)}
-          />
-          <p className="text-xs text-muted-foreground">
-            Defina uma data para conceder acesso cortesia (ex: compensação, teste).
-          </p>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Status da Assinatura (Manual)</Label>
+            <Select value={selectedStatus} onValueChange={(val) => setSelectedStatus(val as StatusAssinatura)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ativa">Ativa</SelectItem>
+                <SelectItem value="cancelada">Cancelada</SelectItem>
+                <SelectItem value="inadimplente">Inadimplente</SelectItem>
+                <SelectItem value="inativa">Sem Assinatura (Inativa)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Separator className="my-2" />
+
+          <div className="space-y-2">
+            <Label htmlFor="validade-manual">Estender Validade (Cortesia)</Label>
+            <Input
+              id="validade-manual"
+              type="date"
+              value={validadeManual}
+              onChange={(e) => handleValidadeChange(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Defina uma data para conceder acesso cortesia (ex: compensação, teste).
+            </p>
+          </div>
         </div>
       </div>
 

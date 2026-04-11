@@ -33,7 +33,7 @@ interface MobileMenuSheetProps {
 
 export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
   const { isAuthenticated, profile, signOut } = useAuthContext();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, isPremium } = usePermissions();
   const location = useLocation();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradeLabel, setUpgradeLabel] = useState<string | undefined>();
@@ -74,6 +74,9 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
   };
 
   const renderBadge = (path: string) => {
+    // Se o usuário já é premium, não mostra nenhum distintivo/diamante
+    if (isPremium) return null;
+
     const feature = getFeatureForRoute(path);
     if (!feature || hasPermission(feature)) return null;
     return <PremiumBadge variant={isVipFeature(feature) ? "vip" : "premium"} className="ml-auto" />;
