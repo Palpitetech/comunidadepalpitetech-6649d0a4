@@ -1,0 +1,1 @@
+UPDATE plans SET gerador_max_per_day = 0 WHERE name = 'Grátis' OR slug = 'gratis';

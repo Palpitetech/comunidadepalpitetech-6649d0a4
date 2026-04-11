@@ -14,7 +14,7 @@ export function usePermissions() {
  */
 export function usePermission(feature: FeatureKey): boolean {
   const { hasPermission, loading } = usePermissionContext();
-  // Durante o loading, retorna true para evitar flash de bloqueio
-  if (loading) return true;
+  // Durante o loading, retorna false para evitar acesso indevido
+  if (loading) return false;
   return hasPermission(feature);
 }

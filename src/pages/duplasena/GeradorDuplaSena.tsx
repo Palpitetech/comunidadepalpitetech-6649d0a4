@@ -14,8 +14,8 @@ import { useGeradorStatus } from "@/hooks/useGeradorStatus";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { useUpsell } from "@/contexts/UpsellContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Dices, Loader2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
-// UpgradeModal removido pois é gerenciado globalmente pelo UpsellProvider
 
 export default function GeradorDuplaSena() {
   const isMobile = useIsMobile();
@@ -36,8 +36,9 @@ export default function GeradorDuplaSena() {
   
   const { isLoading, result, error, generatePalpites, reset } = useGeradorDuplaSena();
   const { remaining_today, max_per_day, isLoading: statusLoading, refetch, isAdmin } = useGeradorStatus();
+  const { isPremium } = useUserRole();
 
-  const canGenerate = statusLoading || isAdmin || remaining_today > 0;
+  const canGenerate = !statusLoading && remaining_today > 0;
 
   // Buscar último concurso
   useEffect(() => {
@@ -59,8 +60,12 @@ export default function GeradorDuplaSena() {
   }, []);
 
   const handleGenerate = () => {
+    if (!isPremium && !isAdmin) {
+      openUpgradeModal("Gerador de Palpites");
+      return;
+    }
     if (statusLoading) return;
-    if (!canGenerate) {
+    if (!canGenerate && !isAdmin) {
       openUpgradeModal("Gerador de Palpites");
       return;
     }
