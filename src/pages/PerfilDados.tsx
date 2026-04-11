@@ -11,19 +11,24 @@ export default function PerfilDados() {
   const navigate = useNavigate();
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background">
-      <header className="shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className="fixed inset-0 z-50 flex flex-col bg-background animate-in fade-in slide-in-from-right duration-300">
+      <header className="shrink-0 border-b bg-background/80 backdrop-blur-md sticky top-0 z-10">
         <div className="flex items-center justify-between h-14 px-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-10 w-10">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => navigate(-1)} 
+            className="h-10 w-10 rounded-full hover:bg-muted transition-colors"
+          >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-semibold">Meus Dados</h1>
+          <h1 className="text-base font-bold tracking-tight">Meus Dados</h1>
           <div className="w-10" />
         </div>
       </header>
+      
       <ScrollArea className="flex-1">
-        <div className="pb-8 max-w-lg mx-auto w-full">
-          
+        <div className="pb-20 max-w-lg mx-auto w-full">
           <MeusDadosTab profile={profile} user={user} />
         </div>
       </ScrollArea>
