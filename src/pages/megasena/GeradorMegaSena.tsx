@@ -259,8 +259,8 @@ export default function GeradorMegaSena() {
         <UpgradeModal
           open={upgradeOpen}
           onOpenChange={setUpgradeOpen}
-          featureLabel="Gerador de Palpites — 10 usos/dia"
-          variant="vip"
+          featureLabel="Gerador de Palpites"
+          variant="premium"
         />
       </div>
     </MainLayout>
