@@ -152,6 +152,15 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                     Início
                   </div>
                 </Link>
+                <Link to="/chat" onClick={closeAndNavigate}>
+                  <div className={cn(
+                    "flex items-center gap-3 py-3 text-base transition-colors",
+                    isActive("/chat") ? "text-primary font-medium" : "text-foreground hover:text-primary"
+                  )}>
+                    <MessageCircle className="h-5 w-5 stroke-[1.5]" />
+                    Chat
+                  </div>
+                </Link>
               </nav>
 
                {/* Accordion de Lotofácil */}
