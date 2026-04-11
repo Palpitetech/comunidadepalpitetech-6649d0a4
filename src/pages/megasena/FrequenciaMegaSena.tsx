@@ -45,23 +45,18 @@ export default function FrequenciaMegaSena() {
   return (
     <MainLayout pageTitle="Análise de Dezenas">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-        {/* Header desktop */}
+        {/* Header desktop snapshot button only */}
         {!isMobile && (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
-              Análise de Dezenas - Mega Sena
-            </h1>
-            <div className="flex items-center justify-center sm:justify-end gap-2">
-              <SnapshotButton
-                targetRef={contentRef} 
-                defaultTitle={`Análise de Dezenas Mega Sena - Últimos ${periodo} concursos`}
-              />
-              <SeletorPeriodo
-                periodos={PERIODOS}
-                selecionado={periodo}
-                onChange={setPeriodo}
-              />
-            </div>
+          <div className="flex items-center justify-end gap-2">
+            <SnapshotButton
+              targetRef={contentRef} 
+              defaultTitle={`Análise de Dezenas Mega Sena - Últimos ${periodo} concursos`}
+            />
+            <SeletorPeriodo
+              periodos={PERIODOS}
+              selecionado={periodo}
+              onChange={setPeriodo}
+            />
           </div>
         )}
 
