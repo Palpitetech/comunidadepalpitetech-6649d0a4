@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { usePermissionContext } from "@/contexts/PermissionContext";
+import { ArrowLeft } from "lucide-react";
 
 import { usePermissions } from "@/hooks/usePermission";
 import { getFeatureForRoute, isVipFeature } from "@/lib/featureMap";
