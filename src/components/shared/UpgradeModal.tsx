@@ -57,54 +57,52 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
     try {
       console.log("Iniciando ativação do trial para usuário:", user.id);
       
-      // Verifique se tem Whatsapp ou Celular cadastrado
-      const { data: profile, error: profileError } = await supabase
-        .from("perfis")
-        .select("whatsapp, celular")
-        .eq("id", user.id)
+      // Buscar ID do plano trial
+      const { data: trialPlan } = await supabase
+        .from('plans')
+        .select('id')
+        .in('slug', ['trial', 'teste-gratis-3-dias'])
         .single();
 
-      if (profileError) {
-        console.error("Erro ao carregar perfil do usuário:", profileError);
-        throw profileError;
-      }
-
-      const hasPhone = profile?.whatsapp || profile?.celular;
-
-      if (!hasPhone) {
-        console.warn("Usuário sem telefone cadastrado, redirecionando para perfil.");
-        toast.info("Você precisa cadastrar seu WhatsApp para ativar o teste grátis.");
-        navigate("/perfil"); // Pede para cadastrar
-        onOpenChange(false);
+      if (!trialPlan) {
+        toast.error("Plano de teste não encontrado.");
+        setActivatingTrial(false);
+        activatingRef.current = false;
         return;
       }
 
-      console.log("Chamando RPC activate_free_trial...");
-      const { data: result, error: rpcError } = await supabase.rpc('activate_free_trial');
-      
-      console.log("Retorno do RPC activate_free_trial:", { result, rpcError });
-      
-      if (rpcError) {
-        console.error("Erro RPC no Supabase:", rpcError);
-        throw rpcError;
-      }
-      
-      if (result === true) {
-        console.log("Trial ativado com sucesso! Atualizando dados locais...");
-        toast.success("Teste grátis ativado! Aproveite 3 dias de acesso total.");
-        
-        // Força o refetch da assinatura
-        await refetch();
-        
-        // Pequeno delay para garantir que o PermissionContext receba a atualização do Realtime
-        setTimeout(() => {
-          onOpenChange(false);
-        }, 500);
-      } else {
-        toast.error("Não foi possível ativar o teste. Você já utilizou o período de teste ou ocorreu um erro.");
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 3);
+
+      const { error: updateError } = await supabase
+        .from('perfis')
+        .update({
+          plan_id: trialPlan.id,
+          status_assinatura: 'ativa',
+          validade_assinatura: expiresAt.toISOString(),
+          trial_used: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
+        .eq('trial_used', false);
+
+      if (updateError) {
+        console.error("Erro ao realizar update do trial:", updateError);
+        toast.error("Não foi possível ativar o teste: " + updateError.message);
         setActivatingTrial(false);
         activatingRef.current = false;
+        return;
       }
+
+      toast.success("Teste grátis ativado! Aproveite 3 dias de acesso total.");
+      
+      // Força o refetch da assinatura
+      await refetch();
+      
+      // Pequeno delay para garantir que o PermissionContext receba a atualização do Realtime
+      setTimeout(() => {
+        onOpenChange(false);
+      }, 500);
       
     } catch (error: any) {
       console.error("Erro capturado no catch do handleStartTrial:", error);
