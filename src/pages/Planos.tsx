@@ -103,7 +103,7 @@ export default function Planos() {
     ? STATUS_CONFIG[subscription.status as StatusAssinatura]?.label ?? "Sem assinatura"
     : null;
 
-  const trialPlan = plans.find((p) => p.slug === "trial-3-dias");
+  const trialPlan = plans.find((p) => p.slug === "trial" || p.slug === "teste-gratis-3-dias");
   const paidPlans = plans.filter((p) => p.price > 0);
   const showTrialCard = trialPlan && !subscription?.trial_used && subscription?.status === "inativa";
 
