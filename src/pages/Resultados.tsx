@@ -45,8 +45,12 @@ export default function Resultados() {
 
   const hasFilters = searchConcurso.trim() || dateFilter;
 
-  // Adapter: ResultadoCard expects concurso_id, but unified table uses concurso
-  const adaptResultado = (r: any) => ({ ...r, concurso_id: r.concurso });
+  // Adapter: Ensure concurso_id exists for both table structures
+  const adaptResultado = (r: any) => ({ 
+    ...r, 
+    concurso_id: r.concurso_id ?? r.concurso,
+    concurso: r.concurso ?? r.concurso_id 
+  });
 
   return (
     <MainLayout pageTitle="Resultados">
