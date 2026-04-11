@@ -23,10 +23,13 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
   const { data: subscription, refetch } = useMySubscription(user?.id);
   const [activatingTrial, setActivatingTrial] = useState(false);
 
-  // If user is already premium but seeing the modal, it's likely they want VIP (unlimited)
+  // Se o usuário já é premium mas está vendo o modal, provavelmente quer VIP (ilimitado)
   const effectiveVariant = (isPremium && variant !== "vip") ? "vip" : variant;
   const isVip = effectiveVariant === "vip";
   
+  // Lógica refatorada conforme solicitação:
+  // Se for Free > Oferece o trial de 3 dias
+  // Se for Free que já usou o Trial > Oferece o Upgrade.
   const canUseTrial = subscription?.isFree && !subscription.trial_used;
   const isTrialExpired = subscription?.isFree && subscription.trial_used;
 
@@ -63,18 +66,18 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
   };
 
   const getTitle = () => {
-    if (isTrialExpired) return "Acesso Premium Necessário";
     if (canUseTrial) return "Experimente o Premium Grátis";
+    if (isTrialExpired) return "Acesso Premium Necessário";
     if (isVip) return "Recurso Exclusivo VIP";
     return "Recurso Premium";
   };
 
   const getDescription = () => {
-    if (isTrialExpired) {
-      return "Seu período de teste de 3 dias expirou. Para continuar utilizando este e outros recursos exclusivos, escolha um dos nossos planos.";
-    }
     if (canUseTrial) {
-      return "Você ainda não utilizou seu teste gratuito. Aproveite 3 dias de acesso total a todas as ferramentas agora mesmo.";
+      return "Você ainda não utilizou seu teste gratuito. Aproveite 3 dias de acesso total a todas as ferramentas agora mesmo sem compromisso.";
+    }
+    if (isTrialExpired) {
+      return "Seu período de teste de 3 dias expirou. Para continuar utilizando este e outros recursos exclusivos, faça um upgrade para um dos nossos planos.";
     }
     if (subscription?.status === "ativa") {
       return (
@@ -94,13 +97,24 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
         <DialogHeader className="text-center space-y-3 pb-2">
           <div className="flex flex-col items-center gap-3">
             <div className={`mx-auto flex items-center justify-center h-16 w-16 rounded-2xl ${isVip ? "bg-[hsl(var(--vip))]/15" : "bg-[hsl(var(--premium))]/15"}`}>
-              <Gem className={`h-8 w-8 ${isVip ? "text-[hsl(var(--vip))]" : "text-[hsl(var(--premium))]"}`} />
+              {canUseTrial ? (
+                <Zap className="h-8 w-8 text-amber-500 fill-amber-500" />
+              ) : (
+                <Gem className={`h-8 w-8 ${isVip ? "text-[hsl(var(--vip))]" : "text-[hsl(var(--premium))]"}`} />
+              )}
             </div>
             
             {isTrialExpired && (
               <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 gap-1.5 py-1 px-3">
                 <AlertCircle className="h-3.5 w-3.5" />
                 Seu período de teste já foi utilizado
+              </Badge>
+            )}
+            
+            {canUseTrial && (
+              <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 gap-1.5 py-1 px-3">
+                <Sparkles className="h-3.5 w-3.5" />
+                Oferta Exclusiva: 3 Dias Grátis
               </Badge>
             )}
           </div>
