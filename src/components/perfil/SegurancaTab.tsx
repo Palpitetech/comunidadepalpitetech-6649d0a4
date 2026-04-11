@@ -19,18 +19,7 @@ export function SegurancaTab({ user, onSignOut }: SegurancaTabProps) {
   return (
     <div className="px-4 py-4 space-y-4">
       <div className="rounded-xl border bg-card overflow-hidden divide-y">
-        <Link to="/recuperar-senha" className="block">
-          <div className="flex items-center gap-3 p-3.5 hover:bg-muted/50 transition-colors">
-            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <Lock className="h-4 w-4 text-primary" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium">Trocar Senha</p>
-              <p className="text-[11px] text-muted-foreground">Altere sua senha de acesso</p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </div>
-        </Link>
+{/* Trocar Senha removido */}
 
         <Link to="/privacidade" className="block">
           <div className="flex items-center gap-3 p-3.5 hover:bg-muted/50 transition-colors">
