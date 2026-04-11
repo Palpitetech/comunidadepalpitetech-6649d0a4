@@ -240,6 +240,13 @@ export function DesktopHeader() {
             </Button>
           )}
 
+          <Link to="/gerar-jogos">
+            <Button variant="ghost" className="gap-1.5 h-10 px-2.5 text-sm">
+              <Dices className="h-4 w-4" />
+              <span className="hidden lg:inline">Gerar Jogos</span>
+            </Button>
+          </Link>
+
           <Link to="/proximos-concursos">
             <Button variant="ghost" className="gap-1.5 h-10 px-2.5 text-sm">
               <Calendar className="h-4 w-4" />
