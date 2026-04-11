@@ -69,10 +69,13 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
 
         <div className="space-y-4">
           <p className="text-muted-foreground text-sm text-center">
-            {featureLabel
-              ? <><strong className="text-foreground">{featureLabel}</strong> é um recurso {isVip ? "exclusivo do plano Anual VIP" : "disponível nos planos pagos"}.</>
-              : <>Este recurso {isVip ? "é exclusivo do plano Anual VIP" : "está disponível nos planos pagos"}.</>
-            }
+            {subscription?.status === "ativa" ? (
+              <>Você atingiu seu limite diário para <strong className="text-foreground">{featureLabel || "este recurso"}</strong>. Faça um upgrade para aumentar seu limite ou gerar jogos ilimitados.</>
+            ) : (
+              featureLabel
+                ? <><strong className="text-foreground">{featureLabel}</strong> é um recurso {isVip ? "exclusivo do plano Anual VIP" : "disponível nos planos pagos"}.</>
+                : <>Este recurso {isVip ? "é exclusivo do plano Anual VIP" : "está disponível nos planos pagos"}.</>
+            )}
           </p>
 
           <div className="bg-secondary/50 rounded-xl p-4 space-y-2.5">
