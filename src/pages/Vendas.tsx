@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { CheckCircle2, ArrowRight, ShieldCheck, Zap, Users, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { LotofacilGeneratorDemo } from "@/components/vendas/LotofacilGeneratorDemo";
+import { RealGeneratorDemo } from "@/components/vendas/RealGeneratorDemo";
 
 export default function Vendas() {
   const ctaLink = "/login?cadastro=true";
@@ -154,7 +154,7 @@ export default function Vendas() {
             <div className="flex-1 relative">
               <div className="bg-gradient-to-tr from-primary to-accent p-1 rounded-3xl shadow-2xl">
                 <div className="bg-card rounded-[22px] overflow-hidden p-6 sm:p-10 flex items-center justify-center">
-                  <LotofacilGeneratorDemo />
+                  <RealGeneratorDemo />
                 </div>
               </div>
               {/* Floating Badge */}
