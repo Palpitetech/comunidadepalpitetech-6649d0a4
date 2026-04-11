@@ -76,13 +76,7 @@ export function UserPlanTab({ user, plans, onUserUpdated }: UserPlanTabProps) {
     }
   };
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success(`${label} copiado!`);
-  };
-
   const selectedPlan = plans.find((p) => p.id === selectedPlanId);
-  const statusAssinatura = (user.status_assinatura || "inativa") as StatusAssinatura;
   const statusConfig = STATUS_CONFIG[selectedStatus];
   
   const diasRestantes = user.validade_assinatura 
@@ -135,7 +129,7 @@ export function UserPlanTab({ user, plans, onUserUpdated }: UserPlanTabProps) {
 
       <Separator />
 
-      {/* Seção 2: Status da Assinatura */}
+      {/* Seção 2: Status da Assinatura (Exibição) */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-muted-foreground" />
@@ -149,7 +143,7 @@ export function UserPlanTab({ user, plans, onUserUpdated }: UserPlanTabProps) {
                 <CreditCard className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-sm font-medium">Status</p>
+                <p className="text-sm font-medium">Status Atual</p>
                 <p className="text-xs text-muted-foreground">Estado atual da assinatura</p>
               </div>
             </div>
@@ -216,19 +210,20 @@ export function UserPlanTab({ user, plans, onUserUpdated }: UserPlanTabProps) {
             </Select>
           </div>
 
-          <Separator className="my-4" />
-          
+          <Separator className="my-2" />
+
           <div className="space-y-2">
-          <Label htmlFor="validade-manual">Estender Validade (Cortesia)</Label>
-          <Input
-            id="validade-manual"
-            type="date"
-            value={validadeManual}
-            onChange={(e) => handleValidadeChange(e.target.value)}
-          />
-          <p className="text-xs text-muted-foreground">
-            Defina uma data para conceder acesso cortesia (ex: compensação, teste).
-          </p>
+            <Label htmlFor="validade-manual">Estender Validade (Cortesia)</Label>
+            <Input
+              id="validade-manual"
+              type="date"
+              value={validadeManual}
+              onChange={(e) => handleValidadeChange(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Defina uma data para conceder acesso cortesia (ex: compensação, teste).
+            </p>
+          </div>
         </div>
       </div>
 
