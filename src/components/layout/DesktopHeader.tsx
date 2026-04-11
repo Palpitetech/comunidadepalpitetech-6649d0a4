@@ -120,6 +120,8 @@ interface ToolItem {
 interface DesktopHeaderProps {
   pageTitle?: string;
   breadcrumb?: { label: string; onClick?: () => void }[];
+  onBack?: () => void;
+  hideBackButton?: boolean;
 }
 
 function LotteryDropdown({
