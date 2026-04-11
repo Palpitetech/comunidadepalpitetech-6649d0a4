@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 import { UserDataTab } from "./UserDataTab";
 import { UserPlanTab } from "./UserPlanTab";
 import { UserPermissionsTab } from "./UserPermissionsTab";
@@ -74,7 +75,10 @@ export function UserDetailSheet({
                 {user.nome || "Sem nome"}
               </SheetTitle>
               <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                <Badge variant="secondary" className="text-[10px] md:text-xs">
+                <Badge variant="secondary" className={cn(
+                  "text-[10px] md:text-xs",
+                  (user.plan?.slug === 'trial' || user.plan?.slug === 'teste-gratis-3-dias') && "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 border-orange-200"
+                )}>
                   {user.plan?.name || "Free"}
                 </Badge>
                 {user.is_blocked && (

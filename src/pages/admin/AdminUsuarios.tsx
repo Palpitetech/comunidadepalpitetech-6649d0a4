@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, Users, UserCheck, UserX, ShieldOff, ChevronRight, ChevronLeft, X, ArrowLeft } from "lucide-react";
+import { Search, Loader2, Users, UserCheck, UserX, ShieldOff, ChevronRight, ChevronLeft, X, ArrowLeft, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
 import { TagFilterPopover } from "@/components/admin/TagFilterPopover";
@@ -21,11 +21,12 @@ interface UserWithPlan extends ExtendedProfile {
   plan?: Plan | null;
 }
 
-type FilterTab = "todos" | "pagos" | "free" | "bloqueados";
+type FilterTab = "todos" | "pagos" | "trial" | "free" | "bloqueados";
 
-const FILTER_TABS: { key: FilterTab; label: string; icon: typeof Users }[] = [
+const FILTER_TABS: { key: FilterTab; label: string; icon: typeof Users | typeof Timer }[] = [
   { key: "todos", label: "Todos", icon: Users },
   { key: "pagos", label: "Pagos", icon: UserCheck },
+  { key: "trial", label: "Trial", icon: Timer },
   { key: "free", label: "Free", icon: UserX },
   { key: "bloqueados", label: "Bloqueados", icon: ShieldOff },
 ];
@@ -81,13 +82,19 @@ export default function AdminUsuarios() {
 
   const stats = useMemo(() => {
     const paidPlanIds = new Set(plans.filter(p => p.price > 0).map(p => p.id));
+    const trialSlugs = ['trial', 'teste-gratis-3-dias'];
     const total = users.length;
     const bloqueados = users.filter(u => u.is_blocked).length;
+    const trial = users.filter(u => trialSlugs.includes(u.plan?.slug || "")).length;
     const pagos = users.filter(u =>
-      (u.plan_id && paidPlanIds.has(u.plan_id)) || u.status_assinatura === "ativa"
+      ((u.plan_id && paidPlanIds.has(u.plan_id)) || u.status_assinatura === "ativa") &&
+      !trialSlugs.includes(u.plan?.slug || "")
     ).length;
-    const free = total - pagos;
-    return { total, pagos, free, bloqueados };
+    const free = users.filter(u => 
+      !((u.plan_id && paidPlanIds.has(u.plan_id)) || u.status_assinatura === "ativa") &&
+      !trialSlugs.includes(u.plan?.slug || "")
+    ).length;
+    return { total, pagos, trial, free, bloqueados };
   }, [users, plans]);
 
   const allTags = useMemo(() => {
@@ -96,15 +103,16 @@ export default function AdminUsuarios() {
     return Array.from(tagSet).sort();
   }, [users]);
 
-  
-
   const filteredUsers = useMemo(() => {
     const paidPlanIds = new Set(plans.filter(p => p.price > 0).map(p => p.id));
+    const trialSlugs = ['trial', 'teste-gratis-3-dias'];
     let list = users;
     if (activeFilter === "pagos") {
-      list = users.filter(u => (u.plan_id && paidPlanIds.has(u.plan_id)) || u.status_assinatura === "ativa");
+      list = users.filter(u => ((u.plan_id && paidPlanIds.has(u.plan_id)) || u.status_assinatura === "ativa") && !trialSlugs.includes(u.plan?.slug || ""));
+    } else if (activeFilter === "trial") {
+      list = users.filter(u => trialSlugs.includes(u.plan?.slug || ""));
     } else if (activeFilter === "free") {
-      list = users.filter(u => !((u.plan_id && paidPlanIds.has(u.plan_id)) || u.status_assinatura === "ativa"));
+      list = users.filter(u => !((u.plan_id && paidPlanIds.has(u.plan_id)) || u.status_assinatura === "ativa") && !trialSlugs.includes(u.plan?.slug || ""));
     } else if (activeFilter === "bloqueados") {
       list = users.filter(u => u.is_blocked);
     }
@@ -155,6 +163,7 @@ export default function AdminUsuarios() {
     switch (key) {
       case "todos": return stats.total;
       case "pagos": return stats.pagos;
+      case "trial": return stats.trial;
       case "free": return stats.free;
       case "bloqueados": return stats.bloqueados;
     }
@@ -193,7 +202,7 @@ export default function AdminUsuarios() {
       {/* ======= MOBILE ======= */}
       <div className="md:hidden px-4 py-3 space-y-3">
         {/* Stats row */}
-        <div className="grid grid-cols-4 gap-1.5">
+        <div className="grid grid-cols-5 gap-1">
           {FILTER_TABS.map(({ key, label, icon: Icon }) => {
             const count = getFilterCount(key);
             const isActive = activeFilter === key;
@@ -259,7 +268,11 @@ export default function AdminUsuarios() {
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 {getUtmBadge(user.utm_source)}
-                <Badge variant="secondary" className={cn("text-[10px] px-1.5 py-0.5", user.plan && user.plan.price > 0 && "bg-primary/10 text-primary border-primary/20")}>
+                <Badge variant="secondary" className={cn(
+                  "text-[10px] px-1.5 py-0.5", 
+                  user.plan && user.plan.price > 0 && "bg-primary/10 text-primary border-primary/20",
+                  (user.plan?.slug === 'trial' || user.plan?.slug === 'teste-gratis-3-dias') && "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 border-orange-200"
+                )}>
                   {user.plan?.name || "Free"}
                 </Badge>
               </div>
@@ -390,8 +403,10 @@ export default function AdminUsuarios() {
                   </TableCell>
                   <TableCell className="py-2.5">
                     <span className={cn(
-                      "text-xs font-medium",
-                      user.plan && user.plan.price > 0 ? "text-primary" : "text-muted-foreground"
+                      "text-xs font-medium px-2 py-0.5 rounded-full",
+                      user.plan && user.plan.price > 0 ? "text-primary bg-primary/10" : 
+                      (user.plan?.slug === 'trial' || user.plan?.slug === 'teste-gratis-3-dias') ? "text-orange-700 bg-orange-100 dark:text-orange-300 dark:bg-orange-900/40" :
+                      "text-muted-foreground bg-muted/50"
                     )}>
                       {user.plan?.name || "Free"}
                     </span>
