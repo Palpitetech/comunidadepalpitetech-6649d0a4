@@ -23,6 +23,11 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Obter corpo da requisição para verificar overrides de teste
+    const body = await req.json().catch(() => ({}));
+    const testTime = body.testTime; // Ex: "14:00"
+    const testDay = body.testDay !== undefined ? body.testDay : null; // Ex: 1 (Segunda)
+
     // Horário atual no fuso de Brasília (UTC-3)
     const now = new Date();
     const brasiliaOffset = -3 * 60;
@@ -31,8 +36,21 @@ serve(async (req) => {
     
     const currentHour = brasiliaTime.getHours().toString().padStart(2, "0");
     const currentMinute = brasiliaTime.getMinutes().toString().padStart(2, "0");
-    const currentTime = `${currentHour}:${currentMinute}`;
-    const currentDay = brasiliaTime.getDay(); // 0=Dom, 1=Seg...
+    
+    let currentTime = `${currentHour}:${currentMinute}`;
+    let currentDay = brasiliaTime.getDay(); // 0=Dom, 1=Seg...
+
+    if (testTime) {
+      currentTime = testTime;
+      console.log(`[process-scheduled-posts] 🧪 MODO TESTE: Simulando horário ${currentTime}`);
+    }
+    if (testDay !== null) {
+      currentDay = testDay;
+      console.log(`[process-scheduled-posts] 🧪 MODO TESTE: Simulando dia ${currentDay}`);
+    }
+
+    const [simulatedHour, simulatedMinute] = currentTime.split(":");
+
 
     // Janela de 14 horas para verificar se o Autor de Resultados postou
     // Isso cobre: resultado às 23h → posts válidos até 13h do dia seguinte
