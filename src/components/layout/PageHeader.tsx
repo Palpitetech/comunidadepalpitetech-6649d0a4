@@ -78,7 +78,7 @@ export function PageHeader({ title, breadcrumb, onBack, rightContent, hideBackBu
               {rightContent}
             </div>
           ) : hasBreadcrumb ? (
-            <div className="flex items-center gap-1 min-w-0 overflow-hidden">
+            <div className="hidden md:flex items-center gap-1 min-w-0 overflow-hidden">
               {breadcrumb.map((item, index) => (
                 <div key={index} className="flex items-center gap-1 min-w-0">
                   {item.onClick ? (
@@ -96,12 +96,12 @@ export function PageHeader({ title, breadcrumb, onBack, rightContent, hideBackBu
                   <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                 </div>
               ))}
-              <h1 className="text-lg font-bold text-foreground truncate">
+              <h1 className="hidden md:block text-lg font-bold text-foreground truncate">
                 {title}
               </h1>
             </div>
           ) : title ? (
-            <h1 className="text-lg font-bold text-foreground truncate">
+            <h1 className="hidden md:block text-lg font-bold text-foreground truncate">
               {title}
             </h1>
           ) : null}

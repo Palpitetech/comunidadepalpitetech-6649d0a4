@@ -171,7 +171,7 @@ export default function PostDetalhes() {
   const commentsCount = post.respostas_count || 0;
 
   return (
-    <MainLayout pageTitle="Post" hideBottomNav={!isAuthenticated}>
+    <MainLayout pageTitle={post?.titulo || "Post"} hideBottomNav={!isAuthenticated}>
       <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* Desktop back button */}
         {!isMobile && (
@@ -204,7 +204,7 @@ export default function PostDetalhes() {
 
         {/* Title */}
         {post.titulo && (
-          <div className="px-4 pb-2">
+          <div className="px-4 pb-2 hidden md:block">
             <h1 className="text-xl font-bold text-foreground leading-tight">{post.titulo}</h1>
           </div>
         )}

@@ -33,7 +33,7 @@ export default function LinhasColunasQuina() {
 
   return (
     <MainLayout pageTitle="Linhas e Colunas – Quina">
-      <div className="container-senior py-6">
+      <div className="container-senior py-6 hidden md:block">
         {!isMobile && (
           <div className="flex items-center justify-between gap-3 mb-6">
             <div className="flex items-center gap-3">
