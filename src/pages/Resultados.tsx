@@ -56,11 +56,7 @@ export default function Resultados() {
     <MainLayout pageTitle="Resultados">
       <div className="container-senior py-6">
         {!isMobile && (
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <div className="flex items-center gap-3">
-              <BarChart3 className="h-7 w-7 text-primary" />
-              <h1 className="text-xl font-bold">Resultados</h1>
-            </div>
+          <div className="flex items-center justify-end gap-3 mb-4">
             <SnapshotButton targetRef={contentRef} defaultTitle="Resultados Lotofácil" />
           </div>
         )}
