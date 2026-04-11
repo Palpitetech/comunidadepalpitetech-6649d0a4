@@ -21,14 +21,14 @@ interface UpgradeModalProps {
 export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "premium" }: UpgradeModalProps) {
   const { user } = useAuthContext();
   const navigate = useNavigate();
-  const { isPremium } = usePermissionContext();
+  const { isPremium, plan } = usePermissionContext();
   const { data: subscription, refetch } = useMySubscription(user?.id);
   const [activatingTrial, setActivatingTrial] = useState(false);
   const activatingRef = useRef(false);
-  const { plan } = usePermissionContext();
 
   // Se o usuário já é premium mas está vendo o modal, provavelmente quer VIP (ilimitado)
   const effectiveVariant = (isPremium && variant !== "vip") ? "vip" : variant;
+  const isVip = effectiveVariant === "vip";
   const isTrialActive = plan?.slug === 'trial' || plan?.slug === 'teste-gratis-3-dias';
   
   // Se estiver em trial, fecha o modal de upsell premium (recurso agora é liberado no hasPermission)
@@ -38,17 +38,10 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
     }
   }, [open, isTrialActive, variant, onOpenChange]);
 
-  const isVip = effectiveVariant === "vip";
-  const { plan } = usePermissionContext();
-  const isTrialActive = plan?.slug === 'trial' || plan?.slug === 'teste-gratis-3-dias';
-  
   // Se for Free > Oferece o trial de 3 dias
   // Se for Free que já usou o Trial > Oferece o Upgrade.
   const canUseTrial = subscription?.isFree && !subscription.trial_used;
   const isTrialExpired = subscription?.isFree && subscription.trial_used;
-
-  // Se estiver em trial, não mostra o modal de upsell premium (recurso agora é liberado no hasPermission)
-  const isModalOpen = open && (!isTrialActive || isVip);
 
 
   const handleStartTrial = async () => {
