@@ -361,7 +361,7 @@ export default function Desdobramento() {
     return (
       <DesdobramentoResultados
         jogos={jogosGerados}
-        dezenasFixes={dezenasFixas}
+        dezenasFixas={dezenasFixas}
         ultimoConcursoDezenas={ultimoSorteio}
         qtdDezenas={qtdDezenas}
         onVoltar={handleLimpar}

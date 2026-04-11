@@ -15,7 +15,7 @@ const MOLDURA_DUPLASENA = [
 interface JogoCardDuplaSenaProps {
   index: number;
   dezenas: number[];
-  dezenasFixes?: number[];
+  dezenasFixas?: number[];
   ultimoConcursoDezenas?: number[];
   isSelected?: boolean;
   onSelectChange?: (checked: boolean) => void;
@@ -28,7 +28,7 @@ interface JogoCardDuplaSenaProps {
 export function JogoCardDuplaSena({
   index,
   dezenas,
-  dezenasFixes = [],
+  dezenasFixas = [],
   ultimoConcursoDezenas = [],
   isSelected = false,
   onSelectChange,
@@ -103,7 +103,7 @@ export function JogoCardDuplaSena({
             key={dezena}
             className={cn(
               "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold",
-              dezenasFixes?.includes(dezena)
+              dezenasFixas?.includes(dezena)
                 ? "bg-foreground text-background"
                 : ultimoConcursoDezenas.includes(dezena)
                 ? "bg-duplasena-primary text-white"

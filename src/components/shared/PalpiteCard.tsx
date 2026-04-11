@@ -25,7 +25,7 @@ export interface PalpiteCardProps {
   index: number;
   dezenas: number[];
   ultimoConcursoDezenas?: number[];
-  dezenasFixes?: number[];
+  dezenasFixas?: number[];
   isSelected?: boolean;
   onSelectChange?: (checked: boolean) => void;
   onDelete?: () => void;
@@ -65,7 +65,7 @@ export function PalpiteCard({
   index,
   dezenas,
   ultimoConcursoDezenas = [],
-  dezenasFixes = [],
+  dezenasFixas = [],
   isSelected = false,
   onSelectChange,
   onDelete,
@@ -276,7 +276,7 @@ export function PalpiteCard({
       <div className="space-y-1 mb-2">
         <div className="flex flex-wrap gap-1">
           {primeiraLinha.map((dezena) => {
-            const isFixa = dezenasFixes.includes(dezena);
+            const isFixa = dezenasFixas.includes(dezena);
             return (
               <span
                 key={dezena}
@@ -295,7 +295,7 @@ export function PalpiteCard({
         {segundaLinha.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {segundaLinha.map((dezena) => {
-              const isFixa = dezenasFixes.includes(dezena);
+              const isFixa = dezenasFixas.includes(dezena);
               return (
                 <span
                   key={dezena}

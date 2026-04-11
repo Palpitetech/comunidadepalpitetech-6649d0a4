@@ -375,7 +375,7 @@ export function ResultadosFechamentoMegaSena({
               key={palpite.id}
               index={realIndex}
               dezenas={palpite.dezenas}
-              dezenasFixes={fixas}
+              dezenasFixas={fixas}
               isSelected={selected.has(palpite.id)}
               onSelectChange={(checked) => handleSelectChange(palpite.id, checked)}
               acertos={acertosPorPalpite[palpite.id] ?? null}

@@ -71,7 +71,7 @@ serve(async (req) => {
     const periodoAnalise = Math.min(Math.max(body.periodoAnalise || 50, 1), 500);
     const sorteioAnalise = body.sorteioAnalise || "ambos";
     
-    const dezenasFiexas: number[] = (body.dezenasFiexas || [])
+    const dezenasFixas: number[] = (body.dezenasFixas || [])
       .filter((d: number) => d >= 1 && d <= TOTAL_DEZENAS)
       .slice(0, 5);
     const dezenasExcluidas: number[] = (body.dezenasExcluidas || [])
@@ -245,8 +245,8 @@ PERÍODO DE ANÁLISE: ${periodoAnalise} concurso(s)
 `;
 
     let filtrosTexto = "";
-    if (dezenasFiexas.length > 0) {
-      filtrosTexto += `\nDEZENAS FIXAS (OBRIGATÓRIAS em TODOS os jogos): ${dezenasFiexas.map((d: number) => d.toString().padStart(2, '0')).join(', ')}`;
+    if (dezenasFixas.length > 0) {
+      filtrosTexto += `\nDEZENAS FIXAS (OBRIGATÓRIAS em TODOS os jogos): ${dezenasFixas.map((d: number) => d.toString().padStart(2, '0')).join(', ')}`;
     }
     if (dezenasExcluidas.length > 0) {
       filtrosTexto += `\nDEZENAS EXCLUÍDAS (PROIBIDAS em todos os jogos): ${dezenasExcluidas.map((d: number) => d.toString().padStart(2, '0')).join(', ')}`;
@@ -264,7 +264,7 @@ REGRAS OBRIGATÓRIAS:
 4. Considere o equilíbrio par/ímpar e distribuição no volante
 5. NUNCA prometa vitória - loteria é probabilidade
 6. Seja didático e acessível na explicação
-${dezenasFiexas.length > 0 ? `7. OBRIGATÓRIO: Todas as dezenas fixas [${dezenasFiexas.join(', ')}] DEVEM aparecer em TODOS os jogos` : ''}
+${dezenasFixas.length > 0 ? `7. OBRIGATÓRIO: Todas as dezenas fixas [${dezenasFixas.join(', ')}] DEVEM aparecer em TODOS os jogos` : ''}
 ${dezenasExcluidas.length > 0 ? `8. PROIBIDO: As dezenas excluídas [${dezenasExcluidas.join(', ')}] NÃO PODEM aparecer em nenhum jogo` : ''}
 
 Use a função generate_palpites_duplasena para retornar os jogos estruturados.`;
@@ -424,8 +424,8 @@ Explique brevemente a estratégia utilizada.`;
       }
       
       // Garantir dezenas fixas
-      if (dezenasFiexas.length > 0) {
-        for (const fixa of dezenasFiexas) {
+      if (dezenasFixas.length > 0) {
+        for (const fixa of dezenasFixas) {
           if (!dezenas.includes(fixa)) {
             dezenas.push(fixa);
           }

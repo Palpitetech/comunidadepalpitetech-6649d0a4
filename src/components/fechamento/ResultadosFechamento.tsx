@@ -327,7 +327,7 @@ export function ResultadosFechamento({
               key={palpite.id}
               index={realIndex}
               dezenas={palpite.dezenas}
-              dezenasFixes={fixas}
+              dezenasFixas={fixas}
               ultimoConcursoDezenas={ultimoConcurso}
               isSelected={selected.has(palpite.id)}
               onSelectChange={(checked) => handleSelectChange(palpite.id, checked)}

@@ -27,7 +27,7 @@ export function RealGeneratorDemo() {
   const { toast } = useToast();
   
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
-  const [dezenasFiexasOpcao, setDezenasFiexasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
+  const [dezenasFixasOpcao, setDezenasFiexasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
   const [dezenasFixas, setDezenasFixas] = useState<number[]>([]);
   const [dezenasExcluidasOpcao, setDezenasExcluidasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
   const [dezenasExcluidas, setDezenasExcluidas] = useState<number[]>([]);
@@ -68,7 +68,7 @@ export function RealGeneratorDemo() {
             quantidade, 
             qtdDezenas, 
             periodoAnalise,
-            dezenasFiexas: dezenasFiexasOpcao === "sim" ? dezenasFixas : [],
+            dezenasFixas: dezenasFixasOpcao === "sim" ? dezenasFixas : [],
             dezenasExcluidas: dezenasExcluidasOpcao === "sim" ? dezenasExcluidas : [],
             pedidoEspecial: pedidoEspecial.trim() || undefined,
           }),
@@ -112,7 +112,7 @@ export function RealGeneratorDemo() {
   };
 
   const temFiltrosAtivos = 
-    dezenasFiexasOpcao !== "padrao" || 
+    dezenasFixasOpcao !== "padrao" || 
     dezenasExcluidasOpcao !== "padrao" || 
     pedidoEspecial.trim().length > 0;
 
@@ -177,7 +177,7 @@ export function RealGeneratorDemo() {
               <FiltroDezenasSelector
                 label="Dezenas Fixas"
                 description="Forçar dezenas específicas"
-                value={dezenasFiexasOpcao}
+                value={dezenasFixasOpcao}
                 onChange={setDezenasFiexasOpcao}
                 dezenasSelecionadas={dezenasFixas}
                 onDezenasChange={setDezenasFixas}
@@ -250,7 +250,7 @@ export function RealGeneratorDemo() {
           onClearAll={handleClearAll}
           estrategia={result.estrategia}
           periodoAnalise={periodoAnalise}
-          dezenasFixes={dezenasFiexasOpcao === "sim" ? dezenasFixas : undefined}
+          dezenasFixas={dezenasFixasOpcao === "sim" ? dezenasFixas : undefined}
         />
       )}
 
