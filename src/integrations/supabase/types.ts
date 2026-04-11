@@ -2062,11 +2062,14 @@ export type Database = {
           locais_ganhadores: Json | null
           local_sorteio: string | null
           premiacao_json: Json | null
+          qtd_fibonacci: number | null
           qtd_impares: number | null
           qtd_moldura: number | null
           qtd_pares: number | null
           qtd_primos: number | null
           qtd_repetidas: number | null
+          sequencias: number | null
+          soma: number | null
           valor_acumulado_especial: number | null
           valor_estimado_proximo: number | null
         }
@@ -2082,11 +2085,14 @@ export type Database = {
           locais_ganhadores?: Json | null
           local_sorteio?: string | null
           premiacao_json?: Json | null
+          qtd_fibonacci?: number | null
           qtd_impares?: number | null
           qtd_moldura?: number | null
           qtd_pares?: number | null
           qtd_primos?: number | null
           qtd_repetidas?: number | null
+          sequencias?: number | null
+          soma?: number | null
           valor_acumulado_especial?: number | null
           valor_estimado_proximo?: number | null
         }
@@ -2102,11 +2108,14 @@ export type Database = {
           locais_ganhadores?: Json | null
           local_sorteio?: string | null
           premiacao_json?: Json | null
+          qtd_fibonacci?: number | null
           qtd_impares?: number | null
           qtd_moldura?: number | null
           qtd_pares?: number | null
           qtd_primos?: number | null
           qtd_repetidas?: number | null
+          sequencias?: number | null
+          soma?: number | null
           valor_acumulado_especial?: number | null
           valor_estimado_proximo?: number | null
         }

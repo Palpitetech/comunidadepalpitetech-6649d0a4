@@ -228,6 +228,12 @@ Responda APENAS no formato JSON:
         loteria_tag: "Lotofácil",
         tipo: "resultado_oficial",
         concurso_referencia: concurso,
+        metadata: {
+          concurso,
+          indicadores,
+          ciclo: cicloInfo,
+          dezenas
+        }
       })
       .select("id")
       .single();
@@ -609,10 +615,9 @@ Deno.serve(async (req) => {
     if (bodyAction === 'reprocess_history') {
       console.log('[REPROCESS] Iniciando reprocessamento histórico lotofacil...');
       const { data: existentes, error: fetchErr } = await supabase
-        .from('resultados_loterias')
-          .select('concurso')
-          .eq('loteria', 'lotofacil')
-        .order('concurso', { ascending: true });
+        .from('resultados')
+          .select('concurso_id as concurso')
+        .order('concurso_id', { ascending: true });
       if (fetchErr) throw new Error(fetchErr.message);
       if (!existentes?.length) {
         return new Response(JSON.stringify({ success: true, reprocessados: 0 }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -779,12 +784,11 @@ Deno.serve(async (req) => {
     // Ordenar do mais antigo para o mais novo
     concursosProcessados.sort((a, b) => a.numero - b.numero);
 
-    // Buscar último concurso salvo (tabela unificada)
+    // Buscar último concurso salvo na tabela principal Lotofácil
     const { data: ultimoSalvo } = await supabase
-      .from('resultados_loterias')
-        .select('concurso, dezenas, dezenas_faltantes_ciclo, ciclo_numero')
-        .eq('loteria', 'lotofacil')
-      .order('concurso', { ascending: false })
+      .from('resultados')
+        .select('concurso_id, dezenas, dezenas_faltantes_ciclo, ciclo_numero')
+      .order('concurso_id', { ascending: false })
       .limit(1)
       .single();
 
@@ -895,9 +899,9 @@ Deno.serve(async (req) => {
         if (raw.localSorteio) local_sorteio = String(raw.localSorteio);
 
         // Gravar na tabela unificada
-        const registroUnificado = {
-          loteria: 'lotofacil',
-          concurso: concurso.numero,
+        // Gravar na tabela principal Lotofácil (SaaS)
+        const registroLotofacil = {
+          concurso_id: concurso.numero,
           data_sorteio: concurso.data,
           dezenas: concurso.dezenas,
           acumulou,
@@ -911,11 +915,28 @@ Deno.serve(async (req) => {
         };
 
         const { error: insertError } = await supabase
+          .from('resultados')
+          .upsert(registroLotofacil, { onConflict: 'concurso_id' });
+
+        if (insertError) {
+          throw new Error(`Erro na tabela resultados: ${insertError.message}`);
+        }
+
+        // Gravar também na tabela unificada (manter compatibilidade)
+        const registroUnificado = {
+          loteria: 'lotofacil',
+          concurso: concurso.numero,
+          ...registroLotofacil,
+          concurso_id: undefined // Remover campo que não existe na unificada
+        };
+        delete registroUnificado.concurso_id;
+
+        const { error: insertUnificadoError } = await supabase
           .from('resultados_loterias')
           .upsert(registroUnificado, { onConflict: 'loteria,concurso' });
 
-        if (insertError) {
-          throw new Error(insertError.message);
+        if (insertUnificadoError) {
+          console.warn(`[WARN] Erro na tabela resultados_loterias: ${insertUnificadoError.message}`);
         }
 
         // LOG DE AUDITORIA: Concurso adicionado com sucesso
@@ -948,23 +969,20 @@ Deno.serve(async (req) => {
             loteria: 'Lotofácil',
           });
 
-          // Palpite Tech: post de resultado oficial
+          // Palpite Tech: post de resultado oficial na comunidade
           try {
-            await fetch(
-              Deno.env.get('SUPABASE_URL') + '/functions/v1/palpitetech-post',
-              {
-                method: 'POST',
-                headers: {
-                  'Authorization': 'Bearer ' + Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ mode: 'resultado' })
-              }
-            );
-            console.log(`[PALPITETECH] Post de resultado disparado para concurso ${concurso.numero}`);
+            await criarPostResultadoOficial({
+              supabase,
+              concurso: concurso.numero,
+              dezenas: concurso.dezenas,
+              indicadores,
+              cicloInfo,
+              acumulou
+            });
+            console.log(`[PALPITETECH] Post de resultado criado para concurso ${concurso.numero}`);
           } catch (ptErr) {
             const msg = ptErr instanceof Error ? ptErr.message : String(ptErr);
-            console.error(`[PALPITETECH] Falha ao disparar post: ${msg}`);
+            console.error(`[PALPITETECH] Falha ao criar post: ${msg}`);
           }
         } else {
           console.log('[NOTIFY] Disparo desativado (carga histórica ou notify=false).');
