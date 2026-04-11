@@ -153,7 +153,7 @@ export default function Vendas() {
             </div>
             <div className="flex-1 relative">
               <div className="bg-gradient-to-tr from-primary to-accent p-1 rounded-3xl shadow-2xl">
-                <div className="bg-card rounded-[22px] overflow-hidden p-6 sm:p-10 flex items-center justify-center">
+                <div className="bg-card rounded-[22px] overflow-hidden p-4 sm:p-6 flex items-center justify-center">
                   <RealGeneratorDemo />
                 </div>
               </div>
