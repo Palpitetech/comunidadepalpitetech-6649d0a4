@@ -83,13 +83,14 @@ export function UserPlanTab({ user, plans, onUserUpdated }: UserPlanTabProps) {
 
   const selectedPlan = plans.find((p) => p.id === selectedPlanId);
   const statusAssinatura = (user.status_assinatura || "inativa") as StatusAssinatura;
-  const statusConfig = STATUS_CONFIG[statusAssinatura];
+  const statusConfig = STATUS_CONFIG[selectedStatus];
   
   const diasRestantes = user.validade_assinatura 
     ? differenceInDays(new Date(user.validade_assinatura), new Date())
     : null;
 
   const hasChanges = selectedPlanId !== user.plan_id || 
+    selectedStatus !== (user.status_assinatura || "inativa") ||
     (validadeManual && validadeManual !== (user.validade_assinatura ? format(new Date(user.validade_assinatura), "yyyy-MM-dd") : ""));
 
   return (
