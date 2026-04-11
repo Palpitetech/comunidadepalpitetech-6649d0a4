@@ -10,7 +10,7 @@ import { PeriodoAnaliseSelector } from "@/components/gerador/PeriodoAnaliseSelec
 import { FiltroDezenasSelector } from "@/components/gerador/FiltroDezenasSelector";
 import { PedidoEspecialInput } from "@/components/gerador/PedidoEspecialInput";
 import { ResultadosSheet } from "@/components/gerador/ResultadosSheet";
-import { UpgradeModal } from "@/components/shared/UpgradeModal";
+// UpgradeModal removido pois é gerenciado globalmente pelo UpsellProvider
 import { useGerador } from "@/hooks/useGerador";
 import { useGeradorStatus } from "@/hooks/useGeradorStatus";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -25,7 +25,7 @@ export default function Gerador() {
   const [periodoAnalise, setPeriodoAnalise] = useState(50);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  // upgradeOpen removido pois o modal é global
   const { openUpgradeModal } = useUpsell();
 
   // Novos estados para filtros
@@ -272,13 +272,7 @@ export default function Gerador() {
           />
         )}
 
-        {/* Modal de Upgrade ao exceder limite */}
-        <UpgradeModal
-          open={upgradeOpen}
-          onOpenChange={setUpgradeOpen}
-          featureLabel="Gerador de Palpites"
-          variant="premium"
-        />
+        {/* O UpgradeModal agora é gerenciado globalmente pelo UpsellProvider */}
       </div>
     </MainLayout>
   );

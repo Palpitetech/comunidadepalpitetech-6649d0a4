@@ -15,7 +15,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { useUpsell } from "@/contexts/UpsellContext";
 import { Dices, Loader2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
-import { UpgradeModal } from "@/components/shared/UpgradeModal";
 
 export default function GeradorMegaSena() {
   const isMobile = useIsMobile();
@@ -23,7 +22,6 @@ export default function GeradorMegaSena() {
   const [periodoAnalise, setPeriodoAnalise] = useState(50);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const { openUpgradeModal } = useUpsell();
 
   // Filtros - Mesmo padrão da Lotofácil
@@ -39,7 +37,6 @@ export default function GeradorMegaSena() {
 
   const canGenerate = statusLoading || isAdmin || remaining_today > 0;
 
-  // Buscar último concurso
   useEffect(() => {
     const fetchUltimoConcurso = async () => {
       const { data } = await (supabase as any)
@@ -63,15 +60,15 @@ export default function GeradorMegaSena() {
       openUpgradeModal("Gerador de Palpites");
       return;
     }
+    
     const filtros = {
       dezenasFiexas: dezenasFiexasOpcao === "sim" ? dezenasFixas : [],
       dezenasExcluidas: dezenasExcluidasOpcao === "sim" ? dezenasExcluidas : [],
       pedidoEspecial: pedidoEspecial.trim() || undefined,
     };
+    
     generatePalpites(quantidade, periodoAnalise, filtros);
   };
-
-  const usageBadgeText = isAdmin ? "∞" : `${remaining_today}/${max_per_day}`;
 
   useEffect(() => {
     if (result) {
@@ -96,17 +93,21 @@ export default function GeradorMegaSena() {
     dezenasExcluidasOpcao !== "padrao" || 
     pedidoEspecial.trim().length > 0;
 
+  const usageBadgeText = isAdmin
+    ? "∞"
+    : `${remaining_today}/${max_per_day}`;
+
   return (
-    <MainLayout pageTitle="Gerador Mega Sena">
+    <MainLayout pageTitle="Gerador Mega-Sena">
       <div className="container-senior py-6 space-y-6 max-w-md mx-auto">
         {!isMobile && (
           <div className="text-center space-y-1">
             <div className="flex items-center justify-center gap-2">
-              <Dices className="h-7 w-7 text-emerald-500" />
-              <h1 className="text-2xl font-bold">Gerador Mega Sena</h1>
+              <Dices className="h-7 w-7 text-primary" />
+              <h1 className="text-2xl font-bold">Gerador Mega-Sena</h1>
             </div>
             <p className="text-sm text-muted-foreground">
-              Palpites inteligentes baseados em análise estatística
+              Palpites baseados em análise estatística
             </p>
           </div>
         )}
@@ -117,13 +118,13 @@ export default function GeradorMegaSena() {
               value={quantidade}
               onChange={setQuantidade}
               max={12}
-              disabled={isLoading || !canGenerate}
+              disabled={isLoading}
             />
 
             <PeriodoAnaliseSelector
               value={periodoAnalise}
               onChange={setPeriodoAnalise}
-              disabled={isLoading || !canGenerate}
+              disabled={isLoading}
             />
 
             <Separator />
@@ -148,10 +149,8 @@ export default function GeradorMegaSena() {
               )}
             </button>
 
-            {/* Filtros Avançados - Mesmo padrão da Lotofácil */}
             {filtrosAbertos && (
               <div className="space-y-6 pt-2">
-                {/* Dezenas Fixas */}
                 <FiltroDezenaSelectorMegaSena
                   label="Dezenas Fixas"
                   description="Forçar dezenas específicas em todos os jogos"
@@ -159,12 +158,10 @@ export default function GeradorMegaSena() {
                   onChange={setDezenasFiexasOpcao}
                   dezenasSelecionadas={dezenasFixas}
                   onDezenasChange={setDezenasFixas}
-                  disabled={isLoading || !canGenerate}
+                  disabled={isLoading}
                   tipo="fixas"
-                  maxDezenas={5}
                 />
 
-                {/* Dezenas Excluídas */}
                 <FiltroDezenaSelectorMegaSena
                   label="Dezenas Excluídas"
                   description="Evitar dezenas específicas nos jogos"
@@ -172,16 +169,14 @@ export default function GeradorMegaSena() {
                   onChange={setDezenasExcluidasOpcao}
                   dezenasSelecionadas={dezenasExcluidas}
                   onDezenasChange={setDezenasExcluidas}
-                  disabled={isLoading || !canGenerate}
+                  disabled={isLoading}
                   tipo="excluidas"
-                  maxDezenas={10}
                 />
 
-                {/* Pedido Especial */}
                 <PedidoEspecialInput
                   value={pedidoEspecial}
                   onChange={setPedidoEspecial}
-                  disabled={isLoading || !canGenerate}
+                  disabled={isLoading}
                 />
               </div>
             )}
@@ -247,13 +242,8 @@ export default function GeradorMegaSena() {
             dezenasFixes={dezenasFiexasOpcao === "sim" ? dezenasFixas : undefined}
           />
         )}
-
-        <UpgradeModal
-          open={upgradeOpen}
-          onOpenChange={setUpgradeOpen}
-          featureLabel="Gerador de Palpites"
-          variant="premium"
-        />
+        
+        {/* O UpgradeModal agora é gerenciado globalmente pelo UpsellProvider */}
       </div>
     </MainLayout>
   );
