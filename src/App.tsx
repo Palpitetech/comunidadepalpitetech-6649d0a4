@@ -215,12 +215,12 @@ const App = () => (
                 {/* Rotas Quina */}
                 <Route path="/quina" element={<ProtectedRoute><HubQuina /></ProtectedRoute>} />
                 <Route path="/quina/resultados" element={<ProtectedRoute><ResultadosQuina /></ProtectedRoute>} />
-                <Route path="/quina/tendencias" element={<ProtectedRoute><TendenciasQuina /></ProtectedRoute>} />
-                <Route path="/quina/frequencia" element={<ProtectedRoute><FrequenciaQuina /></ProtectedRoute>} />
-                <Route path="/quina/frequencia-dezenas" element={<ProtectedRoute><FrequenciaDezenasQuina /></ProtectedRoute>} />
-                <Route path="/quina/dezenas-posicao" element={<ProtectedRoute><DezenasporPosicaoQuina /></ProtectedRoute>} />
-                <Route path="/quina/linhas-colunas" element={<ProtectedRoute><LinhasColunasQuina /></ProtectedRoute>} />
-                <Route path="/quina/tabela-movimentacao" element={<ProtectedRoute><TabelaMovimentacaoQuina /></ProtectedRoute>} />
+                <Route path="/quina/tendencias" element={<ProtectedRoute><GatedPage feature="tendencias"><TendenciasQuina /></GatedPage></ProtectedRoute>} />
+                <Route path="/quina/frequencia" element={<ProtectedRoute><GatedPage feature="quentes_frias"><FrequenciaQuina /></GatedPage></ProtectedRoute>} />
+                <Route path="/quina/frequencia-dezenas" element={<ProtectedRoute><GatedPage feature="frequencia_dezenas"><FrequenciaDezenasQuina /></GatedPage></ProtectedRoute>} />
+                <Route path="/quina/dezenas-posicao" element={<ProtectedRoute><GatedPage feature="dezenas_por_posicao"><DezenasporPosicaoQuina /></GatedPage></ProtectedRoute>} />
+                <Route path="/quina/linhas-colunas" element={<ProtectedRoute><GatedPage feature="linhas_colunas"><LinhasColunasQuina /></GatedPage></ProtectedRoute>} />
+                <Route path="/quina/tabela-movimentacao" element={<ProtectedRoute><GatedPage feature="tabela_movimentacao"><TabelaMovimentacaoQuina /></GatedPage></ProtectedRoute>} />
                 <Route path="/quina/gerador" element={<ProtectedRoute><GatedPage feature="gerador"><GeradorQuina /></GatedPage></ProtectedRoute>} />
                 <Route path="/quina/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><DesdobramentoQuina /></GatedPage></ProtectedRoute>} />
                 <Route path="/quina/analise-do-dia" element={<ProtectedRoute><GatedPage feature="analise_do_dia"><AnaliseDoDiaQuina /></GatedPage></ProtectedRoute>} />
