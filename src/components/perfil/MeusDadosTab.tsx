@@ -104,37 +104,49 @@ export function MeusDadosTab({ profile, user }: MeusDadosTabProps) {
     window.location.reload();
   };
 
+  const formatarTelefone = (tel: string | null) => {
+    if (!tel) return tel;
+    const digits = tel.replace(/\D/g, "");
+    if (digits.length === 13) {
+      return `(${digits.slice(0, 2)}) ${digits.slice(2, 4)} ${digits.slice(4, 9)}-${digits.slice(9)}`;
+    }
+    return tel;
+  };
+
   return (
-    <div className="flex flex-col gap-6 p-4 max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Seção de Perfil Principal */}
       <div className="space-y-4">
         <div className="flex flex-col gap-1.5">
           <h2 className="text-xs font-bold text-muted-foreground/80 px-1 uppercase tracking-widest">
             Informações Pessoais
           </h2>
-          <div className="rounded-3xl border bg-card shadow-sm overflow-hidden divide-y divide-muted/30">
+          <div className="rounded-3xl border bg-white shadow-md overflow-hidden divide-y divide-muted/30">
             <CopyableRow icon={User} label="Nome Completo" value={profile?.nome} />
             <CopyableRow icon={Mail} label="E-mail" value={user?.email || null} verified={true} />
-            <CopyableRow icon={Phone} label="Telefone Celular" value={profile?.celular} verified={!!profile?.celular} />
+            <CopyableRow 
+              icon={Phone} 
+              label="Telefone Celular" 
+              value={formatarTelefone(profile?.celular || null)} 
+              verified={!!profile?.celular} 
+              action={
+                <AlterarCelularDialog
+                  celularAtual={profile?.celular || null}
+                  onSuccess={handleCelularSuccess}
+                  trigger={
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  }
+                />
+              }
+            />
           </div>
         </div>
-
-        {/* Botão de Ação Rápida */}
-        <AlterarCelularDialog
-          celularAtual={profile?.celular || null}
-          onSuccess={handleCelularSuccess}
-          trigger={
-            <Button 
-              variant="outline" 
-              className="w-full h-12 gap-3 rounded-2xl text-sm font-bold shadow-sm hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-[0.98]"
-            >
-              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Phone className="h-4 w-4 text-primary group-hover:text-primary-foreground" />
-              </div>
-              {profile?.celular ? "Atualizar Celular" : "Vincular Celular"}
-            </Button>
-          }
-        />
       </div>
 
       {/* Seção Técnica */}
@@ -142,7 +154,7 @@ export function MeusDadosTab({ profile, user }: MeusDadosTabProps) {
         <h2 className="text-[10px] font-bold text-muted-foreground/60 px-1 uppercase tracking-[0.2em]">
           Identificação da Conta
         </h2>
-        <div className="rounded-2xl border bg-muted/10 overflow-hidden">
+        <div className="rounded-2xl border bg-white/50 shadow-sm overflow-hidden">
           <CopyableRow icon={Hash} label="ID de Usuário" value={user?.id || null} isTechnical={true} />
         </div>
       </div>
