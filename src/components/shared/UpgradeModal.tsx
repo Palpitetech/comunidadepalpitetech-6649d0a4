@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Gem, ArrowRight, Check, Sparkles, Loader2, Zap } from "lucide-react";
+import { Gem, ArrowRight, Check, Sparkles, Loader2, Zap, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useMySubscription } from "@/hooks/useMySubscription";
 import { usePermissionContext } from "@/contexts/PermissionContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 interface UpgradeModalProps {
   open: boolean;
@@ -27,6 +28,7 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
   const isVip = effectiveVariant === "vip";
   
   const canUseTrial = subscription && !subscription.trial_used && subscription.status === "inativa";
+  const isTrialExpired = subscription && subscription.trial_used && subscription.status === "inativa";
 
   const handleStartTrial = async () => {
     if (!user) return;
@@ -60,27 +62,57 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
     }
   };
 
+  const getTitle = () => {
+    if (isTrialExpired) return "Acesso Premium Necessário";
+    if (canUseTrial) return "Experimente o Premium Grátis";
+    if (isVip) return "Recurso Exclusivo VIP";
+    return "Recurso Premium";
+  };
+
+  const getDescription = () => {
+    if (isTrialExpired) {
+      return "Seu período de teste de 3 dias expirou. Para continuar utilizando este e outros recursos exclusivos, escolha um dos nossos planos.";
+    }
+    if (canUseTrial) {
+      return "Você ainda não utilizou seu teste gratuito. Aproveite 3 dias de acesso total a todas as ferramentas agora mesmo.";
+    }
+    if (subscription?.status === "ativa") {
+      return (
+        <>Você atingiu seu limite diário para <strong className="text-foreground">{featureLabel || "este recurso"}</strong>. Faça um upgrade para o plano <strong className="text-foreground">VIP</strong> para ter acesso ilimitado.</>
+      );
+    }
+    return (
+      featureLabel
+        ? <><strong className="text-foreground">{featureLabel}</strong> é um recurso {isVip ? "exclusivo do plano Anual VIP" : "disponível nos planos pagos"}.</>
+        : <>Este recurso {isVip ? "é exclusivo do plano Anual VIP" : "está disponível nos planos pagos"}.</>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="text-center space-y-3 pb-2">
-          <div className={`mx-auto flex items-center justify-center h-16 w-16 rounded-2xl ${isVip ? "bg-[hsl(var(--vip))]/15" : "bg-[hsl(var(--premium))]/15"}`}>
-            <Gem className={`h-8 w-8 ${isVip ? "text-[hsl(var(--vip))]" : "text-[hsl(var(--premium))]"}`} />
+          <div className="flex flex-col items-center gap-3">
+            <div className={`mx-auto flex items-center justify-center h-16 w-16 rounded-2xl ${isVip ? "bg-[hsl(var(--vip))]/15" : "bg-[hsl(var(--premium))]/15"}`}>
+              <Gem className={`h-8 w-8 ${isVip ? "text-[hsl(var(--vip))]" : "text-[hsl(var(--premium))]"}`} />
+            </div>
+            
+            {isTrialExpired && (
+              <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 gap-1.5 py-1 px-3">
+                <AlertCircle className="h-3.5 w-3.5" />
+                Seu período de teste já foi utilizado
+              </Badge>
+            )}
           </div>
+          
           <DialogTitle className="text-xl font-bold">
-            {isVip ? "Recurso Exclusivo VIP" : "Recurso Premium"}
+            {getTitle()}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <p className="text-muted-foreground text-sm text-center">
-            {subscription?.status === "ativa" ? (
-              <>Você atingiu seu limite diário para <strong className="text-foreground">{featureLabel || "este recurso"}</strong>. Faça um upgrade para o plano <strong className="text-foreground">VIP</strong> para ter acesso ilimitado.</>
-            ) : (
-              featureLabel
-                ? <><strong className="text-foreground">{featureLabel}</strong> é um recurso {isVip ? "exclusivo do plano Anual VIP" : "disponível nos planos pagos"}.</>
-                : <>Este recurso {isVip ? "é exclusivo do plano Anual VIP" : "está disponível nos planos pagos"}.</>
-            )}
+            {getDescription()}
           </p>
 
           <div className="bg-secondary/50 rounded-xl p-4 space-y-2.5">
