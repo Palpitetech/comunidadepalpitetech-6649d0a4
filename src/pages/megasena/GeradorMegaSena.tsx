@@ -13,6 +13,7 @@ import { useGeradorMegaSena } from "@/hooks/useGeradorMegaSena";
 import { useGeradorStatus } from "@/hooks/useGeradorStatus";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
+import { useTrialOffer } from "@/hooks/useTrialOffer";
 import { Dices, Loader2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { UpgradeModal } from "@/components/shared/UpgradeModal";
 
