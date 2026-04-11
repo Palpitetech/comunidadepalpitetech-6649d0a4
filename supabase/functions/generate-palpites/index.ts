@@ -78,12 +78,12 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     
     // Obter parâmetros do body e validar
-    let quantidade = Math.min(Math.max(body.quantidade || 1, 1), 250);
+    let quantidade_jogos = Math.min(Math.max(body.quantidade || 1, 1), 250);
     let qtdDezenas = Math.min(Math.max(body.qtdDezenas || 15, 15), 20);
     let periodoAnalise = Math.min(Math.max(body.periodoAnalise || 50, 1), 500);
     
     // Filtros avançados
-    let dezenasFixas: number[] = (body.dezenasFixas || body.dezenasFixas || [])
+    let dezenasFixas: number[] = (body.dezenasFixas || [])
       .filter((d: number) => d >= 1 && d <= 25)
       .slice(0, 10);
     let dezenasExcluidas: number[] = (body.dezenasExcluidas || [])
@@ -93,7 +93,7 @@ serve(async (req) => {
 
     // For demo requests, restrict parameters
     if (isDemo && !user) {
-      quantidade = Math.min(quantidade, 3);
+      quantidade_jogos = Math.min(quantidade_jogos, 3);
       periodoAnalise = Math.min(periodoAnalise, 50);
       // No fixed numbers for demo
       dezenasFixas = [];
@@ -101,6 +101,7 @@ serve(async (req) => {
       pedidoEspecial = "";
     }
 
+    const today = new Date().toISOString().split("T")[0];
     let geradorMaxPerDay = 1;
     let hasGeradorFeature = false;
     let currentUsage = 0;
@@ -138,7 +139,7 @@ serve(async (req) => {
       }
 
       // Verificar uso diário
-      const today = new Date().toISOString().split("T")[0];
+      // Verificar uso diário
       const { data: usage } = await supabaseAdmin
         .from("gerador_daily_usage")
         .select("count")
@@ -269,7 +270,7 @@ Você deve usar a função generate_palpites para retornar os jogos estruturados
 
     const userPrompt = `${contextoEstatistico}${filtrosTexto}
 
-Com base nesta análise, gere ${quantidade} jogo(s) de Lotofácil com EXATAMENTE ${qtdDezenas} dezenas cada.
+Com base nesta análise, gere ${quantidade_jogos} jogo(s) de Lotofácil com EXATAMENTE ${qtdDezenas} dezenas cada.
 
 Para cada jogo, utilize uma abordagem diferente (se houver mais de um):
 - Jogo 1: Foco nas dezenas quentes (mais frequentes)
@@ -416,8 +417,8 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
         total_tokens: aiUsage.total_tokens || 0,
         model: "google/gemini-3-flash-preview",
         cost_usd: estimateCost(aiUsage, "google/gemini-3-flash-preview"),
-        metadata: { quantidade, qtdDezenas, periodoAnalise },
-      }).then(() => {}).catch(e => console.error("Erro log:", e));
+        metadata: { quantidade_jogos, qtdDezenas, periodoAnalise },
+      });
     }
     
     if (!toolCall?.function?.arguments) {
