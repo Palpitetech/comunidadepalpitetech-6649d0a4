@@ -76,41 +76,30 @@ serve(async (req) => {
 
     // Obter parâmetros do body
     const body = await req.json().catch(() => ({}));
-    const quantidade = Math.min(Math.max(body.quantidade || 1, 1), 250);
-    const qtdDezenas = Math.min(Math.max(body.qtdDezenas || 15, 15), 20);
-    const periodoAnalise = Math.min(Math.max(body.periodoAnalise || 50, 1), 500);
+    
+    // Obter parâmetros do body e validar
+    let quantidade = Math.min(Math.max(body.quantidade || 1, 1), 250);
+    let qtdDezenas = Math.min(Math.max(body.qtdDezenas || 15, 15), 20);
+    let periodoAnalise = Math.min(Math.max(body.periodoAnalise || 50, 1), 500);
     
     // Filtros avançados
-    const dezenasFiexas: number[] = (body.dezenasFiexas || [])
+    let dezenasFixas: number[] = (body.dezenasFixas || body.dezenasFiexas || [])
       .filter((d: number) => d >= 1 && d <= 25)
       .slice(0, 10);
-    const dezenasExcluidas: number[] = (body.dezenasExcluidas || [])
+    let dezenasExcluidas: number[] = (body.dezenasExcluidas || [])
       .filter((d: number) => d >= 1 && d <= 25)
       .slice(0, 10);
-    const pedidoEspecial: string = (body.pedidoEspecial || "").trim().slice(0, 200);
+    let pedidoEspecial: string = (body.pedidoEspecial || "").trim().slice(0, 200);
 
     // For demo requests, restrict parameters
     if (isDemo && !user) {
-      body.quantidade = Math.min(body.quantidade || 1, 3);
-      body.periodoAnalise = Math.min(body.periodoAnalise || 50, 50);
+      quantidade = Math.min(quantidade, 3);
+      periodoAnalise = Math.min(periodoAnalise, 50);
       // No fixed numbers for demo
-      body.dezenasFiexas = [];
-      body.dezenasExcluidas = [];
-      body.pedidoEspecial = "";
+      dezenasFixas = [];
+      dezenasExcluidas = [];
+      pedidoEspecial = "";
     }
-
-    const quantidade = Math.min(Math.max(body.quantidade || 1, 1), 250);
-    const qtdDezenas = Math.min(Math.max(body.qtdDezenas || 15, 15), 20);
-    const periodoAnalise = Math.min(Math.max(body.periodoAnalise || 50, 1), 500);
-    
-    // Filtros avançados
-    const dezenasFiexas: number[] = (body.dezenasFiexas || [])
-      .filter((d: number) => d >= 1 && d <= 25)
-      .slice(0, 10);
-    const dezenasExcluidas: number[] = (body.dezenasExcluidas || [])
-      .filter((d: number) => d >= 1 && d <= 25)
-      .slice(0, 10);
-    const pedidoEspecial: string = (body.pedidoEspecial || "").trim().slice(0, 200);
 
     let geradorMaxPerDay = 1;
     let hasGeradorFeature = false;
