@@ -963,23 +963,20 @@ Deno.serve(async (req) => {
             loteria: 'Lotofácil',
           });
 
-          // Palpite Tech: post de resultado oficial
+          // Palpite Tech: post de resultado oficial na comunidade
           try {
-            await fetch(
-              Deno.env.get('SUPABASE_URL') + '/functions/v1/palpitetech-post',
-              {
-                method: 'POST',
-                headers: {
-                  'Authorization': 'Bearer ' + Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ mode: 'resultado' })
-              }
-            );
-            console.log(`[PALPITETECH] Post de resultado disparado para concurso ${concurso.numero}`);
+            await criarPostResultadoOficial({
+              supabase,
+              concurso: concurso.numero,
+              dezenas: concurso.dezenas,
+              indicadores,
+              cicloInfo,
+              acumulou
+            });
+            console.log(`[PALPITETECH] Post de resultado criado para concurso ${concurso.numero}`);
           } catch (ptErr) {
             const msg = ptErr instanceof Error ? ptErr.message : String(ptErr);
-            console.error(`[PALPITETECH] Falha ao disparar post: ${msg}`);
+            console.error(`[PALPITETECH] Falha ao criar post: ${msg}`);
           }
         } else {
           console.log('[NOTIFY] Disparo desativado (carga histórica ou notify=false).');
