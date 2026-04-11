@@ -25,9 +25,19 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
   const { data: subscription, refetch } = useMySubscription(user?.id);
   const [activatingTrial, setActivatingTrial] = useState(false);
   const activatingRef = useRef(false);
+  const { plan } = usePermissionContext();
 
   // Se o usuário já é premium mas está vendo o modal, provavelmente quer VIP (ilimitado)
   const effectiveVariant = (isPremium && variant !== "vip") ? "vip" : variant;
+  const isTrialActive = plan?.slug === 'trial' || plan?.slug === 'teste-gratis-3-dias';
+  
+  // Se estiver em trial, fecha o modal de upsell premium (recurso agora é liberado no hasPermission)
+  useEffect(() => {
+    if (open && isTrialActive && variant !== "vip") {
+      onOpenChange(false);
+    }
+  }, [open, isTrialActive, variant, onOpenChange]);
+
   const isVip = effectiveVariant === "vip";
   const { plan } = usePermissionContext();
   const isTrialActive = plan?.slug === 'trial' || plan?.slug === 'teste-gratis-3-dias';
