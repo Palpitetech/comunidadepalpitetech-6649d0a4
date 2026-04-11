@@ -45,11 +45,18 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
 
 
   const handleStartTrial = async () => {
-    if (!user) return;
+    if (!user) {
+      console.error("Tentativa de ativar trial sem usuário autenticado");
+      toast.error("Você precisa estar logado para ativar o teste grátis.");
+      return;
+    }
     
     setActivatingTrial(true);
     activatingRef.current = true;
+    
     try {
+      console.log("Iniciando ativação do trial para usuário:", user.id);
+      
       // Verifique se tem Whatsapp ou Celular cadastrado
       const { data: profile, error: profileError } = await supabase
         .from("perfis")
@@ -57,38 +64,60 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
         .eq("id", user.id)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Erro ao carregar perfil do usuário:", profileError);
+        throw profileError;
+      }
 
       const hasPhone = profile?.whatsapp || profile?.celular;
 
       if (!hasPhone) {
+        console.warn("Usuário sem telefone cadastrado, redirecionando para perfil.");
         toast.info("Você precisa cadastrar seu WhatsApp para ativar o teste grátis.");
         navigate("/perfil"); // Pede para cadastrar
         onOpenChange(false);
         return;
       }
 
+      console.log("Chamando RPC activate_free_trial...");
       const { data: result, error: rpcError } = await supabase.rpc('activate_free_trial');
       
-      if (rpcError) throw rpcError;
+      console.log("Retorno do RPC activate_free_trial:", { result, rpcError });
+      
+      if (rpcError) {
+        console.error("Erro RPC no Supabase:", rpcError);
+        throw rpcError;
+      }
       
       const response = result as { success: boolean, message: string };
+      
+      if (!response) {
+        throw new Error("Resposta do servidor vazia ao tentar ativar trial.");
+      }
+
       if (!response.success) {
-        toast.error(response.message);
+        console.warn("RPC retornou erro de negócio:", response.message);
+        toast.error(response.message || "Não foi possível ativar seu teste grátis.");
         setActivatingTrial(false);
         activatingRef.current = false;
         return;
       }
 
-      toast.success("Teste grátis ativado com sucesso! Aproveite 3 dias de acesso total.");
-      await refetch();
-      onOpenChange(false);
+      console.log("Trial ativado com sucesso! Atualizando dados locais...");
+      toast.success(response.message || "Teste grátis ativado com sucesso! Aproveite 3 dias de acesso total.");
       
-      // Abre o gerador - removido para que o usuário permaneça na ferramenta atual
-      // navigate("/smart-gerador");
-    } catch (error) {
-      console.error("Erro ao ativar trial:", error);
-      toast.error("Erro ao ativar teste grátis. Tente novamente mais tarde.");
+      // Força o refetch da assinatura
+      await refetch();
+      
+      // Pequeno delay para garantir que o PermissionContext receba a atualização do Realtime
+      setTimeout(() => {
+        onOpenChange(false);
+      }, 500);
+      
+    } catch (error: any) {
+      console.error("Erro capturado no catch do handleStartTrial:", error);
+      const errorMessage = error?.message || "Erro inesperado ao ativar teste grátis.";
+      toast.error(`Falha na ativação: ${errorMessage}`);
       activatingRef.current = false;
     } finally {
       setActivatingTrial(false);
