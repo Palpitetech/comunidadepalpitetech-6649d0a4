@@ -58,9 +58,9 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
             .eq("user_id", user.id),
           supabase
             .from("perfis")
-            .select("plan_id, custom_features, is_blocked")
+            .select("plan_id, custom_features, is_blocked, status_assinatura, validade_assinatura")
             .eq("id", user.id)
-            .single(),
+            .maybeSingle(),
         ]);
 
         if (cancelled) return;
@@ -80,8 +80,11 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
         setIsBlocked(perfilData?.is_blocked || false);
         setCustomFeatures(perfilData?.custom_features as PlanFeatures | null);
 
-        // Fetch plan if assigned
-        if (perfilData?.plan_id) {
+        // Fetch plan if assigned AND active
+        const isPlanActive = perfilData?.status_assinatura === "ativa";
+        const isExpired = perfilData?.validade_assinatura && new Date(perfilData.validade_assinatura) < new Date();
+
+        if (perfilData?.plan_id && isPlanActive && !isExpired) {
           const { data: planRow, error: planError } = await supabase
             .from("plans")
             .select("*")
