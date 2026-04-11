@@ -102,13 +102,14 @@ serve(async (req) => {
           console.log(`[${guide.perfis?.nome}] É Autor de Resultados, verificando agenda para análises diárias`);
         }
 
-        // REGRA: Autor de Vendas do Sistema (is_system_sales_author) NÃO depende do resultado
-        // Ele pode publicar a qualquer momento (ex: 18h)
-        if (guide.is_system_sales_author) {
-          console.log(`[${guide.perfis?.nome}] É Autor de Vendas do Sistema, publica independente do resultado`);
+        // REGRA: Autor de Vendas do Sistema ou Autor de Resultados NÃO dependem de outro post do autor
+        // Eles podem publicar em seus horários agendados normalmente.
+        if (guide.is_system_sales_author || guide.is_result_author) {
+          console.log(`[${guide.perfis?.nome}] Publica independente de outros posts do autor`);
           // Continua para processar normalmente
         } else if (!resultAuthorPostedToday) {
-          // Demais autores só postam se o Autor de Resultados já postou
+          // Demais autores só postam se o Autor de Resultados já postou (ex: resultado oficial)
+          console.log(`[${guide.perfis?.nome}] Aguardando Autor de Resultados postar primeiro`);
           console.log(`[${guide.perfis?.nome}] Aguardando Autor de Resultados postar primeiro`);
           skipped.push(`${guide.perfis?.nome}: Aguardando resultado do dia`);
           
