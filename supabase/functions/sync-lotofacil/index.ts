@@ -609,10 +609,9 @@ Deno.serve(async (req) => {
     if (bodyAction === 'reprocess_history') {
       console.log('[REPROCESS] Iniciando reprocessamento histórico lotofacil...');
       const { data: existentes, error: fetchErr } = await supabase
-        .from('resultados_loterias')
-          .select('concurso')
-          .eq('loteria', 'lotofacil')
-        .order('concurso', { ascending: true });
+        .from('resultados')
+          .select('concurso_id as concurso')
+        .order('concurso_id', { ascending: true });
       if (fetchErr) throw new Error(fetchErr.message);
       if (!existentes?.length) {
         return new Response(JSON.stringify({ success: true, reprocessados: 0 }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
