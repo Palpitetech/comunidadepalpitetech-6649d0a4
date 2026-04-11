@@ -32,15 +32,27 @@ const STATUS_CONFIG: Record<StatusAssinatura, { label: string; variant: "default
 export function UserPlanTab({ user, plans, onUserUpdated }: UserPlanTabProps) {
   const [saving, setSaving] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState(user.plan_id || "");
+  const [selectedStatus, setSelectedStatus] = useState<StatusAssinatura>((user.status_assinatura || "inativa") as StatusAssinatura);
   const [validadeManual, setValidadeManual] = useState(
     user.validade_assinatura ? format(new Date(user.validade_assinatura), "yyyy-MM-dd") : ""
   );
+
+  const handlePlanChange = (val: string) => {
+    setSelectedPlanId(val);
+    setSelectedStatus('ativa'); // Auto-set status to 'ativa' on plan change
+  };
+
+  const handleValidadeChange = (val: string) => {
+    setValidadeManual(val);
+    setSelectedStatus('ativa'); // Auto-set status to 'ativa' on validity change
+  };
 
   const handleSave = async () => {
     setSaving(true);
     try {
       const updateData: Record<string, any> = { 
-        plan_id: selectedPlanId || null 
+        plan_id: selectedPlanId || null,
+        status_assinatura: selectedStatus
       };
       
       // Só atualiza validade se foi alterada
