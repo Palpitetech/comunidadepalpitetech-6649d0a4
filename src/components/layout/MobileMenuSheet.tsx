@@ -24,6 +24,7 @@ import {
   Target, Table2, Flame, Gift, ArrowLeft, Home, 
   BarChart3, MessageCircle, LogOut, Dices, Shuffle, 
   LayoutGrid, Grid3X3, TrendingUp, TrendingDown 
+} from "lucide-react";
 import { 
   LOTOFACIL_TOOLS, 
   MEGASENA_TOOLS, 
@@ -32,6 +33,7 @@ import {
   SIMPLE_LOTTERIES,
   ToolItem
 } from "./DesktopHeader";
+
 
 interface MobileMenuSheetProps {
   open: boolean;

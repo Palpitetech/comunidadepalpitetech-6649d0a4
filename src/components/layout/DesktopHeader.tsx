@@ -239,7 +239,7 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      <div className="flex items-center py-2 px-4 gap-1 w-full">
+      <div className="flex items-center py-2 px-4 gap-1 w-full max-w-[1400px] mx-auto">
         {/* Mobile Back Button */}
         {pageTitle && !hideBackButton && (
           <Button
@@ -272,7 +272,7 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
         )}
 
         {/* Desktop Navigation - centralizado, flex-wrap para não estourar */}
-        <nav className="hidden md:flex items-center gap-0.5 flex-1 justify-center flex-wrap">
+        <nav className="hidden md:flex items-center gap-0.5 flex-1 justify-center flex-wrap overflow-hidden">
           {/* Bolões */}
           {isAdmin ? (
             <Link to="/boloes">
