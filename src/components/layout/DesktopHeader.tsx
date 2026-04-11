@@ -23,6 +23,7 @@ import {
   Table2, Gift, Lock, CreditCard, Calendar, Save, Trophy,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 // Helper: cria os itens de um dropdown de loteria
 function LotteryDropdownItem({
