@@ -10,7 +10,7 @@ import { PeriodoAnaliseSelector } from "@/components/gerador/PeriodoAnaliseSelec
 import { FiltroDezenasSelector } from "@/components/gerador/FiltroDezenasSelector";
 import { PedidoEspecialInput } from "@/components/gerador/PedidoEspecialInput";
 import { ResultadosSheet } from "@/components/gerador/ResultadosSheet";
-import { UpgradeModal } from "@/components/shared/UpgradeModal";
+// UpgradeModal removido pois é gerenciado globalmente pelo UpsellProvider
 import { useGerador } from "@/hooks/useGerador";
 import { useGeradorStatus } from "@/hooks/useGeradorStatus";
 import { useIsMobile } from "@/hooks/use-mobile";
