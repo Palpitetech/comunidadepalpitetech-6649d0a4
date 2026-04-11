@@ -42,16 +42,18 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
     setActivatingTrial(true);
     activatingRef.current = true;
     try {
-      // Verifique se tem Whatsapp cadastrado
+      // Verifique se tem Whatsapp ou Celular cadastrado
       const { data: profile, error: profileError } = await supabase
         .from("perfis")
-        .select("whatsapp")
+        .select("whatsapp, celular")
         .eq("id", user.id)
         .single();
 
       if (profileError) throw profileError;
 
-      if (!profile?.whatsapp) {
+      const hasPhone = profile?.whatsapp || profile?.celular;
+
+      if (!hasPhone) {
         toast.info("Você precisa cadastrar seu WhatsApp para ativar o teste grátis.");
         navigate("/perfil"); // Pede para cadastrar
         onOpenChange(false);

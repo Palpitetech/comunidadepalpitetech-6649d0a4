@@ -144,8 +144,8 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
   const isPremium = useMemo(() => {
     if (roles.includes("admin") || roles.includes("premium") || isModerator) return true;
     if (!plan) return false;
-    // O plano "trial" com status ativa conta como premium
-    if (plan.slug === 'trial') return true;
+    // O plano "trial" ou "teste-gratis-3-dias" com status ativa conta como premium
+    if (plan.slug === 'trial' || plan.slug === 'teste-gratis-3-dias') return true;
     // Planos com preço > 0 são premium (se ativos, o que já é garantido pela lógica do fetchAll)
     return plan.price > 0;
   }, [roles, isModerator, plan]);
