@@ -5,33 +5,32 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { Loader2, Mail, ArrowLeft, CheckCircle, MessageCircle } from "lucide-react";
+import { Loader2, Mail, Lock, User, MessageCircle, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
-type Etapa = "email" | "codigo" | "completar-perfil";
+type Etapa = "login" | "cadastro" | "completar-perfil";
 
 export function LoginWizard() {
-  const [etapa, setEtapa] = useState<Etapa>("email");
+  const [etapa, setEtapa] = useState<Etapa>("login");
   const [email, setEmail] = useState("");
-  const [codigo, setCodigo] = useState("");
+  const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [tempoRestante, setTempoRestante] = useState(0);
 
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signInWithOtp, verifyOtp, updateProfile, profile } = useAuthContext();
+  const { signIn, signUp, updateProfile, profile } = useAuthContext();
 
   const supportWhatsApp = "https://wa.me/5516997175392";
 
-  const handleEnviarCodigo = async (e?: React.FormEvent) => {
-    e?.preventDefault();
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     const emailLimpo = email.trim().toLowerCase();
-    if (!emailLimpo || !emailLimpo.includes("@")) {
+    
+    if (!emailLimpo || !password) {
       toast({
-        title: "E-mail inválido",
-        description: "Por favor, insira um e-mail válido.",
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha seu e-mail e senha.",
         variant: "destructive",
       });
       return;
@@ -39,52 +38,51 @@ export function LoginWizard() {
 
     setIsLoading(true);
     try {
-      await signInWithOtp(emailLimpo);
-      setEtapa("codigo");
-      setTempoRestante(60);
+      await signIn(emailLimpo, password);
       toast({
-        title: "Código enviado!",
-        description: "Verifique sua caixa de entrada (e o spam).",
+        title: "Sucesso!",
+        description: "Você está logado.",
       });
-
-      // Iniciar timer
-      const timer = setInterval(() => {
-        setTempoRestante((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      // Se já tiver nome, o useEffect no Auth.tsx redireciona
+      // Mas podemos forçar aqui se o profile já estiver carregado
+      if (profile?.nome) {
+        navigate("/home", { replace: true });
+      } else {
+        setEtapa("completar-perfil");
+      }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Não foi possível enviar o código";
-      toast({ title: "Erro", description: message, variant: "destructive" });
+      const message = err instanceof Error ? err.message : "E-mail ou senha incorretos";
+      toast({ title: "Erro no login", description: "Verifique seus dados e tente novamente.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleVerificarCodigo = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (codigo.length !== 6) return;
+  const handleCadastro = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const emailLimpo = email.trim().toLowerCase();
+    
+    if (!emailLimpo || !password || !nome.trim()) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsLoading(true);
     try {
-      const { session } = await verifyOtp(email.trim().toLowerCase(), codigo);
-      
-      if (session) {
-        toast({ title: "Sucesso!", description: "Você está logado." });
-        
-        // Se o perfil não tiver nome, pede para completar
-        // Mas o hook useAuth leva um tempo para carregar o perfil
-        // Vou verificar se o nome está vazio no objeto retornado se possível
-        // No Supabase, se for novo usuário, o perfil pode demorar
-        setEtapa("completar-perfil");
-      }
+      await signUp(emailLimpo, password, nome.trim());
+      toast({
+        title: "Cadastro realizado!",
+        description: "Verifique seu e-mail para confirmar a conta (se necessário).",
+      });
+      // O profile pode demorar para atualizar, mas o signUp já deve logar se não houver confirmação de e-mail
+      navigate("/home", { replace: true });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Código inválido ou expirado";
-      toast({ title: "Erro", description: message, variant: "destructive" });
+      const message = err instanceof Error ? err.message : "Não foi possível realizar o cadastro";
+      toast({ title: "Erro no cadastro", description: message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -114,20 +112,20 @@ export function LoginWizard() {
 
   return (
     <Card className="w-full max-w-lg shadow-none border-0 md:shadow-xl md:border">
-      {etapa === "email" && (
+      {etapa === "login" && (
         <>
           <CardHeader className="text-center pb-4 md:pb-6 px-4 md:px-6">
-            <CardTitle className="text-xl md:text-senior-2xl">Palpite Tech</CardTitle>
+            <CardTitle className="text-xl md:text-senior-2xl">Acessar Conta</CardTitle>
             <CardDescription className="text-sm md:text-senior-base">
-              Digite seu e-mail para receber um código de acesso.
+              Digite seus dados para entrar na plataforma.
             </CardDescription>
           </CardHeader>
           <CardContent className="px-4 md:px-6">
-            <form onSubmit={handleEnviarCodigo} className="space-y-4 md:space-y-6">
+            <form onSubmit={handleLogin} className="space-y-4 md:space-y-6">
               <div className="space-y-1.5 md:space-y-2">
                 <Label htmlFor="email" className="text-sm md:text-senior-base flex items-center gap-2">
                   <Mail className="h-4 w-4 md:h-5 md:w-5" />
-                  Seu E-mail
+                  E-mail
                 </Label>
                 <Input
                   id="email"
@@ -141,18 +139,43 @@ export function LoginWizard() {
                 />
               </div>
 
-              <Button type="submit" className="w-full h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl" disabled={isLoading || !email.trim()}>
+              <div className="space-y-1.5 md:space-y-2">
+                <Label htmlFor="password" className="text-sm md:text-senior-base flex items-center gap-2">
+                  <Lock className="h-4 w-4 md:h-5 md:w-5" />
+                  Senha
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Sua senha"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-11 md:h-14 text-sm md:text-lg px-3 md:px-4 rounded-lg md:rounded-xl border-2 focus:border-primary"
+                  required
+                />
+              </div>
+
+              <Button type="submit" className="w-full h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                    Enviando código...
+                    Entrando...
                   </>
                 ) : (
-                  "Receber Código"
+                  "Entrar"
                 )}
               </Button>
 
-              <div className="flex flex-col gap-2 md:gap-3 pt-1 md:pt-2">
+              <div className="flex flex-col gap-2 pt-2">
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  onClick={() => setEtapa("cadastro")}
+                  className="text-primary hover:text-primary/80"
+                >
+                  Não tem uma conta? Cadastre-se
+                </Button>
+                
                 <a
                   href={supportWhatsApp}
                   target="_blank"
@@ -168,71 +191,87 @@ export function LoginWizard() {
         </>
       )}
 
-      {etapa === "codigo" && (
+      {etapa === "cadastro" && (
         <>
           <CardHeader className="text-center pb-4 md:pb-6 px-4 md:px-6">
-            <CardTitle className="text-xl md:text-senior-2xl">Digite o código</CardTitle>
+            <CardTitle className="text-xl md:text-senior-2xl">Criar Conta</CardTitle>
             <CardDescription className="text-sm md:text-senior-base">
-              Enviamos um código para <strong>{email}</strong>
+              Preencha os dados abaixo para se cadastrar.
             </CardDescription>
           </CardHeader>
-          <CardContent className="px-4 md:px-6 space-y-6">
-            <div className="flex justify-center">
-              <InputOTP
-                maxLength={6}
-                value={codigo}
-                onChange={setCodigo}
-                onComplete={() => handleVerificarCodigo()}
-                disabled={isLoading}
-              >
-                <InputOTPGroup className="gap-2">
-                  {[0, 1, 2, 3, 4, 5].map((index) => (
-                    <InputOTPSlot
-                      key={index}
-                      index={index}
-                      className="w-10 h-12 md:w-14 md:h-16 text-xl md:text-3xl font-bold border-2 rounded-xl"
-                    />
-                  ))}
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
+          <CardContent className="px-4 md:px-6">
+            <form onSubmit={handleCadastro} className="space-y-4 md:space-y-6">
+              <div className="space-y-1.5 md:space-y-2">
+                <Label htmlFor="reg-nome" className="text-sm md:text-senior-base flex items-center gap-2">
+                  <User className="h-4 w-4 md:h-5 md:w-5" />
+                  Nome Completo
+                </Label>
+                <Input
+                  id="reg-nome"
+                  type="text"
+                  placeholder="Seu nome"
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  className="h-11 md:h-14 text-sm md:text-lg px-3 md:px-4 rounded-lg md:rounded-xl border-2 focus:border-primary"
+                  required
+                />
+              </div>
 
-            <Button
-              onClick={() => handleVerificarCodigo()}
-              className="w-full h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl"
-              disabled={isLoading || codigo.length !== 6}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                  Verificando...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="h-5 w-5 mr-2" />
-                  Entrar
-                </>
-              )}
-            </Button>
+              <div className="space-y-1.5 md:space-y-2">
+                <Label htmlFor="reg-email" className="text-sm md:text-senior-base flex items-center gap-2">
+                  <Mail className="h-4 w-4 md:h-5 md:w-5" />
+                  E-mail
+                </Label>
+                <Input
+                  id="reg-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-11 md:h-14 text-sm md:text-lg px-3 md:px-4 rounded-lg md:rounded-xl border-2 focus:border-primary"
+                  required
+                />
+              </div>
 
-            <div className="flex flex-col gap-2">
-              <Button
-                variant="ghost"
-                onClick={handleEnviarCodigo}
-                disabled={isLoading || tempoRestante > 0}
-                className="w-full h-10 md:h-12 text-sm md:text-senior-base"
-              >
-                {tempoRestante > 0 ? `Reenviar código em ${tempoRestante}s` : "Reenviar código"}
+              <div className="space-y-1.5 md:space-y-2">
+                <Label htmlFor="reg-password" className="text-sm md:text-senior-base flex items-center gap-2">
+                  <Lock className="h-4 w-4 md:h-5 md:w-5" />
+                  Senha
+                </Label>
+                <Input
+                  id="reg-password"
+                  type="password"
+                  placeholder="Mínimo 6 caracteres"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-11 md:h-14 text-sm md:text-lg px-3 md:px-4 rounded-lg md:rounded-xl border-2 focus:border-primary"
+                  minLength={6}
+                  required
+                />
+              </div>
+
+              <Button type="submit" className="w-full h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                    Criando conta...
+                  </>
+                ) : (
+                  "Criar Conta"
+                )}
               </Button>
-              <Button
-                variant="ghost"
-                onClick={() => setEtapa("email")}
-                className="w-full h-10 md:h-12 text-sm md:text-senior-base"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Alterar e-mail
-              </Button>
-            </div>
+
+              <div className="flex flex-col gap-2 pt-2">
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  onClick={() => setEtapa("login")}
+                  className="text-primary hover:text-primary/80"
+                >
+                  Já tem uma conta? Faça login
+                </Button>
+              </div>
+            </form>
           </CardContent>
         </>
       )}

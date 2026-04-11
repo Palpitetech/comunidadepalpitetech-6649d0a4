@@ -166,6 +166,14 @@ export function useAuth() {
     [authState.user]
   );
 
+  const updatePassword = useCallback(
+    async (password: string) => {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+    },
+    []
+  );
+
   return {
     user: authState.user,
     session: authState.session,
@@ -178,5 +186,6 @@ export function useAuth() {
     verifyOtp,
     signOut,
     updateProfile,
+    updatePassword,
   };
 }
