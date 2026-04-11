@@ -66,10 +66,10 @@ export function LotofacilGeneratorDemo() {
             <div
               key={n}
               className={`
-                h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center rounded-full text-xs sm:text-sm font-bold transition-all duration-300
+                h-10 w-10 flex items-center justify-center rounded-full text-xs font-extrabold transition-all duration-300
                 ${numbers.includes(n) 
-                  ? "bg-primary text-primary-foreground scale-110 shadow-lg shadow-primary/30 ring-2 ring-primary/20" 
-                  : "bg-muted text-muted-foreground/30 border border-border/50"}
+                  ? "bg-[#FFD700] text-[#1A1A1A] scale-110 shadow-[0_0_15px_rgba(255,215,0,0.4)] ring-2 ring-white" 
+                  : "bg-muted/30 text-muted-foreground/30 border border-border/50"}
               `}
             >
               {n.toString().padStart(2, "0")}
