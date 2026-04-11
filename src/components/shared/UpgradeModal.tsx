@@ -67,7 +67,7 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
         .update({
           plan_id: trialPlanId,
           status_assinatura: "ativa",
-          validate_assinatura: expiresAt.toISOString(),
+          validade_assinatura: expiresAt.toISOString(),
           trial_used: true
         })
         .eq("id", user.id);
