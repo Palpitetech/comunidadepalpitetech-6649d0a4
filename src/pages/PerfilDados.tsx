@@ -18,19 +18,19 @@ export default function PerfilDados() {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background animate-in fade-in slide-in-from-right duration-300">
       <header className="shrink-0 border-b bg-background/80 backdrop-blur-md sticky top-0 z-20">
-        <div className="flex items-center justify-between h-16 px-2">
+        <div className="flex items-center justify-between h-16 px-4">
           <div className="flex items-center gap-1">
             <Button 
               variant="ghost" 
               size="icon" 
               onClick={() => navigate(-1)} 
-              className="h-10 w-10 rounded-full hover:bg-muted transition-colors active:scale-90"
+              className="h-10 w-10 rounded-full hover:bg-muted transition-colors active:scale-90 -ml-2"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-lg font-bold tracking-tight text-foreground/90">Meus Dados</h1>
           </div>
-          <div className="px-3">
+          <div className="">
             <Avatar className="h-9 w-9 border-2 border-primary/20 ring-1 ring-background">
               <AvatarImage src={profile?.avatar_url || undefined} />
               <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">
