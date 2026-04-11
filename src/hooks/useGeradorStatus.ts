@@ -48,12 +48,15 @@ export function useGeradorStatus() {
       // Buscar plano do usuário
       const { data: perfil } = await supabase
         .from("perfis")
-        .select("plan_id")
+        .select("plan_id, status_assinatura, validade_assinatura")
         .eq("id", user.id)
         .single();
 
+      const isPlanActive = perfil?.status_assinatura === "ativa";
+      const isExpired = perfil?.validade_assinatura && new Date(perfil.validade_assinatura) < new Date();
+
       let maxPerDay = 1;
-      if (perfil?.plan_id) {
+      if (perfil?.plan_id && isPlanActive && !isExpired) {
         const { data: plan } = await supabase
           .from("plans")
           .select("gerador_max_per_day")
