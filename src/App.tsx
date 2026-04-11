@@ -129,16 +129,16 @@ function LowercaseRedirect() {
 // Main App component
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <PermissionProvider>
-      <TooltipProvider>
-        <UTMCapture />
-        <CodeProtection />
-        <PWAUpdateHandler />
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <LowercaseRedirect />
+    <BrowserRouter>
+      <AuthProvider>
+        <PermissionProvider>
+          <TooltipProvider>
+            <UTMCapture />
+            <CodeProtection />
+            <PWAUpdateHandler />
+            <Toaster />
+            <Sonner />
+            <LowercaseRedirect />
           <Routes>
             {/* Rotas Públicas */}
             <Route path="/" element={<Home />} />
