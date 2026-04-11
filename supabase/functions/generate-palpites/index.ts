@@ -416,8 +416,8 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
     const aiUsage = aiData.usage;
 
-    // Log de uso de IA
-    if (aiUsage) {
+    // Log de uso de IA (only for real users)
+    if (aiUsage && user) {
       supabaseAdmin.from("ai_usage_logs").insert({
         user_id: user.id,
         edge_function: "generate-palpites",
@@ -476,17 +476,19 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
       });
     }
 
-    // Atualizar uso diário
-    await supabaseAdmin
-      .from("gerador_daily_usage")
-      .upsert({
-        user_id: user.id,
-        day: today,
-        count: currentUsage + 1,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: "user_id,day"
-      });
+    // Atualizar uso diário (only for real users)
+    if (user) {
+      await supabaseAdmin
+        .from("gerador_daily_usage")
+        .upsert({
+          user_id: user.id,
+          day: today,
+          count: currentUsage + 1,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: "user_id,day"
+        });
+    }
 
     return new Response(JSON.stringify({
       jogos: jogosValidados,
