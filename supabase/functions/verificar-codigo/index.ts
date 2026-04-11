@@ -122,6 +122,17 @@ Deno.serve(async (req) => {
         console.error("[ERRO VERIFICAÇÃO] Falha ao atualizar perfil:", profileError);
         return jsonResponse({ sucesso: false, erro: "Erro ao atualizar verificação do e-mail" }, 500);
       }
+
+      // Sincronizar com auth.users para evitar inconsistências
+      const { error: authError } = await supabase.auth.admin.updateUserById(userId, {
+        email_confirm: true,
+        user_metadata: { email_verified: true }
+      });
+
+      if (authError) {
+        console.error("[ERRO VERIFICAÇÃO] Falha ao sincronizar auth.users:", authError);
+        // Não barramos o sucesso se o perfil já foi atualizado, mas logamos o erro
+      }
     } else if (codigoData.tipo === "sms") {
       const { error: profileError } = await supabase
         .from("perfis")
@@ -131,6 +142,16 @@ Deno.serve(async (req) => {
       if (profileError) {
         console.error("[ERRO VERIFICAÇÃO] Falha ao atualizar perfil:", profileError);
         return jsonResponse({ sucesso: false, erro: "Erro ao atualizar verificação do celular" }, 500);
+      }
+
+      // Sincronizar com auth.users para celular se necessário
+      const { error: authError } = await supabase.auth.admin.updateUserById(userId, {
+        phone_confirm: true,
+        user_metadata: { phone_verified: true }
+      });
+
+      if (authError) {
+        console.error("[ERRO VERIFICAÇÃO] Falha ao sincronizar auth.users (celular):", authError);
       }
     }
 
