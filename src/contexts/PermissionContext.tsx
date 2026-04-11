@@ -58,7 +58,7 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
             .eq("user_id", user.id),
           supabase
             .from("perfis")
-            .select("plan_id, custom_features, is_blocked")
+            .select("plan_id, custom_features, is_blocked, status_assinatura, validade_assinatura")
             .eq("id", user.id)
             .single(),
         ]);
