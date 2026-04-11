@@ -42,20 +42,23 @@ export default function Comunidade() {
         {!isMobile && <FeedHeader />}
 
         <Card 
-          className="mb-6 bg-primary hover:bg-primary/90 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden group active:scale-95"
+          className="mb-6 bg-gradient-to-r from-primary to-primary/80 hover:to-primary transition-all cursor-pointer text-white border-none shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden group active:scale-95"
           onClick={() => navigate('/gerar-jogos')}
         >
-          <CardContent className="p-4 sm:p-5 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="bg-white/20 p-2.5 rounded-xl group-hover:scale-110 transition-transform">
+          <CardContent className="p-5 sm:p-6 flex items-center justify-between relative overflow-hidden">
+            <div className="absolute top-[-20%] right-[-10%] opacity-10 group-hover:scale-110 transition-transform">
+              <Sparkles className="h-24 w-24 text-white" />
+            </div>
+            <div className="flex items-center gap-4 relative z-10">
+              <div className="bg-white/25 p-3 rounded-2xl group-hover:rotate-12 transition-all">
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h3 className="font-extrabold text-lg sm:text-xl leading-none">Gerar meus Palpites</h3>
-                <p className="text-white/80 text-xs sm:text-sm mt-1">Crie jogos inteligentes em segundos</p>
+                <h3 className="font-extrabold text-xl sm:text-2xl leading-tight">Gerar meus Palpites</h3>
+                <p className="text-white/90 text-xs sm:text-sm mt-1 font-medium italic">IA otimizada para seus jogos</p>
               </div>
             </div>
-            <ChevronRight className="h-6 w-6 text-white/60 group-hover:translate-x-1 transition-transform" />
+            <ChevronRight className="h-7 w-7 text-white/80 group-hover:translate-x-1 transition-transform relative z-10" />
           </CardContent>
         </Card>
 
