@@ -117,6 +117,11 @@ interface ToolItem {
   bold?: boolean;
 }
 
+interface DesktopHeaderProps {
+  pageTitle?: string;
+  breadcrumb?: { label: string; onClick?: () => void }[];
+}
+
 function LotteryDropdown({
   name,
   tools,
