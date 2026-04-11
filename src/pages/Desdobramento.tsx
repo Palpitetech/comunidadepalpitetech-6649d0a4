@@ -385,18 +385,7 @@ export default function Desdobramento() {
   return (
     <MainLayout pageTitle="Gerador de Desdobramento">
       <div className="container-senior py-4 space-y-5 max-w-lg mx-auto">
-        {/* Header desktop */}
-        {!isMobile && (
-          <div className="text-center space-y-1">
-            <div className="flex items-center justify-center gap-2">
-              <Shuffle className="h-7 w-7 text-primary" />
-              <h1 className="text-2xl font-bold">Gerador de Desdobramento</h1>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Gere palpites com filtros estatísticos personalizados
-            </p>
-          </div>
-        )}
+        {/* Header desktop description only if needed, but keeping it clean */}
 
         {/* Botão para abrir filtros de jogos */}
         <button
