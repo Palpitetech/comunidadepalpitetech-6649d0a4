@@ -239,40 +239,41 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      <div className="flex items-center py-2 px-4 gap-1 w-full max-w-[1400px] mx-auto">
-        {/* Mobile Back Button */}
-        {pageTitle && !hideBackButton && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden h-10 w-10 shrink-0"
-            onClick={handleBack}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        )}
-
-        {/* Logo - fixo à esquerda (Desktop ou mobile sem back button) */}
-        <Link 
-          to="/home" 
-          className={cn(
-            "flex items-center gap-2 no-underline shrink-0 mr-2",
-            pageTitle && !hideBackButton && "hidden md:flex"
+      <div className="grid grid-cols-[auto_1fr_auto] md:grid-cols-[1fr_auto_1fr] items-center py-2 px-4 gap-2 w-full max-w-[1400px] mx-auto overflow-hidden">
+        {/* Mobile Page Title logic & Logo Section */}
+        <div className="flex items-center gap-2 overflow-hidden">
+          {pageTitle && !hideBackButton && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden h-10 w-10 shrink-0"
+              onClick={handleBack}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
           )}
-        >
-          <img src="/logo.png" alt="Palpite Tech" className="h-8 w-8 rounded-md" />
-          <span className="text-lg font-bold text-primary hidden xl:inline">Palpite Tech</span>
-        </Link>
 
-        {/* Mobile Page Title */}
-        {pageTitle && (
-          <div className="flex-1 md:hidden overflow-hidden ml-1">
-            <h1 className="text-base font-bold text-foreground truncate">{pageTitle}</h1>
-          </div>
-        )}
+          <Link 
+            to="/home" 
+            className={cn(
+              "flex items-center gap-2 no-underline shrink-0 mr-2",
+              pageTitle && !hideBackButton && "hidden md:flex"
+            )}
+          >
+            <img src="/logo.png" alt="Palpite Tech" className="h-8 w-8 rounded-md" />
+            <span className="text-lg font-bold text-primary hidden xl:inline">Palpite Tech</span>
+          </Link>
 
-        {/* Desktop Navigation - centralizado, flex-wrap para não estourar */}
-        <nav className="hidden md:flex items-center gap-0.5 flex-1 justify-center flex-wrap overflow-hidden">
+          {/* Mobile Page Title */}
+          {pageTitle && (
+            <div className="flex-1 md:hidden overflow-hidden ml-1">
+              <h1 className="text-base font-bold text-foreground truncate">{pageTitle}</h1>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Navigation - centralizado */}
+        <nav className="hidden md:flex items-center gap-0.5 justify-center flex-wrap overflow-hidden">
           {/* Bolões */}
           {isAdmin ? (
             <Link to="/boloes">
@@ -361,7 +362,8 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
         </nav>
 
         {/* User Actions - fixo à direita */}
-        <div className="flex items-center gap-1 shrink-0 ml-2">
+        <div className="flex items-center justify-end gap-1 shrink-0">
+
           {isAuthenticated ? (
             <>
               <Link to="/meus-palpites">
