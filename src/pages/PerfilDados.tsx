@@ -59,7 +59,7 @@ export default function PerfilDados() {
                 {profile?.nome || "Usuário"}
               </h2>
               <p className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-[0.2em]">
-                Membro desde {profile?.created_at ? new Date(profile.created_at).getFullYear() : '2024'}
+                CONTA PRINCIPAL
               </p>
             </div>
           </div>
