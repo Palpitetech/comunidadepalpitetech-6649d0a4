@@ -109,17 +109,6 @@ export default function GeradorQuina() {
   return (
     <MainLayout pageTitle="Gerador de Palpites – Quina">
       <div className="container-senior py-6 space-y-6 max-w-md mx-auto">
-        {!isMobile && (
-          <div className="text-center space-y-1">
-            <div className="flex items-center justify-center gap-2">
-              <Dices className="h-7 w-7 text-primary" />
-              <h1 className="text-2xl font-bold">Gerador de Palpites – Quina</h1>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Palpites baseados em análise estatística • 5 dezenas de 01 a 80
-            </p>
-          </div>
-        )}
 
         <Card>
           <CardContent className="pt-6 space-y-6">
