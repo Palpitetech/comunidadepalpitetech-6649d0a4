@@ -160,9 +160,14 @@ serve(async (req) => {
         // Verificar se algum horário bate (com margem de 1 minuto)
         const matchingTime = schedule.horarios.find((h) => {
           const [schedHour, schedMinute] = h.split(":");
-          const schedTimeMinutes = parseInt(schedHour) * 60 + parseInt(schedMinute);
-          const currentTimeMinutes = parseInt(currentHour) * 60 + parseInt(currentMinute);
-          return Math.abs(schedTimeMinutes - currentTimeMinutes) <= 1;
+          const schedTotalMinutes = parseInt(schedHour) * 60 + parseInt(schedMinute);
+          const currentTotalMinutes = parseInt(simulatedHour) * 60 + parseInt(simulatedMinute);
+          
+          // Se for modo teste, buscamos o horário exato. Senão, margem de 1min.
+          if (testTime) {
+            return h === currentTime;
+          }
+          return Math.abs(schedTotalMinutes - currentTotalMinutes) <= 1;
         });
 
         if (!matchingTime) {
