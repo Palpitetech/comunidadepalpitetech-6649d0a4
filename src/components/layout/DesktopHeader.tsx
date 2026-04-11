@@ -222,8 +222,15 @@ export function DesktopHeader({ pageTitle, breadcrumb }: DesktopHeaderProps) {
           <span className="text-lg font-bold text-primary hidden xl:inline">Palpite Tech</span>
         </Link>
 
+        {/* Mobile Page Title */}
+        {pageTitle && (
+          <div className="flex-1 md:hidden ml-2 overflow-hidden">
+            <h1 className="text-base font-bold text-foreground truncate">{pageTitle}</h1>
+          </div>
+        )}
+
         {/* Desktop Navigation - centralizado, flex-wrap para não estourar */}
-        <nav className="flex items-center gap-0.5 flex-1 justify-center flex-wrap">
+        <nav className="hidden md:flex items-center gap-0.5 flex-1 justify-center flex-wrap">
           {/* Bolões */}
           {isAdmin ? (
             <Link to="/boloes">
