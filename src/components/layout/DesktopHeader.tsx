@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { usePermissionContext } from "@/contexts/PermissionContext";
+import { ArrowLeft } from "lucide-react";
 
 import { usePermissions } from "@/hooks/usePermission";
 import { getFeatureForRoute, isVipFeature } from "@/lib/featureMap";
@@ -22,6 +23,7 @@ import {
   Table2, Gift, Lock, CreditCard, Calendar, Save, Trophy,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 // Helper: cria os itens de um dropdown de loteria
 function LotteryDropdownItem({
@@ -120,7 +122,16 @@ interface ToolItem {
 interface DesktopHeaderProps {
   pageTitle?: string;
   breadcrumb?: { label: string; onClick?: () => void }[];
+  onBack?: () => void;
+  hideBackButton?: boolean;
 }
+
+// Mapeamento de rotas para navegação de retorno
+const getParentRoute = (pathname: string): string => {
+  if (pathname.startsWith("/megasena/")) return "/megasena/resultados";
+  if (["/desdobramento", "/fechamento", "/gerador", "/tendencias", "/frequencia"].includes(pathname)) return "/resultados";
+  return "/comunidade";
+};
 
 function LotteryDropdown({
   name,
@@ -175,13 +186,25 @@ function LotteryDropdown({
   );
 }
 
-export function DesktopHeader({ pageTitle, breadcrumb }: DesktopHeaderProps) {
+export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }: DesktopHeaderProps) {
   const { isAuthenticated, profile, signOut } = useAuthContext();
   const { isAdmin } = usePermissionContext();
   const { hasPermission } = usePermissions();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradeLabel, setUpgradeLabel] = useState<string | undefined>();
   const [upgradeVariant, setUpgradeVariant] = useState<"premium" | "vip">("premium");
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else if (window.history.length > 2) {
+      navigate(-1);
+    } else {
+      navigate(getParentRoute(location.pathname));
+    }
+  };
 
   const handleGatedClick = (e: React.MouseEvent, path: string) => {
     const feature = getFeatureForRoute(path);
@@ -216,14 +239,39 @@ export function DesktopHeader({ pageTitle, breadcrumb }: DesktopHeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <div className="flex items-center py-2 px-4 gap-1 w-full">
-        {/* Logo - fixo à esquerda */}
-        <Link to="/home" className="flex items-center gap-2 no-underline shrink-0 mr-2">
+        {/* Mobile Back Button */}
+        {pageTitle && !hideBackButton && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden h-10 w-10 shrink-0"
+            onClick={handleBack}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        )}
+
+        {/* Logo - fixo à esquerda (Desktop ou mobile sem back button) */}
+        <Link 
+          to="/home" 
+          className={cn(
+            "flex items-center gap-2 no-underline shrink-0 mr-2",
+            pageTitle && !hideBackButton && "hidden md:flex"
+          )}
+        >
           <img src="/logo.png" alt="Palpite Tech" className="h-8 w-8 rounded-md" />
           <span className="text-lg font-bold text-primary hidden xl:inline">Palpite Tech</span>
         </Link>
 
+        {/* Mobile Page Title */}
+        {pageTitle && (
+          <div className="flex-1 md:hidden overflow-hidden ml-1">
+            <h1 className="text-base font-bold text-foreground truncate">{pageTitle}</h1>
+          </div>
+        )}
+
         {/* Desktop Navigation - centralizado, flex-wrap para não estourar */}
-        <nav className="flex items-center gap-0.5 flex-1 justify-center flex-wrap">
+        <nav className="hidden md:flex items-center gap-0.5 flex-1 justify-center flex-wrap">
           {/* Bolões */}
           {isAdmin ? (
             <Link to="/boloes">

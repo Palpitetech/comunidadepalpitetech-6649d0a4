@@ -48,8 +48,12 @@ export function PageHeader({ title, breadcrumb, onBack, rightContent, hideBackBu
     }
   };
 
-  // Se há breadcrumb, o título é o último item e os anteriores são clicáveis
-  const hasBreadcrumb = breadcrumb && breadcrumb.length > 0;
+  const hasBreadcrumb = !!(breadcrumb && breadcrumb.length > 0);
+
+  // Se não há título, nem breadcrumb, nem botão de voltar e nem conteúdo à direita, não renderiza nada
+  if (!title && !hasBreadcrumb && hideBackButton && !rightContent) {
+    return null;
+  }
 
   return (
     <header 
