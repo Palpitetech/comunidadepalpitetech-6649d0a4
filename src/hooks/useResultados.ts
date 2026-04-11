@@ -79,15 +79,23 @@ export function useResultadosPaginados(
   return useQuery({
     queryKey: ["resultados-loterias-pag", loteria, page, itemsPerPage, filters],
     queryFn: async () => {
+      const isLotofacil = loteria === "lotofacil";
+      const tableName = isLotofacil ? "resultados" : "resultados_loterias";
+      const concursoColumn = isLotofacil ? "concurso_id" : "concurso";
+
       let query = (supabase as any)
-        .from("resultados_loterias")
-        .select("*", { count: "exact" })
-        .eq("loteria", loteria)
-        .order("concurso", { ascending: false });
+        .from(tableName)
+        .select("*", { count: "exact" });
+
+      if (!isLotofacil) {
+        query = query.eq("loteria", loteria);
+      }
+
+      query = query.order(concursoColumn, { ascending: false });
 
       if (filters?.searchConcurso?.trim()) {
         const num = parseInt(filters.searchConcurso.trim());
-        if (!isNaN(num)) query = query.eq("concurso", num);
+        if (!isNaN(num)) query = query.eq(concursoColumn, num);
       }
 
       if (filters?.dateFilter) {
