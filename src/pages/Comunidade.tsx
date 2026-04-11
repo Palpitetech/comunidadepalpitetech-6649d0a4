@@ -8,7 +8,8 @@ import { PostCardSkeleton } from "@/components/comunidade/PostCardSkeleton";
 import { useCommunityPosts } from "@/hooks/useCommunityPosts";
 import { DownloadBanner } from "@/components/pwa/DownloadBanner";
 import { PWAUpdateBanner } from "@/components/pwa/PWAUpdateBanner";
-import { Pin } from "lucide-react";
+import { Pin, Sparkles, ChevronRight } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function Comunidade() {
   const navigate = useNavigate();
