@@ -38,27 +38,24 @@ export default function Comunidade() {
     <MainLayout pageTitle="Comunidade" hideBackButton>
       <DownloadBanner />
       <PWAUpdateBanner />
-      <div className="max-w-2xl mx-auto px-4 py-6 bg-clovers min-h-full bg-primary/5">
+      <div className="max-w-xl mx-auto px-4 py-4 min-h-full">
         {!isMobile && <FeedHeader />}
 
         <Card 
-          className="mb-6 bg-gradient-to-r from-primary to-primary/80 hover:to-primary transition-all cursor-pointer text-white border-none shadow-[0_8px_30px_rgb(0,0,0,0.12)] overflow-hidden group active:scale-95"
+          className="mb-4 bg-background border-border/40 hover:border-primary/40 transition-all cursor-pointer shadow-sm overflow-hidden group active:scale-95"
           onClick={() => navigate('/gerar-jogos')}
         >
-          <CardContent className="p-5 sm:p-6 flex items-center justify-between relative overflow-hidden">
-            <div className="absolute top-[-20%] right-[-10%] opacity-10 group-hover:scale-110 transition-transform">
-              <Sparkles className="h-24 w-24 text-white" />
-            </div>
-            <div className="flex items-center gap-4 relative z-10">
-              <div className="bg-white/25 p-3 rounded-2xl group-hover:rotate-12 transition-all">
-                <Sparkles className="h-6 w-6 text-white" />
+          <CardContent className="p-4 flex items-center justify-between relative overflow-hidden">
+            <div className="flex items-center gap-3 relative z-10">
+              <div className="bg-primary/5 p-2.5 rounded-xl group-hover:bg-primary/10 transition-colors">
+                <Sparkles className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h3 className="font-extrabold text-xl sm:text-2xl leading-tight">Gerar meus Palpites</h3>
-                <p className="text-white/90 text-xs sm:text-sm mt-1 font-medium italic">IA otimizada para seus jogos</p>
+                <h3 className="font-bold text-base leading-tight">Gerar Palpites</h3>
+                <p className="text-muted-foreground text-[10px] mt-0.5">IA otimizada para seus jogos</p>
               </div>
             </div>
-            <ChevronRight className="h-7 w-7 text-white/80 group-hover:translate-x-1 transition-transform relative z-10" />
+            <ChevronRight className="h-5 w-5 text-muted-foreground/40 group-hover:translate-x-1 transition-transform relative z-10" />
           </CardContent>
         </Card>
 

@@ -28,23 +28,19 @@ export function DownloadBanner() {
   return (
     <>
       {/* Compact mobile banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-primary via-primary/95 to-primary/85 text-primary-foreground">
-        {/* Subtle decorative circles */}
-        <div className="absolute -right-4 -top-4 w-20 h-20 bg-white/[0.04] rounded-full" />
-        <div className="absolute right-8 -bottom-6 w-14 h-14 bg-white/[0.04] rounded-full" />
-
-        <div className="px-4 py-3 flex items-center gap-3">
+      <div className="relative overflow-hidden bg-background border-b border-border/40">
+        <div className="px-4 py-2.5 flex items-center gap-3">
           {/* App icon */}
-          <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/10">
-            <Smartphone className="h-5 w-5" />
+          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center border border-primary/10">
+            <Smartphone className="h-4 w-4 text-primary" />
           </div>
 
           {/* Text */}
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-[15px] leading-tight">
+            <p className="font-bold text-xs leading-tight text-foreground">
               Baixe grátis o App
             </p>
-            <p className="text-[13px] opacity-80 leading-tight mt-0.5">
+            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">
               Mais praticidade no seu celular
             </p>
           </div>
@@ -53,7 +49,8 @@ export function DownloadBanner() {
           <Button
             onClick={handleInstall}
             size="sm"
-            className="flex-shrink-0 bg-white text-primary hover:bg-white/90 font-bold h-9 px-4 rounded-lg shadow-md text-[13px]"
+            variant="outline"
+            className="flex-shrink-0 h-8 px-3 rounded-lg text-[11px] font-bold border-primary/20 text-primary hover:bg-primary/5 hover:text-primary"
           >
             Instalar
           </Button>
@@ -61,10 +58,10 @@ export function DownloadBanner() {
           {/* Close */}
           <button
             onClick={handleDismiss}
-            className="flex-shrink-0 p-1 rounded-full hover:bg-white/15 transition-colors -mr-1"
+            className="flex-shrink-0 p-1 rounded-full hover:bg-muted transition-colors -mr-1"
             aria-label="Fechar"
           >
-            <X className="h-4 w-4 opacity-70" />
+            <X className="h-3.5 w-3.5 text-muted-foreground/60" />
           </button>
         </div>
       </div>

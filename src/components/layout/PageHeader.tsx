@@ -57,8 +57,8 @@ export function PageHeader({ title, breadcrumb, onBack, rightContent, hideBackBu
 
   return (
     <header 
-      className="sticky top-0 z-20 bg-background border-b border-border px-4 py-3"
-      style={{ paddingTop: `max(0.75rem, env(safe-area-inset-top, 0.75rem))` }}
+      className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border/40 px-4 py-2.5"
+      style={{ paddingTop: `max(0.6rem, env(safe-area-inset-top, 0.6rem))` }}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0 flex-1">

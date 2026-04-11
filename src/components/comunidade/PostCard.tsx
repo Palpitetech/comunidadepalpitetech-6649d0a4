@@ -44,7 +44,7 @@ export const PostCard = memo(function PostCard({ post, onClick, onPrefetch }: Po
     <article
       onClick={onClick}
       onPointerEnter={onPrefetch}
-      className="bg-card border border-border/60 rounded-xl p-3 cursor-pointer shadow-md active:scale-[0.98] transition-transform duration-150"
+      className="bg-card border border-border/40 rounded-xl p-3 cursor-pointer shadow-sm active:scale-[0.98] transition-all duration-200 hover:border-primary/20"
     >
       {/* Header compacto */}
       <div className="flex items-center gap-2 mb-2">

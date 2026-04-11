@@ -105,35 +105,34 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
   const supportWhatsApp = "https://wa.me/5516997175392?text=Olá! Preciso de ajuda com o Palpite Tech.";
 
   const LotteryAccordion = ({ name, color, tools }: { name: string, color: string, tools: any[] }) => (
-    <div className="mx-4 p-1 rounded-r-md border-l-4 mb-3" style={{ borderLeftColor: color, backgroundColor: `${color}0A` }}>
+    <div className="mx-4 border-b border-border/40">
       <Accordion type="single" collapsible>
         <AccordionItem value="tools" className="border-none">
-          <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
+          <AccordionTrigger className="py-3.5 text-sm hover:no-underline font-medium">
             <div className="flex items-center gap-3">
-              <BarChart3 className="h-5 w-5 stroke-[1.5]" />
+              <div className="w-1 h-4 rounded-full" style={{ backgroundColor: color }} />
               <span>{name}</span>
             </div>
           </AccordionTrigger>
-          <AccordionContent className="pb-0">
-            <div className="pl-8 space-y-0">
+          <AccordionContent className="pb-2">
+            <div className="pl-4 space-y-1">
               {tools.map((tool, idx) => (
-                <div key={tool.to}>
-                  {idx > 0 && tool.bold && <div className="border-t border-border/50 my-1" />}
-                  <Link 
-                    to={tool.to} 
-                    onClick={(e) => tool.gated ? handleGatedClick(e, tool.to) : closeAndNavigate()}
-                  >
-                    <div className={cn(
-                      "py-2.5 text-[15px] flex items-center gap-2 transition-colors",
-                      tool.bold ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"
-                    )}>
-                      {tool.icon && <tool.icon className="h-4 w-4" />}
+                <Link 
+                  key={tool.to}
+                  to={tool.to} 
+                  onClick={(e) => tool.gated ? handleGatedClick(e, tool.to) : closeAndNavigate()}
+                >
+                  <div className={cn(
+                    "py-2.5 text-sm flex items-center justify-between transition-colors",
+                    tool.bold ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground"
+                  )}>
+                    <div className="flex items-center gap-3">
+                      {tool.icon && <tool.icon className="h-4 w-4 stroke-[1.5]" />}
                       {tool.label}
-                      {tool.gated && renderBadge(tool.to)}
                     </div>
-                  </Link>
-                  {idx === 0 && <div className="border-t border-border/50 my-1" />}
-                </div>
+                    {tool.gated && renderBadge(tool.to)}
+                  </div>
+                </Link>
               ))}
             </div>
           </AccordionContent>
@@ -150,9 +149,9 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
             <SheetTitle>Menu Principal</SheetTitle>
           </SheetHeader>
 
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
-            <button onClick={() => onOpenChange(false)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-base">
-              <ArrowLeft className="h-5 w-5" />
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border/30">
+            <button onClick={() => onOpenChange(false)} className="flex items-center gap-2 text-muted-foreground/60 hover:text-foreground transition-colors text-sm font-medium">
+              <ArrowLeft className="h-4 w-4" />
               Voltar
             </button>
 
@@ -235,23 +234,23 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            <nav className="px-4 py-4 space-y-1">
+            <nav className="px-6 py-4 space-y-1">
               <Link to="/home" onClick={closeAndNavigate}>
-                <div className={cn("flex items-center gap-3 py-3 px-4 rounded-xl text-base transition-all active:scale-95", isActive("/home") ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-foreground hover:bg-muted/50")}>
-                  <Home className="h-5 w-5 stroke-[1.5]" />
+                <div className={cn("flex items-center gap-3 py-3 px-2 rounded-lg text-sm transition-all active:scale-95", isActive("/home") ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground")}>
+                  <Home className="h-4 w-4 stroke-[1.5]" />
                   Página Inicial
                 </div>
               </Link>
               <Link to="/meus-palpites" onClick={closeAndNavigate}>
-                <div className={cn("flex items-center gap-3 py-3 px-4 rounded-xl text-base transition-all active:scale-95", isActive("/meus-palpites") ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-foreground hover:bg-muted/50")}>
-                  <Save className="h-5 w-5 stroke-[1.5]" />
-                  Meus Palpites Salvos
+                <div className={cn("flex items-center gap-3 py-3 px-2 rounded-lg text-sm transition-all active:scale-95", isActive("/meus-palpites") ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground")}>
+                  <Save className="h-4 w-4 stroke-[1.5]" />
+                  Palpites Salvos
                 </div>
               </Link>
               <Link to="/proximos-concursos" onClick={closeAndNavigate}>
-                <div className={cn("flex items-center gap-3 py-3 px-4 rounded-xl text-base transition-all active:scale-95", isActive("/proximos-concursos") ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-foreground hover:bg-muted/50")}>
-                  <Calendar className="h-5 w-5 stroke-[1.5]" />
-                  Próximos Concursos
+                <div className={cn("flex items-center gap-3 py-3 px-2 rounded-lg text-sm transition-all active:scale-95", isActive("/proximos-concursos") ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground")}>
+                  <Calendar className="h-4 w-4 stroke-[1.5]" />
+                  Concursos
                 </div>
               </Link>
             </nav>
