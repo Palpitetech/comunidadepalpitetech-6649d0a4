@@ -26,6 +26,15 @@ export default function GeradorQuina() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const { shouldShow, setShouldShow } = useTrialOffer();
+
+  // Abrir modal de trial se for o caso
+  useEffect(() => {
+    if (shouldShow) {
+      setUpgradeOpen(true);
+      setShouldShow(false);
+    }
+  }, [shouldShow, setShouldShow]);
 
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
   const [dezenasFiexasOpcao, setDezenasFiexasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
