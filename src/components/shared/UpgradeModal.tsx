@@ -5,6 +5,7 @@ import { Gem, ArrowRight, Check, Sparkles, Loader2, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useMySubscription } from "@/hooks/useMySubscription";
+import { usePermissionContext } from "@/contexts/PermissionContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -16,11 +17,15 @@ interface UpgradeModalProps {
 }
 
 export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "premium" }: UpgradeModalProps) {
-  const isVip = variant === "vip";
   const { user } = useAuthContext();
+  const { isPremium } = usePermissionContext();
   const { data: subscription, refetch } = useMySubscription(user?.id);
   const [activatingTrial, setActivatingTrial] = useState(false);
 
+  // If user is already premium but seeing the modal, it's likely they want VIP (unlimited)
+  const effectiveVariant = (isPremium && variant !== "vip") ? "vip" : variant;
+  const isVip = effectiveVariant === "vip";
+  
   const canUseTrial = subscription && !subscription.trial_used && subscription.status === "inativa";
 
   const handleStartTrial = async () => {
@@ -69,10 +74,13 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
 
         <div className="space-y-4">
           <p className="text-muted-foreground text-sm text-center">
-            {featureLabel
-              ? <><strong className="text-foreground">{featureLabel}</strong> é um recurso {isVip ? "exclusivo do plano Anual VIP" : "disponível nos planos pagos"}.</>
-              : <>Este recurso {isVip ? "é exclusivo do plano Anual VIP" : "está disponível nos planos pagos"}.</>
-            }
+            {subscription?.status === "ativa" ? (
+              <>Você atingiu seu limite diário para <strong className="text-foreground">{featureLabel || "este recurso"}</strong>. Faça um upgrade para o plano <strong className="text-foreground">VIP</strong> para ter acesso ilimitado.</>
+            ) : (
+              featureLabel
+                ? <><strong className="text-foreground">{featureLabel}</strong> é um recurso {isVip ? "exclusivo do plano Anual VIP" : "disponível nos planos pagos"}.</>
+                : <>Este recurso {isVip ? "é exclusivo do plano Anual VIP" : "está disponível nos planos pagos"}.</>
+            )}
           </p>
 
           <div className="bg-secondary/50 rounded-xl p-4 space-y-2.5">
@@ -87,7 +95,7 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
                   "Tudo dos outros planos",
                 ]
               : [
-                  "Gerador de Jogos",
+                  "Gerador de Jogos (10x/dia)",
                   "Fechamento e Desdobramento",
                   "Estatísticas completas",
                   "Comunidade e Mesa Redonda",
@@ -121,7 +129,7 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
             <Button className={`w-full gap-2 ${canUseTrial ? "h-10 text-sm" : "h-12 text-senior-base"}`} variant={canUseTrial ? "outline" : "default"} asChild>
               <Link to="/planos" onClick={() => onOpenChange(false)}>
                 <Sparkles className="h-4 w-4" />
-                Ver Planos e Fazer Upgrade
+                {isVip && isPremium ? "Upgrade para VIP Ilimitado" : "Ver Planos e Fazer Upgrade"}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
