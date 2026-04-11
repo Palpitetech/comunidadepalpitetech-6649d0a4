@@ -105,17 +105,6 @@ export default function GeradorDuplaSena() {
   return (
     <MainLayout pageTitle="Gerador Dupla Sena">
       <div className="container-senior py-6 space-y-6 max-w-md mx-auto">
-        {!isMobile && (
-          <div className="text-center space-y-1">
-            <div className="flex items-center justify-center gap-2">
-              <Dices className="h-7 w-7 text-duplasena-primary" />
-              <h1 className="text-2xl font-bold">Gerador Dupla Sena</h1>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Palpites inteligentes baseados em análise estatística
-            </p>
-          </div>
-        )}
 
         <Card>
           <CardContent className="pt-6 space-y-6">
