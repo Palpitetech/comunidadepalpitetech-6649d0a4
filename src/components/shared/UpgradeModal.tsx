@@ -76,8 +76,8 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
       await refetch();
       onOpenChange(false);
       
-      // Abre o gerador
-      navigate("/smart-gerador");
+      // Abre o gerador - removido para que o usuário permaneça na ferramenta atual
+      // navigate("/smart-gerador");
     } catch (error) {
       console.error("Erro ao ativar trial:", error);
       toast.error("Erro ao ativar teste grátis. Tente novamente mais tarde.");
