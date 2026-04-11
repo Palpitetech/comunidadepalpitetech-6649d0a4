@@ -1,14 +1,9 @@
 import { ReactNode, useEffect, useState } from "react";
 import { usePermissionContext } from "@/contexts/PermissionContext";
 import type { FeatureKey } from "@/types/plans";
-import { UpgradeModal } from "@/components/shared/UpgradeModal";
 import { FEATURE_LABELS } from "@/types/plans";
-
-const VIP_ONLY_FEATURES: FeatureKey[] = [
-  "chat_estatisticas",
-  "chat_boloes",
-  "guias",
-];
+import { useUpsell } from "@/contexts/UpsellContext";
+import { VIP_ONLY_FEATURES } from "@/lib/featureMap";
 
 interface GatedPageProps {
   feature: FeatureKey;
@@ -22,35 +17,34 @@ interface GatedPageProps {
  */
 export function GatedPage({ feature, children }: GatedPageProps) {
   const { hasPermission, loading, isAdmin } = usePermissionContext();
-  const [showModal, setShowModal] = useState(false);
+  const { openUpgradeModal } = useUpsell();
+  const [shouldShowOverlay, setShouldShowOverlay] = useState(false);
 
   // Admin always has access, skip everything
   const hasAccess = loading || isAdmin || hasPermission(feature);
 
   useEffect(() => {
     if (!hasAccess) {
-      const timer = setTimeout(() => setShowModal(true), 400);
+      const timer = setTimeout(() => {
+        setShouldShowOverlay(true);
+        openUpgradeModal(FEATURE_LABELS[feature], VIP_ONLY_FEATURES.includes(feature) ? "vip" : "premium");
+      }, 400);
       return () => clearTimeout(timer);
     } else {
-      setShowModal(false);
+      setShouldShowOverlay(false);
     }
-  }, [hasAccess]);
-
-  const isVip = VIP_ONLY_FEATURES.includes(feature);
+  }, [hasAccess, feature, openUpgradeModal]);
 
   if (hasAccess) return <>{children}</>;
 
   return (
-    <>
-      <div className="pointer-events-none select-none opacity-40 blur-[2px]">
+    <div className="relative min-h-[60vh]">
+      <div className="pointer-events-none select-none opacity-40 blur-[4px] transition-all duration-500">
         {children}
       </div>
-      <UpgradeModal
-        open={showModal}
-        onOpenChange={setShowModal}
-        featureLabel={FEATURE_LABELS[feature]}
-        variant={isVip ? "vip" : "premium"}
-      />
-    </>
+      {shouldShowOverlay && (
+        <div className="absolute inset-0 z-10 bg-background/20 backdrop-blur-[2px] rounded-xl flex items-center justify-center" />
+      )}
+    </div>
   );
 }

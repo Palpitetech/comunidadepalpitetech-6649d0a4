@@ -123,7 +123,7 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
 
   const isAdmin = useMemo(() => roles.includes("admin"), [roles]);
   const isModerator = useMemo(() => roles.includes("moderator") || isAdmin, [roles, isAdmin]);
-  const isPremium = useMemo(() => roles.includes("premium") || isModerator, [roles, isModerator]);
+  const isPremium = useMemo(() => roles.includes("premium") || isModerator || !!plan, [roles, isModerator, plan]);
 
   const hasRole = useCallback((role: AppRole) => roles.includes(role), [roles]);
 
