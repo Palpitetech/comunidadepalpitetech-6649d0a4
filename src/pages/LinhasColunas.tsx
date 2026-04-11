@@ -12,7 +12,7 @@ export default function LinhasColunas() {
 
   return (
     <MainLayout pageTitle="Linhas e Colunas">
-      <div className="container-senior py-6">
+      <div className="container-senior py-6 hidden md:block">
         {/* Header desktop */}
         {!isMobile && (
           <div className="flex items-center justify-between gap-3 mb-6">

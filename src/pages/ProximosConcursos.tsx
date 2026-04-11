@@ -94,7 +94,7 @@ export default function ProximosConcursos() {
   return (
     <MainLayout pageTitle="Próximos Concursos">
       <div className="px-4 py-3 md:container-senior md:py-8 max-w-3xl mx-auto">
-        <div className="mb-6">
+        <div className="mb-6 hidden md:block">
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Calendar className="h-6 w-6 text-primary" />
             Próximos Concursos
