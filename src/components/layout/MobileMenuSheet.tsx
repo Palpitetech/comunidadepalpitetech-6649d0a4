@@ -19,11 +19,20 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Target, Table2, Flame, Gift, ArrowLeft, Home, 
   BarChart3, MessageCircle, LogOut, Dices, Shuffle, 
-  LayoutGrid, Grid3X3, TrendingUp, TrendingDown 
+  LayoutGrid, Grid3X3, TrendingUp, TrendingDown,
+  User, CreditCard, Ticket, Lock
 } from "lucide-react";
 import { 
   LOTOFACIL_TOOLS, 
@@ -147,28 +156,71 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
             </button>
 
             {isAuthenticated ? (
-              <Link to="/perfil/dados" onClick={closeAndNavigate}>
-                <div className="flex flex-col items-end gap-0.5 hover:opacity-80 transition-opacity">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base font-medium text-foreground">
-                      {profile?.nome?.split(' ')[0] || 'Usuário'}
-                    </span>
-                    <Avatar className="h-9 w-9">
-                      <AvatarImage src={profile?.avatar_url || undefined} />
-                      <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                        {getInitials(profile?.nome)}
-                      </AvatarFallback>
-                    </Avatar>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex flex-col items-end gap-0.5 hover:opacity-80 transition-opacity">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base font-medium text-foreground">
+                        {profile?.nome?.split(' ')[0] || 'Usuário'}
+                      </span>
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={profile?.avatar_url || undefined} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                          {getInitials(profile?.nome)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                    {profile?.status_assinatura === "ativa" ? (
+                      <span className="text-[10px] text-primary font-medium uppercase tracking-wider">Premium</span>
+                    ) : profile?.trial_used ? (
+                      <span className="text-[10px] text-destructive font-medium uppercase tracking-wider">Teste Vencido</span>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Plano Free</span>
+                    )}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64 bg-popover z-[120]">
+                  <div className="px-3 py-3">
+                    <div className="flex items-center gap-2">
+                      <p className="text-base font-semibold">{profile?.nome || "Usuário"}</p>
+                      {profile?.status_assinatura === "ativa" ? (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/20">Premium</Badge>
+                      ) : profile?.trial_used ? (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-destructive/10 text-destructive border-destructive/20 whitespace-nowrap">Teste Vencido</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-muted text-muted-foreground border-muted-foreground/20">Plano Free</Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {profile?.celular || "Sem celular"}
+                    </p>
                   </div>
-                  {profile?.status_assinatura === "ativa" ? (
-                    <span className="text-[10px] text-primary font-medium uppercase tracking-wider">Premium</span>
-                  ) : profile?.trial_used ? (
-                    <span className="text-[10px] text-destructive font-medium uppercase tracking-wider">Teste Vencido</span>
-                  ) : (
-                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Plano Free</span>
-                  )}
-                </div>
-              </Link>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base" onClick={() => onOpenChange(false)}>
+                    <Link to="/perfil/dados"><User className="h-5 w-5" />Dados</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base" onClick={() => onOpenChange(false)}>
+                    <Link to="/perfil/transacoes"><CreditCard className="h-5 w-5" />Transações</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base" onClick={() => onOpenChange(false)}>
+                    <Link to="/perfil/assinatura"><Ticket className="h-5 w-5" />Assinatura</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base" onClick={() => onOpenChange(false)}>
+                    <Link to="/perfil/seguranca"><Lock className="h-5 w-5" />Segurança</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base" onClick={() => onOpenChange(false)}>
+                    <Link to="/convites"><Gift className="h-5 w-5" />Convidar Amigos</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="gap-3 py-3 cursor-pointer text-base text-destructive focus:text-destructive"
+                    onClick={handleSignOut}
+                  >
+                    <LogOut className="h-5 w-5" />Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <Link to="/login" onClick={closeAndNavigate}>
                 <div className="flex items-center gap-2 hover:opacity-80 transition-opacity">
