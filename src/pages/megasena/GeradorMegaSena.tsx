@@ -67,7 +67,7 @@ export default function GeradorMegaSena() {
       pedidoEspecial: pedidoEspecial.trim() || undefined,
     };
     
-    generatePalpites(quantidade, 6, periodoAnalise, filtros);
+    generatePalpites(quantidade, periodoAnalise, filtros);
   };
 
   useEffect(() => {
