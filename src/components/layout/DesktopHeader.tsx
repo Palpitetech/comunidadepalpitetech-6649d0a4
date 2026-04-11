@@ -224,91 +224,122 @@ export function DesktopHeader({ pageTitle, breadcrumb }: DesktopHeaderProps) {
 
         {/* Desktop Navigation - centralizado, flex-wrap para não estourar */}
         <nav className="flex items-center gap-0.5 flex-1 justify-center flex-wrap">
-          {/* Bolões */}
-          {isAdmin ? (
-            <Link to="/boloes">
-              <Button variant="ghost" className="gap-1.5 h-10 px-2.5 text-sm">
-                <Trophy className="h-4 w-4" />
-                Bolões
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 ml-0.5 border-amber-500/50 text-amber-500">
-                  Em Breve
-                </Badge>
-              </Button>
-            </Link>
+          {pageTitle ? (
+            <div className="flex flex-col items-center">
+              {breadcrumb && breadcrumb.length > 0 && (
+                <div className="flex items-center gap-1 mb-0.5">
+                  {breadcrumb.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-1">
+                      {item.onClick ? (
+                        <button 
+                          onClick={item.onClick}
+                          className="text-[10px] text-muted-foreground hover:text-foreground transition-colors uppercase tracking-wider font-medium"
+                        >
+                          {item.label}
+                        </button>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+                          {item.label}
+                        </span>
+                      )}
+                      <ChevronRight className="h-2.5 w-2.5 text-muted-foreground/50" />
+                    </div>
+                  ))}
+                </div>
+              )}
+              <h1 className="text-xl font-bold text-foreground">
+                {pageTitle}
+              </h1>
+            </div>
           ) : (
-            <Button variant="ghost" className="gap-1.5 h-10 px-2.5 text-sm cursor-default opacity-60" disabled>
-              <Trophy className="h-4 w-4" />
-              Bolões
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 ml-0.5 border-muted-foreground/30 text-muted-foreground">
-                Em Breve
-              </Badge>
-            </Button>
-          )}
-
-          <Link to="/gerar-jogos">
-            <Button variant="ghost" className="gap-1.5 h-10 px-2.5 text-sm">
-              <Dices className="h-4 w-4" />
-              <span className="hidden lg:inline">Gerar Jogos</span>
-            </Button>
-          </Link>
-
-          <Link to="/proximos-concursos">
-            <Button variant="ghost" className="gap-1.5 h-10 px-2.5 text-sm">
-              <Calendar className="h-4 w-4" />
-              <span className="hidden lg:inline">Concursos</span>
-            </Button>
-          </Link>
-
-          {/* Lotofácil */}
-          <LotteryDropdown
-            name="Lotofácil"
-            tools={LOTOFACIL_TOOLS}
-            handleGatedClick={handleGatedClick}
-            renderBadge={renderBadge}
-          />
-
-          {/* Mega Sena */}
-          <LotteryDropdown
-            name="Mega Sena"
-            tools={MEGASENA_TOOLS}
-            handleGatedClick={handleGatedClick}
-            renderBadge={renderBadge}
-          />
-
-          {/* Dupla Sena */}
-          <LotteryDropdown
-            name="Dupla Sena"
-            tools={DUPLASENA_TOOLS}
-            handleGatedClick={handleGatedClick}
-            renderBadge={renderBadge}
-          />
-
-          {/* Quina */}
-          <LotteryDropdown
-            name="Quina"
-            tools={QUINA_TOOLS}
-            handleGatedClick={handleGatedClick}
-            renderBadge={renderBadge}
-          />
-
-          {SIMPLE_LOTTERIES.map((lottery) => (
-            <DropdownMenu key={lottery.name}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-1 h-10 px-2.5 text-sm">
-                  {lottery.name}
-                  <ChevronDown className="h-3 w-3" />
+            <>
+              {/* Bolões */}
+              {isAdmin ? (
+                <Link to="/boloes">
+                  <Button variant="ghost" className="gap-1.5 h-10 px-2.5 text-sm">
+                    <Trophy className="h-4 w-4" />
+                    Bolões
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 ml-0.5 border-amber-500/50 text-amber-500">
+                      Em Breve
+                    </Badge>
+                  </Button>
+                </Link>
+              ) : (
+                <Button variant="ghost" className="gap-1.5 h-10 px-2.5 text-sm cursor-default opacity-60" disabled>
+                  <Trophy className="h-4 w-4" />
+                  Bolões
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 ml-0.5 border-muted-foreground/30 text-muted-foreground">
+                    Em Breve
+                  </Badge>
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-56 p-1 bg-popover z-50">
-                <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base">
-                  <Link to={lottery.resultsPath}>
-                    <BarChart3 className="h-5 w-5" />
-                    Resultados
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ))}
+              )}
+
+              <Link to="/gerar-jogos">
+                <Button variant="ghost" className="gap-1.5 h-10 px-2.5 text-sm">
+                  <Dices className="h-4 w-4" />
+                  <span className="hidden lg:inline">Gerar Jogos</span>
+                </Button>
+              </Link>
+
+              <Link to="/proximos-concursos">
+                <Button variant="ghost" className="gap-1.5 h-10 px-2.5 text-sm">
+                  <Calendar className="h-4 w-4" />
+                  <span className="hidden lg:inline">Concursos</span>
+                </Button>
+              </Link>
+
+              {/* Lotofácil */}
+              <LotteryDropdown
+                name="Lotofácil"
+                tools={LOTOFACIL_TOOLS}
+                handleGatedClick={handleGatedClick}
+                renderBadge={renderBadge}
+              />
+
+              {/* Mega Sena */}
+              <LotteryDropdown
+                name="Mega Sena"
+                tools={MEGASENA_TOOLS}
+                handleGatedClick={handleGatedClick}
+                renderBadge={renderBadge}
+              />
+
+              {/* Dupla Sena */}
+              <LotteryDropdown
+                name="Dupla Sena"
+                tools={DUPLASENA_TOOLS}
+                handleGatedClick={handleGatedClick}
+                renderBadge={renderBadge}
+              />
+
+              {/* Quina */}
+              <LotteryDropdown
+                name="Quina"
+                tools={QUINA_TOOLS}
+                handleGatedClick={handleGatedClick}
+                renderBadge={renderBadge}
+              />
+
+              {SIMPLE_LOTTERIES.map((lottery) => (
+                <DropdownMenu key={lottery.name}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="gap-1 h-10 px-2.5 text-sm">
+                      {lottery.name}
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="center" className="w-56 p-1 bg-popover z-50">
+                    <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base">
+                      <Link to={lottery.resultsPath}>
+                        <BarChart3 className="h-5 w-5" />
+                        Resultados
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ))}
+            </>
+          )}
         </nav>
 
         {/* User Actions - fixo à direita */}
