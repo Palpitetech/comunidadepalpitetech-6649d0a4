@@ -24,12 +24,20 @@ import {
   Target, Table2, Flame, Gift, ArrowLeft, Home, 
   BarChart3, MessageCircle, LogOut, Dices, Shuffle, 
   LayoutGrid, Grid3X3, TrendingUp, TrendingDown 
-} from "lucide-react";
+import { 
+  LOTOFACIL_TOOLS, 
+  MEGASENA_TOOLS, 
+  DUPLASENA_TOOLS, 
+  QUINA_TOOLS,
+  SIMPLE_LOTTERIES,
+  ToolItem
+} from "./DesktopHeader";
 
 interface MobileMenuSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
 
 export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
   const { isAuthenticated, profile, signOut } = useAuthContext();
