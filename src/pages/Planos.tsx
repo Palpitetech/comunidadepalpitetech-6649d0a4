@@ -91,7 +91,7 @@ export default function Planos() {
 
   if (loading) {
     return (
-      <MainLayout>
+      <MainLayout pageTitle="Planos">
         <div className="flex items-center justify-center min-h-[60vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -108,7 +108,7 @@ export default function Planos() {
   const showTrialCard = trialPlan && !subscription?.trial_used && subscription?.status === "inativa";
 
   return (
-    <MainLayout>
+    <MainLayout pageTitle="Planos">
       <div className="py-8 max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-8">
