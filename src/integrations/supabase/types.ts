@@ -1654,6 +1654,7 @@ export type Database = {
           referral_code: string | null
           status_assinatura: string | null
           tags: string[]
+          trial_used: boolean | null
           updated_at: string
           utm_source: string | null
           validade_assinatura: string | null
@@ -1679,6 +1680,7 @@ export type Database = {
           referral_code?: string | null
           status_assinatura?: string | null
           tags?: string[]
+          trial_used?: boolean | null
           updated_at?: string
           utm_source?: string | null
           validade_assinatura?: string | null
@@ -1704,6 +1706,7 @@ export type Database = {
           referral_code?: string | null
           status_assinatura?: string | null
           tags?: string[]
+          trial_used?: boolean | null
           updated_at?: string
           utm_source?: string | null
           validade_assinatura?: string | null
