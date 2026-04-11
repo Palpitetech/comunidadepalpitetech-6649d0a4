@@ -33,7 +33,7 @@ interface MobileMenuSheetProps {
 
 export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
   const { isAuthenticated, profile, signOut } = useAuthContext();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, isPremium } = usePermissions();
   const location = useLocation();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradeLabel, setUpgradeLabel] = useState<string | undefined>();
