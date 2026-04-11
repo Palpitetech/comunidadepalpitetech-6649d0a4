@@ -119,11 +119,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
           {/* Lado Direito: Perfil Compacto */}
           {isAuthenticated ? (
             <Link to="/perfil" onClick={closeAndNavigate}>
-              <div className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <span className="text-base font-medium text-foreground">
-                  {profile?.nome?.split(' ')[0] || 'Usuário'}
-                </span>
-                <Avatar className="h-9 w-9">
+              <div className="flex flex-col items-end gap-0.5 hover:opacity-80 transition-opacity">
+                <div className="flex items-center gap-2">
+                  <span className="text-base font-medium text-foreground">
+                    {profile?.nome?.split(' ')[0] || 'Usuário'}
+                  </span>
+                  <Avatar className="h-9 w-9">
                   <AvatarImage src={profile?.avatar_url || undefined} />
                   <AvatarFallback className="bg-primary/10 text-primary text-sm">
                     {getInitials(profile?.nome)}
