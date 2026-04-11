@@ -128,13 +128,15 @@ export function RealGeneratorDemo() {
             MODO ATIVO
           </div>
         </div>
-        <CardContent className="pt-6 space-y-6">
-          <QuantidadeSelector
-            value={quantidade}
-            onChange={setQuantidade}
-            max={3}
-            disabled={isLoading}
-          />
+        <CardContent className="pt-4 space-y-4">
+          <div className="space-y-4">
+            <QuantidadeSelector
+              value={quantidade}
+              onChange={setQuantidade}
+              max={3}
+              disabled={isLoading}
+            />
+          </div>
 
           <DezenasSelector
             value={qtdDezenas}
