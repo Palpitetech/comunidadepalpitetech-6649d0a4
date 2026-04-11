@@ -202,7 +202,7 @@ export default function AdminUsuarios() {
       {/* ======= MOBILE ======= */}
       <div className="md:hidden px-4 py-3 space-y-3">
         {/* Stats row */}
-        <div className="grid grid-cols-4 gap-1.5">
+        <div className="grid grid-cols-5 gap-1">
           {FILTER_TABS.map(({ key, label, icon: Icon }) => {
             const count = getFilterCount(key);
             const isActive = activeFilter === key;
