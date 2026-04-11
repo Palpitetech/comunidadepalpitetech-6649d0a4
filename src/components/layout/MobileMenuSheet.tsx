@@ -25,11 +25,21 @@ import {
   BarChart3, MessageCircle, LogOut, Dices, Shuffle, 
   LayoutGrid, Grid3X3, TrendingUp, TrendingDown 
 } from "lucide-react";
+import { 
+  LOTOFACIL_TOOLS, 
+  MEGASENA_TOOLS, 
+  DUPLASENA_TOOLS, 
+  QUINA_TOOLS,
+  SIMPLE_LOTTERIES,
+  ToolItem
+} from "./DesktopHeader";
+
 
 interface MobileMenuSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
 
 export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
   const { isAuthenticated, profile, signOut } = useAuthContext();
@@ -190,57 +200,37 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
             <LotteryAccordion 
               name="Lotofácil" 
               color="hsl(270, 60%, 50%)" 
-              tools={[
-                { to: "/lotofacil", label: "Ver Todas", gated: false, bold: true },
-                { to: "/analise-do-dia", label: "Análise do Dia", icon: Target, gated: true },
-                { to: "/resultados", label: "Resultados", gated: false },
-                { to: "/smart-gerador", label: "Gerador", icon: Dices, gated: true },
-                { to: "/desdobramento", label: "Desdobramento", icon: Shuffle, gated: true },
-                { to: "/fechamento", label: "Fechamento", icon: LayoutGrid, gated: true },
-              ]} 
+              tools={LOTOFACIL_TOOLS} 
             />
 
             <LotteryAccordion 
               name="Mega Sena" 
               color="hsl(145, 63%, 42%)" 
-              tools={[
-                { to: "/megasena", label: "Ver Todas", gated: false, bold: true },
-                { to: "/megasena/analise-do-dia", label: "Análise do Dia", icon: Target, gated: true },
-                { to: "/megasena/resultados", label: "Resultados", gated: false },
-                { to: "/megasena/gerador", label: "Gerador", icon: Dices, gated: true },
-              ]} 
+              tools={MEGASENA_TOOLS} 
             />
 
             <LotteryAccordion 
               name="Dupla Sena" 
               color="hsl(0, 75%, 55%)" 
-              tools={[
-                { to: "/duplasena", label: "Ver Todas", gated: false, bold: true },
-                { to: "/duplasena/analise-do-dia", label: "Análise do Dia", icon: Target, gated: true },
-                { to: "/duplasena/resultados", label: "Resultados", gated: false },
-                { to: "/duplasena/gerador", label: "Gerador", icon: Dices, gated: true },
-              ]} 
+              tools={DUPLASENA_TOOLS} 
             />
 
             <LotteryAccordion 
               name="Quina" 
               color="hsl(210, 80%, 45%)" 
-              tools={[
-                { to: "/quina", label: "Ver Todas", gated: false, bold: true },
-                { to: "/quina/analise-do-dia", label: "Análise do Dia", icon: Target, gated: true },
-                { to: "/quina/resultados", label: "Resultados", gated: false },
-                { to: "/quina/gerador", label: "Gerador", icon: Dices, gated: true },
-              ]} 
+              tools={QUINA_TOOLS} 
             />
 
             <div className="px-4 pt-4 border-t border-border/30 space-y-3">
-              <Link to="/diadesorte/resultados" onClick={closeAndNavigate}>
-                <div className="py-2.5 text-base text-muted-foreground hover:text-foreground transition-colors">Dia de Sorte</div>
-              </Link>
-              <Link to="/lotomania/resultados" onClick={closeAndNavigate}>
-                <div className="py-2.5 text-base text-muted-foreground hover:text-foreground transition-colors">Lotomania</div>
-              </Link>
+              {SIMPLE_LOTTERIES.map((lottery) => (
+                <Link key={lottery.name} to={lottery.resultsPath} onClick={closeAndNavigate}>
+                  <div className="py-2.5 text-base text-muted-foreground hover:text-foreground transition-colors">
+                    {lottery.name}
+                  </div>
+                </Link>
+              ))}
             </div>
+
           </div>
 
           <div className="mt-auto px-4 py-4 border-t border-border/30 space-y-3 bg-secondary/20">

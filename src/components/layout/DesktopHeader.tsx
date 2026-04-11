@@ -47,7 +47,7 @@ function LotteryDropdownItem({
 }
 
 // Dados das loterias com ferramentas completas
-const LOTOFACIL_TOOLS = [
+export const LOTOFACIL_TOOLS: ToolItem[] = [
   { to: "/lotofacil", label: "Ver Todas as Ferramentas", gated: false, bold: true },
   { to: "/analise-do-dia", label: "Análise do Dia", icon: Target, gated: true },
   { to: "/resultados", label: "Resultados", icon: BarChart3, gated: false },
@@ -62,7 +62,7 @@ const LOTOFACIL_TOOLS = [
   { to: "/fechamento", label: "Fechamento", icon: Wrench, gated: true },
 ];
 
-const MEGASENA_TOOLS = [
+export const MEGASENA_TOOLS: ToolItem[] = [
   { to: "/megasena", label: "Ver Todas as Ferramentas", gated: false, bold: true },
   { to: "/megasena/analise-do-dia", label: "Análise do Dia", icon: Target, gated: true },
   { to: "/megasena/resultados", label: "Resultados", icon: BarChart3, gated: false },
@@ -77,7 +77,7 @@ const MEGASENA_TOOLS = [
   { to: "/megasena/fechamento", label: "Fechamento", icon: Wrench, gated: true },
 ];
 
-const DUPLASENA_TOOLS = [
+export const DUPLASENA_TOOLS: ToolItem[] = [
   { to: "/duplasena", label: "Ver Todas as Ferramentas", gated: false, bold: true },
   { to: "/duplasena/analise-do-dia", label: "Análise do Dia", icon: Target, gated: true },
   { to: "/duplasena/resultados", label: "Resultados", icon: BarChart3, gated: false },
@@ -92,7 +92,7 @@ const DUPLASENA_TOOLS = [
   { to: "/duplasena/fechamento", label: "Fechamento", icon: Wrench, gated: true },
 ];
 
-const QUINA_TOOLS = [
+export const QUINA_TOOLS: ToolItem[] = [
   { to: "/quina", label: "Ver Todas as Ferramentas", gated: false, bold: true },
   { to: "/quina/analise-do-dia", label: "Análise do Dia", icon: Target, gated: true },
   { to: "/quina/resultados", label: "Resultados", icon: BarChart3, gated: false },
@@ -106,18 +106,19 @@ const QUINA_TOOLS = [
   { to: "/quina/desdobramento", label: "Desdobramento", icon: Shuffle, gated: true },
 ];
 
-const SIMPLE_LOTTERIES = [
+export const SIMPLE_LOTTERIES = [
   { name: "Dia de Sorte", resultsPath: "/diadesorte/resultados" },
   { name: "Lotomania", resultsPath: "/lotomania/resultados" },
 ];
 
-interface ToolItem {
+export interface ToolItem {
   to: string;
   label: string;
   icon?: React.ComponentType<{ className?: string }>;
   gated: boolean;
   bold?: boolean;
 }
+
 
 interface DesktopHeaderProps {
   pageTitle?: string;
@@ -238,40 +239,41 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      <div className="flex items-center py-2 px-4 gap-1 w-full">
-        {/* Mobile Back Button */}
-        {pageTitle && !hideBackButton && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden h-10 w-10 shrink-0"
-            onClick={handleBack}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        )}
-
-        {/* Logo - fixo à esquerda (Desktop ou mobile sem back button) */}
-        <Link 
-          to="/home" 
-          className={cn(
-            "flex items-center gap-2 no-underline shrink-0 mr-2",
-            pageTitle && !hideBackButton && "hidden md:flex"
+      <div className="grid grid-cols-[auto_1fr_auto] md:grid-cols-[1fr_auto_1fr] items-center py-2 px-4 gap-2 w-full max-w-[1400px] mx-auto overflow-hidden">
+        {/* Mobile Page Title logic & Logo Section */}
+        <div className="flex items-center gap-2 overflow-hidden">
+          {pageTitle && !hideBackButton && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden h-10 w-10 shrink-0"
+              onClick={handleBack}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
           )}
-        >
-          <img src="/logo.png" alt="Palpite Tech" className="h-8 w-8 rounded-md" />
-          <span className="text-lg font-bold text-primary hidden xl:inline">Palpite Tech</span>
-        </Link>
 
-        {/* Mobile Page Title */}
-        {pageTitle && (
-          <div className="flex-1 md:hidden overflow-hidden ml-1">
-            <h1 className="text-base font-bold text-foreground truncate">{pageTitle}</h1>
-          </div>
-        )}
+          <Link 
+            to="/home" 
+            className={cn(
+              "flex items-center gap-2 no-underline shrink-0 mr-2",
+              pageTitle && !hideBackButton && "hidden md:flex"
+            )}
+          >
+            <img src="/logo.png" alt="Palpite Tech" className="h-8 w-8 rounded-md" />
+            <span className="text-lg font-bold text-primary hidden xl:inline">Palpite Tech</span>
+          </Link>
 
-        {/* Desktop Navigation - centralizado, flex-wrap para não estourar */}
-        <nav className="hidden md:flex items-center gap-0.5 flex-1 justify-center flex-wrap">
+          {/* Mobile Page Title */}
+          {pageTitle && (
+            <div className="flex-1 md:hidden overflow-hidden ml-1">
+              <h1 className="text-base font-bold text-foreground truncate">{pageTitle}</h1>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Navigation - centralizado */}
+        <nav className="hidden md:flex items-center gap-0.5 justify-center flex-wrap overflow-hidden">
           {/* Bolões */}
           {isAdmin ? (
             <Link to="/boloes">
@@ -360,7 +362,8 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
         </nav>
 
         {/* User Actions - fixo à direita */}
-        <div className="flex items-center gap-1 shrink-0 ml-2">
+        <div className="flex items-center justify-end gap-1 shrink-0">
+
           {isAuthenticated ? (
             <>
               <Link to="/meus-palpites">
