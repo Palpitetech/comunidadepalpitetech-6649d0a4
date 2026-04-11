@@ -24,6 +24,15 @@ export default function GeradorDuplaSena() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const { shouldShow, setShouldShow } = useTrialOffer();
+
+  // Abrir modal de trial se for o caso
+  useEffect(() => {
+    if (shouldShow) {
+      setUpgradeOpen(true);
+      setShouldShow(false);
+    }
+  }, [shouldShow, setShouldShow]);
   
   // Filtros
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
