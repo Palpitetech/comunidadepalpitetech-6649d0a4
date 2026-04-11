@@ -9,9 +9,8 @@ export default function Auth() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Só redireciona se autenticado E email verificado
-    // Se email_verificado === false, o RegisterWizard está mostrando o OTP inline
-    if (isAuthenticated && profile?.email_verificado !== false) {
+    // Redireciona se autenticado e tiver nome (perfil completo)
+    if (isAuthenticated && profile?.nome) {
       navigate("/home", { replace: true });
     }
   }, [isAuthenticated, profile, navigate]);
