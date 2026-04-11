@@ -61,8 +61,7 @@ import NotFound from "./pages/NotFound";
 import Termos from "./pages/Termos";
 import Privacidade from "./pages/Privacidade";
 import Home from "./pages/Home";
-import AtivarConta from "@/pages/AtivarConta";
-import VerificarEmail from "@/pages/VerificarEmail";
+// AtivarConta e VerificarEmail removidos
 import ResultadosMegaSena from "./pages/megasena/ResultadosMegaSena";
 import TendenciasMegaSena from "./pages/megasena/TendenciasMegaSena";
 import FrequenciaMegaSena from "./pages/megasena/FrequenciaMegaSena";
@@ -146,8 +145,7 @@ const App = () => (
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 {/* RecuperarSenha removido */}
-                <Route path="/ativar-conta" element={<AtivarConta />} />
-                <Route path="/verificar-email" element={<VerificarEmail />} />
+{/* AtivarConta e VerificarEmail removidos */}
                 <Route path="/termos" element={<Termos />} />
                 <Route path="/privacidade" element={<Privacidade />} />
                 <Route path="/proximos-concursos" element={<ProximosConcursos />} />
