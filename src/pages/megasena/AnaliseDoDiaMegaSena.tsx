@@ -290,7 +290,7 @@ export default function AnaliseDoDiaMegaSena() {
             <Target className="h-4 w-4 text-[hsl(var(--megasena-primary))] shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
               <p className="text-xs leading-relaxed text-foreground">
-                <span className="font-semibold">Análise do Dia</span> — Reunimos os principais dados estatísticos da Mega Sena. Clique nos dados para levar diretamente ao desdobramento e facilitar sua fézinha.
+                Reunimos os principais dados estatísticos da Mega Sena. Clique nos dados para levar diretamente ao desdobramento e facilitar sua fézinha.
               </p>
             </div>
           </div>
