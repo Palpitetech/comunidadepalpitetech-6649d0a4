@@ -5,6 +5,7 @@ import type { StatusAssinatura } from "@/types/plans";
 type MySubscriptionData = {
   status: StatusAssinatura;
   validade: string | null;
+  trial_used?: boolean;
 };
 
 export function useMySubscription(userId?: string) {
@@ -26,7 +27,7 @@ export function useMySubscription(userId?: string) {
     try {
       const { data: row, error: queryError } = await supabase
         .from("perfis")
-        .select("status_assinatura, validade_assinatura")
+        .select("status_assinatura, validade_assinatura, trial_used")
         .eq("id", userId)
         .maybeSingle();
 
