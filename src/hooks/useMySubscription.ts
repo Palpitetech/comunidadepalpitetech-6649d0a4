@@ -15,7 +15,7 @@ export function useMySubscription(userId?: string) {
 
   const fetchSubscription = useCallback(async () => {
     if (!userId) {
-      setData({ status: "inativa", validade: null });
+      setData({ status: "inativa", validade: null, trial_used: false });
       setLoading(false);
       setError(null);
       return;
@@ -35,12 +35,13 @@ export function useMySubscription(userId?: string) {
 
       const status = ((row?.status_assinatura || "inativa") as StatusAssinatura) ?? "inativa";
       const validade = row?.validade_assinatura ?? null;
+      const trial_used = row?.trial_used ?? false;
 
-      setData({ status, validade });
+      setData({ status, validade, trial_used });
     } catch (e) {
       console.error("Erro ao buscar assinatura do usuário:", e);
       setError(e instanceof Error ? e.message : "Erro ao buscar assinatura");
-      setData({ status: "inativa", validade: null });
+      setData({ status: "inativa", validade: null, trial_used: false });
     } finally {
       setLoading(false);
     }
