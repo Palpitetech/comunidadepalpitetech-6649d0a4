@@ -6,7 +6,8 @@ export type Loteria = "lotofacil" | "megasena" | "duplasena" | "quina" | "lotoma
 export interface ResultadoUnificado {
   id: string;
   loteria: string;
-  concurso: number;
+  concurso?: number;
+  concurso_id?: number;
   data_sorteio: string;
   dezenas: number[];
   dezenas_sorteio2: number[] | null;
