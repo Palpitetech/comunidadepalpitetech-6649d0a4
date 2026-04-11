@@ -268,7 +268,11 @@ export default function AdminUsuarios() {
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 {getUtmBadge(user.utm_source)}
-                <Badge variant="secondary" className={cn("text-[10px] px-1.5 py-0.5", user.plan && user.plan.price > 0 && "bg-primary/10 text-primary border-primary/20")}>
+                <Badge variant="secondary" className={cn(
+                  "text-[10px] px-1.5 py-0.5", 
+                  user.plan && user.plan.price > 0 && "bg-primary/10 text-primary border-primary/20",
+                  (user.plan?.slug === 'trial' || user.plan?.slug === 'teste-gratis-3-dias') && "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 border-orange-200"
+                )}>
                   {user.plan?.name || "Free"}
                 </Badge>
               </div>
