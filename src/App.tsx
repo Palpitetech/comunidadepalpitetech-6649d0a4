@@ -8,6 +8,7 @@ import { PermissionProvider } from "@/contexts/PermissionContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
 import { GatedPage } from "@/components/shared/GatedPage";
+import { UpsellProvider } from "@/contexts/UpsellContext";
 import { CodeProtection } from "@/components/shared/CodeProtection";
 import { PWAUpdateHandler } from "@/components/pwa/PWAUpdateHandler";
 import { useUTM } from "@/hooks/useUTM";
@@ -133,134 +134,136 @@ const App = () => (
       <AuthProvider>
         <PermissionProvider>
           <TooltipProvider>
-            <UTMCapture />
-            <CodeProtection />
-            <PWAUpdateHandler />
-            <Toaster />
-            <Sonner />
-            <LowercaseRedirect />
-          <Routes>
-            {/* Rotas Públicas */}
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/recuperar-senha" element={<RecuperarSenha />} />
-            <Route path="/ativar-conta" element={<AtivarConta />} />
-            <Route path="/verificar-email" element={<VerificarEmail />} />
-            <Route path="/termos" element={<Termos />} />
-            <Route path="/privacidade" element={<Privacidade />} />
-            <Route path="/proximos-concursos" element={<ProximosConcursos />} />
-            <Route path="/g/:slug" element={<SmartLinkRedirect />} />
+            <UpsellProvider>
+              <UTMCapture />
+              <CodeProtection />
+              <PWAUpdateHandler />
+              <Toaster />
+              <Sonner />
+              <LowercaseRedirect />
+              <Routes>
+                {/* Rotas Públicas */}
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/recuperar-senha" element={<RecuperarSenha />} />
+                <Route path="/ativar-conta" element={<AtivarConta />} />
+                <Route path="/verificar-email" element={<VerificarEmail />} />
+                <Route path="/termos" element={<Termos />} />
+                <Route path="/privacidade" element={<Privacidade />} />
+                <Route path="/proximos-concursos" element={<ProximosConcursos />} />
+                <Route path="/g/:slug" element={<SmartLinkRedirect />} />
 
-            {/* Rotas Protegidas - Requer Login */}
-            <Route path="/gerar-jogos" element={<ProtectedRoute><GerarJogos /></ProtectedRoute>} />
-            <Route path="/home" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
-            <Route path="/comunidade" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
-            <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-            <Route path="/notificacoes" element={<ProtectedRoute><Notificacoes /></ProtectedRoute>} />
-            <Route path="/lotofacil" element={<ProtectedRoute><HubLotofacil /></ProtectedRoute>} />
-            <Route path="/resultados" element={<ProtectedRoute><Resultados /></ProtectedRoute>} />
-            <Route path="/tendencias" element={<ProtectedRoute><GatedPage feature="tendencias"><Tendencias /></GatedPage></ProtectedRoute>} />
-            <Route path="/linhas-colunas" element={<ProtectedRoute><GatedPage feature="linhas_colunas"><LinhasColunas /></GatedPage></ProtectedRoute>} />
-            <Route path="/frequencia" element={<ProtectedRoute><GatedPage feature="quentes_frias"><Frequencia /></GatedPage></ProtectedRoute>} />
-            <Route path="/smart-gerador" element={<ProtectedRoute><Gerador /></ProtectedRoute>} />
-            <Route path="/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><Desdobramento /></GatedPage></ProtectedRoute>} />
-            <Route path="/fechamento" element={<ProtectedRoute><GatedPage feature="fechamento"><Fechamento /></GatedPage></ProtectedRoute>} />
-            <Route path="/meus-palpites" element={<ProtectedRoute><GatedPage feature="palpites_salvos"><MeusPalpites /></GatedPage></ProtectedRoute>} />
-            <Route path="/boloes" element={<ProtectedRoute><Boloes /></ProtectedRoute>} />
-            <Route path="/analise-do-dia" element={<ProtectedRoute><GatedPage feature="analise_do_dia"><AnaliseDoDia /></GatedPage></ProtectedRoute>} />
-            <Route path="/tabela-movimentacao" element={<ProtectedRoute><GatedPage feature="tabela_movimentacao"><TabelaMovimentacao /></GatedPage></ProtectedRoute>} />
-            <Route path="/frequencia-dezenas" element={<ProtectedRoute><GatedPage feature="frequencia_dezenas"><FrequenciaDezenas /></GatedPage></ProtectedRoute>} />
-            <Route path="/dezenas-por-posicao" element={<ProtectedRoute><GatedPage feature="dezenas_por_posicao"><DezenasporPosicao /></GatedPage></ProtectedRoute>} />
-            <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
-            <Route path="/perfil/dados" element={<ProtectedRoute><PerfilDados /></ProtectedRoute>} />
-            <Route path="/perfil/transacoes" element={<ProtectedRoute><PerfilTransacoes /></ProtectedRoute>} />
-            <Route path="/perfil/assinatura" element={<ProtectedRoute><PerfilAssinatura /></ProtectedRoute>} />
-            <Route path="/perfil/seguranca" element={<ProtectedRoute><PerfilSeguranca /></ProtectedRoute>} />
-            <Route path="/criar-post" element={<ProtectedRoute><CriarPost /></ProtectedRoute>} />
-            <Route path="/comunidade/post/:slug" element={<PostDetalhes />} />
-            <Route path="/convites" element={<ProtectedRoute><GatedPage feature="comunidade_full"><Convites /></GatedPage></ProtectedRoute>} />
-            <Route path="/bloqueado" element={<Bloqueado />} />
-            <Route path="/planos" element={<Planos />} />
-            
-            {/* Rotas Mega Sena */}
-            <Route path="/megasena" element={<ProtectedRoute><HubMegaSena /></ProtectedRoute>} />
-            <Route path="/megasena/resultados" element={<ProtectedRoute><ResultadosMegaSena /></ProtectedRoute>} />
-            <Route path="/megasena/tendencias" element={<ProtectedRoute><GatedPage feature="tendencias"><TendenciasMegaSena /></GatedPage></ProtectedRoute>} />
-            <Route path="/megasena/frequencia" element={<ProtectedRoute><GatedPage feature="quentes_frias"><FrequenciaMegaSena /></GatedPage></ProtectedRoute>} />
-            <Route path="/megasena/gerador" element={<ProtectedRoute><GeradorMegaSena /></ProtectedRoute>} />
-            <Route path="/megasena/fechamento" element={<ProtectedRoute><GatedPage feature="fechamento"><FechamentoMegaSena /></GatedPage></ProtectedRoute>} />
-            <Route path="/megasena/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><DesdobramentoMegaSena /></GatedPage></ProtectedRoute>} />
-            <Route path="/megasena/linhas-colunas" element={<ProtectedRoute><GatedPage feature="linhas_colunas"><LinhasColunasMegaSena /></GatedPage></ProtectedRoute>} />
-            <Route path="/megasena/analise-do-dia" element={<ProtectedRoute><GatedPage feature="analise_do_dia"><AnaliseDoDiaMegaSena /></GatedPage></ProtectedRoute>} />
-            <Route path="/megasena/tabela-movimentacao" element={<ProtectedRoute><GatedPage feature="tabela_movimentacao"><TabelaMovimentacaoMegaSena /></GatedPage></ProtectedRoute>} />
-            <Route path="/megasena/frequencia-dezenas" element={<ProtectedRoute><GatedPage feature="frequencia_dezenas"><FrequenciaDecenasMegaSena /></GatedPage></ProtectedRoute>} />
-            <Route path="/megasena/dezenas-por-posicao" element={<ProtectedRoute><GatedPage feature="dezenas_por_posicao"><DezenasporPosicaoMegaSena /></GatedPage></ProtectedRoute>} />
-            
-            {/* Rotas Dupla Sena */}
-            <Route path="/duplasena" element={<ProtectedRoute><HubDuplaSena /></ProtectedRoute>} />
-            <Route path="/duplasena/resultados" element={<ProtectedRoute><ResultadosDuplaSena /></ProtectedRoute>} />
-            <Route path="/duplasena/tendencias" element={<ProtectedRoute><GatedPage feature="tendencias"><TendenciasDuplaSena /></GatedPage></ProtectedRoute>} />
-            <Route path="/duplasena/frequencia" element={<ProtectedRoute><GatedPage feature="quentes_frias"><FrequenciaDuplaSena /></GatedPage></ProtectedRoute>} />
-            <Route path="/duplasena/dezenas-por-posicao" element={<ProtectedRoute><GatedPage feature="dezenas_por_posicao"><DezenasporPosicaoDuplaSena /></GatedPage></ProtectedRoute>} />
-            <Route path="/duplasena/linhas-colunas" element={<ProtectedRoute><GatedPage feature="linhas_colunas"><LinhasColunasDuplaSena /></GatedPage></ProtectedRoute>} />
-            <Route path="/duplasena/analise-do-dia" element={<ProtectedRoute><GatedPage feature="analise_do_dia"><AnaliseDoDiaDuplaSena /></GatedPage></ProtectedRoute>} />
-            <Route path="/duplasena/gerador" element={<ProtectedRoute><GeradorDuplaSena /></ProtectedRoute>} />
-            <Route path="/duplasena/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><DesdobramentoDuplaSena /></GatedPage></ProtectedRoute>} />
-            <Route path="/duplasena/frequencia-dezenas" element={<ProtectedRoute><GatedPage feature="frequencia_dezenas"><FrequenciaDecenasDuplaSena /></GatedPage></ProtectedRoute>} />
-            <Route path="/duplasena/tabela-movimentacao" element={<ProtectedRoute><GatedPage feature="tabela_movimentacao"><TabelaMovimentacaoDuplaSena /></GatedPage></ProtectedRoute>} />
-            <Route path="/duplasena/fechamento" element={<ProtectedRoute><GatedPage feature="fechamento"><FechamentoDuplaSena /></GatedPage></ProtectedRoute>} />
-            
-            {/* Rotas Quina */}
-            <Route path="/quina" element={<ProtectedRoute><HubQuina /></ProtectedRoute>} />
-            <Route path="/quina/resultados" element={<ProtectedRoute><ResultadosQuina /></ProtectedRoute>} />
-            <Route path="/quina/tendencias" element={<ProtectedRoute><TendenciasQuina /></ProtectedRoute>} />
-            <Route path="/quina/frequencia" element={<ProtectedRoute><FrequenciaQuina /></ProtectedRoute>} />
-            <Route path="/quina/frequencia-dezenas" element={<ProtectedRoute><FrequenciaDezenasQuina /></ProtectedRoute>} />
-            <Route path="/quina/dezenas-posicao" element={<ProtectedRoute><DezenasporPosicaoQuina /></ProtectedRoute>} />
-            <Route path="/quina/linhas-colunas" element={<ProtectedRoute><LinhasColunasQuina /></ProtectedRoute>} />
-            <Route path="/quina/tabela-movimentacao" element={<ProtectedRoute><TabelaMovimentacaoQuina /></ProtectedRoute>} />
-            <Route path="/quina/gerador" element={<ProtectedRoute><GeradorQuina /></ProtectedRoute>} />
-            <Route path="/quina/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><DesdobramentoQuina /></GatedPage></ProtectedRoute>} />
-            <Route path="/quina/analise-do-dia" element={<ProtectedRoute><GatedPage feature="analise_do_dia"><AnaliseDoDiaQuina /></GatedPage></ProtectedRoute>} />
+                {/* Rotas Protegidas - Requer Login */}
+                <Route path="/gerar-jogos" element={<ProtectedRoute><GerarJogos /></ProtectedRoute>} />
+                <Route path="/home" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
+                <Route path="/comunidade" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
+                <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+                <Route path="/notificacoes" element={<ProtectedRoute><Notificacoes /></ProtectedRoute>} />
+                <Route path="/lotofacil" element={<ProtectedRoute><HubLotofacil /></ProtectedRoute>} />
+                <Route path="/resultados" element={<ProtectedRoute><Resultados /></ProtectedRoute>} />
+                <Route path="/tendencias" element={<ProtectedRoute><GatedPage feature="tendencias"><Tendencias /></GatedPage></ProtectedRoute>} />
+                <Route path="/linhas-colunas" element={<ProtectedRoute><GatedPage feature="linhas_colunas"><LinhasColunas /></GatedPage></ProtectedRoute>} />
+                <Route path="/frequencia" element={<ProtectedRoute><GatedPage feature="quentes_frias"><Frequencia /></GatedPage></ProtectedRoute>} />
+                <Route path="/smart-gerador" element={<ProtectedRoute><Gerador /></ProtectedRoute>} />
+                <Route path="/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><Desdobramento /></GatedPage></ProtectedRoute>} />
+                <Route path="/fechamento" element={<ProtectedRoute><GatedPage feature="fechamento"><Fechamento /></GatedPage></ProtectedRoute>} />
+                <Route path="/meus-palpites" element={<ProtectedRoute><GatedPage feature="palpites_salvos"><MeusPalpites /></GatedPage></ProtectedRoute>} />
+                <Route path="/boloes" element={<ProtectedRoute><Boloes /></ProtectedRoute>} />
+                <Route path="/analise-do-dia" element={<ProtectedRoute><GatedPage feature="analise_do_dia"><AnaliseDoDia /></GatedPage></ProtectedRoute>} />
+                <Route path="/tabela-movimentacao" element={<ProtectedRoute><GatedPage feature="tabela_movimentacao"><TabelaMovimentacao /></GatedPage></ProtectedRoute>} />
+                <Route path="/frequencia-dezenas" element={<ProtectedRoute><GatedPage feature="frequencia_dezenas"><FrequenciaDezenas /></GatedPage></ProtectedRoute>} />
+                <Route path="/dezenas-por-posicao" element={<ProtectedRoute><GatedPage feature="dezenas_por_posicao"><DezenasporPosicao /></GatedPage></ProtectedRoute>} />
+                <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
+                <Route path="/perfil/dados" element={<ProtectedRoute><PerfilDados /></ProtectedRoute>} />
+                <Route path="/perfil/transacoes" element={<ProtectedRoute><PerfilTransacoes /></ProtectedRoute>} />
+                <Route path="/perfil/assinatura" element={<ProtectedRoute><PerfilAssinatura /></ProtectedRoute>} />
+                <Route path="/perfil/seguranca" element={<ProtectedRoute><PerfilSeguranca /></ProtectedRoute>} />
+                <Route path="/criar-post" element={<ProtectedRoute><CriarPost /></ProtectedRoute>} />
+                <Route path="/comunidade/post/:slug" element={<PostDetalhes />} />
+                <Route path="/convites" element={<ProtectedRoute><GatedPage feature="comunidade_full"><Convites /></GatedPage></ProtectedRoute>} />
+                <Route path="/bloqueado" element={<Bloqueado />} />
+                <Route path="/planos" element={<Planos />} />
+                
+                {/* Rotas Mega Sena */}
+                <Route path="/megasena" element={<ProtectedRoute><HubMegaSena /></ProtectedRoute>} />
+                <Route path="/megasena/resultados" element={<ProtectedRoute><ResultadosMegaSena /></ProtectedRoute>} />
+                <Route path="/megasena/tendencias" element={<ProtectedRoute><GatedPage feature="tendencias"><TendenciasMegaSena /></GatedPage></ProtectedRoute>} />
+                <Route path="/megasena/frequencia" element={<ProtectedRoute><GatedPage feature="quentes_frias"><FrequenciaMegaSena /></GatedPage></ProtectedRoute>} />
+                <Route path="/megasena/gerador" element={<ProtectedRoute><GeradorMegaSena /></ProtectedRoute>} />
+                <Route path="/megasena/fechamento" element={<ProtectedRoute><GatedPage feature="fechamento"><FechamentoMegaSena /></GatedPage></ProtectedRoute>} />
+                <Route path="/megasena/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><DesdobramentoMegaSena /></GatedPage></ProtectedRoute>} />
+                <Route path="/megasena/linhas-colunas" element={<ProtectedRoute><GatedPage feature="linhas_colunas"><LinhasColunasMegaSena /></GatedPage></ProtectedRoute>} />
+                <Route path="/megasena/analise-do-dia" element={<ProtectedRoute><GatedPage feature="analise_do_dia"><AnaliseDoDiaMegaSena /></GatedPage></ProtectedRoute>} />
+                <Route path="/megasena/tabela-movimentacao" element={<ProtectedRoute><GatedPage feature="tabela_movimentacao"><TabelaMovimentacaoMegaSena /></GatedPage></ProtectedRoute>} />
+                <Route path="/megasena/frequencia-dezenas" element={<ProtectedRoute><GatedPage feature="frequencia_dezenas"><FrequenciaDecenasMegaSena /></GatedPage></ProtectedRoute>} />
+                <Route path="/megasena/dezenas-por-posicao" element={<ProtectedRoute><GatedPage feature="dezenas_por_posicao"><DezenasporPosicaoMegaSena /></GatedPage></ProtectedRoute>} />
+                
+                {/* Rotas Dupla Sena */}
+                <Route path="/duplasena" element={<ProtectedRoute><HubDuplaSena /></ProtectedRoute>} />
+                <Route path="/duplasena/resultados" element={<ProtectedRoute><ResultadosDuplaSena /></ProtectedRoute>} />
+                <Route path="/duplasena/tendencias" element={<ProtectedRoute><GatedPage feature="tendencias"><TendenciasDuplaSena /></GatedPage></ProtectedRoute>} />
+                <Route path="/duplasena/frequencia" element={<ProtectedRoute><GatedPage feature="quentes_frias"><FrequenciaDuplaSena /></GatedPage></ProtectedRoute>} />
+                <Route path="/duplasena/dezenas-por-posicao" element={<ProtectedRoute><GatedPage feature="dezenas_por_posicao"><DezenasporPosicaoDuplaSena /></GatedPage></ProtectedRoute>} />
+                <Route path="/duplasena/linhas-colunas" element={<ProtectedRoute><GatedPage feature="linhas_colunas"><LinhasColunasDuplaSena /></GatedPage></ProtectedRoute>} />
+                <Route path="/duplasena/analise-do-dia" element={<ProtectedRoute><GatedPage feature="analise_do_dia"><AnaliseDoDiaDuplaSena /></GatedPage></ProtectedRoute>} />
+                <Route path="/duplasena/gerador" element={<ProtectedRoute><GeradorDuplaSena /></ProtectedRoute>} />
+                <Route path="/duplasena/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><DesdobramentoDuplaSena /></GatedPage></ProtectedRoute>} />
+                <Route path="/duplasena/frequencia-dezenas" element={<ProtectedRoute><GatedPage feature="frequencia_dezenas"><FrequenciaDecenasDuplaSena /></GatedPage></ProtectedRoute>} />
+                <Route path="/duplasena/tabela-movimentacao" element={<ProtectedRoute><GatedPage feature="tabela_movimentacao"><TabelaMovimentacaoDuplaSena /></GatedPage></ProtectedRoute>} />
+                <Route path="/duplasena/fechamento" element={<ProtectedRoute><GatedPage feature="fechamento"><FechamentoDuplaSena /></GatedPage></ProtectedRoute>} />
+                
+                {/* Rotas Quina */}
+                <Route path="/quina" element={<ProtectedRoute><HubQuina /></ProtectedRoute>} />
+                <Route path="/quina/resultados" element={<ProtectedRoute><ResultadosQuina /></ProtectedRoute>} />
+                <Route path="/quina/tendencias" element={<ProtectedRoute><TendenciasQuina /></ProtectedRoute>} />
+                <Route path="/quina/frequencia" element={<ProtectedRoute><FrequenciaQuina /></ProtectedRoute>} />
+                <Route path="/quina/frequencia-dezenas" element={<ProtectedRoute><FrequenciaDezenasQuina /></ProtectedRoute>} />
+                <Route path="/quina/dezenas-posicao" element={<ProtectedRoute><DezenasporPosicaoQuina /></ProtectedRoute>} />
+                <Route path="/quina/linhas-colunas" element={<ProtectedRoute><LinhasColunasQuina /></ProtectedRoute>} />
+                <Route path="/quina/tabela-movimentacao" element={<ProtectedRoute><TabelaMovimentacaoQuina /></ProtectedRoute>} />
+                <Route path="/quina/gerador" element={<ProtectedRoute><GeradorQuina /></ProtectedRoute>} />
+                <Route path="/quina/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><DesdobramentoQuina /></GatedPage></ProtectedRoute>} />
+                <Route path="/quina/analise-do-dia" element={<ProtectedRoute><GatedPage feature="analise_do_dia"><AnaliseDoDiaQuina /></GatedPage></ProtectedRoute>} />
 
-            {/* Rotas Dia de Sorte */}
-            <Route path="/diadesorte/resultados" element={<ProtectedRoute><ResultadosDiaDeSorte /></ProtectedRoute>} />
-            
-            {/* Rotas Lotomania */}
-            <Route path="/lotomania/resultados" element={<ProtectedRoute><ResultadosLotomania /></ProtectedRoute>} />
-            
-            {/* Rotas Admin */}
-            <Route path="/admin" element={<AdminRoute><AdminIndex /></AdminRoute>} />
-            <Route path="/admin/planos" element={<AdminRoute><AdminPlanos /></AdminRoute>} />
-            <Route path="/admin/usuarios" element={<AdminRoute><AdminUsuarios /></AdminRoute>} />
-            <Route path="/admin/bots" element={<AdminRoute><AdminBots /></AdminRoute>} />
-            <Route path="/admin/custos" element={<AdminRoute><AdminCustos /></AdminRoute>} />
-            <Route path="/admin/convites" element={<AdminRoute><AdminConvites /></AdminRoute>} />
-            <Route path="/admin/vendas" element={<AdminRoute><AdminVendas /></AdminRoute>} />
-            <Route path="/admin/eventos" element={<AdminRoute><AdminEventos /></AdminRoute>} />
-            <Route path="/admin/whatsapp" element={<AdminRoute><AdminWhatsApp /></AdminRoute>} />
-            <Route path="/admin/integracoes" element={<AdminRoute><Integracoes /></AdminRoute>} />
-            <Route path="/admin/metricas" element={<AdminRoute><AdminMetricas /></AdminRoute>} />
-            <Route path="/admin/manutencao" element={<AdminRoute><AdminManutencao /></AdminRoute>} />
-            <Route path="/admin/novo-bolao" element={<AdminRoute><NovoBolao /></AdminRoute>} />
-            <Route path="/admin/listagem-bolao" element={<AdminRoute><ListagemBolao /></AdminRoute>} />
-            <Route path="/admin/solicitacao-resgate" element={<AdminRoute><ResgatesBolao /></AdminRoute>} />
-            <Route path="/admin/compras-saldo" element={<AdminRoute><ComprasSaldo /></AdminRoute>} />
-            <Route path="/admin/compras-cotas" element={<AdminRoute><ComprasCotas /></AdminRoute>} />
-            <Route path="/admin/boloes-pagamento" element={<AdminRoute><BoloesPagamento /></AdminRoute>} />
-            <Route path="/admin/premiacao" element={<AdminRoute><Premiacao /></AdminRoute>} />
-            <Route path="/admin/carteira" element={<AdminRoute><Carteira /></AdminRoute>} />
-            <Route path="/admin/gravacao/lotofacil" element={<AdminRoute><GravacaoLotofacil /></AdminRoute>} />
-            <Route path="/admin/gravacao/quina" element={<AdminRoute><GravacaoQuina /></AdminRoute>} />
-            
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </TooltipProvider>
-      </PermissionProvider>
-    </AuthProvider>
-  </BrowserRouter>
-</QueryClientProvider>
+                {/* Rotas Dia de Sorte */}
+                <Route path="/diadesorte/resultados" element={<ProtectedRoute><ResultadosDiaDeSorte /></ProtectedRoute>} />
+                
+                {/* Rotas Lotomania */}
+                <Route path="/lotomania/resultados" element={<ProtectedRoute><ResultadosLotomania /></ProtectedRoute>} />
+                
+                {/* Rotas Admin */}
+                <Route path="/admin" element={<AdminRoute><AdminIndex /></AdminRoute>} />
+                <Route path="/admin/planos" element={<AdminRoute><AdminPlanos /></AdminRoute>} />
+                <Route path="/admin/usuarios" element={<AdminRoute><AdminUsuarios /></AdminRoute>} />
+                <Route path="/admin/bots" element={<AdminRoute><AdminBots /></AdminRoute>} />
+                <Route path="/admin/custos" element={<AdminRoute><AdminCustos /></AdminRoute>} />
+                <Route path="/admin/convites" element={<AdminRoute><AdminConvites /></AdminRoute>} />
+                <Route path="/admin/vendas" element={<AdminRoute><AdminVendas /></AdminRoute>} />
+                <Route path="/admin/eventos" element={<AdminRoute><AdminEventos /></AdminRoute>} />
+                <Route path="/admin/whatsapp" element={<AdminRoute><AdminWhatsApp /></AdminRoute>} />
+                <Route path="/admin/integracoes" element={<AdminRoute><Integracoes /></AdminRoute>} />
+                <Route path="/admin/metricas" element={<AdminRoute><AdminMetricas /></AdminRoute>} />
+                <Route path="/admin/manutencao" element={<AdminRoute><AdminManutencao /></AdminRoute>} />
+                <Route path="/admin/novo-bolao" element={<AdminRoute><NovoBolao /></AdminRoute>} />
+                <Route path="/admin/listagem-bolao" element={<AdminRoute><ListagemBolao /></AdminRoute>} />
+                <Route path="/admin/solicitacao-resgate" element={<AdminRoute><ResgatesBolao /></AdminRoute>} />
+                <Route path="/admin/compras-saldo" element={<AdminRoute><ComprasSaldo /></AdminRoute>} />
+                <Route path="/admin/compras-cotas" element={<AdminRoute><ComprasCotas /></AdminRoute>} />
+                <Route path="/admin/boloes-pagamento" element={<AdminRoute><BoloesPagamento /></AdminRoute>} />
+                <Route path="/admin/premiacao" element={<AdminRoute><Premiacao /></AdminRoute>} />
+                <Route path="/admin/carteira" element={<AdminRoute><Carteira /></AdminRoute>} />
+                <Route path="/admin/gravacao/lotofacil" element={<AdminRoute><GravacaoLotofacil /></AdminRoute>} />
+                <Route path="/admin/gravacao/quina" element={<AdminRoute><GravacaoQuina /></AdminRoute>} />
+                
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </UpsellProvider>
+          </TooltipProvider>
+        </PermissionProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  </QueryClientProvider>
 );
 
 export default App;
