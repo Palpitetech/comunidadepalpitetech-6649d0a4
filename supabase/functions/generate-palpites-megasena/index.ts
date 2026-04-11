@@ -80,14 +80,17 @@ serve(async (req) => {
     // Verificar plano
     const { data: perfil } = await supabaseAdmin
       .from("perfis")
-      .select("plan_id, custom_features")
+      .select("plan_id, custom_features, status_assinatura, validade_assinatura")
       .eq("id", user.id)
       .single();
+
+    const isPlanActive = perfil?.status_assinatura === "ativa";
+    const isExpired = perfil?.validade_assinatura && new Date(perfil.validade_assinatura) < new Date();
 
     let geradorMaxPerDay = 1;
     let hasGeradorFeature = false;
 
-    if (perfil?.plan_id) {
+    if (perfil?.plan_id && isPlanActive && !isExpired) {
       const { data: plan } = await supabaseAdmin
         .from("plans")
         .select("features, gerador_max_per_day")
