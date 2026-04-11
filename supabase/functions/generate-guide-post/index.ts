@@ -375,23 +375,29 @@ serve(async (req) => {
     // Extrair tipo do corpo da requisição
     const body = await req.json().catch(() => ({}));
     const tipoPost = body.tipo_post || "geral";
+    const requestedGuideId = body.guide_persona_id;
     
-    console.log(`Gerando post do tipo: ${tipoPost}`);
+    console.log(`Gerando post do tipo: ${tipoPost}${requestedGuideId ? ` para o guia ${requestedGuideId}` : ""}`);
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // 1. Buscar guia ativo que PODE criar posts (correção do bug)
-    const { data: guide, error: guideError } = await supabaseAdmin
+    // 1. Buscar guia (se ID fornecido, busca ele; senão, o próximo da fila)
+    let query = supabaseAdmin
       .from("guide_personas")
       .select("*, perfis(*)")
       .eq("ativo", true)
-      .eq("can_create_posts", true)
-      .order("ultimo_post_em", { ascending: true, nullsFirst: true })
-      .limit(1)
-      .single();
+      .eq("can_create_posts", true);
+    
+    if (requestedGuideId) {
+      query = query.eq("id", requestedGuideId);
+    } else {
+      query = query.order("ultimo_post_em", { ascending: true, nullsFirst: true }).limit(1);
+    }
+
+    const { data: guide, error: guideError } = await query.single();
 
     if (guideError || !guide) {
       console.log("[generate-guide-post] ❌ Nenhum guia encontrado com permissão:", guideError?.message);

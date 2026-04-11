@@ -95,31 +95,21 @@ serve(async (req) => {
 
     for (const guide of guides) {
       try {
-        // REGRA: Autor de Resultados NÃO usa schedule (é triggado pelo sync-lotofacil)
+        // REGRA: Autor de Resultados também pode ter schedule (ex: análises diárias)
+        // O post de "resultado_oficial" é triggado pelo sync-lotofacil, 
+        // mas as análises agendadas (Ciclo, Moldura, etc.) devem ser processadas aqui.
         if (guide.is_result_author) {
-          console.log(`[${guide.perfis?.nome}] É Autor de Resultados, ignora schedule (usa sync-lotofacil)`);
-          skipped.push(`${guide.perfis?.nome}: Autor de Resultados (sync-lotofacil)`);
-          
-          // Log skip
-          await supabaseAdmin
-            .from("bot_publishing_logs")
-            .insert({
-              guide_persona_id: guide.id,
-              bot_name: guide.perfis?.nome,
-              event_type: "skipped",
-              reason: "Result author uses sync-lotofacil instead",
-              details: { is_result_author: true }
-            });
-          continue;
+          console.log(`[${guide.perfis?.nome}] É Autor de Resultados, verificando agenda para análises diárias`);
         }
 
-        // REGRA: Autor de Vendas do Sistema (is_system_sales_author) NÃO depende do resultado
-        // Ele pode publicar a qualquer momento (ex: 18h)
-        if (guide.is_system_sales_author) {
-          console.log(`[${guide.perfis?.nome}] É Autor de Vendas do Sistema, publica independente do resultado`);
+        // REGRA: Autor de Vendas do Sistema ou Autor de Resultados NÃO dependem de outro post do autor
+        // Eles podem publicar em seus horários agendados normalmente.
+        if (guide.is_system_sales_author || guide.is_result_author) {
+          console.log(`[${guide.perfis?.nome}] Publica independente de outros posts do autor`);
           // Continua para processar normalmente
         } else if (!resultAuthorPostedToday) {
-          // Demais autores só postam se o Autor de Resultados já postou
+          // Demais autores só postam se o Autor de Resultados já postou (ex: resultado oficial)
+          console.log(`[${guide.perfis?.nome}] Aguardando Autor de Resultados postar primeiro`);
           console.log(`[${guide.perfis?.nome}] Aguardando Autor de Resultados postar primeiro`);
           skipped.push(`${guide.perfis?.nome}: Aguardando resultado do dia`);
           
@@ -200,7 +190,7 @@ serve(async (req) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
           },
-          body: JSON.stringify({ tipo_post: tipoPost }),
+          body: JSON.stringify({ tipo_post: tipoPost, guide_persona_id: guide.id }),
         });
 
         if (!generateResponse.ok) {
