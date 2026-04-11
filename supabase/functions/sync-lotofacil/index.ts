@@ -228,6 +228,12 @@ Responda APENAS no formato JSON:
         loteria_tag: "Lotofácil",
         tipo: "resultado_oficial",
         concurso_referencia: concurso,
+        metadata: {
+          concurso,
+          indicadores,
+          ciclo: cicloInfo,
+          dezenas
+        }
       })
       .select("id")
       .single();
