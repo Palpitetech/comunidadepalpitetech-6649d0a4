@@ -109,6 +109,7 @@ import PerfilTransacoes from "./pages/PerfilTransacoes";
 import PerfilAssinatura from "./pages/PerfilAssinatura";
 import PerfilSeguranca from "./pages/PerfilSeguranca";
 import Vendas from "./pages/Vendas";
+import Vendas2 from "./pages/Vendas2";
 
 const queryClient = new QueryClient();
 
