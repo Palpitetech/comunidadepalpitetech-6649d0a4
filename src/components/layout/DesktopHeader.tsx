@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   BarChart3, LogOut, User, Wrench, TrendingUp, Flame,
-  ChevronDown, Dices, Shuffle, Ticket, LayoutGrid, Target,
+  ChevronDown, ChevronRight, Dices, Shuffle, Ticket, LayoutGrid, Target,
   Table2, Gift, Lock, CreditCard, Calendar, Save, Trophy,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
