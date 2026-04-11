@@ -82,13 +82,19 @@ export default function AdminUsuarios() {
 
   const stats = useMemo(() => {
     const paidPlanIds = new Set(plans.filter(p => p.price > 0).map(p => p.id));
+    const trialSlugs = ['trial', 'teste-gratis-3-dias'];
     const total = users.length;
     const bloqueados = users.filter(u => u.is_blocked).length;
+    const trial = users.filter(u => trialSlugs.includes(u.plan?.slug || "")).length;
     const pagos = users.filter(u =>
-      (u.plan_id && paidPlanIds.has(u.plan_id)) || u.status_assinatura === "ativa"
+      ((u.plan_id && paidPlanIds.has(u.plan_id)) || u.status_assinatura === "ativa") &&
+      !trialSlugs.includes(u.plan?.slug || "")
     ).length;
-    const free = total - pagos;
-    return { total, pagos, free, bloqueados };
+    const free = users.filter(u => 
+      !((u.plan_id && paidPlanIds.has(u.plan_id)) || u.status_assinatura === "ativa") &&
+      !trialSlugs.includes(u.plan?.slug || "")
+    ).length;
+    return { total, pagos, trial, free, bloqueados };
   }, [users, plans]);
 
   const allTags = useMemo(() => {
@@ -97,15 +103,16 @@ export default function AdminUsuarios() {
     return Array.from(tagSet).sort();
   }, [users]);
 
-  
-
   const filteredUsers = useMemo(() => {
     const paidPlanIds = new Set(plans.filter(p => p.price > 0).map(p => p.id));
+    const trialSlugs = ['trial', 'teste-gratis-3-dias'];
     let list = users;
     if (activeFilter === "pagos") {
-      list = users.filter(u => (u.plan_id && paidPlanIds.has(u.plan_id)) || u.status_assinatura === "ativa");
+      list = users.filter(u => ((u.plan_id && paidPlanIds.has(u.plan_id)) || u.status_assinatura === "ativa") && !trialSlugs.includes(u.plan?.slug || ""));
+    } else if (activeFilter === "trial") {
+      list = users.filter(u => trialSlugs.includes(u.plan?.slug || ""));
     } else if (activeFilter === "free") {
-      list = users.filter(u => !((u.plan_id && paidPlanIds.has(u.plan_id)) || u.status_assinatura === "ativa"));
+      list = users.filter(u => !((u.plan_id && paidPlanIds.has(u.plan_id)) || u.status_assinatura === "ativa") && !trialSlugs.includes(u.plan?.slug || ""));
     } else if (activeFilter === "bloqueados") {
       list = users.filter(u => u.is_blocked);
     }
