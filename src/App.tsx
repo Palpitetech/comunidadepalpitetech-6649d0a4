@@ -162,7 +162,7 @@ const App = () => (
             <Route path="/tendencias" element={<ProtectedRoute><GatedPage feature="tendencias"><Tendencias /></GatedPage></ProtectedRoute>} />
             <Route path="/linhas-colunas" element={<ProtectedRoute><GatedPage feature="linhas_colunas"><LinhasColunas /></GatedPage></ProtectedRoute>} />
             <Route path="/frequencia" element={<ProtectedRoute><GatedPage feature="quentes_frias"><Frequencia /></GatedPage></ProtectedRoute>} />
-            <Route path="/smart-gerador" element={<ProtectedRoute><GatedPage feature="gerador"><Gerador /></GatedPage></ProtectedRoute>} />
+            <Route path="/smart-gerador" element={<ProtectedRoute><Gerador /></ProtectedRoute>} />
             <Route path="/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><Desdobramento /></GatedPage></ProtectedRoute>} />
             <Route path="/fechamento" element={<ProtectedRoute><GatedPage feature="fechamento"><Fechamento /></GatedPage></ProtectedRoute>} />
             <Route path="/meus-palpites" element={<ProtectedRoute><GatedPage feature="palpites_salvos"><MeusPalpites /></GatedPage></ProtectedRoute>} />
@@ -187,7 +187,7 @@ const App = () => (
             <Route path="/megasena/resultados" element={<ProtectedRoute><ResultadosMegaSena /></ProtectedRoute>} />
             <Route path="/megasena/tendencias" element={<ProtectedRoute><GatedPage feature="tendencias"><TendenciasMegaSena /></GatedPage></ProtectedRoute>} />
             <Route path="/megasena/frequencia" element={<ProtectedRoute><GatedPage feature="quentes_frias"><FrequenciaMegaSena /></GatedPage></ProtectedRoute>} />
-            <Route path="/megasena/gerador" element={<ProtectedRoute><GatedPage feature="gerador"><GeradorMegaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/megasena/gerador" element={<ProtectedRoute><GeradorMegaSena /></ProtectedRoute>} />
             <Route path="/megasena/fechamento" element={<ProtectedRoute><GatedPage feature="fechamento"><FechamentoMegaSena /></GatedPage></ProtectedRoute>} />
             <Route path="/megasena/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><DesdobramentoMegaSena /></GatedPage></ProtectedRoute>} />
             <Route path="/megasena/linhas-colunas" element={<ProtectedRoute><GatedPage feature="linhas_colunas"><LinhasColunasMegaSena /></GatedPage></ProtectedRoute>} />
@@ -204,7 +204,7 @@ const App = () => (
             <Route path="/duplasena/dezenas-por-posicao" element={<ProtectedRoute><GatedPage feature="dezenas_por_posicao"><DezenasporPosicaoDuplaSena /></GatedPage></ProtectedRoute>} />
             <Route path="/duplasena/linhas-colunas" element={<ProtectedRoute><GatedPage feature="linhas_colunas"><LinhasColunasDuplaSena /></GatedPage></ProtectedRoute>} />
             <Route path="/duplasena/analise-do-dia" element={<ProtectedRoute><GatedPage feature="analise_do_dia"><AnaliseDoDiaDuplaSena /></GatedPage></ProtectedRoute>} />
-            <Route path="/duplasena/gerador" element={<ProtectedRoute><GatedPage feature="gerador"><GeradorDuplaSena /></GatedPage></ProtectedRoute>} />
+            <Route path="/duplasena/gerador" element={<ProtectedRoute><GeradorDuplaSena /></ProtectedRoute>} />
             <Route path="/duplasena/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><DesdobramentoDuplaSena /></GatedPage></ProtectedRoute>} />
             <Route path="/duplasena/frequencia-dezenas" element={<ProtectedRoute><GatedPage feature="frequencia_dezenas"><FrequenciaDecenasDuplaSena /></GatedPage></ProtectedRoute>} />
             <Route path="/duplasena/tabela-movimentacao" element={<ProtectedRoute><GatedPage feature="tabela_movimentacao"><TabelaMovimentacaoDuplaSena /></GatedPage></ProtectedRoute>} />
@@ -219,7 +219,7 @@ const App = () => (
             <Route path="/quina/dezenas-posicao" element={<ProtectedRoute><DezenasporPosicaoQuina /></ProtectedRoute>} />
             <Route path="/quina/linhas-colunas" element={<ProtectedRoute><LinhasColunasQuina /></ProtectedRoute>} />
             <Route path="/quina/tabela-movimentacao" element={<ProtectedRoute><TabelaMovimentacaoQuina /></ProtectedRoute>} />
-            <Route path="/quina/gerador" element={<ProtectedRoute><GatedPage feature="gerador"><GeradorQuina /></GatedPage></ProtectedRoute>} />
+            <Route path="/quina/gerador" element={<ProtectedRoute><GeradorQuina /></ProtectedRoute>} />
             <Route path="/quina/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><DesdobramentoQuina /></GatedPage></ProtectedRoute>} />
             <Route path="/quina/analise-do-dia" element={<ProtectedRoute><GatedPage feature="analise_do_dia"><AnaliseDoDiaQuina /></GatedPage></ProtectedRoute>} />
 

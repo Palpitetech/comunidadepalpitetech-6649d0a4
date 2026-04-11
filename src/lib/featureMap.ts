@@ -13,7 +13,7 @@ export const ROUTE_FEATURE_MAP: Record<string, FeatureKey> = {
   "/dezenas-por-posicao": "dezenas_por_posicao",
   "/tabela-movimentacao": "tabela_movimentacao",
   "/analise-do-dia": "analise_do_dia",
-  "/smart-gerador": "gerador",
+  // "/smart-gerador": "gerador", // Gerador is now self-managed to allow free usage and trial offers
   "/desdobramento": "desdobramento",
   "/fechamento": "fechamento",
 
@@ -25,7 +25,7 @@ export const ROUTE_FEATURE_MAP: Record<string, FeatureKey> = {
   "/megasena/dezenas-por-posicao": "dezenas_por_posicao",
   "/megasena/tabela-movimentacao": "tabela_movimentacao",
   "/megasena/analise-do-dia": "analise_do_dia",
-  "/megasena/gerador": "gerador",
+  // "/megasena/gerador": "gerador",
   "/megasena/desdobramento": "desdobramento",
   "/megasena/fechamento": "fechamento",
 
@@ -37,7 +37,7 @@ export const ROUTE_FEATURE_MAP: Record<string, FeatureKey> = {
   "/duplasena/dezenas-por-posicao": "dezenas_por_posicao",
   "/duplasena/tabela-movimentacao": "tabela_movimentacao",
   "/duplasena/analise-do-dia": "analise_do_dia",
-  "/duplasena/gerador": "gerador",
+  // "/duplasena/gerador": "gerador",
   "/duplasena/desdobramento": "desdobramento",
   "/duplasena/fechamento": "fechamento",
 
@@ -49,7 +49,7 @@ export const ROUTE_FEATURE_MAP: Record<string, FeatureKey> = {
   "/quina/dezenas-posicao": "dezenas_por_posicao",
   "/quina/tabela-movimentacao": "tabela_movimentacao",
   "/quina/analise-do-dia": "analise_do_dia",
-  "/quina/gerador": "gerador",
+  // "/quina/gerador": "gerador",
   "/quina/desdobramento": "desdobramento",
 
   // Outros
