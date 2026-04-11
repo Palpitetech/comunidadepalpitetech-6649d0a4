@@ -162,7 +162,7 @@ const App = () => (
             <Route path="/tendencias" element={<ProtectedRoute><GatedPage feature="tendencias"><Tendencias /></GatedPage></ProtectedRoute>} />
             <Route path="/linhas-colunas" element={<ProtectedRoute><GatedPage feature="linhas_colunas"><LinhasColunas /></GatedPage></ProtectedRoute>} />
             <Route path="/frequencia" element={<ProtectedRoute><GatedPage feature="quentes_frias"><Frequencia /></GatedPage></ProtectedRoute>} />
-            <Route path="/smart-gerador" element={<ProtectedRoute><GatedPage feature="gerador"><Gerador /></GatedPage></ProtectedRoute>} />
+            <Route path="/smart-gerador" element={<ProtectedRoute><Gerador /></ProtectedRoute>} />
             <Route path="/desdobramento" element={<ProtectedRoute><GatedPage feature="desdobramento"><Desdobramento /></GatedPage></ProtectedRoute>} />
             <Route path="/fechamento" element={<ProtectedRoute><GatedPage feature="fechamento"><Fechamento /></GatedPage></ProtectedRoute>} />
             <Route path="/meus-palpites" element={<ProtectedRoute><GatedPage feature="palpites_salvos"><MeusPalpites /></GatedPage></ProtectedRoute>} />
