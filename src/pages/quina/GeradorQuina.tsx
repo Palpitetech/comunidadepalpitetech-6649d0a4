@@ -15,6 +15,7 @@ import { useGeradorQuina } from "@/hooks/useGeradorQuina";
 import { useGeradorStatus } from "@/hooks/useGeradorStatus";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
+import { useTrialOffer } from "@/hooks/useTrialOffer";
 import { Dices, Loader2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function GeradorQuina() {
@@ -25,6 +26,23 @@ export default function GeradorQuina() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const { shouldShow, setShouldShow } = useTrialOffer();
+
+  // Abrir modal de trial se for o caso
+  useEffect(() => {
+    if (shouldShow) {
+      setUpgradeOpen(true);
+      setShouldShow(false);
+    }
+  }, [shouldShow, setShouldShow]);
+
+  // Abrir modal de trial se for o caso
+  useEffect(() => {
+    if (shouldShow) {
+      setUpgradeOpen(true);
+      setShouldShow(false);
+    }
+  }, [shouldShow, setShouldShow]);
 
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
   const [dezenasFiexasOpcao, setDezenasFiexasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");

@@ -13,6 +13,7 @@ import { useGeradorMegaSena } from "@/hooks/useGeradorMegaSena";
 import { useGeradorStatus } from "@/hooks/useGeradorStatus";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
+import { useTrialOffer } from "@/hooks/useTrialOffer";
 import { Dices, Loader2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { UpgradeModal } from "@/components/shared/UpgradeModal";
 
@@ -23,6 +24,15 @@ export default function GeradorMegaSena() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const { shouldShow, setShouldShow } = useTrialOffer();
+
+  // Abrir modal de trial se for o caso
+  useEffect(() => {
+    if (shouldShow) {
+      setUpgradeOpen(true);
+      setShouldShow(false);
+    }
+  }, [shouldShow, setShouldShow]);
   
   // Filtros - Mesmo padrão da Lotofácil
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
