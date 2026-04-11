@@ -123,7 +123,14 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
 
   const isAdmin = useMemo(() => roles.includes("admin"), [roles]);
   const isModerator = useMemo(() => roles.includes("moderator") || isAdmin, [roles, isAdmin]);
-  const isPremium = useMemo(() => roles.includes("premium") || isModerator || !!plan, [roles, isModerator, plan]);
+  const isPremium = useMemo(() => {
+    if (roles.includes("admin") || roles.includes("premium") || isModerator) return true;
+    if (!plan) return false;
+    // O plano "trial" com status ativa conta como premium
+    if (plan.slug === 'trial') return true;
+    // Planos com preço > 0 são premium (se ativos, o que já é garantido pela lógica do fetchAll)
+    return plan.price > 0;
+  }, [roles, isModerator, plan]);
 
   const hasRole = useCallback((role: AppRole) => roles.includes(role), [roles]);
 
