@@ -157,6 +157,9 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
       if (isBlocked) return false;
       if (!user) return false;
       if (isAdmin) return true;
+      
+      // 0. Trial access is total access
+      if (plan?.slug === 'trial' || plan?.slug === 'teste-gratis-3-dias') return true;
 
       // 1. custom_features override
       if (customFeatures && feature in customFeatures) {
