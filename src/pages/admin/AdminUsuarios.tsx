@@ -163,6 +163,7 @@ export default function AdminUsuarios() {
     switch (key) {
       case "todos": return stats.total;
       case "pagos": return stats.pagos;
+      case "trial": return stats.trial;
       case "free": return stats.free;
       case "bloqueados": return stats.bloqueados;
     }
