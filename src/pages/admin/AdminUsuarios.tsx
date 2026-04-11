@@ -403,8 +403,10 @@ export default function AdminUsuarios() {
                   </TableCell>
                   <TableCell className="py-2.5">
                     <span className={cn(
-                      "text-xs font-medium",
-                      user.plan && user.plan.price > 0 ? "text-primary" : "text-muted-foreground"
+                      "text-xs font-medium px-2 py-0.5 rounded-full",
+                      user.plan && user.plan.price > 0 ? "text-primary bg-primary/10" : 
+                      (user.plan?.slug === 'trial' || user.plan?.slug === 'teste-gratis-3-dias') ? "text-orange-700 bg-orange-100 dark:text-orange-300 dark:bg-orange-900/40" :
+                      "text-muted-foreground bg-muted/50"
                     )}>
                       {user.plan?.name || "Free"}
                     </span>
