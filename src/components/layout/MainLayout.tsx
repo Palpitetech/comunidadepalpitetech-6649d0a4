@@ -58,13 +58,16 @@ export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRigh
       </main>
 
       {/* Footer / Rodapé */}
-      <footer className={`border-t border-border bg-card py-4 ${isMobile ? 'mb-16' : ''}`}>
-        <div className="max-w-3xl mx-auto px-4 text-center space-y-1.5">
-          <p className="text-[10px] text-muted-foreground leading-relaxed">
-            <strong>Aviso legal:</strong> Este site não possui qualquer vínculo com a Caixa Econômica Federal, Facebook, Instagram, Meta ou qualquer outra empresa do grupo Meta Platforms, Inc. O conteúdo apresentado tem caráter exclusivamente educacional e informativo, baseado em análises estatísticas de resultados públicos. <strong>Não garantimos premiação em nenhuma modalidade de loteria.</strong> Aposte com responsabilidade.
+      <footer className={cn(
+        "border-t border-slate-100 bg-white/50 py-8",
+        isMobile ? "mb-20 px-6" : "px-4"
+      )}>
+        <div className="max-w-3xl mx-auto text-center space-y-3">
+          <p className="text-[11px] text-slate-400 leading-relaxed font-medium">
+            <strong>Aviso legal:</strong> Este site não possui vínculo com a Caixa Econômica Federal ou Meta. O conteúdo é educacional/informativo e não garante premiação. Aposte com responsabilidade.
           </p>
-          <p className="text-[10px] text-muted-foreground">
-            © {new Date().getFullYear()} Palpite Tech. Todos os direitos reservados.
+          <p className="text-[11px] text-slate-400 font-bold tracking-tight">
+            © {new Date().getFullYear()} Palpite Tech.
           </p>
         </div>
       </footer>
