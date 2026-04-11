@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ interface UpgradeModalProps {
 export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "premium" }: UpgradeModalProps) {
   const { user } = useAuthContext();
   const navigate = useNavigate();
-  const { isPremium } = usePermissionContext();
+  const { isPremium, plan } = usePermissionContext();
   const { data: subscription, refetch } = useMySubscription(user?.id);
   const [activatingTrial, setActivatingTrial] = useState(false);
   const activatingRef = useRef(false);
@@ -29,12 +29,20 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
   // Se o usuário já é premium mas está vendo o modal, provavelmente quer VIP (ilimitado)
   const effectiveVariant = (isPremium && variant !== "vip") ? "vip" : variant;
   const isVip = effectiveVariant === "vip";
+  const isTrialActive = plan?.slug === 'trial' || plan?.slug === 'teste-gratis-3-dias';
   
-  // Lógica refatorada conforme solicitação:
+  // Se estiver em trial, fecha o modal de upsell premium (recurso agora é liberado no hasPermission)
+  useEffect(() => {
+    if (open && isTrialActive && variant !== "vip") {
+      onOpenChange(false);
+    }
+  }, [open, isTrialActive, variant, onOpenChange]);
+
   // Se for Free > Oferece o trial de 3 dias
   // Se for Free que já usou o Trial > Oferece o Upgrade.
   const canUseTrial = subscription?.isFree && !subscription.trial_used;
   const isTrialExpired = subscription?.isFree && subscription.trial_used;
+
 
   const handleStartTrial = async () => {
     if (!user) return;
@@ -76,8 +84,8 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
       await refetch();
       onOpenChange(false);
       
-      // Abre o gerador
-      navigate("/smart-gerador");
+      // Abre o gerador - removido para que o usuário permaneça na ferramenta atual
+      // navigate("/smart-gerador");
     } catch (error) {
       console.error("Erro ao ativar trial:", error);
       toast.error("Erro ao ativar teste grátis. Tente novamente mais tarde.");
