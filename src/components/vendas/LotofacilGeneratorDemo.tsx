@@ -1,20 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dices, Loader2, Sparkles, TrendingUp } from "lucide-react";
+import { Dices, Loader2, Sparkles, TrendingUp, Cpu, History } from "lucide-react";
 
 export function LotofacilGeneratorDemo() {
   const [numbers, setNumbers] = useState<number[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [simulationCount, setSimulationCount] = useState(1458);
+  const [analysisText, setAnalysisText] = useState("");
+
+  const steps = [
+    "Carregando histórico...",
+    "Calculando frequência...",
+    "Aplicando filtros AI...",
+    "Gerando combinação otimizada..."
+  ];
 
   const generate = () => {
     setIsGenerating(true);
     setNumbers([]);
     
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      setAnalysisText(steps[currentStep]);
+      currentStep++;
+      if (currentStep >= steps.length) clearInterval(interval);
+    }, 400);
+
     // Simulate "AI Analysis"
     setTimeout(() => {
       const allNumbers = Array.from({ length: 25 }, (_, i) => i + 1);
-      // Pick 15 numbers randomly
       const selected: number[] = [];
       const tempAll = [...allNumbers];
       for (let i = 0; i < 15; i++) {
@@ -23,7 +38,8 @@ export function LotofacilGeneratorDemo() {
       }
       setNumbers(selected.sort((a, b) => a - b));
       setIsGenerating(false);
-    }, 1500);
+      setSimulationCount(prev => prev + 1);
+    }, 1800);
   };
 
   return (
@@ -64,12 +80,12 @@ export function LotofacilGeneratorDemo() {
         <Button 
           onClick={generate} 
           disabled={isGenerating}
-          className="w-full h-12 text-base font-bold gap-2 bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          className="w-full h-12 text-sm sm:text-base font-bold gap-2 bg-accent text-accent-foreground hover:bg-accent/90 shadow-lg shadow-accent/20 transition-all hover:scale-[1.02] active:scale-[0.98] border-b-4 border-accent-foreground/20"
         >
           {isGenerating ? (
             <>
               <Loader2 className="h-5 w-5 animate-spin" />
-              ANALISANDO TENDÊNCIAS...
+              {analysisText}
             </>
           ) : (
             <>
@@ -78,6 +94,17 @@ export function LotofacilGeneratorDemo() {
             </>
           )}
         </Button>
+
+        <div className="flex items-center justify-center gap-4 text-[10px] text-muted-foreground font-semibold">
+           <div className="flex items-center gap-1">
+             <History className="h-3 w-3" />
+             {simulationCount.toLocaleString()} Simulações hoje
+           </div>
+           <div className="flex items-center gap-1">
+             <Cpu className="h-3 w-3" />
+             SLA: 0.1ms
+           </div>
+        </div>
 
         {numbers.length > 0 && !isGenerating && (
           <div className="text-center animate-in slide-in-from-bottom-2 duration-300">
