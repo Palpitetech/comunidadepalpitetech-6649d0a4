@@ -894,9 +894,9 @@ Deno.serve(async (req) => {
         if (raw.localSorteio) local_sorteio = String(raw.localSorteio);
 
         // Gravar na tabela unificada
-        const registroUnificado = {
-          loteria: 'lotofacil',
-          concurso: concurso.numero,
+        // Gravar na tabela principal Lotofácil (SaaS)
+        const registroLotofacil = {
+          concurso_id: concurso.numero,
           data_sorteio: concurso.data,
           dezenas: concurso.dezenas,
           acumulou,
@@ -910,11 +910,28 @@ Deno.serve(async (req) => {
         };
 
         const { error: insertError } = await supabase
+          .from('resultados')
+          .upsert(registroLotofacil, { onConflict: 'concurso_id' });
+
+        if (insertError) {
+          throw new Error(`Erro na tabela resultados: ${insertError.message}`);
+        }
+
+        // Gravar também na tabela unificada (manter compatibilidade)
+        const registroUnificado = {
+          loteria: 'lotofacil',
+          concurso: concurso.numero,
+          ...registroLotofacil,
+          concurso_id: undefined // Remover campo que não existe na unificada
+        };
+        delete registroUnificado.concurso_id;
+
+        const { error: insertUnificadoError } = await supabase
           .from('resultados_loterias')
           .upsert(registroUnificado, { onConflict: 'loteria,concurso' });
 
-        if (insertError) {
-          throw new Error(insertError.message);
+        if (insertUnificadoError) {
+          console.warn(`[WARN] Erro na tabela resultados_loterias: ${insertUnificadoError.message}`);
         }
 
         // LOG DE AUDITORIA: Concurso adicionado com sucesso
