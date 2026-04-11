@@ -25,9 +25,8 @@ const Convites: React.FC = () => {
   } = useConvites();
 
   return (
-    <MainLayout>
+    <MainLayout pageTitle="Convites">
       <div className="container max-w-2xl mx-auto px-4 py-6 space-y-6">
-        <PageHeader title="Convites" />
 
         <p className="text-muted-foreground text-sm -mt-2">
           Convide amigos e ganhe assinatura grátis!
