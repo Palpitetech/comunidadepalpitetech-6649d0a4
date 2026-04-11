@@ -257,7 +257,7 @@ Responda APENAS no formato JSON:
       .from("bot_publishing_logs")
       .insert({
         guide_persona_id: author.id,
-        bot_name: "Ana",
+        bot_name: author.perfis?.nome || "Palpite Tech",
         event_type: "success",
         reason: "Result post created directly by sync",
         details: { post_id: newPost.id, concurso }

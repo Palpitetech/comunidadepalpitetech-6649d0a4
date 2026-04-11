@@ -95,22 +95,11 @@ serve(async (req) => {
 
     for (const guide of guides) {
       try {
-        // REGRA: Autor de Resultados NÃO usa schedule (é triggado pelo sync-lotofacil)
+        // REGRA: Autor de Resultados também pode ter schedule (ex: análises diárias)
+        // O post de "resultado_oficial" é triggado pelo sync-lotofacil, 
+        // mas as análises agendadas (Ciclo, Moldura, etc.) devem ser processadas aqui.
         if (guide.is_result_author) {
-          console.log(`[${guide.perfis?.nome}] É Autor de Resultados, ignora schedule (usa sync-lotofacil)`);
-          skipped.push(`${guide.perfis?.nome}: Autor de Resultados (sync-lotofacil)`);
-          
-          // Log skip
-          await supabaseAdmin
-            .from("bot_publishing_logs")
-            .insert({
-              guide_persona_id: guide.id,
-              bot_name: guide.perfis?.nome,
-              event_type: "skipped",
-              reason: "Result author uses sync-lotofacil instead",
-              details: { is_result_author: true }
-            });
-          continue;
+          console.log(`[${guide.perfis?.nome}] É Autor de Resultados, verificando agenda para análises diárias`);
         }
 
         // REGRA: Autor de Vendas do Sistema (is_system_sales_author) NÃO depende do resultado
