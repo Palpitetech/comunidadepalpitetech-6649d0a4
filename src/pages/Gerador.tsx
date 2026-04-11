@@ -272,13 +272,7 @@ export default function Gerador() {
           />
         )}
 
-        {/* Modal de Upgrade ao exceder limite */}
-        <UpgradeModal
-          open={upgradeOpen}
-          onOpenChange={setUpgradeOpen}
-          featureLabel="Gerador de Palpites"
-          variant="premium"
-        />
+        {/* O UpgradeModal agora é gerenciado globalmente pelo UpsellProvider */}
       </div>
     </MainLayout>
   );
