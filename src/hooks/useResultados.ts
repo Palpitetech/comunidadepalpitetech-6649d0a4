@@ -49,11 +49,15 @@ export function useResultados(loteria: Loteria, limit: number = 200) {
   return useQuery({
     queryKey: ["resultados-loterias", loteria, limit],
     queryFn: async (): Promise<ResultadoUnificado[]> => {
-      const { data, error } = await (supabase as any)
-        .from("resultados_loterias")
-        .select("*")
-        .eq("loteria", loteria)
-        .order("concurso", { ascending: false })
+      const tableName = loteria === "lotofacil" ? "resultados" : "resultados_loterias";
+      let query = (supabase as any).from(tableName).select("*");
+      
+      if (loteria !== "lotofacil") {
+        query = query.eq("loteria", loteria);
+      }
+      
+      const { data, error } = await query
+        .order(loteria === "lotofacil" ? "concurso_id" : "concurso", { ascending: false })
         .limit(limit);
 
       if (error) throw new Error(error.message);
