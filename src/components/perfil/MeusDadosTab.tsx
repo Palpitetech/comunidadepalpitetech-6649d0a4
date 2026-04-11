@@ -33,37 +33,52 @@ function CopyableRow({ icon: Icon, label, value, verified, isTechnical }: {
   };
 
   return (
-    <div className={`flex items-center gap-4 p-4 transition-colors ${isTechnical ? 'bg-muted/30' : 'hover:bg-muted/50'}`}>
-      <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${isTechnical ? 'bg-muted' : 'bg-primary/10'}`}>
-        <Icon className={`h-5 w-5 ${isTechnical ? 'text-muted-foreground' : 'text-primary'}`} />
+    <div 
+      onClick={handleCopy}
+      className={`group flex items-center gap-4 p-4 transition-all active:scale-[0.98] cursor-pointer ${
+        isTechnical ? 'bg-muted/20' : 'hover:bg-muted/40'
+      }`}
+    >
+      <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 ${
+        isTechnical ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary'
+      }`}>
+        <Icon className="h-5 w-5" />
       </div>
+      
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium text-muted-foreground mb-0.5">{label}</p>
-        <p className={`text-[15px] font-semibold truncate ${isTechnical ? 'font-mono text-xs text-muted-foreground' : 'text-foreground'}`}>
+        <p className="text-[11px] font-bold text-muted-foreground/70 uppercase tracking-wider mb-0.5">
+          {label}
+        </p>
+        <p className={`text-base font-semibold truncate ${
+          isTechnical ? 'font-mono text-xs text-muted-foreground' : 'text-foreground'
+        }`}>
           {value || "Não informado"}
         </p>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+
+      <div className="flex items-center gap-3 shrink-0">
         {verified !== undefined && (
           <div className="flex items-center">
             {verified ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                <CheckCircle2 className="h-3 w-3" />
+                <span>VERIFICADO</span>
+              </div>
             ) : (
-              <AlertCircle className="h-4 w-4 text-amber-500" />
+              <div className="flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+                <AlertCircle className="h-3 w-3" />
+                <span>PENDENTE</span>
+              </div>
             )}
           </div>
         )}
-        {value && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={handleCopy} 
-            className="h-8 w-8 rounded-full hover:bg-primary/10 hover:text-primary transition-all"
-            title={`Copiar ${label}`}
-          >
-            {copied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4 text-muted-foreground" />}
-          </Button>
-        )}
+        <div className={`p-2 rounded-full transition-colors ${copied ? 'bg-primary/10' : 'bg-transparent group-hover:bg-primary/5'}`}>
+          {copied ? (
+            <Check className="h-4 w-4 text-primary animate-in zoom-in duration-300" />
+          ) : (
+            <Copy className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+          )}
+        </div>
       </div>
     </div>
   );
@@ -78,36 +93,52 @@ export function MeusDadosTab({ profile, user }: MeusDadosTabProps) {
   };
 
   return (
-    <div className="space-y-6 px-4 py-6 max-w-md mx-auto">
-      <div className="space-y-1.5">
-        <h2 className="text-sm font-semibold text-muted-foreground px-1 uppercase tracking-wider">Informações Pessoais</h2>
-        <div className="rounded-2xl border bg-card shadow-sm overflow-hidden divide-y divide-muted/30">
-          <CopyableRow icon={User} label="Nome Completo" value={profile?.nome} />
-          <CopyableRow icon={Mail} label="E-mail" value={user?.email || null} verified={true} />
-          <CopyableRow icon={Phone} label="Telefone Celular" value={profile?.celular} verified={!!profile?.celular} />
+    <div className="flex flex-col gap-6 p-4 max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Seção de Perfil Principal */}
+      <div className="space-y-4">
+        <div className="flex flex-col gap-1.5">
+          <h2 className="text-xs font-bold text-muted-foreground/80 px-1 uppercase tracking-widest">
+            Informações Pessoais
+          </h2>
+          <div className="rounded-3xl border bg-card shadow-sm overflow-hidden divide-y divide-muted/30">
+            <CopyableRow icon={User} label="Nome Completo" value={profile?.nome} />
+            <CopyableRow icon={Mail} label="E-mail" value={user?.email || null} verified={true} />
+            <CopyableRow icon={Phone} label="Telefone Celular" value={profile?.celular} verified={!!profile?.celular} />
+          </div>
         </div>
-      </div>
 
-      <div className="space-y-1.5">
-        <h2 className="text-sm font-semibold text-muted-foreground px-1 uppercase tracking-wider text-[10px]">Identificação do Sistema</h2>
-        <div className="rounded-xl border bg-card/50 overflow-hidden">
-          <CopyableRow icon={Hash} label="ID do Usuário" value={user?.id || null} isTechnical={true} />
-        </div>
-      </div>
-
-      {/* Alterar celular button */}
-      <div className="pt-2">
+        {/* Botão de Ação Rápida */}
         <AlterarCelularDialog
           celularAtual={profile?.celular || null}
           onSuccess={handleCelularSuccess}
           trigger={
-            <Button variant="outline" className="w-full h-11 gap-2.5 rounded-xl text-sm font-semibold shadow-sm hover:bg-primary/5 hover:border-primary/30 transition-all">
-              <Phone className="h-4 w-4" />
+            <Button 
+              variant="outline" 
+              className="w-full h-12 gap-3 rounded-2xl text-sm font-bold shadow-sm hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-[0.98]"
+            >
+              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Phone className="h-4 w-4 text-primary group-hover:text-primary-foreground" />
+              </div>
               {profile?.celular ? "Atualizar Celular" : "Vincular Celular"}
             </Button>
           }
         />
       </div>
+
+      {/* Seção Técnica */}
+      <div className="space-y-2">
+        <h2 className="text-[10px] font-bold text-muted-foreground/60 px-1 uppercase tracking-[0.2em]">
+          Identificação da Conta
+        </h2>
+        <div className="rounded-2xl border bg-muted/10 overflow-hidden">
+          <CopyableRow icon={Hash} label="ID de Usuário" value={user?.id || null} isTechnical={true} />
+        </div>
+      </div>
+
+      {/* Dica de UX */}
+      <p className="text-center text-[11px] text-muted-foreground/50 font-medium italic">
+        Toque em qualquer campo para copiar as informações
+      </p>
     </div>
   );
 }
