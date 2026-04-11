@@ -1,41 +1,15 @@
 import { useState, useEffect } from "react";
-import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
-import { QuantidadeSelector } from "@/components/gerador/QuantidadeSelector";
-import { PeriodoAnaliseSelector } from "@/components/gerador/PeriodoAnaliseSelector";
-import { PedidoEspecialInput } from "@/components/gerador/PedidoEspecialInput";
-import { FiltroDezenaSelectorMegaSena } from "@/components/megasena/FiltroDezenaSelectorMegaSena";
-import { ResultadosSheetMegaSena } from "@/components/megasena/ResultadosSheetMegaSena";
-import { useGeradorMegaSena } from "@/hooks/useGeradorMegaSena";
-import { useGeradorStatus } from "@/hooks/useGeradorStatus";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { supabase } from "@/integrations/supabase/client";
+...
 import { useUpsell } from "@/contexts/UpsellContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Dices, Loader2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function GeradorMegaSena() {
-  const isMobile = useIsMobile();
-  const [quantidade, setQuantidade] = useState(3);
-  const [periodoAnalise, setPeriodoAnalise] = useState(50);
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
-  const { openUpgradeModal } = useUpsell();
-
-  // Filtros - Mesmo padrão da Lotofácil
-  const [filtrosAbertos, setFiltrosAbertos] = useState(false);
-  const [dezenasFiexasOpcao, setDezenasFiexasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
-  const [dezenasFixas, setDezenasFixas] = useState<number[]>([]);
-  const [dezenasExcluidasOpcao, setDezenasExcluidasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
-  const [dezenasExcluidas, setDezenasExcluidas] = useState<number[]>([]);
-  const [pedidoEspecial, setPedidoEspecial] = useState("");
-  
-  const { isLoading, result, error, generatePalpites, reset } = useGeradorMegaSena();
+...
   const { remaining_today, max_per_day, isLoading: statusLoading, refetch, isAdmin } = useGeradorStatus();
+  const { isPremium } = useUserRole();
 
-  const canGenerate = statusLoading || isAdmin || remaining_today > 0;
+  const canGenerate = !statusLoading && remaining_today > 0;
 
   useEffect(() => {
     const fetchUltimoConcurso = async () => {
@@ -55,8 +29,12 @@ export default function GeradorMegaSena() {
   }, []);
 
   const handleGenerate = () => {
+    if (!isPremium && !isAdmin) {
+      openUpgradeModal("Gerador de Palpites");
+      return;
+    }
     if (statusLoading) return;
-    if (!canGenerate) {
+    if (!canGenerate && !isAdmin) {
       openUpgradeModal("Gerador de Palpites");
       return;
     }
