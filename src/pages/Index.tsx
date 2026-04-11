@@ -6,7 +6,7 @@ import { BarChart3, TrendingUp, Flame, Users } from "lucide-react";
 
 const Index = () => {
   return (
-    <MainLayout>
+    <MainLayout pageTitle="Início">
       <div className="container-senior pt-4 pb-8">
         {/* Cards de Acesso Rápido */}
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
