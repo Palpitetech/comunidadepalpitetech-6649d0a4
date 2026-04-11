@@ -27,7 +27,7 @@ export default function GeradorQuina() {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
-  const [dezenasFixasOpcao, setDezenasFiexasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
+  const [dezenasFixasOpcao, setDezenasFixasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
   const [dezenasFixas, setDezenasFixas] = useState<number[]>([]);
   const [dezenasExcluidasOpcao, setDezenasExcluidasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
   const [dezenasExcluidas, setDezenasExcluidas] = useState<number[]>([]);
@@ -83,7 +83,7 @@ export default function GeradorQuina() {
     setQuantidade(3);
     setQtdDezenas(5);
     setPeriodoAnalise(50);
-    setDezenasFiexasOpcao("padrao");
+    setDezenasFixasOpcao("padrao");
     setDezenasFixas([]);
     setDezenasExcluidasOpcao("padrao");
     setDezenasExcluidas([]);
@@ -163,7 +163,7 @@ export default function GeradorQuina() {
                   label="Dezenas Fixas"
                   description={`Forçar dezenas específicas em todos os jogos (máx. ${qtdDezenas - 1})`}
                   value={dezenasFixasOpcao}
-                  onChange={setDezenasFiexasOpcao}
+                  onChange={setDezenasFixasOpcao}
                   dezenasSelecionadas={dezenasFixas}
                   onDezenasChange={setDezenasFixas}
                   disabled={isLoading}
