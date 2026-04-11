@@ -15,7 +15,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { useUpsell } from "@/contexts/UpsellContext";
 import { Dices, Loader2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
-import { UpgradeModal } from "@/components/shared/UpgradeModal";
+// UpgradeModal removido pois é gerenciado globalmente pelo UpsellProvider
 
 export default function GeradorDuplaSena() {
   const isMobile = useIsMobile();
@@ -23,7 +23,7 @@ export default function GeradorDuplaSena() {
   const [periodoAnalise, setPeriodoAnalise] = useState(50);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  // upgradeOpen removido pois o modal é global
   const { openUpgradeModal } = useUpsell();
 
   // Filtros
@@ -249,12 +249,7 @@ export default function GeradorDuplaSena() {
           />
         )}
 
-        <UpgradeModal
-          open={upgradeOpen}
-          onOpenChange={setUpgradeOpen}
-          featureLabel="Gerador de Palpites"
-          variant="premium"
-        />
+        {/* O UpgradeModal agora é gerenciado globalmente pelo UpsellProvider */}
       </div>
     </MainLayout>
   );
