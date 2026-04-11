@@ -108,6 +108,7 @@ import PerfilDados from "./pages/PerfilDados";
 import PerfilTransacoes from "./pages/PerfilTransacoes";
 import PerfilAssinatura from "./pages/PerfilAssinatura";
 import PerfilSeguranca from "./pages/PerfilSeguranca";
+import Vendas from "./pages/Vendas";
 
 const queryClient = new QueryClient();
 
@@ -149,6 +150,7 @@ const App = () => (
             <Route path="/privacidade" element={<Privacidade />} />
             <Route path="/proximos-concursos" element={<ProximosConcursos />} />
             <Route path="/g/:slug" element={<SmartLinkRedirect />} />
+            <Route path="/vendas" element={<Vendas />} />
 
             {/* Rotas Protegidas - Requer Login */}
             <Route path="/home" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
