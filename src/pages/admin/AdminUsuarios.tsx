@@ -22,14 +22,14 @@ interface UserWithPlan extends ExtendedProfile {
 }
 
 type FilterTab = "todos" | "pagos" | "trial" | "free" | "bloqueados";
-101: 
-26: const FILTER_TABS: { key: FilterTab; label: string; icon: typeof Users }[] = [
-27:   { key: "todos", label: "Todos", icon: Users },
-28:   { key: "pagos", label: "Pagos", icon: UserCheck },
-29:   { key: "trial", label: "Trial", icon: Timer },
-30:   { key: "free", label: "Free", icon: UserX },
-31:   { key: "bloqueados", label: "Bloqueados", icon: ShieldOff },
-32: ];
+
+const FILTER_TABS: { key: FilterTab; label: string; icon: typeof Users | typeof Timer }[] = [
+  { key: "todos", label: "Todos", icon: Users },
+  { key: "pagos", label: "Pagos", icon: UserCheck },
+  { key: "trial", label: "Trial", icon: Timer },
+  { key: "free", label: "Free", icon: UserX },
+  { key: "bloqueados", label: "Bloqueados", icon: ShieldOff },
+];
 
 export default function AdminUsuarios() {
   const navigate = useNavigate();
