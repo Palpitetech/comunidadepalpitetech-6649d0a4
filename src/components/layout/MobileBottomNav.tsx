@@ -1,4 +1,4 @@
-import { Users, Menu, Calendar, MessageCircle, Save, Trophy } from "lucide-react";
+import { Users, Menu, Calendar, MessageCircle, Save, Trophy, Home, LayoutGrid } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -13,80 +13,72 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
   const isActive = (path: string) => currentPath === path;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[100] bg-card border-t border-border safe-area-bottom" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-      <div className="flex items-center justify-around h-14">
+    <nav className="fixed bottom-0 left-0 right-0 z-[100] bg-white/80 backdrop-blur-lg border-t border-slate-100 safe-area-bottom pb-2" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}>
+      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
         <Link
-          to="/boloes"
+          to="/"
           className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full py-1.5 transition-colors relative",
-            isActive("/boloes")
-              ? "text-primary"
-              : "text-muted-foreground hover:text-foreground"
+            "flex flex-col items-center justify-center flex-1 h-full py-2 transition-all duration-300 relative",
+            isActive("/") 
+              ? "text-primary scale-110" 
+              : "text-slate-400 hover:text-slate-600"
           )}
         >
-          <span className="absolute -top-0.5 right-1 text-[7px] font-bold text-accent bg-accent/15 rounded px-1">BREVE</span>
-          <Trophy className="h-5 w-5" />
-          <span className="text-[10px] mt-0.5 font-medium leading-tight">Bolões</span>
+          <Home className={cn("h-6 w-6 mb-1", isActive("/") ? "fill-primary/10" : "")} />
+          <span className="text-[10px] font-bold tracking-tight uppercase leading-none">Início</span>
+          {isActive("/") && <span className="absolute bottom-0 w-1 h-1 rounded-full bg-primary" />}
         </Link>
 
         <Link
           to="/comunidade"
           className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full py-1.5 transition-colors",
-            isActive("/comunidade") || isActive("/")
-              ? "text-primary"
-              : "text-muted-foreground hover:text-foreground"
+            "flex flex-col items-center justify-center flex-1 h-full py-2 transition-all duration-300 relative",
+            isActive("/comunidade") || isActive("/home")
+              ? "text-primary scale-110"
+              : "text-slate-400 hover:text-slate-600"
           )}
         >
-          <Users className="h-5 w-5" />
-          <span className="text-[10px] mt-0.5 font-medium leading-tight">Comunidade</span>
+          <Users className={cn("h-6 w-6 mb-1", isActive("/comunidade") || isActive("/home") ? "fill-primary/10" : "")} />
+          <span className="text-[10px] font-bold tracking-tight uppercase leading-none">Feed</span>
+          {(isActive("/comunidade") || isActive("/home")) && <span className="absolute bottom-0 w-1 h-1 rounded-full bg-primary" />}
         </Link>
 
         <Link
           to="/proximos-concursos"
           className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full py-1.5 transition-colors",
+            "flex flex-col items-center justify-center flex-1 h-full py-2 transition-all duration-300 relative",
             isActive("/proximos-concursos")
-              ? "text-primary"
-              : "text-muted-foreground hover:text-foreground"
+              ? "text-primary scale-110"
+              : "text-slate-400 hover:text-slate-600"
           )}
         >
-          <Calendar className="h-5 w-5" />
-          <span className="text-[10px] mt-0.5 font-medium leading-tight">Concursos</span>
-        </Link>
-
-        <Link
-          to="/meus-palpites"
-          className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full py-1.5 transition-colors",
-            isActive("/meus-palpites")
-              ? "text-primary"
-              : "text-muted-foreground hover:text-foreground"
-          )}
-        >
-          <Save className="h-5 w-5" />
-          <span className="text-[10px] mt-0.5 font-medium leading-tight">Salvos</span>
+          <Calendar className={cn("h-6 w-6 mb-1", isActive("/proximos-concursos") ? "fill-primary/10" : "")} />
+          <span className="text-[10px] font-bold tracking-tight uppercase leading-none">Agenda</span>
+          {isActive("/proximos-concursos") && <span className="absolute bottom-0 w-1 h-1 rounded-full bg-primary" />}
         </Link>
 
         <Link
           to="/chat"
           className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full py-1.5 transition-colors",
+            "flex flex-col items-center justify-center flex-1 h-full py-2 transition-all duration-300 relative",
             isActive("/chat")
-              ? "text-primary"
-              : "text-muted-foreground hover:text-foreground"
+              ? "text-primary scale-110"
+              : "text-slate-400 hover:text-slate-600"
           )}
         >
-          <MessageCircle className="h-5 w-5" />
-          <span className="text-[10px] mt-0.5 font-medium leading-tight">Chat</span>
+          <MessageCircle className={cn("h-6 w-6 mb-1", isActive("/chat") ? "fill-primary/10" : "")} />
+          <span className="text-[10px] font-bold tracking-tight uppercase leading-none">Chat</span>
+          {isActive("/chat") && <span className="absolute bottom-0 w-1 h-1 rounded-full bg-primary" />}
         </Link>
 
         <button
           onClick={onMenuClick}
-          className="flex flex-col items-center justify-center flex-1 h-full py-1.5 transition-colors text-muted-foreground hover:text-foreground"
+          className="flex flex-col items-center justify-center flex-1 h-full py-2 transition-all duration-300 text-slate-400 hover:text-slate-600 group"
         >
-          <Menu className="h-5 w-5" />
-          <span className="text-[10px] mt-0.5 font-medium leading-tight">Geradores</span>
+          <div className="h-10 w-10 rounded-2xl bg-primary shadow-lg shadow-primary/20 flex items-center justify-center -mt-8 mb-1 group-hover:rotate-12 transition-transform">
+             <LayoutGrid className="h-6 w-6 text-white" />
+          </div>
+          <span className="text-[10px] font-bold tracking-tight uppercase leading-none">Mais</span>
         </button>
       </div>
     </nav>
