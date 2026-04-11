@@ -29,8 +29,18 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
   // Se o usuário já é premium mas está vendo o modal, provavelmente quer VIP (ilimitado)
   const effectiveVariant = (isPremium && variant !== "vip") ? "vip" : variant;
   const isVip = effectiveVariant === "vip";
+  const { plan } = usePermissionContext();
+  const isTrialActive = plan?.slug === 'trial' || plan?.slug === 'teste-gratis-3-dias';
   
-  // Lógica refatorada conforme solicitação:
+  // Se estiver em trial, não mostra o modal de upsell premium
+  // a menos que seja algo especificamente VIP (que agora também é liberado pelo hasPermission)
+  const shouldHide = open && isTrialActive && !isVip;
+  
+  if (shouldHide) {
+    onOpenChange(false);
+    return null;
+  }
+  
   // Se for Free > Oferece o trial de 3 dias
   // Se for Free que já usou o Trial > Oferece o Upgrade.
   const canUseTrial = subscription?.isFree && !subscription.trial_used;
