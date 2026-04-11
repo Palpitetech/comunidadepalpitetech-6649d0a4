@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useMySubscription } from "@/hooks/useMySubscription";
 import { usePermissionContext } from "@/contexts/PermissionContext";
+import { useLocation } from "react-router-dom";
 
 export type OfferType = "trial" | "upgrade" | null;
 
@@ -11,9 +12,21 @@ export function useTrialOffer() {
   const { data: subscription, loading: subLoading } = useMySubscription(user?.id);
   const [shouldShow, setShouldShow] = useState(false);
   const [offerType, setOfferType] = useState<OfferType>(null);
+  const location = useLocation();
 
   useEffect(() => {
-    if (!permissionsLoading && !subLoading && !isPremium && subscription && subscription.status === "inativa") {
+    // Only show trial/upgrade offers when user is on a generator page
+    const generatorPaths = [
+      "/smart-gerador",
+      "/gerar-jogos",
+      "/megasena/gerador",
+      "/quina/gerador",
+      "/duplasena/gerador"
+    ];
+
+    const isGeneratorPage = generatorPaths.includes(location.pathname);
+
+    if (isGeneratorPage && !permissionsLoading && !subLoading && !isPremium && subscription && subscription.status === "inativa") {
       // Logic:
       // If trial NOT used -> Offer Trial
       // If trial ALREADY used -> Offer Upgrade
@@ -34,7 +47,7 @@ export function useTrialOffer() {
         sessionStorage.setItem("upgrade_offered_generator", "true");
       }
     }
-  }, [permissionsLoading, subLoading, isPremium, subscription]);
+  }, [permissionsLoading, subLoading, isPremium, subscription, location.pathname]);
 
   return { shouldShow, setShouldShow, offerType };
 }
