@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
 import { usePermissions } from "@/hooks/usePermission";
 import { getFeatureForRoute, isVipFeature } from "@/lib/featureMap";
@@ -48,6 +49,7 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradeLabel, setUpgradeLabel] = useState<string | undefined>();
   const [upgradeVariant, setUpgradeVariant] = useState<"premium" | "vip">("premium");
+  const isActive = (path: string) => location.pathname === path;
 
   const handleSignOut = async () => {
     try {
@@ -150,6 +152,15 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                   <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
                     <Home className="h-5 w-5 stroke-[1.5]" />
                     Início
+                  </div>
+                </Link>
+                <Link to="/chat" onClick={closeAndNavigate}>
+                  <div className={cn(
+                    "flex items-center gap-3 py-3 text-base transition-colors",
+                    isActive("/chat") ? "text-primary font-medium" : "text-foreground hover:text-primary"
+                  )}>
+                    <MessageCircle className="h-5 w-5 stroke-[1.5]" />
+                    Chat
                   </div>
                 </Link>
               </nav>
