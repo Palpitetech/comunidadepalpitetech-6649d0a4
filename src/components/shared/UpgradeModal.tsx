@@ -27,8 +27,8 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
   const effectiveVariant = (isPremium && variant !== "vip") ? "vip" : variant;
   const isVip = effectiveVariant === "vip";
   
-  const canUseTrial = subscription && !subscription.trial_used && subscription.status === "inativa";
-  const isTrialExpired = subscription && subscription.trial_used && subscription.status === "inativa";
+  const canUseTrial = subscription?.isFree && !subscription.trial_used;
+  const isTrialExpired = subscription?.isFree && subscription.trial_used;
 
   const handleStartTrial = async () => {
     if (!user) return;

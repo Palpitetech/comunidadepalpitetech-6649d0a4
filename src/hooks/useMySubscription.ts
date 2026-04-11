@@ -6,6 +6,7 @@ type MySubscriptionData = {
   status: StatusAssinatura;
   validade: string | null;
   trial_used?: boolean;
+  isFree: boolean;
 };
 
 export function useMySubscription(userId?: string) {
