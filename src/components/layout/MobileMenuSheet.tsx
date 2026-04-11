@@ -235,17 +235,23 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            <nav className="px-4 py-6 space-y-1">
+            <nav className="px-4 py-4 space-y-1">
               <Link to="/home" onClick={closeAndNavigate}>
-                <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
+                <div className={cn("flex items-center gap-3 py-3 px-4 rounded-xl text-base transition-all active:scale-95", isActive("/home") ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-foreground hover:bg-muted/50")}>
                   <Home className="h-5 w-5 stroke-[1.5]" />
-                  Início
+                  Página Inicial
                 </div>
               </Link>
-              <Link to="/chat" onClick={closeAndNavigate}>
-                <div className={cn("flex items-center gap-3 py-3 text-base transition-colors", isActive("/chat") ? "text-primary font-medium" : "text-foreground hover:text-primary")}>
-                  <MessageCircle className="h-5 w-5 stroke-[1.5]" />
-                  Chat IA
+              <Link to="/meus-palpites" onClick={closeAndNavigate}>
+                <div className={cn("flex items-center gap-3 py-3 px-4 rounded-xl text-base transition-all active:scale-95", isActive("/meus-palpites") ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-foreground hover:bg-muted/50")}>
+                  <Save className="h-5 w-5 stroke-[1.5]" />
+                  Meus Palpites Salvos
+                </div>
+              </Link>
+              <Link to="/proximos-concursos" onClick={closeAndNavigate}>
+                <div className={cn("flex items-center gap-3 py-3 px-4 rounded-xl text-base transition-all active:scale-95", isActive("/proximos-concursos") ? "bg-primary/10 text-primary font-bold shadow-sm" : "text-foreground hover:bg-muted/50")}>
+                  <Calendar className="h-5 w-5 stroke-[1.5]" />
+                  Próximos Concursos
                 </div>
               </Link>
             </nav>
