@@ -25,7 +25,7 @@ export default function Gerador() {
   const [periodoAnalise, setPeriodoAnalise] = useState(50);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  // upgradeOpen removido pois o modal é global
   const { openUpgradeModal } = useUpsell();
 
   // Novos estados para filtros
