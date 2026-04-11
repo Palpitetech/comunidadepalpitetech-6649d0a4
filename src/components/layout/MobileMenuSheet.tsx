@@ -74,6 +74,9 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
   };
 
   const renderBadge = (path: string) => {
+    // Se o usuário já é premium, não mostra nenhum distintivo/diamante
+    if (isPremium) return null;
+
     const feature = getFeatureForRoute(path);
     if (!feature || hasPermission(feature)) return null;
     return <PremiumBadge variant={isVipFeature(feature) ? "vip" : "premium"} className="ml-auto" />;
