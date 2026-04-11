@@ -104,7 +104,7 @@ export function UserPlanTab({ user, plans, onUserUpdated }: UserPlanTabProps) {
         
         <div className="space-y-2">
           <Label>Selecionar Plano</Label>
-          <Select value={selectedPlanId} onValueChange={setSelectedPlanId}>
+          <Select value={selectedPlanId} onValueChange={handlePlanChange}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione um plano" />
             </SelectTrigger>
@@ -200,13 +200,31 @@ export function UserPlanTab({ user, plans, onUserUpdated }: UserPlanTabProps) {
           <h3 className="font-medium">Ações Manuais</h3>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Status da Assinatura (Manual)</Label>
+            <Select value={selectedStatus} onValueChange={(val) => setSelectedStatus(val as StatusAssinatura)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ativa">Ativa</SelectItem>
+                <SelectItem value="cancelada">Cancelada</SelectItem>
+                <SelectItem value="inadimplente">Inadimplente</SelectItem>
+                <SelectItem value="inativa">Sem Assinatura (Inativa)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Separator className="my-4" />
+          
+          <div className="space-y-2">
           <Label htmlFor="validade-manual">Estender Validade (Cortesia)</Label>
           <Input
             id="validade-manual"
             type="date"
             value={validadeManual}
-            onChange={(e) => setValidadeManual(e.target.value)}
+            onChange={(e) => handleValidadeChange(e.target.value)}
           />
           <p className="text-xs text-muted-foreground">
             Defina uma data para conceder acesso cortesia (ex: compensação, teste).
