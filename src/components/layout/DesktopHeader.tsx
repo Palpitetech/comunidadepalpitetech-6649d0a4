@@ -47,7 +47,7 @@ function LotteryDropdownItem({
 }
 
 // Dados das loterias com ferramentas completas
-const LOTOFACIL_TOOLS = [
+export const LOTOFACIL_TOOLS: ToolItem[] = [
   { to: "/lotofacil", label: "Ver Todas as Ferramentas", gated: false, bold: true },
   { to: "/analise-do-dia", label: "Análise do Dia", icon: Target, gated: true },
   { to: "/resultados", label: "Resultados", icon: BarChart3, gated: false },
@@ -62,7 +62,7 @@ const LOTOFACIL_TOOLS = [
   { to: "/fechamento", label: "Fechamento", icon: Wrench, gated: true },
 ];
 
-const MEGASENA_TOOLS = [
+export const MEGASENA_TOOLS: ToolItem[] = [
   { to: "/megasena", label: "Ver Todas as Ferramentas", gated: false, bold: true },
   { to: "/megasena/analise-do-dia", label: "Análise do Dia", icon: Target, gated: true },
   { to: "/megasena/resultados", label: "Resultados", icon: BarChart3, gated: false },
@@ -77,7 +77,7 @@ const MEGASENA_TOOLS = [
   { to: "/megasena/fechamento", label: "Fechamento", icon: Wrench, gated: true },
 ];
 
-const DUPLASENA_TOOLS = [
+export const DUPLASENA_TOOLS: ToolItem[] = [
   { to: "/duplasena", label: "Ver Todas as Ferramentas", gated: false, bold: true },
   { to: "/duplasena/analise-do-dia", label: "Análise do Dia", icon: Target, gated: true },
   { to: "/duplasena/resultados", label: "Resultados", icon: BarChart3, gated: false },
@@ -92,7 +92,7 @@ const DUPLASENA_TOOLS = [
   { to: "/duplasena/fechamento", label: "Fechamento", icon: Wrench, gated: true },
 ];
 
-const QUINA_TOOLS = [
+export const QUINA_TOOLS: ToolItem[] = [
   { to: "/quina", label: "Ver Todas as Ferramentas", gated: false, bold: true },
   { to: "/quina/analise-do-dia", label: "Análise do Dia", icon: Target, gated: true },
   { to: "/quina/resultados", label: "Resultados", icon: BarChart3, gated: false },
@@ -106,18 +106,19 @@ const QUINA_TOOLS = [
   { to: "/quina/desdobramento", label: "Desdobramento", icon: Shuffle, gated: true },
 ];
 
-const SIMPLE_LOTTERIES = [
+export const SIMPLE_LOTTERIES = [
   { name: "Dia de Sorte", resultsPath: "/diadesorte/resultados" },
   { name: "Lotomania", resultsPath: "/lotomania/resultados" },
 ];
 
-interface ToolItem {
+export interface ToolItem {
   to: string;
   label: string;
   icon?: React.ComponentType<{ className?: string }>;
   gated: boolean;
   bold?: boolean;
 }
+
 
 interface DesktopHeaderProps {
   pageTitle?: string;
