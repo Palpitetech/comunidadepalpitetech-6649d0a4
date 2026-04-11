@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mail, Phone, User, Hash, Copy, Check, CheckCircle2, AlertCircle } from "lucide-react";
+import { Mail, Phone, User, Hash, Copy, Check, CheckCircle2, AlertCircle, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { AlterarCelularDialog } from "@/components/perfil/AlterarCelularDialog";
 import { Button } from "@/components/ui/button";
