@@ -78,25 +78,36 @@ export function MeusDadosTab({ profile, user }: MeusDadosTabProps) {
   };
 
   return (
-    <div className="space-y-4 px-4 py-4">
-      <div className="rounded-xl border bg-card overflow-hidden divide-y">
-        <CopyableRow icon={User} label="Nome" value={profile?.nome} />
-        <CopyableRow icon={Mail} label="E-mail" value={user?.email || null} verified={true} />
-        <CopyableRow icon={Phone} label="Celular" value={profile?.celular} verified={!!profile?.celular} />
-        <CopyableRow icon={Hash} label="ID da Conta (imutável)" value={user?.id || null} />
+    <div className="space-y-6 px-4 py-6 max-w-md mx-auto">
+      <div className="space-y-1.5">
+        <h2 className="text-sm font-semibold text-muted-foreground px-1 uppercase tracking-wider">Informações Pessoais</h2>
+        <div className="rounded-2xl border bg-card shadow-sm overflow-hidden divide-y divide-muted/30">
+          <CopyableRow icon={User} label="Nome Completo" value={profile?.nome} />
+          <CopyableRow icon={Mail} label="E-mail" value={user?.email || null} verified={true} />
+          <CopyableRow icon={Phone} label="Telefone Celular" value={profile?.celular} verified={!!profile?.celular} />
+        </div>
       </div>
 
-      {/* Alterar celular */}
-      <AlterarCelularDialog
-        celularAtual={profile?.celular || null}
-        onSuccess={handleCelularSuccess}
-        trigger={
-          <Button variant="outline" className="w-full gap-2">
-            <Phone className="h-4 w-4" />
-            {profile?.celular ? "Alterar Celular" : "Adicionar Celular"}
-          </Button>
-        }
-      />
+      <div className="space-y-1.5">
+        <h2 className="text-sm font-semibold text-muted-foreground px-1 uppercase tracking-wider text-[10px]">Identificação do Sistema</h2>
+        <div className="rounded-xl border bg-card/50 overflow-hidden">
+          <CopyableRow icon={Hash} label="ID do Usuário" value={user?.id || null} isTechnical={true} />
+        </div>
+      </div>
+
+      {/* Alterar celular button */}
+      <div className="pt-2">
+        <AlterarCelularDialog
+          celularAtual={profile?.celular || null}
+          onSuccess={handleCelularSuccess}
+          trigger={
+            <Button variant="outline" className="w-full h-11 gap-2.5 rounded-xl text-sm font-semibold shadow-sm hover:bg-primary/5 hover:border-primary/30 transition-all">
+              <Phone className="h-4 w-4" />
+              {profile?.celular ? "Atualizar Celular" : "Vincular Celular"}
+            </Button>
+          }
+        />
+      </div>
     </div>
   );
 }
