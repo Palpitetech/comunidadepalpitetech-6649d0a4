@@ -89,30 +89,22 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
         throw rpcError;
       }
       
-      const response = result as { success: boolean, message: string };
-      
-      if (!response) {
-        throw new Error("Resposta do servidor vazia ao tentar ativar trial.");
-      }
-
-      if (!response.success) {
-        console.warn("RPC retornou erro de negócio:", response.message);
-        toast.error(response.message || "Não foi possível ativar seu teste grátis.");
+      if (result === true) {
+        console.log("Trial ativado com sucesso! Atualizando dados locais...");
+        toast.success("Teste grátis ativado! Aproveite 3 dias de acesso total.");
+        
+        // Força o refetch da assinatura
+        await refetch();
+        
+        // Pequeno delay para garantir que o PermissionContext receba a atualização do Realtime
+        setTimeout(() => {
+          onOpenChange(false);
+        }, 500);
+      } else {
+        toast.error("Não foi possível ativar o teste. Você já utilizou o período de teste ou ocorreu um erro.");
         setActivatingTrial(false);
         activatingRef.current = false;
-        return;
       }
-
-      console.log("Trial ativado com sucesso! Atualizando dados locais...");
-      toast.success(response.message || "Teste grátis ativado com sucesso! Aproveite 3 dias de acesso total.");
-      
-      // Força o refetch da assinatura
-      await refetch();
-      
-      // Pequeno delay para garantir que o PermissionContext receba a atualização do Realtime
-      setTimeout(() => {
-        onOpenChange(false);
-      }, 500);
       
     } catch (error: any) {
       console.error("Erro capturado no catch do handleStartTrial:", error);
