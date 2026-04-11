@@ -42,25 +42,27 @@ export default function PerfilDados() {
       </header>
       
       <ScrollArea className="flex-1">
-        <div className="pb-10 max-w-lg mx-auto w-full">
+        <div className="pb-10 max-w-lg mx-auto w-full px-4">
           {/* Header Visual Compacto */}
-          <div className="px-6 pt-8 pb-4 flex flex-col items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="pt-8 pb-4 flex flex-col items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
             <div className="relative group">
               <div className="absolute -inset-0.5 bg-gradient-to-tr from-primary to-primary/30 rounded-full blur opacity-30 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-              <Avatar className="h-24 w-24 border-4 border-background shadow-xl relative">
+              <Avatar className="h-20 w-20 border-4 border-background shadow-xl relative">
                 <AvatarImage src={profile?.avatar_url || undefined} className="object-cover" />
-                <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-black">
+                <AvatarFallback className="bg-primary text-primary-foreground text-xl font-black">
                   {getInitials(profile?.nome)}
                 </AvatarFallback>
               </Avatar>
             </div>
-            <div className="text-center space-y-1">
+            <div className="text-center space-y-2">
               <h2 className="text-xl font-black tracking-tight text-foreground">
                 {profile?.nome || "Usuário"}
               </h2>
-              <p className="text-xs font-semibold text-muted-foreground/60 uppercase tracking-[0.2em]">
-                CONTA PRINCIPAL
-              </p>
+              <div className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 shadow-sm">
+                <span className="text-[10px] font-bold uppercase tracking-wider">
+                  Conta Principal
+                </span>
+              </div>
             </div>
           </div>
 
