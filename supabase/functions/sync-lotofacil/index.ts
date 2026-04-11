@@ -128,7 +128,7 @@ async function criarPostResultadoOficial(params: {
     // 1. Buscar perfil_id do autor de resultados (is_result_author = Palpite Tech)
     const { data: author, error: authorError } = await supabase
       .from("guide_personas")
-      .select("id, perfil_id, system_prompt, max_chars_post, ai_model, total_posts")
+      .select("id, perfil_id, system_prompt, max_chars_post, ai_model, total_posts, perfis(nome)")
       .eq("is_result_author", true)
       .eq("ativo", true)
       .eq("can_create_posts", true)
