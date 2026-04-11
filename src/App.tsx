@@ -14,7 +14,7 @@ import { PWAUpdateHandler } from "@/components/pwa/PWAUpdateHandler";
 import { useUTM } from "@/hooks/useUTM";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
-import RecuperarSenha from "./pages/RecuperarSenha";
+// RecuperarSenha removido
 import Comunidade from "./pages/Comunidade";
 import Chat from "./pages/Chat";
 import Notificacoes from "./pages/Notificacoes";
@@ -61,8 +61,7 @@ import NotFound from "./pages/NotFound";
 import Termos from "./pages/Termos";
 import Privacidade from "./pages/Privacidade";
 import Home from "./pages/Home";
-import AtivarConta from "@/pages/AtivarConta";
-import VerificarEmail from "@/pages/VerificarEmail";
+// AtivarConta e VerificarEmail removidos
 import ResultadosMegaSena from "./pages/megasena/ResultadosMegaSena";
 import TendenciasMegaSena from "./pages/megasena/TendenciasMegaSena";
 import FrequenciaMegaSena from "./pages/megasena/FrequenciaMegaSena";
@@ -145,9 +144,8 @@ const App = () => (
                 {/* Rotas Públicas */}
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="/recuperar-senha" element={<RecuperarSenha />} />
-                <Route path="/ativar-conta" element={<AtivarConta />} />
-                <Route path="/verificar-email" element={<VerificarEmail />} />
+                {/* RecuperarSenha removido */}
+{/* AtivarConta e VerificarEmail removidos */}
                 <Route path="/termos" element={<Termos />} />
                 <Route path="/privacidade" element={<Privacidade />} />
                 <Route path="/proximos-concursos" element={<ProximosConcursos />} />

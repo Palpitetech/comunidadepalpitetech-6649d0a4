@@ -78,8 +78,37 @@ export function useAuth() {
     };
   }, []);
 
+  const signInWithOtp = useCallback(async (email: string) => {
+    const { data, error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: window.location.origin + "/home",
+      },
+    });
+
+    if (error) throw error;
+    return data;
+  }, []);
+
+  const verifyOtp = useCallback(async (email: string, token: string) => {
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: "email",
+    });
+
+    if (error) throw error;
+    return data;
+  }, []);
+
   const signUp = useCallback(
-    async (email: string, password: string, nome?: string, celular?: string, referralCode?: string) => {
+    async (email: string, password?: string, nome?: string, celular?: string, referralCode?: string) => {
+      // Se não houver senha, usamos signInWithOtp
+      if (!password) {
+        return signInWithOtp(email);
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -96,10 +125,15 @@ export function useAuth() {
       if (error) throw error;
       return data;
     },
-    []
+    [signInWithOtp]
   );
 
-  const signIn = useCallback(async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password?: string) => {
+    // Se não houver senha, usamos signInWithOtp
+    if (!password) {
+      return signInWithOtp(email);
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -107,7 +141,7 @@ export function useAuth() {
 
     if (error) throw error;
     return data;
-  }, []);
+  }, [signInWithOtp]);
 
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
@@ -140,6 +174,8 @@ export function useAuth() {
     isAuthenticated: !!authState.user,
     signUp,
     signIn,
+    signInWithOtp,
+    verifyOtp,
     signOut,
     updateProfile,
   };
