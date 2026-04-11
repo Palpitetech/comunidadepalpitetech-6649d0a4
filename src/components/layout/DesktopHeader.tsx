@@ -330,7 +330,16 @@ export function DesktopHeader() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-64 bg-popover z-50">
                   <div className="px-3 py-3">
-                    <p className="text-base font-semibold">{profile?.nome || "Usuário"}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-base font-semibold">{profile?.nome || "Usuário"}</p>
+                      {profile?.status_assinatura === "ativa" ? (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/20">Premium</Badge>
+                      ) : profile?.trial_used ? (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-destructive/10 text-destructive border-destructive/20 whitespace-nowrap">Teste Vencido</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-muted text-muted-foreground border-muted-foreground/20">Plano Free</Badge>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground truncate">
                       {profile?.celular || "Sem celular"}
                     </p>

@@ -32,7 +32,7 @@ export function useAuth() {
           setTimeout(async () => {
             const { data } = await supabase
               .from("perfis")
-              .select("id, nome, celular, is_bot, avatar_url, email_verificado, trial_used")
+              .select("id, nome, celular, is_bot, avatar_url, email_verificado, trial_used, status_assinatura")
               .eq("id", session.user.id)
               .maybeSingle();
 

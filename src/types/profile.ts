@@ -6,4 +6,5 @@ export interface Profile {
   avatar_url: string | null;
   email_verificado: boolean | null;
   trial_used?: boolean;
+  status_assinatura?: string;
 }
