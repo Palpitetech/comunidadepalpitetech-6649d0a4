@@ -12,7 +12,7 @@ interface MeusDadosTabProps {
   user: SupaUser | null;
 }
 
-function CopyableRow({ icon: Icon, label, value, verified, isTechnical, action }: {
+function ProfileRow({ icon: Icon, label, value, verified, isTechnical, action }: {
   icon: React.ElementType;
   label: string;
   value: string | null;
@@ -35,44 +35,43 @@ function CopyableRow({ icon: Icon, label, value, verified, isTechnical, action }
 
   return (
     <div 
-      className={`group flex items-center gap-4 p-4 transition-all ${
-        isTechnical ? 'bg-muted/20' : 'hover:bg-muted/40'
+      onClick={handleCopy}
+      className={`group flex items-center gap-5 p-6 transition-all bg-card cursor-pointer active:bg-muted/40 border-b border-border last:border-0 ${
+        isTechnical ? 'bg-muted/5' : ''
       }`}
     >
       <div 
-        onClick={handleCopy}
-        className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 cursor-pointer ${
-          isTechnical ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary'
+        className={`h-14 w-14 rounded-[1.25rem] flex items-center justify-center shrink-0 shadow-sm border-2 ${
+          isTechnical 
+          ? 'bg-muted text-muted-foreground border-transparent' 
+          : 'bg-primary/5 text-primary border-primary/20'
         }`}
       >
-        <Icon className="h-5 w-5" />
+        <Icon className="h-7 w-7" />
       </div>
       
-      <div 
-        onClick={handleCopy}
-        className="flex-1 min-w-0 cursor-pointer"
-      >
-        <p className="text-[11px] font-bold text-muted-foreground/70 uppercase tracking-wider mb-0.5">
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] font-black text-muted-foreground/60 uppercase tracking-[0.15em] mb-1">
           {label}
         </p>
-        <p className={`text-base font-semibold truncate ${
-          isTechnical ? 'font-mono text-xs text-muted-foreground' : 'text-foreground'
+        <p className={`text-lg font-black truncate leading-tight ${
+          isTechnical ? 'font-mono text-sm text-muted-foreground' : 'text-foreground'
         }`}>
           {value || "Não informado"}
         </p>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-3 shrink-0 ml-1">
         {verified !== undefined && (
           <div className="flex items-center">
             {verified ? (
-              <div className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                <CheckCircle2 className="h-2.5 w-2.5" />
+              <div className="flex items-center gap-1.5 text-[9px] font-black text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200 shadow-sm">
+                <CheckCircle2 className="h-3 w-3" />
                 <span>VERIFICADO</span>
               </div>
             ) : (
-              <div className="flex items-center gap-1 text-[9px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
-                <AlertCircle className="h-2.5 w-2.5" />
+              <div className="flex items-center gap-1.5 text-[9px] font-black text-amber-700 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200 shadow-sm">
+                <AlertCircle className="h-3 w-3" />
                 <span>PENDENTE</span>
               </div>
             )}
@@ -81,13 +80,14 @@ function CopyableRow({ icon: Icon, label, value, verified, isTechnical, action }
         
         {action || (
           <div 
-            onClick={handleCopy}
-            className={`p-2 rounded-full transition-colors cursor-pointer ${copied ? 'bg-primary/10' : 'bg-transparent group-hover:bg-primary/5'}`}
+            className={`p-3 rounded-2xl transition-all shadow-sm border ${
+              copied ? 'bg-primary/10 border-primary/30' : 'bg-muted/10 border-transparent'
+            }`}
           >
             {copied ? (
-              <Check className="h-4 w-4 text-primary animate-in zoom-in duration-300" />
+              <Check className="h-5 w-5 text-primary animate-in zoom-in duration-300" />
             ) : (
-              <Copy className="h-4 w-4 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+              <Copy className="h-5 w-5 text-muted-foreground/40 group-hover:text-primary transition-colors" />
             )}
           </div>
         )}
@@ -114,55 +114,61 @@ export function MeusDadosTab({ profile, user }: MeusDadosTabProps) {
   };
 
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Seção de Perfil Principal */}
+    <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-10 duration-1000">
+      {/* Seção Principal */}
       <div className="space-y-4">
-        <div className="flex flex-col gap-1.5">
-          <h2 className="text-xs font-bold text-muted-foreground/80 px-1 uppercase tracking-widest">
-            Informações Pessoais
-          </h2>
-          <div className="rounded-3xl border bg-white shadow-md overflow-hidden divide-y divide-muted/30">
-            <CopyableRow icon={User} label="Nome Completo" value={profile?.nome} />
-            <CopyableRow icon={Mail} label="E-mail" value={user?.email || null} verified={true} />
-            <CopyableRow 
-              icon={Phone} 
-              label="Telefone Celular" 
-              value={formatarTelefone(profile?.celular || null)} 
-              verified={!!profile?.celular} 
-              action={
-                <AlterarCelularDialog
-                  celularAtual={profile?.celular || null}
-                  onSuccess={handleCelularSuccess}
-                  trigger={
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  }
-                />
-              }
-            />
-          </div>
+        <h3 className="text-xs font-black text-muted-foreground px-1 uppercase tracking-[0.25em] flex items-center gap-3">
+          <span className="h-[2px] w-4 bg-primary/30 rounded-full" />
+          Informações Pessoais
+        </h3>
+        <div className="rounded-[2.5rem] border border-border bg-card shadow-2xl shadow-black/5 overflow-hidden ring-1 ring-black/5">
+          <ProfileRow icon={User} label="Nome Completo" value={profile?.nome} />
+          <ProfileRow icon={Mail} label="E-mail de Acesso" value={user?.email || null} verified={true} />
+          <ProfileRow 
+            icon={Phone} 
+            label="Telefone WhatsApp" 
+            value={formatarTelefone(profile?.celular || null)} 
+            verified={!!profile?.celular} 
+            action={
+              <AlterarCelularDialog
+                celularAtual={profile?.celular || null}
+                onSuccess={handleCelularSuccess}
+                trigger={
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-14 w-14 rounded-2xl bg-secondary hover:bg-primary/10 hover:text-primary transition-all active:scale-95 border-2 border-border/50 shadow-sm"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Pencil className="h-5 w-5" />
+                  </Button>
+                }
+              />
+            }
+          />
         </div>
       </div>
 
-      {/* Seção Técnica */}
-      <div className="space-y-2">
-        <h2 className="text-[10px] font-bold text-muted-foreground/60 px-1 uppercase tracking-[0.2em]">
+      {/* Seção ID */}
+      <div className="space-y-4">
+        <h3 className="text-xs font-black text-muted-foreground px-1 uppercase tracking-[0.25em] flex items-center gap-3">
+          <span className="h-[2px] w-4 bg-muted-foreground/30 rounded-full" />
           Identificação da Conta
-        </h2>
-        <div className="rounded-2xl border bg-white/50 shadow-sm overflow-hidden">
-          <CopyableRow icon={Hash} label="ID de Usuário" value={user?.id || null} isTechnical={true} />
+        </h3>
+        <div className="rounded-[2.5rem] border border-border bg-card/60 shadow-xl shadow-black/5 overflow-hidden">
+          <ProfileRow icon={Hash} label="ID do Usuário" value={user?.id || null} isTechnical={true} />
         </div>
       </div>
 
       {/* Dica de UX */}
-      <p className="text-center text-[11px] text-muted-foreground/50 font-medium italic">
-        Toque em qualquer campo para copiar as informações
-      </p>
+      <div className="flex flex-col items-center gap-4 px-8 py-10 rounded-[3rem] bg-primary/5 border-2 border-primary/10 border-dashed">
+        <p className="text-center text-sm text-primary font-black uppercase tracking-wider">
+          Instrução de Cópia
+        </p>
+        <p className="text-center text-sm text-muted-foreground font-bold leading-relaxed">
+          Para copiar qualquer dado acima para seu WhatsApp ou outro app, basta tocar no campo desejado.
+        </p>
+      </div>
     </div>
   );
 }

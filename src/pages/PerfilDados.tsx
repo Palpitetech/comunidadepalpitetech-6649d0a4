@@ -1,8 +1,7 @@
 import { useAuthContext } from "@/contexts/AuthContext";
-import { ArrowLeft, UserCircle2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { MeusDadosTab } from "@/components/perfil/MeusDadosTab";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -16,61 +15,64 @@ export default function PerfilDados() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background animate-in fade-in slide-in-from-right duration-300">
-      <header className="shrink-0 border-b bg-background/80 backdrop-blur-md sticky top-0 z-20">
-        <div className="flex items-center justify-between h-16 px-4">
-          <div className="flex items-center gap-1">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => navigate(-1)} 
-              className="h-10 w-10 rounded-full hover:bg-muted transition-colors active:scale-90 -ml-2"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-bold tracking-tight text-foreground/90">Meus Dados</h1>
-          </div>
-          <div className="">
-            <Avatar className="h-9 w-9 border-2 border-primary/20 ring-1 ring-background">
-              <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">
+    <div className="min-h-screen bg-secondary/30 flex flex-col animate-in fade-in duration-500 pb-10">
+      {/* Header com Safe Area */}
+      <header className="sticky top-0 z-30 w-full bg-background border-b border-border shadow-sm pt-[env(safe-area-inset-top,0px)]">
+        <div className="flex items-center h-16 px-6 max-w-2xl mx-auto">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => navigate(-1)} 
+            className="rounded-xl hover:bg-muted active:scale-95 transition-all -ml-2 h-12 w-12"
+          >
+            <ArrowLeft className="h-6 w-6 text-foreground" />
+          </Button>
+          <h1 className="flex-1 text-center mr-10 text-xl font-black text-foreground tracking-tight">
+            Meus Dados
+          </h1>
+        </div>
+      </header>
+      
+      <main className="flex-1 w-full max-w-2xl mx-auto px-6 py-8 space-y-10">
+        {/* Profile Card - Modern & High Contrast */}
+        <section className="bg-card rounded-[2.5rem] p-8 shadow-xl shadow-black/5 border border-border flex flex-col items-center text-center space-y-6">
+          <div className="relative group">
+            <div className="absolute -inset-2 bg-gradient-to-tr from-primary/20 to-transparent rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
+            <Avatar className="h-28 w-28 border-4 border-background shadow-2xl relative ring-2 ring-primary/10">
+              <AvatarImage src={profile?.avatar_url || undefined} className="object-cover" />
+              <AvatarFallback className="bg-primary text-primary-foreground text-3xl font-black">
                 {getInitials(profile?.nome)}
               </AvatarFallback>
             </Avatar>
           </div>
-        </div>
-      </header>
-      
-      <ScrollArea className="flex-1">
-        <div className="pb-10 max-w-lg mx-auto w-full px-4">
-          {/* Header Visual Compacto */}
-          <div className="pt-8 pb-4 flex flex-col items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
-            <div className="relative group">
-              <div className="absolute -inset-0.5 bg-gradient-to-tr from-primary to-primary/30 rounded-full blur opacity-30 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-              <Avatar className="h-20 w-20 border-4 border-background shadow-xl relative">
-                <AvatarImage src={profile?.avatar_url || undefined} className="object-cover" />
-                <AvatarFallback className="bg-primary text-primary-foreground text-xl font-black">
-                  {getInitials(profile?.nome)}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-            <div className="text-center space-y-2">
-              <h2 className="text-xl font-black tracking-tight text-foreground">
-                {profile?.nome || "Usuário"}
-              </h2>
-              <div className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 shadow-sm">
-                <span className="text-[10px] font-bold uppercase tracking-wider">
-                  Conta Principal
-                </span>
-              </div>
+          
+          <div className="space-y-3">
+            <h2 className="text-2xl font-black tracking-tight text-foreground">
+              {profile?.nome || "Usuário"}
+            </h2>
+            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/5 text-primary border border-primary/20">
+              <span className="text-xs font-black uppercase tracking-[0.15em]">
+                Conta Verificada
+              </span>
             </div>
           </div>
+        </section>
 
-          <div className="mt-2">
-            <MeusDadosTab profile={profile} user={user} />
-          </div>
+        {/* Data Sections */}
+        <div className="animate-in slide-in-from-bottom-8 duration-1000">
+          <MeusDadosTab profile={profile} user={user} />
         </div>
-      </ScrollArea>
+
+        {/* Support Link */}
+        <div className="pt-6 flex flex-col items-center gap-4">
+          <p className="text-sm text-muted-foreground/80 font-semibold text-center max-w-[280px]">
+            Precisa alterar algum dado que não está disponível para edição?
+          </p>
+          <Button variant="link" className="text-primary font-bold text-base h-auto p-0">
+            Falar com suporte
+          </Button>
+        </div>
+      </main>
     </div>
   );
 }
