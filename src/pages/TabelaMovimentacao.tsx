@@ -113,18 +113,6 @@ export default function TabelaMovimentacao() {
         <div className="px-2 py-3 space-y-3 w-full max-w-full">
           {/* Header */}
           <div className="space-y-3">
-            {!isMobile && (
-              <div className="text-center space-y-1">
-                <div className="flex items-center justify-center gap-2">
-                  <Table2 className="h-7 w-7 text-primary" />
-                  <h1 className="text-2xl font-bold">Tabela de Movimentação</h1>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Lotofácil • Últimos {periodo} Concursos + Ciclos
-                </p>
-              </div>
-            )}
-
             {/* Controles */}
             <Card className="bg-card">
               <CardContent className="py-3">
