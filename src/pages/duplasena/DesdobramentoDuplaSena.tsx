@@ -268,7 +268,7 @@ export default function DesdobramentoDuplaSena() {
     return (
       <DesdobramentoResultadosDuplaSena
         jogos={jogosGerados}
-        dezenasFixes={dezenasFixas}
+        dezenasFixas={dezenasFixas}
         ultimoConcursoDezenas={ultimoSorteio}
         qtdDezenas={qtdDezenas}
         onVoltar={handleLimpar}

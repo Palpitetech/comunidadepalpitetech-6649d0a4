@@ -15,7 +15,7 @@ export interface GeradorQuinaResult {
 }
 
 export interface FiltrosGeradorQuina {
-  dezenasFiexas?: number[];
+  dezenasFixas?: number[];
   dezenasExcluidas?: number[];
   pedidoEspecial?: string;
 }
@@ -54,7 +54,7 @@ export function useGeradorQuina() {
             quantidade,
             qtdDezenas,
             periodoAnalise,
-            dezenasFiexas: filtros?.dezenasFiexas,
+            dezenasFixas: filtros?.dezenasFixas,
             dezenasExcluidas: filtros?.dezenasExcluidas,
             pedidoEspecial: filtros?.pedidoEspecial,
           }),

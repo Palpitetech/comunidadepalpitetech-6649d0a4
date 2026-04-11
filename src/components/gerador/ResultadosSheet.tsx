@@ -22,7 +22,7 @@ interface ResultadosSheetProps {
   onClearAll: () => void;
   estrategia?: EstrategiaData;
   periodoAnalise?: number;
-  dezenasFixes?: number[];
+  dezenasFixas?: number[];
 }
 
 const ITEMS_PER_PAGE = 12;
@@ -35,7 +35,7 @@ export function ResultadosSheet({
   onClearAll,
   estrategia,
   periodoAnalise,
-  dezenasFixes = [],
+  dezenasFixas = [],
 }: ResultadosSheetProps) {
   const { toast } = useToast();
   const { salvarPalpites, isLoading: isSaving } = usePalpitesSalvos();
@@ -296,7 +296,7 @@ export function ResultadosSheet({
                   index={globalIndex}
                   dezenas={jogo.dezenas}
                   ultimoConcursoDezenas={ultimoConcursoDezenas}
-                  dezenasFixes={dezenasFixes}
+                  dezenasFixas={dezenasFixas}
                   isSelected={selected.has(`gerador-${globalIndex}`)}
                   onSelectChange={(checked) => handleSelectChange(globalIndex, checked)}
                   onDelete={() => handleDeleteSingle(globalIndex)}

@@ -216,7 +216,7 @@ export default function DesdobramentoQuina() {
     return (
       <DesdobramentoResultadosQuina
         jogos={jogosGerados}
-        dezenasFixes={dezenasFixas}
+        dezenasFixas={dezenasFixas}
         ultimoConcursoDezenas={ultimoSorteio}
         qtdDezenas={qtdDezenas}
         onVoltar={handleLimpar}

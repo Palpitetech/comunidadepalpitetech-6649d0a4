@@ -30,7 +30,7 @@ interface FiltrosResumo {
 
 interface DesdobramentoResultadosQuinaProps {
   jogos: JogoGerado[];
-  dezenasFixes?: number[];
+  dezenasFixas?: number[];
   ultimoConcursoDezenas?: number[];
   qtdDezenas: number;
   onVoltar: () => void;
@@ -39,7 +39,7 @@ interface DesdobramentoResultadosQuinaProps {
 
 export function DesdobramentoResultadosQuina({
   jogos,
-  dezenasFixes = [],
+  dezenasFixas = [],
   ultimoConcursoDezenas = [],
   qtdDezenas,
   onVoltar,
@@ -238,10 +238,10 @@ export function DesdobramentoResultadosQuina({
                 )}
               </div>
               
-              {dezenasFixes.length > 0 && (
+              {dezenasFixas.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-1 border-t border-border/50">
                   <Badge variant="secondary" className="text-xs bg-palpite-fixa text-palpite-fixa-foreground">
-                    Fixas: {dezenasFixes.map(d => formatarDezena(d)).join(", ")}
+                    Fixas: {dezenasFixas.map(d => formatarDezena(d)).join(", ")}
                   </Badge>
                 </div>
               )}
@@ -281,7 +281,7 @@ export function DesdobramentoResultadosQuina({
               key={id}
               index={index}
               dezenas={jogo.dezenas}
-              dezenasFixes={dezenasFixes}
+              dezenasFixas={dezenasFixas}
               ultimoConcursoDezenas={ultimoConcursoDezenas}
               isSelected={toolbar.selected.has(id)}
               onSelectChange={(checked) => toolbar.handleSelectChange(id, checked)}

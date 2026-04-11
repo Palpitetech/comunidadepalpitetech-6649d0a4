@@ -21,7 +21,7 @@ interface ResultadosSheetMegaSenaProps {
   onClearAll: () => void;
   estrategia?: EstrategiaData;
   periodoAnalise?: number;
-  dezenasFixes?: number[];
+  dezenasFixas?: number[];
 }
 
 const ITEMS_PER_PAGE = 12;
@@ -34,7 +34,7 @@ export function ResultadosSheetMegaSena({
   onClearAll,
   estrategia,
   periodoAnalise,
-  dezenasFixes = [],
+  dezenasFixas = [],
 }: ResultadosSheetMegaSenaProps) {
   const { toast } = useToast();
   const { salvarPalpites, isLoading: isSaving } = usePalpitesSalvos();
@@ -257,7 +257,7 @@ export function ResultadosSheetMegaSena({
                   key={globalIndex}
                   index={globalIndex}
                   dezenas={jogo.dezenas}
-                  dezenasFixes={dezenasFixes}
+                  dezenasFixas={dezenasFixas}
                   isSelected={selected.has(id)}
                   onSelectChange={(checked) => handleSelectChange(globalIndex, checked)}
                   acertos={acertosPorPalpite[id]}
