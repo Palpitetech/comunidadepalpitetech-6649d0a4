@@ -125,6 +125,13 @@ interface DesktopHeaderProps {
   hideBackButton?: boolean;
 }
 
+// Mapeamento de rotas para navegação de retorno
+const getParentRoute = (pathname: string): string => {
+  if (pathname.startsWith("/megasena/")) return "/megasena/resultados";
+  if (["/desdobramento", "/fechamento", "/gerador", "/tendencias", "/frequencia"].includes(pathname)) return "/resultados";
+  return "/comunidade";
+};
+
 function LotteryDropdown({
   name,
   tools,
@@ -178,13 +185,25 @@ function LotteryDropdown({
   );
 }
 
-export function DesktopHeader({ pageTitle, breadcrumb }: DesktopHeaderProps) {
+export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }: DesktopHeaderProps) {
   const { isAuthenticated, profile, signOut } = useAuthContext();
   const { isAdmin } = usePermissionContext();
   const { hasPermission } = usePermissions();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradeLabel, setUpgradeLabel] = useState<string | undefined>();
   const [upgradeVariant, setUpgradeVariant] = useState<"premium" | "vip">("premium");
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else if (window.history.length > 2) {
+      navigate(-1);
+    } else {
+      navigate(getParentRoute(location.pathname));
+    }
+  };
 
   const handleGatedClick = (e: React.MouseEvent, path: string) => {
     const feature = getFeatureForRoute(path);
