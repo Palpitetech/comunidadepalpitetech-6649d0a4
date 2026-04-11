@@ -1,7 +1,7 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { Dices, Sparkles, ChevronRight } from "lucide-react";
+import { Dices, ChevronRight } from "lucide-react";
 
 export default function GerarJogos() {
   const generators = [
