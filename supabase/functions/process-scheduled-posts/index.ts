@@ -54,7 +54,7 @@ serve(async (req) => {
 
     // Janela de 14 horas para verificar se o Autor de Resultados postou
     // Isso cobre: resultado às 23h → posts válidos até 13h do dia seguinte
-    const windowHours = 14;
+    const windowHours = 22;
     const windowStart = new Date(brasiliaTime.getTime() - (windowHours * 60 * 60 * 1000));
     const windowStartISO = new Date(windowStart.getTime() - (brasiliaOffset * 60 * 1000)).toISOString();
 
