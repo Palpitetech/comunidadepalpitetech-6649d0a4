@@ -114,18 +114,7 @@ export default function Gerador() {
   return (
     <MainLayout pageTitle="Gerador de Palpites">
       <div className="container-senior py-6 space-y-6 max-w-md mx-auto">
-        {/* Header desktop com ícone */}
-        {!isMobile && (
-          <div className="text-center space-y-1">
-            <div className="flex items-center justify-center gap-2">
-              <Dices className="h-7 w-7 text-primary" />
-              <h1 className="text-2xl font-bold">Gerador de Palpites</h1>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Palpites baseados em análise estatística
-            </p>
-          </div>
-        )}
+        {/* Header desktop removed, moved to Header via MainLayout */}
 
         {/* Card de Configuração */}
         <Card>
