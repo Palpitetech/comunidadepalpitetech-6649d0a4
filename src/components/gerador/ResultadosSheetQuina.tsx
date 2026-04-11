@@ -22,7 +22,7 @@ interface ResultadosSheetQuinaProps {
   onClearAll: () => void;
   estrategia?: EstrategiaData;
   periodoAnalise?: number;
-  dezenasFixas?: number[];
+  dezenasFixes?: number[];
 }
 
 const ITEMS_PER_PAGE = 12;
@@ -35,7 +35,7 @@ export function ResultadosSheetQuina({
   onClearAll,
   estrategia,
   periodoAnalise,
-  dezenasFixas = [],
+  dezenasFixes = [],
 }: ResultadosSheetQuinaProps) {
   const { toast } = useToast();
   const { salvarPalpites, isLoading: isSaving } = usePalpitesSalvos();
@@ -212,7 +212,7 @@ export function ResultadosSheetQuina({
                   index={globalIndex}
                   dezenas={jogo.dezenas}
                   ultimoConcursoDezenas={ultimoConcursoDezenas}
-                  dezenasFixas={dezenasFixas}
+                  dezenasFixes={dezenasFixes}
                   isSelected={selected.has(`gerador-${globalIndex}`)}
                   onSelectChange={(checked) => handleSelectChange(globalIndex, checked)}
                   onDelete={() => handleDeleteSingle(globalIndex)}

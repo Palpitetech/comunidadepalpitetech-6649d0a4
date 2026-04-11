@@ -6,7 +6,6 @@ import { UpgradeModal } from "@/components/shared/UpgradeModal";
 import { FEATURE_LABELS } from "@/types/plans";
 import { useState } from "react";
 import { ChevronRight, type LucideIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export interface HubTool {
   title: string;
@@ -45,7 +44,7 @@ export function HubLoteriaGrid({ tools, themeColor, themeFg = "#fff" }: HubLoter
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-4">
+      <div className="space-y-3">
         {tools.map((tool) => {
           const Icon = tool.icon;
           const badge = renderBadge(tool.path);
@@ -55,38 +54,35 @@ export function HubLoteriaGrid({ tools, themeColor, themeFg = "#fff" }: HubLoter
               key={tool.path}
               to={tool.path}
               onClick={(e) => handleGatedClick(e, tool.path)}
-              className="block group"
+              className="block"
             >
               <div
-                className={cn(
-                  "flex items-center gap-4 p-5 rounded-2xl border-none bg-card shadow-md transition-all duration-300",
-                  "hover:shadow-lg hover:-translate-y-1 active:scale-[0.98]"
-                )}
+                className="flex items-center gap-4 p-4 rounded-xl border bg-card hover:shadow-md transition-all duration-200"
                 style={{
-                  borderLeft: `4px solid hsl(${themeColor})`,
+                  borderLeftWidth: 4,
+                  borderLeftColor: `hsl(${themeColor})`,
+                  boxShadow: `0 1px 3px hsl(${themeColor} / 0.08)`,
                 }}
               >
                 <div
-                  className="h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm"
+                  className="h-11 w-11 rounded-xl flex items-center justify-center shrink-0"
                   style={{
-                    backgroundColor: `hsl(${themeColor} / 0.1)`,
+                    backgroundColor: `hsl(${themeColor} / 0.12)`,
                     color: `hsl(${themeColor})`,
                   }}
                 >
-                  <Icon className="h-6 w-6" />
+                  <Icon className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-base font-bold text-foreground leading-tight">{tool.title}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-foreground">{tool.title}</h3>
                     {badge}
                   </div>
-                  <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1 opacity-80">
+                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
                     {tool.description}
                   </p>
                 </div>
-                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center opacity-40 group-hover:opacity-100 group-hover:bg-primary/10 group-hover:text-primary transition-all">
-                  <ChevronRight className="h-4 w-4" />
-                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
               </div>
             </Link>
           );

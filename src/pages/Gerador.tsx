@@ -28,7 +28,7 @@ export default function Gerador() {
   
   // Novos estados para filtros
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
-  const [dezenasFixasOpcao, setDezenasFixasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
+  const [dezenasFiexasOpcao, setDezenasFiexasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
   const [dezenasFixas, setDezenasFixas] = useState<number[]>([]);
   const [dezenasExcluidasOpcao, setDezenasExcluidasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
   const [dezenasExcluidas, setDezenasExcluidas] = useState<number[]>([]);
@@ -66,7 +66,7 @@ export default function Gerador() {
     
     // Preparar filtros
     const filtros = {
-      dezenasFixas: dezenasFixasOpcao === "sim" ? dezenasFixas : [],
+      dezenasFiexas: dezenasFiexasOpcao === "sim" ? dezenasFixas : [],
       dezenasExcluidas: dezenasExcluidasOpcao === "sim" ? dezenasExcluidas : [],
       pedidoEspecial: pedidoEspecial.trim() || undefined,
     };
@@ -87,7 +87,7 @@ export default function Gerador() {
     setQuantidade(3);
     setQtdDezenas(15);
     setPeriodoAnalise(50);
-    setDezenasFixasOpcao("padrao");
+    setDezenasFiexasOpcao("padrao");
     setDezenasFixas([]);
     setDezenasExcluidasOpcao("padrao");
     setDezenasExcluidas([]);
@@ -95,7 +95,7 @@ export default function Gerador() {
   };
 
   const temFiltrosAtivos = 
-    dezenasFixasOpcao !== "padrao" || 
+    dezenasFiexasOpcao !== "padrao" || 
     dezenasExcluidasOpcao !== "padrao" || 
     pedidoEspecial.trim().length > 0;
 
@@ -174,8 +174,8 @@ export default function Gerador() {
                 <FiltroDezenasSelector
                   label="Dezenas Fixas"
                   description="Forçar dezenas específicas em todos os jogos"
-                  value={dezenasFixasOpcao}
-                  onChange={setDezenasFixasOpcao}
+                  value={dezenasFiexasOpcao}
+                  onChange={setDezenasFiexasOpcao}
                   dezenasSelecionadas={dezenasFixas}
                   onDezenasChange={setDezenasFixas}
                   disabled={isLoading}
@@ -266,7 +266,7 @@ export default function Gerador() {
             onClearAll={handleClearAll}
             estrategia={result.estrategia}
             periodoAnalise={periodoAnalise}
-            dezenasFixas={dezenasFixasOpcao === "sim" ? dezenasFixas : undefined}
+            dezenasFixes={dezenasFiexasOpcao === "sim" ? dezenasFixas : undefined}
           />
         )}
 

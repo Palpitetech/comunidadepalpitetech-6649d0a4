@@ -26,7 +26,7 @@ export default function GeradorDuplaSena() {
   
   // Filtros
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
-  const [dezenasFixasOpcao, setDezenasFixasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
+  const [dezenasFiexasOpcao, setDezenasFiexasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
   const [dezenasFixas, setDezenasFixas] = useState<number[]>([]);
   const [dezenasExcluidasOpcao, setDezenasExcluidasOpcao] = useState<"padrao" | "sim" | "nao">("padrao");
   const [dezenasExcluidas, setDezenasExcluidas] = useState<number[]>([]);
@@ -63,7 +63,7 @@ export default function GeradorDuplaSena() {
       return;
     }
     const filtros = {
-      dezenasFixas: dezenasFixasOpcao === "sim" ? dezenasFixas : [],
+      dezenasFiexas: dezenasFiexasOpcao === "sim" ? dezenasFixas : [],
       dezenasExcluidas: dezenasExcluidasOpcao === "sim" ? dezenasExcluidas : [],
       pedidoEspecial: pedidoEspecial.trim() || undefined,
     };
@@ -83,7 +83,7 @@ export default function GeradorDuplaSena() {
     reset();
     setQuantidade(3);
     setPeriodoAnalise(50);
-    setDezenasFixasOpcao("padrao");
+    setDezenasFiexasOpcao("padrao");
     setDezenasFixas([]);
     setDezenasExcluidasOpcao("padrao");
     setDezenasExcluidas([]);
@@ -91,7 +91,7 @@ export default function GeradorDuplaSena() {
   };
 
   const temFiltrosAtivos = 
-    dezenasFixasOpcao !== "padrao" || 
+    dezenasFiexasOpcao !== "padrao" || 
     dezenasExcluidasOpcao !== "padrao" || 
     pedidoEspecial.trim().length > 0;
 
@@ -154,8 +154,8 @@ export default function GeradorDuplaSena() {
                 <FiltroDezenaSelectorDuplaSena
                   label="Dezenas Fixas"
                   description="Forçar dezenas específicas em todos os jogos"
-                  value={dezenasFixasOpcao}
-                  onChange={setDezenasFixasOpcao}
+                  value={dezenasFiexasOpcao}
+                  onChange={setDezenasFiexasOpcao}
                   dezenasSelecionadas={dezenasFixas}
                   onDezenasChange={setDezenasFixas}
                   disabled={isLoading || !canGenerate}
@@ -243,7 +243,7 @@ export default function GeradorDuplaSena() {
             onClearAll={handleClearAll}
             estrategia={result.estrategia}
             periodoAnalise={periodoAnalise}
-            dezenasFixas={dezenasFixasOpcao === "sim" ? dezenasFixas : undefined}
+            dezenasFixes={dezenasFiexasOpcao === "sim" ? dezenasFixas : undefined}
           />
         )}
 

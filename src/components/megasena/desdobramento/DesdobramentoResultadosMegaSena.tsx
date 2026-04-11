@@ -32,7 +32,7 @@ interface FiltrosResumo {
 
 interface DesdobramentoResultadosMegaSenaProps {
   jogos: JogoGerado[];
-  dezenasFixas?: number[];
+  dezenasFixes?: number[];
   ultimoConcursoDezenas?: number[];
   qtdDezenas: number;
   onVoltar: () => void;
@@ -41,7 +41,7 @@ interface DesdobramentoResultadosMegaSenaProps {
 
 export function DesdobramentoResultadosMegaSena({
   jogos,
-  dezenasFixas = [],
+  dezenasFixes = [],
   ultimoConcursoDezenas = [],
   qtdDezenas,
   onVoltar,
@@ -317,10 +317,10 @@ export function DesdobramentoResultadosMegaSena({
               )}
               
               {/* Dezenas Fixas */}
-              {dezenasFixas.length > 0 && (
+              {dezenasFixes.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-1 border-t border-border/50">
                   <Badge variant="secondary" className="text-xs bg-palpite-fixa text-palpite-fixa-foreground">
-                    Fixas: {dezenasFixas.map(d => formatarDezena(d)).join(", ")}
+                    Fixas: {dezenasFixes.map(d => formatarDezena(d)).join(", ")}
                   </Badge>
                 </div>
               )}
@@ -364,7 +364,7 @@ export function DesdobramentoResultadosMegaSena({
               key={id}
               index={index}
               dezenas={jogo.dezenas}
-              dezenasFixas={dezenasFixas}
+              dezenasFixes={dezenasFixes}
               ultimoConcursoDezenas={ultimoConcursoDezenas}
               isSelected={toolbar.selected.has(id)}
               onSelectChange={(checked) => toolbar.handleSelectChange(id, checked)}

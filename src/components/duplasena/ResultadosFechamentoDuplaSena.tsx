@@ -231,7 +231,7 @@ export function ResultadosFechamentoDuplaSena({
               key={palpite.id}
               index={realIndex}
               dezenas={palpite.dezenas}
-              dezenasFixas={fixas}
+              dezenasFixes={fixas}
               isSelected={selected.has(palpite.id)}
               onSelectChange={(checked) => handleSelectChange(palpite.id, checked)}
               acertos={acertosPorPalpite[palpite.id] ?? null}

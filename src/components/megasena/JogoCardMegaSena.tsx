@@ -15,7 +15,7 @@ import { AcertosBadge } from "@/components/shared/AcertosBadge";
 interface JogoCardMegaSenaProps {
   index: number;
   dezenas: number[];
-  dezenasFixas?: number[];
+  dezenasFixes?: number[];
   isSelected?: boolean;
   onSelectChange?: (checked: boolean) => void;
   acertos?: number | null;
@@ -27,7 +27,7 @@ interface JogoCardMegaSenaProps {
 export function JogoCardMegaSena({
   index,
   dezenas,
-  dezenasFixas = [],
+  dezenasFixes = [],
   isSelected = false,
   onSelectChange,
   acertos,
@@ -124,7 +124,7 @@ export function JogoCardMegaSena({
       {/* Dezenas em linha */}
       <div className="flex items-center gap-1">
         {dezenas.map((dezena) => {
-          const isFixa = dezenasFixas.includes(dezena);
+          const isFixa = dezenasFixes.includes(dezena);
           return (
             <span
               key={dezena}

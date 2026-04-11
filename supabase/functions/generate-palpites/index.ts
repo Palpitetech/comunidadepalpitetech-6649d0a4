@@ -39,132 +39,114 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    const isDemo = req.headers.get("x-is-demo") === "true";
-    
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Não autorizado" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    let user = null;
-    let isAdmin = false;
+    // Cliente autenticado para verificar usuário
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
 
-    if (authHeader) {
-      const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
-        global: { headers: { Authorization: authHeader } },
-      });
-      const { data: { user: authUser }, error: userError } = await supabaseAuth.auth.getUser();
-      user = authUser;
-      
-      if (user) {
-        const { data: userRole } = await supabaseAdmin
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .eq("role", "admin")
-          .single();
-        isAdmin = !!userRole;
-      }
-    }
-
-    if (!user && !isDemo) {
+    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser();
+    if (userError || !user) {
       return new Response(JSON.stringify({ error: "Usuário não autenticado" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    // Cliente service role para operações privilegiadas
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
     // Obter parâmetros do body
     const body = await req.json().catch(() => ({}));
-    
-    // Obter parâmetros do body e validar
-    let quantidade_jogos = Math.min(Math.max(body.quantidade || 1, 1), 250);
-    let qtdDezenas = Math.min(Math.max(body.qtdDezenas || 15, 15), 20);
-    let periodoAnalise = Math.min(Math.max(body.periodoAnalise || 50, 1), 500);
+    const quantidade = Math.min(Math.max(body.quantidade || 1, 1), 250);
+    const qtdDezenas = Math.min(Math.max(body.qtdDezenas || 15, 15), 20);
+    const periodoAnalise = Math.min(Math.max(body.periodoAnalise || 50, 1), 500);
     
     // Filtros avançados
-    let dezenasFixas: number[] = (body.dezenasFixas || [])
+    const dezenasFiexas: number[] = (body.dezenasFiexas || [])
       .filter((d: number) => d >= 1 && d <= 25)
       .slice(0, 10);
-    let dezenasExcluidas: number[] = (body.dezenasExcluidas || [])
+    const dezenasExcluidas: number[] = (body.dezenasExcluidas || [])
       .filter((d: number) => d >= 1 && d <= 25)
       .slice(0, 10);
-    let pedidoEspecial: string = (body.pedidoEspecial || "").trim().slice(0, 200);
+    const pedidoEspecial: string = (body.pedidoEspecial || "").trim().slice(0, 200);
 
-    // For demo requests, restrict parameters
-    if (isDemo && !user) {
-      quantidade_jogos = Math.min(quantidade_jogos, 3);
-      periodoAnalise = Math.min(periodoAnalise, 50);
-      // No fixed numbers for demo
-      dezenasFixas = [];
-      dezenasExcluidas = [];
-      pedidoEspecial = "";
+    // Verificar se é admin (geração infinita)
+    const { data: userRole } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .single();
+    
+    const isAdmin = !!userRole;
+
+    // Verificar plano e feature do usuário
+    const { data: perfil } = await supabaseAdmin
+      .from("perfis")
+      .select("plan_id, custom_features")
+      .eq("id", user.id)
+      .single();
+
+    let geradorMaxPerDay = 1; // Default para usuários sem plano
+    let hasGeradorFeature = false;
+
+    if (perfil?.plan_id) {
+      const { data: plan } = await supabaseAdmin
+        .from("plans")
+        .select("features, gerador_max_per_day")
+        .eq("id", perfil.plan_id)
+        .single();
+
+      if (plan) {
+        const features = plan.features as Record<string, boolean> || {};
+        hasGeradorFeature = features.gerador === true;
+        geradorMaxPerDay = plan.gerador_max_per_day || 1;
+      }
     }
 
+    // Verificar custom_features override
+    if (perfil?.custom_features) {
+      const customFeatures = perfil.custom_features as Record<string, boolean>;
+      if (customFeatures.gerador !== undefined) {
+        hasGeradorFeature = customFeatures.gerador;
+      }
+    }
+
+    // Verificar uso diário (admins ignoram o limite)
     const today = new Date().toISOString().split("T")[0];
-    let geradorMaxPerDay = 1;
-    let hasGeradorFeature = false;
-    let currentUsage = 0;
-    let remainingToday = 0;
-    let effectiveMaxPerDay = 1;
+    const { data: usage } = await supabaseAdmin
+      .from("gerador_daily_usage")
+      .select("count")
+      .eq("user_id", user.id)
+      .eq("day", today)
+      .single();
 
-    if (user) {
-      // Verificar plano e feature do usuário
-      const { data: perfil } = await supabaseAdmin
-        .from("perfis")
-        .select("plan_id, custom_features")
-        .eq("id", user.id)
-        .single();
+    const currentUsage = usage?.count || 0;
+    
+    // Admins têm geração infinita
+    const remainingToday = isAdmin ? 999 : Math.max(geradorMaxPerDay - currentUsage, 0);
+    const effectiveMaxPerDay = isAdmin ? -1 : geradorMaxPerDay; // -1 = infinito
 
-      if (perfil?.plan_id) {
-        const { data: plan } = await supabaseAdmin
-          .from("plans")
-          .select("features, gerador_max_per_day")
-          .eq("id", perfil.plan_id)
-          .single();
-
-        if (plan) {
-          const features = plan.features as Record<string, boolean> || {};
-          hasGeradorFeature = features.gerador === true;
-          geradorMaxPerDay = plan.gerador_max_per_day || 1;
-        }
-      }
-
-      // Verificar custom_features override
-      if (perfil?.custom_features) {
-        const customFeatures = perfil.custom_features as Record<string, boolean>;
-        if (customFeatures.gerador !== undefined) {
-          hasGeradorFeature = customFeatures.gerador;
-        }
-      }
-
-      // Verificar uso diário
-      // Verificar uso diário
-      const { data: usage } = await supabaseAdmin
-        .from("gerador_daily_usage")
-        .select("count")
-        .eq("user_id", user.id)
-        .eq("day", today)
-        .single();
-
-      currentUsage = usage?.count || 0;
-      remainingToday = isAdmin ? 999 : Math.max(geradorMaxPerDay - currentUsage, 0);
-      effectiveMaxPerDay = isAdmin ? -1 : geradorMaxPerDay;
-
-      if (!isAdmin && remainingToday <= 0 && geradorMaxPerDay > 0) {
-        return new Response(JSON.stringify({
-          error: "Limite diário atingido",
-          remaining_today: 0,
-          max_per_day: geradorMaxPerDay
-        }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-    } else if (isDemo) {
-      // Demo limits: 3 generations per day globally or per IP (simplified here for now)
-      remainingToday = 3; 
-      effectiveMaxPerDay = 3;
+    if (!isAdmin && remainingToday <= 0 && geradorMaxPerDay > 0) {
+      return new Response(JSON.stringify({
+        error: "Limite diário atingido",
+        remaining_today: 0,
+        max_per_day: geradorMaxPerDay
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Buscar resultados para análise baseado no período selecionado
@@ -243,8 +225,8 @@ PERÍODO DE ANÁLISE: ${periodoAnalise} concurso(s) - ${periodoAnalise <= 5 ? 'F
 
     // Construir regras de filtros para o prompt
     let filtrosTexto = "";
-    if (dezenasFixas.length > 0) {
-      filtrosTexto += `\nDEZENAS FIXAS (OBRIGATÓRIAS em TODOS os jogos): ${dezenasFixas.map((d: number) => d.toString().padStart(2, '0')).join(', ')}`;
+    if (dezenasFiexas.length > 0) {
+      filtrosTexto += `\nDEZENAS FIXAS (OBRIGATÓRIAS em TODOS os jogos): ${dezenasFiexas.map((d: number) => d.toString().padStart(2, '0')).join(', ')}`;
     }
     if (dezenasExcluidas.length > 0) {
       filtrosTexto += `\nDEZENAS EXCLUÍDAS (PROIBIDAS em todos os jogos): ${dezenasExcluidas.map((d: number) => d.toString().padStart(2, '0')).join(', ')}`;
@@ -263,14 +245,14 @@ REGRAS OBRIGATÓRIAS:
 5. Inclua pelo menos algumas dezenas faltantes do ciclo quando disponíveis
 6. NUNCA prometa vitória - loteria é probabilidade
 7. Seja didático e acessível na explicação
-${dezenasFixas.length > 0 ? `8. OBRIGATÓRIO: Todas as dezenas fixas [${dezenasFixas.join(', ')}] DEVEM aparecer em TODOS os jogos` : ''}
+${dezenasFiexas.length > 0 ? `8. OBRIGATÓRIO: Todas as dezenas fixas [${dezenasFiexas.join(', ')}] DEVEM aparecer em TODOS os jogos` : ''}
 ${dezenasExcluidas.length > 0 ? `9. PROIBIDO: As dezenas excluídas [${dezenasExcluidas.join(', ')}] NÃO PODEM aparecer em nenhum jogo` : ''}
 
 Você deve usar a função generate_palpites para retornar os jogos estruturados.`;
 
     const userPrompt = `${contextoEstatistico}${filtrosTexto}
 
-Com base nesta análise, gere ${quantidade_jogos} jogo(s) de Lotofácil com EXATAMENTE ${qtdDezenas} dezenas cada.
+Com base nesta análise, gere ${quantidade} jogo(s) de Lotofácil com EXATAMENTE ${qtdDezenas} dezenas cada.
 
 Para cada jogo, utilize uma abordagem diferente (se houver mais de um):
 - Jogo 1: Foco nas dezenas quentes (mais frequentes)
@@ -406,8 +388,8 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
     const aiUsage = aiData.usage;
 
-    // Log de uso de IA (only for real users)
-    if (aiUsage && user) {
+    // Log de uso de IA
+    if (aiUsage) {
       supabaseAdmin.from("ai_usage_logs").insert({
         user_id: user.id,
         edge_function: "generate-palpites",
@@ -417,8 +399,8 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
         total_tokens: aiUsage.total_tokens || 0,
         model: "google/gemini-3-flash-preview",
         cost_usd: estimateCost(aiUsage, "google/gemini-3-flash-preview"),
-        metadata: { quantidade_jogos, qtdDezenas, periodoAnalise },
-      });
+        metadata: { quantidade, qtdDezenas, periodoAnalise },
+      }).then(() => {}).catch(e => console.error("Erro log:", e));
     }
     
     if (!toolCall?.function?.arguments) {
@@ -443,8 +425,8 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
       }
       
       // Garantir dezenas fixas presentes
-      if (dezenasFixas.length > 0) {
-        for (const fixa of dezenasFixas) {
+      if (dezenasFiexas.length > 0) {
+        for (const fixa of dezenasFiexas) {
           if (!dezenas.includes(fixa)) {
             dezenas.push(fixa);
           }
@@ -466,19 +448,17 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
       });
     }
 
-    // Atualizar uso diário (only for real users)
-    if (user) {
-      await supabaseAdmin
-        .from("gerador_daily_usage")
-        .upsert({
-          user_id: user.id,
-          day: today,
-          count: currentUsage + 1,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: "user_id,day"
-        });
-    }
+    // Atualizar uso diário
+    await supabaseAdmin
+      .from("gerador_daily_usage")
+      .upsert({
+        user_id: user.id,
+        day: today,
+        count: currentUsage + 1,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: "user_id,day"
+      });
 
     return new Response(JSON.stringify({
       jogos: jogosValidados,

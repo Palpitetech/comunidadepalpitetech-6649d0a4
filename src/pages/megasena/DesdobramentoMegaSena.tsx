@@ -367,7 +367,7 @@ export default function DesdobramentoMegaSena() {
     return (
       <DesdobramentoResultadosMegaSena
         jogos={jogosGerados}
-        dezenasFixas={dezenasFixas}
+        dezenasFixes={dezenasFixas}
         ultimoConcursoDezenas={ultimoSorteio}
         qtdDezenas={qtdDezenas}
         onVoltar={handleLimpar}

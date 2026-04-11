@@ -15,7 +15,7 @@ export interface GeradorMegaSenaResult {
 }
 
 export interface FiltrosGeradorMegaSena {
-  dezenasFixas?: number[];
+  dezenasFiexas?: number[];
   dezenasExcluidas?: number[];
   pedidoEspecial?: string;
 }
@@ -52,7 +52,7 @@ export function useGeradorMegaSena() {
           body: JSON.stringify({ 
             quantidade, 
             periodoAnalise,
-            dezenasFixas: filtros?.dezenasFixas,
+            dezenasFiexas: filtros?.dezenasFiexas,
             dezenasExcluidas: filtros?.dezenasExcluidas,
             pedidoEspecial: filtros?.pedidoEspecial,
           }),

@@ -15,7 +15,7 @@ export interface GeradorDuplaSenaResult {
 }
 
 export interface FiltrosGeradorDuplaSena {
-  dezenasFixas?: number[];
+  dezenasFiexas?: number[];
   dezenasExcluidas?: number[];
   pedidoEspecial?: string;
   sorteioAnalise?: "1" | "2" | "ambos";
@@ -53,7 +53,7 @@ export function useGeradorDuplaSena() {
           body: JSON.stringify({ 
             quantidade, 
             periodoAnalise,
-            dezenasFixas: filtros?.dezenasFixas,
+            dezenasFiexas: filtros?.dezenasFiexas,
             dezenasExcluidas: filtros?.dezenasExcluidas,
             pedidoEspecial: filtros?.pedidoEspecial,
             sorteioAnalise: filtros?.sorteioAnalise || "ambos",

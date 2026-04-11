@@ -21,7 +21,7 @@ interface ResultadosSheetDuplaSenaProps {
   onClearAll: () => void;
   estrategia?: EstrategiaData;
   periodoAnalise?: number;
-  dezenasFixas?: number[];
+  dezenasFixes?: number[];
 }
 
 const ITEMS_PER_PAGE = 12;
@@ -34,7 +34,7 @@ export function ResultadosSheetDuplaSena({
   onClearAll,
   estrategia,
   periodoAnalise,
-  dezenasFixas = [],
+  dezenasFixes = [],
 }: ResultadosSheetDuplaSenaProps) {
   const { toast } = useToast();
   const { salvarPalpites, isLoading: isSaving } = usePalpitesSalvos();
@@ -298,7 +298,7 @@ export function ResultadosSheetDuplaSena({
                   key={globalIndex}
                   index={globalIndex}
                   dezenas={jogo.dezenas}
-                  dezenasFixas={dezenasFixas}
+                  dezenasFixes={dezenasFixes}
                   ultimoConcursoDezenas={ultimoConcursoDezenas}
                   isSelected={selected.has(`gerador-${globalIndex}`)}
                   onSelectChange={(checked) => handleSelectChange(globalIndex, checked)}

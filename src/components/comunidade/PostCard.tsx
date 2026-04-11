@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { FormattedContent } from "./FormattedContent";
-import { Heart, MessageCircle, ChevronRight, Share2, MoreHorizontal } from "lucide-react";
+import { Heart, MessageCircle, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -44,39 +44,34 @@ export const PostCard = memo(function PostCard({ post, onClick, onPrefetch }: Po
     <article
       onClick={onClick}
       onPointerEnter={onPrefetch}
-      className="bg-card border-none rounded-[1.5rem] p-5 cursor-pointer shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-300"
+      className="bg-card border border-border/60 rounded-xl p-3 cursor-pointer shadow-md active:scale-[0.98] transition-transform duration-150"
     >
-      {/* Header moderno */}
-      <div className="flex items-center gap-3 mb-4">
-        <Avatar className="h-10 w-10 ring-2 ring-primary/10">
+      {/* Header compacto */}
+      <div className="flex items-center gap-2 mb-2">
+        <Avatar className="h-7 w-7">
           <AvatarImage src={post.perfis?.avatar_url || undefined} />
-          <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">
+          <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
             {initials}
           </AvatarFallback>
         </Avatar>
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-sm text-foreground truncate leading-tight">
-            {authorName}
-          </p>
-          <p className="text-[11px] text-muted-foreground/80 font-medium">
-            {timeAgo}
-          </p>
-        </div>
-        <button className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted/80">
-          <MoreHorizontal className="h-4 w-4" />
-        </button>
+        <span className="font-medium text-sm text-foreground truncate">
+          {authorName}
+        </span>
+        <span className="text-xs text-muted-foreground ml-auto whitespace-nowrap">
+          {timeAgo}
+        </span>
       </div>
 
-      {/* Título mais chamativo */}
+      {/* Título */}
       {post.titulo && (
-        <h3 className="font-bold text-base text-foreground mb-3 leading-snug tracking-tight">
+        <h3 className="font-semibold text-sm text-foreground mb-2 line-clamp-2">
           {post.titulo}
         </h3>
       )}
 
-      {/* Thumbnail da Mídia com sombra e bordas arredondadas maiores */}
+      {/* Thumbnail da Mídia */}
       {post.media_url && (
-        <div className="relative aspect-video rounded-2xl overflow-hidden mb-4 bg-muted shadow-sm">
+        <div className="relative aspect-video rounded-lg overflow-hidden mb-2 bg-muted">
           {post.media_type === "video" ? (
             <video
               src={post.media_url}
@@ -92,43 +87,35 @@ export const PostCard = memo(function PostCard({ post, onClick, onPrefetch }: Po
               decoding="async"
             />
           )}
-          {post.loteria_tag && (
-            <div className="absolute top-3 left-3 bg-black/40 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
-              {post.loteria_tag}
-            </div>
-          )}
         </div>
       )}
 
-      {/* Conteúdo resumido com melhor tipografia */}
+      {/* Conteúdo resumido */}
       {!post.media_url && post.conteudo && (
         <FormattedContent
           content={post.conteudo}
           truncate
-          maxLines={3}
-          className="mb-4 text-sm leading-relaxed text-muted-foreground/90 font-medium italic"
+          maxLines={2}
+          className="mb-2"
         />
       )}
 
-      {/* Footer com botões de interação modernos */}
-      <div className="flex items-center justify-between pt-3 border-t border-muted/50 mt-1">
-        <div className="flex items-center gap-5 text-muted-foreground/80">
-          <button className="flex items-center gap-1.5 text-xs font-bold hover:text-primary transition-colors">
-            <Heart className="h-4 w-4" />
+      {/* Footer */}
+      <div className="flex items-center justify-between pt-1">
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <span className="flex items-center gap-1 text-xs">
+            <Heart className="h-3.5 w-3.5" />
             {post.curtidas || 0}
-          </button>
-          <button className="flex items-center gap-1.5 text-xs font-bold hover:text-primary transition-colors">
-            <MessageCircle className="h-4 w-4" />
+          </span>
+          <span className="flex items-center gap-1 text-xs">
+            <MessageCircle className="h-3.5 w-3.5" />
             {post.respostas_count || 0}
-          </button>
-          <button className="flex items-center gap-1.5 text-xs font-bold hover:text-primary transition-colors">
-            <Share2 className="h-4 w-4" />
-          </button>
+          </span>
         </div>
-        <div className="flex items-center gap-1 text-[11px] text-primary font-bold uppercase tracking-wider group">
-          Ver post
-          <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-        </div>
+        <span className="flex items-center gap-1 text-xs text-primary font-medium">
+          Continue lendo
+          <ChevronRight className="h-3.5 w-3.5" />
+        </span>
       </div>
     </article>
   );
