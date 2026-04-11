@@ -39,32 +39,40 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
+    const isDemo = req.headers.get("x-is-demo") === "true";
+    
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Cliente autenticado para verificar usuário
-    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    let user = null;
+    let isAdmin = false;
 
-    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser();
-    if (userError || !user) {
+    if (authHeader) {
+      const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: { user: authUser }, error: userError } = await supabaseAuth.auth.getUser();
+      user = authUser;
+      
+      if (user) {
+        const { data: userRole } = await supabaseAdmin
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "admin")
+          .single();
+        isAdmin = !!userRole;
+      }
+    }
+
+    if (!user && !isDemo) {
       return new Response(JSON.stringify({ error: "Usuário não autenticado" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // Cliente service role para operações privilegiadas
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     // Obter parâmetros do body
     const body = await req.json().catch(() => ({}));
@@ -81,72 +89,92 @@ serve(async (req) => {
       .slice(0, 10);
     const pedidoEspecial: string = (body.pedidoEspecial || "").trim().slice(0, 200);
 
-    // Verificar se é admin (geração infinita)
-    const { data: userRole } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin")
-      .single();
+    // For demo requests, restrict parameters
+    if (isDemo && !user) {
+      body.quantidade = Math.min(body.quantidade || 1, 3);
+      body.periodoAnalise = Math.min(body.periodoAnalise || 50, 50);
+      // No fixed numbers for demo
+      body.dezenasFiexas = [];
+      body.dezenasExcluidas = [];
+      body.pedidoEspecial = "";
+    }
+
+    const quantidade = Math.min(Math.max(body.quantidade || 1, 1), 250);
+    const qtdDezenas = Math.min(Math.max(body.qtdDezenas || 15, 15), 20);
+    const periodoAnalise = Math.min(Math.max(body.periodoAnalise || 50, 1), 500);
     
-    const isAdmin = !!userRole;
+    // Filtros avançados
+    const dezenasFiexas: number[] = (body.dezenasFiexas || [])
+      .filter((d: number) => d >= 1 && d <= 25)
+      .slice(0, 10);
+    const dezenasExcluidas: number[] = (body.dezenasExcluidas || [])
+      .filter((d: number) => d >= 1 && d <= 25)
+      .slice(0, 10);
+    const pedidoEspecial: string = (body.pedidoEspecial || "").trim().slice(0, 200);
 
-    // Verificar plano e feature do usuário
-    const { data: perfil } = await supabaseAdmin
-      .from("perfis")
-      .select("plan_id, custom_features")
-      .eq("id", user.id)
-      .single();
-
-    let geradorMaxPerDay = 1; // Default para usuários sem plano
+    let geradorMaxPerDay = 1;
     let hasGeradorFeature = false;
+    let currentUsage = 0;
+    let remainingToday = 0;
+    let effectiveMaxPerDay = 1;
 
-    if (perfil?.plan_id) {
-      const { data: plan } = await supabaseAdmin
-        .from("plans")
-        .select("features, gerador_max_per_day")
-        .eq("id", perfil.plan_id)
+    if (user) {
+      // Verificar plano e feature do usuário
+      const { data: perfil } = await supabaseAdmin
+        .from("perfis")
+        .select("plan_id, custom_features")
+        .eq("id", user.id)
         .single();
 
-      if (plan) {
-        const features = plan.features as Record<string, boolean> || {};
-        hasGeradorFeature = features.gerador === true;
-        geradorMaxPerDay = plan.gerador_max_per_day || 1;
+      if (perfil?.plan_id) {
+        const { data: plan } = await supabaseAdmin
+          .from("plans")
+          .select("features, gerador_max_per_day")
+          .eq("id", perfil.plan_id)
+          .single();
+
+        if (plan) {
+          const features = plan.features as Record<string, boolean> || {};
+          hasGeradorFeature = features.gerador === true;
+          geradorMaxPerDay = plan.gerador_max_per_day || 1;
+        }
       }
-    }
 
-    // Verificar custom_features override
-    if (perfil?.custom_features) {
-      const customFeatures = perfil.custom_features as Record<string, boolean>;
-      if (customFeatures.gerador !== undefined) {
-        hasGeradorFeature = customFeatures.gerador;
+      // Verificar custom_features override
+      if (perfil?.custom_features) {
+        const customFeatures = perfil.custom_features as Record<string, boolean>;
+        if (customFeatures.gerador !== undefined) {
+          hasGeradorFeature = customFeatures.gerador;
+        }
       }
-    }
 
-    // Verificar uso diário (admins ignoram o limite)
-    const today = new Date().toISOString().split("T")[0];
-    const { data: usage } = await supabaseAdmin
-      .from("gerador_daily_usage")
-      .select("count")
-      .eq("user_id", user.id)
-      .eq("day", today)
-      .single();
+      // Verificar uso diário
+      const today = new Date().toISOString().split("T")[0];
+      const { data: usage } = await supabaseAdmin
+        .from("gerador_daily_usage")
+        .select("count")
+        .eq("user_id", user.id)
+        .eq("day", today)
+        .single();
 
-    const currentUsage = usage?.count || 0;
-    
-    // Admins têm geração infinita
-    const remainingToday = isAdmin ? 999 : Math.max(geradorMaxPerDay - currentUsage, 0);
-    const effectiveMaxPerDay = isAdmin ? -1 : geradorMaxPerDay; // -1 = infinito
+      currentUsage = usage?.count || 0;
+      remainingToday = isAdmin ? 999 : Math.max(geradorMaxPerDay - currentUsage, 0);
+      effectiveMaxPerDay = isAdmin ? -1 : geradorMaxPerDay;
 
-    if (!isAdmin && remainingToday <= 0 && geradorMaxPerDay > 0) {
-      return new Response(JSON.stringify({
-        error: "Limite diário atingido",
-        remaining_today: 0,
-        max_per_day: geradorMaxPerDay
-      }), {
-        status: 429,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (!isAdmin && remainingToday <= 0 && geradorMaxPerDay > 0) {
+        return new Response(JSON.stringify({
+          error: "Limite diário atingido",
+          remaining_today: 0,
+          max_per_day: geradorMaxPerDay
+        }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else if (isDemo) {
+      // Demo limits: 3 generations per day globally or per IP (simplified here for now)
+      remainingToday = 3; 
+      effectiveMaxPerDay = 3;
     }
 
     // Buscar resultados para análise baseado no período selecionado
@@ -388,8 +416,8 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
     const aiUsage = aiData.usage;
 
-    // Log de uso de IA
-    if (aiUsage) {
+    // Log de uso de IA (only for real users)
+    if (aiUsage && user) {
       supabaseAdmin.from("ai_usage_logs").insert({
         user_id: user.id,
         edge_function: "generate-palpites",
@@ -448,17 +476,19 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos.`;
       });
     }
 
-    // Atualizar uso diário
-    await supabaseAdmin
-      .from("gerador_daily_usage")
-      .upsert({
-        user_id: user.id,
-        day: today,
-        count: currentUsage + 1,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: "user_id,day"
-      });
+    // Atualizar uso diário (only for real users)
+    if (user) {
+      await supabaseAdmin
+        .from("gerador_daily_usage")
+        .upsert({
+          user_id: user.id,
+          day: today,
+          count: currentUsage + 1,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: "user_id,day"
+        });
+    }
 
     return new Response(JSON.stringify({
       jogos: jogosValidados,
