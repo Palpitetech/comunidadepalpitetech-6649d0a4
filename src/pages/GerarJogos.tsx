@@ -38,15 +38,6 @@ export default function GerarJogos() {
   return (
     <MainLayout pageTitle="Gerar Jogos">
       <div className="container-senior py-6 space-y-6 max-w-md mx-auto">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-bold">Gerar Jogos inteligentes</h2>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Escolha uma loteria para gerar palpites baseados em análise estatística.
-          </p>
-        </div>
 
         <div className="grid gap-4">
           {generators.map((gen) => (
