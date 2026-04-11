@@ -43,12 +43,8 @@ export default function Frequencia() {
   return (
     <MainLayout pageTitle="Análise de Dezenas">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-4">
-        {/* Header desktop */}
         {!isMobile && (
-          <div className="flex items-center justify-between gap-4">
-            <h1 className="text-xl sm:text-2xl font-semibold text-foreground">
-              Análise de Dezenas
-            </h1>
+          <div className="flex items-center justify-end gap-4">
             <SnapshotButton
               targetRef={contentRef}
               defaultTitle={`Análise de Dezenas - Últimos ${periodo} concursos`}
