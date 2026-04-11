@@ -8,10 +8,7 @@ export function FeedHeader() {
   return (
     <div className="flex items-center justify-between gap-4 mb-6">
       <div className="flex items-center gap-3">
-        <Users className="h-7 w-7 text-primary" />
-        <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-          Comunidade
-        </h1>
+        {/* Title removed, moved to Header via MainLayout */}
       </div>
       
       {/* Botão de criar post desativado temporariamente
