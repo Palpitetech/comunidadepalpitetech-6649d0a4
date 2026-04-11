@@ -35,7 +35,12 @@ export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRigh
   return (
     <div className="min-h-screen flex flex-col bg-background" style={{ paddingBottom: isMobile ? 'env(safe-area-inset-bottom, 0px)' : undefined }}>
       {/* Header completo - em todos os tamanhos, DesktopHeader cuida das visibilidades mobile/desktop */}
-      <DesktopHeader pageTitle={pageTitle} breadcrumb={breadcrumb} />
+      <DesktopHeader 
+        pageTitle={pageTitle} 
+        breadcrumb={breadcrumb} 
+        onBack={onBack}
+        hideBackButton={hideBackButton}
+      />
       
       {isMobile && pageTitle !== undefined && (
         <PageHeader 
@@ -43,7 +48,7 @@ export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRigh
           breadcrumb={breadcrumb}
           onBack={onBack} 
           rightContent={headerRightContent}
-          hideBackButton={hideBackButton}
+          hideBackButton={true}
         />
       )}
 
