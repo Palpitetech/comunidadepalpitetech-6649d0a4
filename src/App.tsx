@@ -108,6 +108,7 @@ import PerfilDados from "./pages/PerfilDados";
 import PerfilTransacoes from "./pages/PerfilTransacoes";
 import PerfilAssinatura from "./pages/PerfilAssinatura";
 import PerfilSeguranca from "./pages/PerfilSeguranca";
+import GerarJogos from "./pages/GerarJogos";
 
 const queryClient = new QueryClient();
 
@@ -151,6 +152,7 @@ const App = () => (
             <Route path="/g/:slug" element={<SmartLinkRedirect />} />
 
             {/* Rotas Protegidas - Requer Login */}
+            <Route path="/gerar-jogos" element={<ProtectedRoute><GerarJogos /></ProtectedRoute>} />
             <Route path="/home" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
             <Route path="/comunidade" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
             <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
