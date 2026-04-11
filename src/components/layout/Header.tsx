@@ -35,13 +35,13 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
-      <div className="container-senior flex items-center justify-between py-2">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+      <div className="container-senior flex items-center justify-between py-4">
         {/* Logo */}
-        <Link to="/home" className="flex items-center gap-2 no-underline">
-          <img src="/logo.png" alt="Palpite Tech" className="h-7 w-7 rounded-md" />
-          <span className="text-base font-bold text-primary hidden sm:inline">Palpite Tech</span>
-          <span className="text-base font-bold text-primary sm:hidden">Palpite</span>
+        <Link to="/home" className="flex items-center gap-3 no-underline">
+          <img src="/logo.png" alt="Palpite Tech" className="h-9 w-9 rounded-md" />
+          <span className="text-senior-xl font-bold text-primary hidden sm:inline">Palpite Tech</span>
+          <span className="text-senior-xl font-bold text-primary sm:hidden">Palpite</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -114,10 +114,10 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden h-10 w-10"
+            className="md:hidden h-12 w-12"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-6 w-6" />
           </Button>
         </div>
       </div>

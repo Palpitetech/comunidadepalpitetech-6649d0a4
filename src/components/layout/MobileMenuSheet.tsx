@@ -32,8 +32,7 @@ import {
   Target, Table2, Flame, Gift, ArrowLeft, Home, 
   BarChart3, MessageCircle, LogOut, Dices, Shuffle, 
   LayoutGrid, Grid3X3, TrendingUp, TrendingDown,
-  User, CreditCard, Ticket, Lock, Save, Calendar, 
-  ChevronRight, Info
+  User, CreditCard, Ticket, Lock
 } from "lucide-react";
 import { 
   LOTOFACIL_TOOLS, 
@@ -105,34 +104,35 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
   const supportWhatsApp = "https://wa.me/5516997175392?text=Olá! Preciso de ajuda com o Palpite Tech.";
 
   const LotteryAccordion = ({ name, color, tools }: { name: string, color: string, tools: any[] }) => (
-    <div className="mx-4 border-b border-border/40">
+    <div className="mx-4 p-1 rounded-r-md border-l-4 mb-3" style={{ borderLeftColor: color, backgroundColor: `${color}0A` }}>
       <Accordion type="single" collapsible>
         <AccordionItem value="tools" className="border-none">
-          <AccordionTrigger className="py-3.5 text-sm hover:no-underline font-medium">
+          <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
             <div className="flex items-center gap-3">
-              <div className="w-1 h-4 rounded-full" style={{ backgroundColor: color }} />
+              <BarChart3 className="h-5 w-5 stroke-[1.5]" />
               <span>{name}</span>
             </div>
           </AccordionTrigger>
-          <AccordionContent className="pb-2">
-            <div className="pl-4 space-y-1">
+          <AccordionContent className="pb-0">
+            <div className="pl-8 space-y-0">
               {tools.map((tool, idx) => (
-                <Link 
-                  key={tool.to}
-                  to={tool.to} 
-                  onClick={(e) => tool.gated ? handleGatedClick(e, tool.to) : closeAndNavigate()}
-                >
-                  <div className={cn(
-                    "py-2.5 text-sm flex items-center justify-between transition-colors",
-                    tool.bold ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground"
-                  )}>
-                    <div className="flex items-center gap-3">
-                      {tool.icon && <tool.icon className="h-4 w-4 stroke-[1.5]" />}
+                <div key={tool.to}>
+                  {idx > 0 && tool.bold && <div className="border-t border-border/50 my-1" />}
+                  <Link 
+                    to={tool.to} 
+                    onClick={(e) => tool.gated ? handleGatedClick(e, tool.to) : closeAndNavigate()}
+                  >
+                    <div className={cn(
+                      "py-2.5 text-[15px] flex items-center gap-2 transition-colors",
+                      tool.bold ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"
+                    )}>
+                      {tool.icon && <tool.icon className="h-4 w-4" />}
                       {tool.label}
+                      {tool.gated && renderBadge(tool.to)}
                     </div>
-                    {tool.gated && renderBadge(tool.to)}
-                  </div>
-                </Link>
+                  </Link>
+                  {idx === 0 && <div className="border-t border-border/50 my-1" />}
+                </div>
               ))}
             </div>
           </AccordionContent>
@@ -149,9 +149,9 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
             <SheetTitle>Menu Principal</SheetTitle>
           </SheetHeader>
 
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border/30">
-            <button onClick={() => onOpenChange(false)} className="flex items-center gap-2 text-muted-foreground/60 hover:text-foreground transition-colors text-sm font-medium">
-              <ArrowLeft className="h-4 w-4" />
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+            <button onClick={() => onOpenChange(false)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-base">
+              <ArrowLeft className="h-5 w-5" />
               Voltar
             </button>
 
@@ -234,23 +234,17 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            <nav className="px-6 py-4 space-y-1">
+            <nav className="px-4 py-6 space-y-1">
               <Link to="/home" onClick={closeAndNavigate}>
-                <div className={cn("flex items-center gap-3 py-3 px-2 rounded-lg text-sm transition-all active:scale-95", isActive("/home") ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground")}>
-                  <Home className="h-4 w-4 stroke-[1.5]" />
-                  Página Inicial
+                <div className="flex items-center gap-3 py-3 text-base text-foreground hover:text-primary transition-colors">
+                  <Home className="h-5 w-5 stroke-[1.5]" />
+                  Início
                 </div>
               </Link>
-              <Link to="/meus-palpites" onClick={closeAndNavigate}>
-                <div className={cn("flex items-center gap-3 py-3 px-2 rounded-lg text-sm transition-all active:scale-95", isActive("/meus-palpites") ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground")}>
-                  <Save className="h-4 w-4 stroke-[1.5]" />
-                  Palpites Salvos
-                </div>
-              </Link>
-              <Link to="/proximos-concursos" onClick={closeAndNavigate}>
-                <div className={cn("flex items-center gap-3 py-3 px-2 rounded-lg text-sm transition-all active:scale-95", isActive("/proximos-concursos") ? "text-primary font-bold" : "text-muted-foreground hover:text-foreground")}>
-                  <Calendar className="h-4 w-4 stroke-[1.5]" />
-                  Concursos
+              <Link to="/chat" onClick={closeAndNavigate}>
+                <div className={cn("flex items-center gap-3 py-3 text-base transition-colors", isActive("/chat") ? "text-primary font-medium" : "text-foreground hover:text-primary")}>
+                  <MessageCircle className="h-5 w-5 stroke-[1.5]" />
+                  Chat IA
                 </div>
               </Link>
             </nav>

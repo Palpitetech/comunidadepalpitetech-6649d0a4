@@ -59,18 +59,18 @@ export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRigh
       <RequireCelularModal />
 
       {/* Main Content */}
-      <main className={`flex-1 ${isMobile ? 'pb-16' : ''}`}>
+      <main className={`flex-1 ${isMobile ? 'pb-20' : ''}`}>
         {children}
       </main>
 
       {/* Footer / Rodapé */}
-      <footer className={`border-t border-border/40 bg-card py-4 ${isMobile ? 'mb-14' : ''}`}>
-        <div className="max-w-2xl mx-auto px-6 text-center space-y-1.5">
-          <p className="text-[9px] text-muted-foreground/60 leading-relaxed uppercase tracking-tight">
-            Este site tem caráter exclusivamente educacional e informativo. <strong>Não garantimos premiação.</strong> Aposte com responsabilidade.
+      <footer className={`border-t border-border bg-card py-4 ${isMobile ? 'mb-16' : ''}`}>
+        <div className="max-w-3xl mx-auto px-4 text-center space-y-1.5">
+          <p className="text-[10px] text-muted-foreground leading-relaxed">
+            <strong>Aviso legal:</strong> Este site não possui qualquer vínculo com a Caixa Econômica Federal, Facebook, Instagram, Meta ou qualquer outra empresa do grupo Meta Platforms, Inc. O conteúdo apresentado tem caráter exclusivamente educacional e informativo, baseado em análises estatísticas de resultados públicos. <strong>Não garantimos premiação em nenhuma modalidade de loteria.</strong> Aposte com responsabilidade.
           </p>
-          <p className="text-[9px] text-muted-foreground/40 font-medium">
-            © {new Date().getFullYear()} Palpite Tech.
+          <p className="text-[10px] text-muted-foreground">
+            © {new Date().getFullYear()} Palpite Tech. Todos os direitos reservados.
           </p>
         </div>
       </footer>

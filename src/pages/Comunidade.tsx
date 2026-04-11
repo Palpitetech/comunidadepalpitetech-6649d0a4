@@ -38,24 +38,24 @@ export default function Comunidade() {
     <MainLayout pageTitle="Comunidade" hideBackButton>
       <DownloadBanner />
       <PWAUpdateBanner />
-      <div className="max-w-xl mx-auto px-4 py-4 min-h-full">
+      <div className="max-w-2xl mx-auto px-4 py-6 bg-clovers min-h-full bg-primary/5">
         {!isMobile && <FeedHeader />}
 
         <Card 
-          className="mb-4 bg-background border-border/40 hover:border-primary/40 transition-all cursor-pointer shadow-sm overflow-hidden group active:scale-95"
+          className="mb-6 bg-primary hover:bg-primary/90 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden group active:scale-95"
           onClick={() => navigate('/gerar-jogos')}
         >
-          <CardContent className="p-4 flex items-center justify-between relative overflow-hidden">
-            <div className="flex items-center gap-3 relative z-10">
-              <div className="bg-primary/5 p-2.5 rounded-xl group-hover:bg-primary/10 transition-colors">
-                <Sparkles className="h-5 w-5 text-primary" />
+          <CardContent className="p-4 sm:p-5 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="bg-white/20 p-2.5 rounded-xl group-hover:scale-110 transition-transform">
+                <Sparkles className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h3 className="font-bold text-base leading-tight">Gerar Palpites</h3>
-                <p className="text-muted-foreground text-[10px] mt-0.5">IA otimizada para seus jogos</p>
+                <h3 className="font-extrabold text-lg sm:text-xl leading-none">Gerar meus Palpites</h3>
+                <p className="text-white/80 text-xs sm:text-sm mt-1">Crie jogos inteligentes em segundos</p>
               </div>
             </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground/40 group-hover:translate-x-1 transition-transform relative z-10" />
+            <ChevronRight className="h-6 w-6 text-white/60 group-hover:translate-x-1 transition-transform" />
           </CardContent>
         </Card>
 
