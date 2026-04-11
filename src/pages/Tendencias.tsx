@@ -43,13 +43,8 @@ export default function Tendencias() {
   return (
     <MainLayout pageTitle="Tendências">
       <div className="container-senior py-6">
-        {/* Header desktop */}
         {!isMobile && (
-          <div className="flex items-center justify-between gap-3 mb-6">
-            <div className="flex items-center gap-3">
-              <TrendingUp className="h-7 w-7 text-primary" />
-              <h1 className="text-xl font-bold">Tendências</h1>
-            </div>
+          <div className="flex items-center justify-end gap-3 mb-6">
             <SnapshotButton 
               targetRef={contentRef} 
               defaultTitle="Análise de Tendências - Lotofácil"
