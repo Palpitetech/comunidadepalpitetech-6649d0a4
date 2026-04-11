@@ -32,7 +32,8 @@ import {
   Target, Table2, Flame, Gift, ArrowLeft, Home, 
   BarChart3, MessageCircle, LogOut, Dices, Shuffle, 
   LayoutGrid, Grid3X3, TrendingUp, TrendingDown,
-  User, CreditCard, Ticket, Lock
+  User, CreditCard, Ticket, Lock, Save, Calendar, 
+  ChevronRight, Info
 } from "lucide-react";
 import { 
   LOTOFACIL_TOOLS, 
