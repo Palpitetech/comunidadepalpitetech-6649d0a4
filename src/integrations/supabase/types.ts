@@ -3078,6 +3078,7 @@ export type Database = {
       }
     }
     Functions: {
+      activate_free_trial: { Args: never; Returns: Json }
       audit_webhook_access: { Args: never; Returns: undefined }
       check_referral_milestones: {
         Args: { p_referrer_id: string }
