@@ -60,21 +60,17 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
         return;
       }
 
-      const trialPlanId = 'b3a2a9e3-8e3b-4e3b-8e3b-8e3b8e3b8e3b';
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 3);
-
-      const { error } = await supabase
-        .from("perfis")
-        .update({
-          plan_id: trialPlanId,
-          status_assinatura: "ativa",
-          validade_assinatura: expiresAt.toISOString(),
-          trial_used: true
-        })
-        .eq("id", user.id);
-
-      if (error) throw error;
+      const { data: result, error: rpcError } = await supabase.rpc('activate_free_trial');
+      
+      if (rpcError) throw rpcError;
+      
+      const response = result as { success: boolean, message: string };
+      if (!response.success) {
+        toast.error(response.message);
+        setActivatingTrial(false);
+        activatingRef.current = false;
+        return;
+      }
 
       toast.success("Teste grátis ativado com sucesso! Aproveite 3 dias de acesso total.");
       await refetch();
