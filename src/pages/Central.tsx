@@ -82,6 +82,47 @@ const Central = () => {
         <div className="w-full mt-6">
           <LatestResults />
         </div>
+
+        {/* Section 3: Daily Studies */}
+        <div className="w-full mt-12 space-y-8">
+          <div className="text-center space-y-2">
+            <h2 className="text-xl sm:text-2xl font-black text-senior-dark leading-tight">
+              Receba Estudos diários sem custo nenhum, 100% de graça.
+            </h2>
+            <p className="text-sm sm:text-base text-muted-foreground font-medium">
+              Todos os dias publicamos analises e estudos atualizados para te ajudar na jornada do 14 e 15 pontos.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-8 w-full pb-10">
+            {[
+              "Raio X do Resultado.",
+              "Análise de Pares e Ímpares",
+              "Análise de Ciclo",
+              "Analise de Movimentação",
+              "Análise técnica",
+              "Análise moldura",
+              "Analise Repetidas"
+            ].map((title, index) => (
+              <Card key={index} className="overflow-hidden border-none shadow-[0_20px_50px_rgba(0,0,0,0.1)] bg-white/95 backdrop-blur-sm transition-all duration-300 hover:shadow-[0_30px_60px_rgba(0,0,0,0.15)] hover:-translate-y-2 flex flex-col p-5 space-y-4 rounded-[2rem]">
+                <h3 className="font-extrabold text-senior-dark text-lg px-2">{title}</h3>
+                
+                <div className="aspect-video w-full bg-gray-100 rounded-2xl overflow-hidden flex items-center justify-center text-muted-foreground text-xs italic border border-dashed border-gray-200">
+                  [Foto na horizontal]
+                </div>
+
+                <div className="flex justify-center pt-2">
+                  <Button 
+                    className="h-10 px-6 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-black shadow-lg shadow-primary/20 transition-all active:scale-95"
+                    asChild
+                  >
+                    <Link to="/login">Fazer meu Cadastro Gratuíto</Link>
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
       </div>
     </MainLayout>
   );
