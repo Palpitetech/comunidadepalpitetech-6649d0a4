@@ -93,7 +93,7 @@ const Index = () => {
         </section>
         
         {/* Main Action Boxes */}
-        <div className="cluster-container w-full pt-0 pb-6 grid grid-cols-2 gap-3">
+        <div className="cluster-container w-full pt-0 pb-4 grid grid-cols-2 gap-2">
           <Card 
             className="bg-green-600 sm:hover:bg-green-700 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden active:scale-[0.98] active:opacity-90 select-none touch-manipulation"
             onClick={() => navigate('/gerar-jogos')}
