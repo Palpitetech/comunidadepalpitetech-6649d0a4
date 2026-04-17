@@ -122,13 +122,14 @@ const AjudaConfiavel = () => {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <article className="prose prose-slate dark:prose-invert max-w-none">
           <header className="mb-8 border-b pb-8">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4 text-foreground leading-tight">
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 text-foreground leading-tight">
               Palpite Tech é confiável? Teste real, análise e resultados
             </h1>
+            <p className="text-sm text-muted-foreground italic mb-6">
+              <em>Última atualização: Abril de 2026</em>
+            </p>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span>Por <strong>Equipe Palpite Tech</strong></span>
-              <span>•</span>
-              <time dateTime="2024-05-20">Atualizado em 20 de maio de 2024</time>
             </div>
           </header>
 

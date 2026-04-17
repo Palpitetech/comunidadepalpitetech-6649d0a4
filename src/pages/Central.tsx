@@ -85,9 +85,6 @@ const Central = () => {
           <h1 className="text-xl sm:text-3xl font-black text-senior-dark leading-tight line-clamp-2">
             Central completa para você fazer sua <span className="text-primary">fézinha</span>
           </h1>
-          <p className="text-[10px] sm:text-[12px] text-muted-foreground italic mt-1">
-            Última atualização: Abril de 2026
-          </p>
           <p className="text-sm sm:text-lg text-muted-foreground font-medium line-clamp-1">
             O que deseja fazer agora?
           </p>
