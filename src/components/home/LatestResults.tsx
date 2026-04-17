@@ -1,8 +1,11 @@
 
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { TrendingUp, Calendar } from "lucide-react";
+import { TrendingUp, Calendar, ChevronRight } from "lucide-react";
 
 interface LotteryResult {
   id: string;
@@ -100,7 +103,19 @@ const latestLotteryResults: LotteryResult[] = [
 ];
 
 export function LatestResults() {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
+  const handleStudyClick = (lotteryId: string) => {
+    if (!isAuthenticated) {
+      navigate("/login");
+    } else {
+      navigate(`/${lotteryId}`);
+    }
+  };
+
   return (
+
     <div className="w-full space-y-3 px-4 pb-6">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-senior-dark">Últimos Resultados</h2>
