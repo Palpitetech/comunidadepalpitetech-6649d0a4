@@ -85,21 +85,14 @@ const Index = () => {
             className="bg-primary hover:bg-primary/90 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden group active:scale-95"
             onClick={() => navigate('/gerar-jogos')}
           >
-            <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center justify-center h-full min-h-[100px]">
-              <div className="bg-white/20 p-2 rounded-xl group-hover:scale-110 transition-transform mb-2">
-                <Sparkles className="h-5 w-5 text-white" />
-              </div>
+            <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center justify-center h-full min-h-[60px]">
               <h3 className="font-bold text-sm sm:text-base leading-tight">Gerar meus Palpites</h3>
             </CardContent>
           </Card>
-
           <Card 
             className="bg-white hover:bg-gray-50 transition-all cursor-pointer text-primary border-none shadow-lg overflow-hidden group active:scale-95"
           >
-            <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center justify-center h-full min-h-[100px]">
-              <div className="bg-primary/10 p-2 rounded-xl group-hover:scale-110 transition-transform mb-2">
-                <MessageSquare className="h-5 w-5 text-primary" />
-              </div>
+            <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center justify-center h-full min-h-[60px]">
               <h3 className="font-bold text-sm sm:text-base leading-tight text-senior-dark">Entrar no Grupo</h3>
             </CardContent>
           </Card>
@@ -112,8 +105,7 @@ const Index = () => {
               return (
                 <DropdownMenu key={index}>
                   <DropdownMenuTrigger asChild>
-                    <Card className="hover:border-primary transition-all duration-300 cursor-pointer border-none shadow-md bg-white/80 backdrop-blur-sm group-active:scale-95 flex flex-col items-center justify-center p-2 text-center h-full min-h-[80px] group">
-                      <item.icon className={`h-5 w-5 sm:h-8 sm:w-8 ${item.color} mb-1 sm:mb-2 group-hover:scale-110 transition-transform`} />
+                    <Card className="hover:border-primary transition-all duration-300 cursor-pointer border-none shadow-md bg-white/80 backdrop-blur-sm group-active:scale-95 flex flex-col items-center justify-center p-2 text-center h-full min-h-[60px] group">
                       <span className="text-[10px] sm:text-[13px] font-semibold text-senior-dark leading-tight line-clamp-2">
                         {item.title}
                       </span>
@@ -142,8 +134,7 @@ const Index = () => {
 
             return (
               <Link key={index} to={item.to || "#"} className="block group">
-                <Card className="hover:border-primary transition-all duration-300 cursor-pointer border-none shadow-md bg-white/80 backdrop-blur-sm group-active:scale-95 flex flex-col items-center justify-center p-2 text-center h-full min-h-[80px]">
-                  <item.icon className={`h-5 w-5 sm:h-8 sm:w-8 ${item.color} mb-1 sm:mb-2 group-hover:scale-110 transition-transform`} />
+                <Card className="hover:border-primary transition-all duration-300 cursor-pointer border-none shadow-md bg-white/80 backdrop-blur-sm group-active:scale-95 flex flex-col items-center justify-center p-2 text-center h-full min-h-[60px]">
                   <span className="text-[10px] sm:text-[13px] font-semibold text-senior-dark leading-tight line-clamp-2">
                     {item.title}
                   </span>
