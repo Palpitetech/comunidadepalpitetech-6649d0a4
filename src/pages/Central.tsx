@@ -1,4 +1,5 @@
 import { MainLayout } from "@/components/layout/MainLayout";
+import { Helmet } from "react-helmet-async";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
@@ -80,6 +81,10 @@ const Central = () => {
 
   return (
     <MainLayout hideBottomNav>
+      <Helmet>
+        <title>Palpite Tech - Análise de Loterias e Gerador de Palpites</title>
+        <meta name="description" content="A melhor plataforma de análise para Lotofácil, Mega-Sena e Quina. Aumente suas chances com estatísticas e ferramentas inteligentes." />
+      </Helmet>
       <div className="container-senior pt-20 pb-8 space-y-6 px-4">
         <div className="text-center space-y-1">
           <h1 className="text-xl sm:text-3xl font-black text-senior-dark leading-tight line-clamp-2">
