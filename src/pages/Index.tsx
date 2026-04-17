@@ -73,23 +73,22 @@ const Index = () => {
 
   return (
     <MainLayout hideBottomNav={!isAuthenticated}>
-      <div className="cluster-container pt-2 pb-6 flex flex-col items-center overflow-x-hidden">
+      <div className="flex flex-col items-center overflow-x-hidden">
         {/* Hero Section - Text */}
-        <div className="text-center w-full px-4 mb-4">
+        <section className="cluster-container text-center w-full px-4 pt-4 pb-8">
           <p className="meta-update">Atualizado em: {new Date().toLocaleDateString('pt-BR')}</p>
-          <h1>Palpite Tech: O Gerador de Palpites para Loterias</h1>
-          <div className="snippet-answer">
-            Ganhe tempo e aumente suas chances com palpites baseados em estatísticas reais e análise de tendências diárias.
-          </div>
-          <p className="text-[#333]">
+          <h1 className="text-3xl md:text-4xl font-extrabold mb-4">
+            Palpite Tech: O Gerador de Palpites para Loterias
+          </h1>
+          <p className="text-[#333] text-lg max-w-2xl mx-auto">
             {isAuthenticated 
-              ? "Selecione uma ferramenta abaixo para começar sua análise personalizada." 
+              ? "Selecione uma ferramenta abaixo para começar sua análise personalizada e aumentar suas chances." 
               : "Tenha acesso às melhores ferramentas de análise estatística para Lotofácil, Mega-Sena e mais."}
           </p>
-        </div>
+        </section>
         
         {/* Main Action Boxes */}
-        <div className="grid grid-cols-2 gap-3 mb-4 w-full px-1">
+        <div className="cluster-container w-full pt-0 pb-6">
           <Card 
             className="bg-green-600 sm:hover:bg-green-700 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden active:scale-[0.98] active:opacity-90 select-none touch-manipulation"
             onClick={() => navigate('/gerar-jogos')}
@@ -183,33 +182,52 @@ const Index = () => {
         )}
 
 
-        {/* Section 2: Latest Results */}
-        <div className="w-full mt-4">
-          <LatestResults />
-        </div>
-
-        {/* Section 3: FAQ SEO */}
-        <div className="w-full mt-8 faq-seo" id="faq-seo">
-          <h2>Perguntas Frequentes sobre Loterias</h2>
-          <div>
-            <h3>Como ganhar na Lotofácil?</h3>
-            <p>
-              Para aumentar suas chances de ganhar na Lotofácil, é fundamental utilizar estatísticas de fechamentos, tendências de números pares e ímpares, além de analisar os sorteios anteriores para identificar padrões recorrentes.
-            </p>
-          </div>
-          <div>
-            <h3>O gerador de palpites é confiável?</h3>
-            <p>
-              Sim, o Palpite Tech utiliza algoritmos baseados na frequência dos sorteios oficiais da Caixa, fornecendo palpites estatisticamente otimizados para maximizar seu potencial de acerto.
-            </p>
+        {/* Section 2: Latest Results - Micro variation background */}
+        <div className="w-full bg-slate-50/80 py-10 border-y border-slate-100">
+          <div className="cluster-container py-0">
+            <h2 className="text-center mb-6">Últimos Resultados</h2>
+            <LatestResults />
           </div>
         </div>
 
-        {/* Trust Box Example for Commercial Intent */}
-        <div className="w-full mt-6 intent-commercial">
-          <div className="trust-box">
-            <h3 className="mt-0">Por que confiar no Palpite Tech?</h3>
-            <p className="text-[15px] mb-0">Mais de 10.000 apostadores utilizam nossas ferramentas diariamente para melhorar suas apostas com base em dados, não em sorte.</p>
+        {/* Section 3: FAQ SEO - Standard white bg */}
+        <div className="cluster-container py-10">
+          <div className="w-full faq-seo" id="faq-seo">
+            <h2 className="text-2xl font-bold mb-6">Perguntas Frequentes sobre Loterias</h2>
+            
+            {/* Snippet moved here: Home (Index) snippet optional/moderated */}
+            <div className="snippet-answer mb-10">
+              O Palpite Tech é uma plataforma de análise estatística que gera palpites otimizados para as principais loterias da Caixa, como Lotofácil e Mega-Sena, utilizando frequências e tendências reais.
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-bold">Como ganhar na Lotofácil?</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Para aumentar suas chances de ganhar na Lotofácil, é fundamental utilizar estatísticas de fechamentos, tendências de números pares e ímpares, além de analisar os sorteios anteriores para identificar padrões recorrentes.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold">O gerador de palpites é confiável?</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Sim, o Palpite Tech utiliza algoritmos baseados na frequência dos sorteios oficiais da Caixa, fornecendo palpites estatisticamente otimizados para maximizar seu potencial de acerto.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Trust Box - Highlight variation background */}
+        <div className="w-full bg-primary/[0.03] py-12 border-t border-primary/5">
+          <div className="cluster-container py-0">
+            <div className="intent-commercial">
+              <div className="trust-box border-primary/10 bg-white/50">
+                <h3 className="text-xl font-bold mt-0 mb-3 text-primary">Por que confiar no Palpite Tech?</h3>
+                <p className="text-lg text-slate-700 mb-0 leading-relaxed">
+                  Mais de 10.000 apostadores utilizam nossas ferramentas diariamente para melhorar suas apostas com base em dados reais e transparência total nos processos estatísticos.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
