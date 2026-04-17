@@ -229,9 +229,11 @@ const App = () => (
                 <Route path="/quina/analise-do-dia" element={<ProtectedRoute><GatedPage feature="analise_do_dia"><AnaliseDoDiaQuina /></GatedPage></ProtectedRoute>} />
 
                 {/* Rotas Dia de Sorte */}
+                <Route path="/diadesorte" element={<ProtectedRoute><HubDiaDeSorte /></ProtectedRoute>} />
                 <Route path="/diadesorte/resultados" element={<ProtectedRoute><ResultadosDiaDeSorte /></ProtectedRoute>} />
                 
                 {/* Rotas Lotomania */}
+                <Route path="/lotomania" element={<ProtectedRoute><HubLotomania /></ProtectedRoute>} />
                 <Route path="/lotomania/resultados" element={<ProtectedRoute><ResultadosLotomania /></ProtectedRoute>} />
                 
                 {/* Rotas Admin */}
