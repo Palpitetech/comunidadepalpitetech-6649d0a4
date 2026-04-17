@@ -64,7 +64,7 @@ const Central = () => {
 
   const menuItems = [
     { title: "Resultados", icon: BarChart3, color: "text-blue-500", onClick: () => document.getElementById('sessao-2')?.scrollIntoView({ behavior: 'smooth' }) },
-    { title: "Estudos", icon: BookOpen, color: "text-green-500", to: "#" },
+    { title: "Estudos", icon: BookOpen, color: "text-green-500", onClick: () => document.getElementById('sessao-3')?.scrollIntoView({ behavior: 'smooth' }) },
     { title: "Fechamentos", icon: Lock, color: "text-orange-500", id: "fechamento" },
     { title: "Gerador de Palpite", icon: Dices, color: "text-purple-500", id: "gerador" },
     { title: "Tabela de Movimentação", icon: Table, color: "text-red-500", id: "tabela" },
@@ -153,7 +153,7 @@ const Central = () => {
         </div>
 
         {/* Section 3: Daily Studies */}
-        <div className="w-full mt-12 space-y-8">
+        <div id="sessao-3" className="w-full mt-12 space-y-8 scroll-mt-20">
           <div className="text-center space-y-2">
             <h2 className="text-xl sm:text-2xl font-black text-senior-dark leading-tight">
               Receba Estudos diários sem custo nenhum, 100% de graça.
