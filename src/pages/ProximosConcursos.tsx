@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -62,20 +63,7 @@ function relativeUpdated(dateStr: string) {
 
 export default function ProximosConcursos() {
   useEffect(() => {
-    document.title = "Próximos Concursos de Loteria | Palpite Tech";
-    const meta = document.querySelector('meta[name="description"]');
-    if (meta) {
-      meta.setAttribute(
-        "content",
-        "Confira as datas e prêmios estimados dos próximos sorteios de Mega-Sena, Lotofácil, Dupla Sena e mais."
-      );
-    } else {
-      const newMeta = document.createElement("meta");
-      newMeta.name = "description";
-      newMeta.content =
-        "Confira as datas e prêmios estimados dos próximos sorteios de Mega-Sena, Lotofácil, Dupla Sena e mais.";
-      document.head.appendChild(newMeta);
-    }
+    // Analytics ou outros side-effects podem ir aqui
   }, []);
 
   const { data: concursos, isLoading } = useQuery({
@@ -93,6 +81,10 @@ export default function ProximosConcursos() {
 
   return (
     <MainLayout pageTitle="Próximos Concursos">
+      <Helmet>
+        <title>Próximos Concursos de Loteria | Palpite Tech</title>
+        <meta name="description" content="Confira as datas e prêmios estimados dos próximos sorteios de Mega-Sena, Lotofácil, Dupla Sena e mais." />
+      </Helmet>
       <div className="px-4 py-3 md:container-senior md:py-8 max-w-3xl mx-auto">
         <div className="mb-6 hidden md:block">
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
