@@ -73,7 +73,7 @@ const Index = () => {
   ];
 
   return (
-    <MainLayout hideBottomNav={!isAuthenticated}>
+    <MainLayout hideBottomNav={!isAuthenticated} pageTitle="Palpite Tech: O Gerador de Palpites para Loterias">
       <Helmet>
         <title>Dashboard | Palpite Tech</title>
         <meta name="robots" content="noindex, nofollow" />
@@ -82,7 +82,7 @@ const Index = () => {
         {/* Hero Section - Text */}
         <section className="cluster-container text-center w-full px-4 pt-0 pb-4">
           <p className="meta-update">Atualizado em: {new Date().toLocaleDateString('pt-BR')}</p>
-          <h1 className="text-3xl md:text-4xl font-extrabold mb-4">
+          <h1 className="sr-only">
             Palpite Tech: O Gerador de Palpites para Loterias
           </h1>
           <p className="text-[#333] text-lg max-w-2xl mx-auto">

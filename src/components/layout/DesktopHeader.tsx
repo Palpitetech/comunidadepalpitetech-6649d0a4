@@ -279,10 +279,10 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
             </span>
           </Link>
 
-          {/* Mobile Page Title */}
+          {/* Desktop & Mobile Page Title */}
           {pageTitle && (
-            <div className="flex-1 md:hidden overflow-hidden ml-1">
-              <h1 className="text-base font-bold text-foreground truncate">{pageTitle}</h1>
+            <div className="flex-1 overflow-hidden ml-1">
+              <h1 className="text-base md:text-lg font-bold text-foreground truncate">{pageTitle}</h1>
             </div>
           )}
         </div>
