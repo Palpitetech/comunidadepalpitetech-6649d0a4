@@ -19,13 +19,13 @@ const Index = () => {
 
   return (
     <MainLayout hideBottomNav={!isAuthenticated}>
-      <div className="container-senior pt-1 pb-6 flex flex-col items-center">
+      <div className="container-senior pt-1 pb-4 flex flex-col items-center">
         {/* Hero Section - Text */}
-        <div className="text-center space-y-0.5 mb-3 w-full px-4">
+        <div className="text-center space-y-0.5 mb-2 w-full px-4">
           <h1 className="text-[1.05rem] sm:text-senior-xl font-bold text-senior-dark">
             {isAuthenticated ? "Bem-vindo ao Palpite Tech" : "Comece a analisar agora!"}
           </h1>
-          <p className="text-[11px] sm:text-senior-sm text-muted-foreground leading-tight">
+          <p className="text-[11px] sm:text-senior-sm text-muted-foreground leading-tight line-clamp-2">
             {isAuthenticated 
               ? "Selecione uma ferramenta abaixo para começar sua análise." 
               : "Tenha acesso às melhores ferramentas de análise estatística."}
@@ -33,10 +33,10 @@ const Index = () => {
         </div>
 
         {/* WhatsApp Button Box */}
-        <div className="flex justify-center w-full px-4 mb-4">
+        <div className="flex justify-center w-full px-4 mb-3">
           <Button 
             variant="outline" 
-            className="w-full max-w-[320px] h-12 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-lg rounded-xl active:scale-95 transition-all"
+            className="w-full max-w-[320px] h-11 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-lg rounded-xl active:scale-95 transition-all"
             asChild
           >
             <a 
@@ -48,7 +48,7 @@ const Index = () => {
               <MessageSquare className="h-5 w-5 fill-white shrink-0" />
               <div className="flex flex-col">
                 <span className="text-[8px] uppercase font-bold tracking-wider opacity-90 leading-none">WhatsApp</span>
-                <span className="text-[13px] font-bold leading-tight whitespace-nowrap">
+                <span className="text-[12px] font-bold leading-tight whitespace-nowrap">
                   Receber Resultados no WhatsApp
                 </span>
               </div>
@@ -57,12 +57,12 @@ const Index = () => {
         </div>
 
         {/* Floating Boxes Grid */}
-        <div className="grid grid-cols-2 gap-2 w-full mb-3">
+        <div className="grid grid-cols-2 gap-2 w-full mb-2">
           {menuItems.map((item, index) => (
             <Link key={index} to={item.to} className="block group">
-              <Card className="hover:border-primary transition-all duration-300 cursor-pointer border-none shadow-md bg-white/80 backdrop-blur-sm group-active:scale-95 flex flex-col items-center justify-center p-2.5 text-center h-full min-h-[85px]">
+              <Card className="hover:border-primary transition-all duration-300 cursor-pointer border-none shadow-md bg-white/80 backdrop-blur-sm group-active:scale-95 flex flex-col items-center justify-center p-2 text-center h-full min-h-[80px]">
                 <item.icon className={`h-5 w-5 sm:h-8 sm:w-8 ${item.color} mb-1 sm:mb-2 group-hover:scale-110 transition-transform`} />
-                <span className="text-[10px] sm:text-[13px] font-semibold text-senior-dark leading-tight">
+                <span className="text-[10px] sm:text-[13px] font-semibold text-senior-dark leading-tight line-clamp-2">
                   {item.title}
                 </span>
               </Card>
@@ -71,7 +71,7 @@ const Index = () => {
         </div>
 
         {!isAuthenticated && (
-          <div className="mt-3 w-full px-4">
+          <div className="mt-2 w-full px-4">
             <Link to="/login" className="w-full">
               <Button className="w-full h-10 bg-primary hover:bg-primary/90 text-white rounded-xl shadow-md font-bold text-sm">
                 Criar conta grátis
@@ -81,7 +81,7 @@ const Index = () => {
         )}
 
         {/* Section 2: Latest Results */}
-        <div className="w-full mt-6">
+        <div className="w-full mt-4">
           <LatestResults />
         </div>
       </div>
