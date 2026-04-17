@@ -193,10 +193,10 @@ export default function LandingPage() {
           <div className="flex justify-center">
             <Button 
               variant="outline" 
-              className="w-[70%] h-auto py-4 px-6 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-lg flex-col gap-1 rounded-[2rem] active:scale-95 transition-all"
+              className="w-[85%] sm:w-[70%] h-auto py-5 px-6 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-xl flex-col gap-1 rounded-[2rem] active:scale-95 transition-all"
             >
               <div className="flex items-center gap-2">
-                <Volume2 className="h-4 w-4 fill-white" />
+                <MessageSquare className="h-4 w-4 fill-white" />
                 <span className="text-[10px] uppercase font-black tracking-widest opacity-90">WhatsApp</span>
               </div>
               <span className="text-[13px] font-bold">
