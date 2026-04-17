@@ -21,49 +21,7 @@ const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const structuredData = {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "Palpite Tech é seguro?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Sim, o Palpite Tech é seguro, pois oferece acesso transparente, teste gratuito e não exige cartão para começar."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Palpite Tech tem garantia de ganho?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Não, o Palpite Tech não garante ganhos, pois loterias dependem de sorte e probabilidades."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Palpite Tech vale a pena para iniciantes?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Sim, principalmente para iniciantes que desejam apostar com mais estratégia e menos aleatoriedade."
-          }
-        }
-      ]
-    };
-
-    const script = document.createElement("script");
-    script.type = "application/ld+json";
-    script.id = "faq-schema-index";
-    script.innerHTML = JSON.stringify(structuredData);
-    document.head.appendChild(script);
-
-    return () => {
-      const existingScript = document.getElementById("faq-schema-index");
-      if (existingScript) {
-        document.head.removeChild(existingScript);
-      }
-    };
+    // FAQ Schema removed for SEO focus change
   }, []);
 
   const lotteries = [
@@ -119,7 +77,7 @@ const Index = () => {
         {/* Hero Section - Text */}
         <div className="text-center space-y-0.5 mb-2 w-full px-4">
           <h1 className="text-[1.05rem] sm:text-senior-xl font-bold text-senior-dark">
-            Palpite Tech é confiável? Teste real, análise e resultados
+            Palpite Tech: Gerador de Palpites para Loterias
           </h1>
           <p className="text-[11px] sm:text-senior-sm text-muted-foreground leading-tight line-clamp-1">
             {isAuthenticated 
@@ -228,54 +186,6 @@ const Index = () => {
           <LatestResults />
         </div>
 
-        {/* Snippet Comparison */}
-        <section id="snippet-comparison" className="w-full mt-10 px-4 mb-8">
-          <div className="max-w-2xl mx-auto text-center space-y-3">
-            <h2 className="text-lg sm:text-xl font-bold text-senior-dark">
-              Palpite Tech é melhor que outros geradores de palpites?
-            </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              O Palpite Tech se destaca por oferecer estratégias explicadas, teste gratuito e maior transparência, 
-              enquanto muitos geradores de palpites entregam apenas números aleatórios sem análise.
-            </p>
-          </div>
-        </section>
-
-        {/* FAQ SEO Section */}
-        <section id="faq-seo" className="w-full mt-10 px-4 mb-12">
-          <div className="max-w-2xl mx-auto space-y-6">
-            <h2 className="text-lg sm:text-xl font-bold text-senior-dark text-center">
-              Perguntas frequentes sobre o Palpite Tech
-            </h2>
-            
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <h3 className="font-bold text-senior-dark text-sm sm:text-base">Palpite Tech é seguro?</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Sim, o Palpite Tech é seguro, pois oferece acesso transparente, teste gratuito e não exige cartão para começar.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="font-bold text-senior-dark text-sm sm:text-base">Palpite Tech tem garantia de ganho?</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Não, o Palpite Tech não garante ganhos, pois loterias dependem de sorte e probabilidades.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="font-bold text-senior-dark text-sm sm:text-base">Palpite Tech vale a pena para iniciantes?</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Sim, principalmente para iniciantes que desejam apostar com mais estratégia e menos aleatoriedade.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <p style={{ display: 'none' }}>
-          palpite tech é confiável, palpite tech funciona mesmo, palpite tech vale a pena, sistema de palpites loteria funciona, gerador de palpites confiável
-        </p>
       </div>
     </MainLayout>
   );
