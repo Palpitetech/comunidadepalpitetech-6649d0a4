@@ -10,6 +10,7 @@ export interface AjudaContent {
   main_question: string;
   direct_answer: string;
   content: string;
+  intent?: 'definicao' | 'analise' | 'comparacao'; // Nova coluna de intenção
   faq_items: {
     question: string;
     answer: string;
@@ -31,6 +32,7 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
     updated_at,
     main_question,
     direct_answer,
+    intent = 'definicao', // Default para definição se não vier
     content: bodyContent,
     faq_items,
     author_name = "Equipe de Suporte",
@@ -71,25 +73,38 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
     }
   };
 
-  // 5. LINKAGEM AUTOMÁTICA INTELIGENTE
+  // 5. LINKAGEM AUTOMÁTICA INTELIGENTE (REVISADA)
   const enrichContentWithLinks = (html: string) => {
+    // Whitelist controlada de links internos com prioridade para pilares
     const internalLinks = [
-      { keyword: "confiável", slug: "palpite-tech-e-confiavel" },
-      { keyword: "resultado lotofácil", slug: "lotofacil-resultado" },
+      { keyword: "confiável", slug: "palpite-tech-e-confiavel", isPillar: true },
+      { keyword: "resultado lotofácil", slug: "lotofacil-resultado", isPillar: true },
       { keyword: "estratégias", slug: "estratefias-vencedoras" },
-      { keyword: "fechamento", slug: "como-funciona-fechamento" },
+      { keyword: "fechamento", slug: "como-funciona-fechamento", isPillar: true },
       { keyword: "como funciona", slug: "como-usar-o-sistema" }
     ];
 
     let enrichedHtml = html;
-    internalLinks.forEach(({ keyword, slug: linkSlug }) => {
+    let globalLinkCount = 0;
+    const MAX_LINKS_PER_PAGE = 5; // Regra do user: máx 3-5 links
+
+    // Ordenar por prioridade de pilares primeiro
+    const sortedLinks = [...internalLinks].sort((a, b) => 
+      (b.isPillar ? 1 : 0) - (a.isPillar ? 1 : 0)
+    );
+
+    sortedLinks.forEach(({ keyword, slug: linkSlug }) => {
+      if (globalLinkCount >= MAX_LINKS_PER_PAGE) return;
+
       // Don't link if it's already inside an <a> tag
       const regex = new RegExp(`(?<!<a[^>]*>)\\b(${keyword})\\b(?![^<]*</a>)`, 'gi');
-      // Only replace first 2 occurrences to avoid over-linking
-      let count = 0;
+      
+      // Evitar links duplicados no mesmo bloco: agora limitamos a 1 por keyword
+      let matchCount = 0;
       enrichedHtml = enrichedHtml.replace(regex, (match) => {
-        if (count < 2 && linkSlug !== content.slug) {
-          count++;
+        if (matchCount < 1 && globalLinkCount < MAX_LINKS_PER_PAGE && linkSlug !== content.slug) {
+          matchCount++;
+          globalLinkCount++;
           return `<a href="/ajuda/${linkSlug}" class="text-primary hover:underline font-medium">${match}</a>`;
         }
         return match;
@@ -122,36 +137,36 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
             <em>Última atualização: {formattedDate} — conteúdo baseado em análise e testes reais.</em>
           </p>
 
-          {/* Variação Estrutural Controlada: Ordem das seções pode variar */}
-          {content.slug.length % 2 === 0 ? (
+          {/* Variação Estrutural Controlada por Intenção (SEO Governance) */}
+          {intent === 'analise' ? (
             <>
-              {/* Ordem Padrão */}
-              <section id="snippet-answer" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10">
+              {/* Intenção: Análise -> Conteúdo detalhado primeiro */}
+              <div 
+                className="mb-10 help-content-body"
+                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
+              />
+
+              <section id="resposta-direta" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10">
                 <h2 className="text-xl font-bold mt-0 mb-4">{main_question}</h2>
                 <p className="text-lg leading-relaxed font-medium">
                   <strong>{direct_answer}</strong>
                 </p>
               </section>
-
-              <div 
-                className="mb-10 help-content-body"
-                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
-              />
             </>
           ) : (
             <>
-              {/* Ordem Invertida (Variação para SEO) */}
-              <div 
-                className="mb-10 help-content-body"
-                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
-              />
-
-              <section id="snippet-answer" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10">
+              {/* Intenção: Definição/Padrão -> Resposta direta (Featured Snippet) primeiro */}
+              <section id="resposta-direta" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10">
                 <h2 className="text-xl font-bold mt-0 mb-4">{main_question}</h2>
                 <p className="text-lg leading-relaxed font-medium">
                   <strong>{direct_answer}</strong>
                 </p>
               </section>
+
+              <div 
+                className="mb-10 help-content-body"
+                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
+              />
             </>
           )}
 

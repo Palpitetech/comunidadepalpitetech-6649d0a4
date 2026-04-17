@@ -1270,6 +1270,7 @@ export type Database = {
           direct_answer: string | null
           faq_items: Json | null
           id: string
+          intent: string | null
           main_question: string | null
           meta_description: string | null
           meta_title: string | null
@@ -1286,6 +1287,7 @@ export type Database = {
           direct_answer?: string | null
           faq_items?: Json | null
           id?: string
+          intent?: string | null
           main_question?: string | null
           meta_description?: string | null
           meta_title?: string | null
@@ -1302,6 +1304,7 @@ export type Database = {
           direct_answer?: string | null
           faq_items?: Json | null
           id?: string
+          intent?: string | null
           main_question?: string | null
           meta_description?: string | null
           meta_title?: string | null
