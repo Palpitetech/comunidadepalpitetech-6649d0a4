@@ -6,6 +6,12 @@ import { useEffect } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { BarChart3, BookOpen, Lock, Dices, Table, CalendarDays, MessageSquare } from "lucide-react";
 import { LatestResults } from "@/components/home/LatestResults";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Central = () => {
   const { isAuthenticated } = useAuthContext();
@@ -17,13 +23,51 @@ const Central = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  const lotteries = [
+    { name: "Lotofácil", id: "lotofacil" },
+    { name: "Mega-Sena", id: "megasena" },
+    { name: "Quina", id: "quina" },
+    { name: "Dupla-Sena", id: "duplasena" },
+  ];
+
+  const getPath = (toolId: string, lotteryId: string) => {
+    const paths: Record<string, Record<string, string>> = {
+      fechamento: {
+        lotofacil: "/fechamento",
+        megasena: "/megasena/fechamento",
+        quina: "/quina",
+        duplasena: "/duplasena/fechamento",
+      },
+      gerador: {
+        lotofacil: "/smart-gerador",
+        megasena: "/megasena/gerador",
+        quina: "/quina/gerador",
+        duplasena: "/duplasena/gerador",
+      },
+      tabela: {
+        lotofacil: "/tabela-movimentacao",
+        megasena: "/megasena/tabela-movimentacao",
+        quina: "/quina/tabela-movimentacao",
+        duplasena: "/duplasena/tabela-movimentacao",
+      },
+      analise: {
+        lotofacil: "/analise-do-dia",
+        megasena: "/megasena/analise-do-dia",
+        quina: "/quina/analise-do-dia",
+        duplasena: "/duplasena/analise-do-dia",
+      },
+    };
+
+    return paths[toolId]?.[lotteryId] || `/${lotteryId}`;
+  };
+
   const menuItems = [
     { title: "Resultados", icon: BarChart3, color: "text-blue-500", to: "/resultados" },
     { title: "Estudos", icon: BookOpen, color: "text-green-500", to: "#" },
-    { title: "Fechamentos", icon: Lock, color: "text-orange-500", to: "/fechamento" },
-    { title: "Gerador de Palpite", icon: Dices, color: "text-purple-500", to: "/smart-gerador" },
-    { title: "Tabela de Movimentação", icon: Table, color: "text-red-500", to: "/tabela-movimentacao" },
-    { title: "Analise do Dia", icon: CalendarDays, color: "text-yellow-500", to: "/analise-do-dia" },
+    { title: "Fechamentos", icon: Lock, color: "text-orange-500", id: "fechamento" },
+    { title: "Gerador de Palpite", icon: Dices, color: "text-purple-500", id: "gerador" },
+    { title: "Tabela de Movimentação", icon: Table, color: "text-red-500", id: "tabela" },
+    { title: "Analise do Dia", icon: CalendarDays, color: "text-yellow-500", id: "analise" },
   ];
 
   return (
@@ -40,18 +84,47 @@ const Central = () => {
 
         {/* Floating Boxes Grid */}
         <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-          {menuItems.map((item, index) => (
-            <Link key={index} to={item.to} className="block group">
-              <Card className="hover:border-primary transition-all duration-300 cursor-pointer h-32 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white group-active:scale-95 flex flex-col items-center justify-center p-4 text-center rounded-3xl">
-                <div className="bg-gray-50 p-3 rounded-2xl mb-2 group-hover:bg-primary/5 transition-colors">
-                  <item.icon className={`h-8 w-8 ${item.color} group-hover:scale-110 transition-transform`} />
-                </div>
-                <span className="text-xs font-bold text-senior-dark leading-tight px-2">
-                  {item.title}
-                </span>
-              </Card>
-            </Link>
-          ))}
+          {menuItems.map((item, index) => {
+            if (item.id) {
+              return (
+                <DropdownMenu key={index}>
+                  <DropdownMenuTrigger asChild>
+                    <Card className="hover:border-primary transition-all duration-300 cursor-pointer h-32 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white group-active:scale-95 flex flex-col items-center justify-center p-4 text-center rounded-3xl group">
+                      <div className="bg-gray-50 p-3 rounded-2xl mb-2 group-hover:bg-primary/5 transition-colors">
+                        <item.icon className={`h-8 w-8 ${item.color} group-hover:scale-110 transition-transform`} />
+                      </div>
+                      <span className="text-xs font-bold text-senior-dark leading-tight px-2">
+                        {item.title}
+                      </span>
+                    </Card>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="center" className="w-48">
+                    {lotteries.map((lottery) => (
+                      <DropdownMenuItem 
+                        key={lottery.id}
+                        onClick={() => navigate(getPath(item.id!, lottery.id))}
+                      >
+                        {lottery.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
+            }
+
+            return (
+              <Link key={index} to={item.to || "#"} className="block group">
+                <Card className="hover:border-primary transition-all duration-300 cursor-pointer h-32 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white group-active:scale-95 flex flex-col items-center justify-center p-4 text-center rounded-3xl">
+                  <div className="bg-gray-50 p-3 rounded-2xl mb-2 group-hover:bg-primary/5 transition-colors">
+                    <item.icon className={`h-8 w-8 ${item.color} group-hover:scale-110 transition-transform`} />
+                  </div>
+                  <span className="text-xs font-bold text-senior-dark leading-tight px-2">
+                    {item.title}
+                  </span>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
 
         {/* Section 2: Latest Results */}
