@@ -59,7 +59,7 @@ const AjudaConfiavel = () => {
             "name": "Palpite Tech é confiável?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Sim, o Palpite Tech é considerado confiável por oferecer transparência, teste gratuito e estratégias explicadas. No entanto, não há garantia de ganhos em loterias."
+              "text": "Sim, o Palpite Tech é confiável, pois é uma plataforma que oferece palpites para loterias com base em análises e estratégias, além de disponibilizar teste gratuito e transparência. No entanto, não garante resultados, já que jogos de loteria dependem de sorte."
             }
           },
           {
@@ -182,7 +182,7 @@ const AjudaConfiavel = () => {
           <section id="snippet-answer" className="mb-8">
             <h2 className="text-2xl font-bold mb-4 text-foreground">Palpite Tech é confiável?</h2>
             <p className="text-lg leading-relaxed text-foreground">
-              <strong>Sim, o Palpite Tech é confiável</strong>, pois oferece teste gratuito, transparência sobre o criador e estratégias explicadas. No entanto, não garante ganhos, já que loterias dependem de sorte. É por isso que o <strong>palpite tech vale a pena</strong> para quem busca um <strong>gerador de palpites loteria</strong> fundamentado em dados estatísticos.
+              <strong>Sim, o Palpite Tech é confiável</strong>, pois é uma plataforma que oferece palpites para loterias com base em análises e estratégias, além de disponibilizar teste gratuito e transparência. No entanto, não garante resultados, já que jogos de loteria dependem de sorte.
             </p>
           </section>
 
