@@ -84,6 +84,47 @@ const Index = () => {
         <div className="w-full mt-4">
           <LatestResults />
         </div>
+
+        {/* Section 3: Daily Studies */}
+        <div className="w-full mt-8 px-4 space-y-6">
+          <div className="text-center space-y-2">
+            <h2 className="text-lg sm:text-xl font-extrabold text-senior-dark leading-tight">
+              Receba Estudos diários sem custo nenhum, 100% de graça.
+            </h2>
+            <p className="text-[11px] sm:text-senior-sm text-muted-foreground leading-snug">
+              Todos os dias publicamos analises e estudos atualizados para te ajudar na jornada do 14 e 15 pontos.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 w-full pb-8">
+            {[
+              "Raio X do Resultado.",
+              "Análise de Pares e Ímpares",
+              "Análise de Ciclo",
+              "Analise de Movimentação",
+              "Análise técnica",
+              "Análise moldura",
+              "Analise Repetidas"
+            ].map((title, index) => (
+              <Card key={index} className="overflow-hidden border-none shadow-xl bg-white/90 backdrop-blur-sm transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 flex flex-col p-4 space-y-3">
+                <h3 className="font-bold text-senior-dark text-base">{title}</h3>
+                
+                <div className="aspect-video w-full bg-muted rounded-lg overflow-hidden flex items-center justify-center text-muted-foreground text-xs italic">
+                  [Foto na horizontal]
+                </div>
+
+                <div className="flex justify-center pt-1">
+                  <Button 
+                    className="h-8 px-4 bg-primary hover:bg-primary/90 text-white rounded-full text-[10px] font-bold shadow-md transition-transform active:scale-95"
+                    asChild
+                  >
+                    <Link to="/login">Fazer meu Cadastro Gratuíto</Link>
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
       </div>
     </MainLayout>
   );
