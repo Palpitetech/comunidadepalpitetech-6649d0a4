@@ -227,12 +227,9 @@ const AjudaConfiavel = () => {
             ></iframe>
           </div>
 
-          <h2 className="text-2xl font-semibold mt-10 mb-4">O que é o Palpite Tech?</h2>
-          <p>
-            O <strong>Palpite Tech</strong> é uma plataforma avançada que oferece <strong>palpites para loterias</strong> (como Lotofácil, Mega-Sena, Quina) com base em análises estatísticas, tendências e estratégias matemáticas.
-          </p>
-          <p>
-            Diferente de muitos serviços que apenas geram números aleatórios, o sistema busca entregar <strong>palpites mais estratégicos</strong>, com explicações detalhadas sobre os padrões identificados em sorteios anteriores.
+          <h2 className="text-2xl font-bold mb-4 text-foreground">Palpite Tech é seguro?</h2>
+          <p className="text-muted-foreground leading-relaxed mb-6">
+            Sim, o sistema é totalmente seguro e prioriza a proteção de dados dos usuários. Muitos que pesquisam por <strong>palpite tech отзывы</strong> (avaliações) percebem que a plataforma utiliza criptografia de ponta a ponta, sendo um ambiente confiável para buscar seus palpites diários.
           </p>
 
           <h2 className="text-2xl font-semibold mt-10 mb-4">Quem criou o Palpite Tech?</h2>
