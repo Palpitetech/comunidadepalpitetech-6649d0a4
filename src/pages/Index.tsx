@@ -17,14 +17,14 @@ const Index = () => {
   ];
 
   return (
-    <MainLayout pageTitle="Início" hideBottomNav={!isAuthenticated}>
-      <div className="container-senior pt-2 pb-6 flex flex-col items-center">
+    <MainLayout hideBottomNav={!isAuthenticated}>
+      <div className="container-senior pt-1 pb-6 flex flex-col items-center">
         {/* Hero Section - Text */}
-        <div className="text-center space-y-1 mb-4 w-full px-4">
-          <h1 className="text-[1.1rem] sm:text-senior-xl font-bold text-senior-dark">
+        <div className="text-center space-y-0.5 mb-3 w-full px-4">
+          <h1 className="text-[1.05rem] sm:text-senior-xl font-bold text-senior-dark">
             {isAuthenticated ? "Bem-vindo ao Palpite Tech" : "Comece a analisar agora!"}
           </h1>
-          <p className="text-[12px] sm:text-senior-sm text-muted-foreground">
+          <p className="text-[11px] sm:text-senior-sm text-muted-foreground leading-tight">
             {isAuthenticated 
               ? "Selecione uma ferramenta abaixo para começar sua análise." 
               : "Tenha acesso às melhores ferramentas de análise estatística."}
