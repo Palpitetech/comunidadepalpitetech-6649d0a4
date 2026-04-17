@@ -11,6 +11,7 @@ import { DownloadBanner } from "@/components/pwa/DownloadBanner";
 import { PWAUpdateBanner } from "@/components/pwa/PWAUpdateBanner";
 import { Pin, Sparkles, ChevronRight, MessageSquare } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { usePermissionContext } from "@/contexts/PermissionContext";
 
 export default function Comunidade() {
   const navigate = useNavigate();
