@@ -71,7 +71,7 @@ export const PostCard = memo(function PostCard({ post, onClick, onPrefetch }: Po
 
       {/* Thumbnail da Mídia */}
       {post.media_url && (
-        <div className="relative aspect-video rounded-lg overflow-hidden mb-2 bg-muted">
+        <div className="relative aspect-[3/4] rounded-lg overflow-hidden mb-2 bg-muted">
           {post.media_type === "video" ? (
             <video
               src={post.media_url}

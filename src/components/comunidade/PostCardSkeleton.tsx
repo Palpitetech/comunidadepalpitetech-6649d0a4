@@ -25,7 +25,7 @@ export function PostCardSkeleton({ count = 3 }: PostCardSkeletonProps) {
           <Skeleton className="h-5 w-3/4 mb-3" />
 
           {/* Mídia */}
-          <Skeleton className="aspect-video w-full rounded-lg mb-3" />
+          <Skeleton className="aspect-[3/4] w-full rounded-lg mb-3" />
 
           {/* Footer */}
           <div className="flex gap-4">
