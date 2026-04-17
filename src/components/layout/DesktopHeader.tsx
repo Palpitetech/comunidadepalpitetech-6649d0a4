@@ -241,10 +241,9 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
   return (
     <header 
       className={cn(
-        "top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80",
-        isHomePage ? "fixed" : "sticky"
+        "sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80"
       )}
-      style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+      style={{ paddingTop: 'max(0px, env(safe-area-inset-top, 0px))' }}
     >
       <div className={cn(
         "flex items-center justify-between py-2 px-4 gap-2 w-full max-w-[1400px] mx-auto overflow-hidden",
