@@ -126,6 +126,7 @@ function GrupoRow({ label, grupoKey, grupo, isSelected, onToggle }: GrupoRowProp
 }
 
 export default function AnaliseDoDia() {
+  const navigate = useNavigate();
   const [periodo, setPeriodo] = useState(10);
   const { data: tendencias, isLoading } = useTendenciasDia(periodo);
   
