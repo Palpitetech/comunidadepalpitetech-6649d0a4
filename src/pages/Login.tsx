@@ -44,7 +44,8 @@ export default function Auth() {
       <div className="flex-1 flex flex-col justify-center p-0 md:p-10 md:w-1/2 relative">
         <button 
           onClick={() => navigate("/")}
-          className="absolute top-6 left-6 p-2.5 rounded-full hover:bg-accent/50 transition-all z-50 text-muted-foreground hover:text-foreground group"
+          className="absolute left-6 p-2.5 rounded-full hover:bg-accent/50 transition-all z-50 text-muted-foreground hover:text-foreground group"
+          style={{ top: 'calc(1.5rem + env(safe-area-inset-top, 0px))' }}
           title="Voltar"
         >
           <ArrowLeft className="h-6 w-6 transition-transform group-hover:-translate-x-1" />

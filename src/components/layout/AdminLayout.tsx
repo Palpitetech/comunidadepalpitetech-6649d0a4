@@ -15,7 +15,13 @@ export function AdminLayout({ children, pageTitle, headerRightContent }: AdminLa
         <AdminSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
-          <header className="sticky top-0 z-40 h-14 flex items-center gap-3 border-b border-border bg-background/95 backdrop-blur px-4">
+          <header 
+            className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-background/95 backdrop-blur px-4"
+            style={{ 
+              paddingTop: 'env(safe-area-inset-top, 0px)',
+              height: 'calc(3.5rem + env(safe-area-inset-top, 0px))' 
+            }}
+          >
             <SidebarTrigger className="h-8 w-8" />
             {pageTitle && (
               <h1 className="text-lg font-semibold truncate flex-1">{pageTitle}</h1>
