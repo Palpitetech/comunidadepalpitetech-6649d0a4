@@ -193,6 +193,38 @@ const Index = () => {
             </p>
           </div>
         </section>
+
+        {/* FAQ SEO Section */}
+        <section id="faq-seo" className="w-full mt-10 px-4 mb-12">
+          <div className="max-w-2xl mx-auto space-y-6">
+            <h2 className="text-lg sm:text-xl font-bold text-senior-dark text-center">
+              Perguntas frequentes sobre o Palpite Tech
+            </h2>
+            
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="font-bold text-senior-dark text-sm sm:text-base">Palpite Tech é seguro?</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  Sim, o Palpite Tech é seguro, pois oferece acesso transparente, teste gratuito e não exige cartão para começar.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="font-bold text-senior-dark text-sm sm:text-base">Palpite Tech tem garantia de ganho?</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  Não, o Palpite Tech não garante ganhos, pois loterias dependem de sorte e probabilidades.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="font-bold text-senior-dark text-sm sm:text-base">Palpite Tech vale a pena para iniciantes?</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  Sim, principalmente para iniciantes que desejam apostar com mais estratégia e menos aleatoriedade.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </MainLayout>
   );
