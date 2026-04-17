@@ -445,6 +445,8 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton, i
             </Link>
           )}
         </div>
+      )}
+    </div>
       </div>
       <UpgradeModal
         open={upgradeOpen}
