@@ -8,8 +8,10 @@ import {
   Users,
   CheckCircle2,
   Sparkles,
-  NotebookPen
+  NotebookPen,
+  FileText
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useTendenciasDia } from "@/hooks/useTendenciasDia";
 import { SeletorPeriodo } from "@/components/frequencia/SeletorPeriodo";
 import { DezenaCirculoMini } from "@/components/lotofacil/DezenaCirculoMini";
