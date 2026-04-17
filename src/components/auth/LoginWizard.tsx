@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { Loader2, Mail, Lock, User, MessageCircle, ArrowRight, ArrowLeft, Phone, ShieldCheck } from "lucide-react";
-// Import useNavigate and useLocation already handled in previous tool call
 import { supabase } from "@/integrations/supabase/client";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
