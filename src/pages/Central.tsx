@@ -63,7 +63,7 @@ const Central = () => {
   };
 
   const menuItems = [
-    { title: "Resultados", icon: BarChart3, color: "text-blue-500", to: "/resultados" },
+    { title: "Resultados", icon: BarChart3, color: "text-blue-500", onClick: () => document.getElementById('sessao-2')?.scrollIntoView({ behavior: 'smooth' }) },
     { title: "Estudos", icon: BookOpen, color: "text-green-500", to: "#" },
     { title: "Fechamentos", icon: Lock, color: "text-orange-500", id: "fechamento" },
     { title: "Gerador de Palpite", icon: Dices, color: "text-purple-500", id: "gerador" },
@@ -120,23 +120,35 @@ const Central = () => {
               );
             }
 
+            const CardContent = (
+              <Card className="hover:border-primary transition-all duration-300 cursor-pointer h-32 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white group-active:scale-95 flex flex-col items-center justify-center p-4 text-center rounded-3xl">
+                <div className="bg-gray-50 p-3 rounded-2xl mb-2 group-hover:bg-primary/5 transition-colors">
+                  <item.icon className={`h-8 w-8 ${item.color} group-hover:scale-110 transition-transform`} />
+                </div>
+                <span className="text-xs font-bold text-senior-dark leading-tight px-2">
+                  {item.title}
+                </span>
+              </Card>
+            );
+
+            if ('onClick' in item) {
+              return (
+                <div key={index} onClick={item.onClick} className="block group cursor-pointer">
+                  {CardContent}
+                </div>
+              );
+            }
+
             return (
               <Link key={index} to={item.to || "#"} className="block group">
-                <Card className="hover:border-primary transition-all duration-300 cursor-pointer h-32 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white group-active:scale-95 flex flex-col items-center justify-center p-4 text-center rounded-3xl">
-                  <div className="bg-gray-50 p-3 rounded-2xl mb-2 group-hover:bg-primary/5 transition-colors">
-                    <item.icon className={`h-8 w-8 ${item.color} group-hover:scale-110 transition-transform`} />
-                  </div>
-                  <span className="text-xs font-bold text-senior-dark leading-tight px-2">
-                    {item.title}
-                  </span>
-                </Card>
+                {CardContent}
               </Link>
             );
           })}
         </div>
 
         {/* Section 2: Latest Results */}
-        <div className="w-full mt-6">
+        <div id="sessao-2" className="w-full mt-6 scroll-mt-20">
           <LatestResults />
         </div>
 
