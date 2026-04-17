@@ -1261,6 +1261,48 @@ export type Database = {
           },
         ]
       }
+      help_content: {
+        Row: {
+          author_name: string | null
+          content: string
+          created_at: string
+          direct_answer: string | null
+          faq_items: Json | null
+          id: string
+          main_question: string | null
+          meta_description: string | null
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_name?: string | null
+          content: string
+          created_at?: string
+          direct_answer?: string | null
+          faq_items?: Json | null
+          id?: string
+          main_question?: string | null
+          meta_description?: string | null
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_name?: string | null
+          content?: string
+          created_at?: string
+          direct_answer?: string | null
+          faq_items?: Json | null
+          id?: string
+          main_question?: string | null
+          meta_description?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       kirvano_offer_plan_map: {
         Row: {
           created_at: string
