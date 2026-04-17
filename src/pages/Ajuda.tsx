@@ -53,7 +53,7 @@ const Ajuda = () => {
 
   return (
     <MainLayout 
-      pageTitle="Ajuda" 
+      hideBackButton={true}
       youtubeVideoId="dQw4w9WgXcQ" // ID do vídeo de exemplo (Rickroll) - substitua pelo real
       hideBottomNav={true}
     >
