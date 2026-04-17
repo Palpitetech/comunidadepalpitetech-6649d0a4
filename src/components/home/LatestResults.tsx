@@ -57,6 +57,45 @@ const latestLotteryResults: LotteryResult[] = [
     proximoSorteio: "15/03/2024",
     proximoDiaSemana: "Sexta-feira",
     proximoConcurso: "6390"
+  },
+  {
+    id: "duplasena",
+    name: "Dupla Sena",
+    color: "#a61324",
+    concurso: "2641",
+    dataSorteio: "14/03/2024",
+    dezenas: ["02", "11", "23", "29", "36", "47"],
+    valorEstimado: "R$ 3.500.000,00",
+    acumulado: true,
+    proximoSorteio: "16/03/2024",
+    proximoDiaSemana: "Sábado",
+    proximoConcurso: "2642"
+  },
+  {
+    id: "lotomania",
+    name: "Lotomania",
+    color: "#f7941d",
+    concurso: "2597",
+    dataSorteio: "13/03/2024",
+    dezenas: ["01", "05", "12", "18", "22", "27", "33", "39", "44", "48", "52", "57", "61", "66", "72", "78", "84", "89", "93", "99"],
+    valorEstimado: "R$ 4.200.000,00",
+    acumulado: true,
+    proximoSorteio: "15/03/2024",
+    proximoDiaSemana: "Sexta-feira",
+    proximoConcurso: "2598"
+  },
+  {
+    id: "diadesorte",
+    name: "Dia de Sorte",
+    color: "#cb812b",
+    concurso: "887",
+    dataSorteio: "14/03/2024",
+    dezenas: ["03", "07", "12", "18", "21", "25", "30"],
+    valorEstimado: "R$ 1.200.000,00",
+    acumulado: false,
+    proximoSorteio: "16/03/2024",
+    proximoDiaSemana: "Sábado",
+    proximoConcurso: "888"
   }
 ];
 
