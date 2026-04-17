@@ -46,7 +46,7 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
 
   const handleStartTrial = async () => {
     if (!user) {
-      console.error("Tentativa de ativar trial sem usuário autenticado");
+      // console.error("Tentativa de ativar trial sem usuário autenticado");
       toast.error("Você precisa estar logado para ativar o teste grátis.");
       return;
     }
@@ -55,7 +55,7 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
     activatingRef.current = true;
     
     try {
-      console.log("Iniciando ativação do trial para usuário:", user.id);
+      // console.log("Iniciando ativação do trial para usuário:", user.id);
       
       // Buscar ID do plano trial
       const { data: trialPlan } = await supabase
@@ -89,7 +89,7 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
         .eq('trial_used', false);
 
       if (updateError) {
-        console.error("Erro ao realizar update do trial:", updateError);
+        // console.error("Erro ao realizar update do trial:", updateError);
         toast.error("Não foi possível ativar o teste: " + updateError.message);
         setActivatingTrial(false);
         activatingRef.current = false;
@@ -107,7 +107,7 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
       }, 500);
       
     } catch (error: any) {
-      console.error("Erro capturado no catch do handleStartTrial:", error);
+      // console.error("Erro capturado no catch do handleStartTrial:", error);
       const errorMessage = error?.message || "Erro inesperado ao ativar teste grátis.";
       toast.error(`Falha na ativação: ${errorMessage}`);
       activatingRef.current = false;
