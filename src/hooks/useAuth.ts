@@ -174,6 +174,14 @@ export function useAuth() {
     []
   );
 
+  const resetPassword = useCallback(async (email: string) => {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + "/reset-password",
+    });
+    if (error) throw error;
+    return data;
+  }, []);
+
   return {
     user: authState.user,
     session: authState.session,
@@ -187,5 +195,6 @@ export function useAuth() {
     signOut,
     updateProfile,
     updatePassword,
+    resetPassword,
   };
 }
