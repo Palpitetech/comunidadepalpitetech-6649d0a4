@@ -61,15 +61,7 @@ export function MainLayout({
         hideBackButton={hideBackButton}
       />
       
-      {isMobile && pageTitle !== undefined && (
-        <PageHeader 
-          title="" 
-          breadcrumb={breadcrumb}
-          onBack={onBack} 
-          rightContent={headerRightContent}
-          hideBackButton={true}
-        />
-      )}
+      {/* Mobile PageHeader logic moved to DesktopHeader */}
 
       {/* Push Notification Banner */}
       <PushNotificationBanner />
