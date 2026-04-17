@@ -183,7 +183,7 @@ const Central = () => {
 
                 <div className="flex justify-center pt-2">
                   <Button 
-                    className="h-10 px-6 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-black shadow-lg shadow-green-600/20 transition-all active:scale-95"
+                    className="h-8 px-6 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-black shadow-lg shadow-green-600/20 transition-all active:scale-95"
                     asChild
                   >
                     <Link to="/login">Receber estudos diários Grátis</Link>
