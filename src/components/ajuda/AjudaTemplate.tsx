@@ -137,36 +137,36 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
             <em>Última atualização: {formattedDate} — conteúdo baseado em análise e testes reais.</em>
           </p>
 
-          {/* Variação Estrutural Controlada: Ordem das seções pode variar */}
-          {content.slug.length % 2 === 0 ? (
+          {/* Variação Estrutural Controlada por Intenção (SEO Governance) */}
+          {intent === 'analise' ? (
             <>
-              {/* Ordem Padrão */}
-              <section id="snippet-answer" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10">
+              {/* Intenção: Análise -> Conteúdo detalhado primeiro */}
+              <div 
+                className="mb-10 help-content-body"
+                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
+              />
+
+              <section id="resposta-direta" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10">
                 <h2 className="text-xl font-bold mt-0 mb-4">{main_question}</h2>
                 <p className="text-lg leading-relaxed font-medium">
                   <strong>{direct_answer}</strong>
                 </p>
               </section>
-
-              <div 
-                className="mb-10 help-content-body"
-                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
-              />
             </>
           ) : (
             <>
-              {/* Ordem Invertida (Variação para SEO) */}
-              <div 
-                className="mb-10 help-content-body"
-                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
-              />
-
-              <section id="snippet-answer" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10">
+              {/* Intenção: Definição/Padrão -> Resposta direta (Featured Snippet) primeiro */}
+              <section id="resposta-direta" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10">
                 <h2 className="text-xl font-bold mt-0 mb-4">{main_question}</h2>
                 <p className="text-lg leading-relaxed font-medium">
                   <strong>{direct_answer}</strong>
                 </p>
               </section>
+
+              <div 
+                className="mb-10 help-content-body"
+                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
+              />
             </>
           )}
 
