@@ -196,6 +196,7 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradeLabel, setUpgradeLabel] = useState<string | undefined>();
   const [upgradeVariant, setUpgradeVariant] = useState<"premium" | "vip">("premium");
+  const isHomePage = location.pathname === "/";
 
   const handleBack = () => {
     if (onBack) {
