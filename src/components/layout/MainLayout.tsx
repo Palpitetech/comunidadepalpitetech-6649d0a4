@@ -59,12 +59,12 @@ export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRigh
       <RequireCelularModal />
 
       {/* Main Content */}
-      <main className={`flex-1 ${isMobile ? 'pb-20' : ''}`}>
+      <main className={`flex-1 ${isMobile && !hideBottomNav ? 'pb-20' : ''}`}>
         {children}
       </main>
 
       {/* Footer / Rodapé */}
-      <footer className={`border-t border-border bg-card py-4 ${isMobile ? 'mb-16' : ''}`}>
+      <footer className={`border-t border-border bg-card py-4 ${isMobile && !hideBottomNav ? 'mb-16' : ''}`}>
         <div className="max-w-3xl mx-auto px-4 text-center space-y-1.5">
           <p className="text-[10px] text-muted-foreground leading-relaxed">
             <strong>Aviso legal:</strong> Este site não possui qualquer vínculo com a Caixa Econômica Federal, Facebook, Instagram, Meta ou qualquer outra empresa do grupo Meta Platforms, Inc. O conteúdo apresentado tem caráter exclusivamente educacional e informativo, baseado em análises estatísticas de resultados públicos. <strong>Não garantimos premiação em nenhuma modalidade de loteria.</strong> Aposte com responsabilidade.
