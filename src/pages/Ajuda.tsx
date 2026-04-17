@@ -1,112 +1,83 @@
 import { MainLayout } from "@/components/layout/MainLayout";
-import { useEffect } from "react";
+import { Helmet } from "react-helmet-async";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Link } from "react-router-dom";
 
 const Ajuda = () => {
-  useEffect(() => {
-    document.title = "Ajuda e Suporte | Palpite Tech";
-    
-    // Structured Data (JSON-LD) for SEO
-    const structuredData = {
-      "@context": "https://schema.org",
-      "@type": "HelpPage",
-      "mainEntity": {
-        "@type": "FAQPage",
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": "Como utilizar o Palpite Tech?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "O Palpite Tech é uma plataforma de análise estatística para loterias. Você pode utilizar nossas ferramentas de tendências, gerador de jogos e desdobramentos para melhorar suas estratégias de aposta."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Os palpites são garantidos?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Não garantimos premiações. Nossas ferramentas são baseadas em estatísticas e probabilidades matemáticas para auxiliar nas escolhas, mas as loterias são jogos de azar."
-            }
-          }
-        ]
-      },
-      "description": "Página de ajuda e suporte do Palpite Tech. Encontre tutoriais e respostas para suas dúvidas sobre nossas ferramentas de análise lotérica.",
-      "publisher": {
-        "@type": "Organization",
-        "name": "Palpite Tech",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://palpitetech.com.br/logo.png"
-        }
-      }
-    };
+  const { data: articles, isLoading } = useQuery({
+    queryKey: ["help-articles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("help_content")
+        .select("slug, title, main_question")
+        .order("created_at", { ascending: false });
 
-    const script = document.createElement("script");
-    script.type = "application/ld+json";
-    script.innerHTML = JSON.stringify(structuredData);
-    document.head.appendChild(script);
+      if (error) throw error;
+      return data;
+    },
+  });
 
-    return () => {
-      document.head.removeChild(script);
-    };
-  }, []);
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "HelpPage",
+    "description": "Central de Ajuda do Palpite Tech. Encontre tutoriais e análises sobre ferramentas lotéricas.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Palpite Tech"
+    }
+  };
 
   return (
     <MainLayout 
       hideBackButton={true}
-      youtubeVideoId="dQw4w9WgXcQ" // ID do vídeo de exemplo (Rickroll) - substitua pelo real
       hideBottomNav={true}
     >
+      <Helmet>
+        <title>Central de Ajuda | Palpite Tech</title>
+        <meta name="description" content="Tudo o que você precisa saber sobre o Palpite Tech. Tutoriais, confiabilidade e dicas de uso." />
+        <script type="application/ld+json">{JSON.stringify(structuredData)}</script>
+      </Helmet>
+
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Content Section */}
         <article className="prose prose-slate dark:prose-invert max-w-none">
           <h1 className="text-3xl font-bold mb-6 text-foreground">Central de Ajuda</h1>
           
-          <p className="text-lg text-muted-foreground leading-relaxed">
+          <p className="text-lg text-muted-foreground leading-relaxed mb-10">
             Bem-vindo à nossa Central de Ajuda. Aqui você encontrará todas as informações necessárias para extrair o máximo potencial das nossas ferramentas de análise estatística.
           </p>
 
-          <h2 className="text-2xl font-semibold mt-10 mb-4">Primeiros Passos</h2>
-          <p>
-            Para começar a usar o Palpite Tech, navegue pelo menu lateral para acessar as diferentes loterias disponíveis. Cada modalidade possui suas próprias ferramentas de análise:
-          </p>
-          <ul>
-            <li><strong>Tendências:</strong> Visualize quais números estão saindo com mais frequência.</li>
-            <li><strong>Gerador:</strong> Crie jogos baseados em filtros estatísticos avançados.</li>
-            <li><strong>Desdobramentos:</strong> Aumente suas chances com coberturas matemáticas inteligentes.</li>
-          </ul>
-
-          <h2 className="text-2xl font-semibold mt-10 mb-4">Dúvidas Frequentes</h2>
-          <div className="space-y-6 not-prose">
-            <div className="bg-card p-6 rounded-lg border border-border">
-              <h3 className="text-lg font-bold text-foreground mb-2">Como funcionam os desdobramentos?</h3>
-              <p className="text-muted-foreground">
-                Os desdobramentos permitem que você jogue com mais dezenas, garantindo prêmios menores caso as condições escolhidas sejam atendidas, otimizando seu investimento.
-              </p>
-            </div>
-            <div className="bg-card p-6 rounded-lg border border-border">
-              <h3 className="text-lg font-bold text-foreground mb-2">O site é seguro?</h3>
-              <p className="text-muted-foreground">
-                Sim, utilizamos criptografia de ponta a ponta e não armazenamos dados de pagamento sensíveis em nossos servidores.
-              </p>
-            </div>
-            <div className="bg-card p-6 rounded-lg border border-border">
-              <h3 className="text-lg font-bold text-foreground mb-2">O Palpite Tech é confiável?</h3>
-              <p className="text-muted-foreground mb-4">
-                Sim, o Palpite Tech é confiável por oferecer transparência, teste gratuito e estratégias fundamentadas. No entanto, não há garantia de ganhos em loterias.
-              </p>
-              <a 
-                href="/ajuda/palpite-tech-e-confiavel" 
-                className="text-primary hover:underline font-medium inline-flex items-center gap-1"
-              >
-                Ler análise completa →
-              </a>
-            </div>
+          <h2 className="text-2xl font-semibold mb-6">Artigos em Destaque</h2>
+          
+          <div className="grid gap-6 not-prose">
+            {isLoading ? (
+              <>
+                <Skeleton className="h-32 w-full rounded-lg" />
+                <Skeleton className="h-32 w-full rounded-lg" />
+              </>
+            ) : (
+              articles?.map((article) => (
+                <Link 
+                  key={article.slug}
+                  to={`/ajuda/${article.slug}`}
+                  className="block bg-card p-6 rounded-lg border border-border hover:border-primary/50 transition-colors"
+                >
+                  <h3 className="text-xl font-bold text-foreground mb-2">{article.title}</h3>
+                  <p className="text-muted-foreground text-sm line-clamp-2">
+                    {article.main_question}
+                  </p>
+                  <span className="text-primary text-sm font-medium mt-4 inline-block">
+                    Ler artigo completo →
+                  </span>
+                </Link>
+              ))
+            )}
           </div>
 
-          <h2 className="text-2xl font-semibold mt-10 mb-4">Contato e Suporte</h2>
+          <h2 className="text-2xl font-semibold mt-12 mb-4">Contato e Suporte</h2>
           <p>
-            Se você não encontrou o que procurava, nossa equipe de suporte está à disposição para ajudar. Você pode entrar em contato conosco através do nosso chat oficial ou pelas nossas redes sociais.
+            Se você não encontrou o que procurava, nossa equipe de suporte está à disposição para ajudar através do nosso chat oficial ou redes sociais.
           </p>
           
           <div className="mt-12 p-6 bg-primary/5 rounded-xl border border-primary/10">
