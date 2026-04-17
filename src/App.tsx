@@ -61,6 +61,7 @@ import NotFound from "./pages/NotFound";
 import Termos from "./pages/Termos";
 import Privacidade from "./pages/Privacidade";
 import Ajuda from "./pages/Ajuda";
+import AjudaConfiavel from "./pages/AjudaConfiavel";
 
 // AtivarConta e VerificarEmail removidos
 import ResultadosMegaSena from "./pages/megasena/ResultadosMegaSena";
@@ -262,7 +263,8 @@ const App = () => (
                 <Route path="/admin/gravacao/quina" element={<AdminRoute><GravacaoQuina /></AdminRoute>} />
                 
                 <Route path="/ajuda" element={<Ajuda />} />
-                
+                <Route path="/ajuda/confiavel" element={<AjudaConfiavel />} />
+
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
