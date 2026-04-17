@@ -192,7 +192,7 @@ const Central = () => {
                     className="h-10 px-6 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-black shadow-lg shadow-primary/20 transition-all active:scale-95"
                     asChild
                   >
-                    <Link to="/login">Fazer meu Cadastro Gratuíto</Link>
+                    <Link to="/login">Receber estudos diários Grátis</Link>
                   </Button>
                 </div>
               </Card>
