@@ -6,6 +6,7 @@ import { FeedHeader } from "@/components/comunidade/FeedHeader";
 import { PostCard } from "@/components/comunidade/PostCard";
 import { PostCardSkeleton } from "@/components/comunidade/PostCardSkeleton";
 import { useCommunityPosts } from "@/hooks/useCommunityPosts";
+import { LatestResults } from "@/components/home/LatestResults";
 import { DownloadBanner } from "@/components/pwa/DownloadBanner";
 import { PWAUpdateBanner } from "@/components/pwa/PWAUpdateBanner";
 import { Pin, Sparkles, ChevronRight } from "lucide-react";
