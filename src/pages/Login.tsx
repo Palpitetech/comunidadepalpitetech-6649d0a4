@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { LoginWizard } from "@/components/auth/LoginWizard";
 import { Loader2, ArrowLeft } from "lucide-react";
