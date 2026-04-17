@@ -3,8 +3,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { TrendingUp, Calendar, ChevronRight } from "lucide-react";
+import { TrendingUp, Calendar, ChevronRight, Loader2 } from "lucide-react";
+import { useLatestResults } from "@/hooks/useLatestResults";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface LotteryResult {
   id: string;
@@ -20,109 +22,65 @@ interface LotteryResult {
   proximoConcurso: string;
 }
 
-const latestLotteryResults: LotteryResult[] = [
-  {
-    id: "megasena",
-    name: "Mega-Sena",
-    color: "#209869",
-    concurso: "2700",
-    dataSorteio: "14/03/2024",
-    dezenas: ["01", "11", "19", "20", "28", "37"],
-    valorEstimado: "R$ 50.000.000,00",
-    acumulado: true,
-    proximoSorteio: "16/03/2024",
-    proximoDiaSemana: "Sábado",
-    proximoConcurso: "2701"
-  },
-  {
-    id: "lotofacil",
-    name: "Lotofácil",
-    color: "#930989",
-    concurso: "3053",
-    dataSorteio: "14/03/2024",
-    dezenas: ["01", "02", "03", "04", "05", "07", "08", "10", "12", "13", "14", "18", "19", "20", "23"],
-    valorEstimado: "R$ 1.700.000,00",
-    acumulado: false,
-    proximoSorteio: "15/03/2024",
-    proximoDiaSemana: "Sexta-feira",
-    proximoConcurso: "3054"
-  },
-  {
-    id: "quina",
-    name: "Quina",
-    color: "#260085",
-    concurso: "6389",
-    dataSorteio: "14/03/2024",
-    dezenas: ["15", "23", "36", "41", "78"],
-    valorEstimado: "R$ 2.400.000,00",
-    acumulado: true,
-    proximoSorteio: "15/03/2024",
-    proximoDiaSemana: "Sexta-feira",
-    proximoConcurso: "6390"
-  },
-  {
-    id: "duplasena",
-    name: "Dupla Sena",
-    color: "#a61324",
-    concurso: "2641",
-    dataSorteio: "14/03/2024",
-    dezenas: ["02", "11", "23", "29", "36", "47"],
-    valorEstimado: "R$ 3.500.000,00",
-    acumulado: true,
-    proximoSorteio: "16/03/2024",
-    proximoDiaSemana: "Sábado",
-    proximoConcurso: "2642"
-  },
-  {
-    id: "lotomania",
-    name: "Lotomania",
-    color: "#f7941d",
-    concurso: "2597",
-    dataSorteio: "13/03/2024",
-    dezenas: ["01", "05", "12", "18", "22", "27", "33", "39", "44", "48", "52", "57", "61", "66", "72", "78", "84", "89", "93", "99"],
-    valorEstimado: "R$ 4.200.000,00",
-    acumulado: true,
-    proximoSorteio: "15/03/2024",
-    proximoDiaSemana: "Sexta-feira",
-    proximoConcurso: "2598"
-  },
-  {
-    id: "diadesorte",
-    name: "Dia de Sorte",
-    color: "#cb812b",
-    concurso: "887",
-    dataSorteio: "14/03/2024",
-    dezenas: ["03", "07", "12", "18", "21", "25", "30"],
-    valorEstimado: "R$ 1.200.000,00",
-    acumulado: false,
-    proximoSorteio: "16/03/2024",
-    proximoDiaSemana: "Sábado",
-    proximoConcurso: "888"
-  }
-];
+const lotteryConfig: Record<string, { name: string; color: string }> = {
+  megasena: { name: "Mega-Sena", color: "#209869" },
+  lotofacil: { name: "Lotofácil", color: "#930989" },
+  quina: { name: "Quina", color: "#260085" },
+  duplasena: { name: "Dupla Sena", color: "#a61324" },
+  lotomania: { name: "Lotomania", color: "#f7941d" },
+  diadesorte: { name: "Dia de Sorte", color: "#cb812b" },
+};
 
 export function LatestResults() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated } = useAuth();
+  const { data: latestResults, isLoading } = useLatestResults();
 
   const handleStudyClick = (lotteryId: string) => {
-    // Definir as rotas dos hubs para cada loteria (todas agora possuem hub raiz)
     const targetPath = `/${lotteryId}`;
-
-    // Na página Central (sem slug, path: "/"), redirecionar diretamente para o hub
-    // A ProtectedRoute cuidará do login se necessário
     if (location.pathname === "/") {
       navigate(targetPath);
       return;
     }
-
     if (!isAuthenticated) {
       navigate("/login");
     } else {
       navigate(targetPath);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const results: LotteryResult[] = (latestResults || []).map((r) => {
+    const config = lotteryConfig[r.loteria] || { name: r.loteria, color: "#666" };
+    const concurso = (r.concurso || r.concurso_id || 0).toString();
+    const nextConcurso = (parseInt(concurso) + 1).toString();
+    
+    return {
+      id: r.loteria,
+      name: config.name,
+      color: config.color,
+      concurso,
+      dataSorteio: r.data_sorteio ? format(new Date(r.data_sorteio), "dd/MM/yyyy") : "-",
+      dezenas: (r.dezenas || []).map((d) => d.toString().padStart(2, "0")),
+      valorEstimado: r.valor_estimado_proximo 
+        ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(r.valor_estimado_proximo)
+        : "Aguardando...",
+      acumulado: !!r.acumulou,
+      proximoSorteio: r.data_proximo_concurso ? format(new Date(r.data_proximo_concurso), "dd/MM/yyyy") : "-",
+      proximoDiaSemana: r.data_proximo_concurso 
+        ? format(new Date(r.data_proximo_concurso), "EEEE", { locale: ptBR })
+        : "-",
+      proximoConcurso: nextConcurso,
+    };
+  });
 
   return (
     <div className="w-full space-y-3 px-4 pb-6">
@@ -132,16 +90,14 @@ export function LatestResults() {
       </div>
 
       <div className="grid grid-cols-1 gap-3">
-        {latestLotteryResults.map((result) => (
+        {results.map((result) => (
           <Card key={result.id} className="overflow-hidden border-none shadow-md bg-white">
-            {/* Header with Lottery Color Accent */}
             <div 
               className="h-1 w-full" 
               style={{ backgroundColor: result.color }}
             />
             
             <div className="p-3 space-y-3">
-              {/* Lottery Name and Contest Info */}
               <div className="flex justify-between items-start">
                 <div>
                   <h3 
@@ -161,7 +117,6 @@ export function LatestResults() {
                 )}
               </div>
 
-              {/* Result Balls */}
               <div className="flex flex-wrap gap-1.5">
                 {result.dezenas.map((dezena, idx) => (
                   <div 
@@ -174,7 +129,6 @@ export function LatestResults() {
                 ))}
               </div>
 
-              {/* Footer Info: Next Draw and Estimated Value */}
               <div className="pt-2 border-t border-dashed border-gray-100 flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
@@ -192,7 +146,7 @@ export function LatestResults() {
                     <span className="text-[11px] text-muted-foreground font-medium">Próximo Sorteio</span>
                   </div>
                   <div className="text-right">
-                    <p className="text-[11px] font-bold text-senior-dark leading-tight">
+                    <p className="text-[11px] font-bold text-senior-dark leading-tight capitalize">
                       {result.proximoSorteio} • {result.proximoDiaSemana}
                     </p>
                     <p className="text-[9px] text-muted-foreground">
@@ -202,7 +156,6 @@ export function LatestResults() {
                 </div>
               </div>
 
-              {/* Action Button */}
               <Button 
                 className="w-full h-10 rounded-xl font-bold text-white shadow-md transition-all sm:hover:scale-[1.01] active:scale-[0.98] flex items-center justify-center mt-2 select-none touch-manipulation"
                 style={{ backgroundColor: result.color }}
@@ -217,3 +170,4 @@ export function LatestResults() {
     </div>
   );
 }
+
