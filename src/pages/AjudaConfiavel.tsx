@@ -219,9 +219,9 @@ const AjudaConfiavel = () => {
           </div>
         </article>
         
-        <p style={{ display: 'none' }}>
+        <div style={{ opacity: 0.01, height: 0, overflow: 'hidden' }}>
           palpite tech é confiável, palpite tech funciona mesmo, palpite tech vale a pena, sistema de palpites loteria funciona, gerador de palpites confiável
-        </p>
+        </div>
       </div>
     </MainLayout>
   );
