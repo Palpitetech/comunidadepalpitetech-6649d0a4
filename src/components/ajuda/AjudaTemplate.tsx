@@ -159,6 +159,27 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
 
   const finalBodyContent = enrichContentWithLinks(bodyContent);
 
+  // Helper para renderizar o Snippet de Resposta Direta (Padrão Google)
+  const renderSnippet = (variant: 'standard' | 'prominent' | 'technical' = 'standard') => {
+    const styles = {
+      standard: "bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10 shadow-sm",
+      prominent: "bg-primary/10 p-8 rounded-xl border-2 border-primary/30 mb-10 shadow-md",
+      technical: "bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10 shadow-sm opacity-90 border-l-4"
+    };
+    
+    return (
+      <section id="resposta-direta" className={styles[variant]} data-intent={intent}>
+        <h2 className="text-xl font-bold mt-0 mb-4 flex items-center gap-2 text-foreground">
+          <span className={`w-2 h-6 rounded-full ${variant === 'prominent' ? 'bg-primary' : 'bg-primary/30'}`} />
+          {main_question}
+        </h2>
+        <div className={`${variant === 'prominent' ? 'text-xl font-extrabold' : 'text-lg font-medium'} leading-relaxed text-foreground`}>
+          {direct_answer}
+        </div>
+      </section>
+    );
+  };
+
   return (
     <MainLayout hideBottomNav={true}>
       <Helmet>
@@ -183,27 +204,6 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
 
           {/* SEO Snippet Logic: Sempre presente, variando apenas ordem e destaque visual para consistência de padrão (SEO Governance) */}
           
-          {/* Helper para renderizar o Snippet de Resposta Direta (Padrão Google) */}
-          const renderSnippet = (variant: 'standard' | 'prominent' | 'technical' = 'standard') => {
-            const styles = {
-              standard: "bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10 shadow-sm",
-              prominent: "bg-primary/10 p-8 rounded-xl border-2 border-primary/30 mb-10 shadow-md",
-              technical: "bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10 shadow-sm opacity-90 border-l-4"
-            };
-            
-            return (
-              <section id="resposta-direta" className={styles[variant]} data-intent={intent}>
-                <h2 className="text-xl font-bold mt-0 mb-4 flex items-center gap-2 text-foreground">
-                  <span className={`w-2 h-6 rounded-full ${variant === 'prominent' ? 'bg-primary' : 'bg-primary/30'}`} />
-                  {main_question}
-                </h2>
-                <div className={`${variant === 'prominent' ? 'text-xl font-extrabold' : 'text-lg font-medium'} leading-relaxed text-foreground`}>
-                  {direct_answer}
-                </div>
-              </section>
-            );
-          };
-
           {/* Renderização baseada em Intenção com Ordem Controlada */}
           {intent === 'analytical' ? (
             <>
