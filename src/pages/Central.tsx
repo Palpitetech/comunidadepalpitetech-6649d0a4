@@ -63,7 +63,7 @@ const Central = () => {
   };
 
   const menuItems = [
-    { title: "Resultados", icon: BarChart3, color: "text-blue-500", to: "/resultados" },
+    { title: "Resultados", icon: BarChart3, color: "text-blue-500", onClick: () => document.getElementById('sessao-2')?.scrollIntoView({ behavior: 'smooth' }) },
     { title: "Estudos", icon: BookOpen, color: "text-green-500", to: "#" },
     { title: "Fechamentos", icon: Lock, color: "text-orange-500", id: "fechamento" },
     { title: "Gerador de Palpite", icon: Dices, color: "text-purple-500", id: "gerador" },
