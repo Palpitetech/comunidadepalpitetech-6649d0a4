@@ -73,16 +73,18 @@ const Index = () => {
 
   return (
     <MainLayout hideBottomNav={!isAuthenticated}>
-      <div className="container-senior pt-2 pb-6 flex flex-col items-center overflow-x-hidden">
+      <div className="cluster-container pt-2 pb-6 flex flex-col items-center overflow-x-hidden">
         {/* Hero Section - Text */}
-        <div className="text-center space-y-0.5 mb-2 w-full px-4">
-          <h1 className="text-[1.05rem] sm:text-senior-xl font-bold text-senior-dark">
-            Palpite Tech: Gerador de Palpites para Loterias
-          </h1>
-          <p className="text-[11px] sm:text-senior-sm text-muted-foreground leading-tight line-clamp-1">
+        <div className="text-center w-full px-4 mb-4">
+          <p className="meta-update">Atualizado em: {new Date().toLocaleDateString('pt-BR')}</p>
+          <h1>Palpite Tech: O Gerador de Palpites para Loterias</h1>
+          <div className="snippet-answer">
+            Ganhe tempo e aumente suas chances com palpites baseados em estatísticas reais e análise de tendências diárias.
+          </div>
+          <p className="text-[#333]">
             {isAuthenticated 
-              ? "Selecione uma ferramenta abaixo para começar sua análise." 
-              : "Tenha acesso às melhores ferramentas de análise estatística."}
+              ? "Selecione uma ferramenta abaixo para começar sua análise personalizada." 
+              : "Tenha acesso às melhores ferramentas de análise estatística para Lotofácil, Mega-Sena e mais."}
           </p>
         </div>
         
