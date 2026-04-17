@@ -175,6 +175,13 @@ const Index = () => {
           </div>
         )}
 
+        <section id="snippet-definition" className="w-full px-4 mt-8 mb-4 text-left">
+          <h2 className="text-xl font-bold text-senior-dark mb-2">O que é o Palpite Tech?</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            O Palpite Tech é um sistema que gera palpites para loterias com base em análises estatísticas e estratégias, ajudando apostadores a montar jogos de forma mais estruturada e menos aleatória.
+          </p>
+        </section>
+
         {/* Section 2: Latest Results */}
         <div className="w-full mt-4">
           <LatestResults />
