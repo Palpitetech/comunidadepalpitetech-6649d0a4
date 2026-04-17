@@ -147,7 +147,7 @@ const Index = () => {
         {!isAuthenticated && (
           <div className="mt-2 w-full px-4">
             <Link to="/login" className="w-full">
-              <Button className="w-full h-10 bg-primary hover:bg-primary/90 text-white rounded-xl shadow-md font-bold text-sm">
+              <Button className="w-full h-8 bg-primary hover:bg-primary/90 text-white rounded-xl shadow-md font-bold text-sm">
                 Criar conta grátis
               </Button>
             </Link>
