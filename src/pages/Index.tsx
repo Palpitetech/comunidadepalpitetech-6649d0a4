@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { BarChart3, BookOpen, Lock, Dices, Table, CalendarDays, MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { LatestResults } from "@/components/home/LatestResults";
 
 const Index = () => {
   const { isAuthenticated } = useAuth();
@@ -78,6 +79,11 @@ const Index = () => {
             </Link>
           </div>
         )}
+
+        {/* Section 2: Latest Results */}
+        <div className="w-full mt-6">
+          <LatestResults />
+        </div>
       </div>
     </MainLayout>
   );
