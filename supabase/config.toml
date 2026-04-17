@@ -86,3 +86,6 @@ verify_jwt = false
 
 [functions.get-push-stats]
 verify_jwt = false
+
+[functions.handle-subscription-expiration]
+verify_jwt = false
