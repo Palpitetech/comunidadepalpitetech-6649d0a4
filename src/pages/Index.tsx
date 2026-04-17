@@ -18,14 +18,26 @@ const Index = () => {
 
   return (
     <MainLayout pageTitle="Início" hideBottomNav={!isAuthenticated}>
-      <div className="container-senior pt-4 pb-8 space-y-8">
+      <div className="container-senior pt-4 pb-8 flex flex-col items-center">
+        {/* Hero Section - Text */}
+        <div className="text-center space-y-2 mb-6 w-full px-4">
+          <h1 className="text-senior-xl font-bold text-senior-dark">
+            {isAuthenticated ? "Bem-vindo ao Palpite Tech" : "Comece a analisar agora!"}
+          </h1>
+          <p className="text-senior-sm text-muted-foreground">
+            {isAuthenticated 
+              ? "Selecione uma ferramenta abaixo para começar sua análise." 
+              : "Tenha acesso às melhores ferramentas de análise estatística."}
+          </p>
+        </div>
+
         {/* Floating Boxes Grid */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3 w-full mb-6">
           {menuItems.map((item, index) => (
             <Link key={index} to={item.to} className="block group">
-              <Card className="hover:border-primary transition-all duration-300 cursor-pointer h-100 border-none shadow-lg bg-white/80 backdrop-blur-sm group-active:scale-95 flex flex-col items-center justify-center p-6 text-center">
-                <item.icon className={`h-10 w-10 ${item.color} mb-3 group-hover:scale-110 transition-transform`} />
-                <span className="text-senior-sm font-semibold text-senior-dark leading-tight">
+              <Card className="hover:border-primary transition-all duration-300 cursor-pointer border-none shadow-md bg-white/80 backdrop-blur-sm group-active:scale-95 flex flex-col items-center justify-center p-4 text-center h-full">
+                <item.icon className={`h-8 w-8 ${item.color} mb-2 group-hover:scale-110 transition-transform`} />
+                <span className="text-[13px] font-semibold text-senior-dark leading-tight">
                   {item.title}
                 </span>
               </Card>
@@ -34,47 +46,38 @@ const Index = () => {
         </div>
 
         {/* WhatsApp Button Box */}
-        <div className="flex justify-center w-full">
+        <div className="flex justify-center w-full px-4">
           <Button 
             variant="outline" 
-            className="w-[70%] h-auto py-4 px-6 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-lg rounded-2xl active:scale-95 transition-all p-0"
+            className="w-full max-w-[320px] h-auto py-3 px-4 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-lg rounded-xl active:scale-95 transition-all"
             asChild
           >
             <a 
               href="https://wa.me/5551981854281" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex flex-col items-center justify-center gap-1 w-full h-full text-center"
+              className="flex items-center justify-center gap-3 w-full h-full text-left"
             >
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 fill-white" />
-                <span className="text-xs uppercase font-bold tracking-wider">WhatsApp</span>
+              <MessageSquare className="h-6 w-6 fill-white shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase font-bold tracking-wider opacity-90">WhatsApp</span>
+                <span className="text-sm font-medium leading-tight">
+                  Receber Resultados no WhatsApp
+                </span>
               </div>
-              <span className="text-sm font-medium leading-tight px-4">
-                Quero receber Resultados no meu whatsapp
-              </span>
             </a>
           </Button>
         </div>
 
-        {/* CTA para não logados */}
-        <div className="mt-8 text-center">
-          <Card className="bg-primary/5 border-primary/20">
-            <CardContent className="py-8">
-              <h2 className="text-senior-xl font-semibold mb-4 text-senior-dark">
-                Comece a analisar agora!
-              </h2>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                Crie sua conta gratuita e tenha acesso às melhores ferramentas de análise da Lotofácil.
-              </p>
-              <Link to="/login">
-                <Button size="lg" className="h-14 px-8 text-senior-lg bg-primary hover:bg-primary/90 text-white rounded-full">
-                  Criar conta grátis
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
+        {!isAuthenticated && (
+          <div className="mt-8 w-full px-4">
+            <Link to="/login" className="w-full">
+              <Button className="w-full h-12 bg-primary hover:bg-primary/90 text-white rounded-xl shadow-md font-bold">
+                Criar conta grátis
+              </Button>
+            </Link>
+          </div>
+        )}
       </div>
     </MainLayout>
   );
