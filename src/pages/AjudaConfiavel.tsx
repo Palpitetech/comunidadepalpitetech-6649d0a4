@@ -137,6 +137,24 @@ const AjudaConfiavel = () => {
             </p>
           </section>
 
+          <section id="quick-summary" className="mb-8 bg-primary/5 p-6 rounded-xl border border-primary/20 shadow-sm">
+            <h2 className="text-xl font-bold mb-4 text-foreground">Resumo rápido</h2>
+            <ul className="space-y-3">
+              <li className="flex items-center gap-2 text-foreground font-medium">
+                <span className="text-green-600 font-bold">✔</span> Plataforma com análise de palpites
+              </li>
+              <li className="flex items-center gap-2 text-foreground font-medium">
+                <span className="text-green-600 font-bold">✔</span> Teste gratuito disponível
+              </li>
+              <li className="flex items-center gap-2 text-foreground font-medium">
+                <span className="text-green-600 font-bold">✔</span> Estratégias explicadas
+              </li>
+              <li className="flex items-center gap-2 text-foreground font-medium">
+                <span className="text-amber-600 font-bold">❗</span> Não garante ganhos
+              </li>
+            </ul>
+          </section>
+
           <section id="snippet-list" className="mb-8 bg-muted/30 p-6 rounded-xl border border-border">
             <h2 className="text-2xl font-bold mb-4 text-foreground">Palpite Tech funciona mesmo?</h2>
             <ol className="list-decimal pl-6 space-y-2 text-foreground">
