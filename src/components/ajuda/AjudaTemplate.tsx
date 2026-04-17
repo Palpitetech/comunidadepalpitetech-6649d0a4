@@ -4,6 +4,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 export interface AjudaContent {
   slug: string;
   title: string;
+  meta_title?: string;
   meta_description?: string;
   updated_at: string;
   main_question: string;
@@ -14,6 +15,8 @@ export interface AjudaContent {
     answer: string;
   }[];
   author_name?: string;
+  author_experience?: string;
+  review_method?: string;
 }
 
 interface AjudaTemplateProps {
@@ -23,6 +26,7 @@ interface AjudaTemplateProps {
 export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
   const {
     title,
+    meta_title,
     meta_description,
     updated_at,
     main_question,
@@ -30,6 +34,8 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
     content: bodyContent,
     faq_items,
     author_name = "Equipe de Suporte",
+    author_experience,
+    review_method,
   } = content;
 
   // Formatar data
@@ -65,10 +71,39 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
     }
   };
 
+  // 5. LINKAGEM AUTOMÁTICA INTELIGENTE
+  const enrichContentWithLinks = (html: string) => {
+    const internalLinks = [
+      { keyword: "confiável", slug: "palpite-tech-e-confiavel" },
+      { keyword: "resultado lotofácil", slug: "lotofacil-resultado" },
+      { keyword: "estratégias", slug: "estratefias-vencedoras" },
+      { keyword: "fechamento", slug: "como-funciona-fechamento" },
+      { keyword: "como funciona", slug: "como-usar-o-sistema" }
+    ];
+
+    let enrichedHtml = html;
+    internalLinks.forEach(({ keyword, slug: linkSlug }) => {
+      // Don't link if it's already inside an <a> tag
+      const regex = new RegExp(`(?<!<a[^>]*>)\\b(${keyword})\\b(?![^<]*</a>)`, 'gi');
+      // Only replace first 2 occurrences to avoid over-linking
+      let count = 0;
+      enrichedHtml = enrichedHtml.replace(regex, (match) => {
+        if (count < 2 && linkSlug !== content.slug) {
+          count++;
+          return `<a href="/ajuda/${linkSlug}" class="text-primary hover:underline font-medium">${match}</a>`;
+        }
+        return match;
+      });
+    });
+    return enrichedHtml;
+  };
+
+  const finalBodyContent = enrichContentWithLinks(bodyContent);
+
   return (
     <MainLayout hideBottomNav={true}>
       <Helmet>
-        <title>{title} | Palpite Tech</title>
+        <title>{meta_title || `${title} | Palpite Tech`}</title>
         {meta_description && <meta name="description" content={meta_description} />}
         <link rel="canonical" href={`https://palpitetech.com.br/ajuda/${content.slug}`} />
         <script type="application/ld+json">{JSON.stringify(faqSchema)}</script>
@@ -87,19 +122,38 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
             <em>Última atualização: {formattedDate} — conteúdo baseado em análise e testes reais.</em>
           </p>
 
-          {/* 2.3 Snippet resposta direta (POSIÇÃO 0) */}
-          <section id="snippet-answer" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10">
-            <h2 className="text-xl font-bold mt-0 mb-4">{main_question}</h2>
-            <p className="text-lg leading-relaxed font-medium">
-              <strong>{direct_answer}</strong>
-            </p>
-          </section>
+          {/* Variação Estrutural Controlada: Ordem das seções pode variar */}
+          {content.slug.length % 2 === 0 ? (
+            <>
+              {/* Ordem Padrão */}
+              <section id="snippet-answer" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10">
+                <h2 className="text-xl font-bold mt-0 mb-4">{main_question}</h2>
+                <p className="text-lg leading-relaxed font-medium">
+                  <strong>{direct_answer}</strong>
+                </p>
+              </section>
 
-          {/* Conteúdo Principal */}
-          <div 
-            className="mb-10 help-content-body"
-            dangerouslySetInnerHTML={{ __html: bodyContent }}
-          />
+              <div 
+                className="mb-10 help-content-body"
+                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
+              />
+            </>
+          ) : (
+            <>
+              {/* Ordem Invertida (Variação para SEO) */}
+              <div 
+                className="mb-10 help-content-body"
+                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
+              />
+
+              <section id="snippet-answer" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10">
+                <h2 className="text-xl font-bold mt-0 mb-4">{main_question}</h2>
+                <p className="text-lg leading-relaxed font-medium">
+                  <strong>{direct_answer}</strong>
+                </p>
+              </section>
+            </>
+          )}
 
           {/* 2.6 FAQ visível (obrigatório) */}
           <section id="faq-seo" className="mb-10">
@@ -123,13 +177,22 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
             <h2 className="text-xl font-bold mt-0 mb-4">Por que confiar neste conteúdo?</h2>
             <div className="flex items-center gap-4 mb-4">
               <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary">
-                PT
+                {author_name.charAt(0)}
               </div>
               <div>
                 <p className="font-semibold text-foreground m-0">{author_name}</p>
-                <p className="text-xs text-muted-foreground m-0">Especialista em Análise de Dados</p>
+                <p className="text-xs text-muted-foreground m-0">
+                  {author_experience || "Especialista em Análise de Dados e Sistemas de Loteria"}
+                </p>
               </div>
             </div>
+            
+            {review_method && (
+              <div className="mb-4 text-sm bg-background/50 p-3 rounded border border-border/50 italic">
+                <strong>Método de revisão:</strong> {review_method}
+              </div>
+            )}
+
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 list-none p-0">
               <li className="flex items-center gap-2 text-sm m-0">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary" />
