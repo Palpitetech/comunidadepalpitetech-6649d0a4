@@ -72,6 +72,20 @@ const AjudaConfiavel = () => {
             Neste conteúdo, você vai encontrar uma análise completa, baseada em testes e informações reais, para entender se o Palpite Tech vale a pena.
           </p>
 
+          <div className="my-8 aspect-video w-full max-w-2xl mx-auto overflow-hidden rounded-xl shadow-lg">
+            <iframe 
+              width="100%" 
+              height="100%" 
+              src="https://www.youtube.com/embed/V4a0CXAZUd4?si=Gzy4_o-LGP01djW8&amp;start=4" 
+              title="YouTube video player" 
+              frameBorder="0" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+              referrerPolicy="strict-origin-when-cross-origin" 
+              allowFullScreen
+              className="w-full h-full"
+            ></iframe>
+          </div>
+
           <h2 className="text-2xl font-semibold mt-10 mb-4">O que é o Palpite Tech?</h2>
           <p>
             O <strong>Palpite Tech</strong> é uma plataforma que oferece <strong>palpites para loterias</strong> com base em análises estatísticas e estratégias.
