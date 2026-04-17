@@ -77,6 +77,11 @@ const Central = () => {
             </Link>
           ))}
         </div>
+
+        {/* Section 2: Latest Results */}
+        <div className="w-full mt-6">
+          <LatestResults />
+        </div>
       </div>
     </MainLayout>
   );
