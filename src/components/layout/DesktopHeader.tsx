@@ -368,9 +368,11 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton, i
             </DropdownMenu>
           ))}
         </nav>
+        )}
 
         {/* User Actions - fixo à direita */}
-        <div className="flex items-center justify-end gap-1 shrink-0">
+        {!isLandingPage && (
+          <div className="flex items-center justify-end gap-1 shrink-0">
 
           {isAuthenticated ? (
             <>
