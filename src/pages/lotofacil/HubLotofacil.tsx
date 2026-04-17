@@ -35,12 +35,32 @@ export default function HubLotofacil() {
             Todas as ferramentas de análise e geração para a Lotofácil
           </p>
         </div>
-        <HubLoteriaGrid tools={tools} themeColor={THEME_COLOR} />
 
-        <div className="flex justify-center mt-8">
+        <div className="flex justify-center mb-8">
           <Button 
             variant="outline" 
-            className="w-[85%] sm:w-[70%] h-auto py-5 px-6 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-xl rounded-[2rem] active:scale-95 transition-all p-0"
+            className="w-full sm:w-[85%] h-auto py-4 px-6 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-xl rounded-[1.5rem] active:scale-95 transition-all p-0"
+            asChild
+          >
+            <a 
+              href="https://wa.me/5551981854281" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-3 w-full h-full text-center"
+            >
+              <MessageSquare className="h-5 w-5 fill-white" />
+              <div className="flex flex-col items-start">
+                <span className="text-[10px] uppercase font-black tracking-widest opacity-90 leading-none">WhatsApp</span>
+                <span className="text-sm font-bold leading-tight">
+                  Quero receber Resultados no whatsapp
+                </span>
+              </div>
+            </a>
+          </Button>
+        </div>
+
+        <HubLoteriaGrid tools={tools} themeColor={THEME_COLOR} />
+
             asChild
           >
             <a 
