@@ -1,4 +1,6 @@
 import { ReactNode, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DesktopHeader } from "./DesktopHeader";
 import { MobileBottomNav } from "./MobileBottomNav";
@@ -30,7 +32,12 @@ interface MainLayoutProps {
 
 export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRightContent, hideBackButton, hideBottomNav }: MainLayoutProps) {
   const isMobile = useIsMobile();
+  const { isAuthenticated } = useAuthContext();
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Força esconder o menu inferior na página raiz quando deslogado
+  const finalHideBottomNav = hideBottomNav || (location.pathname === "/" && !isAuthenticated);
 
   return (
     <div className="min-h-screen flex flex-col bg-background" style={{ paddingBottom: isMobile ? 'env(safe-area-inset-bottom, 0px)' : undefined }}>
@@ -59,12 +66,12 @@ export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRigh
       <RequireCelularModal />
 
       {/* Main Content */}
-      <main className={`flex-1 ${isMobile && !hideBottomNav ? 'pb-20' : ''}`}>
+      <main className={`flex-1 ${isMobile && !finalHideBottomNav ? 'pb-20' : ''}`}>
         {children}
       </main>
 
       {/* Footer / Rodapé */}
-      <footer className={`border-t border-border bg-card py-4 ${isMobile && !hideBottomNav ? 'mb-16' : ''}`}>
+      <footer className={`border-t border-border bg-card py-4 ${isMobile && !finalHideBottomNav ? 'mb-16' : ''}`}>
         <div className="max-w-3xl mx-auto px-4 text-center space-y-1.5">
           <p className="text-[10px] text-muted-foreground leading-relaxed">
             <strong>Aviso legal:</strong> Este site não possui qualquer vínculo com a Caixa Econômica Federal, Facebook, Instagram, Meta ou qualquer outra empresa do grupo Meta Platforms, Inc. O conteúdo apresentado tem caráter exclusivamente educacional e informativo, baseado em análises estatísticas de resultados públicos. <strong>Não garantimos premiação em nenhuma modalidade de loteria.</strong> Aposte com responsabilidade.
@@ -76,7 +83,7 @@ export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRigh
       </footer>
 
       {/* Mobile Navigation */}
-      {isMobile && !hideBottomNav && (
+      {isMobile && !finalHideBottomNav && (
         <>
           <MobileBottomNav onMenuClick={() => setMenuOpen(true)} />
           <MobileMenuSheet open={menuOpen} onOpenChange={setMenuOpen} />
