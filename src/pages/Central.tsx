@@ -9,9 +9,9 @@ const Central = () => {
       <header className="bg-white border-b px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img 
-            src="/lovable-uploads/649d0ca3-a19c-497d-9442-53b76964344e.png" 
+            src="/logo.png" 
             alt="Palpite Tech" 
-            className="h-8"
+            className="h-8 w-8 rounded-lg"
           />
           <span className="font-bold text-xl text-primary">Palpite Tech</span>
         </div>
