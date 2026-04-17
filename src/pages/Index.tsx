@@ -82,18 +82,18 @@ const Index = () => {
         {/* Main Action Boxes */}
         <div className="grid grid-cols-2 gap-3 mb-4 w-full">
           <Card 
-            className="bg-primary hover:bg-primary/90 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden group active:scale-95"
+            className="bg-green-600 hover:bg-green-700 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden group active:scale-95"
             onClick={() => navigate('/gerar-jogos')}
           >
             <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center justify-center h-full min-h-[60px]">
-              <h3 className="font-bold text-sm sm:text-base leading-tight">Gerar meus Palpites</h3>
+              <h3 className="font-bold text-sm sm:text-base leading-tight">Gerar meus palpites</h3>
             </CardContent>
           </Card>
           <Card 
-            className="bg-white hover:bg-gray-50 transition-all cursor-pointer text-primary border-none shadow-lg overflow-hidden group active:scale-95"
+            className="bg-green-600 hover:bg-green-700 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden group active:scale-95"
           >
             <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center justify-center h-full min-h-[60px]">
-              <h3 className="font-bold text-sm sm:text-base leading-tight text-senior-dark">Entrar no Grupo</h3>
+              <h3 className="font-bold text-sm sm:text-base leading-tight">Entrar no Grupo</h3>
             </CardContent>
           </Card>
         </div>
