@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { Loader2, Mail, Lock, User, MessageCircle, ArrowRight, ArrowLeft, Phone, ShieldCheck } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
@@ -39,6 +39,7 @@ export function LoginWizard() {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { signIn, signInWithOtp, verifyOtp, updateProfile, profile, resetPassword } = useAuthContext();
 
@@ -117,7 +118,8 @@ export function LoginWizard() {
     try {
       await signIn(emailLogin || email, password);
       toast({ title: "Sucesso!", description: "Você está logado." });
-      navigate("/home", { replace: true });
+      const from = (location.state as any)?.from?.pathname || "/home";
+      navigate(from, { replace: true });
     } catch (err) {
       toast({ title: "Erro no login", description: "Senha incorreta. Tente novamente.", variant: "destructive" });
     } finally {
@@ -181,7 +183,8 @@ export function LoginWizard() {
         whatsapp: whatsapp.trim()
       });
       toast({ title: "Conta criada!", description: "Bem-vindo ao Palpite Tech." });
-      navigate("/home", { replace: true });
+      const from = (location.state as any)?.from?.pathname || "/home";
+      navigate(from, { replace: true });
     } catch (err) {
       toast({ title: "Código inválido", description: "Verifique o código e tente novamente.", variant: "destructive" });
     } finally {

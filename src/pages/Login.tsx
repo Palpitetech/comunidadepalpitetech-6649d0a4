@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { LoginWizard } from "@/components/auth/LoginWizard";
 import { Loader2, ArrowLeft } from "lucide-react";
@@ -7,13 +7,15 @@ import { Loader2, ArrowLeft } from "lucide-react";
 export default function Auth() {
   const { isAuthenticated, loading, profile } = useAuthContext();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     // Redireciona se autenticado e tiver nome (perfil completo)
     if (isAuthenticated && profile?.nome) {
-      navigate("/home", { replace: true });
+      const from = (location.state as any)?.from?.pathname || "/home";
+      navigate(from, { replace: true });
     }
-  }, [isAuthenticated, profile, navigate]);
+  }, [isAuthenticated, profile, navigate, location]);
 
   if (loading) {
     return (
