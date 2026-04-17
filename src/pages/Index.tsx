@@ -99,13 +99,13 @@ const Index = () => {
         </div>
 
         {/* Floating Boxes Grid */}
-        <div className="grid grid-cols-2 gap-2 w-full mb-2">
+        <div className="grid grid-cols-2 gap-2 w-full mb-2 px-1">
           {menuItems.map((item, index) => {
             if (item.id) {
               return (
                 <DropdownMenu key={index}>
                   <DropdownMenuTrigger asChild>
-                    <Card className="hover:border-primary transition-all duration-300 cursor-pointer border-none shadow-md bg-white/80 backdrop-blur-sm group-active:scale-95 flex flex-col items-center justify-center p-2 text-center h-full min-h-[60px] group">
+                    <Card className="sm:hover:border-primary transition-all duration-200 cursor-pointer border-none shadow-md bg-white/90 backdrop-blur-sm active:scale-[0.98] active:bg-gray-50 flex flex-col items-center justify-center p-2 text-center h-full min-h-[60px] select-none touch-manipulation">
                       <span className="text-[10px] sm:text-[13px] font-semibold text-senior-dark leading-tight line-clamp-2">
                         {item.title}
                       </span>
@@ -116,7 +116,7 @@ const Index = () => {
                       <DropdownMenuItem 
                         key={lottery.id}
                         className={cn(
-                          "cursor-pointer transition-colors duration-200",
+                          "cursor-pointer transition-colors duration-200 py-3 sm:py-2",
                           lottery.id === "lotofacil" && "focus:bg-[#943391] focus:text-white",
                           lottery.id === "megasena" && "focus:bg-[#209869] focus:text-white",
                           lottery.id === "quina" && "focus:bg-[#260085] focus:text-white",
@@ -133,8 +133,8 @@ const Index = () => {
             }
 
             return (
-              <Link key={index} to={item.to || "#"} className="block group">
-                <Card className="hover:border-primary transition-all duration-300 cursor-pointer border-none shadow-md bg-white/80 backdrop-blur-sm group-active:scale-95 flex flex-col items-center justify-center p-2 text-center h-full min-h-[60px]">
+              <Link key={index} to={item.to || "#"} className="block group select-none touch-manipulation">
+                <Card className="sm:hover:border-primary transition-all duration-200 cursor-pointer border-none shadow-md bg-white/90 backdrop-blur-sm active:scale-[0.98] active:bg-gray-50 flex flex-col items-center justify-center p-2 text-center h-full min-h-[60px]">
                   <span className="text-[10px] sm:text-[13px] font-semibold text-senior-dark leading-tight line-clamp-2">
                     {item.title}
                   </span>
