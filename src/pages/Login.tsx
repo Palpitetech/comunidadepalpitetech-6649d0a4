@@ -42,10 +42,10 @@ export default function Auth() {
       <div className="flex-1 flex flex-col justify-center p-0 md:p-10 md:w-1/2 relative">
         <button 
           onClick={() => navigate("/")}
-          className="absolute top-4 left-4 p-2 rounded-full hover:bg-accent transition-all z-50 text-muted-foreground hover:text-foreground"
+          className="absolute top-6 left-6 p-2.5 rounded-full hover:bg-accent/50 transition-all z-50 text-muted-foreground hover:text-foreground group"
           title="Voltar"
         >
-          <ArrowLeft className="h-6 w-6" />
+          <ArrowLeft className="h-6 w-6 transition-transform group-hover:-translate-x-1" />
         </button>
         <div className="w-full max-w-lg mx-auto flex flex-col flex-1 md:flex-initial justify-center py-4 md:py-0">
           <LoginWizard />
