@@ -280,7 +280,8 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton, i
         </div>
 
         {/* Desktop Navigation - centralizado */}
-        <nav className="hidden md:flex items-center gap-0.5 justify-center flex-wrap overflow-hidden">
+        {!isLandingPage && (
+          <nav className="hidden md:flex items-center gap-0.5 justify-center flex-wrap overflow-hidden">
           {/* Bolões */}
           {isAdmin ? (
             <Link to="/boloes">
