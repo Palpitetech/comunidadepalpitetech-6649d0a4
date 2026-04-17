@@ -51,9 +51,10 @@ export function MainLayout({
         breadcrumb={breadcrumb} 
         onBack={onBack}
         hideBackButton={hideBackButton}
+        isLandingPage={isLandingPage}
       />
       
-      {isMobile && pageTitle !== undefined && (
+      {isMobile && pageTitle !== undefined && !isLandingPage && (
         <PageHeader 
           title="" 
           breadcrumb={breadcrumb}
