@@ -148,7 +148,7 @@ function LotteryDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="gap-1 h-9 px-2.5 text-sm">
+        <Button variant="ghost" className="gap-1 h-8 px-2.5 text-xs">
           {name}
           <ChevronDown className="h-3 w-3" />
         </Button>
@@ -256,7 +256,7 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden h-9 w-9 shrink-0"
+              className="md:hidden h-8 w-8 shrink-0"
               onClick={handleBack}
             >
               <ArrowLeft className="h-5 w-5" />
@@ -293,7 +293,7 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
           {/* Bolões */}
           {isAdmin ? (
             <Link to="/boloes">
-              <Button variant="ghost" className="gap-1.5 h-9 px-2.5 text-sm">
+              <Button variant="ghost" className="gap-1.5 h-8 px-2 text-xs">
                 <Trophy className="h-4 w-4" />
                 Bolões
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 ml-0.5 border-amber-500/50 text-amber-500">
@@ -302,7 +302,7 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
               </Button>
             </Link>
           ) : (
-            <Button variant="ghost" className="gap-1.5 h-9 px-2.5 text-sm cursor-default opacity-60" disabled>
+            <Button variant="ghost" className="gap-1.5 h-8 px-2 text-xs cursor-default opacity-60" disabled>
               <Trophy className="h-4 w-4" />
               Bolões
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 ml-0.5 border-muted-foreground/30 text-muted-foreground">
@@ -312,14 +312,14 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
           )}
 
           <Link to="/gerar-jogos">
-            <Button variant="ghost" className="gap-1.5 h-9 px-2.5 text-sm">
+            <Button variant="ghost" className="gap-1.5 h-8 px-2 text-xs">
               <Dices className="h-4 w-4" />
               <span className="hidden lg:inline">Gerar Jogos</span>
             </Button>
           </Link>
 
           <Link to="/proximos-concursos">
-            <Button variant="ghost" className="gap-1.5 h-9 px-2.5 text-sm">
+            <Button variant="ghost" className="gap-1.5 h-8 px-2 text-xs">
               <Calendar className="h-4 w-4" />
               <span className="hidden lg:inline">Concursos</span>
             </Button>
@@ -360,7 +360,7 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
           {SIMPLE_LOTTERIES.map((lottery) => (
             <DropdownMenu key={lottery.name}>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-1 h-9 px-2.5 text-sm">
+                <Button variant="ghost" className="gap-1 h-8 px-2 text-xs">
                   {lottery.name}
                   <ChevronDown className="h-3 w-3" />
                 </Button>
@@ -384,7 +384,7 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
           {isAuthenticated ? (
             <>
               <Link to="/meus-palpites">
-                <Button variant="ghost" size="icon" className="h-9 w-9" title="Jogos Salvos">
+                <Button variant="ghost" size="icon" className="h-8 w-8" title="Jogos Salvos">
                   <Save className="h-5 w-5" />
                 </Button>
               </Link>
@@ -392,8 +392,8 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
               {/* Avatar Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
-                    <Avatar className="h-9 w-9">
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
+                    <Avatar className="h-8 w-8">
                       <AvatarImage src={profile?.avatar_url || undefined} />
                       <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                         {getInitials(profile?.nome)}
