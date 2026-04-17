@@ -2,8 +2,9 @@ import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { 
   Target, TrendingUp, TrendingDown, Filter, Users,
-  CheckCircle2, Sparkles, NotebookPen
+  CheckCircle2, Sparkles, NotebookPen, FileText
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useTendenciasDiaQuina } from "@/hooks/useTendenciasDiaQuina";
 import { SeletorPeriodo } from "@/components/frequencia/SeletorPeriodo";
 import { DezenaCirculoMini } from "@/components/lotofacil/DezenaCirculoMini";
@@ -102,6 +103,7 @@ function GrupoRow({ label, grupoKey, grupo, isSelected, onToggle }: GrupoRowProp
 }
 
 export default function AnaliseDoDiaQuina() {
+  const navigate = useNavigate();
   const [periodo, setPeriodo] = useState(10);
   const { data: tendencias, isLoading } = useTendenciasDiaQuina(periodo);
 
@@ -240,6 +242,16 @@ export default function AnaliseDoDiaQuina() {
                 <span>Pri: <strong className="text-foreground">{tendencias.ultimoConcurso.primos}</strong></span>
                 <span>M3: <strong className="text-foreground">{tendencias.ultimoConcurso.m3}</strong></span>
               </div>
+
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full mt-3 text-xs gap-2"
+                onClick={() => navigate("/quina")}
+              >
+                <FileText className="h-3.5 w-3.5 text-primary" />
+                Ver estudo completo
+              </Button>
             </div>
 
             {/* ESTRATÉGIA DE FILTROS */}
