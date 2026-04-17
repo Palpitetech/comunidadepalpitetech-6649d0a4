@@ -43,6 +43,7 @@ export default function HubLotofacil() {
             className="w-[85%] sm:w-[70%] h-auto py-5 px-6 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-xl flex flex-col items-center gap-1 rounded-[2rem] active:scale-95 transition-all"
           >
             <div className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 fill-white" />
               <span className="text-[10px] uppercase font-black tracking-widest opacity-90">WhatsApp</span>
             </div>
             <span className="text-sm font-bold">
