@@ -109,7 +109,17 @@ export function LatestResults() {
     if (!isAuthenticated) {
       navigate("/login");
     } else {
-      navigate(`/${lotteryId}`);
+      // Direct to specific hub or results if hub doesn't exist
+      const hubPaths: Record<string, string> = {
+        megasena: "/megasena",
+        lotofacil: "/lotofacil",
+        quina: "/quina",
+        duplasena: "/duplasena",
+        lotomania: "/lotomania/resultados",
+        diadesorte: "/diadesorte/resultados"
+      };
+      
+      navigate(hubPaths[lotteryId] || `/${lotteryId}`);
     }
   };
 
