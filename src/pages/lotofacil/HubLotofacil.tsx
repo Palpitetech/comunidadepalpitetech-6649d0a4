@@ -3,7 +3,7 @@ import { HubLoteriaGrid, type HubTool } from "@/components/shared/HubLoteriaGrid
 import { Button } from "@/components/ui/button";
 import {
   Target, BarChart3, TrendingUp, Flame, LayoutGrid,
-  Table2, Dices, Shuffle, Wrench,
+  Table2, Dices, Shuffle, Wrench, MessageSquare
 } from "lucide-react";
 
 const THEME_COLOR = "270, 60%, 50%"; // Roxo Lotofácil
