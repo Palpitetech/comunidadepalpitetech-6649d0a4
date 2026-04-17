@@ -90,6 +90,18 @@ const Ajuda = () => {
                 Sim, utilizamos criptografia de ponta a ponta e não armazenamos dados de pagamento sensíveis em nossos servidores.
               </p>
             </div>
+            <div className="bg-card p-6 rounded-lg border border-border">
+              <h3 className="text-lg font-bold text-foreground mb-2">O Palpite Tech é confiável?</h3>
+              <p className="text-muted-foreground mb-4">
+                Sim, oferecemos total transparência sobre nossos métodos e resultados. Confira nossa análise completa.
+              </p>
+              <a 
+                href="/ajuda/confiavel" 
+                className="text-primary hover:underline font-medium inline-flex items-center gap-1"
+              >
+                Ler análise completa →
+              </a>
+            </div>
           </div>
 
           <h2 className="text-2xl font-semibold mt-10 mb-4">Contato e Suporte</h2>
