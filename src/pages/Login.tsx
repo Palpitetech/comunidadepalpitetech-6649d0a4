@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { LoginWizard } from "@/components/auth/LoginWizard";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 
 export default function Auth() {
   const { isAuthenticated, loading, profile } = useAuthContext();
@@ -39,7 +39,14 @@ export default function Auth() {
       </div>
 
       {/* Right side — Form */}
-      <div className="flex-1 flex flex-col justify-center p-0 md:p-10 md:w-1/2">
+      <div className="flex-1 flex flex-col justify-center p-0 md:p-10 md:w-1/2 relative">
+        <button 
+          onClick={() => navigate("/")}
+          className="absolute top-6 left-6 p-2.5 rounded-full hover:bg-accent/50 transition-all z-50 text-muted-foreground hover:text-foreground group"
+          title="Voltar"
+        >
+          <ArrowLeft className="h-6 w-6 transition-transform group-hover:-translate-x-1" />
+        </button>
         <div className="w-full max-w-lg mx-auto flex flex-col flex-1 md:flex-initial justify-center py-4 md:py-0">
           <LoginWizard />
 
