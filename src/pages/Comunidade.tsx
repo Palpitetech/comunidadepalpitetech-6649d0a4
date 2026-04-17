@@ -104,6 +104,11 @@ export default function Comunidade() {
             ))}
           </div>
         )}
+
+        {/* Section 2: Latest Results */}
+        <div className="w-full mt-6">
+          <LatestResults />
+        </div>
       </div>
     </MainLayout>
   );
