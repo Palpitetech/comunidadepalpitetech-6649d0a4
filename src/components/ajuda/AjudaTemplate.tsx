@@ -122,19 +122,38 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
             <em>Última atualização: {formattedDate} — conteúdo baseado em análise e testes reais.</em>
           </p>
 
-          {/* 2.3 Snippet resposta direta (otimizado para Featured Snippet) */}
-          <section id="snippet-answer" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10">
-            <h2 className="text-xl font-bold mt-0 mb-4">{main_question}</h2>
-            <p className="text-lg leading-relaxed font-medium">
-              <strong>{direct_answer}</strong>
-            </p>
-          </section>
+          {/* Variação Estrutural Controlada: Ordem das seções pode variar */}
+          {content.slug.length % 2 === 0 ? (
+            <>
+              {/* Ordem Padrão */}
+              <section id="snippet-answer" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10">
+                <h2 className="text-xl font-bold mt-0 mb-4">{main_question}</h2>
+                <p className="text-lg leading-relaxed font-medium">
+                  <strong>{direct_answer}</strong>
+                </p>
+              </section>
 
-          {/* Conteúdo Principal */}
-          <div 
-            className="mb-10 help-content-body"
-            dangerouslySetInnerHTML={{ __html: finalBodyContent }}
-          />
+              <div 
+                className="mb-10 help-content-body"
+                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
+              />
+            </>
+          ) : (
+            <>
+              {/* Ordem Invertida (Variação para SEO) */}
+              <div 
+                className="mb-10 help-content-body"
+                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
+              />
+
+              <section id="snippet-answer" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10">
+                <h2 className="text-xl font-bold mt-0 mb-4">{main_question}</h2>
+                <p className="text-lg leading-relaxed font-medium">
+                  <strong>{direct_answer}</strong>
+                </p>
+              </section>
+            </>
+          )}
 
           {/* 2.6 FAQ visível (obrigatório) */}
           <section id="faq-seo" className="mb-10">
@@ -197,5 +216,4 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
       </div>
     </MainLayout>
   );
-};
 };
