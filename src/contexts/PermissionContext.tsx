@@ -117,7 +117,7 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
     fetchPermissions(user.id);
 
     // Listen for real-time updates to user profile (plan changes)
-    const channel = supabase
+    const profileChannel = supabase
       .channel(`profile_changes_${user.id}`)
       .on(
         'postgres_changes',
@@ -128,14 +128,31 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
           filter: `id=eq.${user.id}`,
         },
         () => {
-          // console.log("Detectada mudança no perfil, limpando cache e re-buscando...");
+          fetchPermissions(user.id);
+        }
+      )
+      .subscribe();
+
+    // Listen for real-time updates to user roles
+    const rolesChannel = supabase
+      .channel(`roles_changes_${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_roles',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
           fetchPermissions(user.id);
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(profileChannel);
+      supabase.removeChannel(rolesChannel);
     };
   }, [user?.id, fetchPermissions]);
 
