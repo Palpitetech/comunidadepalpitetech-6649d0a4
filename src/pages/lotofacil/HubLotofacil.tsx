@@ -1,5 +1,6 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { HubLoteriaGrid, type HubTool } from "@/components/shared/HubLoteriaGrid";
+import { Button } from "@/components/ui/button";
 import {
   Target, BarChart3, TrendingUp, Flame, LayoutGrid,
   Table2, Dices, Shuffle, Wrench,
