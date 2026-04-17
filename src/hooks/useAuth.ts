@@ -32,7 +32,7 @@ export function useAuth() {
           setTimeout(async () => {
             const { data } = await supabase
               .from("perfis")
-              .select("id, nome, celular, is_bot, avatar_url, email_verificado, trial_used, status_assinatura")
+              .select("id, nome, celular, whatsapp, is_bot, avatar_url, email_verificado, trial_used, status_assinatura")
               .eq("id", session.user.id)
               .maybeSingle();
 
@@ -174,6 +174,14 @@ export function useAuth() {
     []
   );
 
+  const resetPassword = useCallback(async (email: string) => {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + "/reset-password",
+    });
+    if (error) throw error;
+    return data;
+  }, []);
+
   return {
     user: authState.user,
     session: authState.session,
@@ -187,5 +195,6 @@ export function useAuth() {
     signOut,
     updateProfile,
     updatePassword,
+    resetPassword,
   };
 }

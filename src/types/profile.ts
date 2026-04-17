@@ -7,4 +7,5 @@ export interface Profile {
   email_verificado: boolean | null;
   trial_used?: boolean;
   status_assinatura?: string;
+  whatsapp?: string | null;
 }
