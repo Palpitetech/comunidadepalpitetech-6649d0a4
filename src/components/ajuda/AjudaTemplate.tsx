@@ -190,19 +190,22 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
         <script type="application/ld+json">{JSON.stringify(articleSchema)}</script>
       </Helmet>
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-10 max-w-4xl">
         <article className="prose prose-slate dark:prose-invert max-w-none">
-          {/* 2.1 H1 único */}
-          <h1 className="text-3xl md:text-4xl font-extrabold mb-2 text-foreground">
+          {/* 2.1 H1 único - Clear semantic focus */}
+          <h1 className="text-3xl md:text-4xl font-extrabold mb-4 text-foreground leading-tight">
             {title}
           </h1>
+          
+          <div className="flex items-center gap-3 mb-8">
+            <div className="h-px flex-1 bg-border" />
+            <p className="text-sm text-muted-foreground m-0 whitespace-nowrap">
+              <em>Atualizado em {formattedDate}</em>
+            </p>
+            <div className="h-px flex-1 bg-border" />
+          </div>
 
-          {/* 2.2 Data de atualização */}
-          <p className="text-sm text-muted-foreground mt-0 mb-8">
-            <em>Última atualização: {formattedDate} — conteúdo baseado em análise e testes reais.</em>
-          </p>
-
-          {/* 2.3 Resposta direta (snippet) */}
+          {/* 2.3 Resposta direta (snippet) - Obligatory for /ajuda/* */}
           {renderSnippet(intent === 'commercial' ? 'prominent' : intent === 'analytical' ? 'technical' : 'standard')}
 
           {/* 2.4 Conteúdo principal (ou análise, dependendo da intent) */}
@@ -244,43 +247,54 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
             </div>
           </section>
 
-          {/* 2.7 Bloco de autoridade (E-E-A-T) */}
-          <section id="authority-boost" className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-800 mb-10">
-            <h2 className="text-xl font-bold mt-0 mb-4">Por que confiar neste conteúdo?</h2>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary">
+          {/* 2.7 Bloco de autoridade (E-E-A-T) - Micro variation background */}
+          <section id="authority-boost" className="bg-primary/[0.03] dark:bg-slate-900/50 p-8 rounded-2xl border border-primary/10 mb-12 shadow-sm">
+            <h2 className="text-xl font-bold mt-0 mb-6 flex items-center gap-2">
+              <div className="w-1.5 h-6 bg-primary rounded-full" />
+              Por que confiar neste conteúdo?
+            </h2>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-xl shadow-inner">
                 {author_name.charAt(0)}
               </div>
               <div>
-                <p className="font-semibold text-foreground m-0">{author_name}</p>
-                <p className="text-xs text-muted-foreground m-0">
+                <p className="font-bold text-foreground m-0 text-lg">{author_name}</p>
+                <p className="text-sm text-muted-foreground m-0">
                   {author_experience || "Especialista em Análise de Dados e Sistemas de Loteria"}
                 </p>
               </div>
             </div>
             
             {review_method && (
-              <div className="mb-4 text-sm bg-background/50 p-3 rounded border border-border/50 italic">
+              <div className="mb-6 text-sm bg-white/50 dark:bg-background/50 p-4 rounded-xl border border-border/50 italic leading-relaxed shadow-sm">
                 <strong>Método de revisão:</strong> {review_method}
               </div>
             )}
 
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 list-none p-0">
-              <li className="flex items-center gap-2 text-sm m-0">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                Baseado em análise e testes reais
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 list-none p-0 m-0">
+              <li className="flex items-start gap-3 text-sm m-0">
+                <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                </div>
+                <span>Baseado em análise e testes reais</span>
               </li>
-              <li className="flex items-center gap-2 text-sm m-0">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                Conteúdo revisado regularmente
+              <li className="flex items-start gap-3 text-sm m-0">
+                <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                </div>
+                <span>Conteúdo revisado regularmente</span>
               </li>
-              <li className="flex items-center gap-2 text-sm m-0">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                Transparência total nos processos
+              <li className="flex items-start gap-3 text-sm m-0">
+                <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                </div>
+                <span>Transparência total nos processos</span>
               </li>
-              <li className="flex items-center gap-2 text-sm m-0">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                Sem promessas de ganhos garantidos
+              <li className="flex items-start gap-3 text-sm m-0">
+                <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                </div>
+                <span>Sem promessas de ganhos garantidos</span>
               </li>
             </ul>
           </section>
