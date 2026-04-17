@@ -14,6 +14,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import estudoResultadoSaiu from "@/assets/estudo-resultado-saiu.jpg";
+import estudoParImpar from "@/assets/estudo-par-impar.jpg";
+import estudoCiclo from "@/assets/estudo-ciclo.jpg";
+import estudoQuentesFrias from "@/assets/estudo-quentes-frias.jpg";
+import estudoTecnicaCiclo from "@/assets/estudo-tecnica-ciclo.jpg";
+import estudoMoldura from "@/assets/estudo-moldura.jpg";
+import estudoRepetidas from "@/assets/estudo-repetidas.jpg";
 
 const Central = () => {
   const { isAuthenticated } = useAuthContext();
@@ -169,21 +176,27 @@ const Central = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-8 w-full pb-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full pb-10">
             {[
-              "Raio X do Resultado.",
-              "Análise de Pares e Ímpares",
-              "Análise de Ciclo",
-              "Analise de Movimentação",
-              "Análise técnica",
-              "Análise moldura",
-              "Analise Repetidas"
-            ].map((title, index) => (
+              { title: "Raio X do Resultado", img: estudoResultadoSaiu, alt: "Estudo Lotofácil: Raio-X do resultado do concurso com pares, ímpares e moldura" },
+              { title: "Análise de Pares e Ímpares", img: estudoParImpar, alt: "Estudo Lotofácil: Análise de distribuição de pares e ímpares" },
+              { title: "Análise de Ciclo", img: estudoCiclo, alt: "Estudo Lotofácil: Status e progresso do ciclo de dezenas" },
+              { title: "Análise de Movimentação", img: estudoQuentesFrias, alt: "Estudo Lotofácil: Movimentação de dezenas quentes e frias" },
+              { title: "Análise Técnica", img: estudoTecnicaCiclo, alt: "Estudo Lotofácil: Análise técnica e insights dos últimos concursos" },
+              { title: "Análise Moldura", img: estudoMoldura, alt: "Estudo Lotofácil: Análise de moldura vs miolo" },
+              { title: "Análise de Repetidas", img: estudoRepetidas, alt: "Estudo Lotofácil: Análise de dezenas repetidas recentes" },
+            ].map((item, index) => (
               <Card key={index} className="overflow-hidden border-none shadow-[0_20px_50px_rgba(0,0,0,0.1)] bg-white/95 backdrop-blur-sm transition-all duration-300 hover:shadow-[0_30px_60px_rgba(0,0,0,0.15)] hover:-translate-y-2 flex flex-col p-5 space-y-4 rounded-[2rem]">
-                <h3 className="font-extrabold text-senior-dark text-lg px-2">{title}</h3>
-                
-                <div className="aspect-[3/4] w-full bg-gray-100 rounded-2xl overflow-hidden flex items-center justify-center text-muted-foreground text-xs italic border border-dashed border-gray-200">
-                  [Foto na vertical]
+                <h3 className="font-extrabold text-senior-dark text-lg px-2">{item.title}</h3>
+
+                <div className="aspect-[3/4] w-full bg-muted rounded-2xl overflow-hidden">
+                  <img
+                    src={item.img}
+                    alt={item.alt}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
 
                 <div className="flex justify-center pt-2">
