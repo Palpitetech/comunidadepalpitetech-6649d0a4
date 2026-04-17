@@ -97,10 +97,7 @@ const Central = () => {
               return (
                 <DropdownMenu key={index}>
                   <DropdownMenuTrigger asChild>
-                    <Card className="hover:border-primary transition-all duration-300 cursor-pointer h-32 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white group-active:scale-95 flex flex-col items-center justify-center p-4 text-center rounded-3xl group">
-                      <div className="bg-gray-50 p-3 rounded-2xl mb-2 group-hover:bg-primary/5 transition-colors">
-                        <item.icon className={`h-8 w-8 ${item.color} group-hover:scale-110 transition-transform`} />
-                      </div>
+                    <Card className="hover:border-primary transition-all duration-300 cursor-pointer h-20 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white group-active:scale-95 flex flex-col items-center justify-center p-2 text-center rounded-3xl group">
                       <span className="text-xs font-bold text-senior-dark leading-tight px-2">
                         {item.title}
                       </span>
@@ -128,10 +125,7 @@ const Central = () => {
             }
 
             const CardContent = (
-              <Card className="hover:border-primary transition-all duration-300 cursor-pointer h-32 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white group-active:scale-95 flex flex-col items-center justify-center p-4 text-center rounded-3xl">
-                <div className="bg-gray-50 p-3 rounded-2xl mb-2 group-hover:bg-primary/5 transition-colors">
-                  <item.icon className={`h-8 w-8 ${item.color} group-hover:scale-110 transition-transform`} />
-                </div>
+              <Card className="hover:border-primary transition-all duration-300 cursor-pointer h-20 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white group-active:scale-95 flex flex-col items-center justify-center p-2 text-center rounded-3xl">
                 <span className="text-xs font-bold text-senior-dark leading-tight px-2">
                   {item.title}
                 </span>
@@ -189,7 +183,7 @@ const Central = () => {
 
                 <div className="flex justify-center pt-2">
                   <Button 
-                    className="h-10 px-6 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-black shadow-lg shadow-green-600/20 transition-all active:scale-95"
+                    className="h-8 px-6 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-black shadow-lg shadow-green-600/20 transition-all active:scale-95"
                     asChild
                   >
                     <Link to="/login">Receber estudos diários Grátis</Link>
