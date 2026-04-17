@@ -32,30 +32,6 @@ const Index = () => {
           </p>
         </div>
 
-        {/* WhatsApp Button Box */}
-        <div className="flex justify-center w-full px-4 mb-3">
-          <Button 
-            variant="outline" 
-            className="w-full sm:w-[85%] h-auto py-4 px-6 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-xl rounded-[1.5rem] active:scale-95 transition-all p-0"
-            asChild
-          >
-            <a 
-              href="https://wa.me/5551981854281" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-3 w-full h-full text-center"
-            >
-              <MessageSquare className="h-5 w-5 fill-white" />
-              <div className="flex flex-col items-start">
-                <span className="text-[10px] uppercase font-black tracking-widest opacity-90 leading-none">WhatsApp</span>
-                <span className="text-sm font-bold leading-tight">
-                  Quero receber Resultados no whatsapp
-                </span>
-              </div>
-            </a>
-          </Button>
-        </div>
-
         {/* Floating Boxes Grid */}
         <div className="grid grid-cols-2 gap-2 w-full mb-2">
           {menuItems.map((item, index) => (
