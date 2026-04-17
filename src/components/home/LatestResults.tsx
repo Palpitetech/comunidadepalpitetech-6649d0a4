@@ -204,7 +204,7 @@ export function LatestResults() {
 
               {/* Action Button */}
               <Button 
-                className="w-full h-8 rounded-xl font-bold text-white shadow-md transition-all hover:scale-[1.01] active:scale-95 flex items-center justify-center mt-2"
+                className="w-full h-10 rounded-xl font-bold text-white shadow-md transition-all sm:hover:scale-[1.01] active:scale-[0.98] flex items-center justify-center mt-2 select-none touch-manipulation"
                 style={{ backgroundColor: result.color }}
                 onClick={() => handleStudyClick(result.id)}
               >

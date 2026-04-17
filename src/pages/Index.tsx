@@ -66,7 +66,7 @@ const Index = () => {
 
   return (
     <MainLayout hideBottomNav={!isAuthenticated}>
-      <div className="container-senior pt-1 pb-4 flex flex-col items-center">
+      <div className="container-senior pt-2 pb-6 flex flex-col items-center overflow-x-hidden">
         {/* Hero Section - Text */}
         <div className="text-center space-y-0.5 mb-2 w-full px-4">
           <h1 className="text-[1.05rem] sm:text-senior-xl font-bold text-senior-dark">
@@ -80,32 +80,32 @@ const Index = () => {
         </div>
         
         {/* Main Action Boxes */}
-        <div className="grid grid-cols-2 gap-3 mb-4 w-full">
+        <div className="grid grid-cols-2 gap-3 mb-4 w-full px-1">
           <Card 
-            className="bg-green-600 hover:bg-green-700 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden group active:scale-95"
+            className="bg-green-600 sm:hover:bg-green-700 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden active:scale-[0.98] active:opacity-90 select-none touch-manipulation"
             onClick={() => navigate('/gerar-jogos')}
           >
             <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center justify-center h-full min-h-[60px]">
-              <h3 className="font-bold text-sm sm:text-base leading-tight">Gerar meus palpites</h3>
+              <h3 className="font-bold text-[13px] sm:text-base leading-tight">Gerar meus palpites</h3>
             </CardContent>
           </Card>
           <Card 
-            className="bg-green-600 hover:bg-green-700 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden group active:scale-95"
+            className="bg-green-600 sm:hover:bg-green-700 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden active:scale-[0.98] active:opacity-90 select-none touch-manipulation"
           >
             <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center justify-center h-full min-h-[60px]">
-              <h3 className="font-bold text-sm sm:text-base leading-tight">Entrar no Grupo</h3>
+              <h3 className="font-bold text-[13px] sm:text-base leading-tight">Entrar no Grupo</h3>
             </CardContent>
           </Card>
         </div>
 
         {/* Floating Boxes Grid */}
-        <div className="grid grid-cols-2 gap-2 w-full mb-2">
+        <div className="grid grid-cols-2 gap-2 w-full mb-2 px-1">
           {menuItems.map((item, index) => {
             if (item.id) {
               return (
                 <DropdownMenu key={index}>
                   <DropdownMenuTrigger asChild>
-                    <Card className="hover:border-primary transition-all duration-300 cursor-pointer border-none shadow-md bg-white/80 backdrop-blur-sm group-active:scale-95 flex flex-col items-center justify-center p-2 text-center h-full min-h-[60px] group">
+                    <Card className="sm:hover:border-primary transition-all duration-200 cursor-pointer border-none shadow-md bg-white active:scale-[0.98] active:bg-gray-50 flex flex-col items-center justify-center p-2 text-center h-full min-h-[60px] select-none touch-manipulation">
                       <span className="text-[10px] sm:text-[13px] font-semibold text-senior-dark leading-tight line-clamp-2">
                         {item.title}
                       </span>
@@ -116,7 +116,7 @@ const Index = () => {
                       <DropdownMenuItem 
                         key={lottery.id}
                         className={cn(
-                          "cursor-pointer transition-colors duration-200",
+                          "cursor-pointer transition-colors duration-200 py-3 sm:py-2",
                           lottery.id === "lotofacil" && "focus:bg-[#943391] focus:text-white",
                           lottery.id === "megasena" && "focus:bg-[#209869] focus:text-white",
                           lottery.id === "quina" && "focus:bg-[#260085] focus:text-white",
@@ -133,8 +133,8 @@ const Index = () => {
             }
 
             return (
-              <Link key={index} to={item.to || "#"} className="block group">
-                <Card className="hover:border-primary transition-all duration-300 cursor-pointer border-none shadow-md bg-white/80 backdrop-blur-sm group-active:scale-95 flex flex-col items-center justify-center p-2 text-center h-full min-h-[60px]">
+              <Link key={index} to={item.to || "#"} className="block group select-none touch-manipulation">
+                <Card className="sm:hover:border-primary transition-all duration-200 cursor-pointer border-none shadow-md bg-white active:scale-[0.98] active:bg-gray-50 flex flex-col items-center justify-center p-2 text-center h-full min-h-[60px]">
                   <span className="text-[10px] sm:text-[13px] font-semibold text-senior-dark leading-tight line-clamp-2">
                     {item.title}
                   </span>
@@ -145,9 +145,9 @@ const Index = () => {
         </div>
 
         {!isAuthenticated && (
-          <div className="mt-2 w-full px-4">
+          <div className="mt-4 w-full px-4">
             <Link to="/login" className="w-full">
-              <Button className="w-full h-8 bg-primary hover:bg-primary/90 text-white rounded-xl shadow-md font-bold text-sm">
+              <Button className="w-full h-11 bg-primary sm:hover:bg-primary/90 text-white rounded-xl shadow-md font-bold text-base active:scale-95 transition-transform touch-manipulation">
                 Criar conta grátis
               </Button>
             </Link>
