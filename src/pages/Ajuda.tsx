@@ -55,6 +55,7 @@ const Ajuda = () => {
     <MainLayout 
       pageTitle="Ajuda" 
       youtubeVideoId="dQw4w9WgXcQ" // ID do vídeo de exemplo (Rickroll) - substitua pelo real
+      hideBottomNav={true}
     >
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Content Section */}
