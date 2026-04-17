@@ -3,45 +3,105 @@ import { useEffect } from "react";
 
 const AjudaConfiavel = () => {
   useEffect(() => {
-    document.title = "Palpite Tech é confiável? Teste real e análise completa";
+    const title = "Palpite Tech é confiável? Teste real e análise completa";
+    const description = "Descubra se o Palpite Tech é confiável. Veja análise completa, como funciona, quem criou, preços e se realmente vale a pena apostar.";
+    const url = window.location.href;
+    const imageUrl = "https://palpitetec.com/og-image.jpg"; // Substitua pela URL real da imagem
+
+    document.title = title;
     
-    // SEO description and meta tags
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute("content", "Descubra se o Palpite Tech é confiável. Veja análise completa, como funciona, quem criou, preços e se realmente vale a pena apostar.");
+    // Function to set or create meta tags
+    const setMetaTag = (name: string, content: string, property = false) => {
+      const attr = property ? "property" : "name";
+      let element = document.querySelector(`meta[${attr}="${name}"]`);
+      if (!element) {
+        element = document.createElement("meta");
+        element.setAttribute(attr, name);
+        document.head.appendChild(element);
+      }
+      element.setAttribute("content", content);
+    };
+
+    // Standard Meta Tags
+    setMetaTag("description", description);
+    
+    // Open Graph / Facebook
+    setMetaTag("og:type", "article", true);
+    setMetaTag("og:url", url, true);
+    setMetaTag("og:title", title, true);
+    setMetaTag("og:description", description, true);
+    setMetaTag("og:image", imageUrl, true);
+
+    // Twitter
+    setMetaTag("twitter:card", "summary_large_image");
+    setMetaTag("twitter:url", url);
+    setMetaTag("twitter:title", title);
+    setMetaTag("twitter:description", description);
+    setMetaTag("twitter:image", imageUrl);
+
+    // Canonical link
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      document.head.appendChild(canonical);
     }
+    canonical.setAttribute("href", url);
 
     // Structured Data (JSON-LD) for SEO
-    const structuredData = {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "Palpite Tech é confiável?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Sim, o Palpite Tech é considerado confiável por oferecer transparência, teste gratuito e estratégias explicadas. No entanto, não há garantia de ganhos em loterias."
+    const structuredData = [
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Palpite Tech é confiável?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Sim, o Palpite Tech é considerado confiável por oferecer transparência, teste gratuito e estratégias explicadas. No entanto, não há garantia de ganhos em loterias."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Palpite Tech funciona mesmo?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "O Palpite Tech funciona como uma ferramenta de apoio com base em análises e estratégias, mas não garante resultados, pois loterias dependem de sorte."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Vale a pena usar o Palpite Tech?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Pode valer a pena para quem busca mais organização e estratégia nas apostas, além de testar antes de investir."
+            }
+          }
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": title,
+        "description": description,
+        "image": imageUrl,
+        "author": {
+          "@type": "Person",
+          "name": "Augusto Honorato"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Palpite Tech",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://palpitetec.com/logo.png"
           }
         },
-        {
-          "@type": "Question",
-          "name": "Palpite Tech funciona mesmo?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "O Palpite Tech funciona como uma ferramenta de apoio com base em análises e estratégias, mas não garante resultados, pois loterias dependem de sorte."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Vale a pena usar o Palpite Tech?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Pode valer a pena para quem busca mais organização e estratégia nas apostas, além de testar antes de investir."
-          }
-        }
-      ]
-    };
+        "datePublished": "2024-01-01", // Ideally these would be dynamic
+        "dateModified": new Date().toISOString().split('T')[0]
+      }
+    ];
 
     const script = document.createElement("script");
     script.type = "application/ld+json";
@@ -50,6 +110,7 @@ const AjudaConfiavel = () => {
 
     return () => {
       document.head.removeChild(script);
+      // Optional: Cleanup meta tags if needed, but usually not necessary for standard ones
     };
   }, []);
 
