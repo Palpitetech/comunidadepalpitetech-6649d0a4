@@ -129,12 +129,17 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
         if (!keywordRegex.test(enrichedBlock)) return;
 
         // 2. Validação Semântica (Layer 1): Verificar contexto exigido no MESMO bloco
-        const hasContext = contexts.some(ctx => 
+        const contextMatches = contexts.filter(ctx => 
           new RegExp(`\\b${ctx}\\b`, 'i').test(enrichedBlock)
         );
+        const hasContext = contextMatches.length > 0;
+        
+        // Calcular Score de Relevância (0 a 1)
+        const relevanceScore = contexts.length > 0 ? contextMatches.length / contexts.length : 0;
 
-        // 3. Fallback Inteligente (Layer 2): Se for página Pillar, linka mesmo sem contexto forte
-        if (hasContext || isPillar) {
+        // 3. Fallback Controlado (Layer 2): Só linka se tiver contexto forte OU for Pillar com relevância mínima (> 0.3)
+        // Isso evita "link injection" sem sentido semântico
+        if (hasContext || (isPillar && relevanceScore > 0.3)) {
           enrichedBlock = enrichedBlock.replace(keywordRegex, (match) => {
             globalLinkCount++;
             linkedSlugs.add(linkSlug);
