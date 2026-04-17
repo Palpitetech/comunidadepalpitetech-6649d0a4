@@ -80,7 +80,7 @@ const Index = () => {
       </Helmet>
       <div className="flex flex-col items-center overflow-x-hidden">
         {/* Hero Section - Text */}
-        <section className="cluster-container text-center w-full px-4 pt-4 pb-8">
+        <section className="cluster-container text-center w-full px-4 pt-0 pb-4">
           <p className="meta-update">Atualizado em: {new Date().toLocaleDateString('pt-BR')}</p>
           <h1 className="text-3xl md:text-4xl font-extrabold mb-4">
             Palpite Tech: O Gerador de Palpites para Loterias
@@ -93,7 +93,7 @@ const Index = () => {
         </section>
         
         {/* Main Action Boxes */}
-        <div className="cluster-container w-full pt-0 pb-6 grid grid-cols-2 gap-3">
+        <div className="cluster-container w-full pt-0 pb-4 grid grid-cols-2 gap-2">
           <Card 
             className="bg-green-600 sm:hover:bg-green-700 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden active:scale-[0.98] active:opacity-90 select-none touch-manipulation"
             onClick={() => navigate('/gerar-jogos')}
@@ -131,7 +131,7 @@ const Index = () => {
         </div>
 
         {/* Floating Boxes Grid */}
-        <div className="cluster-container py-0 grid grid-cols-2 gap-2 w-full mb-8">
+        <div className="cluster-container py-0 grid grid-cols-2 gap-2 w-full mb-4">
           {menuItems.map((item, index) => {
             if (item.id) {
               return (
@@ -188,7 +188,7 @@ const Index = () => {
 
 
         {/* Section 2: Latest Results - Micro variation background */}
-        <div className="w-full bg-slate-50/80 py-10 border-y border-slate-100">
+        <div className="w-full bg-slate-50/80 py-6 border-y border-slate-100">
           <div className="cluster-container py-0">
             <h2 className="text-center mb-6">Últimos Resultados</h2>
             <LatestResults />
@@ -196,7 +196,7 @@ const Index = () => {
         </div>
 
         {/* Section 3: FAQ SEO - Standard white bg */}
-        <div className="cluster-container py-10">
+        <div className="cluster-container py-6">
           <div className="w-full faq-seo" id="faq-seo">
             <h2 className="text-2xl font-bold mb-6">Perguntas Frequentes sobre Loterias</h2>
             
@@ -223,7 +223,7 @@ const Index = () => {
         </div>
 
         {/* Trust Box - Highlight variation background */}
-        <div className="w-full bg-primary/[0.03] py-12 border-t border-primary/5">
+        <div className="w-full bg-primary/[0.03] py-8 border-t border-primary/5">
           <div className="cluster-container py-0">
             <div className="intent-commercial">
               <div className="trust-box border-primary/10 bg-white/50">
