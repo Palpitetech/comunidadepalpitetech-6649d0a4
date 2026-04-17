@@ -60,7 +60,7 @@ import DezenasporPosicao from "./pages/DezenasporPosicao";
 import NotFound from "./pages/NotFound";
 import Termos from "./pages/Termos";
 import Privacidade from "./pages/Privacidade";
-import Home from "./pages/Home";
+
 // AtivarConta e VerificarEmail removidos
 import ResultadosMegaSena from "./pages/megasena/ResultadosMegaSena";
 import TendenciasMegaSena from "./pages/megasena/TendenciasMegaSena";
