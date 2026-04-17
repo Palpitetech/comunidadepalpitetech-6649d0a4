@@ -52,22 +52,11 @@ const Ajuda = () => {
   }, []);
 
   return (
-    <MainLayout pageTitle="Ajuda">
+    <MainLayout 
+      pageTitle="Ajuda" 
+      youtubeVideoId="dQw4w9WgXcQ" // ID do vídeo de exemplo (Rickroll) - substitua pelo real
+    >
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* YouTube Video Section */}
-        <div className="mb-12 aspect-video w-full overflow-hidden rounded-xl shadow-lg bg-muted">
-          <iframe
-            width="100%"
-            height="100%"
-            src="https://www.youtube.com/embed/dQw4w9WgXcQ" // Example video, user should replace with their own
-            title="Como utilizar o Palpite Tech"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-            className="w-full h-full"
-          ></iframe>
-        </div>
-
         {/* Content Section */}
         <article className="prose prose-slate dark:prose-invert max-w-none">
           <h1 className="text-3xl font-bold mb-6 text-foreground">Central de Ajuda</h1>

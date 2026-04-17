@@ -8,6 +8,7 @@ import { MobileMenuSheet } from "./MobileMenuSheet";
 import { PageHeader } from "./PageHeader";
 import { PushNotificationBanner } from "@/components/pwa/PushNotificationBanner";
 import { RequireCelularModal } from "@/components/shared/RequireCelularModal";
+import { PageVideo } from "@/components/shared/PageVideo";
 
 interface BreadcrumbItem {
   label: string;
@@ -67,6 +68,11 @@ export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRigh
 
       {/* Main Content */}
       <main className={`flex-1 ${isMobile && !finalHideBottomNav ? 'pb-20' : ''}`}>
+        {youtubeVideoId && (
+          <div className="max-w-3xl mx-auto px-4 mt-4">
+            <PageVideo videoId={youtubeVideoId} />
+          </div>
+        )}
         {children}
       </main>
 
