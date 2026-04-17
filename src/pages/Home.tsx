@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Volume2, UserPlus } from "lucide-react";
+import { Volume2, UserPlus, BarChart3, BookOpen, Lock, Dices, Table, CalendarDays, MessageSquare } from "lucide-react";
 import { CheckCircle2, ArrowRight, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { captureReferralCode } from "@/hooks/useConvites";
