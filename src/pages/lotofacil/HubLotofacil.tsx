@@ -60,25 +60,6 @@ export default function HubLotofacil() {
         </div>
 
         <HubLoteriaGrid tools={tools} themeColor={THEME_COLOR} />
-
-            asChild
-          >
-            <a 
-              href="https://wa.me/5551981854281" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex flex-col items-center justify-center gap-1 w-full h-full text-center"
-            >
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 fill-white" />
-                <span className="text-[10px] uppercase font-black tracking-widest opacity-90">WhatsApp</span>
-              </div>
-              <span className="text-sm font-bold leading-tight px-4">
-                Quero receber Resultados no meu whatsapp
-              </span>
-            </a>
-          </Button>
-        </div>
       </div>
 
     </MainLayout>
