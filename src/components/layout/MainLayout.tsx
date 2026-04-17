@@ -26,9 +26,20 @@ interface MainLayoutProps {
   hideBackButton?: boolean;
   /** Esconde a barra de navegação inferior no mobile */
   hideBottomNav?: boolean;
+  /** Define se é uma página de captura/landing page */
+  isLandingPage?: boolean;
 }
 
-export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRightContent, hideBackButton, hideBottomNav }: MainLayoutProps) {
+export function MainLayout({ 
+  children, 
+  pageTitle, 
+  breadcrumb, 
+  onBack, 
+  headerRightContent, 
+  hideBackButton, 
+  hideBottomNav,
+  isLandingPage
+}: MainLayoutProps) {
   const isMobile = useIsMobile();
   const [menuOpen, setMenuOpen] = useState(false);
 
