@@ -188,6 +188,32 @@ const Index = () => {
           <LatestResults />
         </div>
 
+        {/* Section 3: FAQ SEO */}
+        <div className="w-full mt-8 faq-seo" id="faq-seo">
+          <h2>Perguntas Frequentes sobre Loterias</h2>
+          <div>
+            <h3>Como ganhar na Lotofácil?</h3>
+            <p>
+              Para aumentar suas chances de ganhar na Lotofácil, é fundamental utilizar estatísticas de fechamentos, tendências de números pares e ímpares, além de analisar os sorteios anteriores para identificar padrões recorrentes.
+            </p>
+          </div>
+          <div>
+            <h3>O gerador de palpites é confiável?</h3>
+            <p>
+              Sim, o Palpite Tech utiliza algoritmos baseados na frequência dos sorteios oficiais da Caixa, fornecendo palpites estatisticamente otimizados para maximizar seu potencial de acerto.
+            </p>
+          </div>
+        </div>
+
+        {/* Trust Box Example for Commercial Intent */}
+        <div className="w-full mt-6 intent-commercial">
+          <div className="trust-box">
+            <h3 className="mt-0">Por que confiar no Palpite Tech?</h3>
+            <p className="text-[15px] mb-0">Mais de 10.000 apostadores utilizam nossas ferramentas diariamente para melhorar suas apostas com base em dados, não em sorte.</p>
+          </div>
+        </div>
+
+
       </div>
     </MainLayout>
   );
