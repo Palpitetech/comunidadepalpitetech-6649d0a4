@@ -272,6 +272,10 @@ const Index = () => {
             </div>
           </div>
         </section>
+
+        <p style={{ display: 'none' }}>
+          palpite tech é confiável, palpite tech funciona mesmo, palpite tech vale a pena, sistema de palpites loteria funciona, gerador de palpites confiável
+        </p>
       </div>
     </MainLayout>
   );
