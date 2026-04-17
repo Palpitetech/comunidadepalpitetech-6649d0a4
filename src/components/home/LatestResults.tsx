@@ -107,17 +107,8 @@ export function LatestResults() {
   const { isAuthenticated } = useAuth();
 
   const handleStudyClick = (lotteryId: string) => {
-    // Definir as rotas dos hubs para cada loteria
-    const hubPaths: Record<string, string> = {
-      megasena: "/megasena",
-      lotofacil: "/lotofacil",
-      quina: "/quina",
-      duplasena: "/duplasena",
-      lotomania: "/lotomania/resultados",
-      diadesorte: "/diadesorte/resultados"
-    };
-
-    const targetPath = hubPaths[lotteryId] || `/${lotteryId}`;
+    // Definir as rotas dos hubs para cada loteria (todas agora possuem hub raiz)
+    const targetPath = `/${lotteryId}`;
 
     // Na página Central (sem slug, path: "/"), redirecionar diretamente para o hub
     // A ProtectedRoute cuidará do login se necessário
