@@ -7,7 +7,6 @@ interface AuthState {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  resetPassword: (email: string) => Promise<any>;
 }
 
 export function useAuth() {
