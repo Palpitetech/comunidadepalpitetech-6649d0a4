@@ -32,12 +32,12 @@ const Index = () => {
         </div>
 
         {/* Floating Boxes Grid */}
-        <div className="grid grid-cols-2 gap-2 w-full mb-4">
+        <div className="grid grid-cols-2 gap-2 w-full mb-3">
           {menuItems.map((item, index) => (
             <Link key={index} to={item.to} className="block group">
-              <Card className="hover:border-primary transition-all duration-300 cursor-pointer border-none shadow-md bg-white/80 backdrop-blur-sm group-active:scale-95 flex flex-col items-center justify-center p-3 text-center h-full">
-                <item.icon className={`h-6 w-6 sm:h-8 sm:w-8 ${item.color} mb-1 sm:mb-2 group-hover:scale-110 transition-transform`} />
-                <span className="text-[11px] sm:text-[13px] font-semibold text-senior-dark leading-tight">
+              <Card className="hover:border-primary transition-all duration-300 cursor-pointer border-none shadow-md bg-white/80 backdrop-blur-sm group-active:scale-95 flex flex-col items-center justify-center p-2.5 text-center h-full min-h-[85px]">
+                <item.icon className={`h-5 w-5 sm:h-8 sm:w-8 ${item.color} mb-1 sm:mb-2 group-hover:scale-110 transition-transform`} />
+                <span className="text-[10px] sm:text-[13px] font-semibold text-senior-dark leading-tight">
                   {item.title}
                 </span>
               </Card>
