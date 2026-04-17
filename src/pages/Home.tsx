@@ -166,10 +166,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ===== QUICK ACCESS MOBILE GRID ===== */}
-      <section className="py-8 bg-background md:hidden">
-        <div className="max-w-md mx-auto px-5 space-y-8">
-          <div className="grid grid-cols-2 gap-4">
+      {/* ===== QUICK ACCESS GRID ===== */}
+      <section className="py-10 bg-background border-b border-border">
+        <div className="max-w-4xl mx-auto px-5 space-y-10">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {[
               { title: "Resultados", icon: BarChart3, color: "text-blue-500" },
               { title: "Estudos", icon: BookOpen, color: "text-green-500" },
