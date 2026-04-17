@@ -1,8 +1,9 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { HubLoteriaGrid, type HubTool } from "@/components/shared/HubLoteriaGrid";
+import { Button } from "@/components/ui/button";
 import {
   Target, BarChart3, TrendingUp, Flame, LayoutGrid,
-  Table2, Dices, Shuffle, Wrench,
+  Table2, Dices, Shuffle, Wrench, MessageSquare
 } from "lucide-react";
 
 const THEME_COLOR = "270, 60%, 50%"; // Roxo Lotofácil
@@ -35,7 +36,23 @@ export default function HubLotofacil() {
           </p>
         </div>
         <HubLoteriaGrid tools={tools} themeColor={THEME_COLOR} />
+
+        <div className="flex justify-center mt-8">
+          <Button 
+            variant="outline" 
+            className="w-[85%] sm:w-[70%] h-auto py-5 px-6 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-xl flex flex-col items-center gap-1 rounded-[2rem] active:scale-95 transition-all"
+          >
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 fill-white" />
+              <span className="text-[10px] uppercase font-black tracking-widest opacity-90">WhatsApp</span>
+            </div>
+            <span className="text-sm font-bold">
+              Quero receber Resultados no meu whatsapp
+            </span>
+          </Button>
+        </div>
       </div>
+
     </MainLayout>
   );
 }

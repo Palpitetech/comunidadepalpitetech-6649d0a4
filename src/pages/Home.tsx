@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Volume2, UserPlus } from "lucide-react";
+import { Volume2, UserPlus, BarChart3, BookOpen, Lock, Dices, Table, CalendarDays, MessageSquare } from "lucide-react";
 import { CheckCircle2, ArrowRight, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { captureReferralCode } from "@/hooks/useConvites";
@@ -166,7 +166,48 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ===== 2. PROBLEMA ===== */}
+      {/* ===== QUICK ACCESS GRID ===== */}
+      <section className="py-10 bg-background border-b border-border">
+        <div className="max-w-4xl mx-auto px-5 space-y-10">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            {[
+              { title: "Resultados", icon: BarChart3, color: "text-blue-500" },
+              { title: "Estudos", icon: BookOpen, color: "text-green-500" },
+              { title: "Fechamentos", icon: Lock, color: "text-orange-500" },
+              { title: "Gerador de Palpite", icon: Dices, color: "text-purple-500" },
+              { title: "Tabela de Movimentação", icon: Table, color: "text-red-500" },
+              { title: "Analise do Dia", icon: CalendarDays, color: "text-yellow-500" },
+            ].map((item, idx) => (
+              <div 
+                key={idx} 
+                className="bg-white rounded-3xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col items-center justify-center text-center gap-3 border border-gray-50 active:scale-95 transition-all cursor-pointer group"
+              >
+                <div className="bg-gray-50 p-3 rounded-2xl group-hover:bg-primary/5 transition-colors">
+                  <item.icon className={`h-8 w-8 ${item.color}`} />
+                </div>
+                <span className="text-xs font-bold text-senior-dark leading-tight">{item.title}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-center">
+            <Button 
+              variant="outline" 
+              className="w-[85%] sm:w-[70%] h-auto py-5 px-6 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-xl flex-col gap-1 rounded-[2rem] active:scale-95 transition-all"
+            >
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 fill-white" />
+                <span className="text-[10px] uppercase font-black tracking-widest opacity-90">WhatsApp</span>
+              </div>
+              <span className="text-[13px] font-bold">
+                Quero receber Resultados no meu whatsapp
+              </span>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+
       <section className="py-10 md:py-14 bg-secondary/30">
         <div className="max-w-2xl mx-auto px-5 text-center">
           <h2 className="text-xl md:text-2xl font-bold text-foreground mb-5 leading-snug">
