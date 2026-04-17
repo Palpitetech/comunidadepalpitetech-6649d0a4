@@ -285,6 +285,44 @@ Content-Type: application/json
           </Button>
         </div>
 
+        {/* API Loterias Integration */}
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Link2 className="h-4 w-4 text-primary" />
+                <CardTitle className="text-sm font-semibold">API Loterias (Caisa)</CardTitle>
+              </div>
+              <Badge variant="outline" className="text-[10px] bg-background">Provedor de Dados</Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Esta integração é utilizada pelos processos automáticos (Edge Functions) para sincronizar os resultados oficiais das loterias.
+            </p>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-1.5 h-8 text-xs flex-1 md:flex-none"
+                onClick={() => window.open("https://apiloterias.com.br/", "_blank")}
+              >
+                <Link2 className="h-3.5 w-3.5" />
+                Site Oficial
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-1.5 h-8 text-xs flex-1 md:flex-none"
+                onClick={() => window.open("https://apiloterias.com.br/meu-token", "_blank")}
+              >
+                <Copy className="h-3.5 w-3.5" />
+                Obter Token
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Webhook cards */}
         {webhooks.length === 0 ? (
           <Card>
