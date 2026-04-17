@@ -28,12 +28,12 @@ const Central = () => {
 
   return (
     <MainLayout hideBottomNav>
-      <div className="container-senior pt-24 pb-12 space-y-8 px-4">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-black text-senior-dark leading-tight">
+      <div className="container-senior pt-20 pb-8 space-y-6 px-4">
+        <div className="text-center space-y-1">
+          <h1 className="text-xl sm:text-3xl font-black text-senior-dark leading-tight line-clamp-2">
             Central completa para você fazer sua <span className="text-primary">fézinha</span>
           </h1>
-          <p className="text-lg text-muted-foreground font-medium">
+          <p className="text-sm sm:text-lg text-muted-foreground font-medium line-clamp-1">
             O que deseja fazer agora?
           </p>
         </div>
