@@ -26,7 +26,7 @@ const Central = () => {
   ];
 
   return (
-    <MainLayout pageTitle="Central">
+    <MainLayout pageTitle="Central" hideBottomNav>
       <div className="container-senior pt-8 pb-12 space-y-10 px-4">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-black text-senior-dark leading-tight">
