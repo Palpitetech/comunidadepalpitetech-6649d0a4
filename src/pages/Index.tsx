@@ -18,13 +18,13 @@ const Index = () => {
 
   return (
     <MainLayout pageTitle="Início" hideBottomNav={!isAuthenticated}>
-      <div className="container-senior pt-4 pb-8 flex flex-col items-center">
+      <div className="container-senior pt-2 pb-6 flex flex-col items-center">
         {/* Hero Section - Text */}
-        <div className="text-center space-y-2 mb-6 w-full px-4">
-          <h1 className="text-senior-xl font-bold text-senior-dark">
+        <div className="text-center space-y-1 mb-4 w-full px-4">
+          <h1 className="text-[1.1rem] sm:text-senior-xl font-bold text-senior-dark">
             {isAuthenticated ? "Bem-vindo ao Palpite Tech" : "Comece a analisar agora!"}
           </h1>
-          <p className="text-senior-sm text-muted-foreground">
+          <p className="text-[12px] sm:text-senior-sm text-muted-foreground">
             {isAuthenticated 
               ? "Selecione uma ferramenta abaixo para começar sua análise." 
               : "Tenha acesso às melhores ferramentas de análise estatística."}
@@ -32,12 +32,12 @@ const Index = () => {
         </div>
 
         {/* Floating Boxes Grid */}
-        <div className="grid grid-cols-2 gap-3 w-full mb-6">
+        <div className="grid grid-cols-2 gap-2 w-full mb-4">
           {menuItems.map((item, index) => (
             <Link key={index} to={item.to} className="block group">
-              <Card className="hover:border-primary transition-all duration-300 cursor-pointer border-none shadow-md bg-white/80 backdrop-blur-sm group-active:scale-95 flex flex-col items-center justify-center p-4 text-center h-full">
-                <item.icon className={`h-8 w-8 ${item.color} mb-2 group-hover:scale-110 transition-transform`} />
-                <span className="text-[13px] font-semibold text-senior-dark leading-tight">
+              <Card className="hover:border-primary transition-all duration-300 cursor-pointer border-none shadow-md bg-white/80 backdrop-blur-sm group-active:scale-95 flex flex-col items-center justify-center p-3 text-center h-full">
+                <item.icon className={`h-6 w-6 sm:h-8 sm:w-8 ${item.color} mb-1 sm:mb-2 group-hover:scale-110 transition-transform`} />
+                <span className="text-[11px] sm:text-[13px] font-semibold text-senior-dark leading-tight">
                   {item.title}
                 </span>
               </Card>
@@ -49,19 +49,19 @@ const Index = () => {
         <div className="flex justify-center w-full px-4">
           <Button 
             variant="outline" 
-            className="w-full max-w-[320px] h-auto py-3 px-4 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-lg rounded-xl active:scale-95 transition-all"
+            className="w-full max-w-[320px] h-auto py-2 px-3 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-lg rounded-xl active:scale-95 transition-all"
             asChild
           >
             <a 
               href="https://wa.me/5551981854281" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-3 w-full h-full text-left"
+              className="flex items-center justify-center gap-2 w-full h-full text-left"
             >
-              <MessageSquare className="h-6 w-6 fill-white shrink-0" />
+              <MessageSquare className="h-5 w-5 fill-white shrink-0" />
               <div className="flex flex-col">
-                <span className="text-[10px] uppercase font-bold tracking-wider opacity-90">WhatsApp</span>
-                <span className="text-sm font-medium leading-tight">
+                <span className="text-[8px] uppercase font-bold tracking-wider opacity-90">WhatsApp</span>
+                <span className="text-xs font-medium leading-tight">
                   Receber Resultados no WhatsApp
                 </span>
               </div>
