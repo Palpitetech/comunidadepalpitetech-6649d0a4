@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -115,7 +114,6 @@ export function LatestResults() {
   };
 
   return (
-
     <div className="w-full space-y-3 px-4 pb-6">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-senior-dark">Últimos Resultados</h2>
@@ -192,6 +190,16 @@ export function LatestResults() {
                   </div>
                 </div>
               </div>
+
+              {/* Action Button */}
+              <Button 
+                className="w-full h-10 rounded-xl font-bold text-white shadow-md transition-all hover:scale-[1.01] active:scale-95 flex items-center justify-center gap-2 mt-2"
+                style={{ backgroundColor: result.color }}
+                onClick={() => handleStudyClick(result.id)}
+              >
+                Ver estudo completo
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           </Card>
         ))}
