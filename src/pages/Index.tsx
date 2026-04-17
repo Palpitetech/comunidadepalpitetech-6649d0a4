@@ -3,7 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { BarChart3, BookOpen, Lock, Dices, Table, CalendarDays, MessageSquare, Sparkles } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { usePermissionContext } from "@/contexts/PermissionContext";
 import { LatestResults } from "@/components/home/LatestResults";
 import {
   DropdownMenu,
@@ -14,7 +15,8 @@ import {
 import { cn } from "@/lib/utils";
 
 const Index = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuthContext();
+  const { plan } = usePermissionContext();
   const navigate = useNavigate();
 
   const lotteries = [
