@@ -1,4 +1,5 @@
 import { MainLayout } from "@/components/layout/MainLayout";
+import { useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
@@ -18,6 +19,52 @@ const Index = () => {
   const { isAuthenticated } = useAuthContext();
   const { plan } = usePermissionContext();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const structuredData = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Palpite Tech é seguro?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sim, o Palpite Tech é seguro, pois oferece acesso transparente, teste gratuito e não exige cartão para começar."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Palpite Tech tem garantia de ganho?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Não, o Palpite Tech não garante ganhos, pois loterias dependem de sorte e probabilidades."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Palpite Tech vale a pena para iniciantes?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sim, principalmente para iniciantes que desejam apostar com mais estratégia e menos aleatoriedade."
+          }
+        }
+      ]
+    };
+
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.id = "faq-schema-index";
+    script.innerHTML = JSON.stringify(structuredData);
+    document.head.appendChild(script);
+
+    return () => {
+      const existingScript = document.getElementById("faq-schema-index");
+      if (existingScript) {
+        document.head.removeChild(existingScript);
+      }
+    };
+  }, []);
 
   const lotteries = [
     { name: "Lotofácil", id: "lotofacil" },
@@ -191,6 +238,38 @@ const Index = () => {
               O Palpite Tech se destaca por oferecer estratégias explicadas, teste gratuito e maior transparência, 
               enquanto muitos geradores de palpites entregam apenas números aleatórios sem análise.
             </p>
+          </div>
+        </section>
+
+        {/* FAQ SEO Section */}
+        <section id="faq-seo" className="w-full mt-10 px-4 mb-12">
+          <div className="max-w-2xl mx-auto space-y-6">
+            <h2 className="text-lg sm:text-xl font-bold text-senior-dark text-center">
+              Perguntas frequentes sobre o Palpite Tech
+            </h2>
+            
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="font-bold text-senior-dark text-sm sm:text-base">Palpite Tech é seguro?</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  Sim, o Palpite Tech é seguro, pois oferece acesso transparente, teste gratuito e não exige cartão para começar.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="font-bold text-senior-dark text-sm sm:text-base">Palpite Tech tem garantia de ganho?</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  Não, o Palpite Tech não garante ganhos, pois loterias dependem de sorte e probabilidades.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="font-bold text-senior-dark text-sm sm:text-base">Palpite Tech vale a pena para iniciantes?</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  Sim, principalmente para iniciantes que desejam apostar com mais estratégia e menos aleatoriedade.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
       </div>
