@@ -31,22 +31,33 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Floating Boxes Grid */}
-        <div className="grid grid-cols-2 gap-2 w-full mb-3">
-          {menuItems.map((item, index) => (
-            <Link key={index} to={item.to} className="block group">
-              <Card className="hover:border-primary transition-all duration-300 cursor-pointer border-none shadow-md bg-white/80 backdrop-blur-sm group-active:scale-95 flex flex-col items-center justify-center p-2.5 text-center h-full min-h-[85px]">
-                <item.icon className={`h-5 w-5 sm:h-8 sm:w-8 ${item.color} mb-1 sm:mb-2 group-hover:scale-110 transition-transform`} />
-                <span className="text-[10px] sm:text-[13px] font-semibold text-senior-dark leading-tight">
-                  {item.title}
+        {/* WhatsApp Button Box */}
+        <div className="flex justify-center w-full px-4 mb-4">
+          <Button 
+            variant="outline" 
+            className="w-full max-w-[320px] h-12 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-lg rounded-xl active:scale-95 transition-all"
+            asChild
+          >
+            <a 
+              href="https://wa.me/5551981854281" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-3 w-full h-full text-left"
+            >
+              <MessageSquare className="h-5 w-5 fill-white shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-[8px] uppercase font-bold tracking-wider opacity-90 leading-none">WhatsApp</span>
+                <span className="text-[13px] font-bold leading-tight whitespace-nowrap">
+                  Receber Resultados no WhatsApp
                 </span>
-              </Card>
-            </Link>
-          ))}
+              </div>
+            </a>
+          </Button>
         </div>
 
-        {/* WhatsApp Button Box */}
-        <div className="flex justify-center w-full px-4">
+        {/* Floating Boxes Grid */}
+        <div className="grid grid-cols-2 gap-2 w-full mb-3">
+
           <Button 
             variant="outline" 
             className="w-full max-w-[320px] h-11 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-lg rounded-xl active:scale-95 transition-all"
