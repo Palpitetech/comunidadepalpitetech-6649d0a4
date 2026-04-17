@@ -95,7 +95,7 @@ const AjudaConfiavel = () => {
           "name": "Palpite Tech",
           "logo": {
             "@type": "ImageObject",
-            "url": "https://palpitetec.com/logo.png"
+            "url": "https://www.palpitetech.com.br/logo.png"
           }
         },
         "datePublished": "2024-01-01",
@@ -109,13 +109,13 @@ const AjudaConfiavel = () => {
             "@type": "ListItem",
             "position": 1,
             "name": "Home",
-            "item": "https://palpitetec.com/"
+            "item": "https://www.palpitetech.com.br/"
           },
           {
             "@type": "ListItem",
             "position": 2,
             "name": "Ajuda",
-            "item": "https://palpitetec.com/ajuda"
+            "item": "https://www.palpitetech.com.br/ajuda"
           },
           {
             "@type": "ListItem",
