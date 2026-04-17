@@ -69,7 +69,7 @@ export function LoginWizard() {
 
       if (result.exists) {
         setNomeUsuarioEncontrado(result.nome || "");
-        setEmailLogin(result.email || emailLimpo);
+        setEmailLogin(result.email || inputLimpo);
         setEtapa("senha");
       } else {
         setEtapa("celular");
