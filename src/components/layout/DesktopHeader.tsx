@@ -197,6 +197,7 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
   const [upgradeLabel, setUpgradeLabel] = useState<string | undefined>();
   const [upgradeVariant, setUpgradeVariant] = useState<"premium" | "vip">("premium");
   const isHomePage = location.pathname === "/";
+  const isAjudaPage = location.pathname === "/ajuda";
 
   const handleBack = () => {
     if (onBack) {
@@ -272,7 +273,7 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
             <img src="/logo.png" alt="Palpite Tech" className="h-8 w-8 rounded-md" />
             <span className={cn(
               "text-lg font-bold text-primary",
-              !isHomePage && "hidden xl:inline"
+              (!isHomePage && !isAjudaPage) && "hidden xl:inline"
             )}>
               Palpite Tech
             </span>
