@@ -180,6 +180,19 @@ const Index = () => {
         <div className="w-full mt-4">
           <LatestResults />
         </div>
+
+        {/* Snippet Comparison */}
+        <section id="snippet-comparison" className="w-full mt-10 px-4 mb-8">
+          <div className="max-w-2xl mx-auto text-center space-y-3">
+            <h2 className="text-lg sm:text-xl font-bold text-senior-dark">
+              Palpite Tech é melhor que outros geradores de palpites?
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              O Palpite Tech se destaca por oferecer estratégias explicadas, teste gratuito e maior transparência, 
+              enquanto muitos geradores de palpites entregam apenas números aleatórios sem análise.
+            </p>
+          </div>
+        </section>
       </div>
     </MainLayout>
   );
