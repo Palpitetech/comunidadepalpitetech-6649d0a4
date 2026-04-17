@@ -49,7 +49,7 @@ export default function ResultadosQuina() {
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
               <BarChart3 className="h-7 w-7 text-purple-600" />
-              <h1 className="text-xl font-bold">🌟 Resultados Quina</h1>
+              <h1 className="sr-only">🌟 Resultados Quina</h1>
             </div>
             <SnapshotButton targetRef={contentRef} defaultTitle="Resultados Quina" />
           </div>
