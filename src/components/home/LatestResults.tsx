@@ -1,8 +1,10 @@
-
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { TrendingUp, Calendar } from "lucide-react";
+import { TrendingUp, Calendar, ChevronRight } from "lucide-react";
 
 interface LotteryResult {
   id: string;
@@ -100,6 +102,27 @@ const latestLotteryResults: LotteryResult[] = [
 ];
 
 export function LatestResults() {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
+  const handleStudyClick = (lotteryId: string) => {
+    if (!isAuthenticated) {
+      navigate("/login");
+    } else {
+      // Direct to specific hub or results if hub doesn't exist
+      const hubPaths: Record<string, string> = {
+        megasena: "/megasena",
+        lotofacil: "/lotofacil",
+        quina: "/quina",
+        duplasena: "/duplasena",
+        lotomania: "/lotomania/resultados",
+        diadesorte: "/diadesorte/resultados"
+      };
+      
+      navigate(hubPaths[lotteryId] || `/${lotteryId}`);
+    }
+  };
+
   return (
     <div className="w-full space-y-3 px-4 pb-6">
       <div className="flex items-center justify-between">
@@ -177,6 +200,16 @@ export function LatestResults() {
                   </div>
                 </div>
               </div>
+
+              {/* Action Button */}
+              <Button 
+                className="w-full h-10 rounded-xl font-bold text-white shadow-md transition-all hover:scale-[1.01] active:scale-95 flex items-center justify-center gap-2 mt-2"
+                style={{ backgroundColor: result.color }}
+                onClick={() => handleStudyClick(result.id)}
+              >
+                Ver estudo completo
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           </Card>
         ))}
