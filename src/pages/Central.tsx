@@ -62,7 +62,14 @@ const Central = () => {
     return paths[toolId]?.[lotteryId] || `/${lotteryId}`;
   };
 
-  const menuItems = [
+  const menuItems: Array<{
+    title: string;
+    icon: any;
+    color: string;
+    id?: string;
+    to?: string;
+    onClick?: () => void;
+  }> = [
     { title: "Resultados", icon: BarChart3, color: "text-blue-500", onClick: () => document.getElementById('sessao-2')?.scrollIntoView({ behavior: 'smooth' }) },
     { title: "Estudos", icon: BookOpen, color: "text-green-500", onClick: () => document.getElementById('sessao-3')?.scrollIntoView({ behavior: 'smooth' }) },
     { title: "Fechamentos", icon: Lock, color: "text-orange-500", id: "fechamento" },
