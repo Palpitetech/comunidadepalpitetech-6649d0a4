@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { BarChart3, BookOpen, Lock, Dices, Table, CalendarDays, MessageSquare } from "lucide-react";
+import { LatestResults } from "@/components/home/LatestResults";
 
 const Central = () => {
   const { isAuthenticated } = useAuthContext();
