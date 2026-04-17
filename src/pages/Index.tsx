@@ -80,7 +80,7 @@ const Index = () => {
       </Helmet>
       <div className="flex flex-col items-center overflow-x-hidden">
         {/* Hero Section - Text */}
-        <section className="cluster-container text-center w-full px-4 pt-4 pb-8">
+        <section className="cluster-container text-center w-full px-4 pt-0 pb-4">
           <p className="meta-update">Atualizado em: {new Date().toLocaleDateString('pt-BR')}</p>
           <h1 className="text-3xl md:text-4xl font-extrabold mb-4">
             Palpite Tech: O Gerador de Palpites para Loterias
