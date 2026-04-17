@@ -3143,6 +3143,10 @@ export type Database = {
         Args: { p_template_id: string; p_user_id: string }
         Returns: boolean
       }
+      verificar_existencia_usuario: {
+        Args: { p_celular?: string; p_email?: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "user" | "premium" | "moderator" | "admin"
