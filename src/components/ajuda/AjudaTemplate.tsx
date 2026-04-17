@@ -181,68 +181,52 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
             <em>Última atualização: {formattedDate} — conteúdo baseado em análise e testes reais.</em>
           </p>
 
-          {/* Variação Estrutural Controlada por Intenção (SEO Governance) */}
-          {intent === 'analytical' ? (
-            <>
-              {/* Intenção: Analítica -> Interpretação técnica primeiro, snippet de reforço ao final */}
-              <div 
-                className="mb-10 help-content-body border-l-2 border-primary/20 pl-4 md:pl-6 leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
-              />
-
-              <section id="resposta-direta" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10 shadow-sm">
+          {/* SEO Snippet Logic: Sempre presente, variando apenas ordem e destaque visual para consistência de padrão (SEO Governance) */}
+          
+          {/* Helper para renderizar o Snippet de Resposta Direta (Padrão Google) */}
+          const renderSnippet = (variant: 'standard' | 'prominent' | 'technical' = 'standard') => {
+            const styles = {
+              standard: "bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10 shadow-sm",
+              prominent: "bg-primary/10 p-8 rounded-xl border-2 border-primary/30 mb-10 shadow-md",
+              technical: "bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10 shadow-sm opacity-90 border-l-4"
+            };
+            
+            return (
+              <section id="resposta-direta" className={styles[variant]} data-intent={intent}>
                 <h2 className="text-xl font-bold mt-0 mb-4 flex items-center gap-2 text-foreground">
-                  <span className="w-2 h-6 bg-primary/40 rounded-full" />
+                  <span className={`w-2 h-6 rounded-full ${variant === 'prominent' ? 'bg-primary' : 'bg-primary/30'}`} />
                   {main_question}
                 </h2>
-                <p className="text-lg leading-relaxed font-medium">
-                  <strong>{direct_answer}</strong>
-                </p>
+                <div className={`${variant === 'prominent' ? 'text-xl font-extrabold' : 'text-lg font-medium'} leading-relaxed text-foreground`}>
+                  {direct_answer}
+                </div>
               </section>
+            );
+          };
+
+          {/* Renderização baseada em Intenção com Ordem Controlada */}
+          {intent === 'analytical' ? (
+            <>
+              {/* Analítica: Conteúdo topo (interpretação), Snippet reforço (padrão mantido) */}
+              <div 
+                className="mb-10 help-content-body border-l-2 border-primary/10 pl-4 md:pl-6 leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
+              />
+              {renderSnippet('technical')}
             </>
           ) : intent === 'data' ? (
             <>
-              {/* Intenção: Dados -> Fatos crus e resultados em destaque máximo no TOPO (Foco em números) */}
-              <section id="resposta-direta" className="bg-primary/10 p-8 rounded-xl border-2 border-primary/30 mb-10 shadow-md">
-                <h2 className="text-xl font-bold mt-0 mb-4 flex items-center gap-2 text-primary">
-                  <span className="w-2 h-6 bg-primary rounded-full" />
-                  {main_question}
-                </h2>
-                <p className="text-xl leading-relaxed font-extrabold text-foreground">
-                  {direct_answer}
-                </p>
-              </section>
-
+              {/* Dados: Snippet topo (foco em números), Conteúdo abaixo */}
+              {renderSnippet('prominent')}
               <div 
-                className="mb-10 help-content-body opacity-90 text-sm md:text-base"
-                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
-              />
-            </>
-          ) : intent === 'commercial' ? (
-            <>
-              {/* Intenção: Comercial -> Foca em confiabilidade e autoridade primeiro */}
-              <section id="resposta-direta" className="bg-primary/5 p-8 rounded-xl border-2 border-primary/30 mb-10 shadow-md">
-                <h2 className="text-2xl font-bold mt-0 mb-6 text-primary">{main_question}</h2>
-                <p className="text-xl leading-relaxed font-semibold">
-                  {direct_answer}
-                </p>
-              </section>
-
-              <div 
-                className="mb-10 help-content-body italic border-l-4 border-slate-200 pl-4"
+                className="mb-10 help-content-body opacity-95 text-sm md:text-base"
                 dangerouslySetInnerHTML={{ __html: finalBodyContent }}
               />
             </>
           ) : (
             <>
-              {/* Intenção: Informacional (Padrão) -> Resposta direta em destaque para Featured Snippet no topo */}
-              <section id="resposta-direta" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10 shadow-sm">
-                <h2 className="text-xl font-bold mt-0 mb-4">{main_question}</h2>
-                <p className="text-lg leading-relaxed font-medium">
-                  <strong>{direct_answer}</strong>
-                </p>
-              </section>
-
+              {/* Padrão (Informacional/Comercial): Snippet topo para Featured Snippet */}
+              {renderSnippet(intent === 'commercial' ? 'prominent' : 'standard')}
               <div 
                 className="mb-10 help-content-body"
                 dangerouslySetInnerHTML={{ __html: finalBodyContent }}
