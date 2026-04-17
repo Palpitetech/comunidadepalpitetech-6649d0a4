@@ -163,7 +163,7 @@ const AjudaConfiavel = () => {
       pageTitle="Palpite Tech é confiável?"
       breadcrumb={[
         { label: "Ajuda", onClick: () => window.location.href = "/ajuda" },
-        { label: "Confiável" }
+        { label: "Palpite Tech é Confiável?" }
       ]}
     >
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -201,6 +201,9 @@ const AjudaConfiavel = () => {
             <h2 className="text-2xl font-bold mb-4 text-foreground">O que é o Palpite Tech?</h2>
             <p className="text-lg leading-relaxed text-foreground">
               O Palpite Tech é um sistema avançado que gera palpites para loterias com base em análises estatísticas e estratégias, ajudando apostadores a tomarem decisões mais inteligentes e embasadas em dados, indo muito além da simples escolha aleatória de números para seus jogos diários.
+            </p>
+            <p className="text-sm text-muted-foreground mt-2 italic">
+              Resposta rápida baseada em análise real e testes da plataforma.
             </p>
           </section>
 

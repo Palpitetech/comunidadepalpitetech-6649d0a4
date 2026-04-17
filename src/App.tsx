@@ -263,7 +263,7 @@ const App = () => (
                 <Route path="/admin/gravacao/quina" element={<AdminRoute><GravacaoQuina /></AdminRoute>} />
                 
                 <Route path="/ajuda" element={<Ajuda />} />
-                <Route path="/ajuda/confiavel" element={<AjudaConfiavel />} />
+                <Route path="/ajuda/palpite-tech-e-confiavel" element={<AjudaConfiavel />} />
 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
