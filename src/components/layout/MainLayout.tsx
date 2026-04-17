@@ -80,7 +80,7 @@ export function MainLayout({
       {/* Main Content */}
       <main className={`flex-1 ${isMobile && !finalHideBottomNav ? 'pb-20' : ''}`}>
         {youtubeVideoId && (
-          <div className="max-w-3xl mx-auto px-4 mt-4">
+          <div className="cluster-container mt-4">
             <PageVideo videoId={youtubeVideoId} />
           </div>
         )}
