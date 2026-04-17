@@ -19,6 +19,13 @@ type Etapa =
   | "cadastro-whatsapp" 
   | "cadastro-codigo";
 
+interface VerificationResult {
+  exists: boolean;
+  nome: string | null;
+  email: string | null;
+  type: string | null;
+}
+
 export function LoginWizard() {
   const [etapa, setEtapa] = useState<Etapa>("email");
   const [email, setEmail] = useState("");
@@ -55,9 +62,11 @@ export function LoginWizard() {
 
       if (error) throw error;
 
-      if (data.exists) {
-        setNomeUsuarioEncontrado(data.nome || "");
-        setEmailLogin(data.email || emailLimpo);
+      const result = data as unknown as VerificationResult;
+
+      if (result.exists) {
+        setNomeUsuarioEncontrado(result.nome || "");
+        setEmailLogin(result.email || emailLimpo);
         setEtapa("senha");
       } else {
         setEtapa("celular");
@@ -84,9 +93,11 @@ export function LoginWizard() {
 
       if (error) throw error;
 
-      if (data.exists) {
-        setNomeUsuarioEncontrado(data.nome || "");
-        setEmailLogin(data.email || "");
+      const result = data as unknown as VerificationResult;
+
+      if (result.exists) {
+        setNomeUsuarioEncontrado(result.nome || "");
+        setEmailLogin(result.email || "");
         setEtapa("senha");
       } else {
         setEtapa("cadastro-nome");
@@ -208,7 +219,8 @@ export function LoginWizard() {
                   />
                 </div>
                 <Button type="submit" className="w-full h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl" disabled={isLoading}>
-                  {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Localizar Cadastro"}
+                  {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
+                  Localizar Cadastro
                 </Button>
                 <a
                   href={supportWhatsApp}
@@ -264,7 +276,8 @@ export function LoginWizard() {
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
                   <Button type="submit" className="flex-1 h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl" disabled={isLoading}>
-                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Acessar Conta"}
+                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
+                    Acessar Conta
                   </Button>
                 </div>
               </form>
@@ -304,7 +317,8 @@ export function LoginWizard() {
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
                   <Button type="submit" className="flex-1 h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl" disabled={isLoading}>
-                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Localizar Cadastro"}
+                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
+                    Localizar Cadastro
                   </Button>
                 </div>
               </form>
@@ -424,7 +438,8 @@ export function LoginWizard() {
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
                   <Button type="submit" className="flex-1 h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl" disabled={isLoading}>
-                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Enviar Código de Acesso"}
+                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
+                    Enviar Código de Acesso
                   </Button>
                 </div>
               </form>
@@ -469,7 +484,7 @@ export function LoginWizard() {
                     className="w-full h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl" 
                     disabled={isLoading || codigo.length < 6}
                   >
-                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><ShieldCheck className="h-5 w-5 mr-2" /> Validar Acesso</>}
+                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <><ShieldCheck className="h-5 w-5 mr-2" /> Validar Acesso</>}
                   </Button>
                   <Button variant="ghost" className="text-xs" onClick={() => setEtapa("cadastro-whatsapp")}>
                     Voltar e corrigir dados
