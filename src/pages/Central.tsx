@@ -87,17 +87,17 @@ const Central = () => {
   ];
 
   return (
-    <MainLayout hideBottomNav pageTitle="Central completa para você fazer sua fézinha">
+    <MainLayout hideBottomNav>
       <Helmet>
         <title>Palpite Tech - Análise de Loterias e Gerador de Palpites</title>
         <meta name="description" content="A melhor plataforma de análise para Lotofácil, Mega-Sena e Quina. Aumente suas chances com estatísticas e ferramentas inteligentes." />
       </Helmet>
-      <div className="container-senior pt-2 pb-8 space-y-6 px-4">
-        <div className="text-center space-y-1">
-          <h1 className="sr-only">
+      <div className="container-senior pt-4 pb-8 space-y-6 px-4">
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-black text-senior-dark leading-tight">
             Central completa para você fazer sua fézinha
           </h1>
-          <p className="text-sm sm:text-lg text-muted-foreground font-medium line-clamp-1">
+          <p className="text-sm sm:text-lg text-muted-foreground font-medium">
             O que deseja fazer agora?
           </p>
         </div>
