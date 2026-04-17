@@ -44,7 +44,7 @@ export function HubLoteriaGrid({ tools, themeColor, themeFg = "#fff" }: HubLoter
 
   return (
     <>
-      <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
         {tools.map((tool) => {
           const Icon = tool.icon;
           const badge = renderBadge(tool.path);
@@ -54,40 +54,41 @@ export function HubLoteriaGrid({ tools, themeColor, themeFg = "#fff" }: HubLoter
               key={tool.path}
               to={tool.path}
               onClick={(e) => handleGatedClick(e, tool.path)}
-              className="block"
+              className="block group"
             >
               <div
-                className="flex items-center gap-4 p-4 rounded-xl border bg-card hover:shadow-md transition-all duration-200"
+                className="flex flex-col items-center justify-center p-5 rounded-2xl border bg-card hover:shadow-lg transition-all duration-300 text-center h-full relative group-active:scale-95 shadow-sm"
                 style={{
-                  borderLeftWidth: 4,
-                  borderLeftColor: `hsl(${themeColor})`,
-                  boxShadow: `0 1px 3px hsl(${themeColor} / 0.08)`,
+                  borderBottomWidth: 4,
+                  borderBottomColor: `hsl(${themeColor})`,
                 }}
               >
                 <div
-                  className="h-11 w-11 rounded-xl flex items-center justify-center shrink-0"
+                  className="h-12 w-12 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform"
                   style={{
-                    backgroundColor: `hsl(${themeColor} / 0.12)`,
+                    backgroundColor: `hsl(${themeColor} / 0.1)`,
                     color: `hsl(${themeColor})`,
                   }}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-6 w-6" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold text-foreground">{tool.title}</h3>
-                    {badge}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                    {tool.description}
-                  </p>
+                
+                <div className="flex flex-col items-center gap-1">
+                  <h3 className="text-xs font-bold text-foreground leading-tight uppercase tracking-tight">
+                    {tool.title}
+                  </h3>
+                  {badge && <div className="mt-1">{badge}</div>}
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                
+                <p className="text-[10px] text-muted-foreground mt-2 line-clamp-2 leading-tight opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">
+                  {tool.description}
+                </p>
               </div>
             </Link>
           );
         })}
       </div>
+
 
       <UpgradeModal
         open={upgradeOpen}
