@@ -119,7 +119,7 @@ const Index = () => {
         {/* Hero Section - Text */}
         <div className="text-center space-y-0.5 mb-2 w-full px-4">
           <h1 className="text-[1.05rem] sm:text-senior-xl font-bold text-senior-dark">
-            {isAuthenticated ? "Bem-vindo ao Palpite Tech" : "Comece a analisar agora!"}
+            Palpite Tech é confiável? Teste real, análise e resultados
           </h1>
           <p className="text-[11px] sm:text-senior-sm text-muted-foreground leading-tight line-clamp-1">
             {isAuthenticated 
