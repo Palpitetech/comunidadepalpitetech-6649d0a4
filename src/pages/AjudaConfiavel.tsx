@@ -126,11 +126,8 @@ const AjudaConfiavel = () => {
               Palpite Tech é confiável? Teste real, análise e resultados
             </h1>
             <p className="text-sm text-muted-foreground italic mb-6">
-              <em>Última atualização: Abril de 2026</em>
+              <em>Última atualização: Abril de 2026 — análise baseada em testes reais da plataforma.</em>
             </p>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>Por <strong>Equipe Palpite Tech</strong></span>
-            </div>
           </header>
 
           <section id="snippet-answer" className="mb-8 border-b pb-8">
