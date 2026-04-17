@@ -358,6 +358,16 @@ export default function AnaliseDoDia() {
                 <span>Pri: <strong className="text-foreground">{tendencias.ultimoConcurso.primos}</strong></span>
                 <span>M3: <strong className="text-foreground">{tendencias.ultimoConcurso.m3}</strong></span>
               </div>
+
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full mt-3 text-xs gap-2"
+                onClick={() => navigate("/lotofacil")}
+              >
+                <FileText className="h-3.5 w-3.5 text-primary" />
+                Ver estudo completo
+              </Button>
             </div>
 
             {/* ESTRATÉGIA DE FILTROS */}
