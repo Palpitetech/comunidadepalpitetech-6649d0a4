@@ -179,28 +179,28 @@ const AjudaConfiavel = () => {
             </div>
           </header>
 
-          <section id="snippet-answer" className="mb-8">
+          <section id="snippet-answer" className="mb-8 border-b pb-8">
             <h2 className="text-2xl font-bold mb-4 text-foreground">Palpite Tech é confiável?</h2>
             <p className="text-lg leading-relaxed text-foreground">
-              <strong>Sim, o Palpite Tech é confiável</strong>, pois é uma plataforma que oferece palpites para loterias com base em análises e estratégias, além de disponibilizar teste gratuito e transparência. No entanto, não garante resultados, já que jogos de loteria dependem de sorte.
+              <strong>Sim, o Palpite Tech é confiável</strong>, pois é uma plataforma profissional que oferece palpites para loterias com base em análises estatísticas e estratégias matemáticas, além de disponibilizar teste gratuito e total transparência aos usuários. No entanto, é importante lembrar que o sistema não garante resultados exatos, já que jogos de loteria dependem essencialmente de sorte e probabilidades.
             </p>
           </section>
 
           <section id="snippet-list" className="mb-8 bg-muted/30 p-6 rounded-xl border border-border">
             <h2 className="text-2xl font-bold mb-4 text-foreground">Palpite Tech funciona mesmo?</h2>
-            <p className="mb-4">O Palpite Tech funciona como uma ferramenta de apoio para apostas. Veja como:</p>
+            <p className="mb-4 text-foreground">O Palpite Tech funciona como uma ferramenta de apoio inteligente para apostas. Veja como o sistema ajuda você:</p>
             <ol className="list-decimal pl-6 space-y-2 text-foreground">
-              <li>Gera palpites com base em análise de tendência</li>
-              <li>Mostra estratégias utilizadas em cada concurso</li>
-              <li>Oferece conteúdo diário atualizado pela equipe</li>
-              <li>Permite teste grátis para provar que o <strong>palpite tech funciona</strong></li>
+              <li>Gera palpites com base em análise de tendência e histórico</li>
+              <li>Mostra as estratégias específicas utilizadas em cada concurso</li>
+              <li>Oferece conteúdo diário atualizado por especialistas da equipe</li>
+              <li>Permite teste grátis para provar que o <strong>palpite tech funciona</strong> na prática</li>
             </ol>
           </section>
 
-          <section id="snippet-security" className="mb-10 border-b pb-8">
-            <h2 className="text-2xl font-bold mb-4 text-foreground">Palpite Tech é seguro?</h2>
-            <p className="text-muted-foreground leading-relaxed">
-              Sim, o sistema é totalmente seguro e prioriza a proteção de dados dos usuários. Muitos que pesquisam por <strong>palpite tech отзывы</strong> (avaliações) percebem que a plataforma utiliza criptografia de ponta a ponta, sendo um ambiente confiável para buscar seus palpites diários.
+          <section id="snippet-definition" className="mb-10 border-b pb-8">
+            <h2 className="text-2xl font-bold mb-4 text-foreground">O que é o Palpite Tech?</h2>
+            <p className="text-lg leading-relaxed text-foreground">
+              O Palpite Tech é um sistema avançado que gera palpites para loterias com base em análises estatísticas e estratégias, ajudando apostadores a tomarem decisões mais inteligentes e embasadas em dados, indo muito além da simples escolha aleatória de números para seus jogos diários.
             </p>
           </section>
 
@@ -227,12 +227,9 @@ const AjudaConfiavel = () => {
             ></iframe>
           </div>
 
-          <h2 className="text-2xl font-semibold mt-10 mb-4">O que é o Palpite Tech?</h2>
-          <p>
-            O <strong>Palpite Tech</strong> é uma plataforma avançada que oferece <strong>palpites para loterias</strong> (como Lotofácil, Mega-Sena, Quina) com base em análises estatísticas, tendências e estratégias matemáticas.
-          </p>
-          <p>
-            Diferente de muitos serviços que apenas geram números aleatórios, o sistema busca entregar <strong>palpites mais estratégicos</strong>, com explicações detalhadas sobre os padrões identificados em sorteios anteriores.
+          <h2 className="text-2xl font-bold mb-4 text-foreground">Palpite Tech é seguro?</h2>
+          <p className="text-muted-foreground leading-relaxed mb-6">
+            Sim, o sistema é totalmente seguro e prioriza a proteção de dados dos usuários. Muitos que pesquisam por <strong>palpite tech отзывы</strong> (avaliações) percebem que a plataforma utiliza criptografia de ponta a ponta, sendo um ambiente confiável para buscar seus palpites diários.
           </p>
 
           <h2 className="text-2xl font-semibold mt-10 mb-4">Quem criou o Palpite Tech?</h2>
