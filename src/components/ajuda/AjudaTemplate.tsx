@@ -10,7 +10,7 @@ export interface AjudaContent {
   main_question: string;
   direct_answer: string;
   content: string;
-  intent?: 'informational' | 'analytical' | 'commercial' | 'data'; // SEO Intention
+  intent?: 'informational' | 'analytical' | 'commercial' | 'data'; // SEO Intention: informational (o que é), analytical (interpretação), commercial (autoridade), data (fatos/números)
   faq_items: {
     question: string;
     answer: string;
@@ -119,7 +119,7 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
 
       let enrichedBlock = block;
 
-      internalLinks.forEach(({ keyword, slug: linkSlug, contexts }) => {
+      internalLinks.forEach(({ keyword, slug: linkSlug, contexts, isPillar }) => {
         if (globalLinkCount >= MAX_LINKS_PER_PAGE) return;
         if (linkedSlugs.has(linkSlug)) return; // 1 link por slug por página
         if (linkSlug === content.slug) return; // Não linkar para si mesmo
@@ -128,12 +128,13 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
         const keywordRegex = new RegExp(`(?<!<a[^>]*>)\\b(${keyword})\\b(?![^<]*</a>)`, 'i');
         if (!keywordRegex.test(enrichedBlock)) return;
 
-        // 2. Validação Semântica: Verificar se algum contexto exigido está presente no MESMO bloco
+        // 2. Validação Semântica (Layer 1): Verificar contexto exigido no MESMO bloco
         const hasContext = contexts.some(ctx => 
           new RegExp(`\\b${ctx}\\b`, 'i').test(enrichedBlock)
         );
 
-        if (hasContext) {
+        // 3. Fallback Inteligente (Layer 2): Se for página Pillar, linka mesmo sem contexto forte
+        if (hasContext || isPillar) {
           enrichedBlock = enrichedBlock.replace(keywordRegex, (match) => {
             globalLinkCount++;
             linkedSlugs.add(linkSlug);
@@ -175,24 +176,42 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
             <em>Última atualização: {formattedDate} — conteúdo baseado em análise e testes reais.</em>
           </p>
 
-          {/* Variação Estrutural Controlada por Intenção Dominante (SEO Governance) */}
-          {intent === 'analytical' || intent === 'data' ? (
+          {/* Variação Estrutural Controlada por Intenção (SEO Governance) */}
+          {intent === 'analytical' ? (
             <>
-              {/* Intenção: Analítica ou Dados -> Corpo técnico primeiro para focar em snippets de "como" ou "por que" */}
+              {/* Intenção: Analítica -> Interpretação técnica primeiro, snippet de reforço ao final */}
               <div 
-                className="mb-10 help-content-body border-l-2 border-primary/10 pl-4 md:pl-6"
+                className="mb-10 help-content-body border-l-2 border-primary/20 pl-4 md:pl-6 leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: finalBodyContent }}
               />
 
               <section id="resposta-direta" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10 shadow-sm">
-                <h2 className="text-xl font-bold mt-0 mb-4 flex items-center gap-2">
-                  <span className="w-2 h-6 bg-primary rounded-full" />
+                <h2 className="text-xl font-bold mt-0 mb-4 flex items-center gap-2 text-foreground">
+                  <span className="w-2 h-6 bg-primary/40 rounded-full" />
                   {main_question}
                 </h2>
                 <p className="text-lg leading-relaxed font-medium">
                   <strong>{direct_answer}</strong>
                 </p>
               </section>
+            </>
+          ) : intent === 'data' ? (
+            <>
+              {/* Intenção: Dados -> Fatos crus e resultados em destaque máximo no TOPO (Foco em números) */}
+              <section id="resposta-direta" className="bg-primary/10 p-8 rounded-xl border-2 border-primary/30 mb-10 shadow-md">
+                <h2 className="text-xl font-bold mt-0 mb-4 flex items-center gap-2 text-primary">
+                  <span className="w-2 h-6 bg-primary rounded-full" />
+                  {main_question}
+                </h2>
+                <p className="text-xl leading-relaxed font-extrabold text-foreground">
+                  {direct_answer}
+                </p>
+              </section>
+
+              <div 
+                className="mb-10 help-content-body opacity-90 text-sm md:text-base"
+                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
+              />
             </>
           ) : intent === 'commercial' ? (
             <>
@@ -205,13 +224,13 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
               </section>
 
               <div 
-                className="mb-10 help-content-body italic"
+                className="mb-10 help-content-body italic border-l-4 border-slate-200 pl-4"
                 dangerouslySetInnerHTML={{ __html: finalBodyContent }}
               />
             </>
           ) : (
             <>
-              {/* Intenção: Informacional (Padrão) -> Resposta direta em destaque para Featured Snippet */}
+              {/* Intenção: Informacional (Padrão) -> Resposta direta em destaque para Featured Snippet no topo */}
               <section id="resposta-direta" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10 shadow-sm">
                 <h2 className="text-xl font-bold mt-0 mb-4">{main_question}</h2>
                 <p className="text-lg leading-relaxed font-medium">
