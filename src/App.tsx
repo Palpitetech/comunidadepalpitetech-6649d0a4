@@ -143,7 +143,7 @@ const App = () => (
               <LowercaseRedirect />
               <Routes>
                 {/* Rotas Públicas */}
-                <Route path="/" element={<Home />} />
+                <Route path="/" element={<Central />} />
                 <Route path="/login" element={<Login />} />
                 {/* RecuperarSenha removido */}
 {/* AtivarConta e VerificarEmail removidos */}
@@ -151,8 +151,8 @@ const App = () => (
                 <Route path="/privacidade" element={<Privacidade />} />
                 <Route path="/proximos-concursos" element={<ProximosConcursos />} />
                 <Route path="/g/:slug" element={<SmartLinkRedirect />} />
-                <Route path="/central" element={<Central />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+
 
                 {/* Rotas Protegidas - Requer Login */}
                 <Route path="/gerar-jogos" element={<ProtectedRoute><GerarJogos /></ProtectedRoute>} />
