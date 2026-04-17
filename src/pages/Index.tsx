@@ -73,16 +73,18 @@ const Index = () => {
 
   return (
     <MainLayout hideBottomNav={!isAuthenticated}>
-      <div className="container-senior pt-2 pb-6 flex flex-col items-center overflow-x-hidden">
+      <div className="cluster-container pt-2 pb-6 flex flex-col items-center overflow-x-hidden">
         {/* Hero Section - Text */}
-        <div className="text-center space-y-0.5 mb-2 w-full px-4">
-          <h1 className="text-[1.05rem] sm:text-senior-xl font-bold text-senior-dark">
-            Palpite Tech: Gerador de Palpites para Loterias
-          </h1>
-          <p className="text-[11px] sm:text-senior-sm text-muted-foreground leading-tight line-clamp-1">
+        <div className="text-center w-full px-4 mb-4">
+          <p className="meta-update">Atualizado em: {new Date().toLocaleDateString('pt-BR')}</p>
+          <h1>Palpite Tech: O Gerador de Palpites para Loterias</h1>
+          <div className="snippet-answer">
+            Ganhe tempo e aumente suas chances com palpites baseados em estatísticas reais e análise de tendências diárias.
+          </div>
+          <p className="text-[#333]">
             {isAuthenticated 
-              ? "Selecione uma ferramenta abaixo para começar sua análise." 
-              : "Tenha acesso às melhores ferramentas de análise estatística."}
+              ? "Selecione uma ferramenta abaixo para começar sua análise personalizada." 
+              : "Tenha acesso às melhores ferramentas de análise estatística para Lotofácil, Mega-Sena e mais."}
           </p>
         </div>
         
@@ -185,6 +187,32 @@ const Index = () => {
         <div className="w-full mt-4">
           <LatestResults />
         </div>
+
+        {/* Section 3: FAQ SEO */}
+        <div className="w-full mt-8 faq-seo" id="faq-seo">
+          <h2>Perguntas Frequentes sobre Loterias</h2>
+          <div>
+            <h3>Como ganhar na Lotofácil?</h3>
+            <p>
+              Para aumentar suas chances de ganhar na Lotofácil, é fundamental utilizar estatísticas de fechamentos, tendências de números pares e ímpares, além de analisar os sorteios anteriores para identificar padrões recorrentes.
+            </p>
+          </div>
+          <div>
+            <h3>O gerador de palpites é confiável?</h3>
+            <p>
+              Sim, o Palpite Tech utiliza algoritmos baseados na frequência dos sorteios oficiais da Caixa, fornecendo palpites estatisticamente otimizados para maximizar seu potencial de acerto.
+            </p>
+          </div>
+        </div>
+
+        {/* Trust Box Example for Commercial Intent */}
+        <div className="w-full mt-6 intent-commercial">
+          <div className="trust-box">
+            <h3 className="mt-0">Por que confiar no Palpite Tech?</h3>
+            <p className="text-[15px] mb-0">Mais de 10.000 apostadores utilizam nossas ferramentas diariamente para melhorar suas apostas com base em dados, não em sorte.</p>
+          </div>
+        </div>
+
 
       </div>
     </MainLayout>
