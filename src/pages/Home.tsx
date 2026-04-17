@@ -193,15 +193,23 @@ export default function LandingPage() {
           <div className="flex justify-center">
             <Button 
               variant="outline" 
-              className="w-[85%] sm:w-[70%] h-auto py-5 px-6 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-xl flex-col gap-1 rounded-[2rem] active:scale-95 transition-all"
+              className="w-[85%] sm:w-[70%] h-auto py-5 px-6 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-xl rounded-[2rem] active:scale-95 transition-all p-0"
+              asChild
             >
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 fill-white" />
-                <span className="text-[10px] uppercase font-black tracking-widest opacity-90">WhatsApp</span>
-              </div>
-              <span className="text-[13px] font-bold">
-                Quero receber Resultados no meu whatsapp
-              </span>
+              <a 
+                href="https://wa.me/5551981854281" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex flex-col items-center justify-center gap-1 w-full h-full text-center"
+              >
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 fill-white" />
+                  <span className="text-[10px] uppercase font-black tracking-widest opacity-90">WhatsApp</span>
+                </div>
+                <span className="text-[13px] font-bold leading-tight px-4">
+                  Quero receber Resultados no meu whatsapp
+                </span>
+              </a>
             </Button>
           </div>
         </div>
