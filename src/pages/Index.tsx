@@ -131,7 +131,7 @@ const Index = () => {
         </div>
 
         {/* Floating Boxes Grid */}
-        <div className="cluster-container py-0 grid grid-cols-2 gap-2 w-full mb-8">
+        <div className="cluster-container py-0 grid grid-cols-2 gap-2 w-full mb-4">
           {menuItems.map((item, index) => {
             if (item.id) {
               return (
