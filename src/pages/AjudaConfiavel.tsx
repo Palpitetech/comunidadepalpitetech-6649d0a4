@@ -6,7 +6,7 @@ const AjudaConfiavel = () => {
     const title = "Palpite Tech é confiável? Teste real e análise completa";
     const description = "Descubra se o Palpite Tech é confiável. Veja análise completa, como funciona, quem criou, preços e se realmente vale a pena apostar.";
     const url = window.location.href;
-    const imageUrl = "https://palpitetec.com/og-image.jpg"; // Substitua pela URL real da imagem quando disponível
+    const imageUrl = "https://www.palpitetech.com.br/logo.png"; // Usando o logo como imagem principal por enquanto
 
     document.title = title;
     
