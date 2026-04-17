@@ -8,10 +8,8 @@ import {
   Users,
   CheckCircle2,
   Sparkles,
-  NotebookPen,
-  FileText
+  NotebookPen
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { useTendenciasDia } from "@/hooks/useTendenciasDia";
 import { SeletorPeriodo } from "@/components/frequencia/SeletorPeriodo";
 import { DezenaCirculoMini } from "@/components/lotofacil/DezenaCirculoMini";
@@ -126,7 +124,6 @@ function GrupoRow({ label, grupoKey, grupo, isSelected, onToggle }: GrupoRowProp
 }
 
 export default function AnaliseDoDia() {
-  const navigate = useNavigate();
   const [periodo, setPeriodo] = useState(10);
   const { data: tendencias, isLoading } = useTendenciasDia(periodo);
   
@@ -361,16 +358,6 @@ export default function AnaliseDoDia() {
                 <span>Pri: <strong className="text-foreground">{tendencias.ultimoConcurso.primos}</strong></span>
                 <span>M3: <strong className="text-foreground">{tendencias.ultimoConcurso.m3}</strong></span>
               </div>
-
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full mt-3 text-xs gap-2"
-                onClick={() => navigate("/lotofacil")}
-              >
-                <FileText className="h-3.5 w-3.5 text-primary" />
-                Ver estudo completo
-              </Button>
             </div>
 
             {/* ESTRATÉGIA DE FILTROS */}

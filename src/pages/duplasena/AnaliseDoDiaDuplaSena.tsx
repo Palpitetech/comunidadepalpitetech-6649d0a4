@@ -8,10 +8,8 @@ import {
   Users,
   CheckCircle2,
   Sparkles,
-  NotebookPen,
-  FileText
+  NotebookPen
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { useTendenciasDuplaSena } from "@/hooks/useTendenciasDuplaSena";
 import { SeletorPeriodo } from "@/components/frequencia/SeletorPeriodo";
 import { DezenaCirculoMiniDuplaSena } from "@/components/duplasena/DezenaCirculoMiniDuplaSena";
@@ -131,7 +129,6 @@ function GrupoRow({ label, grupoKey, grupo, isSelected, onToggle }: GrupoRowProp
 }
 
 export default function AnaliseDoDiaDuplaSena() {
-  const navigate = useNavigate();
   const [periodo, setPeriodo] = useState(10);
   const { data: tendencias, isLoading } = useTendenciasDuplaSena(periodo);
   
@@ -372,16 +369,6 @@ export default function AnaliseDoDiaDuplaSena() {
                 <span>Mol: <strong className="text-foreground">{currentData.moldura}</strong></span>
                 <span>Pri: <strong className="text-foreground">{currentData.primos}</strong></span>
               </div>
-
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full mt-3 text-xs gap-2"
-                onClick={() => navigate("/duplasena")}
-              >
-                <FileText className="h-3.5 w-3.5 text-duplasena-primary" />
-                Ver estudo completo
-              </Button>
             </div>
 
             {/* ESTRATÉGIA DE FILTROS */}
