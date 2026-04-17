@@ -1,5 +1,5 @@
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { BarChart3, BookOpen, Lock, Dices, Table, CalendarDays, MessageSquare } from "lucide-react";
@@ -57,27 +57,16 @@ const Index = () => {
 
         {/* Floating Boxes Grid */}
         <div className="grid grid-cols-2 gap-2 w-full mb-3">
-
-          <Button 
-            variant="outline" 
-            className="w-full max-w-[320px] h-11 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-lg rounded-xl active:scale-95 transition-all"
-            asChild
-          >
-            <a 
-              href="https://wa.me/5551981854281" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full h-full text-left"
-            >
-              <MessageSquare className="h-5 w-5 fill-white shrink-0" />
-              <div className="flex flex-col">
-                <span className="text-[7px] uppercase font-bold tracking-wider opacity-90">WhatsApp</span>
-                <span className="text-xs font-medium leading-tight whitespace-nowrap">
-                  Receber Resultados no WhatsApp
+          {menuItems.map((item, index) => (
+            <Link key={index} to={item.to} className="block group">
+              <Card className="hover:border-primary transition-all duration-300 cursor-pointer border-none shadow-md bg-white/80 backdrop-blur-sm group-active:scale-95 flex flex-col items-center justify-center p-2.5 text-center h-full min-h-[85px]">
+                <item.icon className={`h-5 w-5 sm:h-8 sm:w-8 ${item.color} mb-1 sm:mb-2 group-hover:scale-110 transition-transform`} />
+                <span className="text-[10px] sm:text-[13px] font-semibold text-senior-dark leading-tight">
+                  {item.title}
                 </span>
-              </div>
-            </a>
-          </Button>
+              </Card>
+            </Link>
+          ))}
         </div>
 
         {!isAuthenticated && (
@@ -95,4 +84,3 @@ const Index = () => {
 };
 
 export default Index;
-
