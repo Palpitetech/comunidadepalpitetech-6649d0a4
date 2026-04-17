@@ -107,8 +107,8 @@ const Central = () => {
               <Card key={index} className="overflow-hidden border-none shadow-[0_20px_50px_rgba(0,0,0,0.1)] bg-white/95 backdrop-blur-sm transition-all duration-300 hover:shadow-[0_30px_60px_rgba(0,0,0,0.15)] hover:-translate-y-2 flex flex-col p-5 space-y-4 rounded-[2rem]">
                 <h3 className="font-extrabold text-senior-dark text-lg px-2">{title}</h3>
                 
-                <div className="aspect-video w-full bg-gray-100 rounded-2xl overflow-hidden flex items-center justify-center text-muted-foreground text-xs italic border border-dashed border-gray-200">
-                  [Foto na horizontal]
+                <div className="aspect-[3/4] w-full bg-gray-100 rounded-2xl overflow-hidden flex items-center justify-center text-muted-foreground text-xs italic border border-dashed border-gray-200">
+                  [Foto na vertical]
                 </div>
 
                 <div className="flex justify-center pt-2">

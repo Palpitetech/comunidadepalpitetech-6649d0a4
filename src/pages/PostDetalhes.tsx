@@ -37,7 +37,7 @@ function PostSkeleton() {
         </div>
       </div>
       <Skeleton className="h-6 w-3/4" />
-      <Skeleton className="aspect-video w-full rounded-xl" />
+      <Skeleton className="aspect-[3/4] w-full rounded-xl" />
       <div className="space-y-2">
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-5/6" />
@@ -211,22 +211,22 @@ export default function PostDetalhes() {
 
         {/* Media — full-bleed on mobile */}
         {post.media_url && (
-          <div className={cn(
-            "bg-muted/30 overflow-hidden",
-            isMobile ? "mx-0" : "mx-4 rounded-xl"
-          )}>
+        <div className={cn(
+          "bg-muted/30 overflow-hidden aspect-[3/4]",
+          isMobile ? "mx-0" : "mx-4 rounded-xl"
+        )}>
             {post.media_type === "video" ? (
               <video
                 src={post.media_url}
                 controls
-                className="w-full max-h-[480px] object-contain"
+                className="w-full h-full object-cover"
                 playsInline
               />
             ) : (
               <img
                 src={post.media_url}
                 alt="Mídia do post"
-                className="w-full max-h-[480px] object-contain"
+                className="w-full h-full object-cover"
                 loading="lazy"
               />
             )}
