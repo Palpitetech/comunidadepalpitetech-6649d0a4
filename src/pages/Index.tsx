@@ -66,7 +66,7 @@ const Index = () => {
 
   return (
     <MainLayout hideBottomNav={!isAuthenticated}>
-      <div className="container-senior pt-1 pb-4 flex flex-col items-center">
+      <div className="container-senior pt-2 pb-6 flex flex-col items-center overflow-x-hidden">
         {/* Hero Section - Text */}
         <div className="text-center space-y-0.5 mb-2 w-full px-4">
           <h1 className="text-[1.05rem] sm:text-senior-xl font-bold text-senior-dark">
