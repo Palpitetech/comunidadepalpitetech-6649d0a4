@@ -188,7 +188,7 @@ const Index = () => {
 
 
         {/* Section 2: Latest Results - Micro variation background */}
-        <div className="w-full bg-slate-50/80 py-10 border-y border-slate-100">
+        <div className="w-full bg-slate-50/80 py-6 border-y border-slate-100">
           <div className="cluster-container py-0">
             <h2 className="text-center mb-6">Últimos Resultados</h2>
             <LatestResults />
@@ -196,7 +196,7 @@ const Index = () => {
         </div>
 
         {/* Section 3: FAQ SEO - Standard white bg */}
-        <div className="cluster-container py-10">
+        <div className="cluster-container py-6">
           <div className="w-full faq-seo" id="faq-seo">
             <h2 className="text-2xl font-bold mb-6">Perguntas Frequentes sobre Loterias</h2>
             
@@ -223,7 +223,7 @@ const Index = () => {
         </div>
 
         {/* Trust Box - Highlight variation background */}
-        <div className="w-full bg-primary/[0.03] py-12 border-t border-primary/5">
+        <div className="w-full bg-primary/[0.03] py-8 border-t border-primary/5">
           <div className="cluster-container py-0">
             <div className="intent-commercial">
               <div className="trust-box border-primary/10 bg-white/50">
