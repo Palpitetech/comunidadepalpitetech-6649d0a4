@@ -103,23 +103,33 @@ const latestLotteryResults: LotteryResult[] = [
 
 export function LatestResults() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated } = useAuth();
 
   const handleStudyClick = (lotteryId: string) => {
+    // Definir as rotas dos hubs para cada loteria
+    const hubPaths: Record<string, string> = {
+      megasena: "/megasena",
+      lotofacil: "/lotofacil",
+      quina: "/quina",
+      duplasena: "/duplasena",
+      lotomania: "/lotomania/resultados",
+      diadesorte: "/diadesorte/resultados"
+    };
+
+    const targetPath = hubPaths[lotteryId] || `/${lotteryId}`;
+
+    // Na página Central (sem slug, path: "/"), redirecionar diretamente para o hub
+    // A ProtectedRoute cuidará do login se necessário
+    if (location.pathname === "/") {
+      navigate(targetPath);
+      return;
+    }
+
     if (!isAuthenticated) {
       navigate("/login");
     } else {
-      // Direct to specific hub or results if hub doesn't exist
-      const hubPaths: Record<string, string> = {
-        megasena: "/megasena",
-        lotofacil: "/lotofacil",
-        quina: "/quina",
-        duplasena: "/duplasena",
-        lotomania: "/lotomania/resultados",
-        diadesorte: "/diadesorte/resultados"
-      };
-      
-      navigate(hubPaths[lotteryId] || `/${lotteryId}`);
+      navigate(targetPath);
     }
   };
 
