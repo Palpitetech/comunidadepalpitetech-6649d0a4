@@ -105,7 +105,7 @@ const Index = () => {
               return (
                 <DropdownMenu key={index}>
                   <DropdownMenuTrigger asChild>
-                    <Card className="sm:hover:border-primary transition-all duration-200 cursor-pointer border-none shadow-md bg-white/90 backdrop-blur-sm active:scale-[0.98] active:bg-gray-50 flex flex-col items-center justify-center p-2 text-center h-full min-h-[60px] select-none touch-manipulation">
+                    <Card className="sm:hover:border-primary transition-all duration-200 cursor-pointer border-none shadow-md bg-white active:scale-[0.98] active:bg-gray-50 flex flex-col items-center justify-center p-2 text-center h-full min-h-[60px] select-none touch-manipulation">
                       <span className="text-[10px] sm:text-[13px] font-semibold text-senior-dark leading-tight line-clamp-2">
                         {item.title}
                       </span>
@@ -134,7 +134,7 @@ const Index = () => {
 
             return (
               <Link key={index} to={item.to || "#"} className="block group select-none touch-manipulation">
-                <Card className="sm:hover:border-primary transition-all duration-200 cursor-pointer border-none shadow-md bg-white/90 backdrop-blur-sm active:scale-[0.98] active:bg-gray-50 flex flex-col items-center justify-center p-2 text-center h-full min-h-[60px]">
+                <Card className="sm:hover:border-primary transition-all duration-200 cursor-pointer border-none shadow-md bg-white active:scale-[0.98] active:bg-gray-50 flex flex-col items-center justify-center p-2 text-center h-full min-h-[60px]">
                   <span className="text-[10px] sm:text-[13px] font-semibold text-senior-dark leading-tight line-clamp-2">
                     {item.title}
                   </span>
