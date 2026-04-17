@@ -35,15 +35,23 @@ const Index = () => {
         <div className="flex justify-center w-full">
           <Button 
             variant="outline" 
-            className="w-[70%] h-auto py-4 px-6 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-lg flex-col gap-1 rounded-2xl group active:scale-95 transition-all"
+            className="w-[70%] h-auto py-4 px-6 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-lg rounded-2xl active:scale-95 transition-all p-0"
+            asChild
           >
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 fill-white" />
-              <span className="text-xs uppercase font-bold tracking-wider">WhatsApp</span>
-            </div>
-            <span className="text-sm font-medium">
-              Quero receber Resultados no meu whatsapp
-            </span>
+            <a 
+              href="https://wa.me/5551981854281" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex flex-col items-center justify-center gap-1 w-full h-full text-center"
+            >
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 fill-white" />
+                <span className="text-xs uppercase font-bold tracking-wider">WhatsApp</span>
+              </div>
+              <span className="text-sm font-medium leading-tight px-4">
+                Quero receber Resultados no meu whatsapp
+              </span>
+            </a>
           </Button>
         </div>
 
