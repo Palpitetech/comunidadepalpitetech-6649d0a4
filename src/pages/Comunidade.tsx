@@ -11,9 +11,11 @@ import { DownloadBanner } from "@/components/pwa/DownloadBanner";
 import { PWAUpdateBanner } from "@/components/pwa/PWAUpdateBanner";
 import { Pin, Sparkles, ChevronRight, MessageSquare } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { usePermissionContext } from "@/contexts/PermissionContext";
 
 export default function Comunidade() {
   const navigate = useNavigate();
+  const { plan } = usePermissionContext();
   const isMobile = useIsMobile();
   const { data: posts, isLoading, error, prefetchPost } = useCommunityPosts();
 
@@ -54,9 +56,28 @@ export default function Comunidade() {
 
           <Card 
             className="bg-green-600 hover:bg-green-700 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden group active:scale-95"
+            onClick={() => {
+              const isTrial = plan?.slug === 'trial' || plan?.slug === 'teste-gratis-3-dias';
+              const isPaid = !!plan && !isTrial;
+              const link = isPaid ? "https://www.palpitetech.com.br/g/grupo-vip-assinantes" : "https://www.palpitetech.com.br/g/entrar-sala-secreta";
+              window.open(link, '_blank');
+            }}
           >
             <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center justify-center h-full min-h-[60px]">
-              <h3 className="font-bold text-sm sm:text-base leading-tight">Entrar no Grupo</h3>
+              {(() => {
+                const isTrial = plan?.slug === 'trial' || plan?.slug === 'teste-gratis-3-dias';
+                const isPaid = !!plan && !isTrial;
+                return (
+                  <>
+                    <h3 className="font-bold text-sm sm:text-base leading-tight">
+                      {isPaid ? "Receba 15 palpites diários" : "Entrar na Sala Secreta"}
+                    </h3>
+                    <p className="text-[10px] sm:text-[11px] opacity-90 mt-0.5 leading-none">
+                      {isPaid ? "E análise do resultado" : "Receba atualizações diárias"}
+                    </p>
+                  </>
+                );
+              })()}
             </CardContent>
           </Card>
         </div>

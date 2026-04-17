@@ -3,7 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { BarChart3, BookOpen, Lock, Dices, Table, CalendarDays, MessageSquare, Sparkles } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { usePermissionContext } from "@/contexts/PermissionContext";
 import { LatestResults } from "@/components/home/LatestResults";
 import {
   DropdownMenu,
@@ -14,7 +15,8 @@ import {
 import { cn } from "@/lib/utils";
 
 const Index = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuthContext();
+  const { plan } = usePermissionContext();
   const navigate = useNavigate();
 
   const lotteries = [
@@ -86,14 +88,33 @@ const Index = () => {
             onClick={() => navigate('/gerar-jogos')}
           >
             <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center justify-center h-full min-h-[60px]">
-              <h3 className="font-bold text-[13px] sm:text-base leading-tight">Gerar meus palpites</h3>
+              <h3 className="font-bold text-[13px] sm:text-base leading-tight text-center">Gerar meus palpites</h3>
             </CardContent>
           </Card>
           <Card 
             className="bg-green-600 sm:hover:bg-green-700 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden active:scale-[0.98] active:opacity-90 select-none touch-manipulation"
+            onClick={() => {
+              const isTrial = plan?.slug === 'trial' || plan?.slug === 'teste-gratis-3-dias';
+              const isPaid = !!plan && !isTrial;
+              const link = isPaid ? "https://www.palpitetech.com.br/g/grupo-vip-assinantes" : "https://www.palpitetech.com.br/g/entrar-sala-secreta";
+              window.open(link, '_blank');
+            }}
           >
             <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center justify-center h-full min-h-[60px]">
-              <h3 className="font-bold text-[13px] sm:text-base leading-tight">Entrar no Grupo</h3>
+              {(() => {
+                const isTrial = plan?.slug === 'trial' || plan?.slug === 'teste-gratis-3-dias';
+                const isPaid = !!plan && !isTrial;
+                return (
+                  <>
+                    <h3 className="font-bold text-[13px] sm:text-base leading-tight">
+                      {isPaid ? "Receba 15 palpites diários" : "Entrar na Sala Secreta"}
+                    </h3>
+                    <p className="text-[9px] sm:text-[10px] opacity-90 mt-0.5 leading-none">
+                      {isPaid ? "E análise do resultado" : "Receba atualizações diárias"}
+                    </p>
+                  </>
+                );
+              })()}
             </CardContent>
           </Card>
         </div>
