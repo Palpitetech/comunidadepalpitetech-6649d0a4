@@ -48,17 +48,19 @@ export function LoginWizard() {
 
   const handleCheckEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    const emailLimpo = email.trim().toLowerCase();
+    const inputLimpo = email.trim().toLowerCase();
     
-    if (!emailLimpo) {
-      toast({ title: "Email obrigatório", variant: "destructive" });
+    if (!inputLimpo) {
+      toast({ title: "Email ou Celular obrigatório", variant: "destructive" });
       return;
     }
 
     setIsLoading(true);
     try {
+      // Tenta localizar por email ou celular (caso o usuário tenha digitado o celular no campo de email)
       const { data, error } = await supabase.rpc("verificar_existencia_usuario", { 
-        p_email: emailLimpo 
+        p_email: inputLimpo.includes("@") ? inputLimpo : null,
+        p_celular: !inputLimpo.includes("@") ? inputLimpo : null
       });
 
       if (error) throw error;
@@ -67,7 +69,7 @@ export function LoginWizard() {
 
       if (result.exists) {
         setNomeUsuarioEncontrado(result.nome || "");
-        setEmailLogin(result.email || emailLimpo);
+        setEmailLogin(result.email || inputLimpo);
         setEtapa("senha");
       } else {
         setEtapa("celular");
