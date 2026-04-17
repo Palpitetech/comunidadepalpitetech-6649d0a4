@@ -219,14 +219,14 @@ export default function PostDetalhes() {
               <video
                 src={post.media_url}
                 controls
-                className="w-full max-h-[480px] object-contain"
+                className="w-full h-full object-cover"
                 playsInline
               />
             ) : (
               <img
                 src={post.media_url}
                 alt="Mídia do post"
-                className="w-full max-h-[480px] object-contain"
+                className="w-full h-full object-cover"
                 loading="lazy"
               />
             )}
