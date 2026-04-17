@@ -101,22 +101,22 @@ const latestLotteryResults: LotteryResult[] = [
 
 export function LatestResults() {
   return (
-    <div className="w-full space-y-4 px-4 pb-8">
+    <div className="w-full space-y-3 px-4 pb-6">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-senior-dark">Últimos Resultados</h2>
         <span className="text-xs text-muted-foreground font-medium">Ver todos</span>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 gap-3">
         {latestLotteryResults.map((result) => (
           <Card key={result.id} className="overflow-hidden border-none shadow-md bg-white">
             {/* Header with Lottery Color Accent */}
             <div 
-              className="h-1.5 w-full" 
+              className="h-1 w-full" 
               style={{ backgroundColor: result.color }}
             />
             
-            <div className="p-4 space-y-4">
+            <div className="p-3 space-y-3">
               {/* Lottery Name and Contest Info */}
               <div className="flex justify-between items-start">
                 <div>
@@ -138,11 +138,11 @@ export function LatestResults() {
               </div>
 
               {/* Result Balls */}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {result.dezenas.map((dezena, idx) => (
                   <div 
                     key={idx}
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-sm"
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-[13px] font-bold text-white shadow-sm"
                     style={{ backgroundColor: result.color }}
                   >
                     {dezena}
@@ -151,11 +151,11 @@ export function LatestResults() {
               </div>
 
               {/* Footer Info: Next Draw and Estimated Value */}
-              <div className="pt-3 border-t border-dashed border-gray-100 flex flex-col gap-2">
+              <div className="pt-2 border-t border-dashed border-gray-100 flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-[11px] text-muted-foreground font-medium">Estimativa Próximo Concurso</span>
+                    <span className="text-[11px] text-muted-foreground font-medium line-clamp-2">Estimativa Próximo Concurso</span>
                   </div>
                   <span className="text-sm font-bold text-senior-dark">
                     {result.valorEstimado}
@@ -168,7 +168,7 @@ export function LatestResults() {
                     <span className="text-[11px] text-muted-foreground font-medium">Próximo Sorteio</span>
                   </div>
                   <div className="text-right">
-                    <p className="text-[11px] font-bold text-senior-dark">
+                    <p className="text-[11px] font-bold text-senior-dark leading-tight">
                       {result.proximoSorteio} • {result.proximoDiaSemana}
                     </p>
                     <p className="text-[9px] text-muted-foreground">
