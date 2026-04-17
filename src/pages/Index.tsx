@@ -1,5 +1,5 @@
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { BarChart3, BookOpen, Lock, Dices, Table, CalendarDays, MessageSquare } from "lucide-react";
@@ -31,6 +31,30 @@ const Index = () => {
           </p>
         </div>
 
+        {/* WhatsApp Button Box */}
+        <div className="flex justify-center w-full px-4 mb-4">
+          <Button 
+            variant="outline" 
+            className="w-full max-w-[320px] h-12 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-lg rounded-xl active:scale-95 transition-all"
+            asChild
+          >
+            <a 
+              href="https://wa.me/5551981854281" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-3 w-full h-full text-left"
+            >
+              <MessageSquare className="h-5 w-5 fill-white shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-[8px] uppercase font-bold tracking-wider opacity-90 leading-none">WhatsApp</span>
+                <span className="text-[13px] font-bold leading-tight whitespace-nowrap">
+                  Receber Resultados no WhatsApp
+                </span>
+              </div>
+            </a>
+          </Button>
+        </div>
+
         {/* Floating Boxes Grid */}
         <div className="grid grid-cols-2 gap-2 w-full mb-3">
           {menuItems.map((item, index) => (
@@ -43,30 +67,6 @@ const Index = () => {
               </Card>
             </Link>
           ))}
-        </div>
-
-        {/* WhatsApp Button Box */}
-        <div className="flex justify-center w-full px-4">
-          <Button 
-            variant="outline" 
-            className="w-full max-w-[320px] h-11 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-lg rounded-xl active:scale-95 transition-all"
-            asChild
-          >
-            <a 
-              href="https://wa.me/5551981854281" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full h-full text-left"
-            >
-              <MessageSquare className="h-5 w-5 fill-white shrink-0" />
-              <div className="flex flex-col">
-                <span className="text-[7px] uppercase font-bold tracking-wider opacity-90">WhatsApp</span>
-                <span className="text-xs font-medium leading-tight whitespace-nowrap">
-                  Receber Resultados no WhatsApp
-                </span>
-              </div>
-            </a>
-          </Button>
         </div>
 
         {!isAuthenticated && (
@@ -84,4 +84,3 @@ const Index = () => {
 };
 
 export default Index;
-
