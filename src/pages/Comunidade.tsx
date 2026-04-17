@@ -9,7 +9,7 @@ import { useCommunityPosts } from "@/hooks/useCommunityPosts";
 import { LatestResults } from "@/components/home/LatestResults";
 import { DownloadBanner } from "@/components/pwa/DownloadBanner";
 import { PWAUpdateBanner } from "@/components/pwa/PWAUpdateBanner";
-import { Pin, Sparkles, ChevronRight } from "lucide-react";
+import { Pin, Sparkles, ChevronRight, MessageSquare } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function Comunidade() {
