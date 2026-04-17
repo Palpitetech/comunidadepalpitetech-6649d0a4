@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 const Index = () => {
   const { isAuthenticated } = useAuth();
@@ -96,6 +97,13 @@ const Index = () => {
                     {lotteries.map((lottery) => (
                       <DropdownMenuItem 
                         key={lottery.id}
+                        className={cn(
+                          "cursor-pointer transition-colors duration-200",
+                          lottery.id === "lotofacil" && "focus:bg-[#943391] focus:text-white",
+                          lottery.id === "megasena" && "focus:bg-[#209869] focus:text-white",
+                          lottery.id === "quina" && "focus:bg-[#260085] focus:text-white",
+                          lottery.id === "duplasena" && "focus:bg-[#a61324] focus:text-white"
+                        )}
                         onClick={() => navigate(getPath(item.id!, lottery.id))}
                       >
                         {lottery.name}
