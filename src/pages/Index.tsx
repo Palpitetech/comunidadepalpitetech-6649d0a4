@@ -36,22 +36,18 @@ const Index = () => {
         <div className="flex justify-center w-full px-4 mb-3">
           <Button 
             variant="outline" 
-            className="w-full max-w-[320px] h-11 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-lg rounded-xl active:scale-95 transition-all"
+            className="w-[70%] h-11 bg-[#25D366] hover:bg-[#20ba5a] text-white border-none shadow-lg rounded-xl active:scale-95 transition-all"
             asChild
           >
             <a 
               href="https://wa.me/5551981854281" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-3 w-full h-full text-left"
+              className="flex items-center justify-center w-full h-full"
             >
-              <MessageSquare className="h-5 w-5 fill-white shrink-0" />
-              <div className="flex flex-col">
-                <span className="text-[8px] uppercase font-bold tracking-wider opacity-90 leading-none">WhatsApp</span>
-                <span className="text-[12px] font-bold leading-tight whitespace-nowrap">
-                  Receber Resultados no WhatsApp
-                </span>
-              </div>
+              <span className="text-[14px] font-bold">
+                Receber Resultados no Whatsapp
+              </span>
             </a>
           </Button>
         </div>
