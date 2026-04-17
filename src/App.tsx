@@ -99,7 +99,9 @@ import DesdobramentoQuina from "./pages/quina/DesdobramentoQuina";
 import AnaliseDoDiaQuina from "./pages/quina/AnaliseDoDiaQuina";
 import HubQuina from "./pages/quina/HubQuina";
 import ResultadosDiaDeSorte from "./pages/diadesorte/ResultadosDiaDeSorte";
+import HubDiaDeSorte from "./pages/diadesorte/HubDiaDeSorte";
 import ResultadosLotomania from "./pages/lotomania/ResultadosLotomania";
+import HubLotomania from "./pages/lotomania/HubLotomania";
 import HubLotofacil from "./pages/lotofacil/HubLotofacil";
 import GravacaoLotofacil from "./pages/admin/gravacao/GravacaoLotofacil";
 import GravacaoQuina from "./pages/admin/gravacao/GravacaoQuina";
@@ -227,9 +229,11 @@ const App = () => (
                 <Route path="/quina/analise-do-dia" element={<ProtectedRoute><GatedPage feature="analise_do_dia"><AnaliseDoDiaQuina /></GatedPage></ProtectedRoute>} />
 
                 {/* Rotas Dia de Sorte */}
+                <Route path="/diadesorte" element={<ProtectedRoute><HubDiaDeSorte /></ProtectedRoute>} />
                 <Route path="/diadesorte/resultados" element={<ProtectedRoute><ResultadosDiaDeSorte /></ProtectedRoute>} />
                 
                 {/* Rotas Lotomania */}
+                <Route path="/lotomania" element={<ProtectedRoute><HubLotomania /></ProtectedRoute>} />
                 <Route path="/lotomania/resultados" element={<ProtectedRoute><ResultadosLotomania /></ProtectedRoute>} />
                 
                 {/* Rotas Admin */}
