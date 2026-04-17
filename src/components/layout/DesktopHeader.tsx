@@ -247,7 +247,7 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
       style={{ paddingTop: 'max(0px, env(safe-area-inset-top, 0px))' }}
     >
       <div className={cn(
-        "flex items-center justify-between py-1 px-4 gap-2 w-full max-w-[1400px] mx-auto overflow-hidden",
+        "flex items-center justify-between py-0.5 px-4 gap-2 w-full max-w-[1400px] mx-auto overflow-hidden",
         !isHomePage && "grid grid-cols-[auto_1fr_auto] md:grid-cols-[1fr_auto_1fr]"
       )}>
         {/* Mobile Page Title logic & Logo Section */}
