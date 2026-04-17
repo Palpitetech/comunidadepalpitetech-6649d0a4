@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { LoginWizard } from "@/components/auth/LoginWizard";
@@ -30,6 +31,10 @@ export default function Auth() {
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background overflow-y-auto md:overflow-hidden md:flex-row">
+      <Helmet>
+        <title>Entrar | Palpite Tech</title>
+        <meta name="description" content="Acesse sua conta no Palpite Tech e utilize as melhores ferramentas de análise estatística para loterias." />
+      </Helmet>
       {/* Left side — Logo (desktop only) */}
       <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-primary/90 via-primary to-primary/80 items-center justify-center relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(255,255,255,0.08)_0%,transparent_60%)]" />

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -109,6 +110,10 @@ export default function Planos() {
 
   return (
     <MainLayout pageTitle="Planos">
+      <Helmet>
+        <title>Planos e Assinaturas | Palpite Tech</title>
+        <meta name="description" content="Escolha o melhor plano do Palpite Tech para ter acesso a ferramentas exclusivas de análise de loterias." />
+      </Helmet>
       <div className="py-8 max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-8">

@@ -1,4 +1,5 @@
 import { MainLayout } from "@/components/layout/MainLayout";
+import { Helmet } from "react-helmet-async";
 import { useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -73,6 +74,10 @@ const Index = () => {
 
   return (
     <MainLayout hideBottomNav={!isAuthenticated}>
+      <Helmet>
+        <title>Dashboard | Palpite Tech</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="flex flex-col items-center overflow-x-hidden">
         {/* Hero Section - Text */}
         <section className="cluster-container text-center w-full px-4 pt-4 pb-8">

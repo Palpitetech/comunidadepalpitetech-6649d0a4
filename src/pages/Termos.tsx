@@ -1,4 +1,5 @@
 import { MainLayout } from "@/components/layout/MainLayout";
+import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -7,6 +8,10 @@ import { Link } from "react-router-dom";
 export default function Termos() {
   return (
     <MainLayout pageTitle="Termos de Uso">
+      <Helmet>
+        <title>Termos de Uso | Palpite Tech</title>
+        <meta name="description" content="Leia os termos de uso da plataforma Palpite Tech e entenda nossas diretrizes de uso educativo e estatístico." />
+      </Helmet>
       <div className="container-senior py-8 max-w-3xl mx-auto">
         <Link to="/login">
           <Button variant="ghost" className="mb-4 gap-2">

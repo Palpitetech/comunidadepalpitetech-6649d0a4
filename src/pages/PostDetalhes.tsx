@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Helmet } from "react-helmet-async";
 // ... keep existing code
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { ExternalLink, ArrowLeft, MessageCircle } from "lucide-react";
@@ -172,6 +173,12 @@ export default function PostDetalhes() {
 
   return (
     <MainLayout pageTitle={post?.titulo || "Post"} hideBottomNav={!isAuthenticated}>
+      <Helmet>
+        <title>{post?.titulo ? `${post.titulo} | Comunidade Palpite Tech` : "Post | Palpite Tech"}</title>
+        {post?.conteudo && (
+          <meta name="description" content={post.conteudo.substring(0, 160).replace(/[#*`]/g, '')} />
+        )}
+      </Helmet>
       <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300">
         {/* Desktop back button */}
         {!isMobile && (
