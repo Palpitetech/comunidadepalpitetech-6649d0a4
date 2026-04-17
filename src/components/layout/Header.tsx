@@ -36,7 +36,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      <div className="container-senior flex items-center justify-between py-4">
+      <div className="container-senior flex items-center justify-between py-2">
         {/* Logo */}
         <Link to="/home" className="flex items-center gap-3 no-underline">
           <img src="/logo.png" alt="Palpite Tech" className="h-9 w-9 rounded-md" />
