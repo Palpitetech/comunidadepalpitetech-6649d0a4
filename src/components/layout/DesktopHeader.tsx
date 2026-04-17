@@ -254,7 +254,7 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
           )}
 
           <Link 
-            to="/home" 
+            to="/" 
             className={cn(
               "flex items-center gap-2 no-underline shrink-0 mr-2",
               pageTitle && !hideBackButton && "hidden md:flex"
