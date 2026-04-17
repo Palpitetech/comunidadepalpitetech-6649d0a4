@@ -39,7 +39,14 @@ export default function Auth() {
       </div>
 
       {/* Right side — Form */}
-      <div className="flex-1 flex flex-col justify-center p-0 md:p-10 md:w-1/2">
+      <div className="flex-1 flex flex-col justify-center p-0 md:p-10 md:w-1/2 relative">
+        <button 
+          onClick={() => navigate("/")}
+          className="absolute top-4 left-4 p-2 rounded-full hover:bg-accent transition-all z-50 text-muted-foreground hover:text-foreground"
+          title="Voltar"
+        >
+          <ArrowLeft className="h-6 w-6" />
+        </button>
         <div className="w-full max-w-lg mx-auto flex flex-col flex-1 md:flex-initial justify-center py-4 md:py-0">
           <LoginWizard />
 
