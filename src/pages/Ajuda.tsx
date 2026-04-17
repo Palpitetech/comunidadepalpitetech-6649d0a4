@@ -93,7 +93,7 @@ const Ajuda = () => {
             <div className="bg-card p-6 rounded-lg border border-border">
               <h3 className="text-lg font-bold text-foreground mb-2">O Palpite Tech é confiável?</h3>
               <p className="text-muted-foreground mb-4">
-                Sim, oferecemos total transparência sobre nossos métodos e resultados. Confira nossa análise completa.
+                Sim, o Palpite Tech é confiável por oferecer transparência, teste gratuito e estratégias fundamentadas. No entanto, não há garantia de ganhos em loterias.
               </p>
               <a 
                 href="/ajuda/confiavel" 
