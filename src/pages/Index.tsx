@@ -3,8 +3,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { BarChart3, BookOpen, Lock, Dices, Table, CalendarDays, MessageSquare } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
+  const { isAuthenticated } = useAuth();
   const menuItems = [
     { title: "Resultados", icon: BarChart3, color: "text-blue-500", to: "/resultados" },
     { title: "Estudos", icon: BookOpen, color: "text-green-500", to: "#" },
@@ -15,7 +17,7 @@ const Index = () => {
   ];
 
   return (
-    <MainLayout pageTitle="Início">
+    <MainLayout pageTitle="Início" hideBottomNav={!isAuthenticated}>
       <div className="container-senior pt-4 pb-8 space-y-8">
         {/* Floating Boxes Grid */}
         <div className="grid grid-cols-2 gap-4">
