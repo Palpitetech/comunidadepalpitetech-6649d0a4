@@ -125,6 +125,7 @@ interface DesktopHeaderProps {
   breadcrumb?: { label: string; onClick?: () => void }[];
   onBack?: () => void;
   hideBackButton?: boolean;
+  isLandingPage?: boolean;
 }
 
 // Mapeamento de rotas para navegação de retorno
