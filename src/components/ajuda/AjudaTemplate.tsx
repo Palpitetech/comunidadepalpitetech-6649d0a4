@@ -202,37 +202,30 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
             <em>Última atualização: {formattedDate} — conteúdo baseado em análise e testes reais.</em>
           </p>
 
-          {/* SEO Snippet Logic: Sempre presente, variando apenas ordem e destaque visual para consistência de padrão (SEO Governance) */}
-          
-          {/* Renderização baseada em Intenção com Ordem Controlada */}
-          {intent === 'analytical' ? (
-            <>
-              {/* Analítica: Conteúdo topo (interpretação), Snippet reforço (padrão mantido) */}
-              <div 
-                className="mb-10 help-content-body border-l-2 border-primary/10 pl-4 md:pl-6 leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
-              />
-              {renderSnippet('technical')}
-            </>
-          ) : intent === 'data' ? (
-            <>
-              {/* Dados: Snippet topo (foco em números), Conteúdo abaixo */}
-              {renderSnippet('prominent')}
-              <div 
-                className="mb-10 help-content-body opacity-95 text-sm md:text-base"
-                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
-              />
-            </>
-          ) : (
-            <>
-              {/* Padrão (Informacional/Comercial): Snippet topo para Featured Snippet */}
-              {renderSnippet(intent === 'commercial' ? 'prominent' : 'standard')}
-              <div 
-                className="mb-10 help-content-body"
-                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
-              />
-            </>
-          )}
+          {/* 2.3 Resposta direta (snippet) */}
+          {renderSnippet(intent === 'commercial' ? 'prominent' : intent === 'analytical' ? 'technical' : 'standard')}
+
+          {/* 2.4 Conteúdo principal (ou análise, dependendo da intent) */}
+          <div 
+            className={`mb-10 help-content-body ${intent === 'analytical' ? 'border-l-2 border-primary/10 pl-4 md:pl-6 leading-relaxed' : ''} ${intent === 'data' ? 'opacity-95 text-sm md:text-base' : ''}`}
+            dangerouslySetInnerHTML={{ __html: finalBodyContent }}
+          />
+
+          {/* 2.5 🎥 VÍDEO (apoio explicativo) */}
+          <section id="video-explicativo" className="mb-10">
+            <div className="aspect-video w-full rounded-xl overflow-hidden border border-border shadow-sm">
+              <iframe 
+                width="100%" 
+                height="100%" 
+                src="https://www.youtube.com/embed/V4a0CXAZUd4?si=Gzy4_o-LGP01djW8&amp;start=4" 
+                title="YouTube video player" 
+                frameBorder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                referrerPolicy="strict-origin-when-cross-origin" 
+                allowFullScreen
+              ></iframe>
+            </div>
+          </section>
 
           {/* 2.6 FAQ visível (obrigatório) */}
           <section id="faq-seo" className="mb-10">
