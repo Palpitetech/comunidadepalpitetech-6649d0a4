@@ -46,7 +46,7 @@ const AjudaDetalhes = () => {
     return <Navigate to="/404" replace />;
   }
 
-  return <AjudaTemplate content={content} />;
+  return <AjudaTemplate content={content as any} />;
 };
 
 export default AjudaDetalhes;
