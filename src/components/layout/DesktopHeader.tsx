@@ -240,10 +240,13 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton, i
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      <div className="grid grid-cols-[auto_1fr_auto] md:grid-cols-[1fr_auto_1fr] items-center py-2 px-4 gap-2 w-full max-w-[1400px] mx-auto overflow-hidden">
+      <div className={cn(
+        "grid items-center py-2 px-4 gap-2 w-full max-w-[1400px] mx-auto overflow-hidden",
+        isLandingPage ? "grid-cols-1 justify-items-center" : "grid-cols-[auto_1fr_auto] md:grid-cols-[1fr_auto_1fr]"
+      )}>
         {/* Mobile Page Title logic & Logo Section */}
         <div className="flex items-center gap-2 overflow-hidden">
-          {pageTitle && !hideBackButton && (
+          {!isLandingPage && pageTitle && !hideBackButton && (
             <Button
               variant="ghost"
               size="icon"
@@ -258,15 +261,18 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton, i
             to="/" 
             className={cn(
               "flex items-center gap-2 no-underline shrink-0 mr-2",
-              pageTitle && !hideBackButton && "hidden md:flex"
+              !isLandingPage && pageTitle && !hideBackButton && "hidden md:flex"
             )}
           >
             <img src="/logo.png" alt="Palpite Tech" className="h-8 w-8 rounded-md" />
-            <span className="text-lg font-bold text-primary hidden xl:inline">Palpite Tech</span>
+            <span className={cn(
+              "text-lg font-bold text-primary",
+              !isLandingPage && "hidden xl:inline"
+            )}>Palpite Tech</span>
           </Link>
 
           {/* Mobile Page Title */}
-          {pageTitle && (
+          {!isLandingPage && pageTitle && (
             <div className="flex-1 md:hidden overflow-hidden ml-1">
               <h1 className="text-base font-bold text-foreground truncate">{pageTitle}</h1>
             </div>
