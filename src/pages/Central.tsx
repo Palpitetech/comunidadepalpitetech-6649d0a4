@@ -193,8 +193,12 @@ const Central = () => {
                   <img
                     src={item.img}
                     alt={item.alt}
-                    loading="lazy"
+                    width={600}
+                    height={800}
+                    loading={index === 0 ? "eager" : "lazy"}
                     decoding="async"
+                    fetchPriority={index === 0 ? "high" : "low"}
+                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                     className="w-full h-full object-cover"
                   />
                 </div>
