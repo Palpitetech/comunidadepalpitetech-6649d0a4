@@ -10,7 +10,7 @@ export interface AjudaContent {
   main_question: string;
   direct_answer: string;
   content: string;
-  intent?: 'definicao' | 'analise' | 'comparacao'; // Nova coluna de intenção
+  intent?: 'informational' | 'analytical' | 'commercial' | 'data'; // SEO Intention
   faq_items: {
     question: string;
     answer: string;
@@ -32,7 +32,7 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
     updated_at,
     main_question,
     direct_answer,
-    intent = 'definicao', // Default para definição se não vier
+    intent = 'informational', // Default to informational
     content: bodyContent,
     faq_items,
     author_name = "Equipe de Suporte",
@@ -73,44 +73,82 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
     }
   };
 
-  // 5. LINKAGEM AUTOMÁTICA INTELIGENTE (REVISADA)
+  // 5. LINKAGEM AUTOMÁTICA COM CONTEXTO SEMÂNTICO (REVISADA)
   const enrichContentWithLinks = (html: string) => {
-    // Whitelist controlada de links internos com prioridade para pilares
+    // Whitelist controlada de links internos com contexto semântico exigido
     const internalLinks = [
-      { keyword: "confiável", slug: "palpite-tech-e-confiavel", isPillar: true },
-      { keyword: "resultado lotofácil", slug: "lotofacil-resultado", isPillar: true },
-      { keyword: "estratégias", slug: "estratefias-vencedoras" },
-      { keyword: "fechamento", slug: "como-funciona-fechamento", isPillar: true },
-      { keyword: "como funciona", slug: "como-usar-o-sistema" }
+      { 
+        keyword: "confiável", 
+        slug: "palpite-tech-e-confiavel", 
+        isPillar: true,
+        contexts: ["avaliação", "segurança", "reputação", "confiança", "testamos", "análise"]
+      },
+      { 
+        keyword: "resultado lotofácil", 
+        slug: "lotofacil-resultado", 
+        isPillar: true,
+        contexts: ["concurso", "sorteio", "números", "premiação", "ganhadores"]
+      },
+      { 
+        keyword: "estratégias", 
+        slug: "estratefias-vencedoras",
+        contexts: ["jogar", "aposta", "vencer", "dicas", "técnica"]
+      },
+      { 
+        keyword: "fechamento", 
+        slug: "como-funciona-fechamento", 
+        isPillar: true,
+        contexts: ["matemática", "redução", "garantia", "bilhetes", "jogos"]
+      },
+      { 
+        keyword: "como funciona", 
+        slug: "como-usar-o-sistema",
+        contexts: ["tutorial", "passo a passo", "explicando", "guia", "iniciar"]
+      }
     ];
 
-    let enrichedHtml = html;
+    const MAX_LINKS_PER_PAGE = 5;
     let globalLinkCount = 0;
-    const MAX_LINKS_PER_PAGE = 5; // Regra do user: máx 3-5 links
+    
+    // Separar por blocos (parágrafos) para análise de contexto
+    const blocks = html.split(/<\/?p>/g);
+    const linkedSlugs = new Set<string>();
 
-    // Ordenar por prioridade de pilares primeiro
-    const sortedLinks = [...internalLinks].sort((a, b) => 
-      (b.isPillar ? 1 : 0) - (a.isPillar ? 1 : 0)
-    );
+    const processedBlocks = blocks.map(block => {
+      if (!block.trim() || globalLinkCount >= MAX_LINKS_PER_PAGE) return block;
 
-    sortedLinks.forEach(({ keyword, slug: linkSlug }) => {
-      if (globalLinkCount >= MAX_LINKS_PER_PAGE) return;
+      let enrichedBlock = block;
 
-      // Don't link if it's already inside an <a> tag
-      const regex = new RegExp(`(?<!<a[^>]*>)\\b(${keyword})\\b(?![^<]*</a>)`, 'gi');
-      
-      // Evitar links duplicados no mesmo bloco: agora limitamos a 1 por keyword
-      let matchCount = 0;
-      enrichedHtml = enrichedHtml.replace(regex, (match) => {
-        if (matchCount < 1 && globalLinkCount < MAX_LINKS_PER_PAGE && linkSlug !== content.slug) {
-          matchCount++;
-          globalLinkCount++;
-          return `<a href="/ajuda/${linkSlug}" class="text-primary hover:underline font-medium">${match}</a>`;
+      internalLinks.forEach(({ keyword, slug: linkSlug, contexts }) => {
+        if (globalLinkCount >= MAX_LINKS_PER_PAGE) return;
+        if (linkedSlugs.has(linkSlug)) return; // 1 link por slug por página
+        if (linkSlug === content.slug) return; // Não linkar para si mesmo
+
+        // 1. Verificar se a keyword existe no bloco
+        const keywordRegex = new RegExp(`(?<!<a[^>]*>)\\b(${keyword})\\b(?![^<]*</a>)`, 'i');
+        if (!keywordRegex.test(enrichedBlock)) return;
+
+        // 2. Validação Semântica: Verificar se algum contexto exigido está presente no MESMO bloco
+        const hasContext = contexts.some(ctx => 
+          new RegExp(`\\b${ctx}\\b`, 'i').test(enrichedBlock)
+        );
+
+        if (hasContext) {
+          enrichedBlock = enrichedBlock.replace(keywordRegex, (match) => {
+            globalLinkCount++;
+            linkedSlugs.add(linkSlug);
+            return `<a href="/ajuda/${linkSlug}" class="text-primary hover:underline font-medium">${match}</a>`;
+          });
         }
-        return match;
       });
+
+      return enrichedBlock;
     });
-    return enrichedHtml;
+
+    // Reconstruir o HTML mantendo os parágrafos se eles existiam (simplificado)
+    return html.includes('<p>') 
+      ? processedBlocks.map(b => b.trim() ? `<p>${b}</p>` : '').join('')
+      : processedBlocks.join('');
   };
 
   const finalBodyContent = enrichContentWithLinks(bodyContent);
@@ -137,26 +175,44 @@ export const AjudaTemplate = ({ content }: AjudaTemplateProps) => {
             <em>Última atualização: {formattedDate} — conteúdo baseado em análise e testes reais.</em>
           </p>
 
-          {/* Variação Estrutural Controlada por Intenção (SEO Governance) */}
-          {intent === 'analise' ? (
+          {/* Variação Estrutural Controlada por Intenção Dominante (SEO Governance) */}
+          {intent === 'analytical' || intent === 'data' ? (
             <>
-              {/* Intenção: Análise -> Conteúdo detalhado primeiro */}
+              {/* Intenção: Analítica ou Dados -> Corpo técnico primeiro para focar em snippets de "como" ou "por que" */}
               <div 
-                className="mb-10 help-content-body"
+                className="mb-10 help-content-body border-l-2 border-primary/10 pl-4 md:pl-6"
                 dangerouslySetInnerHTML={{ __html: finalBodyContent }}
               />
 
-              <section id="resposta-direta" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10">
-                <h2 className="text-xl font-bold mt-0 mb-4">{main_question}</h2>
+              <section id="resposta-direta" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10 shadow-sm">
+                <h2 className="text-xl font-bold mt-0 mb-4 flex items-center gap-2">
+                  <span className="w-2 h-6 bg-primary rounded-full" />
+                  {main_question}
+                </h2>
                 <p className="text-lg leading-relaxed font-medium">
                   <strong>{direct_answer}</strong>
                 </p>
               </section>
             </>
+          ) : intent === 'commercial' ? (
+            <>
+              {/* Intenção: Comercial -> Foca em confiabilidade e autoridade primeiro */}
+              <section id="resposta-direta" className="bg-primary/5 p-8 rounded-xl border-2 border-primary/30 mb-10 shadow-md">
+                <h2 className="text-2xl font-bold mt-0 mb-6 text-primary">{main_question}</h2>
+                <p className="text-xl leading-relaxed font-semibold">
+                  {direct_answer}
+                </p>
+              </section>
+
+              <div 
+                className="mb-10 help-content-body italic"
+                dangerouslySetInnerHTML={{ __html: finalBodyContent }}
+              />
+            </>
           ) : (
             <>
-              {/* Intenção: Definição/Padrão -> Resposta direta (Featured Snippet) primeiro */}
-              <section id="resposta-direta" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10">
+              {/* Intenção: Informacional (Padrão) -> Resposta direta em destaque para Featured Snippet */}
+              <section id="resposta-direta" className="bg-primary/5 p-6 rounded-xl border border-primary/20 mb-10 shadow-sm">
                 <h2 className="text-xl font-bold mt-0 mb-4">{main_question}</h2>
                 <p className="text-lg leading-relaxed font-medium">
                   <strong>{direct_answer}</strong>
