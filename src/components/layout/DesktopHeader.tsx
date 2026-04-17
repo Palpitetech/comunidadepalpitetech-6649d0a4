@@ -273,7 +273,7 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
             <img src="/logo.png" alt="Palpite Tech" className="h-8 w-8 rounded-md" />
             <span className={cn(
               "text-lg font-bold text-primary",
-              !isHomePage && "hidden xl:inline"
+              (!isHomePage && !isAjudaPage) && "hidden xl:inline"
             )}>
               Palpite Tech
             </span>
