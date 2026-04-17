@@ -204,12 +204,11 @@ export function LatestResults() {
 
               {/* Action Button */}
               <Button 
-                className="w-full h-10 rounded-xl font-bold text-white shadow-md transition-all hover:scale-[1.01] active:scale-95 flex items-center justify-center gap-2 mt-2"
+                className="w-full h-8 rounded-xl font-bold text-white shadow-md transition-all hover:scale-[1.01] active:scale-95 flex items-center justify-center mt-2"
                 style={{ backgroundColor: result.color }}
                 onClick={() => handleStudyClick(result.id)}
               >
                 Ver estudo completo
-                <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           </Card>
