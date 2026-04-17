@@ -1,10 +1,21 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { BarChart3, BookOpen, Lock, Dices, Table, CalendarDays, MessageSquare } from "lucide-react";
 
 const Central = () => {
+  const { isAuthenticated } = useAuthContext();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/home", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
   const menuItems = [
     { title: "Resultados", icon: BarChart3, color: "text-blue-500", to: "/resultados" },
     { title: "Estudos", icon: BookOpen, color: "text-green-500", to: "#" },
