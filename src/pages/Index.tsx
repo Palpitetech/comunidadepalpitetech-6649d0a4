@@ -80,20 +80,20 @@ const Index = () => {
         </div>
         
         {/* Main Action Boxes */}
-        <div className="grid grid-cols-2 gap-3 mb-4 w-full">
+        <div className="grid grid-cols-2 gap-3 mb-4 w-full px-1">
           <Card 
-            className="bg-green-600 hover:bg-green-700 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden group active:scale-95"
+            className="bg-green-600 sm:hover:bg-green-700 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden active:scale-[0.98] active:opacity-90 select-none touch-manipulation"
             onClick={() => navigate('/gerar-jogos')}
           >
             <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center justify-center h-full min-h-[60px]">
-              <h3 className="font-bold text-sm sm:text-base leading-tight">Gerar meus palpites</h3>
+              <h3 className="font-bold text-[13px] sm:text-base leading-tight">Gerar meus palpites</h3>
             </CardContent>
           </Card>
           <Card 
-            className="bg-green-600 hover:bg-green-700 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden group active:scale-95"
+            className="bg-green-600 sm:hover:bg-green-700 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden active:scale-[0.98] active:opacity-90 select-none touch-manipulation"
           >
             <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center justify-center h-full min-h-[60px]">
-              <h3 className="font-bold text-sm sm:text-base leading-tight">Entrar no Grupo</h3>
+              <h3 className="font-bold text-[13px] sm:text-base leading-tight">Entrar no Grupo</h3>
             </CardContent>
           </Card>
         </div>
