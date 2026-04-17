@@ -29,9 +29,20 @@ interface MainLayoutProps {
   hideBackButton?: boolean;
   /** Esconde a barra de navegação inferior no mobile */
   hideBottomNav?: boolean;
+  /** ID do vídeo do YouTube para exibir no início da página */
+  youtubeVideoId?: string;
 }
 
-export function MainLayout({ children, pageTitle, breadcrumb, onBack, headerRightContent, hideBackButton, hideBottomNav }: MainLayoutProps) {
+export function MainLayout({ 
+  children, 
+  pageTitle, 
+  breadcrumb, 
+  onBack, 
+  headerRightContent, 
+  hideBackButton, 
+  hideBottomNav,
+  youtubeVideoId
+}: MainLayoutProps) {
   const isMobile = useIsMobile();
   const { isAuthenticated } = useAuthContext();
   const location = useLocation();
