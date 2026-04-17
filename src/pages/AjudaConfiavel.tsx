@@ -127,10 +127,25 @@ const AjudaConfiavel = () => {
       }
     ];
 
+    // Additional Article Schema requested by user
+    const additionalSchema = {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Palpite Tech é confiável?",
+      "author": {
+        "@type": "Person",
+        "name": "Equipe Palpite Tech"
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "/ajuda/palpite-tech-e-confiavel"
+      }
+    };
+
     const script = document.createElement("script");
     script.type = "application/ld+json";
     script.id = "json-ld-seo";
-    script.innerHTML = JSON.stringify(structuredData);
+    script.innerHTML = JSON.stringify([...structuredData, additionalSchema]);
     document.head.appendChild(script);
 
     return () => {
