@@ -125,7 +125,6 @@ interface DesktopHeaderProps {
   breadcrumb?: { label: string; onClick?: () => void }[];
   onBack?: () => void;
   hideBackButton?: boolean;
-  isLandingPage?: boolean;
 }
 
 // Mapeamento de rotas para navegação de retorno
@@ -188,7 +187,7 @@ function LotteryDropdown({
   );
 }
 
-export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton, isLandingPage }: DesktopHeaderProps) {
+export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }: DesktopHeaderProps) {
   const { isAuthenticated, profile, signOut } = useAuthContext();
   const { isAdmin } = usePermissionContext();
   const { hasPermission } = usePermissions();
@@ -240,13 +239,10 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton, i
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      <div className={cn(
-        "grid items-center py-2 px-4 gap-2 w-full max-w-[1400px] mx-auto overflow-hidden",
-        isLandingPage ? "grid-cols-1 justify-items-center" : "grid-cols-[auto_1fr_auto] md:grid-cols-[1fr_auto_1fr]"
-      )}>
+      <div className="grid grid-cols-[auto_1fr_auto] md:grid-cols-[1fr_auto_1fr] items-center py-2 px-4 gap-2 w-full max-w-[1400px] mx-auto overflow-hidden">
         {/* Mobile Page Title logic & Logo Section */}
         <div className="flex items-center gap-2 overflow-hidden">
-          {!isLandingPage && pageTitle && !hideBackButton && (
+          {pageTitle && !hideBackButton && (
             <Button
               variant="ghost"
               size="icon"
@@ -261,18 +257,15 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton, i
             to="/" 
             className={cn(
               "flex items-center gap-2 no-underline shrink-0 mr-2",
-              !isLandingPage && pageTitle && !hideBackButton && "hidden md:flex"
+              pageTitle && !hideBackButton && "hidden md:flex"
             )}
           >
             <img src="/logo.png" alt="Palpite Tech" className="h-8 w-8 rounded-md" />
-            <span className={cn(
-              "text-lg font-bold text-primary",
-              !isLandingPage && "hidden xl:inline"
-            )}>Palpite Tech</span>
+            <span className="text-lg font-bold text-primary hidden xl:inline">Palpite Tech</span>
           </Link>
 
           {/* Mobile Page Title */}
-          {!isLandingPage && pageTitle && (
+          {pageTitle && (
             <div className="flex-1 md:hidden overflow-hidden ml-1">
               <h1 className="text-base font-bold text-foreground truncate">{pageTitle}</h1>
             </div>
@@ -280,8 +273,7 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton, i
         </div>
 
         {/* Desktop Navigation - centralizado */}
-        {!isLandingPage && (
-          <nav className="hidden md:flex items-center gap-0.5 justify-center flex-wrap overflow-hidden">
+        <nav className="hidden md:flex items-center gap-0.5 justify-center flex-wrap overflow-hidden">
           {/* Bolões */}
           {isAdmin ? (
             <Link to="/boloes">
@@ -368,11 +360,9 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton, i
             </DropdownMenu>
           ))}
         </nav>
-        )}
 
         {/* User Actions - fixo à direita */}
-        {!isLandingPage && (
-          <div className="flex items-center justify-end gap-1 shrink-0">
+        <div className="flex items-center justify-end gap-1 shrink-0">
 
           {isAuthenticated ? (
             <>
@@ -445,8 +435,7 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton, i
             </Link>
           )}
         </div>
-      )}
-    </div>
+      </div>
       <UpgradeModal
         open={upgradeOpen}
         onOpenChange={setUpgradeOpen}
