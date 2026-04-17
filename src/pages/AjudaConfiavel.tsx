@@ -202,6 +202,9 @@ const AjudaConfiavel = () => {
             <p className="text-lg leading-relaxed text-foreground">
               O Palpite Tech é um sistema avançado que gera palpites para loterias com base em análises estatísticas e estratégias, ajudando apostadores a tomarem decisões mais inteligentes e embasadas em dados, indo muito além da simples escolha aleatória de números para seus jogos diários.
             </p>
+            <p className="text-sm text-muted-foreground mt-2 italic">
+              Resposta rápida baseada em análise real e testes da plataforma.
+            </p>
           </section>
 
           <p className="lead text-lg text-muted-foreground mb-6">
