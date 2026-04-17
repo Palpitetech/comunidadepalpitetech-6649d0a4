@@ -180,6 +180,9 @@ const Index = () => {
           <p className="text-sm text-muted-foreground leading-relaxed">
             O Palpite Tech é um sistema que gera palpites para loterias com base em análises estatísticas e estratégias, ajudando apostadores a montar jogos de forma mais estruturada e menos aleatória.
           </p>
+          <p className="text-[12px] text-muted-foreground mt-1 italic">
+            Resposta rápida baseada em análise real e testes da plataforma.
+          </p>
         </section>
 
         {/* Section 2: Latest Results */}
