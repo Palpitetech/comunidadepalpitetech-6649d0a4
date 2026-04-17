@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { BarChart3, BookOpen, Lock, Dices, Table, CalendarDays, MessageSquare } from "lucide-react";
+import { LatestResults } from "@/components/home/LatestResults";
 
 const Central = () => {
   const { isAuthenticated } = useAuthContext();
@@ -75,6 +76,11 @@ const Central = () => {
               </Card>
             </Link>
           ))}
+        </div>
+
+        {/* Section 2: Latest Results */}
+        <div className="w-full mt-6">
+          <LatestResults />
         </div>
       </div>
     </MainLayout>
