@@ -17,8 +17,8 @@ const Index = () => {
   ];
 
   return (
-    <MainLayout pageTitle="Início" hideBottomNav={!isAuthenticated}>
-      <div className="container-senior pt-4 pb-8 space-y-8">
+    <MainLayout hideBottomNav={!isAuthenticated}>
+      <div className="container-senior pt-20 pb-8 space-y-8">
         {/* Floating Boxes Grid */}
         <div className="grid grid-cols-2 gap-4">
           {menuItems.map((item, index) => (
