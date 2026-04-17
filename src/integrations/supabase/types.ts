@@ -1263,6 +1263,7 @@ export type Database = {
       }
       help_content: {
         Row: {
+          author_experience: string | null
           author_name: string | null
           content: string
           created_at: string
@@ -1271,11 +1272,14 @@ export type Database = {
           id: string
           main_question: string | null
           meta_description: string | null
+          meta_title: string | null
+          review_method: string | null
           slug: string
           title: string
           updated_at: string
         }
         Insert: {
+          author_experience?: string | null
           author_name?: string | null
           content: string
           created_at?: string
@@ -1284,11 +1288,14 @@ export type Database = {
           id?: string
           main_question?: string | null
           meta_description?: string | null
+          meta_title?: string | null
+          review_method?: string | null
           slug: string
           title: string
           updated_at?: string
         }
         Update: {
+          author_experience?: string | null
           author_name?: string | null
           content?: string
           created_at?: string
@@ -1297,6 +1304,8 @@ export type Database = {
           id?: string
           main_question?: string | null
           meta_description?: string | null
+          meta_title?: string | null
+          review_method?: string | null
           slug?: string
           title?: string
           updated_at?: string
