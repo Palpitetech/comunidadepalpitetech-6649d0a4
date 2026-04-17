@@ -79,6 +79,9 @@ const Index = () => {
           <h1 className="text-[1.05rem] sm:text-senior-xl font-bold text-senior-dark">
             Palpite Tech: Gerador de Palpites para Loterias
           </h1>
+          <p className="text-[10px] sm:text-[12px] text-muted-foreground italic mt-1">
+            Última atualização: Abril de 2026
+          </p>
           <p className="text-[11px] sm:text-senior-sm text-muted-foreground leading-tight line-clamp-1">
             {isAuthenticated 
               ? "Selecione uma ferramenta abaixo para começar sua análise." 
