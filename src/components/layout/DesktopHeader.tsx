@@ -373,6 +373,7 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
             </DropdownMenu>
           ))}
         </nav>
+        )}
 
         {/* User Actions - fixo à direita */}
         <div className="flex items-center justify-end gap-1 shrink-0">
