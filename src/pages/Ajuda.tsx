@@ -96,7 +96,7 @@ const Ajuda = () => {
                 Sim, o Palpite Tech é confiável por oferecer transparência, teste gratuito e estratégias fundamentadas. No entanto, não há garantia de ganhos em loterias.
               </p>
               <a 
-                href="/ajuda/confiavel" 
+                href="/ajuda/palpite-tech-e-confiavel" 
                 className="text-primary hover:underline font-medium inline-flex items-center gap-1"
               >
                 Ler análise completa →

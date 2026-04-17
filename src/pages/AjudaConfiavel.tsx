@@ -163,7 +163,7 @@ const AjudaConfiavel = () => {
       pageTitle="Palpite Tech é confiável?"
       breadcrumb={[
         { label: "Ajuda", onClick: () => window.location.href = "/ajuda" },
-        { label: "Confiável" }
+        { label: "Palpite Tech é Confiável?" }
       ]}
     >
       <div className="container mx-auto px-4 py-8 max-w-4xl">
