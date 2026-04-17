@@ -149,7 +149,10 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
             <SheetTitle>Menu Principal</SheetTitle>
           </SheetHeader>
 
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+          <div 
+            className="flex items-center justify-between px-4 pb-3 border-b border-border/50"
+            style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}
+          >
             <button onClick={() => onOpenChange(false)} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-base">
               <ArrowLeft className="h-5 w-5" />
               Voltar
