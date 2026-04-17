@@ -6,30 +6,47 @@ export function useLatestResults() {
   return useQuery({
     queryKey: ["latest-results"],
     queryFn: async (): Promise<ResultadoUnificado[]> => {
-      // Fetch latest results for each lottery from the unified table
-      const { data, error } = await supabase
-        .from("resultados_loterias")
-        .select("*")
-        .order("concurso", { ascending: false })
-        .limit(100);
+      // Fetch latest results from both unified table (other lotteries) and lotofacil table
+      const [unifiedRes, lotofacilRes] = await Promise.all([
+        supabase
+          .from("resultados_loterias")
+          .select("*")
+          .order("concurso", { ascending: false })
+          .limit(100),
+        (supabase as any)
+          .from("resultados")
+          .select("*")
+          .order("concurso_id", { ascending: false })
+          .limit(1),
+      ]);
 
-      if (error) throw error;
+      if (unifiedRes.error) throw unifiedRes.error;
+      if (lotofacilRes.error) throw lotofacilRes.error;
 
       const latestByLottery: Record<string, ResultadoUnificado> = {};
-      const lotteriesOrder = ["megasena", "lotofacil", "quina", "duplasena", "lotomania", "diadesorte"];
-      
-      (data || []).forEach((item: any) => {
+
+      (unifiedRes.data || []).forEach((item: any) => {
         if (!latestByLottery[item.loteria]) {
           latestByLottery[item.loteria] = item;
         }
       });
 
-      // Sort by the predefined order
+      // Add lotofacil from its dedicated table, normalizing field names
+      const lotofacilItem = (lotofacilRes.data || [])[0];
+      if (lotofacilItem) {
+        latestByLottery["lotofacil"] = {
+          ...lotofacilItem,
+          loteria: "lotofacil",
+          concurso: lotofacilItem.concurso_id,
+        } as ResultadoUnificado;
+      }
+
+      const lotteriesOrder = ["megasena", "lotofacil", "quina", "duplasena", "lotomania", "diadesorte"];
+
       return lotteriesOrder
-        .filter(lot => !!latestByLottery[lot])
-        .map(lot => latestByLottery[lot]);
+        .filter((lot) => !!latestByLottery[lot])
+        .map((lot) => latestByLottery[lot]);
     },
     staleTime: 5 * 60 * 1000,
   });
 }
-
