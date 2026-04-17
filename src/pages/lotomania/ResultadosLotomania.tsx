@@ -49,7 +49,7 @@ export default function ResultadosLotomania() {
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
               <BarChart3 className="h-7 w-7 text-red-600" />
-              <h1 className="text-xl font-bold">🎰 Resultados Lotomania</h1>
+              <h1 className="sr-only">🎰 Resultados Lotomania</h1>
             </div>
             <SnapshotButton targetRef={contentRef} defaultTitle="Resultados Lotomania" />
           </div>
