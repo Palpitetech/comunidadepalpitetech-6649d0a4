@@ -9,21 +9,12 @@ import { MobileMenuSheet } from "./MobileMenuSheet";
 import { RequireCelularModal } from "@/components/shared/RequireCelularModal";
 import { PageVideo } from "@/components/shared/PageVideo";
 
-interface BreadcrumbItem {
-  label: string;
-  onClick?: () => void;
-}
-
 interface MainLayoutProps {
   children: ReactNode;
-  /** Título da página - quando fornecido, renderiza o PageHeader no mobile automaticamente */
+  /** Título da página - quando fornecido, exibido centralizado no header mobile */
   pageTitle?: string;
-  /** Breadcrumb trail antes do título */
-  breadcrumb?: BreadcrumbItem[];
   /** Callback customizado para o botão voltar */
   onBack?: () => void;
-  /** Conteúdo à direita do header (mobile) */
-  headerRightContent?: ReactNode;
   /** Esconde o botão de voltar no header mobile */
   hideBackButton?: boolean;
   /** Esconde a barra de navegação inferior no mobile */
@@ -32,13 +23,11 @@ interface MainLayoutProps {
   youtubeVideoId?: string;
 }
 
-export function MainLayout({ 
-  children, 
-  pageTitle, 
-  breadcrumb, 
-  onBack, 
-  headerRightContent, 
-  hideBackButton, 
+export function MainLayout({
+  children,
+  pageTitle,
+  onBack,
+  hideBackButton,
   hideBottomNav,
   youtubeVideoId
 }: MainLayoutProps) {
@@ -55,7 +44,6 @@ export function MainLayout({
       {/* Header unificado mobile + desktop */}
       <AppHeader
         pageTitle={pageTitle}
-        breadcrumb={breadcrumb}
         onBack={onBack}
         hideBackButton={hideBackButton}
       />

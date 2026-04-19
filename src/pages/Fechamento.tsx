@@ -178,7 +178,6 @@ export default function Fechamento() {
       <MainLayout 
         pageTitle="Palpites Gerados" 
         onBack={handleNovoFechamento}
-        breadcrumb={[{ label: "Fechamento", onClick: handleNovoFechamento }]}
       >
         <div className="container-senior py-4">
           <ResultadosFechamento 

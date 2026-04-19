@@ -127,7 +127,6 @@ export interface ToolItem {
 
 interface AppHeaderProps {
   pageTitle?: string;
-  breadcrumb?: { label: string; onClick?: () => void }[];
   onBack?: () => void;
   hideBackButton?: boolean;
 }
@@ -322,50 +321,45 @@ export function AppHeader({ pageTitle, onBack, hideBackButton }: AppHeaderProps)
     >
       <div className="w-full max-w-[1400px] mx-auto px-3 md:px-4">
         {/* Linha superior: grid 3 colunas — esquerda | centro | direita */}
-        <div className="grid grid-cols-[64px_1fr_64px] md:grid-cols-[auto_1fr_auto] items-center h-12 md:h-14 gap-2">
-          {/* ESQUERDA: back (mobile com pageTitle) OU logo */}
+        <div className="grid grid-cols-[48px_1fr_48px] md:grid-cols-[auto_1fr_auto] items-center h-12 min-h-12 md:h-14 md:min-h-14 gap-2">
+          {/* ESQUERDA: back (mobile com pageTitle) OU logo (sempre única) */}
           <div className="flex items-center justify-start min-w-0">
             {showMobileBack ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden h-10 w-10 -ml-2"
-                onClick={handleBack}
-                aria-label="Voltar"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
+              <>
+                {/* Mobile: botão voltar */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden h-10 w-10 -ml-2"
+                  onClick={handleBack}
+                  aria-label="Voltar"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+                {/* Desktop: logo (back não usa no desktop) */}
+                <Link to="/" className="hidden md:flex items-center gap-2 no-underline shrink-0">
+                  <img src="/logo.png" alt="Palpite Tech" className="h-8 w-8 rounded-md" />
+                  <span className="hidden lg:inline text-base lg:text-lg font-bold text-primary">
+                    Palpite Tech
+                  </span>
+                </Link>
+              </>
             ) : (
               <Link to="/" className="flex items-center gap-2 no-underline shrink-0">
-                <img src="/logo.png" alt="Palpite Tech" className="h-8 w-8 rounded-md" />
+                <img src="/logo.png" alt="Palpite Tech" className="h-7 w-7 md:h-8 md:w-8 rounded-md" />
                 <span className="hidden md:inline text-base lg:text-lg font-bold text-primary">
-                  Palpite Tech
-                </span>
-              </Link>
-            )}
-            {/* No desktop, quando há back, ele aparece ao lado da logo */}
-            {showMobileBack && (
-              <Link to="/" className="hidden md:flex items-center gap-2 no-underline shrink-0">
-                <img src="/logo.png" alt="Palpite Tech" className="h-8 w-8 rounded-md" />
-                <span className="hidden lg:inline text-base lg:text-lg font-bold text-primary">
                   Palpite Tech
                 </span>
               </Link>
             )}
           </div>
 
-          {/* CENTRO: título (mobile) OU navegação desktop */}
+          {/* CENTRO: título único centralizado (mobile) OU navegação desktop */}
           <div className="flex items-center justify-center min-w-0 overflow-hidden">
-            {/* Mobile: título centralizado */}
-            {pageTitle ? (
-              <h1 className="md:hidden text-base font-semibold text-foreground truncate text-center w-full px-1">
-                {pageTitle}
-              </h1>
-            ) : (
-              <span className="md:hidden text-base font-bold text-primary truncate">
-                Palpite Tech
-              </span>
-            )}
+            {/* Mobile: título único (pageTitle ou "Palpite Tech" na home) */}
+            <h1 className="md:hidden text-base font-semibold text-foreground truncate text-center w-full px-1 leading-none mx-auto">
+              {pageTitle || (isHomePage ? "Palpite Tech" : "")}
+            </h1>
 
             {/* Desktop: navegação centralizada (apenas fora da home) */}
             {!isHomePage && (
@@ -543,6 +537,3 @@ export function AppHeader({ pageTitle, onBack, hideBackButton }: AppHeaderProps)
     </header>
   );
 }
-
-// Backward-compat: manter export DesktopHeader para imports legados
-export { AppHeader as DesktopHeader };
