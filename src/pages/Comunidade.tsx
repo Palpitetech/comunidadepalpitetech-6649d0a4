@@ -7,8 +7,7 @@ import { PostCard } from "@/components/comunidade/PostCard";
 import { PostCardSkeleton } from "@/components/comunidade/PostCardSkeleton";
 import { useCommunityPosts } from "@/hooks/useCommunityPosts";
 import { LatestResults } from "@/components/home/LatestResults";
-import { Pin, Sparkles, ChevronRight, MessageSquare } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Pin, Sparkles, ChevronRight, MessageSquare, Lock, Crown } from "lucide-react";
 import { usePermissionContext } from "@/contexts/PermissionContext";
 
 export default function Comunidade() {
