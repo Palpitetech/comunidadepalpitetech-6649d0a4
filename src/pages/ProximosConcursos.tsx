@@ -138,7 +138,7 @@ export default function ProximosConcursos() {
                   emoji: "🎰",
                   label: c.loteria,
                   color: "hsl(var(--primary))",
-                  hub: "/comunidade",
+                  hub: "/home",
                   btnBg: "hsl(var(--primary))",
                   btnFg: "#fff",
                 };

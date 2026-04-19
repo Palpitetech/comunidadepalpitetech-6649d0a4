@@ -36,7 +36,7 @@ export default function Comunidade() {
   );
 
   return (
-    <MainLayout pageTitle="Comunidade" hideBackButton>
+    <MainLayout pageTitle="Estudos" hideBackButton>
       <div className="max-w-2xl mx-auto px-4 pt-2 pb-6 bg-clovers min-h-full bg-primary/5">
         {!isMobile && <FeedHeader />}
 

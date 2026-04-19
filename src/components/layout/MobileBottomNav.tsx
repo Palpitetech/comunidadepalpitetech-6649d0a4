@@ -16,10 +16,10 @@ export function MobileBottomNav({ onMenuClick }: MobileBottomNavProps) {
     <nav className="fixed bottom-0 left-0 right-0 z-[100] bg-card border-t border-border safe-area-bottom" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       <div className="flex items-center justify-around h-14">
         <Link
-          to="/comunidade"
+          to="/home"
           className={cn(
             "flex flex-col items-center justify-center flex-1 h-full py-1.5 transition-colors",
-            isActive("/comunidade") || isActive("/")
+            isActive("/home") || isActive("/")
               ? "text-primary"
               : "text-muted-foreground hover:text-foreground"
           )}

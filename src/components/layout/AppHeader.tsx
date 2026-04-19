@@ -132,7 +132,7 @@ interface AppHeaderProps {
 const getParentRoute = (pathname: string): string => {
   if (pathname.startsWith("/megasena/")) return "/megasena/resultados";
   if (["/desdobramento", "/fechamento", "/gerador", "/tendencias", "/frequencia"].includes(pathname)) return "/resultados";
-  return "/comunidade";
+  return "/home";
 };
 
 function LotteryDropdown({
