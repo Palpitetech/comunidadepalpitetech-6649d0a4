@@ -153,7 +153,7 @@ export default function PostDetalhes() {
       <MainLayout pageTitle="Post" hideBottomNav={!isAuthenticated}>
         <div className="max-w-2xl mx-auto px-4 py-6">
           {!isMobile && (
-            <Button variant="ghost" onClick={() => navigate("/comunidade")} className="gap-2 mb-6">
+            <Button variant="ghost" onClick={() => navigate("/home")} className="gap-2 mb-6">
               <ArrowLeft className="h-4 w-4" />
               Voltar
             </Button>
@@ -185,7 +185,7 @@ export default function PostDetalhes() {
           <div className="px-4 pt-4">
             <Button
               variant="ghost"
-              onClick={() => navigate(isAuthenticated ? "/comunidade" : "/login")}
+              onClick={() => navigate(isAuthenticated ? "/home" : "/login")}
               className="gap-2 -ml-2 text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />

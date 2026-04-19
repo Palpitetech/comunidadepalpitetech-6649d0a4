@@ -14,7 +14,7 @@ export default function CriarPost() {
   useEffect(() => {
     if (!PERMITIR_POSTS_USUARIOS) {
       toast.info("A criação de posts está temporariamente desativada. Interaja nos posts dos especialistas!");
-      navigate("/comunidade", { replace: true });
+      navigate("/home", { replace: true });
     }
   }, [navigate]);
 
@@ -135,7 +135,7 @@ function CriarPostForm() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
       toast.success("Post publicado com sucesso!");
-      navigate("/comunidade");
+      navigate("/home");
     },
     onError: (error) => {
       console.error("Erro ao criar post:", error);

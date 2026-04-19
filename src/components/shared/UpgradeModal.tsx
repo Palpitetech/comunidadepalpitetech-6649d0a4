@@ -118,7 +118,7 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
 
   const handleClose = (isOpen: boolean) => {
     if (!isOpen && !activatingRef.current && canUseTrial) {
-      navigate("/comunidade");
+      navigate("/home");
     }
     onOpenChange(isOpen);
   };
