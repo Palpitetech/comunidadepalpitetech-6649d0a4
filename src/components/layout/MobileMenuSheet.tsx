@@ -98,10 +98,10 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
     return <PremiumBadge variant={isVipFeature(feature) ? "vip" : "premium"} className="ml-auto" />;
   };
 
-  const supportWhatsApp = "https://wa.me/5516997175392?text=Olá! Preciso de ajuda com o Palpite Tech.";
+  const supportWhatsApp = "https://wa.me/5551981854281?text=Olá! Preciso de ajuda com o Palpite Tech.";
 
-  const LotteryAccordion = ({ name, color, tools }: { name: string, color: string, tools: any[] }) => (
-    <div className="mx-4 p-1 rounded-r-md border-l-4 mb-3" style={{ borderLeftColor: color, backgroundColor: `${color}0A` }}>
+  const LotteryAccordion = ({ name, color, tools }: { name: string, color: string, tools: ToolItem[] }) => (
+    <div className="mx-4 py-1 pl-2 pr-1 rounded-r-md border-l-4 mb-3" style={{ borderLeftColor: color, backgroundColor: `${color}0A` }}>
       <Accordion type="single" collapsible>
         <AccordionItem value="tools" className="border-none">
           <AccordionTrigger className="py-3 text-base hover:no-underline hover:text-primary">
@@ -114,7 +114,6 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
             <div className="pl-8 space-y-0">
               {tools.map((tool, idx) => (
                 <div key={tool.to}>
-                  {idx > 0 && tool.bold && <div className="border-t border-border/50 my-1" />}
                   <Link 
                     to={tool.to} 
                     onClick={(e) => tool.gated ? handleGatedClick(e, tool.to) : closeAndNavigate()}
@@ -158,12 +157,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex flex-col items-end gap-0.5 hover:opacity-80 transition-opacity">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base font-medium text-foreground">
+                  <button className="flex flex-col items-end gap-0.5 hover:opacity-80 transition-opacity min-w-0 max-w-[60vw]">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-base font-medium text-foreground truncate">
                         {profile?.nome?.split(' ')[0] || 'Usuário'}
                       </span>
-                      <Avatar className="h-9 w-9">
+                      <Avatar className="h-9 w-9 shrink-0">
                         <AvatarImage src={profile?.avatar_url || undefined} />
                         <AvatarFallback className="bg-primary/10 text-primary text-sm">
                           {getInitials(profile?.nome)}
@@ -171,11 +170,11 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
                       </Avatar>
                     </div>
                     {profile?.status_assinatura === "ativa" ? (
-                      <span className="text-[10px] text-primary font-medium uppercase tracking-wider">Premium</span>
+                      <span className="text-[10px] text-primary font-medium uppercase tracking-wider truncate max-w-full">Premium</span>
                     ) : profile?.trial_used ? (
-                      <span className="text-[10px] text-destructive font-medium uppercase tracking-wider">Teste Vencido</span>
+                      <span className="text-[10px] text-destructive font-medium uppercase tracking-wider truncate max-w-full">Teste Vencido</span>
                     ) : (
-                      <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Plano Free</span>
+                      <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider truncate max-w-full">Plano Free</span>
                     )}
                   </button>
                 </DropdownMenuTrigger>
