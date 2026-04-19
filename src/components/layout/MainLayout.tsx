@@ -5,7 +5,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { AppHeader } from "./AppHeader";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { MobileMenuSheet } from "./MobileMenuSheet";
-import { PageHeader } from "./PageHeader";
+
 import { PushNotificationBanner } from "@/components/pwa/PushNotificationBanner";
 import { RequireCelularModal } from "@/components/shared/RequireCelularModal";
 import { PageVideo } from "@/components/shared/PageVideo";
