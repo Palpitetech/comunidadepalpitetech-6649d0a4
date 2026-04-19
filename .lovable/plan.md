@@ -1,50 +1,35 @@
 
 
-## Plano: Limpar dead code residual da unificação `/comunidade` → `/home`
+## Plano: Reduzir altura dos botões CTA na `/home`
 
 ### Diagnóstico
 
-Após a unificação das rotas, dois arquivos ficaram **órfãos ou esvaziados**:
+Os botões "Gerar meus palpites" e "Entrar na Sala Secreta" estão em `src/pages/Comunidade.tsx` (rota `/home`). Atualmente:
+- Padding: `p-3 sm:p-4`
+- Altura mínima: `min-h-[60px]`
+- Já estão verdes (`bg-green-600`)
+- Conteúdo já usa `flex flex-col items-center justify-center` (centralizado)
 
-**1. `src/components/layout/Header.tsx` — ARQUIVO MORTO**
-- Header desktop legado com links "Início / Comunidade / Resultados".
-- Confirmado via busca: **zero imports** em todo o projeto (`from ".../layout/Header"` não retorna nada).
-- O header em uso é `AppHeader.tsx`, montado via `MainLayout.tsx`.
-- Mantê-lo gera ruído (links apontando para `/comunidade`, `/resultados` — rotas que ou foram redirecionadas ou nem existem).
+O botão direito é mais alto porque tem 2 linhas de texto (título + subtítulo), enquanto o esquerdo tem só 1.
 
-**2. `src/components/comunidade/FeedHeader.tsx` — COMPONENTE VAZIO**
-- Renderiza apenas uma `<div>` sem conteúdo visível (comentário interno: *"Title removed, moved to Header via MainLayout"*).
-- Import `Users` do lucide-react não é usado.
-- Constante `PERMITIR_POSTS_USUARIOS` está duplicada (já existe em `CriarPost.tsx` como flag oficial) e aqui só guarda um `<button className="hidden">` vazio.
-- Usado apenas em `Comunidade.tsx` (linha 41): `{!isMobile && <FeedHeader />}` — renderiza nada no desktop.
+### Mudanças
 
-### O que NÃO é dead code (verificado)
+**Arquivo único:** `src/pages/Comunidade.tsx` (os 2 cards de CTA)
 
-- **`CriarPost.tsx` + rota `/criar-post` + `SnapshotButton.tsx` + flag `PERMITIR_POSTS_USUARIOS`**: são código **pausado intencionalmente** conforme `mem://constraints/user-post-creation-disabled`. Mantidos para reativação futura. **NÃO mexer.**
-- **Edge functions `group-blast*` e `BotPostsTab/BotAutomationTab`** usam `/comunidade/post/...` (rota de detalhes preservada). **NÃO mexer.**
-- **Pasta `src/components/comunidade/`**: nome interno, outros componentes ainda em uso (`PostCard`, `PostCardSkeleton`, `LoteriaBadge`, `FormattedContent`).
+1. **Reduzir padding vertical:** `p-3 sm:p-4` → `px-3 py-2 sm:px-4 sm:py-2.5`
+2. **Remover altura mínima fixa:** remover `min-h-[60px]` para o botão acompanhar o conteúdo de forma compacta
+3. **Garantir mesma altura entre os dois:** adicionar `h-full` no `Card` (já está) e manter `justify-center` no `CardContent` — assim o card menor estica para acompanhar o maior, com conteúdo centralizado verticalmente.
+4. **Reduzir espaçamento do subtítulo:** `mt-0.5` → `mt-0` (compacta a segunda linha sem mudar tamanho de fonte)
 
-### Etapa 1 — Deletar arquivo morto
+### Fora de escopo
 
-**1.1**: Deletar `src/components/layout/Header.tsx` (150 linhas, zero referências).
+- Não alterar cores (continuam `bg-green-600`)
+- Não alterar tamanhos de fonte
+- Não alterar comportamento/onClick
+- Não tocar em nenhum outro arquivo
+- Não alterar o mesmo bloco em `Index.tsx` (usuário pediu apenas `/home`)
 
-### Etapa 2 — Remover componente vazio
+### Resultado esperado
 
-**2.1**: Deletar `src/components/comunidade/FeedHeader.tsx` (componente sem conteúdo útil).
-**2.2**: Em `src/pages/Comunidade.tsx`:
-- Remover import `FeedHeader` (linha 5).
-- Remover linha 41: `{!isMobile && <FeedHeader />}`.
-
-### Arquivos afetados (3)
-
-1. `src/components/layout/Header.tsx` — **DELETAR**
-2. `src/components/comunidade/FeedHeader.tsx` — **DELETAR**
-3. `src/pages/Comunidade.tsx` — remover 2 linhas (import + uso)
-
-### Garantias
-
-- **Zero impacto visual**: `FeedHeader` já renderizava nada no desktop, `Header.tsx` nunca era renderizado.
-- **Zero impacto funcional**: nenhum import quebrado (verifiquei busca completa).
-- **Sem afetar código pausado**: a flag `PERMITIR_POSTS_USUARIOS` permanece intacta em `CriarPost.tsx` (fonte oficial), apenas a duplicata vazia no `FeedHeader` é removida.
-- **Sem alterar memória**: nenhuma regra precisa ser atualizada — esses arquivos não estão documentados em memórias.
+Botões mais baixos, ambos com mesma altura, conteúdo verticalmente centralizado, cor verde mantida.
 
