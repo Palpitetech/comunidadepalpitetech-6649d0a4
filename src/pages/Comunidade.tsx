@@ -66,7 +66,7 @@ export default function Comunidade() {
                     <h3 className="font-bold text-sm sm:text-base leading-tight">
                       {isPaid ? "Receba 15 palpites diários" : "Entrar na Sala Secreta"}
                     </h3>
-                    <p className="text-[10px] sm:text-[11px] opacity-90 mt-0.5 leading-none">
+                    <p className="text-[10px] sm:text-[11px] opacity-90 mt-0 leading-none">
                       {isPaid ? "E análise do resultado" : "Receba atualizações diárias"}
                     </p>
                   </>
