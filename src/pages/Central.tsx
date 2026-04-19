@@ -3,7 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { BarChart3, BookOpen, Lock, Dices, Table, CalendarDays, MessageSquare } from "lucide-react";
 import { LatestResults } from "@/components/home/LatestResults";
@@ -25,6 +25,30 @@ import estudoRepetidas from "@/assets/estudo-repetidas.jpg";
 const Central = () => {
   const { isAuthenticated } = useAuthContext();
   const navigate = useNavigate();
+  const touchStartY = useRef<number | null>(null);
+  const touchMoved = useRef<boolean>(false);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchMoved.current = false;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+    if (Math.abs(e.touches[0].clientY - touchStartY.current) > 10) {
+      touchMoved.current = true;
+    }
+  };
+
+  const safeAction = (action: () => void) => {
+    if (touchMoved.current) {
+      touchMoved.current = false;
+      touchStartY.current = null;
+      return;
+    }
+    action();
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -106,10 +130,29 @@ const Central = () => {
         <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
           {menuItems.map((item, index) => {
             if (item.id) {
+              const isOpen = openDropdownId === item.id;
               return (
-                <DropdownMenu key={index}>
+                <DropdownMenu
+                  key={index}
+                  open={isOpen}
+                  onOpenChange={(open) => setOpenDropdownId(open ? item.id! : null)}
+                >
                   <DropdownMenuTrigger asChild>
-                    <Card className="hover:border-primary transition-all duration-300 cursor-pointer h-20 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white group-active:scale-95 flex flex-col items-center justify-center p-2 text-center rounded-3xl group">
+                    <Card
+                      onTouchStart={handleTouchStart}
+                      onTouchMove={handleTouchMove}
+                      onClick={(e) => {
+                        if (touchMoved.current) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          touchMoved.current = false;
+                          return;
+                        }
+                        setOpenDropdownId(item.id!);
+                      }}
+                      onPointerDown={(e) => e.preventDefault()}
+                      className="hover:border-primary transition-all duration-200 cursor-pointer h-20 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white active:scale-95 flex flex-col items-center justify-center p-2 text-center rounded-3xl select-none touch-manipulation"
+                    >
                       <span className="text-xs font-bold text-senior-dark leading-tight px-2">
                         {item.title}
                       </span>
@@ -137,7 +180,7 @@ const Central = () => {
             }
 
             const CardContent = (
-              <Card className="hover:border-primary transition-all duration-300 cursor-pointer h-20 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white group-active:scale-95 flex flex-col items-center justify-center p-2 text-center rounded-3xl">
+              <Card className="hover:border-primary transition-all duration-200 cursor-pointer h-20 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white active:scale-95 flex flex-col items-center justify-center p-2 text-center rounded-3xl select-none touch-manipulation">
                 <span className="text-xs font-bold text-senior-dark leading-tight px-2">
                   {item.title}
                 </span>
@@ -146,14 +189,32 @@ const Central = () => {
 
             if ('onClick' in item) {
               return (
-                <div key={index} onClick={item.onClick} className="block group cursor-pointer">
+                <div
+                  key={index}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onClick={() => safeAction(() => item.onClick && item.onClick())}
+                  className="block cursor-pointer"
+                >
                   {CardContent}
                 </div>
               );
             }
 
             return (
-              <Link key={index} to={item.to || "#"} className="block group">
+              <Link
+                key={index}
+                to={item.to || "#"}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onClick={(e) => {
+                  if (touchMoved.current) {
+                    e.preventDefault();
+                    touchMoved.current = false;
+                  }
+                }}
+                className="block"
+              >
                 {CardContent}
               </Link>
             );
