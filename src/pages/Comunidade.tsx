@@ -57,7 +57,7 @@ export default function Comunidade() {
               window.open(link, '_blank');
             }}
           >
-            <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center justify-center h-full min-h-[60px]">
+            <CardContent className="px-3 py-2 sm:px-4 sm:py-2.5 flex flex-col items-center text-center justify-center h-full">
               {(() => {
                 const isTrial = plan?.slug === 'trial' || plan?.slug === 'teste-gratis-3-dias';
                 const isPaid = !!plan && !isTrial;
