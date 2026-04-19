@@ -60,9 +60,6 @@ export function MainLayout({
         hideBackButton={hideBackButton}
       />
 
-      {/* Push Notification Banner */}
-      <PushNotificationBanner />
-
       {/* Require celular modal */}
       <RequireCelularModal />
 
