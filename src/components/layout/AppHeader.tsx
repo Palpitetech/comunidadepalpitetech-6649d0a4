@@ -537,6 +537,3 @@ export function AppHeader({ pageTitle, onBack, hideBackButton }: AppHeaderProps)
     </header>
   );
 }
-
-// Backward-compat: manter export DesktopHeader para imports legados
-export { AppHeader as DesktopHeader };
