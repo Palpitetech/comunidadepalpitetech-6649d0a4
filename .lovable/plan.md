@@ -1,35 +1,52 @@
 
 
-## Plano: Reduzir altura dos botões CTA na `/home`
+## Plano: Redesenhar 100% os botões CTA da `/home`
 
 ### Diagnóstico
 
-Os botões "Gerar meus palpites" e "Entrar na Sala Secreta" estão em `src/pages/Comunidade.tsx` (rota `/home`). Atualmente:
-- Padding: `p-3 sm:p-4`
-- Altura mínima: `min-h-[60px]`
-- Já estão verdes (`bg-green-600`)
-- Conteúdo já usa `flex flex-col items-center justify-center` (centralizado)
+Botões atuais em `src/pages/Comunidade.tsx` (linhas 41-77):
+- Visual genérico (cards verdes chapados, sem hierarquia)
+- Sem ícones
+- Tipografia plana, sem destaque
+- Aparência "amadora" — só texto centralizado em retângulo verde
 
-O botão direito é mais alto porque tem 2 linhas de texto (título + subtítulo), enquanto o esquerdo tem só 1.
+### Proposta de redesign
 
-### Mudanças
+**Conceito:** botões premium com ícone destacado à esquerda, título forte e subtítulo descritivo à direita, gradiente sutil, borda viva, sombra com brilho verde, micro-interação no hover/active.
 
-**Arquivo único:** `src/pages/Comunidade.tsx` (os 2 cards de CTA)
+**Estrutura visual de cada botão:**
+```
+┌──────────────────────────────────┐
+│ [ícone]   Título principal       │
+│           Subtítulo descritivo   │
+└──────────────────────────────────┘
+```
 
-1. **Reduzir padding vertical:** `p-3 sm:p-4` → `px-3 py-2 sm:px-4 sm:py-2.5`
-2. **Remover altura mínima fixa:** remover `min-h-[60px]` para o botão acompanhar o conteúdo de forma compacta
-3. **Garantir mesma altura entre os dois:** adicionar `h-full` no `Card` (já está) e manter `justify-center` no `CardContent` — assim o card menor estica para acompanhar o maior, com conteúdo centralizado verticalmente.
-4. **Reduzir espaçamento do subtítulo:** `mt-0.5` → `mt-0` (compacta a segunda linha sem mudar tamanho de fonte)
+**Mudanças concretas:**
+
+1. **Trocar `Card` por `button` nativo** — mais leve e semântico para CTA.
+2. **Layout horizontal:** ícone circular à esquerda + bloco de texto à direita (alinhado à esquerda).
+3. **Background:** gradiente `from-green-600 to-green-700` com hover `from-green-500 to-green-600`.
+4. **Borda + sombra:** `border border-green-500/40` + `shadow-lg shadow-green-600/30` para dar profundidade premium.
+5. **Ícone:** círculo translúcido `bg-white/15` com ícone branco dentro:
+   - Botão 1 (Gerar palpites): `Sparkles`
+   - Botão 2 (Sala Secreta / 15 palpites): `Lock` (não-pago) ou `Crown` (pago)
+6. **Tipografia:**
+   - Título: `font-bold text-sm leading-tight`
+   - Subtítulo: `text-[11px] text-white/80 leading-tight mt-0.5`
+7. **Subtítulo no botão 1 também:** "Estratégias inteligentes" — pareia visualmente com o botão 2.
+8. **Micro-interação:** `active:scale-[0.98] transition-all duration-200`, `hover:shadow-green-500/40`.
+9. **Altura uniforme:** ambos com `min-h-[68px]` e `items-center` — garante mesma altura sem hack.
+10. **Limpar imports:** remover `Card`/`CardContent`, adicionar `Sparkles`, `Lock`, `Crown` do lucide-react (`Sparkles` já importado).
 
 ### Fora de escopo
 
-- Não alterar cores (continuam `bg-green-600`)
-- Não alterar tamanhos de fonte
-- Não alterar comportamento/onClick
-- Não tocar em nenhum outro arquivo
-- Não alterar o mesmo bloco em `Index.tsx` (usuário pediu apenas `/home`)
+- Não tocar em nenhum outro elemento da página (LatestResults, posts, pinned, etc.)
+- Não alterar `/`, não alterar `Index.tsx`
+- Não mudar lógica de navegação/links
+- Não alterar tokens de design global
 
 ### Resultado esperado
 
-Botões mais baixos, ambos com mesma altura, conteúdo verticalmente centralizado, cor verde mantida.
+Dois botões visualmente premium, com ícone + título + subtítulo, mesma altura, gradiente verde com profundidade, alinhamento horizontal limpo — bem mais profissionais que o estado atual.
 
