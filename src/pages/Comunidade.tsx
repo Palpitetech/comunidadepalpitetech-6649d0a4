@@ -7,8 +7,6 @@ import { PostCard } from "@/components/comunidade/PostCard";
 import { PostCardSkeleton } from "@/components/comunidade/PostCardSkeleton";
 import { useCommunityPosts } from "@/hooks/useCommunityPosts";
 import { LatestResults } from "@/components/home/LatestResults";
-import { DownloadBanner } from "@/components/pwa/DownloadBanner";
-import { PWAUpdateBanner } from "@/components/pwa/PWAUpdateBanner";
 import { Pin, Sparkles, ChevronRight, MessageSquare } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { usePermissionContext } from "@/contexts/PermissionContext";
@@ -39,8 +37,6 @@ export default function Comunidade() {
 
   return (
     <MainLayout pageTitle="Comunidade" hideBackButton>
-      <DownloadBanner />
-      <PWAUpdateBanner />
       <div className="max-w-2xl mx-auto px-4 pt-2 pb-6 bg-clovers min-h-full bg-primary/5">
         {!isMobile && <FeedHeader />}
 

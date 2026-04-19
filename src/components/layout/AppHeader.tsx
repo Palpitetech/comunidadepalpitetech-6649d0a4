@@ -27,6 +27,9 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { PushNotificationBanner } from "@/components/pwa/PushNotificationBanner";
+import { DownloadBanner } from "@/components/pwa/DownloadBanner";
+import { PWAUpdateBanner } from "@/components/pwa/PWAUpdateBanner";
 
 // Helper: cria os itens de um dropdown de loteria
 function LotteryDropdownItem({
@@ -525,6 +528,11 @@ export function AppHeader({ pageTitle, onBack, hideBackButton }: AppHeaderProps)
           </div>
         </div>
       </div>
+
+      {/* Banners agrupados dentro do header sticky para manter altura visual constante */}
+      <PushNotificationBanner />
+      <DownloadBanner />
+      <PWAUpdateBanner />
 
       <UpgradeModal
         open={upgradeOpen}

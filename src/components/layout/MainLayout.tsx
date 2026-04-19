@@ -6,7 +6,6 @@ import { AppHeader } from "./AppHeader";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { MobileMenuSheet } from "./MobileMenuSheet";
 
-import { PushNotificationBanner } from "@/components/pwa/PushNotificationBanner";
 import { RequireCelularModal } from "@/components/shared/RequireCelularModal";
 import { PageVideo } from "@/components/shared/PageVideo";
 
@@ -60,9 +59,6 @@ export function MainLayout({
         onBack={onBack}
         hideBackButton={hideBackButton}
       />
-
-      {/* Push Notification Banner */}
-      <PushNotificationBanner />
 
       {/* Require celular modal */}
       <RequireCelularModal />
