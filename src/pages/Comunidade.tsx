@@ -41,15 +41,12 @@ export default function Comunidade() {
           <button
             type="button"
             onClick={() => navigate('/gerar-jogos')}
-            className="group relative flex items-center gap-3 min-h-[68px] px-3 py-2.5 rounded-xl text-left text-white bg-gradient-to-br from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 border border-green-500/40 shadow-lg shadow-green-600/30 hover:shadow-green-500/40 transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2"
+            className="group relative flex items-center gap-2.5 min-h-[52px] px-3 py-2 rounded-xl text-left text-white bg-gradient-to-br from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 border border-green-500/40 shadow-lg shadow-green-600/30 hover:shadow-green-500/40 transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2"
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/25">
-              <Sparkles className="h-[18px] w-[18px] text-white" />
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/25">
+              <Sparkles className="h-[16px] w-[16px] text-white" />
             </span>
-            <span className="flex flex-col min-w-0 flex-1">
-              <span className="font-bold text-sm leading-tight">Gerar meus palpites</span>
-              <span className="text-[11px] text-white/80 leading-tight mt-0.5">Estratégias inteligentes</span>
-            </span>
+            <span className="font-bold text-sm leading-tight truncate">Gerar meus palpites</span>
           </button>
 
           {(() => {
@@ -61,18 +58,13 @@ export default function Comunidade() {
               <button
                 type="button"
                 onClick={() => window.open(link, '_blank')}
-                className="group relative flex items-center gap-3 min-h-[68px] px-3 py-2.5 rounded-xl text-left text-white bg-gradient-to-br from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 border border-green-500/40 shadow-lg shadow-green-600/30 hover:shadow-green-500/40 transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2"
+                className="group relative flex items-center gap-2.5 min-h-[52px] px-3 py-2 rounded-xl text-left text-white bg-gradient-to-br from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 border border-green-500/40 shadow-lg shadow-green-600/30 hover:shadow-green-500/40 transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/25">
-                  <Icon className="h-[18px] w-[18px] text-white" />
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/25">
+                  <Icon className="h-[16px] w-[16px] text-white" />
                 </span>
-                <span className="flex flex-col min-w-0 flex-1">
-                  <span className="font-bold text-sm leading-tight">
-                    {isPaid ? "Receba 15 palpites diários" : "Entrar na Sala Secreta"}
-                  </span>
-                  <span className="text-[11px] text-white/80 leading-tight mt-0.5">
-                    {isPaid ? "E análise do resultado" : "Receba atualizações diárias"}
-                  </span>
+                <span className="font-bold text-sm leading-tight truncate">
+                  {isPaid ? "15 palpites diários" : "Entrar na Sala Secreta"}
                 </span>
               </button>
             );
