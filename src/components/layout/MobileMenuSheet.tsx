@@ -28,27 +28,24 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  Target, Table2, Flame, Gift, ArrowLeft, Home, 
-  BarChart3, MessageCircle, LogOut, Dices, Shuffle, 
-  LayoutGrid, Grid3X3, TrendingUp, TrendingDown,
-  User, CreditCard, Ticket, Lock
+import {
+  Gift, ArrowLeft, Home,
+  BarChart3, MessageCircle, LogOut,
+  User, CreditCard, Ticket, Lock,
 } from "lucide-react";
-import { 
-  LOTOFACIL_TOOLS, 
-  MEGASENA_TOOLS, 
-  DUPLASENA_TOOLS, 
+import {
+  LOTOFACIL_TOOLS,
+  MEGASENA_TOOLS,
+  DUPLASENA_TOOLS,
   QUINA_TOOLS,
   SIMPLE_LOTTERIES,
-  ToolItem
+  ToolItem,
 } from "./AppHeader";
-
 
 interface MobileMenuSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
 
 export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
   const { isAuthenticated, profile, signOut } = useAuthContext();
