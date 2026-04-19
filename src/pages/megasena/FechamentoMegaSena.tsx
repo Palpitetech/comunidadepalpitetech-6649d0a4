@@ -129,7 +129,6 @@ export default function FechamentoMegaSena() {
       <MainLayout 
         pageTitle="Palpites Gerados" 
         onBack={handleNovoFechamento}
-        breadcrumb={[{ label: "Fechamento", onClick: handleNovoFechamento }]}
       >
         <div className="container-senior py-4">
           <ResultadosFechamentoMegaSena 

@@ -129,7 +129,6 @@ export default function Chat() {
     <MainLayout
       pageTitle={selectedTopic ? "" : "Chat"}
       onBack={selectedTopic ? goBack : undefined}
-      headerRightContent={chatHeaderContent}
     >
       <div className="flex h-[calc(100dvh-5rem)] flex-col overflow-hidden md:h-full" style={{ background: "#F8F9FA" }}>
         {/* Desktop-only header when no topic selected */}

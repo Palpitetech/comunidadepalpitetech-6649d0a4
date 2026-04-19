@@ -476,7 +476,6 @@ export default function MeusPalpites() {
   return (
     <MainLayout 
       pageTitle={pageConfig.title} 
-      breadcrumb={pageConfig.breadcrumb}
       onBack={pageConfig.onBack}
     >
       <div className="flex flex-col min-h-[calc(100vh-4rem)]">
