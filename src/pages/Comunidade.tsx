@@ -38,8 +38,6 @@ export default function Comunidade() {
   return (
     <MainLayout pageTitle="Estudos" hideBackButton>
       <div className="max-w-2xl mx-auto px-4 pt-2 pb-6 bg-clovers min-h-full bg-primary/5">
-        {!isMobile && <FeedHeader />}
-
         <div className="grid grid-cols-2 gap-3 mb-6">
           <Card 
             className="bg-green-600 hover:bg-green-700 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden group active:scale-95"
