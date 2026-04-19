@@ -127,7 +127,6 @@ export interface ToolItem {
 
 interface AppHeaderProps {
   pageTitle?: string;
-  breadcrumb?: { label: string; onClick?: () => void }[];
   onBack?: () => void;
   hideBackButton?: boolean;
 }
