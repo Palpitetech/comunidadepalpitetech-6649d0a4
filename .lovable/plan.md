@@ -1,95 +1,70 @@
 
+## Diagnóstico
 
-## Diagnóstico do Header atual
+O **header em si tem altura fixa** (`h-12` mobile / `h-14` desktop = 48px / 56px). Não muda de tamanho.
 
-O sistema tem um **único header** (`DesktopHeader.tsx`) usado para mobile e desktop via `MainLayout`. O `PageHeader.tsx` existe mas **não está mais em uso** (foi desativado, comentado em `MainLayout` linha 64). Isso é parte do problema visual: ficou código duplicado/abandonado e o `DesktopHeader` está fazendo trabalho demais.
+O que muda visualmente é o que aparece **logo abaixo** do header sticky:
 
-### Problemas identificados (mobile 390x844)
+1. **`PushNotificationBanner`** (em `MainLayout.tsx`, linha 60) — renderizado abaixo do `AppHeader` em **TODAS as páginas**. Banner verde com 64px de altura aprox. (`py-3` + ícone 40px + texto). Some na sessão se usuário dismissar.
 
-1. **Altura excessiva no mobile**: o container usa `py-0.5` (ok) mas o avatar/botões usam `h-8` (32px) e o título `text-base md:text-lg font-bold` em uma linha + logo + back button + 2 ícones — tudo competindo no mesmo eixo. Resultado: header parece "alto e apertado".
+2. **`DownloadBanner` + `PWAUpdateBanner`** (em `Comunidade.tsx`, linhas 42-43) — renderizados como **primeiros filhos** da página `/home`. Aparecem colados no header com aprox. 60-80px adicionais.
 
-2. **Desequilíbrio de layout**: a `<div>` interna alterna entre `flex` (na home) e `grid grid-cols-[auto_1fr_auto]` (outras páginas). No mobile, em páginas com `pageTitle`, o título fica na coluna esquerda junto da logo (que some), enquanto avatar+save ficam à direita — **nada centralizado**, tudo encostado nas bordas.
+3. **Como esses banners NÃO são sticky**, eles ficam visíveis quando o scroll está em `0` (topo) e somem assim que o usuário rola, deixando apenas o `AppHeader` sticky no topo. Isso cria a percepção de "header maior sem scroll → menor com scroll".
 
-3. **Logo + Back button conflito**: quando há `pageTitle` no mobile, a logo é escondida e o back button aparece. Mas o `Link to="/"` mantém `mr-2` e `gap-2`, causando espaços vazios fantasmas.
+4. Adicionalmente, no mobile com `safe-area-inset-top`, o iPhone adiciona padding extra que não conta como altura "do header" mas faz parte do espaço visual.
 
-4. **Título sem hierarquia clara**: `text-base md:text-lg` — no mobile fica 16px sem destaque, competindo visualmente com os ícones de ação ao lado (avatar 32px). O título deveria ser o elemento dominante.
+## Soluções (sem mudar nada ainda)
 
-5. **Safe-area duplicado**: `paddingTop: max(0px, env(safe-area-inset-top, 0px))` no header + `py-0.5` no container interno — em iPhones com notch isso empilha padding e aumenta percepção de altura.
+### Opção A — Recomendada: agrupar banners DENTRO do header sticky
 
-6. **PageHeader.tsx órfão**: arquivo existe mas não é usado em lugar nenhum no `MainLayout`. Confirma código morto contribuindo para confusão.
+Mover `PushNotificationBanner`, `DownloadBanner` e `PWAUpdateBanner` para dentro do `<header sticky>` do `AppHeader.tsx`. Assim eles fazem parte do "topo" e se mantêm fixos junto com o header — não há mais "encolhimento" visual ao rolar.
 
-7. **Home (`/`)** vs **outras páginas**: na home, o header só mostra logo + "Entrar"/avatar (sem nav, sem título). Mas usa o **mesmo** componente pesado, com `grid` desligado e `flex` ligado — cria inconsistência sutil de altura entre rotas.
+- **Prós**: header e banners formam um bloco único, sempre visível, percepção de altura constante.
+- **Contras**: ocupa mais tela útil quando banners estão ativos. Mas eles são dispensáveis (botão X), então é aceitável.
 
-8. **No desktop**: o `<nav>` central usa `flex-wrap` com 8+ botões + 4 dropdowns. Em telas médias (md ~768-1024px) os botões quebram em 2 linhas, **dobrando a altura do header**.
+### Opção B — Banners FORA do header e SEMPRE escondidos no scroll
 
-## Plano de melhorias (sem implementar agora)
+Manter como está, mas adicionar lógica para esconder banners ao rolar (`scrollY > 50`). Mantém a sensação de "topo limpo" mas não resolve o problema de centralização inicial.
 
-### A. Estrutura unificada (mobile + desktop)
+### Opção C — Reorganizar página: banners ABAIXO do conteúdo principal
 
-Adotar grid de 3 colunas **fixo em todas as páginas** (incluindo home), com alturas padronizadas:
+Mover `DownloadBanner` e `PWAUpdateBanner` para o **fim** da página (rodapé do feed), e o `PushNotificationBanner` virar um toast/sheet inferior em vez de banner superior. Header fica sempre sozinho no topo.
 
-```text
-[ ESQUERDA 64px ] [ CENTRO flex-1 ] [ DIREITA 64px ]
-   logo OU back        título            avatar/entrar
-```
+## Recomendação
 
-- Altura única do header: **48px no mobile** (`h-12`), **56px no desktop** (`h-14`).
-- `py` removido; usar `h-12 md:h-14` no container interno.
-- Safe-area aplicada **só** no `<header>` externo, nunca no interno.
+**Opção A** — agrupar tudo dentro do `<header>` sticky. Simples, resolve 100% o problema visual relatado e mantém a hierarquia de informação (avisos importantes ficam sempre visíveis no topo).
 
-### B. Mobile (390px) — header limpo
+## Arquivos a editar (3)
 
-- **Esquerda (40x40)**: logo OU back button (nunca ambos, nunca os dois com espaço reservado).
-- **Centro**: 
-  - Home `/`: logo + "Palpite Tech" (centralizado).
-  - Outras: `pageTitle` em `text-base font-semibold` truncado, **centralizado**.
-- **Direita**: 
-  - Deslogado: botão "Entrar" `h-9 px-3 text-sm`.
-  - Logado: apenas avatar `h-9 w-9`. **Remover** o ícone "Save" do header mobile (ele já está no `MobileBottomNav` via "Jogos Salvos").
-- Resultado: 3 elementos balanceados, título dominante, altura ~48px.
+1. **`src/components/layout/AppHeader.tsx`**
+   - Aceitar children opcional ou renderizar os 3 banners internamente.
+   - Banners ficam DENTRO da tag `<header sticky>`, abaixo do grid principal.
 
-### C. Desktop (≥768px) — evitar quebra de linha
+2. **`src/components/layout/MainLayout.tsx`**
+   - Remover `<PushNotificationBanner />` daqui (passa para dentro do header).
 
-Problema principal: 8 itens + 4 dropdowns no `<nav>` central. Soluções:
+3. **`src/pages/Comunidade.tsx`**
+   - Remover `<DownloadBanner />` e `<PWAUpdateBanner />` do início do conteúdo (passam para dentro do header globalmente, aparecendo só quando aplicável).
 
-- Em `md` (768-1023px): manter só logo + **um único dropdown "Loterias"** (que abre submenu com Lotofácil/Mega/Quina/Dupla/Lotomania/Dia de Sorte) + Concursos + Gerar Jogos.
-- Em `lg+` (≥1024px): expandir para os 4 dropdowns separados como hoje.
-- Garantir `flex-nowrap` + `overflow-hidden` na nav para nunca quebrar linha (forçar altura única).
-
-### D. Limpeza de código
-
-- **Remover `src/components/layout/PageHeader.tsx`** (não usado, confunde).
-- Remover comentário órfão `{/* Mobile PageHeader logic moved to DesktopHeader */}` em `MainLayout.tsx`.
-- Renomear `DesktopHeader` → `AppHeader` (já que serve mobile + desktop). Atualizar imports em `MainLayout.tsx`.
-
-### E. Centralização real do título
-
-Usar `grid grid-cols-[64px_1fr_64px]` com `<h1>` no centro com `text-center` + `truncate` + `mx-auto`. Isso garante que o título fique **opticamente centralizado** independentemente do conteúdo lateral (botão back tem mesma largura reservada que o avatar).
-
-## Arquivos afetados
-
-1. `src/components/layout/DesktopHeader.tsx` — refatorar para grid 3 colunas, altura fixa, remover Save mobile, dropdown único em md.
-2. `src/components/layout/MainLayout.tsx` — limpar comentário órfão, atualizar import se renomear.
-3. `src/components/layout/PageHeader.tsx` — **deletar** (código morto).
-
-## Resumo visual esperado
+## Resultado esperado
 
 ```text
-MOBILE (atual)                    MOBILE (proposto)
-┌──────────────────────────┐     ┌──────────────────────────┐
-│ ←  📊 Resultados   💾 👤 │     │  ←      Resultados    👤 │  ← 48px
-└──────────────────────────┘     └──────────────────────────┘
-   título à esquerda,                título centralizado,
-   3 ações à direita,                1 ação à direita,
-   altura ~56px desigual             altura fixa 48px
-
-DESKTOP md (atual)                DESKTOP md (proposto)
-┌─────────────────────────────┐  ┌─────────────────────────────┐
-│ Logo  Bolões Gerar Conc...  │  │ Logo   Loterias▾ Conc Gerar │  ← 56px
-│       Lotofácil Mega Dupla..│  │                          👤 │
-│                          👤 │  └─────────────────────────────┘
-└─────────────────────────────┘     1 linha, sem wrap
-   nav quebra em 2 linhas,
-   altura ~96px
+ANTES (sem scroll)              DEPOIS (sem scroll)
+┌──────────────────────────┐    ┌──────────────────────────┐
+│   ←   Comunidade    👤   │    │   ←   Comunidade    👤   │ ← sticky
+├──────────────────────────┤    │ 🔔 Receba notificações   │ ← sticky
+│ 📥 Instale o app    ✕    │    │ 📥 Instale o app    ✕    │ ← sticky
+│ 🔔 Receba notif.    ✕    │    ├──────────────────────────┤
+│  ↓ scrolla, somem ↓      │    │  conteúdo da página      │
+│  conteúdo da página      │    │  ...                     │
+                                
+ANTES (com scroll)              DEPOIS (com scroll)
+┌──────────────────────────┐    ┌──────────────────────────┐
+│   ←   Comunidade    👤   │    │   ←   Comunidade    👤   │ ← sticky
+└──────────────────────────┘    │ 🔔 Receba notificações   │ ← sticky
+   "header parece menor"        │ 📥 Instale o app    ✕    │ ← sticky
+                                └──────────────────────────┘
+                                   altura sempre igual
 ```
 
+Centralização do título do header (`Comunidade`) já está correta no grid `[64px_1fr_64px]` — não precisa mexer.
