@@ -529,6 +529,11 @@ export function AppHeader({ pageTitle, onBack, hideBackButton }: AppHeaderProps)
         </div>
       </div>
 
+      {/* Banners agrupados dentro do header sticky para manter altura visual constante */}
+      <PushNotificationBanner />
+      <DownloadBanner />
+      <PWAUpdateBanner />
+
       <UpgradeModal
         open={upgradeOpen}
         onOpenChange={setUpgradeOpen}
