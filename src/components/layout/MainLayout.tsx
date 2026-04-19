@@ -8,6 +8,9 @@ import { MobileMenuSheet } from "./MobileMenuSheet";
 
 import { RequireCelularModal } from "@/components/shared/RequireCelularModal";
 import { PageVideo } from "@/components/shared/PageVideo";
+import { PushNotificationBanner } from "@/components/pwa/PushNotificationBanner";
+import { DownloadBanner } from "@/components/pwa/DownloadBanner";
+import { PWAUpdateBanner } from "@/components/pwa/PWAUpdateBanner";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -53,6 +56,9 @@ export function MainLayout({
 
       {/* Main Content */}
       <main className={`flex-1 ${isMobile && !finalHideBottomNav ? 'pb-20' : ''}`}>
+        <PushNotificationBanner />
+        <DownloadBanner />
+        <PWAUpdateBanner />
         {youtubeVideoId && (
           <div className="cluster-container mt-4">
             <PageVideo videoId={youtubeVideoId} />
