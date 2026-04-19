@@ -297,12 +297,6 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
               Suporte WhatsApp
             </a>
 
-            {isAuthenticated && (
-              <button onClick={handleSignOut} className="flex items-center gap-2 text-muted-foreground hover:text-destructive text-base w-full text-left">
-                <LogOut className="h-5 w-5" />
-                Sair
-              </button>
-            )}
           </div>
         </SheetContent>
       </Sheet>
