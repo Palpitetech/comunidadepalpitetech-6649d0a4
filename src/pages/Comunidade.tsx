@@ -7,8 +7,7 @@ import { PostCard } from "@/components/comunidade/PostCard";
 import { PostCardSkeleton } from "@/components/comunidade/PostCardSkeleton";
 import { useCommunityPosts } from "@/hooks/useCommunityPosts";
 import { LatestResults } from "@/components/home/LatestResults";
-import { Pin, Sparkles, ChevronRight, MessageSquare } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Pin, Sparkles, ChevronRight, MessageSquare, Lock, Crown } from "lucide-react";
 import { usePermissionContext } from "@/contexts/PermissionContext";
 
 export default function Comunidade() {
@@ -39,41 +38,45 @@ export default function Comunidade() {
     <MainLayout pageTitle="Estudos" hideBackButton>
       <div className="max-w-2xl mx-auto px-4 pt-2 pb-6 bg-clovers min-h-full bg-primary/5">
         <div className="grid grid-cols-2 gap-3 mb-6">
-          <Card 
-            className="bg-green-600 hover:bg-green-700 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden group active:scale-95"
+          <button
+            type="button"
             onClick={() => navigate('/gerar-jogos')}
+            className="group relative flex items-center gap-3 min-h-[68px] px-3 py-2.5 rounded-xl text-left text-white bg-gradient-to-br from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 border border-green-500/40 shadow-lg shadow-green-600/30 hover:shadow-green-500/40 transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2"
           >
-            <CardContent className="px-3 py-2 sm:px-4 sm:py-2.5 flex flex-col items-center text-center justify-center h-full">
-              <h3 className="font-bold text-sm sm:text-base leading-tight">Gerar meus palpites</h3>
-            </CardContent>
-          </Card>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/25">
+              <Sparkles className="h-[18px] w-[18px] text-white" />
+            </span>
+            <span className="flex flex-col min-w-0 flex-1">
+              <span className="font-bold text-sm leading-tight">Gerar meus palpites</span>
+              <span className="text-[11px] text-white/80 leading-tight mt-0.5">Estratégias inteligentes</span>
+            </span>
+          </button>
 
-          <Card 
-            className="bg-green-600 hover:bg-green-700 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden group active:scale-95"
-            onClick={() => {
-              const isTrial = plan?.slug === 'trial' || plan?.slug === 'teste-gratis-3-dias';
-              const isPaid = !!plan && !isTrial;
-              const link = isPaid ? "https://www.palpitetech.com.br/g/grupo-vip-assinantes" : "https://www.palpitetech.com.br/g/entrar-sala-secreta";
-              window.open(link, '_blank');
-            }}
-          >
-            <CardContent className="px-3 py-2 sm:px-4 sm:py-2.5 flex flex-col items-center text-center justify-center h-full">
-              {(() => {
-                const isTrial = plan?.slug === 'trial' || plan?.slug === 'teste-gratis-3-dias';
-                const isPaid = !!plan && !isTrial;
-                return (
-                  <>
-                    <h3 className="font-bold text-sm sm:text-base leading-tight">
-                      {isPaid ? "Receba 15 palpites diários" : "Entrar na Sala Secreta"}
-                    </h3>
-                    <p className="text-[10px] sm:text-[11px] opacity-90 mt-0 leading-none">
-                      {isPaid ? "E análise do resultado" : "Receba atualizações diárias"}
-                    </p>
-                  </>
-                );
-              })()}
-            </CardContent>
-          </Card>
+          {(() => {
+            const isTrial = plan?.slug === 'trial' || plan?.slug === 'teste-gratis-3-dias';
+            const isPaid = !!plan && !isTrial;
+            const link = isPaid ? "https://www.palpitetech.com.br/g/grupo-vip-assinantes" : "https://www.palpitetech.com.br/g/entrar-sala-secreta";
+            const Icon = isPaid ? Crown : Lock;
+            return (
+              <button
+                type="button"
+                onClick={() => window.open(link, '_blank')}
+                className="group relative flex items-center gap-3 min-h-[68px] px-3 py-2.5 rounded-xl text-left text-white bg-gradient-to-br from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 border border-green-500/40 shadow-lg shadow-green-600/30 hover:shadow-green-500/40 transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/25">
+                  <Icon className="h-[18px] w-[18px] text-white" />
+                </span>
+                <span className="flex flex-col min-w-0 flex-1">
+                  <span className="font-bold text-sm leading-tight">
+                    {isPaid ? "Receba 15 palpites diários" : "Entrar na Sala Secreta"}
+                  </span>
+                  <span className="text-[11px] text-white/80 leading-tight mt-0.5">
+                    {isPaid ? "E análise do resultado" : "Receba atualizações diárias"}
+                  </span>
+                </span>
+              </button>
+            );
+          })()}
         </div>
 
         {isLoading && <PostCardSkeleton count={5} />}
