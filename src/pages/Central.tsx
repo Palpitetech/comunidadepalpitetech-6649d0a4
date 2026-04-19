@@ -25,6 +25,30 @@ import estudoRepetidas from "@/assets/estudo-repetidas.jpg";
 const Central = () => {
   const { isAuthenticated } = useAuthContext();
   const navigate = useNavigate();
+  const touchStartY = useRef<number | null>(null);
+  const touchMoved = useRef<boolean>(false);
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchMoved.current = false;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+    if (Math.abs(e.touches[0].clientY - touchStartY.current) > 10) {
+      touchMoved.current = true;
+    }
+  };
+
+  const safeAction = (action: () => void) => {
+    if (touchMoved.current) {
+      touchMoved.current = false;
+      touchStartY.current = null;
+      return;
+    }
+    action();
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
