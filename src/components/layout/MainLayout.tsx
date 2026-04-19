@@ -2,7 +2,7 @@ import { ReactNode, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { DesktopHeader } from "./DesktopHeader";
+import { AppHeader } from "./AppHeader";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { MobileMenuSheet } from "./MobileMenuSheet";
 import { PageHeader } from "./PageHeader";
@@ -53,15 +53,13 @@ export function MainLayout({
 
   return (
     <div className="min-h-screen flex flex-col bg-background" style={{ paddingBottom: isMobile ? 'env(safe-area-inset-bottom, 0px)' : undefined }}>
-      {/* Header completo - em todos os tamanhos, DesktopHeader cuida das visibilidades mobile/desktop */}
-      <DesktopHeader 
-        pageTitle={pageTitle} 
-        breadcrumb={breadcrumb} 
+      {/* Header unificado mobile + desktop */}
+      <AppHeader
+        pageTitle={pageTitle}
+        breadcrumb={breadcrumb}
         onBack={onBack}
         hideBackButton={hideBackButton}
       />
-      
-      {/* Mobile PageHeader logic moved to DesktopHeader */}
 
       {/* Push Notification Banner */}
       <PushNotificationBanner />

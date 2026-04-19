@@ -41,7 +41,7 @@ import {
   QUINA_TOOLS,
   SIMPLE_LOTTERIES,
   ToolItem
-} from "./DesktopHeader";
+} from "./AppHeader";
 
 
 interface MobileMenuSheetProps {
