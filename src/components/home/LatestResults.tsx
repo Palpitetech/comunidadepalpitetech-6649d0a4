@@ -58,27 +58,42 @@ export function LatestResults() {
     );
   }
 
-  const results: LotteryResult[] = (latestResults || []).map((r) => {
+  const results: LotteryResult[] = (latestResults || []).map((r: any) => {
     const config = lotteryConfig[r.loteria] || { name: r.loteria, color: "#666" };
     const concurso = (r.concurso || r.concurso_id || 0).toString();
-    const nextConcurso = (parseInt(concurso) + 1).toString();
-    
+
+    // Prioriza dados de proximos_concursos; fallback para resultados_loterias
+    const premioProximo = r.premio_estimado_proximo ?? r.valor_estimado_proximo ?? null;
+    const dataProximoRaw = r.data_proximo_concurso_real ?? r.data_proximo_concurso ?? null;
+    const numeroProximo = r.numero_proximo_concurso ?? (parseInt(concurso) + 1).toString();
+
+    // Parse de data sem time-zone shift (yyyy-mm-dd → Date local)
+    const parseLocalDate = (s: string | null) => {
+      if (!s) return null;
+      const [y, m, d] = s.split("-").map(Number);
+      if (!y || !m || !d) return null;
+      return new Date(y, m - 1, d);
+    };
+
+    const dataSorteioDate = parseLocalDate(r.data_sorteio);
+    const dataProximoDate = parseLocalDate(dataProximoRaw);
+
     return {
       id: r.loteria,
       name: config.name,
       color: config.color,
       concurso,
-      dataSorteio: r.data_sorteio ? format(new Date(r.data_sorteio), "dd/MM/yyyy") : "-",
-      dezenas: (r.dezenas || []).map((d) => d.toString().padStart(2, "0")),
-      valorEstimado: r.valor_estimado_proximo 
-        ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(r.valor_estimado_proximo)
+      dataSorteio: dataSorteioDate ? format(dataSorteioDate, "dd/MM/yyyy") : "-",
+      dezenas: (r.dezenas || []).map((d: number) => d.toString().padStart(2, "0")),
+      valorEstimado: premioProximo
+        ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(premioProximo)
         : "Aguardando...",
       acumulado: !!r.acumulou,
-      proximoSorteio: r.data_proximo_concurso ? format(new Date(r.data_proximo_concurso), "dd/MM/yyyy") : "-",
-      proximoDiaSemana: r.data_proximo_concurso 
-        ? format(new Date(r.data_proximo_concurso), "EEEE", { locale: ptBR })
+      proximoSorteio: dataProximoDate ? format(dataProximoDate, "dd/MM/yyyy") : "-",
+      proximoDiaSemana: dataProximoDate
+        ? format(dataProximoDate, "EEEE", { locale: ptBR })
         : "-",
-      proximoConcurso: nextConcurso,
+      proximoConcurso: numeroProximo,
     };
   });
 
