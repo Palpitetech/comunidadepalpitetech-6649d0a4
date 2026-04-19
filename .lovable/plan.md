@@ -1,76 +1,91 @@
 
 
-## Diagnóstico
+## Diagnóstico — Varredura completa do `MobileMenuSheet.tsx`
 
-A diferença de altura no header não é o `<header>` em si — é causada pelos **3 banners renderizados DENTRO do `<header sticky>`** em `AppHeader.tsx` (linhas 527-529):
+### 🔴 CÓDIGO MORTO (alta prioridade)
 
-- `<PushNotificationBanner />` — aparece se logado e permissão de push = "default" e não dismissado.
-- `<DownloadBanner />` — aparece se PWA não instalada e não dismissada.
-- `<PWAUpdateBanner />` — aparece se há atualização do service worker disponível.
+**1. Imports de ícones não utilizados** (linhas 31-36)
+9 ícones são importados mas **nunca referenciados** no JSX deste arquivo. Eles são entregues indiretamente via `tool.icon` dos arrays do `AppHeader`:
+- `Target`, `Table2`, `Flame`, `Dices`, `Shuffle`, `LayoutGrid`, `Grid3X3`, `TrendingUp`, `TrendingDown`
 
-Como esses banners estão **dentro** do `<header className="sticky top-0">`, eles são considerados parte da altura sticky. Quando ativos, o "topo fixo" tem `48px (header) + 60-80px (banner) = 108-128px`. Quando dispensados/inativos, o topo fixo volta para `48px`. Por isso a percepção de "header maior" na imagem 02 e "menor" na imagem 01.
+**Mantidos (em uso real):** `ArrowLeft`, `Home`, `BarChart3` (header do accordion), `MessageCircle`, `LogOut`, `Gift`, `User`, `CreditCard`, `Ticket`, `Lock`
 
-A decisão anterior (agrupar banners dentro do header) foi revertida pelo usuário: ele quer **a versão mais baixa e fixa sempre** — ou seja, o `<header sticky>` deve conter **apenas a barra do header** (`h-12 / h-14`), nunca os banners.
+**2. Linhas em branco duplicadas** (linhas 45-46, 51-52)
+Duas quebras de linha duplas consecutivas entre imports e a interface, e entre a interface e a função. Estilo inconsistente com o resto da base.
 
-## Plano de implementação (3 etapas)
+**3. Função `closeAndNavigate` redundante** (linhas 76-78)
+É só um wrapper de `onOpenChange(false)`. Usada em 6 lugares — é aceitável pela legibilidade, mas poderia simplesmente chamar `onOpenChange(false)` direto. **Manter por clareza**, sem ação.
 
-### Etapa 1 — Tirar os banners do header sticky em `AppHeader.tsx`
+**4. Tipo `any[]` no `LotteryAccordion`** (linha 106)
+`tools: any[]` deveria ser `tools: ToolItem[]` (já importado na linha 43). Tipagem fraca = potencial bug silencioso.
 
-**Sub-etapa 1.1**: Remover linhas 527-529 (`<PushNotificationBanner />`, `<DownloadBanner />`, `<PWAUpdateBanner />`) de dentro do `<header>`.
+### 🟠 INCONSISTÊNCIAS VISUAIS
 
-**Sub-etapa 1.2**: Remover os 3 imports correspondentes (linhas 30-32).
+**5. Número de WhatsApp de suporte ERRADO** (linha 104)
+Usa `5516997175392`, mas a regra de memória `mem://support/contact-info` define que o **número oficial é `51981854281`** (mesmo usado em `src/lib/boloes.ts` para Bolões e nas notificações de assinatura).
+- Mantém a inconsistência: usuário recebe suporte em número diferente do que vê em Bolões/cobranças.
+- O outro local que também usa o número errado é `LoginWizard.tsx` (linha 46) — mas isso está fora do escopo deste menu.
 
-Resultado: `<header sticky>` passa a ter altura **constante** (`h-12` mobile / `h-14` desktop) — nunca varia.
+**6. `LotteryAccordion` — divisor visual incoerente** (linhas 117-135)
+A lógica atual de divisor é confusa:
+- Linha 120: `{idx > 0 && tool.bold && <div border-t />}` → divisor ANTES de itens bold (mas só "Ver Todas as Ferramentas" é bold, e ele é sempre `idx === 0`, então **essa condição NUNCA dispara**).
+- Linha 134: `{idx === 0 && <div border-t />}` → divisor depois do primeiro item.
 
-### Etapa 2 — Renderizar os banners no `MainLayout.tsx` (fora do sticky, dentro do `<main>` rolável)
+Ou seja: **a linha 120 é código morto** (condição impossível dado os arrays atuais). Apenas a linha 134 efetivamente renderiza um divisor (após "Ver Todas as Ferramentas").
 
-**Sub-etapa 2.1**: Adicionar imports dos 3 banners no topo do `MainLayout.tsx`.
+**7. Padding interno desigual no accordion** (linha 107)
+`p-1` no container externo + `pl-8` interno (linha 117) gera margem visual irregular nas laterais. O `mx-4` cria recuo de 16px externo, mas o `p-1` interno (4px) deixa o conteúdo colado na borda colorida esquerda.
 
-**Sub-etapa 2.2**: Renderizar os 3 banners **dentro do `<main>`**, antes do `{children}`. Eles passarão a fazer parte do conteúdo rolável — somem ao rolar, mas o header sticky permanece sempre na mesma altura.
+**8. SIMPLE_LOTTERIES — sem divisor visual claro** (linhas 279-287)
+Os itens "Dia de Sorte" e "Lotomania" aparecem sem ícone nem identidade visual de cor (diferente dos accordions acima). Visualmente "soltos", parecem itens desconectados.
 
-```tsx
-<main>
-  <PushNotificationBanner />
-  <DownloadBanner />
-  <PWAUpdateBanner />
-  {youtubeVideoId && <PageVideo ... />}
-  {children}
-</main>
-```
+**9. Header do sheet — alinhamento do badge "Plano"** (linhas 176-182)
+O badge de plano (`Premium`/`Teste Vencido`/`Plano Free`) fica abaixo do bloco "nome + avatar" usando `flex-col items-end`. No mobile estreito (<360px), o texto "Plano Free" pode ficar empilhado ou cortado pelo `gap-0.5`.
 
-### Etapa 3 — Verificar que não sobrou código morto
+**10. Botão "Sair" duplicado** (dropdown do perfil + rodapé do sheet)
+- Linha 219-224: "Sair" no DropdownMenu do perfil.
+- Linha 304-309: "Sair" no rodapé do sheet (só visível se `isAuthenticated`).
 
-**Sub-etapa 3.1**: Confirmar via grep que `PushNotificationBanner`, `DownloadBanner` e `PWAUpdateBanner` só são importados no novo local (`MainLayout.tsx`) — sem duplicação em `Comunidade.tsx` ou outras páginas.
+Não é exatamente código morto — é redundância de UX. O usuário tem 2 botões "Sair" idênticos no mesmo painel.
 
-**Sub-etapa 3.2**: Confirmar que `AppHeader.tsx` não tem mais imports/refs órfãos dos 3 banners.
+**11. `getInitials` declarada mas o avatar tem fallback raso** (linhas 71-74)
+A função existe e é usada (linha 172), está OK. Sem ação — só registro.
 
-## Arquivos afetados (2)
+### 🟡 OBSERVAÇÕES MENORES
 
-1. **`src/components/layout/AppHeader.tsx`** — remover 3 banners e seus imports.
-2. **`src/components/layout/MainLayout.tsx`** — importar e renderizar 3 banners no topo do `<main>`.
+**12. `paddingTop` inline no header do sheet** (linha 154)
+Usa `style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}` para safe-area do iPhone. Funciona, mas a base usa `pt-[env(safe-area-inset-top)]` via Tailwind nos outros lugares (`AppHeader`). Inconsistência de padrão.
 
-## Resultado visual esperado
+**13. `z-[110]` e `z-[120]` mágicos** (linhas 147 e 185)
+Valores arbitrários sem token. Não quebra nada, mas dificulta manutenção. (Comum no projeto, não é crítico.)
 
-```text
-ANTES (com banner ativo)              DEPOIS (com banner ativo)
-┌──────────────────────────┐ ← sticky ┌──────────────────────────┐ ← sticky
-│ 🟪   Comunidade    👤    │  108px   │ 🟪   Comunidade    👤    │  56px CONSTANTE
-│ 🔔 Receba notificações ✕ │ inteiro  └──────────────────────────┘
-└──────────────────────────┘          │ 🔔 Receba notificações ✕ │ ← rola
-                                      │ ... conteúdo da página    │
+---
 
-ANTES (banner dispensado)             DEPOIS (banner dispensado)
-┌──────────────────────────┐ ← sticky ┌──────────────────────────┐ ← sticky
-│ 🟪   Comunidade    👤    │  56px    │ 🟪   Comunidade    👤    │  56px CONSTANTE
-└──────────────────────────┘          └──────────────────────────┘
-   altura "encolhe"                      altura sempre igual
-```
+## Plano de correções (3 etapas, 1 arquivo)
+
+### Etapa 1 — Limpar código morto
+**Sub-1.1**: Remover 9 imports de ícones não usados (linhas 31-36 → manter só os 10 efetivamente usados).
+**Sub-1.2**: Remover linhas em branco duplicadas (45-46, 51-52).
+**Sub-1.3**: Remover a condição morta `idx > 0 && tool.bold` na linha 120 (nunca dispara dado o shape atual dos arrays).
+**Sub-1.4**: Tipar `tools: ToolItem[]` no `LotteryAccordion` em vez de `any[]` (linha 106).
+
+### Etapa 2 — Corrigir inconsistências visuais críticas
+**Sub-2.1**: Trocar número de WhatsApp na linha 104 de `5516997175392` para `5551981854281` (alinhar com `mem://support/contact-info` e `src/lib/boloes.ts`).
+**Sub-2.2**: Ajustar padding interno do `LotteryAccordion` (linha 107): trocar `p-1` por `py-1 pl-2 pr-1` para dar respiro à esquerda da borda colorida.
+**Sub-2.3**: Adicionar `min-w-0 truncate` ao bloco do badge de plano no header (linhas 164-183) para evitar quebra em telas <360px.
+
+### Etapa 3 — Decisão sobre redundância "Sair"
+**Sub-3.1**: Manter "Sair" apenas no DropdownMenu do perfil (linhas 219-224) e **remover** o duplicado do rodapé (linhas 304-309). Mantém "Convidar Amigos" e "Suporte WhatsApp" no rodapé. Mais limpo, sem perda de função.
+
+## Arquivo afetado (1)
+
+- `src/components/layout/MobileMenuSheet.tsx`
 
 ## Garantias
 
-- **Header sticky com altura fixa permanente** (`h-12` mobile / `h-14` desktop), sem variar nunca.
-- **Banners continuam funcionando** — apenas mudam de "fixo no topo" para "rolam com o conteúdo".
-- **Centralização do título preservada** (já estava correta com grid `[48px_1fr_48px]`).
-- **Nenhum código morto** após a refatoração.
-- **Nenhuma alteração** em outros componentes, hooks, edge functions ou páginas.
+- **Zero alteração** em outros arquivos (`AppHeader`, `MainLayout`, hooks, edge functions).
+- **Zero alteração** funcional além da remoção do "Sair" duplicado.
+- **Zero alteração** em estilos globais ou tokens de design.
+- Código morto eliminado: 9 ícones + 2 blocos de linhas em branco + 1 condição impossível + tipagem `any` corrigida.
+- Inconsistências resolvidas: número de suporte unificado, padding do accordion equilibrado, header do perfil sem quebra em telas estreitas, botão "Sair" único.
 
