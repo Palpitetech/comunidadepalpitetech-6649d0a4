@@ -15,12 +15,15 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   BarChart3, LogOut, User, Wrench, TrendingUp, Flame,
-  ChevronDown, ChevronRight, Dices, Shuffle, Ticket, LayoutGrid, Target,
-  Table2, Gift, Lock, CreditCard, Calendar, Save, Trophy,
+  ChevronDown, Dices, Shuffle, Ticket, LayoutGrid, Target,
+  Table2, Gift, Lock, CreditCard, Calendar, Trophy,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -119,8 +122,7 @@ export interface ToolItem {
   bold?: boolean;
 }
 
-
-interface DesktopHeaderProps {
+interface AppHeaderProps {
   pageTitle?: string;
   breadcrumb?: { label: string; onClick?: () => void }[];
   onBack?: () => void;
@@ -148,7 +150,7 @@ function LotteryDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="gap-1 h-8 px-2.5 text-xs">
+        <Button variant="ghost" className="gap-1 h-9 px-2.5 text-sm">
           {name}
           <ChevronDown className="h-3 w-3" />
         </Button>
@@ -177,7 +179,6 @@ function LotteryDropdown({
                 </Link>
               </DropdownMenuItem>
             )}
-            {/* Separator after "Análise do Dia" (index 1) and before generators section */}
             {idx === 1 && <DropdownMenuSeparator />}
             {idx === 8 && <DropdownMenuSeparator />}
           </div>
@@ -187,7 +188,77 @@ function LotteryDropdown({
   );
 }
 
-export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }: DesktopHeaderProps) {
+// Dropdown unificado "Loterias" para md (768-1023px) — evita quebra de linha
+function LotteriasUnifiedDropdown({
+  handleGatedClick,
+  renderBadge,
+}: {
+  handleGatedClick: (e: React.MouseEvent, path: string) => void;
+  renderBadge: (path: string) => React.ReactNode;
+}) {
+  const groups = [
+    { name: "Lotofácil", tools: LOTOFACIL_TOOLS },
+    { name: "Mega Sena", tools: MEGASENA_TOOLS },
+    { name: "Dupla Sena", tools: DUPLASENA_TOOLS },
+    { name: "Quina", tools: QUINA_TOOLS },
+  ];
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="gap-1 h-9 px-2.5 text-sm">
+          Loterias
+          <ChevronDown className="h-3 w-3" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="center" className="w-56 p-1 bg-popover z-50">
+        {groups.map((g) => (
+          <DropdownMenuSub key={g.name}>
+            <DropdownMenuSubTrigger className="gap-3 py-3 text-base">{g.name}</DropdownMenuSubTrigger>
+            <DropdownMenuSubContent className="w-64 p-1 bg-popover z-50 max-h-[70vh] overflow-y-auto">
+              {g.tools.map((tool, idx) => (
+                <div key={tool.to}>
+                  {idx === 1 && <DropdownMenuSeparator />}
+                  {tool.bold ? (
+                    <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer font-semibold text-base">
+                      <Link to={tool.to}>{tool.label}</Link>
+                    </DropdownMenuItem>
+                  ) : tool.gated ? (
+                    <LotteryDropdownItem
+                      to={tool.to}
+                      icon={tool.icon}
+                      label={tool.label}
+                      onGatedClick={handleGatedClick}
+                      renderBadge={renderBadge}
+                    />
+                  ) : (
+                    <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base">
+                      <Link to={tool.to}>
+                        {tool.icon && <tool.icon className="h-5 w-5" />}
+                        {tool.label}
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {idx === 8 && <DropdownMenuSeparator />}
+                </div>
+              ))}
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        ))}
+        <DropdownMenuSeparator />
+        {SIMPLE_LOTTERIES.map((lottery) => (
+          <DropdownMenuItem key={lottery.name} asChild className="gap-3 py-3 cursor-pointer text-base">
+            <Link to={lottery.resultsPath}>
+              <BarChart3 className="h-5 w-5" />
+              {lottery.name}
+            </Link>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export function AppHeader({ pageTitle, onBack, hideBackButton }: AppHeaderProps) {
   const { isAuthenticated, profile, signOut } = useAuthContext();
   const { isAdmin } = usePermissionContext();
   const { hasPermission } = usePermissions();
@@ -197,7 +268,6 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
   const [upgradeLabel, setUpgradeLabel] = useState<string | undefined>();
   const [upgradeVariant, setUpgradeVariant] = useState<"premium" | "vip">("premium");
   const isHomePage = location.pathname === "/";
-  const isAjudaPage = location.pathname.startsWith("/ajuda");
 
   const handleBack = () => {
     if (onBack) {
@@ -239,161 +309,160 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
     return nome.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
+  // Mostra back no mobile quando há pageTitle e não está na home
+  const showMobileBack = !!pageTitle && !hideBackButton && !isHomePage;
+
   return (
-    <header 
-      className={cn(
-        "sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80"
-      )}
-      style={{ paddingTop: 'max(0px, env(safe-area-inset-top, 0px))' }}
+    <header
+      className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80"
+      style={{ paddingTop: "max(0px, env(safe-area-inset-top, 0px))" }}
     >
-      <div className={cn(
-        "flex items-center justify-between py-0.5 px-4 gap-2 w-full max-w-[1400px] mx-auto overflow-hidden",
-        !isHomePage && "grid grid-cols-[auto_1fr_auto] md:grid-cols-[1fr_auto_1fr]"
-      )}>
-        {/* Mobile Page Title logic & Logo Section */}
-        <div className="flex items-center gap-2 overflow-hidden">
-          {pageTitle && !hideBackButton && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden h-8 w-8 shrink-0"
-              onClick={handleBack}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          )}
-
-          <Link 
-            to="/" 
-            className={cn(
-              "flex items-center gap-2 no-underline shrink-0 mr-2",
-              pageTitle && !hideBackButton && "hidden md:flex"
-            )}
-          >
-            <img src="/logo.png" alt="Palpite Tech" className="h-8 w-8 rounded-md" />
-            <span className={cn(
-              "text-lg font-bold text-primary",
-              (!isHomePage && !isAjudaPage) && "hidden xl:inline"
-            )}>
-              Palpite Tech
-            </span>
-          </Link>
-
-          {/* Desktop & Mobile Page Title */}
-          {pageTitle && (
-            <div className="flex-1 overflow-hidden ml-1">
-              <h1 className="text-base md:text-lg font-bold text-foreground truncate">{pageTitle}</h1>
-            </div>
-          )}
-        </div>
-
-        {/* Desktop Navigation - centralizado */}
-        {!isHomePage && (
-          <nav className="hidden md:flex items-center gap-0.5 justify-center flex-wrap overflow-hidden">
-          {/* Bolões */}
-          {isAdmin ? (
-            <Link to="/boloes">
-              <Button variant="ghost" className="gap-1.5 h-8 px-2 text-xs">
-                <Trophy className="h-4 w-4" />
-                Bolões
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 ml-0.5 border-amber-500/50 text-amber-500">
-                  Em Breve
-                </Badge>
+      <div className="w-full max-w-[1400px] mx-auto px-3 md:px-4">
+        {/* Linha superior: grid 3 colunas — esquerda | centro | direita */}
+        <div className="grid grid-cols-[64px_1fr_64px] md:grid-cols-[auto_1fr_auto] items-center h-12 md:h-14 gap-2">
+          {/* ESQUERDA: back (mobile com pageTitle) OU logo */}
+          <div className="flex items-center justify-start min-w-0">
+            {showMobileBack ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden h-10 w-10 -ml-2"
+                onClick={handleBack}
+                aria-label="Voltar"
+              >
+                <ArrowLeft className="h-5 w-5" />
               </Button>
-            </Link>
-          ) : (
-            <Button variant="ghost" className="gap-1.5 h-8 px-2 text-xs cursor-default opacity-60" disabled>
-              <Trophy className="h-4 w-4" />
-              Bolões
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 ml-0.5 border-muted-foreground/30 text-muted-foreground">
-                Em Breve
-              </Badge>
-            </Button>
-          )}
-
-          <Link to="/gerar-jogos">
-            <Button variant="ghost" className="gap-1.5 h-8 px-2 text-xs">
-              <Dices className="h-4 w-4" />
-              <span className="hidden lg:inline">Gerar Jogos</span>
-            </Button>
-          </Link>
-
-          <Link to="/proximos-concursos">
-            <Button variant="ghost" className="gap-1.5 h-8 px-2 text-xs">
-              <Calendar className="h-4 w-4" />
-              <span className="hidden lg:inline">Concursos</span>
-            </Button>
-          </Link>
-
-          {/* Lotofácil */}
-          <LotteryDropdown
-            name="Lotofácil"
-            tools={LOTOFACIL_TOOLS}
-            handleGatedClick={handleGatedClick}
-            renderBadge={renderBadge}
-          />
-
-          {/* Mega Sena */}
-          <LotteryDropdown
-            name="Mega Sena"
-            tools={MEGASENA_TOOLS}
-            handleGatedClick={handleGatedClick}
-            renderBadge={renderBadge}
-          />
-
-          {/* Dupla Sena */}
-          <LotteryDropdown
-            name="Dupla Sena"
-            tools={DUPLASENA_TOOLS}
-            handleGatedClick={handleGatedClick}
-            renderBadge={renderBadge}
-          />
-
-          {/* Quina */}
-          <LotteryDropdown
-            name="Quina"
-            tools={QUINA_TOOLS}
-            handleGatedClick={handleGatedClick}
-            renderBadge={renderBadge}
-          />
-
-          {SIMPLE_LOTTERIES.map((lottery) => (
-            <DropdownMenu key={lottery.name}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-1 h-8 px-2 text-xs">
-                  {lottery.name}
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-56 p-1 bg-popover z-50">
-                <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base">
-                  <Link to={lottery.resultsPath}>
-                    <BarChart3 className="h-5 w-5" />
-                    Resultados
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ))}
-        </nav>
-        )}
-
-        {/* User Actions - fixo à direita */}
-        <div className="flex items-center justify-end gap-1 shrink-0">
-
-          {isAuthenticated ? (
-            <>
-              <Link to="/meus-palpites">
-                <Button variant="ghost" size="icon" className="h-8 w-8" title="Jogos Salvos">
-                  <Save className="h-5 w-5" />
-                </Button>
+            ) : (
+              <Link to="/" className="flex items-center gap-2 no-underline shrink-0">
+                <img src="/logo.png" alt="Palpite Tech" className="h-8 w-8 rounded-md" />
+                <span className="hidden md:inline text-base lg:text-lg font-bold text-primary">
+                  Palpite Tech
+                </span>
               </Link>
+            )}
+            {/* No desktop, quando há back, ele aparece ao lado da logo */}
+            {showMobileBack && (
+              <Link to="/" className="hidden md:flex items-center gap-2 no-underline shrink-0">
+                <img src="/logo.png" alt="Palpite Tech" className="h-8 w-8 rounded-md" />
+                <span className="hidden lg:inline text-base lg:text-lg font-bold text-primary">
+                  Palpite Tech
+                </span>
+              </Link>
+            )}
+          </div>
 
-              {/* Avatar Dropdown */}
+          {/* CENTRO: título (mobile) OU navegação desktop */}
+          <div className="flex items-center justify-center min-w-0 overflow-hidden">
+            {/* Mobile: título centralizado */}
+            {pageTitle ? (
+              <h1 className="md:hidden text-base font-semibold text-foreground truncate text-center w-full px-1">
+                {pageTitle}
+              </h1>
+            ) : (
+              <span className="md:hidden text-base font-bold text-primary truncate">
+                Palpite Tech
+              </span>
+            )}
+
+            {/* Desktop: navegação centralizada (apenas fora da home) */}
+            {!isHomePage && (
+              <nav className="hidden md:flex items-center gap-0.5 flex-nowrap overflow-hidden">
+                {/* Bolões */}
+                {isAdmin ? (
+                  <Link to="/boloes">
+                    <Button variant="ghost" className="gap-1.5 h-9 px-2 text-sm">
+                      <Trophy className="h-4 w-4" />
+                      <span className="hidden lg:inline">Bolões</span>
+                      <Badge variant="outline" className="hidden xl:inline-flex text-[10px] px-1.5 py-0 h-4 ml-0.5 border-amber-500/50 text-amber-500">
+                        Em Breve
+                      </Badge>
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button variant="ghost" className="gap-1.5 h-9 px-2 text-sm cursor-default opacity-60" disabled>
+                    <Trophy className="h-4 w-4" />
+                    <span className="hidden lg:inline">Bolões</span>
+                  </Button>
+                )}
+
+                <Link to="/gerar-jogos">
+                  <Button variant="ghost" className="gap-1.5 h-9 px-2 text-sm">
+                    <Dices className="h-4 w-4" />
+                    <span className="hidden lg:inline">Gerar Jogos</span>
+                  </Button>
+                </Link>
+
+                <Link to="/proximos-concursos">
+                  <Button variant="ghost" className="gap-1.5 h-9 px-2 text-sm">
+                    <Calendar className="h-4 w-4" />
+                    <span className="hidden lg:inline">Concursos</span>
+                  </Button>
+                </Link>
+
+                {/* md (768-1023px): dropdown unificado "Loterias" */}
+                <div className="lg:hidden">
+                  <LotteriasUnifiedDropdown
+                    handleGatedClick={handleGatedClick}
+                    renderBadge={renderBadge}
+                  />
+                </div>
+
+                {/* lg+ (≥1024px): 4 dropdowns separados + simples */}
+                <div className="hidden lg:flex items-center gap-0.5">
+                  <LotteryDropdown
+                    name="Lotofácil"
+                    tools={LOTOFACIL_TOOLS}
+                    handleGatedClick={handleGatedClick}
+                    renderBadge={renderBadge}
+                  />
+                  <LotteryDropdown
+                    name="Mega Sena"
+                    tools={MEGASENA_TOOLS}
+                    handleGatedClick={handleGatedClick}
+                    renderBadge={renderBadge}
+                  />
+                  <LotteryDropdown
+                    name="Dupla Sena"
+                    tools={DUPLASENA_TOOLS}
+                    handleGatedClick={handleGatedClick}
+                    renderBadge={renderBadge}
+                  />
+                  <LotteryDropdown
+                    name="Quina"
+                    tools={QUINA_TOOLS}
+                    handleGatedClick={handleGatedClick}
+                    renderBadge={renderBadge}
+                  />
+                  {SIMPLE_LOTTERIES.map((lottery) => (
+                    <DropdownMenu key={lottery.name}>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="gap-1 h-9 px-2 text-sm">
+                          {lottery.name}
+                          <ChevronDown className="h-3 w-3" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="center" className="w-56 p-1 bg-popover z-50">
+                        <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base">
+                          <Link to={lottery.resultsPath}>
+                            <BarChart3 className="h-5 w-5" />
+                            Resultados
+                          </Link>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ))}
+                </div>
+              </nav>
+            )}
+          </div>
+
+          {/* DIREITA: avatar / entrar */}
+          <div className="flex items-center justify-end gap-1 shrink-0">
+            {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
-                    <Avatar className="h-8 w-8">
+                  <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
+                    <Avatar className="h-9 w-9">
                       <AvatarImage src={profile?.avatar_url || undefined} />
                       <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                         {getInitials(profile?.nome)}
@@ -446,16 +515,17 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </>
-          ) : (
-            <Link to="/login">
-              <Button className="h-10 px-4 bg-accent hover:bg-accent/90 text-accent-foreground text-sm">
-                Entrar
-              </Button>
-            </Link>
-          )}
+            ) : (
+              <Link to="/login">
+                <Button className="h-9 px-3 bg-accent hover:bg-accent/90 text-accent-foreground text-sm">
+                  Entrar
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
+
       <UpgradeModal
         open={upgradeOpen}
         onOpenChange={setUpgradeOpen}
@@ -465,3 +535,6 @@ export function DesktopHeader({ pageTitle, breadcrumb, onBack, hideBackButton }:
     </header>
   );
 }
+
+// Backward-compat: manter export DesktopHeader para imports legados
+export { AppHeader as DesktopHeader };
