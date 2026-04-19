@@ -43,7 +43,7 @@ export default function Comunidade() {
             className="bg-green-600 hover:bg-green-700 transition-all cursor-pointer text-white border-none shadow-lg overflow-hidden group active:scale-95"
             onClick={() => navigate('/gerar-jogos')}
           >
-            <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center justify-center h-full min-h-[60px]">
+            <CardContent className="px-3 py-2 sm:px-4 sm:py-2.5 flex flex-col items-center text-center justify-center h-full">
               <h3 className="font-bold text-sm sm:text-base leading-tight">Gerar meus palpites</h3>
             </CardContent>
           </Card>
@@ -57,7 +57,7 @@ export default function Comunidade() {
               window.open(link, '_blank');
             }}
           >
-            <CardContent className="p-3 sm:p-4 flex flex-col items-center text-center justify-center h-full min-h-[60px]">
+            <CardContent className="px-3 py-2 sm:px-4 sm:py-2.5 flex flex-col items-center text-center justify-center h-full">
               {(() => {
                 const isTrial = plan?.slug === 'trial' || plan?.slug === 'teste-gratis-3-dias';
                 const isPaid = !!plan && !isTrial;
@@ -66,7 +66,7 @@ export default function Comunidade() {
                     <h3 className="font-bold text-sm sm:text-base leading-tight">
                       {isPaid ? "Receba 15 palpites diários" : "Entrar na Sala Secreta"}
                     </h3>
-                    <p className="text-[10px] sm:text-[11px] opacity-90 mt-0.5 leading-none">
+                    <p className="text-[10px] sm:text-[11px] opacity-90 mt-0 leading-none">
                       {isPaid ? "E análise do resultado" : "Receba atualizações diárias"}
                     </p>
                   </>
