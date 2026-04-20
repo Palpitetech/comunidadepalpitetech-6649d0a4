@@ -134,15 +134,24 @@ export function TransacoesTab({ user }: TransacoesTabProps) {
   const cotasFiltradas = useMemo(() => filterByPeriod(cotas, periodo), [cotas, periodo]);
   const resgatesFiltrados = useMemo(() => filterByPeriod(resgates, periodo), [resgates, periodo]);
 
-  const { totalIn, totalOut, saldo } = useMemo(() => {
-    let inAmt = 0;
-    let outAmt = 0;
+  const { totalCompra, totalSaida, totalPremio, saldo } = useMemo(() => {
+    let compra = 0;
+    let saida = 0;
+    let premio = 0;
     movFiltradas.forEach((m: any) => {
       const v = Number(m.valor) || 0;
-      if (m.tipo === "entrada" || m.tipo === "premio" || m.tipo === "bonus") inAmt += v;
-      else outAmt += v;
+      const tipo = String(m.tipo || "").toLowerCase();
+      if (tipo === "premio" || tipo === "entrada_premio" || tipo === "bonus") {
+        premio += v;
+      } else if (tipo === "compra" || tipo === "saida_compra" || tipo === "compra_cota") {
+        compra += v;
+      } else if (tipo === "saida" || tipo === "debito" || tipo === "estorno_debito") {
+        saida += v;
+      } else if (tipo === "entrada" || tipo === "credito" || tipo === "deposito") {
+        premio += v;
+      }
     });
-    return { totalIn: inAmt, totalOut: outAmt, saldo: inAmt - outAmt };
+    return { totalCompra: compra, totalSaida: saida, totalPremio: premio, saldo: premio - compra - saida };
   }, [movFiltradas]);
 
   const grouped = useMemo(() => {
