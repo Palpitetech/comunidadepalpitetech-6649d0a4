@@ -1,106 +1,78 @@
 
 
-## Plano: Tabela "Chip Celulares" (gestão de chips com recargas)
+## Plano: Página "Custos Operacionais" (`/admin/custos-operacionais`)
+
+Centraliza **todos os custos da operação** num único painel: assinaturas operacionais, recargas de chip, custo de aquisição de chips e lançamentos manuais (recorrentes ou avulsos).
+
+> Observação: já existe `/admin/custos` ocupada por **Custos IA** (token/USD). Para evitar conflito, esta nova página usa **`/admin/custos-operacionais`**. Se preferir reaproveitar `/admin/custos`, a IA renomeia a página atual antes — confirme se for esse o caso.
 
 ### 1. Banco de dados (migração SQL)
 
-**Tabela `chip_celulares`** (cadastro do chip):
-- `id` uuid PK (`gen_random_uuid()`)
-- `numero_id` integer — sequência única, gera ID `#0001`, `#0002`... (default via sequence)
-- `numero` text NOT NULL — telefone com DDD
-- `operadora` text NOT NULL — `tim` | `claro` | `vivo` (CHECK)
-- `plano_tipo` text NOT NULL — `pre` | `pos` | `controle` (CHECK)
-- `valor_plano` numeric NOT NULL DEFAULT 0 — mensal fixo
-- `custo_chip` numeric NOT NULL DEFAULT 0 — custo de aquisição (editável)
-- `data_compra` date NOT NULL DEFAULT CURRENT_DATE
-- `ultima_recarga_at` timestamptz NULL — preenchido por trigger ao inserir recarga
-- `ultima_recarga_valor` numeric NULL — idem
-- `ativo` boolean NOT NULL DEFAULT true
-- `observacao` text NULL
-- `created_at`, `updated_at`
-
-Sequência + trigger para gerar `numero_id` automaticamente (ordem `#0001`, `#0002`…).
-
-**Tabela `chip_recargas`** (histórico):
+**Tabela `custos_operacionais_manuais`** (apenas lançamentos manuais; os automáticos vêm de views):
 - `id` uuid PK
-- `chip_id` uuid NOT NULL → FK `chip_celulares(id)` ON DELETE CASCADE
-- `valor` numeric NOT NULL
-- `data_recarga` date NOT NULL DEFAULT CURRENT_DATE
-- `metodo` text NULL (Pix, cartão…)
+- `descricao` text NOT NULL
+- `valor` numeric NOT NULL CHECK (`valor >= 0`)
+- `categoria` text NOT NULL — `infraestrutura` | `servico` | `marketing` | `outro` (CHECK)
+- `data_custo` date NOT NULL DEFAULT CURRENT_DATE
+- `recorrente` boolean NOT NULL DEFAULT false — se true, soma todo mês a partir da data
 - `observacao` text NULL
-- `created_at`, `created_by` uuid
+- `created_at`, `updated_at`, `created_by` uuid
 
-**Trigger** `update_chip_ultima_recarga` em INSERT/DELETE de `chip_recargas` → atualiza `ultima_recarga_at`, `ultima_recarga_valor` em `chip_celulares` (último registro pela maior `data_recarga`).
+**View unificada `vw_custos_operacionais`** consolida 4 origens em colunas padrão (`origem`, `origem_id`, `descricao`, `categoria`, `valor`, `data_custo`, `mes_ref` `YYYY-MM`):
 
-**RLS** (mesmo padrão de `assinaturas_operacionais`):
-- "Admins têm acesso total a chip_celulares" → `has_role(auth.uid(), 'admin')`
-- "Admins têm acesso total a chip_recargas" → `has_role(auth.uid(), 'admin')`
+1. **Assinaturas** → cada registro de `assinaturas_operacionais` vira 1 linha por mês entre `data_inicio` e `data_fim` com valor mensal (`valor / nº meses`).
+2. **Recargas de chip** → cada `chip_recargas.valor` por `data_recarga`.
+3. **Custo de chip** → `chip_celulares.custo_chip` na `data_compra` (uma vez).
+4. **Manuais** → `custos_operacionais_manuais`. Se `recorrente=true`, expande mês a mês desde `data_custo` até o mês corrente.
 
-**Índices**: `chip_id` em `chip_recargas`; `numero_id` único em `chip_celulares`.
+**RLS** (`custos_operacionais_manuais`): admin total via `has_role(auth.uid(), 'admin')`.
 
-### 2. Página principal `src/pages/admin/AdminChipCelulares.tsx`
+### 2. Página `src/pages/admin/AdminCustosOperacionais.tsx`
 
-Layout copiando o padrão de `AdminAssinaturasOperacionais`:
+**Filtros (topo)**:
+- Seletor de mês (default = mês atual) — `<input type="month">`
+- Filtro por origem: Todas | Assinaturas | Recargas | Chips | Manuais
+- Filtro por categoria (manuais)
+- Botão **"+ Novo lançamento"** (abre modal)
 
-**Cards de resumo (5)**:
-- Total de chips
-- Chips ativos
-- Custo total dos chips (soma de `custo_chip` de ativos)
-- Custo mensal de planos (soma de `valor_plano` de ativos)
-- Total recarregado no mês (soma de `chip_recargas.valor` do mês corrente)
+**5 cards de resumo** (do mês filtrado):
+- Total geral
+- Total Assinaturas
+- Total Chips (recargas + aquisição)
+- Total Manuais
+- Comparativo mês anterior (% +/-)
 
 **Tabela** (colunas):
-| ID | Número | Operadora | Plano | Valor/mês | Última recarga | Custo chip | Status | Ações |
+| Data | Origem (badge colorido) | Descrição | Categoria | Valor | Ações |
 
-- ID exibido como `#0001` (formatado: `#${String(numero_id).padStart(4, '0')}`)
-- Operadora com badge colorido (TIM amarelo, Claro vermelho, Vivo verde)
-- Plano com badge (Pré/Pós/Controle)
-- Última recarga: data + valor; "—" se nunca
-- Ações: **Recarga** (ícone Zap verde), **Histórico** (ícone Clock azul), **Editar** (lápis), **Excluir** (lixeira)
+- Ações: editar/excluir só aparecem em linhas de **origem = manual**
+- Demais origens têm um link discreto "Ver na origem" (abre `/admin/assinaturas-operacionais` ou `/admin/chip-celulares`)
 
-### 3. Modais
+### 3. Modal "Novo / Editar lançamento manual"
+Campos: descrição, valor, categoria (Select), data, toggle "Recorrente mensal", observação.
 
-**Modal "Novo Chip / Editar Chip"**:
-- Campos: número, operadora (Select), plano (Select), valor do plano, custo do chip (default sugerido pelo último chip cadastrado, mas editável), data de compra, observação
-- ID `#0001` é gerado automaticamente — exibido como readonly após criação
-
-**Modal "Registrar Recarga"** (botão Zap verde):
-- Valor (default = `valor_plano` do chip), data (default hoje), método (texto livre opcional), observação opcional
-- Salva em `chip_recargas` e o trigger atualiza o pai
-
-**Modal "Histórico de Recargas"** (botão Clock azul):
-- Cabeçalho: chip `#0001` — número — operadora
-- Tabela: Data | Valor | Método | Observação | Ações (excluir)
-- Resumo: total recarregado, média mensal, última recarga
-
-### 4. Sidebar (`src/components/layout/AdminSidebar.tsx`)
-
-Adicionar item após "Assinaturas Op." em `mainItems`:
+### 4. Sidebar (`AdminSidebar.tsx`)
+Adicionar item após "Chip Celulares" em `mainItems`:
 ```ts
-{ title: "Chip Celulares", url: "/admin/chip-celulares", icon: Smartphone }
+{ title: "Custos Operacionais", url: "/admin/custos-operacionais", icon: Receipt }
 ```
-(Ícone `Smartphone` do lucide-react)
+Ícone `Receipt` (lucide-react).
 
-### 5. Rota (`src/App.tsx`)
-
-Após a rota de `/admin/assinaturas-operacionais`:
+### 5. Rota (`App.tsx`)
 ```tsx
-<Route path="/admin/chip-celulares" element={<AdminRoute><AdminChipCelulares /></AdminRoute>} />
+<Route path="/admin/custos-operacionais" element={<AdminRoute><AdminCustosOperacionais /></AdminRoute>} />
 ```
-Import: `import AdminChipCelulares from "./pages/admin/AdminChipCelulares";`
 
 ### Resultado esperado
-
-- Nova URL `/admin/chip-celulares` no menu lateral
-- Cadastro de chips com ID sequencial fixo (`#0001`, `#0002`…)
-- Visualização de operadora, plano, valor mensal e última recarga em uma única tabela
-- Botão de recarga rápida com modal completo (valor, data, observação, método)
-- Histórico de recargas em modal separado por chip
-- Custo de aquisição (`custo_chip`) editável por registro, somado nos KPIs
+- Visão única e mensal de **tudo que sai de caixa** na operação
+- Assinaturas e chips alimentam a tabela automaticamente (sem duplicação)
+- Lançamentos manuais (ex: domínio anual, ferramenta avulsa) entram com 1 clique
+- Toggle "recorrente" replica o lançamento mês a mês sem precisar relançar
+- Filtro por mês permite comparar gastos rapidamente
 
 ### Fora de escopo
-
-- Sem integração com APIs de operadoras (recarga é manual)
-- Sem alertas automáticos de saldo baixo (pode virar feature futura)
-- Sem notificação WhatsApp ao registrar recarga
+- Sem gráficos de evolução (KPIs em cards bastam por enquanto)
+- Sem categorias customizáveis pelo admin (lista fixa nesta versão)
+- Sem export CSV (pode virar feature futura)
+- Sem rateio por loteria/produto
 
