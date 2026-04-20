@@ -1,64 +1,68 @@
 
 
-## Plano: Criar tabela `investimentos` no banco — Etapa 1
+## Plano: Adicionar campo "Investimento Mensal" (custo mensal normalizado)
 
-Esta é a **primeira etapa**: apenas criar a estrutura no banco. Próximas etapas (UI admin, listagem, formulário, sidebar) virão depois.
+### Conceito
 
-### Estrutura da tabela `investimentos`
+Cada investimento tem um valor total pago para cobrir um período (ex: R$ 240 por 6 meses = R$ 40/mês). O novo campo **Investimento Mensal** mostra esse custo normalizado para 1 mês, permitindo comparar gastos de fornecedores com prazos diferentes.
 
-| Coluna | Tipo | Regras |
-|---|---|---|
-| `id` | `uuid` | PK, default `gen_random_uuid()` |
-| `identificacao` | `text` | NOT NULL — nome/descrição do investimento |
-| `valor` | `numeric(12,2)` | NOT NULL, default `0` |
-| `provedor` | `text` | NOT NULL — quem é o fornecedor (ex: Lovable, Supabase, OpenAI…) |
-| `periodo_validade` | `text` (enum-like via CHECK) | NOT NULL — valores aceitos: `1_mes`, `3_meses`, `6_meses`, `12_meses`, `nd`, `personalizado` |
-| `periodo_dias_custom` | `integer` | Nullable — preenchido apenas quando `periodo_validade = 'personalizado'` |
-| `data_inicio` | `date` | NOT NULL, default `CURRENT_DATE` |
-| `data_fim` | `date` | Nullable — calculada automaticamente via trigger a partir de `data_inicio` + `periodo_validade` (NULL para `nd`) |
-| `created_at` | `timestamptz` | NOT NULL, default `now()` |
-| `updated_at` | `timestamptz` | NOT NULL, default `now()` |
+### Cálculo (frontend, derivado — sem mudar o banco)
 
-### Regras de validação (validation triggers, não CHECK)
+Função `calcularMensal(inv)` retorna o valor mensal:
 
-- **`validate_investimento`** (BEFORE INSERT/UPDATE):
-  - Se `periodo_validade = 'personalizado'` → exige `periodo_dias_custom > 0`.
-  - Se `periodo_validade != 'personalizado'` → força `periodo_dias_custom = NULL`.
-  - Calcula `data_fim` automaticamente:
-    - `1_mes` → `data_inicio + 1 mês`
-    - `3_meses` → `data_inicio + 3 meses`
-    - `6_meses` → `data_inicio + 6 meses`
-    - `12_meses` → `data_inicio + 12 meses`
-    - `personalizado` → `data_inicio + periodo_dias_custom dias`
-    - `nd` → `NULL`
-  - Garante `valor >= 0`.
-- **`update_updated_at_column`** (BEFORE UPDATE) — reaproveita função existente.
+| `periodo_validade` | Fórmula |
+|---|---|
+| `1_mes` | `valor / 1` |
+| `3_meses` | `valor / 3` |
+| `6_meses` | `valor / 6` |
+| `12_meses` | `valor / 12` |
+| `personalizado` | `valor / (periodo_dias_custom / 30)` |
+| `nd` | `—` (sem período definido, não calcula) |
 
-### Segurança (RLS)
+### Mudanças em `src/pages/admin/AdminInvestimentos.tsx`
 
-- `ALTER TABLE public.investimentos ENABLE ROW LEVEL SECURITY;`
-- Política única: **Admins acesso total** (`ALL` para `authenticated` usando `has_role(auth.uid(), 'admin'::app_role)`).
-- Sem acesso para usuários comuns nem `service_role` (somente admins via painel).
+**1. Helper novo** (logo abaixo de `formatBRL`):
+```ts
+function calcularMensal(inv: Investimento): number | null {
+  const v = Number(inv.valor);
+  switch (inv.periodo_validade) {
+    case "1_mes": return v;
+    case "3_meses": return v / 3;
+    case "6_meses": return v / 6;
+    case "12_meses": return v / 12;
+    case "personalizado":
+      if (!inv.periodo_dias_custom || inv.periodo_dias_custom <= 0) return null;
+      return v / (inv.periodo_dias_custom / 30);
+    case "nd": return null;
+  }
+}
+```
 
-### Índices
+**2. Novo card no resumo (summary)** — adicionar 5º card "Custo Mensal Total":
+- Soma `calcularMensal()` de todos os investimentos **ativos** (ignora `nd` e expirados)
+- Grid passa de `lg:grid-cols-4` → `lg:grid-cols-5`
+- Ícone: `CalendarClock` (lucide-react), cor azul
+- Label: "Custo Mensal" / valor em destaque / sub: "equivalente/mês"
 
-- `idx_investimentos_data_inicio` em `data_inicio DESC` (listagem cronológica).
-- `idx_investimentos_provedor` em `provedor` (filtros futuros).
+**3. Nova coluna na tabela** — entre "Valor" e "Período":
+- Header: `Mensal` (alinhado à direita)
+- Célula: `formatBRL(calcularMensal(inv))` ou `—` se `nd`/personalizado inválido
+- Estilo: `text-xs text-muted-foreground` (secundário, para não competir com o valor principal)
+- Atualizar `colSpan={9}` no estado vazio
 
-### Detalhes técnicos
+**4. Atualizar `summary` (useMemo)**:
+- Adicionar `mensalAtivo`: soma de `calcularMensal` apenas dos ativos com valor não-nulo
 
-- Migração SQL única criando: tabela + função de validação + 2 triggers + RLS + 1 política + 2 índices.
-- `periodo_validade` usa `CHECK IN (...)` simples (valores fixos, imutável → seguro como CHECK).
-- Tipos TypeScript em `src/integrations/supabase/types.ts` serão regenerados automaticamente.
+### Fora de escopo
 
-### Fora de escopo (próximas etapas)
-
-- Página `/admin/investimentos` (listagem + form).
-- Item no `AdminSidebar`.
-- Rota em `App.tsx`.
-- Cálculos de ROI / dashboard.
+- **Sem migração de banco** — o campo é 100% derivado/calculado em runtime
+- Não alterar formulário (não há novo input)
+- Não alterar lógica de `data_fim`, validações ou triggers
+- Não alterar outras páginas do admin
 
 ### Resultado esperado
 
-Tabela `investimentos` criada e protegida, pronta para receber o CRUD na próxima etapa.
+- Coluna "Mensal" na tabela mostrando custo normalizado por investimento
+- Card "Custo Mensal" no topo somando todos os ativos
+- Investimentos `nd` (sem validade) exibem `—` (não entram na soma mensal)
 
