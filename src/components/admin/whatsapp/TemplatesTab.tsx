@@ -237,16 +237,15 @@ export function TemplatesTab() {
 
   const insertVariable = (variable: string) => {
     const ta = textareaRef.current;
+    const current = slots[activeSlot - 1]?.content ?? "";
     if (!ta) {
-      setForm((f) => ({ ...f, content: f.content + variable }));
+      updateActiveSlotContent(current + variable);
       return;
     }
     const start = ta.selectionStart;
     const end = ta.selectionEnd;
-    const before = form.content.slice(0, start);
-    const after = form.content.slice(end);
-    const newContent = before + variable + after;
-    setForm((f) => ({ ...f, content: newContent }));
+    const newContent = current.slice(0, start) + variable + current.slice(end);
+    updateActiveSlotContent(newContent);
     requestAnimationFrame(() => {
       ta.focus();
       const pos = start + variable.length;
