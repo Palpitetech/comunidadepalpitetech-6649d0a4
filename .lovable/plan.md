@@ -1,94 +1,82 @@
 
 
-## Adicionar colunas Verificado/Ativo + remover usuários sem celular
+## Adicionar coluna "Próximo vencimento" na listagem de usuários
 
-### Parte 1 — Novas colunas na listagem `/admin/usuarios`
+### O que adiciona
 
-**Coluna "Verificado":**
-- ✅ verde se `email_verificado = true`
-- ⚠️ âmbar se `email_verificado = false`
+Nova coluna na tabela desktop e info no card mobile mostrando a data de validade da assinatura (`validade_assinatura`) com indicador visual de proximidade do vencimento.
 
-**Coluna "Ativo":**
-- ✅ verde "Ativo" se tem plano pago ativo (`isPaidActive(u)` — slug pago + `status_assinatura = ativa` + dentro da validade)
-- ⚪ cinza "—" se não tem plano pago ativo (free, trial, vencido, cancelado)
+### Lógica de exibição
 
-#### Desktop (tabela)
-Adicionar 2 colunas entre "Plano" e "Origem":
+| Situação | Exibição |
+|---|---|
+| Sem `validade_assinatura` | `—` cinza |
+| Vence em > 7 dias | Data + dias restantes (cinza neutro) |
+| Vence em 1-7 dias | Data + "Em X dias" (âmbar — atenção) |
+| Vence hoje | "Hoje" (âmbar) |
+| Vencido | "Há X dias" (vermelho) |
+
+Formato data: `dd/MM/yyyy` (date-fns ptBR, já importado no projeto).
+
+### Mudanças
+
+**`src/pages/admin/AdminUsuarios.tsx`**
+
+#### Desktop — tabela
+Adicionar coluna entre "Ativo" e "Origem":
 
 ```
-| Usuário | Plano | Verificado | Ativo | Origem | Cadastro |
+| Usuário | Plano | Verificado | Ativo | Próximo vencimento | Origem | Cadastro |
 ```
 
-Cada célula renderiza um ícone + label compacta (`CheckCircle2` / `AlertCircle` do lucide).
+Cada célula renderiza:
+- Linha 1: data formatada (`dd/MM/yyyy`)
+- Linha 2: badge pequeno com dias restantes/status, com cor conforme regra acima
 
-#### Mobile (cards)
-Adicionar 2 micro-badges na linha de status (junto com plano/bloqueado):
-- `✓ Verificado` ou `⚠ Não verificado`
-- `● Ativo` (só aparece se pago ativo, pra não poluir)
+Atualizar `colSpan` da row de "nenhum usuário" de 10 → 11.
 
-### Parte 2 — Limpeza de usuários sem celular
+#### Mobile — cards
+Adicionar linha extra no card (abaixo do plano) só quando `validade_assinatura` existir:
+- `📅 Vence 25/04/2026 · Em 5 dias` (cor conforme regra)
 
-Como celular agora é obrigatório nos 2 fluxos de cadastro, perfis antigos sem celular válido devem ser removidos.
+Se não tem validade, não exibe nada (não polui).
 
-**Critério de "sem celular":**
-- `celular IS NULL` OU
-- `celular = ''` OU
-- celular não-normalizado (não começa com `55`) OU
-- celular com menos de 12 dígitos OU mais de 13
-
-**Proteções (NÃO deletar):**
-- Admins (têm role `admin` em `user_roles`)
-- Bots/sistema (`is_bot = true`)
-- Usuários com plano pago ativo (`status_assinatura = 'ativa'` E slug pago) — segurança extra: nunca deletar quem está pagando, mesmo sem celular
-
-**Como executar:**
-
-Criar migração SQL que:
-1. Lista quantos usuários se enquadram (preview no log)
-2. Chama `admin-delete-user` em loop? Não — vai por SQL direto via cascade já configurado em `perfis` → `auth.users` (ON DELETE CASCADE existe)
-3. Deleta de `auth.users` (cascateia tudo: perfis, palpites, etc.)
-
-```sql
--- Preview
-SELECT COUNT(*) FROM perfis p
-WHERE p.is_bot = false
-  AND NOT EXISTS (SELECT 1 FROM user_roles ur WHERE ur.user_id = p.id AND ur.role = 'admin')
-  AND NOT (p.status_assinatura = 'ativa' AND p.plano_id IN (SELECT id FROM planos WHERE slug IN ('mensal','anual','plano-anual-vip','semestral','grupo')))
-  AND (
-    p.celular IS NULL 
-    OR p.celular = ''
-    OR length(regexp_replace(p.celular, '\D', '', 'g')) < 12
-    OR length(regexp_replace(p.celular, '\D', '', 'g')) > 13
-    OR regexp_replace(p.celular, '\D', '', 'g') NOT LIKE '55%'
-  );
-
--- Delete via auth.users (cascade)
-DELETE FROM auth.users WHERE id IN ( <mesmo SELECT> );
+#### Helper function
+```ts
+const getValidadeInfo = (validade: string | null) => {
+  if (!validade) return null;
+  const dias = differenceInDays(new Date(validade), new Date());
+  const dataFormatada = format(new Date(validade), "dd/MM/yyyy", { locale: ptBR });
+  
+  let label: string;
+  let tone: "neutral" | "warning" | "danger";
+  
+  if (dias < 0) { label = `Há ${Math.abs(dias)} dia${Math.abs(dias) !== 1 ? 's' : ''}`; tone = "danger"; }
+  else if (dias === 0) { label = "Hoje"; tone = "warning"; }
+  else if (dias <= 7) { label = `Em ${dias} dia${dias !== 1 ? 's' : ''}`; tone = "warning"; }
+  else { label = `Em ${dias} dias`; tone = "neutral"; }
+  
+  return { dataFormatada, label, tone };
+};
 ```
-
-A migração mostra a contagem antes de executar e o usuário aprova.
-
-### Parte 3 — Atualizar o subfiltro "Celular OK"
-
-Já existe e está correto. Após a limpeza, o contador ficará igual ao total — útil pra confirmar que a limpeza funcionou.
 
 ### Fora de escopo
 
-- Não mexo em validação de cadastro (já obrigatório)
-- Não mexo no `RequireCelularModal` (continua disponível pra casos edge)
-- Não mexo em `UserDetailSheet` (já mostra celular)
-- Não mexo no schema do banco
+- Sem mudanças no banco
+- Sem mudanças em `UserDetailSheet` / `UserPlanTab` (já mostram validade)
+- Sem novo subfiltro (subfiltro `Plano vencido` já existe)
+- Imports `differenceInDays`, `format`, `ptBR` já estão disponíveis no padrão do projeto
 
-### Arquivos editados
+### Arquivo editado
 
 | Arquivo | Mudança |
 |---|---|
-| `src/pages/admin/AdminUsuarios.tsx` | +2 colunas (Verificado, Ativo) na tabela desktop e cards mobile |
-| **Migração SQL nova** | Deleta usuários sem celular válido (com proteções pra admins/bots/pagantes) |
+| `src/pages/admin/AdminUsuarios.tsx` | +1 coluna desktop, +1 linha condicional no card mobile, +1 helper de formatação |
 
 ### Resultado esperado
 
-- Admin vê de relance quem verificou email e quem tem assinatura ativa
-- Base limpa: 100% dos usuários têm celular válido normalizado
-- Subfiltro `Celular OK` passa a refletir 100% dos cadastros
+Admin consegue, sem abrir o detalhe do usuário, identificar de relance:
+- Quem vai vencer nos próximos dias (âmbar)
+- Quem já venceu (vermelho)
+- Quem tem assinatura longa (cinza neutro)
 
