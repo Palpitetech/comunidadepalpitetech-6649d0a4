@@ -75,7 +75,7 @@ export function AlterarCelularDialog({ celularAtual, onSuccess, trigger }: Alter
 
       toast({
         title: "Código enviado!",
-        description: `Verifique seu celular ${formatCelular(numeros)}`,
+        description: `Verifique seu celular ${formatCelularMask(numeros)}`,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro ao enviar código";
@@ -181,7 +181,7 @@ export function AlterarCelularDialog({ celularAtual, onSuccess, trigger }: Alter
               {celularAtual && (
                 <div className="p-3 bg-muted rounded-lg">
                   <p className="text-sm text-muted-foreground">Celular atual</p>
-                  <p className="font-medium">{formatCelular(celularAtual)}</p>
+                  <p className="font-medium">{formatCelularMask(celularAtual)}</p>
                 </div>
               )}
               <div className="space-y-2">
@@ -191,7 +191,7 @@ export function AlterarCelularDialog({ celularAtual, onSuccess, trigger }: Alter
                   type="tel"
                   placeholder="(11) 99999-9999"
                   value={novoCelular}
-                  onChange={(e) => setNovoCelular(formatCelular(e.target.value))}
+                  onChange={(e) => setNovoCelular(formatCelularMask(e.target.value))}
                   inputMode="numeric"
                   className="h-12 text-lg"
                 />
@@ -223,7 +223,7 @@ export function AlterarCelularDialog({ celularAtual, onSuccess, trigger }: Alter
               <DialogTitle>Verificar código</DialogTitle>
               <DialogDescription>
                 Digite o código de 6 dígitos enviado para{" "}
-                <strong>{formatCelular(novoCelular)}</strong>
+                <strong>{formatCelularMask(novoCelular)}</strong>
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
