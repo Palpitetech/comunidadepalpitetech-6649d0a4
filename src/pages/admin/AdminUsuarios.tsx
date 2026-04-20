@@ -170,10 +170,15 @@ export default function AdminUsuarios() {
     trial: users.filter(isTrialActive).length,
     nao_verificados: users.filter(u => !u.email_verificado).length,
     verificados: users.filter(u => !!u.email_verificado).length,
+    celular_ok: users.filter(isCelularOk).length,
     trial_ok: users.filter(u => !!u.trial_used).length,
+    trial_ativo: users.filter(isTrialAtivoFull).length,
     pago_mensal: users.filter(u => u.plan?.slug === "mensal" && u.status_assinatura === "ativa").length,
     pago_anual: users.filter(u => u.plan?.slug === "anual" && u.status_assinatura === "ativa").length,
     pago_anualvip: users.filter(u => u.plan?.slug === "plano-anual-vip" && u.status_assinatura === "ativa").length,
+    plano_vencido: users.filter(isPlanoVencido).length,
+    plano_cancelado_ativo: users.filter(isCanceladoAtivo).length,
+    plano_cancelado_inativo: users.filter(isCanceladoInativo).length,
     bloqueados: users.filter(u => u.is_blocked).length,
   }), [users]);
 
@@ -193,10 +198,15 @@ export default function AdminUsuarios() {
     // 2. Subfiltro
     if (activeSubFilter === "nao_verificados") list = list.filter(u => !u.email_verificado);
     else if (activeSubFilter === "verificados") list = list.filter(u => !!u.email_verificado);
+    else if (activeSubFilter === "celular_ok") list = list.filter(isCelularOk);
     else if (activeSubFilter === "trial_ok") list = list.filter(u => !!u.trial_used);
+    else if (activeSubFilter === "trial_ativo") list = list.filter(isTrialAtivoFull);
     else if (activeSubFilter === "pago_mensal") list = list.filter(u => u.plan?.slug === "mensal" && u.status_assinatura === "ativa");
     else if (activeSubFilter === "pago_anual") list = list.filter(u => u.plan?.slug === "anual" && u.status_assinatura === "ativa");
     else if (activeSubFilter === "pago_anualvip") list = list.filter(u => u.plan?.slug === "plano-anual-vip" && u.status_assinatura === "ativa");
+    else if (activeSubFilter === "plano_vencido") list = list.filter(isPlanoVencido);
+    else if (activeSubFilter === "plano_cancelado_ativo") list = list.filter(isCanceladoAtivo);
+    else if (activeSubFilter === "plano_cancelado_inativo") list = list.filter(isCanceladoInativo);
     else if (activeSubFilter === "bloqueados") list = list.filter(u => u.is_blocked);
 
     // 3. Tags
@@ -243,9 +253,9 @@ export default function AdminUsuarios() {
     return stats.trial;
   };
 
-  const getSubCount = (key: Exclude<FilterSecundario, null>) => stats[key];
+  const getSubCount = (key: SubFilterKey) => stats[key];
 
-  const toggleSubFilter = (key: Exclude<FilterSecundario, null>) => {
+  const toggleSubFilter = (key: SubFilterKey) => {
     setActiveSubFilter(prev => prev === key ? null : key);
   };
 
