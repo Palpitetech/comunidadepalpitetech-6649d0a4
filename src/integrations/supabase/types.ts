@@ -759,6 +759,7 @@ export type Database = {
       }
       chip_celulares: {
         Row: {
+          aparelho_conectado: string | null
           ativo: boolean
           created_at: string
           custo_chip: number
@@ -775,6 +776,7 @@ export type Database = {
           valor_plano: number
         }
         Insert: {
+          aparelho_conectado?: string | null
           ativo?: boolean
           created_at?: string
           custo_chip?: number
@@ -791,6 +793,7 @@ export type Database = {
           valor_plano?: number
         }
         Update: {
+          aparelho_conectado?: string | null
           ativo?: boolean
           created_at?: string
           custo_chip?: number
