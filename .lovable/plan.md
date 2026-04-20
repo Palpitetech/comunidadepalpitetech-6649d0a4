@@ -1,176 +1,185 @@
 
 
-# Refatorar páginas do menu do usuário (Mobile-First) + remover Ajuda
+# Adicionar 3ª métrica em "Saldo do Período" — Compras vs Premiações
 
 ## Objetivo
-Padronizar as 4 páginas do dropdown de perfil (Dados, Transações, Assinatura, Segurança), reaproveitando o padrão estabelecido em **Meus Dados** (cards `rounded-2xl`, ícones coloridos h-10, tipografia escalada para sênior, touch targets ≥56px). Otimizar a página de **Transações**, corrigir o botão **Grupo WhatsApp** em Segurança para usar smart link com diferenciação por plano, e **remover Ajuda** completamente (rotas, links e arquivos).
+Separar o que hoje aparece como uma única "Entradas" em duas categorias distintas no header da página `/perfil/transacoes`, deixando 3 informações lado a lado:
+
+1. **Entrada (Compra)** — saídas para compra de cotas
+2. **Saída** — outras saídas/débitos
+3. **Premiação** — prêmios recebidos
+
+E ajustar o **Saldo disponível** com a composição: "X disponível · Y comprado · Z em prêmios".
 
 ---
 
-## Visão geral por página
+## Como o usuário vai ver
 
 ```text
-┌────────────────────────────────────────┐
-│ ←     [Título da página]               │ header padrão (mantém)
-├────────────────────────────────────────┤
-│  ╔══════╗                              │
-│  ║avatar║  Bruno Silveira              │ ← MINI HERO compartilhado
-│  ╚══════╝  Plano Premium · ativa       │
-├────────────────────────────────────────┤
-│  [Conteúdo específico da página]       │
-└────────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│ 💼 Saldo disponível                          │
+│ R$ 127,50                                    │
+│ R$ 72,50 comprado · R$ 200,00 em prêmios     │
+│                                              │
+│ ┌──────────┬──────────┬──────────┐           │
+│ │ 🛒       │ ↓        │ 🏆       │           │
+│ │ COMPRA   │ SAÍDA    │ PRÊMIO   │           │
+│ │ R$ 72,50 │ R$ 0,00  │ R$ 200   │           │
+│ └──────────┴──────────┴──────────┘           │
+└──────────────────────────────────────────────┘
 ```
 
-Cada página (Transações, Assinatura, Segurança) ganha o mesmo **mini-hero** de identidade visual no topo (avatar h-14 + nome + plano), criando coesão entre as 4 telas.
+3 cards compactos lado a lado (grid 3 colunas), com ícones coloridos:
+- **Compra** — ícone `ShoppingCart`, fundo azul (`bg-blue-500/10 text-blue-600`)
+- **Saída** — ícone `ArrowDownRight`, fundo vermelho (`bg-destructive/10 text-destructive`)
+- **Premiação** — ícone `Trophy`, fundo âmbar (`bg-amber-500/10 text-amber-600`)
 
 ---
 
-## 1. Padronização compartilhada
+## Mudanças concretas
 
-### Novo componente: `PerfilMiniHero.tsx`
-- Avatar h-14 w-14 (não editável, só visual)
-- Nome (text-base font-semibold) + linha sutil "Plano [X] · [status]"
-- Padding `px-4 py-4`, separador inferior
-- Recebe `profile`, `user`
+### Arquivo: `src/components/perfil/TransacoesTab.tsx`
 
-Inserido no topo de:
-- `PerfilTransacoes.tsx`
-- `PerfilAssinatura.tsx`
-- `PerfilSeguranca.tsx`
+**1. Lógica de classificação (substituir o `useMemo` atual de `totalIn/totalOut/saldo`)**
 
-(`PerfilDados.tsx` mantém o `PerfilDadosHero` maior com avatar 80x80 — é a tela "principal" do perfil)
+Hoje o cálculo agrupa tudo em "in" ou "out" baseado em `tipo`. Vamos refinar para 3 buckets + 1 saldo:
 
----
-
-## 2. Página Transações — otimização completa
-
-**Problemas atuais:**
-- Tabs internas (`Log`/`Cotas`/`Premiações`) ficam apertadas em mobile
-- Cards densos, valores pequenos, pouca distinção visual entre entrada/saída
-- Sem totalizador/saldo no topo
-- Sem filtro de período
-- Datas curtas, sem agrupamento
-
-**Mudanças:**
-
-### 2.1 Header de saldo (novo)
-```text
-┌──────────────────────────────────┐
-│ 💰 Saldo total                   │
-│ R$ 127,50                        │
-│ ↑ R$ 200,00 entradas             │
-│ ↓ R$ 72,50 saídas                │
-└──────────────────────────────────┘
-```
-Calculado do array `movimentacoes` no client.
-
-### 2.2 Filtro de período (chips horizontais)
-- `Tudo` · `7 dias` · `30 dias` · `90 dias`
-- ScrollArea horizontal para não quebrar em mobile pequeno
-- Filtra todas as 3 abas
-
-### 2.3 Tabs com ícones + contadores
-- `Log (12)` `Cotas (3)` `Prêmios (1)`
-- Aumentar h-10 → h-11, font-medium
-
-### 2.4 Lista Log redesenhada (`MovimentacaoRow`)
-- Ícone esquerdo colorido por tipo: entrada (verde), saída (vermelho), prêmio (âmbar), bônus (roxo)
-- 2 linhas: descrição (text-sm font-medium) + data relativa ("Há 2 dias")
-- Valor à direita em destaque (text-base font-bold), cor por tipo
-- Agrupamento por dia com separador `text-[11px] uppercase` ("Hoje", "Ontem", "12 mar")
-
-### 2.5 Cotas/Prêmios redesenhados
-- Card com gradient sutil quando `status="pago"` ou prêmio recebido
-- Loteria como chip colorido (cor da loteria do `mem://design/lottery-branding-colors`)
-- Concurso + código do bolão em destaque
-- Tap na linha → navega para `/boloes/[codigo]` (se existir)
-
-### 2.6 Estado vazio melhorado
-- Ilustração maior (Wallet/Ticket/Trophy h-12), copy amigável + CTA "Explorar Bolões" → `/boloes`
-
----
-
-## 3. Página Assinatura — refinamento
-
-**Mudanças:**
-
-### 3.1 Card de status visual
-- Substitui o card horizontal atual por um **card de destaque** com gradient (gold para Premium / cinza para Grátis)
-- Ícone Crown grande (h-8) centralizado
-- Plano em text-2xl bold
-- Status badge logo abaixo (sem border)
-
-### 3.2 Linha de informações (cards individuais)
-- Vencimento → card próprio com ícone Calendar
-- Dias restantes (calculado) → "Faltam X dias" ou "Vence hoje" / "Vencido há X dias"
-- Próxima cobrança (se mensal recorrente)
-
-### 3.3 CTAs reorganizadas
-- Primário grande: "Trocar Plano" / "Ver Planos" (h-12, gradient primary)
-- Secundário discreto: "Cancelar Assinatura" (variant ghost, text-destructive, h-10)
-- Cancelar fica embaixo, separado por divisor
-
-### 3.4 Histórico curto (novo, opcional)
-- "Suas últimas transações" → 3 últimas movimentações com link "Ver todas →" para `/perfil/transacoes`
-
----
-
-## 4. Página Segurança — refinamento + correção do Grupo WhatsApp
-
-### 4.1 Correção crítica: Grupo WhatsApp
-**Problema:** atualmente usa `https://chat.whatsapp.com/J89dx46Lo97G9YdAaGmR78` direto, sem smart link e sem distinção por plano.
-
-**Correção:** replicar a lógica de `Comunidade.tsx`/`Index.tsx`:
 ```tsx
-const isTrial = plan?.slug === 'trial' || plan?.slug === 'teste-gratis-3-dias';
-const isPaid = !!plan && !isTrial;
-const link = isPaid 
-  ? "https://www.palpitetech.com.br/g/grupo-vip-assinantes" 
-  : "https://www.palpitetech.com.br/g/entrar-sala-secreta";
+const { totalCompra, totalSaida, totalPremio, saldo } = useMemo(() => {
+  let compra = 0;
+  let saida = 0;
+  let premio = 0;
+  
+  movFiltradas.forEach((m: any) => {
+    const v = Number(m.valor) || 0;
+    const tipo = String(m.tipo || "").toLowerCase();
+    
+    // Premiações (entrada de prêmio)
+    if (tipo === "premio" || tipo === "entrada_premio" || tipo === "bonus") {
+      premio += v;
+    }
+    // Compras (saída identificada como compra de cota)
+    else if (tipo === "compra" || tipo === "saida_compra" || tipo === "compra_cota") {
+      compra += v;
+    }
+    // Saídas genéricas
+    else if (tipo === "saida" || tipo === "debito" || tipo === "estorno_debito") {
+      saida += v;
+    }
+    // Entradas genéricas (depósito, ajuste positivo) caem em "premio bucket" não — vamos somar como crédito disponível
+    else if (tipo === "entrada" || tipo === "credito" || tipo === "deposito") {
+      premio += v; // ou criar 4º bucket; manter 3 por simplicidade do pedido
+    }
+  });
+  
+  // Saldo disponível = total recebido (prêmios + créditos) - total gasto (compras + saídas)
+  const saldo = premio - compra - saida;
+  
+  return { totalCompra: compra, totalSaida: saida, totalPremio: premio, saldo };
+}, [movFiltradas]);
 ```
-- Importa `usePermissionContext` para obter `plan`
-- Label dinâmico: "Grupo VIP Assinantes" (pago) ou "Sala Secreta" (grátis/trial)
-- Subtítulo: "Acesso exclusivo dos assinantes" ou "Comunidade aberta"
-- Mantém o smart link engine (passa pelo `/g/...` e respeita lógica anti-internal-browser)
 
-### 4.2 Reorganização visual
-- **Seção "Conta"**: Trocar Senha + Privacidade
-- **Separador + label de seção** "Comunidade": Grupo WhatsApp
-- **Botão Sair fora dos cards** (já está, mantém), mas com variant `outline` em vermelho sutil para dar peso
+> Observação: hoje o banco só tem o tipo `entrada_premio`. A lógica acima já está preparada para os tipos futuros (`compra`, `saida`, etc.) sem quebrar. Vou checar o `useWallet`/edge functions de compra para alinhar os tipos exatos antes de implementar (sem mudar schema agora).
 
-### 4.3 Trocar Senha — Drawer no mobile
-- Mesmo padrão usado em `EditarNomeDrawer.tsx`: `useIsMobile()` decide entre Drawer (bottom sheet) e Dialog
-- OTP/input maior, mais confortável em mobile
+**2. Substituir o bloco JSX do header de saldo**
 
-### 4.4 Confirmação de Logout
-- Adicionar `AlertDialog` antes do `signOut()` (evita logout acidental por toque)
-- "Tem certeza que deseja sair? Você precisará fazer login novamente."
+Trocar a linha atual `Saldo do período` + 2 colunas (Entradas/Saídas) por:
+
+```tsx
+{/* Saldo header */}
+<div className="rounded-2xl border bg-gradient-to-br from-primary/5 via-card to-card p-4">
+  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+    <Wallet className="h-3.5 w-3.5" />
+    Saldo disponível
+  </div>
+  <p className={cn(
+    "text-3xl font-bold tracking-tight",
+    saldo < 0 ? "text-destructive" : "text-foreground"
+  )}>
+    {formatBRL(saldo)}
+  </p>
+  <p className="text-[11px] text-muted-foreground mt-1">
+    {formatBRL(totalCompra)} comprado · {formatBRL(totalPremio)} em prêmios
+  </p>
+
+  {/* 3 métricas lado a lado */}
+  <div className="grid grid-cols-3 gap-2 mt-4">
+    <MetricCell 
+      icon={ShoppingCart}
+      label="Compra"
+      value={totalCompra}
+      tone="blue"
+    />
+    <MetricCell 
+      icon={ArrowDownRight}
+      label="Saída"
+      value={totalSaida}
+      tone="red"
+    />
+    <MetricCell 
+      icon={Trophy}
+      label="Prêmio"
+      value={totalPremio}
+      tone="amber"
+    />
+  </div>
+</div>
+```
+
+**3. Componente interno `MetricCell`**
+
+Pequeno helper dentro do mesmo arquivo (não vira componente externo — escopo local):
+
+```tsx
+function MetricCell({ icon: Icon, label, value, tone }: {
+  icon: LucideIcon;
+  label: string;
+  value: number;
+  tone: "blue" | "red" | "amber";
+}) {
+  const tones = {
+    blue: "bg-blue-500/10 text-blue-600",
+    red: "bg-destructive/10 text-destructive",
+    amber: "bg-amber-500/10 text-amber-600",
+  };
+  return (
+    <div className="flex flex-col items-center gap-1 p-2 rounded-xl bg-background/60">
+      <div className={cn("h-7 w-7 rounded-full flex items-center justify-center", tones[tone])}>
+        <Icon className="h-3.5 w-3.5" />
+      </div>
+      <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium">
+        {label}
+      </p>
+      <p className="text-xs font-bold text-foreground">
+        {formatBRL(value)}
+      </p>
+    </div>
+  );
+}
+```
+
+**4. Imports adicionais**
+```tsx
+import { ShoppingCart, type LucideIcon } from "lucide-react";
+```
+
+**5. Propagar lógica nas linhas do Log (consistência de cores/ícones)**
+
+Atualizar o ícone/cor da row de cada movimentação para refletir os 3 buckets:
+- `compra` / `saida_compra` → `ShoppingCart` azul
+- `saida` / `debito` → `ArrowDownRight` vermelho
+- `premio` / `entrada_premio` / `bonus` → `Trophy` âmbar
+
+(o atual `entrada` genérica continua verde como fallback)
 
 ---
 
-## 5. Remoção da página Ajuda
+## Detalhes técnicos sensíveis
 
-### Arquivos a deletar:
-- `src/pages/Ajuda.tsx`
-- `src/pages/AjudaDetalhes.tsx`
-- `src/components/ajuda/AjudaTemplate.tsx` (e pasta `src/components/ajuda/` se ficar vazia)
-
-### Arquivos a editar:
-- `src/App.tsx` — remover imports `Ajuda`, `AjudaDetalhes` e as rotas `/ajuda` e `/ajuda/:slug`
-- `src/components/layout/AppHeader.tsx` (linha ~501) — remover o `DropdownMenuItem` "Ajuda" (e import `HelpCircle` se não usado em outro lugar)
-- `src/components/layout/MobileMenuSheet.tsx` — verificar e remover qualquer link para `/ajuda`
-
-> A tabela `help_content` no banco **NÃO** será removida (preserva conteúdo SEO). Se quiser remover depois, criamos migration separada.
-
----
-
-## 6. Outras melhorias mobile compartilhadas
-
-- Em todos os 4 wrappers (`PerfilDados/Transacoes/Assinatura/Seguranca.tsx`):
-  - `pb-8` → `pb-24` (folga para área segura iOS + bottom nav)
-  - `max-w-lg mx-auto` → `max-w-xl mx-auto` (um pouco mais largo em tablets)
-- Adicionar `overscroll-contain` no `ScrollArea` para evitar pull-to-refresh acidental
-- Padronizar título do header `text-lg font-semibold` (já está)
+- **Sem migration**: nenhum campo novo no banco. Apenas reclassificação no client.
+- **Compatibilidade**: o tipo atual `entrada_premio` (único existente) cai corretamente em "Prêmio". Tipos futuros (`compra`, `saida`) já estão mapeados.
+- **Saldo disponível**: representa o "líquido do período filtrado" — não o saldo absoluto da carteira (que pode existir noutra fonte). Mantém coerência com o que o filtro de período exibe.
+- **Responsividade**: grid de 3 colunas funciona bem em 390px (cada cell ~110px). Texto reduzido para text-[9px]/text-xs evita quebra.
 
 ---
 
@@ -178,76 +187,13 @@ const link = isPaid
 
 | Arquivo | Ação |
 |---|---|
-| `src/components/perfil/PerfilMiniHero.tsx` | **Novo** — hero compacto compartilhado |
-| `src/components/perfil/TransacoesTab.tsx` | **Reescrever** — saldo, filtros, agrupamento por data, rows redesenhadas |
-| `src/components/perfil/AssinaturaTab.tsx` | **Reescrever** — card destaque, dias restantes, histórico curto |
-| `src/components/perfil/SegurancaTab.tsx` | **Reescrever** — smart link grupo, drawer mobile p/ senha, confirm logout |
-| `src/pages/PerfilTransacoes.tsx` | **Editar** — adicionar `<PerfilMiniHero />` |
-| `src/pages/PerfilAssinatura.tsx` | **Editar** — adicionar `<PerfilMiniHero />` |
-| `src/pages/PerfilSeguranca.tsx` | **Editar** — adicionar `<PerfilMiniHero />` |
-| `src/pages/Ajuda.tsx` | **Deletar** |
-| `src/pages/AjudaDetalhes.tsx` | **Deletar** |
-| `src/components/ajuda/AjudaTemplate.tsx` | **Deletar** |
-| `src/App.tsx` | **Editar** — remover imports e rotas Ajuda |
-| `src/components/layout/AppHeader.tsx` | **Editar** — remover item "Ajuda" do dropdown |
-| `src/components/layout/MobileMenuSheet.tsx` | **Editar** — remover link "Ajuda" se existir |
-
----
-
-## Detalhes técnicos sensíveis
-
-**Smart link Grupo WhatsApp (SegurancaTab):**
-```tsx
-import { usePermissionContext } from "@/contexts/PermissionContext";
-
-const { plan } = usePermissionContext();
-const isTrial = plan?.slug === 'trial' || plan?.slug === 'teste-gratis-3-dias';
-const isPaid = !!plan && !isTrial;
-const groupLink = isPaid 
-  ? "https://www.palpitetech.com.br/g/grupo-vip-assinantes" 
-  : "https://www.palpitetech.com.br/g/entrar-sala-secreta";
-const groupLabel = isPaid ? "Grupo VIP Assinantes" : "Sala Secreta";
-```
-
-**Agrupamento por data (TransacoesTab):**
-```tsx
-import { isToday, isYesterday, format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-
-function groupByDay(items) {
-  return items.reduce((acc, item) => {
-    const d = new Date(item.created_at);
-    const key = isToday(d) ? "Hoje" : isYesterday(d) ? "Ontem" : format(d, "dd 'de' MMM", { locale: ptBR });
-    (acc[key] ||= []).push(item);
-    return acc;
-  }, {} as Record<string, typeof items>);
-}
-```
-
-**Dias restantes (AssinaturaTab):**
-```tsx
-import { differenceInDays } from "date-fns";
-const dias = subscription?.validade ? differenceInDays(new Date(subscription.validade), new Date()) : null;
-const diasLabel = dias === null ? null
-  : dias < 0 ? `Vencido há ${Math.abs(dias)} dia(s)`
-  : dias === 0 ? "Vence hoje"
-  : `Faltam ${dias} dia(s)`;
-```
-
-**Drawer/Dialog responsivo (TrocarSenha):** mesmo padrão do `EditarNomeDrawer.tsx` já existente.
-
----
+| `src/components/perfil/TransacoesTab.tsx` | **Editar** — refazer cálculo (3 buckets + saldo), trocar header com grid de 3 métricas, adicionar `MetricCell` interno e import `ShoppingCart` |
 
 ## Fora de escopo
-- Mexer na página `/convites` (já tem layout próprio que funciona — apenas mantida no menu)
-- Avatar editável nas 3 páginas secundárias (só `PerfilDados` permite editar)
-- Migration para limpar tabela `help_content`
-- Mudar a aba "Transações" interna do `/perfil` (compartilha o componente — propaga automaticamente)
+- Criar novos tipos de movimentação no banco
+- Mexer em `bolao_cotas` ou `bolao_resgates` (continuam exibidos nas tabs Cotas/Prêmios como hoje)
+- Mudar o filtro de período ou as tabs
 
 ## Resultado esperado
-- 4 páginas do perfil com **identidade visual coesa** (mini hero + cards arredondados + tipografia sênior)
-- Transações **escaneável**: saldo no topo, filtros rápidos, agrupamento por dia, valores com cor
-- Assinatura **mais clara**: status visual, dias restantes, ações priorizadas
-- Segurança **funcional**: Grupo WhatsApp respeita plano (corrige bug atual), troca de senha em drawer mobile, logout protegido
-- **Ajuda removida** sem rotas órfãs nem links quebrados
+Header de saldo com 3 informações claras lado a lado (Compra · Saída · Prêmio), e linha de composição "X comprado · Y em prêmios" abaixo do saldo grande, dando visão financeira completa em um único bloco compacto.
 
