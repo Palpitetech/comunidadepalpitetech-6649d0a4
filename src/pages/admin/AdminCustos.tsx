@@ -68,6 +68,7 @@ export default function AdminCustos() {
   const [filterUser, setFilterUser] = useState<string>("all");
   const [editingRate, setEditingRate] = useState(false);
   const [newRate, setNewRate] = useState("");
+  const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
 
   const { data: settings } = useAdminSettings();
   const { data: logs, isLoading: logsLoading, refetch } = useAiUsageLogs({
