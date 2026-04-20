@@ -21,7 +21,6 @@ import { ptBR } from "date-fns/locale";
 
 const FUNCTION_LABELS: Record<string, string> = {
   // Automáticas (bots / sistema)
-  "generate-roundtable-post": "Post Automático Mesa Redonda — bot cria post sozinho",
   "generate-guide-post": "Post Analítico Comunidade — bot cria post de análise (cron)",
   "bot-interact-with-post": "Comentário Automático — bot comenta em post novo",
   "bot-reply-user": "Resposta de Bot — bot responde comentário do usuário em post",
@@ -46,7 +45,6 @@ const FUNCTION_LABELS: Record<string, string> = {
 // Categoria visual por edge function (badge na aba Por Bot)
 type CategoriaBot = { label: string; classes: string };
 const FUNCTION_CATEGORIES: Record<string, CategoriaBot> = {
-  "generate-roundtable-post": { label: "Post", classes: "text-blue-600 border-blue-300" },
   "generate-guide-post": { label: "Post", classes: "text-blue-600 border-blue-300" },
   "sync-lotofacil": { label: "Post", classes: "text-blue-600 border-blue-300" },
   "bot-interact-with-post": { label: "Comentário Auto", classes: "text-purple-600 border-purple-300" },

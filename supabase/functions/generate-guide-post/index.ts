@@ -338,6 +338,24 @@ SEÇÕES SUGERIDAS:
 ${FORMATO_OBRIGATORIO}`;
   }
 
+  if (tipoPost === "estrategia") {
+    return `
+CONTEXTO DO POST: Análise de ESTRATÉGIA da Lotofácil.
+FOCO PRINCIPAL:
+- Síntese dos principais sinais (ciclo, quentes/frias, atrasos, duplas)
+- Sugestão de COMO MONTAR um jogo equilibrado para o próximo concurso
+- Equilíbrio par/ímpar e moldura/miolo recomendado
+- Dezenas que vale a pena considerar fixar
+- Reforçar que é orientação, não certeza
+
+SEÇÕES SUGERIDAS:
+🎯 Leitura do Momento → resumo dos sinais
+💡 Como Montar o Jogo → orientação prática
+⚖️ Equilíbrio Recomendado → par/ímpar + moldura
+🔥 Para Considerar → dezenas em destaque
+${FORMATO_OBRIGATORIO}`;
+  }
+
   if (tipoPost === "pos_sorteio") {
     return `
 CONTEXTO DO POST: Acabou de sair o resultado do concurso (sorteio das 20h). Este é um post de ANÁLISE PÓS-SORTEIO.
@@ -405,6 +423,16 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ message: "Nenhum guia ativo com permissão para criar posts" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 🔒 Trava de segurança: só Palpite Tech (autor de resultados) pode postar na comunidade
+    const PALPITE_TECH_ID = "2a827e7d-a3d1-416e-8552-e830dc7e633c";
+    if (guide.id !== PALPITE_TECH_ID && !guide.is_result_author) {
+      console.warn(`[generate-guide-post] 🚫 Bot não autorizado tentou postar: ${guide.perfis?.nome} (${guide.id})`);
+      return new Response(
+        JSON.stringify({ error: "Apenas o autor oficial pode criar postagens na comunidade" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
