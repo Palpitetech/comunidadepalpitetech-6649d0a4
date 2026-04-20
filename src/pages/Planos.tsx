@@ -120,7 +120,7 @@ export default function Planos() {
         <title>Planos e Assinaturas | Palpite Tech</title>
         <meta name="description" content="Escolha o melhor plano do Palpite Tech para ter acesso a ferramentas exclusivas de análise de loterias." />
       </Helmet>
-      <div className="py-8 max-w-4xl mx-auto px-4">
+      <div className="py-8 max-w-6xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-4 py-1.5 mb-4">
@@ -153,24 +153,27 @@ export default function Planos() {
             backgroundColor: "hsl(var(--primary) / 0.04)",
           }}
         >
-        <div className="grid gap-5 md:grid-cols-3 items-stretch">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
           {paidPlans.map((plan) => {
             const isCurrent = isCurrentPlan(plan.id);
             const isVip = plan.slug === "plano-anual-vip";
             const isAnual = plan.slug === "anual";
+            const isGrupoVip = plan.slug === "grupo-vip-lotofacil";
             const inst = INSTALLMENTS[plan.slug];
             const activeFeatures = Object.values(plan.features).filter(Boolean).length;
 
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-2xl border-2 bg-card flex flex-col overflow-hidden transition-all duration-200 min-h-[520px] ${
+                className={`relative rounded-2xl border-2 bg-card flex flex-col overflow-hidden transition-all duration-200 min-h-[480px] ${
                   isCurrent
                     ? "border-primary shadow-lg"
                     : isVip
                     ? "border-amber-400 shadow-xl"
                     : isAnual
                     ? "border-accent/60 shadow-md"
+                    : isGrupoVip
+                    ? "border-emerald-400/60 shadow-md"
                     : "border-border hover:shadow-md hover:border-primary/30"
                 }`}
               >
@@ -186,6 +189,10 @@ export default function Planos() {
                 ) : isAnual ? (
                   <div className="bg-accent text-accent-foreground text-center py-1.5 text-xs font-bold uppercase tracking-widest">
                     Melhor custo-benefício
+                  </div>
+                ) : isGrupoVip ? (
+                  <div className="bg-emerald-500 text-white text-center py-1.5 text-xs font-bold uppercase tracking-widest">
+                    📱 Mensal · Grupo
                   </div>
                 ) : (
                   <div className="bg-secondary text-secondary-foreground text-center py-1.5 text-xs font-bold uppercase tracking-widest">
