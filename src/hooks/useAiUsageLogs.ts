@@ -159,11 +159,17 @@ export function computeSummary(logs: AiUsageLog[]): UsageSummary {
 
     // By ferramenta (edge function)
     if (!summary.byFerramenta[log.edge_function]) {
-      summary.byFerramenta[log.edge_function] = { costUsd: 0, tokens: 0, count: 0 };
+      summary.byFerramenta[log.edge_function] = {
+        costUsd: 0, tokens: 0, tokensIn: 0, tokensOut: 0, count: 0, hasUser: false, hasAuto: false,
+      };
     }
     summary.byFerramenta[log.edge_function].costUsd += cost;
     summary.byFerramenta[log.edge_function].tokens += tokens;
+    summary.byFerramenta[log.edge_function].tokensIn += log.prompt_tokens || 0;
+    summary.byFerramenta[log.edge_function].tokensOut += log.completion_tokens || 0;
     summary.byFerramenta[log.edge_function].count++;
+    if (log.user_id) summary.byFerramenta[log.edge_function].hasUser = true;
+    else summary.byFerramenta[log.edge_function].hasAuto = true;
 
     // By usuario (only when user_id present)
     if (log.user_id) {
