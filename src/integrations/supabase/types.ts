@@ -3311,6 +3311,7 @@ export type Database = {
           mes_ref: string | null
           origem: string | null
           origem_id: string | null
+          periodo: string | null
           valor: number | null
         }
         Relationships: []
