@@ -421,6 +421,15 @@ export default function AdminUsuarios() {
                   {isPaidActive(user) && <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Plano ativo" />}
                 </div>
                 <p className="text-[11px] text-muted-foreground truncate">{user.email || user.celular || "-"}</p>
+                {(() => {
+                  const info = getValidadeInfo(user.validade_assinatura);
+                  if (!info) return null;
+                  return (
+                    <p className={cn("text-[10px] font-medium truncate", TONE_CLASSES[info.tone])}>
+                      Vence {info.dataFormatada} · {info.label}
+                    </p>
+                  );
+                })()}
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 {getUtmBadge(user.utm_source)}
