@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { DISPOSABLE_DOMAINS, COMMON_TYPOS } from "./disposable-domains.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,12 +47,8 @@ function maskEmail(email: string): string {
   return `${visible}${"*".repeat(Math.max(local.length - 2, 1))}@${domain}`;
 }
 
-const DISPOSABLE_DOMAINS = [
-  "mailinator.com", "tempmail.com", "10minutemail.com", "guerrillamail.com",
-  "yopmail.com", "throwaway.email", "trashmail.com", "fakeinbox.com",
-  "getnada.com", "maildrop.cc", "sharklasers.com", "temp-mail.org",
-  "dispostable.com", "mintemail.com",
-];
+// Lista de descartáveis agora vem de ./disposable-domains.ts (DISPOSABLE_DOMAINS Set ~300+)
+
 
 const KEYBOARD_SEQUENCES = [
   "qwer", "wert", "erty", "rtyu", "tyui", "yuio", "uiop",
@@ -77,37 +74,76 @@ function validateName(nome: string, email: string): string | null {
   return null;
 }
 
-function validateEmail(email: string): string | null {
+type EmailValidationResult =
+  | { ok: true; normalized: string }
+  | { ok: false; reason: string; sugestao?: string };
+
+function validateEmail(email: string): EmailValidationResult {
   const e = email.trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return "formato_invalido";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return { ok: false, reason: "formato_invalido" };
 
   const [local, domain] = e.split("@");
-  if (!local || !domain) return "formato_invalido";
-  if (local.length < 4) return "local_curto";
+  if (!local || !domain) return { ok: false, reason: "formato_invalido" };
+  if (local.length < 4) return { ok: false, reason: "local_curto" };
 
-  // Domínio descartável
-  if (DISPOSABLE_DOMAINS.some((d) => domain === d || domain.endsWith(`.${d}`))) {
-    return "dominio_descartavel";
+  // Typo de provedor grande → sugestão
+  if (COMMON_TYPOS[domain]) {
+    return {
+      ok: false,
+      reason: "typo_detectado",
+      sugestao: `${local}@${COMMON_TYPOS[domain]}`,
+    };
+  }
+
+  // Domínio descartável (Set ~300+)
+  if (DISPOSABLE_DOMAINS.has(domain)) {
+    return { ok: false, reason: "dominio_descartavel" };
+  }
+  // Subdomínio de descartável (ex: foo.mailinator.com)
+  const parts = domain.split(".");
+  for (let i = 1; i < parts.length; i++) {
+    const candidate = parts.slice(i).join(".");
+    if (DISPOSABLE_DOMAINS.has(candidate)) {
+      return { ok: false, reason: "dominio_descartavel" };
+    }
   }
 
   // Repetição da mesma letra 3+ vezes (aaa, bbb)
-  if (/(.)\1{2,}/.test(local)) return "padrao_bot_repeticao";
+  if (/(.)\1{2,}/.test(local)) return { ok: false, reason: "padrao_bot_repeticao" };
 
   // Sequência de teclado
   for (const seq of KEYBOARD_SEQUENCES) {
-    if (local.includes(seq)) return "padrao_bot_teclado";
+    if (local.includes(seq)) return { ok: false, reason: "padrao_bot_teclado" };
   }
 
-  // 4+ consoantes seguidas sem vogal (jkhjk, gdfh, kjaslkdj)
-  if (/[bcdfghjklmnpqrstvwxyz]{4,}/i.test(local)) return "padrao_bot_consoantes";
+  // 4+ consoantes seguidas sem vogal
+  if (/[bcdfghjklmnpqrstvwxyz]{4,}/i.test(local)) return { ok: false, reason: "padrao_bot_consoantes" };
 
-  // Razão consoantes/vogais muito alta (ex: "kjslk" — 0 vogais)
+  // Sem nenhuma vogal
   const vowels = (local.match(/[aeiou]/gi) || []).length;
   const letters = (local.match(/[a-z]/gi) || []).length;
-  if (letters >= 5 && vowels === 0) return "padrao_bot_sem_vogal";
+  if (letters >= 5 && vowels === 0) return { ok: false, reason: "padrao_bot_sem_vogal" };
 
-  return null;
+  return { ok: true, normalized: e };
 }
+
+// MX lookup: domínio precisa aceitar email
+async function dominioTemMX(domain: string): Promise<boolean> {
+  try {
+    // Timeout de 3s para não travar a request
+    const ac = new AbortController();
+    const timeout = setTimeout(() => ac.abort(), 3000);
+    const records = await Deno.resolveDns(domain, "MX", { signal: ac.signal });
+    clearTimeout(timeout);
+    return Array.isArray(records) && records.length > 0;
+  } catch (_e) {
+    return false;
+  }
+}
+
+// TODO (Camada 4): Plugar SMTP probe (Hunter.io / Abstract API) aqui se spam continuar.
+// Adicionar secret HUNTER_API_KEY e checar resposta antes de criar perfil.
+
 
 function validateCelular(celular: string): { ok: boolean; normalized?: string; reason?: string } {
   const digits = celular.replace(/\D/g, "");
@@ -235,15 +271,34 @@ serve(async (req) => {
       return json({ error: "Nome, email e celular são obrigatórios" }, 400);
     }
 
-    // 2. Email
-    const emailReason = validateEmail(email);
-    if (emailReason) {
-      await logBloqueio(supabaseAdmin, "email_invalido", emailReason, { nome, email, celular }, ip, webhook.name);
-      if (emailReason === "formato_invalido" || emailReason === "local_curto" || emailReason === "dominio_descartavel") {
+    // 2. Email — sintaxe + descartável + typo
+    const emailCheck = validateEmail(email);
+    if (!emailCheck.ok) {
+      await logBloqueio(supabaseAdmin, "email_invalido", emailCheck.reason, { nome, email, celular }, ip, webhook.name);
+
+      if (emailCheck.reason === "typo_detectado" && emailCheck.sugestao) {
+        return json({
+          error: `Você quis dizer ${emailCheck.sugestao}?`,
+          sugestao: emailCheck.sugestao,
+        }, 400);
+      }
+      if (emailCheck.reason === "dominio_descartavel") {
+        return json({ error: "Use um email pessoal permanente" }, 400);
+      }
+      if (emailCheck.reason === "formato_invalido" || emailCheck.reason === "local_curto") {
         return json({ error: "Email inválido. Informe um email real" }, 400);
       }
       return json({ error: "Cadastro suspeito detectado" }, 400);
     }
+
+    // 2b. MX do domínio precisa existir
+    const emailDomain = emailCheck.normalized.split("@")[1];
+    const temMX = await dominioTemMX(emailDomain);
+    if (!temMX) {
+      await logBloqueio(supabaseAdmin, "mx_inexistente", `domínio ${emailDomain} sem MX`, { nome, email, celular }, ip, webhook.name);
+      return json({ error: "Domínio do email não recebe correio. Verifique o endereço." }, 400);
+    }
+
 
     // 3. Nome
     const nameReason = validateName(nome, email);
@@ -289,10 +344,11 @@ serve(async (req) => {
     if (!userId) {
       const randomPassword = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
 
+      // email_confirm: false → email_verificado começa em false; trial ativa só após clique no magic link
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email: emailLower,
         password: randomPassword,
-        email_confirm: true,
+        email_confirm: false,
         user_metadata: {
           nome: nome.trim(),
           origem: source || "webhook",
@@ -306,13 +362,50 @@ serve(async (req) => {
       userId = newUser.user.id;
       isNew = true;
 
+      // Aguarda trigger handle_new_user popular o perfil
+      await new Promise((r) => setTimeout(r, 600));
+
+      // Reverte trial automático: lead fica PENDENTE até confirmar email.
+      // O trigger ativar_trial_pos_confirmacao reativa quando email_verificado vira true.
       await supabaseAdmin
         .from("perfis")
-        .update({ celular: normalizedCelular })
+        .update({
+          celular: normalizedCelular,
+          email_verificado: false,
+          plan_id: null,
+          status_assinatura: "pendente",
+          validade_assinatura: null,
+          trial_used: false,
+        })
         .eq("id", userId);
+
+      // Remove role premium (handle_new_user adiciona) — só ganha após confirmar
+      await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId)
+        .eq("role", "premium");
+
+      // Loga criação pendente
+      await supabaseAdmin.from("system_events").insert({
+        event_type: "email_pendente_criado",
+        description: `Lead criado aguardando confirmação de email: ${maskEmail(emailLower)}`,
+        source: "receive-lead",
+        status: "pending",
+        metadata: {
+          user_id: userId,
+          email_mascarado: maskEmail(emailLower),
+          ip,
+          webhook_name: webhook.name,
+        },
+      });
     }
 
     const newTags = ["lead", webhook.source_tag, ...(payloadTags || [])];
+    // Se é novo lead, marcar como pendente de confirmação
+    if (isNew) {
+      newTags.push("email_pendente");
+    }
 
     if (isNew) {
       await new Promise((r) => setTimeout(r, 1000));
