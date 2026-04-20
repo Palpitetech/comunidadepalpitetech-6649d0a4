@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAiUsageLogs, useAdminSettings, computeSummary, type Origem } from "@/hooks/useAiUsageLogs";
+import { useLastActivity } from "@/hooks/useLastActivity";
+import { EmptyTabState } from "@/components/admin/EmptyTabState";
 import { useQueryClient } from "@tanstack/react-query";
 import { DollarSign, Coins, Bot, Wrench, Users, Settings, Loader2, RefreshCw, Cpu, UserCheck, Info, ChevronRight, ChevronDown } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
