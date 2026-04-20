@@ -253,7 +253,7 @@ export function AdminSidebar() {
     exact ? currentPath === url : currentPath === url || currentPath.startsWith(url + "/");
 
   return (
-    <TooltipProvider delayDuration={200}>
+    <TooltipProvider delayDuration={100}>
       <Sidebar collapsible="icon" className="border-r border-border">
         <SidebarContent className="bg-card">
           {/* Main Nav */}
@@ -277,6 +277,8 @@ export function AdminSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
 
+          {collapsed && <div className="h-px bg-sidebar-border mx-2 my-1" />}
+
           <NavGroup
             label="Financeiro"
             icon={DollarSign}
@@ -285,6 +287,8 @@ export function AdminSidebar() {
             isActive={isActive}
           />
 
+          {collapsed && <div className="h-px bg-sidebar-border mx-2 my-1" />}
+
           <NavGroup
             label="Bolões"
             icon={Ticket}
@@ -292,6 +296,8 @@ export function AdminSidebar() {
             collapsed={collapsed}
             isActive={isActive}
           />
+
+          {collapsed && <div className="h-px bg-sidebar-border mx-2 my-1" />}
 
           <NavGroup
             label="Gravação"
