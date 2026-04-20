@@ -93,6 +93,7 @@ export function AdminSidebar() {
 
   const boloesOpen = boloesItems.some((i) => isActive(i.url));
   const gravacaoOpen = gravacaoItems.some((i) => isActive(i.url));
+  const financeiroOpen = financeiroItems.some((i) => isActive(i.url));
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
