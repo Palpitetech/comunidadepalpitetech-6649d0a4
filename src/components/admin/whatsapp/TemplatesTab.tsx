@@ -656,6 +656,39 @@ export function TemplatesTab() {
                     {(slots[activeSlot - 1]?.content ?? "").length}/2000
                   </span>
                 </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateVariants}
+                  disabled={!mainHasContent || generatingVariants}
+                  className={cn(
+                    "w-full gap-1.5 transition-colors",
+                    !mainHasContent && "opacity-50",
+                    mainHasContent && !hasGenerated &&
+                      "border-amber-500/60 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 dark:text-amber-300 animate-pulse",
+                    hasGenerated &&
+                      "border-emerald-500/60 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300"
+                  )}
+                  title={
+                    !mainHasContent
+                      ? "Escreva a mensagem principal primeiro"
+                      : hasGenerated
+                      ? "Regenerar as 9 variações com IA"
+                      : "Gerar 9 variações automáticas com IA"
+                  }
+                >
+                  {generatingVariants ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                  {generatingVariants
+                    ? "Gerando 9 variações..."
+                    : hasGenerated
+                    ? "Regenerar variações com IA"
+                    : "Gerar variações com IA"}
+                </Button>
                 {activeSlot !== 1 && slots[activeSlot - 1]?.exists && (
                   <div className="flex gap-2 pt-1">
                     <Button
