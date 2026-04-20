@@ -14,8 +14,42 @@ import { TagFilterPopover } from "@/components/admin/TagFilterPopover";
 import { cn } from "@/lib/utils";
 
 import type { Plan, PlanFeatures, ExtendedProfile } from "@/types/plans";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+const getValidadeInfo = (validade: string | null | undefined) => {
+  if (!validade) return null;
+  const date = new Date(validade);
+  if (isNaN(date.getTime())) return null;
+  const dias = differenceInDays(date, new Date());
+  const dataFormatada = format(date, "dd/MM/yyyy", { locale: ptBR });
+
+  let label: string;
+  let tone: "neutral" | "warning" | "danger";
+
+  if (dias < 0) {
+    const abs = Math.abs(dias);
+    label = `Há ${abs} dia${abs !== 1 ? "s" : ""}`;
+    tone = "danger";
+  } else if (dias === 0) {
+    label = "Hoje";
+    tone = "warning";
+  } else if (dias <= 7) {
+    label = `Em ${dias} dia${dias !== 1 ? "s" : ""}`;
+    tone = "warning";
+  } else {
+    label = `Em ${dias} dias`;
+    tone = "neutral";
+  }
+
+  return { dataFormatada, label, tone };
+};
+
+const TONE_CLASSES: Record<"neutral" | "warning" | "danger", string> = {
+  neutral: "text-muted-foreground",
+  warning: "text-amber-600 dark:text-amber-400",
+  danger: "text-destructive",
+};
 
 interface UserWithPlan extends ExtendedProfile {
   plan?: Plan | null;
