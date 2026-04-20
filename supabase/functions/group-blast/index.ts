@@ -271,6 +271,7 @@ async function handleSend(
 
         if (latestPost) {
           messageContent = await generateAIMessage(
+            supabase,
             LOVABLE_API_KEY,
             BASE_URL,
             latestPost
@@ -357,6 +358,7 @@ async function handleSend(
 
 // ─── AI MESSAGE GENERATION ──────────────────────────────
 async function generateAIMessage(
+  supabase: any,
   apiKey: string,
   baseUrl: string,
   post: { id: string; slug?: string | null; titulo: string | null; conteudo: string; tipo: string | null }
@@ -391,6 +393,7 @@ Regras obrigatórias:
 Título do post: ${post.titulo ?? "Sem título"}
 Prévia: ${(post.conteudo ?? "").slice(0, 500)}`;
 
+  const model = "google/gemini-2.5-flash-lite";
   try {
     const aiRes = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -401,7 +404,7 @@ Prévia: ${(post.conteudo ?? "").slice(0, 500)}`;
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash-lite",
+          model,
           messages: [
             {
               role: "system",
@@ -423,6 +426,22 @@ Prévia: ${(post.conteudo ?? "").slice(0, 500)}`;
     }
 
     const aiData = await aiRes.json();
+    const usage = aiData?.usage;
+    if (usage) {
+      const pt = usage.prompt_tokens || 0;
+      const ct = usage.completion_tokens || 0;
+      const cost = (pt / 1e6) * 0.075 + (ct / 1e6) * 0.30;
+      supabase.from("ai_usage_logs").insert({
+        edge_function: "group-blast-manual-ai-message",
+        action_type: "msg_post_para_grupo_whatsapp_manual",
+        prompt_tokens: pt,
+        completion_tokens: ct,
+        total_tokens: usage.total_tokens || (pt + ct),
+        model,
+        cost_usd: cost,
+        metadata: { post_id: post.id },
+      }).then(() => {}).catch((e: any) => console.error("Erro log IA:", e));
+    }
     const content = aiData?.choices?.[0]?.message?.content?.trim();
     return content || null;
   } catch (err: any) {
@@ -714,6 +733,22 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos do
     }
 
     const aiData = await aiRes.json();
+    const usage = aiData?.usage;
+    if (usage) {
+      const pt = usage.prompt_tokens || 0;
+      const ct = usage.completion_tokens || 0;
+      const cost = (pt / 1e6) * 0.15 + (ct / 1e6) * 0.60;
+      supabase.from("ai_usage_logs").insert({
+        edge_function: "group-blast-manual-palpite",
+        action_type: "palpite_para_grupo_whatsapp_manual",
+        prompt_tokens: pt,
+        completion_tokens: ct,
+        total_tokens: usage.total_tokens || (pt + ct),
+        model: "google/gemini-3-flash-preview",
+        cost_usd: cost,
+        metadata: {},
+      }).then(() => {}).catch((e: any) => console.error("Erro log IA:", e));
+    }
     const toolCall = aiData?.choices?.[0]?.message?.tool_calls?.[0];
 
     if (!toolCall?.function?.arguments) {

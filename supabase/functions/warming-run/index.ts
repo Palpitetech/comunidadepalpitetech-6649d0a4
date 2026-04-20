@@ -146,6 +146,29 @@ REGRAS:
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content ?? "";
 
+  // Log de uso de IA
+  const usage = data.usage;
+  if (usage) {
+    try {
+      const pt = usage.prompt_tokens || 0;
+      const ct = usage.completion_tokens || 0;
+      const cost = (pt / 1e6) * 0.075 + (ct / 1e6) * 0.30;
+      const sb = getSupabase();
+      sb.from("ai_usage_logs").insert({
+        edge_function: "warming-run",
+        action_type: "aquecimento_chip",
+        prompt_tokens: pt,
+        completion_tokens: ct,
+        total_tokens: usage.total_tokens || (pt + ct),
+        model: "google/gemini-2.5-flash-lite",
+        cost_usd: cost,
+        metadata: { theme, count },
+      }).then(() => {}).catch((e: any) => console.error("Erro log IA:", e));
+    } catch (e) {
+      console.error("[warming-run] log fail:", e);
+    }
+  }
+
   const objMatch = content.match(/\{[\s\S]*"mensagens"[\s\S]*\}/);
   let msgs: { remetente: string; texto: string }[];
 

@@ -484,6 +484,27 @@ Responda APENAS no formato JSON:
 
     const aiData = await aiResponse.json();
     const content = aiData.choices?.[0]?.message?.content;
+    const usage = aiData.usage;
+    const aiModel = "google/gemini-3-flash-preview";
+
+    // Log de uso de IA
+    if (usage) {
+      const promptTokens = usage.prompt_tokens || 0;
+      const completionTokens = usage.completion_tokens || 0;
+      const costUsd = (promptTokens / 1e6) * 0.15 + (completionTokens / 1e6) * 0.60;
+      supabaseAdmin.from("ai_usage_logs").insert({
+        bot_persona_id: guide.id,
+        bot_name: guide.perfis?.nome || null,
+        edge_function: "generate-guide-post",
+        action_type: "post_analitico_comunidade",
+        prompt_tokens: promptTokens,
+        completion_tokens: completionTokens,
+        total_tokens: usage.total_tokens || (promptTokens + completionTokens),
+        model: aiModel,
+        cost_usd: costUsd,
+        metadata: { tipo_post: tipoPost },
+      }).then(() => {}).catch((e: any) => console.error("Erro log IA:", e));
+    }
 
     if (!content) {
       throw new Error("Resposta da IA vazia");

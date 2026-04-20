@@ -20,6 +20,8 @@ export interface AiUsageLog {
   // Enriched fields
   user_name?: string | null;
   user_email?: string | null;
+  bot_cargo?: string | null;
+  bot_resolved_name?: string | null;
   origem?: Origem;
 }
 
@@ -44,7 +46,15 @@ export interface UsageSummary {
     lastActivity: string | null;
     byFerramenta: Record<string, { count: number; tokens: number; costUsd: number }>;
   }>;
-  byBot: Record<string, { name: string; costUsd: number; tokens: number; count: number }>;
+  byBot: Record<string, {
+    name: string;
+    cargo: string | null;
+    costUsd: number;
+    tokens: number;
+    count: number;
+    lastActivity: string | null;
+    byFerramenta: Record<string, { count: number; tokens: number; costUsd: number }>;
+  }>;
 }
 
 export function useAdminSettings() {
@@ -110,8 +120,12 @@ export function useAiUsageLogs(filters?: {
       const userIds = Array.from(
         new Set(logs.map((l) => l.user_id).filter((id): id is string => !!id))
       );
+      const botIds = Array.from(
+        new Set(logs.map((l) => l.bot_persona_id).filter((id): id is string => !!id))
+      );
 
       let perfilMap = new Map<string, { nome: string | null; email: string | null }>();
+      let botMap = new Map<string, { nome: string | null; cargo: string | null }>();
 
       if (userIds.length > 0) {
         const { data: perfis } = await supabase
@@ -123,13 +137,29 @@ export function useAiUsageLogs(filters?: {
         }
       }
 
+      if (botIds.length > 0) {
+        const { data: bots } = await supabase
+          .from("guide_personas")
+          .select("id, cargo, perfis(nome)")
+          .in("id", botIds);
+        for (const b of (bots || []) as any[]) {
+          botMap.set(b.id, {
+            nome: b.perfis?.nome || null,
+            cargo: b.cargo || null,
+          });
+        }
+      }
+
       // Enrich
       return logs.map((log) => {
         const perfil = log.user_id ? perfilMap.get(log.user_id) : null;
+        const bot = log.bot_persona_id ? botMap.get(log.bot_persona_id) : null;
         return {
           ...log,
           user_name: perfil?.nome || null,
           user_email: perfil?.email || null,
+          bot_resolved_name: bot?.nome || log.bot_name || null,
+          bot_cargo: bot?.cargo || null,
           origem: (log.user_id ? "usuario" : "automatico") as Origem,
         };
       });
@@ -211,15 +241,28 @@ export function computeSummary(logs: AiUsageLog[]): UsageSummary {
     if (log.bot_persona_id) {
       if (!summary.byBot[log.bot_persona_id]) {
         summary.byBot[log.bot_persona_id] = {
-          name: log.bot_name || "Bot",
+          name: log.bot_resolved_name || log.bot_name || "Bot",
+          cargo: log.bot_cargo || null,
           costUsd: 0,
           tokens: 0,
           count: 0,
+          lastActivity: null,
+          byFerramenta: {},
         };
       }
-      summary.byBot[log.bot_persona_id].costUsd += cost;
-      summary.byBot[log.bot_persona_id].tokens += tokens;
-      summary.byBot[log.bot_persona_id].count++;
+      const b = summary.byBot[log.bot_persona_id];
+      b.costUsd += cost;
+      b.tokens += tokens;
+      b.count++;
+      if (!b.lastActivity || log.created_at > b.lastActivity) {
+        b.lastActivity = log.created_at;
+      }
+      if (!b.byFerramenta[log.edge_function]) {
+        b.byFerramenta[log.edge_function] = { count: 0, tokens: 0, costUsd: 0 };
+      }
+      b.byFerramenta[log.edge_function].count++;
+      b.byFerramenta[log.edge_function].tokens += tokens;
+      b.byFerramenta[log.edge_function].costUsd += cost;
     }
   }
 
