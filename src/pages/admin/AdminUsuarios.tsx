@@ -555,6 +555,7 @@ export default function AdminUsuarios() {
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Plano</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground text-center">Verificado</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground text-center">Ativo</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Próx. vencimento</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Origem</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Tags</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Cadastro</TableHead>
@@ -620,6 +621,18 @@ export default function AdminUsuarios() {
                     )}
                   </TableCell>
                   <TableCell className="py-2.5">
+                    {(() => {
+                      const info = getValidadeInfo(user.validade_assinatura);
+                      if (!info) return <span className="text-xs text-muted-foreground/60">—</span>;
+                      return (
+                        <div className="flex flex-col leading-tight">
+                          <span className="text-xs tabular-nums text-foreground">{info.dataFormatada}</span>
+                          <span className={cn("text-[10px] font-medium", TONE_CLASSES[info.tone])}>{info.label}</span>
+                        </div>
+                      );
+                    })()}
+                  </TableCell>
+                  <TableCell className="py-2.5">
                     {getUtmBadge(user.utm_source) || <span className="text-[10px] text-muted-foreground">—</span>}
                   </TableCell>
                   <TableCell className="py-2.5">
@@ -646,7 +659,7 @@ export default function AdminUsuarios() {
               ))}
               {filteredUsers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-16 text-sm text-muted-foreground">
+                  <TableCell colSpan={11} className="text-center py-16 text-sm text-muted-foreground">
                     {searchTerm ? "Nenhum usuário encontrado" : "Nenhum usuário cadastrado"}
                   </TableCell>
                 </TableRow>
