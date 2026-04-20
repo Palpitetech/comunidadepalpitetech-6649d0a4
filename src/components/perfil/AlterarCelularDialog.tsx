@@ -108,11 +108,12 @@ export function AlterarCelularDialog({ celularAtual, onSuccess, trigger }: Alter
       if (error) throw error;
       if (!data.sucesso) throw new Error(data.erro);
 
-      // Atualizar celular no perfil
-      const numeros = novoCelular.replace(/\D/g, "");
+      // Atualizar celular no perfil (salva normalizado com prefixo 55 em ambos campos)
+      const validation = validateCelularBR(novoCelular);
+      const normalized = validation.normalized!;
       const { error: updateError } = await supabase
         .from("perfis")
-        .update({ celular: numeros, celular_verificado: true })
+        .update({ celular: normalized, whatsapp: normalized, celular_verificado: true })
         .eq("id", user?.id);
 
       if (updateError) throw updateError;
