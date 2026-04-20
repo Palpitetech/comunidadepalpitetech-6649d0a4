@@ -38,6 +38,55 @@ function resolveTemplate(
   return result;
 }
 
+/**
+ * Resolve o texto final da mensagem:
+ * 1. Se há `variant_id` válido → usa o conteúdo da variante.
+ * 2. Senão, se há `template_id` → usa o conteúdo do template.
+ * 3. Senão, se há `variables.mensagem_livre` → usa esse texto.
+ * 4. Caso contrário, retorna string vazia.
+ * Em todos os casos, aplica `resolveTemplate` para substituir variáveis.
+ */
+async function resolveMessageText(
+  supabase: ReturnType<typeof createClient>,
+  item: any
+): Promise<string> {
+  // 1) Variante (prioridade)
+  if (item.variant_id) {
+    const { data: variant } = await supabase
+      .from("message_template_variants")
+      .select("content")
+      .eq("id", item.variant_id)
+      .maybeSingle();
+    if (variant?.content) {
+      return resolveTemplate(variant.content, item.variables ?? {});
+    }
+    // se variante sumiu, cai no fallback do template
+  }
+
+  // 2) Template padrão
+  if (item.template_id) {
+    const { data: tpl } = await supabase
+      .from("message_templates")
+      .select("content")
+      .eq("id", item.template_id)
+      .maybeSingle();
+    if (tpl?.content) {
+      return resolveTemplate(tpl.content, item.variables ?? {});
+    }
+    return "";
+  }
+
+  // 3) Mensagem livre
+  if (item.variables?.mensagem_livre) {
+    return resolveTemplate(
+      String(item.variables.mensagem_livre),
+      item.variables as Record<string, string>
+    );
+  }
+
+  return "";
+}
+
 async function sendMessage(
   supabase: ReturnType<typeof createClient>,
   item: any
