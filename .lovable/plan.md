@@ -1,146 +1,121 @@
 
 
-## Variantes de Mensagem por Template (Anti-bloqueio)
+## Refatorar UX/UI das variantes — seletor inline no dialog do template
 
 ### Objetivo
-Cada template pode ter **até 10 variações de texto**. Quando o gatilho dispara, o sistema escolhe **1 variante por vez em rotação (round robin)** para evitar que o WhatsApp marque mensagens repetidas como spam.
+Eliminar o botão 🔁 separado e o `VariantsDialog`. Trazer a edição das 10 variantes para **dentro do dialog "Novo/Editar Template"**, num seletor horizontal acima do textarea (1 a 10), onde a posição #1 = mensagem principal do template e #2-#10 = variantes.
 
 ---
 
-## Etapa 1 — Schema + Backfill
+### Como o usuário vai ver
 
-### 1.1 Criar tabela `message_template_variants`
-| Coluna | Tipo | Função |
-|---|---|---|
-| `id` | uuid PK | — |
-| `template_id` | uuid FK → message_templates(id) ON DELETE CASCADE | dono |
-| `content` | text | corpo da variante (mesmas variáveis do template) |
-| `position` | int (1-10) | ordem fixa do round robin |
-| `is_active` | bool | pausar variante específica sem apagar |
-| `times_used` | int default 0 | métrica + critério de seleção |
-| `last_used_at` | timestamptz | desempate |
-| `created_at` | timestamptz | — |
-
-**Constraints:** UNIQUE(template_id, position); CHECK(position BETWEEN 1 AND 10).
-
-### 1.2 Adicionar `last_variant_position` em `message_templates`
-- Coluna `int default 0` — guarda última posição usada (para round robin).
-
-### 1.3 Adicionar `variant_id` em `message_queue`
-- FK opcional para rastrear qual variante foi enfileirada (logs/auditoria).
-
-### 1.4 Backfill — sem criar variantes para os atuais
-Conforme pedido. Os 9 templates existentes continuam funcionando exatamente como hoje — quando não houver nenhuma variante ativa, o sistema usa o `content` do próprio template (fallback). Zero quebra.
-
-### 1.5 Verificação da etapa
-- Confirmar via `\d` que as 3 mudanças de schema existem.
-- Confirmar que `SELECT * FROM message_template_variants` retorna 0 rows.
-
----
-
-## Etapa 2 — Função de seleção (Round Robin)
-
-### 2.1 Nova função `pick_template_variant(template_id) RETURNS uuid|null`
-- Busca variantes ativas do template ordenadas por `position`.
-- Retorna o `id` da próxima posição (round robin baseado em `last_variant_position`).
-- Atualiza `times_used`, `last_used_at` na variante e `last_variant_position` no template.
-- Retorna `null` se não houver nenhuma variante ativa (sinal para fallback no `content`).
-
-### 2.2 Atualizar `queue_templates_for_event`
-Substituir o INSERT atual por:
-```sql
-v_variant_id := public.pick_template_variant(v_template.id);
-INSERT INTO message_queue (..., template_id, variant_id, ...)
-VALUES (..., v_template.id, v_variant_id, ...);
+```
+┌─ Novo Template ──────────────────────────────┐
+│ Nome: [______________]                       │
+│ Evento: [▼ Compra aprovada]                  │
+│ Delay: [○]                                   │
+│                                              │
+│ ── Conteúdo da mensagem ──                   │
+│ Variação ativa:                              │
+│ [ 1 ][ 2 ][ 3 ][ + ][ + ][ + ]...[ + ]       │
+│  ↑ ativa  ↑ vazia (clicar pra criar)         │
+│                                              │
+│ [textarea da variação atual...........]      │
+│ {{nome}} {{telefone}} {{email}} {{produto}}  │
+│ [Pausar variação] [Excluir variação]         │
+│                                              │
+│ ── Segmentação ──                            │
+│ ...                                          │
+│ [Salvar Template]                            │
+└──────────────────────────────────────────────┘
 ```
 
-### 2.3 Atualizar `process-queue` edge function
-Em `sendMessage`:
+**Comportamento do seletor:**
+- 10 slots numerados em linha (responsivo: wrap em mobile)
+- Slot #1 sempre existe = `message_templates.content` (mensagem principal)
+- Slots #2-#10 = registros em `message_template_variants`
+- Slot preenchido: número + cor sólida (verde se ativo, âmbar se pausado)
+- Slot vazio: ícone `+` discreto, clique = cria nova variação naquela posição
+- Slot ativo (selecionado): ring/borda destacada
+- Tooltip ao passar mouse: "Enviada N×" + status
+
+---
+
+### Mudanças por arquivo
+
+#### 1. `src/components/admin/whatsapp/TemplatesTab.tsx`
+- **Remover:**
+  - Import e estado de `VariantsDialog` (`variantsDialogTpl`)
+  - Botão 🔁 do card (linha 519-527)
+  - Tag `<VariantsDialog .../>` no fim (linha 576-591)
+  - Import `Repeat` do lucide se não for mais usado no card (mantém para o badge "N/10 variantes")
+- **Manter:** Badge `N/10 variantes` no card (apenas leitura, sem ação)
+- **Refatorar form:** o estado `form.content` deixa de ser o conteúdo único — passa a ser parte de um array virtual de slots. Carregar variantes ao abrir edit; criar/editar/pausar/excluir variantes via mesmas chamadas de Supabase no salvar.
+
+#### 2. Novo componente `src/components/admin/whatsapp/VariantSlotSelector.tsx`
+Componente puro, recebe:
 ```ts
-if (item.variant_id) {
-  const { data: variant } = await supabase
-    .from("message_template_variants")
-    .select("content").eq("id", item.variant_id).single();
-  messageText = variant?.content ?? template.content; // fallback
+interface Props {
+  slots: Array<{ position: number; content: string; isActive: boolean; timesUsed: number; exists: boolean }>;
+  activeSlot: number; // 1-10
+  onSelect: (position: number) => void;
+  onCreate: (position: number) => void;
 }
-messageText = resolveTemplate(messageText, item.variables ?? {});
 ```
+Renderiza fileira de 10 botões. Acessível (aria-label, focus ring), 44px tap-target em mobile.
 
-### 2.4 Verificação da etapa
-- Teste manual: inserir 3 variantes em 1 template, disparar 6 vezes, conferir distribuição (2-2-2).
-- Verificar `last_variant_position` avançando 1→2→3→1.
+#### 3. `src/components/admin/whatsapp/TemplatesTab.tsx` — novo bloco no dialog
+Substituir o atual "Conteúdo da mensagem" (linhas 417-440) por:
+- Label "Conteúdo da mensagem (até 10 variações)"
+- `<VariantSlotSelector />` 
+- Textarea ligado ao slot ativo
+- Botões "Pausar/Ativar variação" e "Excluir variação" — desabilitados quando `activeSlot === 1` (slot principal não pode ser excluído nem pausado individualmente)
+- Contador `{content.length}/2000`
 
----
+#### 4. Salvamento (`handleSave`)
+Lógica passa a ser:
+1. Salva o template (insert/update) com o `content` do slot #1.
+2. Itera slots 2-10:
+   - Slot novo com conteúdo → INSERT em `message_template_variants`
+   - Slot existente alterado → UPDATE
+   - Slot existente esvaziado/marcado pra excluir → DELETE
+3. Refetch templates + counts.
 
-## Etapa 3 — UI Admin (TemplatesTab)
+Tudo em transação lógica (try/catch + toast único).
 
-### 3.1 Botão "Variantes" no card do template
-Novo botão entre "Editar" e "Testar" — mostra contador `(3/10)`.
+#### 5. Carregamento ao editar
+`openEdit(t)` agora:
+- Busca variantes do template (`SELECT ... WHERE template_id = ? ORDER BY position`)
+- Monta array de 10 slots
+- Reseta `activeSlot = 1`
 
-### 3.2 Novo `VariantsDialog` (componente separado)
-Layout limpo dentro de Dialog:
-- **Lista** das variantes existentes com:
-  - Posição (#1, #2…)
-  - Preview do conteúdo (2 linhas truncadas)
-  - Métrica `Enviada N vezes`
-  - Switch ativo/pausado
-  - Botão editar (textarea inline) e excluir
-- **Botão "+ Adicionar variante"** desabilitado quando atinge 10
-- Mesmo painel de inserir variáveis `{{nome}} {{produto}}` etc.
-- Aviso visual: "Use variações que falem o mesmo conteúdo de formas diferentes"
+#### 6. Deletar — `src/components/admin/whatsapp/VariantsDialog.tsx`
+**Excluir o arquivo inteiro.** Não é mais usado.
 
-### 3.3 Indicador visual no card do template
-Badge pequeno: `🔁 3 variantes` quando `> 0`. Quando `= 0`, badge cinza `Sem variantes` (claramente opcional, não bloqueia uso).
-
-### 3.4 Verificação da etapa
-- Criar 2 variantes via UI, testar via "Testar envio" → deve alternar entre as 2.
-- Editar variante → mudança refletida na próxima fila.
-- Excluir variante → round robin pula posição vazia.
-
----
-
-## Etapa 4 — Refatoração e limpeza
-
-### 4.1 Código morto identificado para remover
-- Em `process-queue/index.ts`: lógica condicional `item.template_id ? template : free_message` continua, mas extrair função `resolveMessageText(item)` para ficar legível.
-- Em `TemplatesTab.tsx`: extrair `EVENT_MASKS` + `getEventLabel` para `src/lib/whatsapp-event-labels.ts` (já é usado em outros 2 arquivos — DRY).
-
-### 4.2 Tipos
-- Adicionar `MessageTemplateVariant` em `src/types/whatsapp.ts` (ou criar arquivo se não existir) — único ponto de verdade do shape.
-
-### 4.3 Validação
-- Função SQL `pick_template_variant` com `EXCEPTION WHEN OTHERS` retornando NULL (não quebra fluxo principal).
-- Frontend: limite hard de 10 variantes (botão desabilitado + check no submit).
-
-### 4.4 Verificação final
-1. Template SEM variantes → continua disparando o `content` original ✅
-2. Template COM 1 variante → sempre usa essa variante
-3. Template COM N variantes → distribui igualmente
-4. Pausar 1 variante → round robin pula automaticamente
-5. Excluir template → variantes deletam em cascata
-6. Edge function não quebra se `variant_id` não existir mais (fallback)
+#### 7. Limpeza/refatoração
+- Remover import `VariantsDialog` do TemplatesTab.
+- `MessageTemplateVariant` em `src/types/whatsapp.ts` continua válido (usado pelo novo componente e pelo edge function `process-queue`).
+- Sem mudanças em `whatsapp-event-labels.ts`, `process-queue/index.ts`, schema do banco, ou função `pick_template_variant`. **Backend continua exatamente igual** — só muda a UI de gestão.
+- Verificar via grep se há outros consumers de `VariantsDialog` (não deve haver).
 
 ---
 
-## Resumo dos arquivos editados
+### Validação pós-deploy
+1. Abrir template existente sem variantes → vê só slot #1 preenchido e #2-#10 com `+`.
+2. Clicar em #2 vazio → cria variação, escreve texto, salva → `message_template_variants` recebe row position=2.
+3. Trocar entre slots preserva edições não salvas no estado local.
+4. Excluir variação #3 → próxima abertura mostra slot #3 como vazio (não promove #4 para #3 — posições são fixas, conforme spec original do round robin).
+5. Pausar variação → `is_active=false` no banco; `pick_template_variant` continua pulando (já implementado).
+6. Card no grid mostra `N/10 variantes` correto.
 
-| Arquivo | Ação |
-|---|---|
-| Migração SQL nova | Cria tabela `message_template_variants`, adiciona `last_variant_position` e `variant_id`, RLS, função `pick_template_variant`, atualiza `queue_templates_for_event` |
-| `supabase/functions/process-queue/index.ts` | Resolve `variant_id` antes de enviar |
-| `src/components/admin/whatsapp/TemplatesTab.tsx` | Botão + indicador de variantes; extração de `EVENT_MASKS` |
-| `src/components/admin/whatsapp/VariantsDialog.tsx` | **Novo** — CRUD de variantes |
-| `src/lib/whatsapp-event-labels.ts` | **Novo** — extraído do TemplatesTab |
-| `src/types/whatsapp.ts` | Adiciona `MessageTemplateVariant` |
+### Fora de escopo
+- Nenhuma mudança em backend (RPC, edge functions, migrações).
+- Nenhuma mudança no fluxo de envio / round robin.
+- Sem geração por IA (próximo ciclo).
 
-## Fora de escopo
-- Sem criação automática de variantes para templates antigos (conforme pedido).
-- Sem geração por IA de variações (pode ser próximo ciclo).
-- Sem mudança no `should_send_template` nem nas tags/segmentação.
-- Sem mudanças em disparo manual (`useDisparoManual`) — variantes só se aplicam a Templates de evento.
-
-## Resultado esperado
-- Cada template pode ter de 0 a 10 variantes; round robin natural.
-- Templates atuais continuam funcionando sem nenhuma alteração visual ou de fluxo.
-- Risco de bloqueio do WhatsApp por mensagens idênticas reduzido drasticamente.
+### Resultado
+- 1 único dialog para gerir template + variantes (zero context switch)
+- Botão extra removido do card
+- Componente reutilizável `VariantSlotSelector`
+- `VariantsDialog.tsx` apagado → menos código para manter
 
