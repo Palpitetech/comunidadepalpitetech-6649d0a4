@@ -559,6 +559,32 @@ export default function AdminUsuarios() {
                       {user.plan?.name || "Free"}
                     </span>
                   </TableCell>
+                  <TableCell className="py-2.5 text-center">
+                    {user.email_verificado ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400" title="Email verificado">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <span className="hidden lg:inline">Sim</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400" title="Email não verificado">
+                        <AlertCircle className="h-3.5 w-3.5" />
+                        <span className="hidden lg:inline">Não</span>
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="py-2.5 text-center">
+                    {isPaidActive(user) ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400" title="Plano pago ativo">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <span className="hidden lg:inline">Ativo</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/60" title="Sem plano pago ativo">
+                        <Circle className="h-3 w-3" />
+                        <span className="hidden lg:inline">—</span>
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell className="py-2.5">
                     {getUtmBadge(user.utm_source) || <span className="text-[10px] text-muted-foreground">—</span>}
                   </TableCell>
