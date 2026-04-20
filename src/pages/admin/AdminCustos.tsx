@@ -101,6 +101,7 @@ export default function AdminCustos() {
   const [expandedBots, setExpandedBots] = useState<Set<string>>(new Set());
 
   const { data: settings } = useAdminSettings();
+  const { data: lastActivity } = useLastActivity();
   const { data: logs, isLoading: logsLoading, refetch } = useAiUsageLogs({
     startDate,
     endDate,
@@ -113,6 +114,21 @@ export default function AdminCustos() {
 
   const usdToBrl = settings?.usd_to_brl || 5.80;
   const summary = useMemo(() => computeSummary(logs || []), [logs]);
+
+  const expandTo30Days = () => {
+    const thirtyAgo = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
+    setStartDate(thirtyAgo);
+    setEndDate(today);
+  };
+
+  const jumpToDate = (iso: string) => {
+    const day = iso.split("T")[0];
+    // Janela de ±3 dias para garantir que pegue
+    const start = new Date(new Date(day).getTime() - 3 * 86400000).toISOString().split("T")[0];
+    const end = new Date(new Date(day).getTime() + 3 * 86400000).toISOString().split("T")[0];
+    setStartDate(start);
+    setEndDate(end > today ? today : end);
+  };
 
   const uniqueBots = useMemo(() => {
     const bots = new Map<string, string>();
