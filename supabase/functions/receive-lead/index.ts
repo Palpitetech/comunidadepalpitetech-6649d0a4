@@ -271,15 +271,34 @@ serve(async (req) => {
       return json({ error: "Nome, email e celular são obrigatórios" }, 400);
     }
 
-    // 2. Email
-    const emailReason = validateEmail(email);
-    if (emailReason) {
-      await logBloqueio(supabaseAdmin, "email_invalido", emailReason, { nome, email, celular }, ip, webhook.name);
-      if (emailReason === "formato_invalido" || emailReason === "local_curto" || emailReason === "dominio_descartavel") {
+    // 2. Email — sintaxe + descartável + typo
+    const emailCheck = validateEmail(email);
+    if (!emailCheck.ok) {
+      await logBloqueio(supabaseAdmin, "email_invalido", emailCheck.reason, { nome, email, celular }, ip, webhook.name);
+
+      if (emailCheck.reason === "typo_detectado" && emailCheck.sugestao) {
+        return json({
+          error: `Você quis dizer ${emailCheck.sugestao}?`,
+          sugestao: emailCheck.sugestao,
+        }, 400);
+      }
+      if (emailCheck.reason === "dominio_descartavel") {
+        return json({ error: "Use um email pessoal permanente" }, 400);
+      }
+      if (emailCheck.reason === "formato_invalido" || emailCheck.reason === "local_curto") {
         return json({ error: "Email inválido. Informe um email real" }, 400);
       }
       return json({ error: "Cadastro suspeito detectado" }, 400);
     }
+
+    // 2b. MX do domínio precisa existir
+    const emailDomain = emailCheck.normalized.split("@")[1];
+    const temMX = await dominioTemMX(emailDomain);
+    if (!temMX) {
+      await logBloqueio(supabaseAdmin, "mx_inexistente", `domínio ${emailDomain} sem MX`, { nome, email, celular }, ip, webhook.name);
+      return json({ error: "Domínio do email não recebe correio. Verifique o endereço." }, 400);
+    }
+
 
     // 3. Nome
     const nameReason = validateName(nome, email);
