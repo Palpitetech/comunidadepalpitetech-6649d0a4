@@ -568,7 +568,7 @@ export default function AdminCustosOperacionais() {
                 {filtered.length === 0 && (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={7}
                       className="text-center text-muted-foreground py-8"
                     >
                       Nenhum custo no período selecionado
