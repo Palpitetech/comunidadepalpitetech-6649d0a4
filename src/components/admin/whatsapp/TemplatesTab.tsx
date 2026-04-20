@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Plus, Pencil, Trash2, FileText, ChevronsUpDown, Check, Send, Pause, Play, Timer, Filter, Repeat } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, FileText, ChevronsUpDown, Check, Send, Pause, Play, Timer, Filter, Repeat, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TemplateSegmentationSection } from "./TemplateSegmentationSection";
 import { VariantSlotSelector, type VariantSlot } from "./VariantSlotSelector";
@@ -107,6 +107,10 @@ export function TemplatesTab() {
   const [variantIds, setVariantIds] = useState<Record<number, string>>({});
   // Track positions removed during the current edit session (to delete on save)
   const [removedPositions, setRemovedPositions] = useState<number[]>([]);
+  const [generatingVariants, setGeneratingVariants] = useState(false);
+  const [hasGenerated, setHasGenerated] = useState(false);
+
+  const mainHasContent = (slots[0]?.content ?? "").trim().length > 0;
 
   const fetchVariantCounts = useCallback(async () => {
     const { data, error } = await supabase
@@ -186,6 +190,7 @@ export function TemplatesTab() {
     setVariantIds({});
     setRemovedPositions([]);
     setActiveSlot(1);
+    setHasGenerated(false);
     setDialogOpen(true);
   };
 
@@ -232,6 +237,8 @@ export function TemplatesTab() {
     setVariantIds(ids);
     setRemovedPositions([]);
     setActiveSlot(1);
+    // Considera "já gerou" se há ao menos 1 variante (slot 2-10) já preenchida
+    setHasGenerated(baseSlots.slice(1).some((s) => s.exists && s.content.trim().length > 0));
     setDialogOpen(true);
   };
 
@@ -373,6 +380,66 @@ export function TemplatesTab() {
       setRemovedPositions((prev) => (prev.includes(pos) ? prev : [...prev, pos]));
     }
     setActiveSlot(1);
+  };
+
+  const handleGenerateVariants = async () => {
+    const main = (slots[0]?.content ?? "").trim();
+    if (!main) {
+      toast.error("Escreva a mensagem principal (slot 1) primeiro");
+      return;
+    }
+    const hasExisting = slots.slice(1).some((s) => s.exists && s.content.trim().length > 0);
+    if (hasExisting) {
+      const ok = window.confirm(
+        "Substituir as 9 variações existentes? O slot #1 (principal) não muda."
+      );
+      if (!ok) return;
+    }
+    setGeneratingVariants(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-message-variants", {
+        body: { main_content: main, count: 9 },
+      });
+      if (error) {
+        // Tenta extrair mensagem amigável do contexto
+        const ctx: any = (error as any).context;
+        let msg = "Erro ao gerar variações";
+        if (ctx?.status === 429) msg = "Muitas requisições. Aguarde alguns segundos.";
+        else if (ctx?.status === 402) msg = "Créditos de IA esgotados. Adicione créditos no workspace.";
+        else if (ctx?.status === 403) msg = "Apenas administradores podem gerar variações.";
+        try {
+          const body = await ctx?.json?.();
+          if (body?.error) msg = body.error;
+        } catch { /* ignore */ }
+        toast.error(msg);
+        return;
+      }
+      const variants: string[] = Array.isArray(data?.variants) ? data.variants : [];
+      if (variants.length === 0) {
+        toast.error("A IA não retornou variações válidas. Tente novamente.");
+        return;
+      }
+      setSlots((prev) =>
+        prev.map((s, i) => {
+          if (i === 0) return s; // mantém slot #1
+          const v = variants[i - 1];
+          if (!v) return s;
+          return {
+            ...s,
+            content: v.slice(0, 2000),
+            isActive: true,
+            exists: true,
+          };
+        })
+      );
+      setHasGenerated(true);
+      toast.success(`${variants.length} variações geradas com IA`);
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Erro ao gerar variações");
+    } finally {
+      setGeneratingVariants(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -589,6 +656,39 @@ export function TemplatesTab() {
                     {(slots[activeSlot - 1]?.content ?? "").length}/2000
                   </span>
                 </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateVariants}
+                  disabled={!mainHasContent || generatingVariants}
+                  className={cn(
+                    "w-full gap-1.5 transition-colors",
+                    !mainHasContent && "opacity-50",
+                    mainHasContent && !hasGenerated &&
+                      "border-amber-500/60 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 dark:text-amber-300 animate-pulse",
+                    hasGenerated &&
+                      "border-emerald-500/60 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300"
+                  )}
+                  title={
+                    !mainHasContent
+                      ? "Escreva a mensagem principal primeiro"
+                      : hasGenerated
+                      ? "Regenerar as 9 variações com IA"
+                      : "Gerar 9 variações automáticas com IA"
+                  }
+                >
+                  {generatingVariants ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                  {generatingVariants
+                    ? "Gerando 9 variações..."
+                    : hasGenerated
+                    ? "Regenerar variações com IA"
+                    : "Gerar variações com IA"}
+                </Button>
                 {activeSlot !== 1 && slots[activeSlot - 1]?.exists && (
                   <div className="flex gap-2 pt-1">
                     <Button
