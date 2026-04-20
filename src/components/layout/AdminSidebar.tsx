@@ -30,7 +30,6 @@ import {
   BarChart2,
   Plug,
   MessageCircle,
-  Wrench,
   Smartphone,
   Receipt,
   Ticket,
@@ -55,7 +54,6 @@ const mainItems = [
   { title: "Métricas", url: "/admin/metricas", icon: BarChart2 },
   { title: "WhatsApp", url: "/admin/whatsapp", icon: MessageCircle },
   { title: "Integrações", url: "/admin/integracoes", icon: Plug },
-  { title: "Manutenção", url: "/admin/manutencao", icon: Wrench },
 ];
 
 const financeiroItems = [

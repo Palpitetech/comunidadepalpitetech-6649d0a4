@@ -99,40 +99,12 @@ Deno.serve(async (req) => {
     let fromLatest = false;
     let limit = 50;
     let concursoEspecifico: number | null = null;
-    let action: string | null = null;
     try {
       const body = await req.json();
       fromLatest = body.from_latest === true;
       limit = body.limit || 50;
       concursoEspecifico = body.concurso || null;
-      action = body.action || null;
     } catch { /* defaults */ }
-
-    // ── REPROCESS HISTORY ──────────────────────────────────────
-    if (action === 'reprocess_history') {
-      console.log('[REPROCESS] Iniciando reprocessamento duplasena...');
-      const { data: existentes } = await supabase.from(TABLE).select('concurso').eq('loteria', LOTERIA).order('concurso', { ascending: true });
-      if (!existentes?.length) return new Response(JSON.stringify({ success: true, reprocessados: 0 }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      let reprocessados = 0, erros = 0;
-      let prevS1: number[] = [], prevS2: number[] = [];
-      for (const item of existentes) {
-        try {
-          const res = await fetch(`https://apiloterias.com.br/app/v2/resultado?loteria=duplasena&token=${API_TOKEN}&concurso=${item.concurso}`);
-          if (!res.ok) { erros++; continue; }
-          const resultado = await res.json();
-          const s1 = resultado.dezenas.map((d: string) => parseInt(d, 10)).sort((a: number, b: number) => a - b);
-          const s2 = resultado.dezenas_2.map((d: string) => parseInt(d, 10)).sort((a: number, b: number) => a - b);
-          const indS1 = calcularIndicadores(s1, prevS1);
-          const indS2 = calcularIndicadores(s2, prevS2);
-          const reg = buildRegistro(resultado, s1, s2, indS1, indS2, item.concurso);
-          const { error } = await supabase.from(TABLE).upsert(reg, { onConflict: 'loteria,concurso' });
-          if (error) { erros++; } else { reprocessados++; }
-          prevS1 = s1; prevS2 = s2;
-          await new Promise(r => setTimeout(r, 300));
-        } catch { erros++; }
-      }
-      return new Response(JSON.stringify({ success: true, reprocessados, erros }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
 
     // ── SYNC NORMAL ────────────────────────────────────────────
     const latestUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=duplasena&token=${API_TOKEN}`;
