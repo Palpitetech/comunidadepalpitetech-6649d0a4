@@ -14,8 +14,21 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Plus, Pencil, Trash2, FileText, ChevronsUpDown, Check, Send, Pause, Play, Timer, Filter, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TemplateSegmentationSection } from "./TemplateSegmentationSection";
-import { VariantsDialog } from "./VariantsDialog";
+import { VariantSlotSelector, type VariantSlot } from "./VariantSlotSelector";
 import { getEventLabel } from "@/lib/whatsapp-event-labels";
+import type { MessageTemplateVariant } from "@/types/whatsapp";
+
+const MAX_SLOTS = 10;
+
+function buildEmptySlots(mainContent = ""): VariantSlot[] {
+  return Array.from({ length: MAX_SLOTS }, (_, i) => ({
+    position: i + 1,
+    content: i === 0 ? mainContent : "",
+    isActive: true,
+    timesUsed: 0,
+    exists: i === 0,
+  }));
+}
 
 interface MessageTemplate {
   id: string;
