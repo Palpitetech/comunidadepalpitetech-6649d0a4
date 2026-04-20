@@ -107,6 +107,10 @@ export function TemplatesTab() {
   const [variantIds, setVariantIds] = useState<Record<number, string>>({});
   // Track positions removed during the current edit session (to delete on save)
   const [removedPositions, setRemovedPositions] = useState<number[]>([]);
+  const [generatingVariants, setGeneratingVariants] = useState(false);
+  const [hasGenerated, setHasGenerated] = useState(false);
+
+  const mainHasContent = (slots[0]?.content ?? "").trim().length > 0;
 
   const fetchVariantCounts = useCallback(async () => {
     const { data, error } = await supabase
