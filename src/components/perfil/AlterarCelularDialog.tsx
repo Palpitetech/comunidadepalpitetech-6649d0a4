@@ -33,26 +33,17 @@ export function AlterarCelularDialog({ celularAtual, onSuccess, trigger }: Alter
   const { toast } = useToast();
   const { user, profile } = useAuthContext();
 
-  const formatCelular = (value: string) => {
-    const numeros = value.replace(/\D/g, "");
-    if (numeros.length <= 2) return numeros;
-    if (numeros.length <= 7) return `(${numeros.slice(0, 2)}) ${numeros.slice(2)}`;
-    if (numeros.length <= 11) {
-      return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`;
-    }
-    return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7, 11)}`;
-  };
-
   const handleEnviarCodigo = async () => {
-    const numeros = novoCelular.replace(/\D/g, "");
-    if (numeros.length < 10 || numeros.length > 11) {
+    const validation = validateCelularBR(novoCelular);
+    if (!validation.ok) {
       toast({
         title: "Celular inválido",
-        description: "Digite um celular válido com DDD",
+        description: validation.reason || "Digite um celular válido com DDD",
         variant: "destructive",
       });
       return;
     }
+    const numeros = validation.normalized!.replace(/^55/, "");
 
     setIsLoading(true);
     try {
