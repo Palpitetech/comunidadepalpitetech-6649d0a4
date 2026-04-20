@@ -380,8 +380,11 @@ export default function AdminUsuarios() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <p className="text-sm font-medium truncate">{user.nome || "Sem nome"}</p>
-                  {user.is_blocked && <span className="w-2 h-2 rounded-full bg-destructive shrink-0" />}
-                  {!user.email_verificado && <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" title="Não verificado" />}
+                  {user.is_blocked && <span className="w-2 h-2 rounded-full bg-destructive shrink-0" title="Bloqueado" />}
+                  {user.email_verificado
+                    ? <CheckCircle2 className="h-3 w-3 text-emerald-500 shrink-0" aria-label="Verificado" />
+                    : <AlertCircle className="h-3 w-3 text-amber-500 shrink-0" aria-label="Não verificado" />}
+                  {isPaidActive(user) && <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Plano ativo" />}
                 </div>
                 <p className="text-[11px] text-muted-foreground truncate">{user.email || user.celular || "-"}</p>
               </div>
