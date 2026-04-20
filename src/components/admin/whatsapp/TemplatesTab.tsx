@@ -190,6 +190,7 @@ export function TemplatesTab() {
     setVariantIds({});
     setRemovedPositions([]);
     setActiveSlot(1);
+    setHasGenerated(false);
     setDialogOpen(true);
   };
 
