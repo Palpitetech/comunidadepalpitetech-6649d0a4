@@ -14,8 +14,42 @@ import { TagFilterPopover } from "@/components/admin/TagFilterPopover";
 import { cn } from "@/lib/utils";
 
 import type { Plan, PlanFeatures, ExtendedProfile } from "@/types/plans";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+const getValidadeInfo = (validade: string | null | undefined) => {
+  if (!validade) return null;
+  const date = new Date(validade);
+  if (isNaN(date.getTime())) return null;
+  const dias = differenceInDays(date, new Date());
+  const dataFormatada = format(date, "dd/MM/yyyy", { locale: ptBR });
+
+  let label: string;
+  let tone: "neutral" | "warning" | "danger";
+
+  if (dias < 0) {
+    const abs = Math.abs(dias);
+    label = `Há ${abs} dia${abs !== 1 ? "s" : ""}`;
+    tone = "danger";
+  } else if (dias === 0) {
+    label = "Hoje";
+    tone = "warning";
+  } else if (dias <= 7) {
+    label = `Em ${dias} dia${dias !== 1 ? "s" : ""}`;
+    tone = "warning";
+  } else {
+    label = `Em ${dias} dias`;
+    tone = "neutral";
+  }
+
+  return { dataFormatada, label, tone };
+};
+
+const TONE_CLASSES: Record<"neutral" | "warning" | "danger", string> = {
+  neutral: "text-muted-foreground",
+  warning: "text-amber-600 dark:text-amber-400",
+  danger: "text-destructive",
+};
 
 interface UserWithPlan extends ExtendedProfile {
   plan?: Plan | null;
@@ -387,6 +421,15 @@ export default function AdminUsuarios() {
                   {isPaidActive(user) && <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Plano ativo" />}
                 </div>
                 <p className="text-[11px] text-muted-foreground truncate">{user.email || user.celular || "-"}</p>
+                {(() => {
+                  const info = getValidadeInfo(user.validade_assinatura);
+                  if (!info) return null;
+                  return (
+                    <p className={cn("text-[10px] font-medium truncate", TONE_CLASSES[info.tone])}>
+                      Vence {info.dataFormatada} · {info.label}
+                    </p>
+                  );
+                })()}
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 {getUtmBadge(user.utm_source)}
@@ -521,6 +564,7 @@ export default function AdminUsuarios() {
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Plano</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground text-center">Verificado</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground text-center">Ativo</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Próx. vencimento</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Origem</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Tags</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Cadastro</TableHead>
@@ -586,6 +630,18 @@ export default function AdminUsuarios() {
                     )}
                   </TableCell>
                   <TableCell className="py-2.5">
+                    {(() => {
+                      const info = getValidadeInfo(user.validade_assinatura);
+                      if (!info) return <span className="text-xs text-muted-foreground/60">—</span>;
+                      return (
+                        <div className="flex flex-col leading-tight">
+                          <span className="text-xs tabular-nums text-foreground">{info.dataFormatada}</span>
+                          <span className={cn("text-[10px] font-medium", TONE_CLASSES[info.tone])}>{info.label}</span>
+                        </div>
+                      );
+                    })()}
+                  </TableCell>
+                  <TableCell className="py-2.5">
                     {getUtmBadge(user.utm_source) || <span className="text-[10px] text-muted-foreground">—</span>}
                   </TableCell>
                   <TableCell className="py-2.5">
@@ -612,7 +668,7 @@ export default function AdminUsuarios() {
               ))}
               {filteredUsers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-16 text-sm text-muted-foreground">
+                  <TableCell colSpan={11} className="text-center py-16 text-sm text-muted-foreground">
                     {searchTerm ? "Nenhum usuário encontrado" : "Nenhum usuário cadastrado"}
                   </TableCell>
                 </TableRow>
