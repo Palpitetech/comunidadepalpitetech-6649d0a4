@@ -237,6 +237,8 @@ export function TemplatesTab() {
     setVariantIds(ids);
     setRemovedPositions([]);
     setActiveSlot(1);
+    // Considera "já gerou" se há ao menos 1 variante (slot 2-10) já preenchida
+    setHasGenerated(baseSlots.slice(1).some((s) => s.exists && s.content.trim().length > 0));
     setDialogOpen(true);
   };
 
