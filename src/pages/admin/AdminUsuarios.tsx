@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, Users, UserCheck, ChevronRight, ChevronLeft, X, ArrowLeft, Timer } from "lucide-react";
+import { Search, Loader2, Users, UserCheck, ChevronRight, ChevronLeft, X, ArrowLeft, Timer, CheckCircle2, AlertCircle, Circle } from "lucide-react";
 import { toast } from "sonner";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
 import { TagFilterPopover } from "@/components/admin/TagFilterPopover";
@@ -380,8 +380,11 @@ export default function AdminUsuarios() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <p className="text-sm font-medium truncate">{user.nome || "Sem nome"}</p>
-                  {user.is_blocked && <span className="w-2 h-2 rounded-full bg-destructive shrink-0" />}
-                  {!user.email_verificado && <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" title="Não verificado" />}
+                  {user.is_blocked && <span className="w-2 h-2 rounded-full bg-destructive shrink-0" title="Bloqueado" />}
+                  {user.email_verificado
+                    ? <CheckCircle2 className="h-3 w-3 text-emerald-500 shrink-0" aria-label="Verificado" />
+                    : <AlertCircle className="h-3 w-3 text-amber-500 shrink-0" aria-label="Não verificado" />}
+                  {isPaidActive(user) && <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Plano ativo" />}
                 </div>
                 <p className="text-[11px] text-muted-foreground truncate">{user.email || user.celular || "-"}</p>
               </div>
@@ -516,6 +519,8 @@ export default function AdminUsuarios() {
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Nome</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Email / Celular</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Plano</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground text-center">Verificado</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground text-center">Ativo</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Origem</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Tags</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Cadastro</TableHead>
@@ -539,7 +544,6 @@ export default function AdminUsuarios() {
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-medium truncate max-w-[200px]">{user.nome || "Sem nome"}</span>
                       {user.is_blocked && <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" title="Bloqueado" />}
-                      {!user.email_verificado && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" title="Não verificado" />}
                     </div>
                   </TableCell>
                   <TableCell className="py-2.5 text-sm text-muted-foreground truncate max-w-[220px]">
@@ -554,6 +558,32 @@ export default function AdminUsuarios() {
                     )}>
                       {user.plan?.name || "Free"}
                     </span>
+                  </TableCell>
+                  <TableCell className="py-2.5 text-center">
+                    {user.email_verificado ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400" title="Email verificado">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <span className="hidden lg:inline">Sim</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400" title="Email não verificado">
+                        <AlertCircle className="h-3.5 w-3.5" />
+                        <span className="hidden lg:inline">Não</span>
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="py-2.5 text-center">
+                    {isPaidActive(user) ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400" title="Plano pago ativo">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <span className="hidden lg:inline">Ativo</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/60" title="Sem plano pago ativo">
+                        <Circle className="h-3 w-3" />
+                        <span className="hidden lg:inline">—</span>
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className="py-2.5">
                     {getUtmBadge(user.utm_source) || <span className="text-[10px] text-muted-foreground">—</span>}
@@ -582,7 +612,7 @@ export default function AdminUsuarios() {
               ))}
               {filteredUsers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-16 text-sm text-muted-foreground">
+                  <TableCell colSpan={10} className="text-center py-16 text-sm text-muted-foreground">
                     {searchTerm ? "Nenhum usuário encontrado" : "Nenhum usuário cadastrado"}
                   </TableCell>
                 </TableRow>
