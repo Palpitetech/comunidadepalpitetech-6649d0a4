@@ -1,90 +1,160 @@
 
 
-## Travar `receive-lead` — exigir Nome + Email + Celular válidos, bloquear lixo
+## Validar emails de verdade no `receive-lead`
 
-### Diagnóstico dos cadastros estranhos
+### Como está hoje (só sintaxe)
 
-Os 21 leads vieram do webhook **`grupo_salasecreta`** (token `Leads - Grupo Free - PalpiteQuente`). Padrão dos suspeitos:
-
-| Email | Nome | Celular |
+| Camada | Tem? | O que pega |
 |---|---|---|
-| `jkhjkgyg@gmail.com` (20/abr 00:46 UTC = 21:46 BRT 19/abr) | jkhjkgyg@gmail.com | nulo |
-| `gdfh@hotmail.com` (19/abr 19:14 UTC = 16:14 BRT) | gdfh@hotmail.com | nulo |
-| `fd@gmail.com`, `tag@gmail.com`, `kjaslkdjodksj@gmail.com` | igual ao email | nulo |
+| Regex formato `a@b.c` | ✅ | `gdfh` (sem `@`) |
+| Local part ≥ 4 chars | ✅ | `fd@gmail.com` |
+| Domínios descartáveis (lista fixa de 14) | ✅ | `mailinator.com` etc |
+| Heurística anti-bot (teclado, consoantes, repetição) | ✅ | `jkhjk`, `gdfh`, `aaa` |
+| **MX do domínio existe?** | ❌ | `joao@dominioqueninguem.com` passa |
+| **Caixa de email existe?** | ❌ | `inexistente123@gmail.com` passa |
+| **Email confirmado pelo dono?** | ❌ | qualquer um pode botar email alheio |
 
-Todos têm 3 sintomas em comum:
-1. **Sem celular** (a função aceita "email OU celular")
-2. **Sem nome** (vem o email no campo nome, sinal claro de form sem campo de nome)
-3. **Email com padrão de bot** (teclado batido, muito curto, só consoantes)
+Resultado: bot esperto que escreve `mariasilva@gmail.com` (nome plausível, gmail real) **passa hoje**, conta é criada, magic link é enviado pro Resend, e se a caixa não existir o Resend dá bounce — mas o perfil já está no banco sujando métricas.
 
-### O que vou implementar
+### O que vou implementar (3 camadas, da mais barata pra mais forte)
 
-#### 1. Tornar Nome + Email + Celular **obrigatórios** (era "email OU celular")
+#### Camada 1 — Validação de **MX do domínio** (DNS lookup, grátis, ~50ms)
+
+Antes de criar a conta, uso `Deno.resolveDns(domain, "MX")`. Se o domínio não tem MX, **não aceita correio** → bloqueia.
 
 ```ts
-if (!nome?.trim() || !email?.trim() || !celular?.trim()) {
-  return json({ error: "Nome, email e celular são obrigatórios" }, 400);
+async function dominioTemMX(domain: string): Promise<boolean> {
+  try {
+    const records = await Deno.resolveDns(domain, "MX");
+    return records.length > 0;
+  } catch {
+    return false; // NXDOMAIN ou sem MX
+  }
 }
 ```
 
-#### 2. Validar **nome real** (mínimo 2 palavras OU 3+ chars sem ser igual ao email)
+Pega:
+- Domínios inventados (`palpite@xyzabc123.com`)
+- Typos óbvios (`joao@gmial.com` → gmial.com não tem MX)
+- Domínios descartáveis novos (que ainda não estão na nossa lista)
 
-- Rejeita se `nome === email`
-- Rejeita se < 3 caracteres
-- Rejeita se for só números/símbolos
+Não pega: caixa específica que não existe (mas o domínio é real).
 
-#### 3. Validar **email** com regex + heurística anti-bot
+#### Camada 2 — Lista expandida de descartáveis + **typos comuns**
 
-- Regex padrão (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`)
-- Parte local (antes do `@`) com **mínimo 4 chars**
-- Bloquear padrões de teclado batido:
-  - 3+ consoantes seguidas sem vogal (`jkhjk`, `gdfh`, `kjaslkdj`)
-  - Sequências de teclado (`asdf`, `qwer`, `zxcv`, `hjkl`)
-  - Repetição da mesma letra 3+ vezes (`aaa`, `bbb`)
-- Bloquear domínios descartáveis comuns (`mailinator.com`, `tempmail`, `10minutemail`, `guerrillamail`, `yopmail`, `throwaway`)
+Hoje tenho 14 domínios. Vou:
+- Subir lista para **~200 domínios descartáveis** (do projeto open-source `disposable-email-domains`, embutido como const)
+- Adicionar detecção de **typos de provedores grandes** e sugerir correção:
 
-#### 4. Validar **celular brasileiro** (10 ou 11 dígitos, DDD válido)
+| Digitado | Sugestão | Ação |
+|---|---|---|
+| `gmial.com`, `gmai.com`, `gnail.com` | `gmail.com` | Bloqueia + retorna `{sugestao: "gmail.com"}` |
+| `hotmial.com`, `hotmai.com` | `hotmail.com` | idem |
+| `outloo.com`, `outlok.com` | `outlook.com` | idem |
+| `yaho.com`, `yahho.com` | `yahoo.com` | idem |
 
-- Limpa não-dígitos, remove `55` se presente
-- Exige 10 ou 11 dígitos
-- DDD entre 11–99 (rejeita `00`, `01`...)
-- Se 11 dígitos, o terceiro tem que ser `9` (celular)
-- Rejeita sequências óbvias: `11111111111`, `12345678901`
+Mensagem na resposta: `"Você quis dizer joao@gmail.com?"` — landing page pode mostrar.
 
-#### 5. Logar **IP + payload mascarado** quando bloqueia
+#### Camada 3 — **Confirmação ativa** via magic link (já existe, só endurecer)
 
-Hoje o IP só serve pra rate limit. Vou inserir em `system_events` cada bloqueio com:
-- `event_type: "lead_bloqueado_validacao"`
-- `metadata: { ip, motivo, email_mascarado, webhook_name }`
+Hoje a conta é criada **antes** do magic link e o usuário ganha trial automático. Vou inverter:
 
-Você consegue ver em `/admin/eventos` de onde vêm as tentativas e o motivo de cada bloqueio. Email mascarado tipo `gd***@hotmail.com` (LGPD).
+**Novo fluxo:**
+1. Lead chega → valida sintaxe + MX + descartáveis (camadas 1 e 2)
+2. Cria perfil com tag **`email_pendente`** (sem trial ativo, sem `premium` role)
+3. Envia magic link
+4. Quando usuário clica e confirma → trigger ou edge function remove `email_pendente`, adiciona `email_verificado`, ativa o trial de 3 dias
 
-#### 6. Mensagens de erro claras (em PT, pra landing page mostrar)
+**Ganhos:**
+- Bot que usar email alheio nunca confirma → fica como `email_pendente` e some das métricas
+- Trial só conta a partir da confirmação (justo pro usuário real)
+- Bot que usar email inventado (passou MX mas caixa não existe) → Resend bounceia, perfil fica pendente
 
-| Status | Erro |
+Existe uma **flag no `/admin/eventos`** já: vou criar event_type `lead_email_confirmado` quando ativar o trial, pra você ver taxa de conversão real.
+
+#### Camada 4 (opcional, **não vou habilitar** por padrão) — **SMTP probe**
+
+Tem APIs grátis (Hunter.io free 25/mês, Abstract API free 100/dia) que fazem SMTP `RCPT TO` e devolvem se a caixa existe. Não vou plugar agora porque:
+- Custa secret + cota
+- MX + magic link já resolve 95% dos casos
+- Dá pra adicionar depois se o spam continuar
+
+Deixo um **TODO comentado** no código pra plugar fácil.
+
+### Mudanças no banco (migration)
+
+```sql
+-- Adicionar campo email_verificado no perfis (já existe, só garantir default)
+-- Já tem coluna email_verificado boolean. Vou usar.
+
+-- Função pra ativar trial só depois de confirmar email
+CREATE OR REPLACE FUNCTION public.ativar_trial_pos_confirmacao()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public' AS $$
+DECLARE
+  trial_plan_id UUID := 'b3a2a9e3-8e3b-4e3b-8e3b-8e3b8e3b8e3b';
+BEGIN
+  -- Só ativa se mudou de false → true
+  IF OLD.email_verificado IS FALSE AND NEW.email_verificado IS TRUE THEN
+    -- Remove tag pendente, adiciona verificado
+    NEW.tags := array_remove(NEW.tags, 'email_pendente');
+    IF NOT ('email_verificado' = ANY(NEW.tags)) THEN
+      NEW.tags := array_append(NEW.tags, 'email_verificado');
+    END IF;
+    -- Ativa trial se ainda não ativou
+    IF NEW.status_assinatura IS NULL OR NEW.status_assinatura != 'ativa' THEN
+      NEW.plan_id := trial_plan_id;
+      NEW.status_assinatura := 'ativa';
+      NEW.validade_assinatura := now() + interval '3 days';
+      NEW.trial_used := true;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trigger_ativar_trial_pos_confirmacao
+BEFORE UPDATE ON public.perfis
+FOR EACH ROW EXECUTE FUNCTION public.ativar_trial_pos_confirmacao();
+```
+
+### Mudanças no código
+
+| Arquivo | Mudança |
 |---|---|
-| 400 | "Nome, email e celular são obrigatórios" |
-| 400 | "Email inválido. Informe um email real" |
-| 400 | "Celular inválido. Use formato (DDD) 9XXXX-XXXX" |
-| 400 | "Cadastro suspeito detectado" (genérico para anti-bot, não revela regra) |
+| `supabase/functions/receive-lead/index.ts` | + `dominioTemMX()`, lista expandida de descartáveis, detecção de typos, criar perfil com `tag: email_pendente` em vez de trial direto |
+| `supabase/functions/receive-lead/disposable-domains.ts` | Novo arquivo com lista de ~200 domínios |
+| `src/pages/AtivarConta.tsx` | Sem mudança (já marca `email_verificado = true` ao processar token) |
 
-### Limpar os 21 leads ruins?
+### Mensagens de erro novas
 
-**Não vou apagar agora** — só travar daqui pra frente. Os 12 com tag `expirado` já estão filtrados nas métricas. Se quiser, num passo seguinte você decide se purga os bots históricos por padrão (`celular IS NULL AND nome = email`).
+| Erro | Mensagem |
+|---|---|
+| MX inválido | `"Domínio do email não recebe correio. Verifique o endereço."` |
+| Typo detectado | `"Você quis dizer joao@gmail.com?"` (com campo `sugestao`) |
+| Descartável (nova lista) | `"Use um email pessoal permanente"` |
 
-### Arquivos editados
+### Logging em `system_events`
 
-- `supabase/functions/receive-lead/index.ts` — adiciona validações + logging de bloqueio
+Adiciono novos motivos que aparecem em `/admin/eventos`:
+- `mx_inexistente` — domínio sem MX
+- `typo_detectado` — sugestão oferecida
+- `email_pendente_criado` — conta criada aguardando confirmação
+- `email_confirmado_trial_ativado` — usuário clicou no link
+
+Você consegue ver a taxa real: quantos leads chegam → quantos confirmam.
 
 ### Fora de escopo
 
-- Não mexo no `Integracoes.tsx` (UI admin já mostra exemplo com nome/email/celular)
-- Não giro o token do webhook (avisa se quiser)
-- Não apago os leads ruins existentes
-- Não mexo em `RegisterWizard` (usuário web já valida tudo isso)
-- Não adiciono CAPTCHA (pode ser passo 2 se o spam continuar)
+- Não plugo Hunter.io / Abstract API (camada 4)
+- Não mexo em `RegisterWizard` (já tem OTP que é mais forte que magic link)
+- Não invalido leads pendentes antigos (só daqui pra frente)
+- Não mexo no fluxo Kirvano (compra confirma email automaticamente)
+- Não mudo aparência da landing page externa (só o JSON de resposta)
 
 ### Resultado esperado
 
-Próximo `gdfh@hotmail.com` que tentar entrar recebe **400 "Cadastro suspeito"**, fica registrado em `/admin/eventos` com IP, e nenhum perfil é criado.
+- `joao@gmial.com` → **400** com `{sugestao: "gmail.com"}`
+- `teste@dominioinventado.xyz` → **400** "Domínio não recebe correio"
+- `mariasilva@gmail.com` (caixa real) → cria pendente → email chega → clica → trial ativa
+- `inexistente@gmail.com` (caixa fake mas gmail real) → cria pendente → Resend bounceia → fica pendente eterno → não suja métrica de "verificados"
 
