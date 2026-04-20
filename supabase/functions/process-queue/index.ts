@@ -67,24 +67,8 @@ async function sendMessage(
     return { success: false, error: "Nenhuma instância disponível após 3 tentativas" };
   }
 
-  // Resolve template or free message
-  let messageText = "";
-  if (item.template_id) {
-    const { data: tpl } = await supabase
-      .from("message_templates")
-      .select("content")
-      .eq("id", item.template_id)
-      .single();
-    messageText = tpl
-      ? resolveTemplate(tpl.content, item.variables ?? {})
-      : "";
-  } else if (item.variables?.mensagem_livre) {
-    // Free-text message: resolve variables in the free message content
-    messageText = resolveTemplate(
-      String(item.variables.mensagem_livre),
-      item.variables as Record<string, string>
-    );
-  }
+  // Resolve template (com variante) ou mensagem livre
+  const messageText = await resolveMessageText(supabase, item);
 
   if (!messageText) {
     await supabase
