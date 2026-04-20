@@ -196,6 +196,8 @@ export function useDisparoManual() {
     activeFilters.push(`Plano: ${planNames.join(", ")}`);
   }
   if (selectedStatus) activeFilters.push(`Status: ${selectedStatus}`);
+  if (selectedVerification === "verified") activeFilters.push("Apenas verificados");
+  if (selectedVerification === "unverified") activeFilters.push("Apenas não verificados");
   if (selectedEvent) activeFilters.push(`Evento: ${selectedEvent}`);
 
   // ── Dispatch logic ──
