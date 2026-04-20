@@ -37,6 +37,7 @@ export function LoginWizard() {
   const [whatsapp, setWhatsapp] = useState("");
   const [codigo, setCodigo] = useState("");
   const [nomeUsuarioEncontrado, setNomeUsuarioEncontrado] = useState("");
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
