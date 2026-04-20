@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+export type Origem = "automatico" | "usuario";
+
 export interface AiUsageLog {
   id: string;
   created_at: string;
@@ -15,6 +17,10 @@ export interface AiUsageLog {
   model: string | null;
   cost_usd: number;
   metadata: Record<string, unknown> | null;
+  // Enriched fields
+  user_name?: string | null;
+  user_email?: string | null;
+  origem?: Origem;
 }
 
 export interface AdminSettings {
@@ -26,9 +32,11 @@ export interface AdminSettings {
 export interface UsageSummary {
   totalCostUsd: number;
   totalTokens: number;
+  totalCalls: number;
+  byOrigem: Record<Origem, { costUsd: number; tokens: number; count: number }>;
+  byFerramenta: Record<string, { costUsd: number; tokens: number; count: number }>;
+  byUsuario: Record<string, { name: string; email: string | null; costUsd: number; tokens: number; count: number }>;
   byBot: Record<string, { name: string; costUsd: number; tokens: number; count: number }>;
-  byFunction: Record<string, { costUsd: number; tokens: number; count: number }>;
-  byUser: Record<string, { costUsd: number; tokens: number; count: number }>;
 }
 
 export function useAdminSettings() {
@@ -52,6 +60,7 @@ export function useAiUsageLogs(filters?: {
   botPersonaId?: string;
   edgeFunction?: string;
   userId?: string;
+  origem?: Origem | "all";
   limit?: number;
 }) {
   return useQuery({
@@ -61,7 +70,7 @@ export function useAiUsageLogs(filters?: {
         .from("ai_usage_logs" as any)
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(filters?.limit || 200);
+        .limit(filters?.limit || 500);
 
       if (filters?.startDate) {
         query = query.gte("created_at", filters.startDate);
@@ -78,10 +87,44 @@ export function useAiUsageLogs(filters?: {
       if (filters?.userId) {
         query = query.eq("user_id", filters.userId);
       }
+      if (filters?.origem === "automatico") {
+        query = query.is("user_id", null);
+      } else if (filters?.origem === "usuario") {
+        query = query.not("user_id", "is", null);
+      }
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []) as unknown as AiUsageLog[];
+
+      const logs = (data || []) as unknown as AiUsageLog[];
+
+      // Collect unique user IDs for JOIN
+      const userIds = Array.from(
+        new Set(logs.map((l) => l.user_id).filter((id): id is string => !!id))
+      );
+
+      let perfilMap = new Map<string, { nome: string | null; email: string | null }>();
+
+      if (userIds.length > 0) {
+        const { data: perfis } = await supabase
+          .from("perfis")
+          .select("id, nome, email")
+          .in("id", userIds);
+        for (const p of perfis || []) {
+          perfilMap.set(p.id, { nome: p.nome, email: p.email });
+        }
+      }
+
+      // Enrich
+      return logs.map((log) => {
+        const perfil = log.user_id ? perfilMap.get(log.user_id) : null;
+        return {
+          ...log,
+          user_name: perfil?.nome || null,
+          user_email: perfil?.email || null,
+          origem: (log.user_id ? "usuario" : "automatico") as Origem,
+        };
+      });
     },
   });
 }
@@ -90,40 +133,68 @@ export function computeSummary(logs: AiUsageLog[]): UsageSummary {
   const summary: UsageSummary = {
     totalCostUsd: 0,
     totalTokens: 0,
+    totalCalls: 0,
+    byOrigem: {
+      automatico: { costUsd: 0, tokens: 0, count: 0 },
+      usuario: { costUsd: 0, tokens: 0, count: 0 },
+    },
+    byFerramenta: {},
+    byUsuario: {},
     byBot: {},
-    byFunction: {},
-    byUser: {},
   };
 
   for (const log of logs) {
-    summary.totalCostUsd += Number(log.cost_usd) || 0;
-    summary.totalTokens += log.total_tokens || 0;
+    const cost = Number(log.cost_usd) || 0;
+    const tokens = log.total_tokens || 0;
 
-    // By bot
-    const botKey = log.bot_persona_id || "user_action";
-    if (!summary.byBot[botKey]) {
-      summary.byBot[botKey] = { name: log.bot_name || "Ação de Usuário", costUsd: 0, tokens: 0, count: 0 };
-    }
-    summary.byBot[botKey].costUsd += Number(log.cost_usd) || 0;
-    summary.byBot[botKey].tokens += log.total_tokens || 0;
-    summary.byBot[botKey].count++;
+    summary.totalCostUsd += cost;
+    summary.totalTokens += tokens;
+    summary.totalCalls++;
 
-    // By function
-    if (!summary.byFunction[log.edge_function]) {
-      summary.byFunction[log.edge_function] = { costUsd: 0, tokens: 0, count: 0 };
-    }
-    summary.byFunction[log.edge_function].costUsd += Number(log.cost_usd) || 0;
-    summary.byFunction[log.edge_function].tokens += log.total_tokens || 0;
-    summary.byFunction[log.edge_function].count++;
+    // By origem
+    const origem: Origem = log.origem || (log.user_id ? "usuario" : "automatico");
+    summary.byOrigem[origem].costUsd += cost;
+    summary.byOrigem[origem].tokens += tokens;
+    summary.byOrigem[origem].count++;
 
-    // By user
-    const userKey = log.user_id || "system";
-    if (!summary.byUser[userKey]) {
-      summary.byUser[userKey] = { costUsd: 0, tokens: 0, count: 0 };
+    // By ferramenta (edge function)
+    if (!summary.byFerramenta[log.edge_function]) {
+      summary.byFerramenta[log.edge_function] = { costUsd: 0, tokens: 0, count: 0 };
     }
-    summary.byUser[userKey].costUsd += Number(log.cost_usd) || 0;
-    summary.byUser[userKey].tokens += log.total_tokens || 0;
-    summary.byUser[userKey].count++;
+    summary.byFerramenta[log.edge_function].costUsd += cost;
+    summary.byFerramenta[log.edge_function].tokens += tokens;
+    summary.byFerramenta[log.edge_function].count++;
+
+    // By usuario (only when user_id present)
+    if (log.user_id) {
+      if (!summary.byUsuario[log.user_id]) {
+        summary.byUsuario[log.user_id] = {
+          name: log.user_name || "Usuário sem nome",
+          email: log.user_email || null,
+          costUsd: 0,
+          tokens: 0,
+          count: 0,
+        };
+      }
+      summary.byUsuario[log.user_id].costUsd += cost;
+      summary.byUsuario[log.user_id].tokens += tokens;
+      summary.byUsuario[log.user_id].count++;
+    }
+
+    // By bot (only when bot_persona_id present)
+    if (log.bot_persona_id) {
+      if (!summary.byBot[log.bot_persona_id]) {
+        summary.byBot[log.bot_persona_id] = {
+          name: log.bot_name || "Bot",
+          costUsd: 0,
+          tokens: 0,
+          count: 0,
+        };
+      }
+      summary.byBot[log.bot_persona_id].costUsd += cost;
+      summary.byBot[log.bot_persona_id].tokens += tokens;
+      summary.byBot[log.bot_persona_id].count++;
+    }
   }
 
   return summary;
