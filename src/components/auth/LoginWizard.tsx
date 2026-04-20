@@ -27,6 +27,39 @@ interface VerificationResult {
   type: string | null;
 }
 
+// Espelha a regra do edge function receive-lead
+function validateCelularBR(value: string): { ok: boolean; normalized?: string; reason?: string } {
+  const digits = value.replace(/\D/g, "");
+  let normalized = digits;
+  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
+    normalized = digits.substring(2);
+  }
+  if (normalized.length < 10 || normalized.length > 11) {
+    return { ok: false, reason: "Celular precisa ter 10 ou 11 dígitos com DDD" };
+  }
+  const ddd = parseInt(normalized.substring(0, 2), 10);
+  if (isNaN(ddd) || ddd < 11 || ddd > 99) {
+    return { ok: false, reason: "DDD inválido" };
+  }
+  if (normalized.length === 11 && normalized[2] !== "9") {
+    return { ok: false, reason: "Celular deve começar com 9 após o DDD" };
+  }
+  if (/^(\d)\1+$/.test(normalized)) {
+    return { ok: false, reason: "Celular inválido" };
+  }
+  if (normalized === "12345678901" || normalized === "1234567890") {
+    return { ok: false, reason: "Celular inválido" };
+  }
+  return { ok: true, normalized: `55${normalized}` };
+}
+
+function formatCelularMask(value: string): string {
+  const n = value.replace(/\D/g, "").slice(0, 11);
+  if (n.length <= 2) return n;
+  if (n.length <= 7) return `(${n.slice(0, 2)}) ${n.slice(2)}`;
+  return `(${n.slice(0, 2)}) ${n.slice(2, 7)}-${n.slice(7, 11)}`;
+}
+
 export function LoginWizard() {
   const [etapa, setEtapa] = useState<Etapa>("email");
   const [email, setEmail] = useState("");
@@ -185,7 +218,11 @@ export function LoginWizard() {
 
   const handleRegisterWhatsapp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!whatsapp.trim()) return;
+    const validation = validateCelularBR(whatsapp);
+    if (!validation.ok) {
+      toast({ title: "Celular inválido", description: validation.reason || "Use formato (DDD) 9XXXX-XXXX", variant: "destructive" });
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -204,14 +241,22 @@ export function LoginWizard() {
     if (e) e.preventDefault();
     if (codigo.length < 6) return;
 
+    const validation = validateCelularBR(whatsapp);
+    if (!validation.ok) {
+      toast({ title: "Celular inválido", description: validation.reason, variant: "destructive" });
+      setEtapa("cadastro-whatsapp");
+      return;
+    }
+
     setIsLoading(true);
     try {
       await verifyOtp(email.trim().toLowerCase(), codigo);
-      // Após verificar, atualiza o perfil com nome, celular e whatsapp
+      // Salva o mesmo número normalizado em celular E whatsapp pra evitar
+      // que RequireCelularModal abra após cadastro novo
       await updateProfile({ 
         nome: nome.trim(), 
-        celular: celular.trim(),
-        whatsapp: whatsapp.trim()
+        celular: validation.normalized!,
+        whatsapp: validation.normalized!,
       });
       toast({ title: "Conta criada!", description: "Bem-vindo ao Palpite Tech." });
       const from = (location.state as any)?.from?.pathname || "/home";
@@ -497,13 +542,15 @@ export function LoginWizard() {
           </>
         );
 
-      case "cadastro-whatsapp":
+      case "cadastro-whatsapp": {
+        const whatsValidation = validateCelularBR(whatsapp);
+        const showError = whatsapp.replace(/\D/g, "").length >= 10 && !whatsValidation.ok;
         return (
           <>
             <CardHeader className="text-center pb-4 md:pb-6 px-4 md:px-6">
-              <CardTitle className="text-xl md:text-senior-2xl">Quase lá!</CardTitle>
+              <CardTitle className="text-xl md:text-senior-2xl">Confirme seu celular</CardTitle>
               <CardDescription className="text-sm md:text-senior-base">
-                Vamos enviar um convite para você receber diariamente os resultados no seu whatsapp.
+                Vamos enviar resultados e códigos de acesso pelo WhatsApp.
               </CardDescription>
             </CardHeader>
             <CardContent className="px-4 md:px-6">
@@ -511,24 +558,34 @@ export function LoginWizard() {
                 <div className="space-y-1.5 md:space-y-2">
                   <Label htmlFor="reg-whatsapp" className="text-sm md:text-senior-base flex items-center gap-2">
                     <MessageCircle className="h-4 w-4 md:h-5 md:w-5" />
-                    Informe seu Whatsapp
+                    Celular (WhatsApp)
                   </Label>
                   <Input
                     id="reg-whatsapp"
                     type="tel"
+                    inputMode="numeric"
                     placeholder="(00) 00000-0000"
                     value={whatsapp}
-                    onChange={(e) => setWhatsapp(e.target.value)}
+                    onChange={(e) => setWhatsapp(formatCelularMask(e.target.value))}
                     className="h-11 md:h-14 text-sm md:text-lg px-3 md:px-4 rounded-lg md:rounded-xl border-2 focus:border-primary"
                     autoFocus
                     required
                   />
+                  {showError && (
+                    <p className="text-destructive text-xs">
+                      {whatsValidation.reason || "Celular inválido. Use formato (DDD) 9XXXX-XXXX"}
+                    </p>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button type="button" variant="outline" className="h-11 md:h-14 px-4" onClick={() => setEtapa("cadastro-email")}>
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
-                  <Button type="submit" className="flex-1 h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl" disabled={isLoading}>
+                  <Button
+                    type="submit"
+                    className="flex-1 h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl"
+                    disabled={isLoading || !whatsValidation.ok}
+                  >
                     {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
                     Enviar Código de Acesso
                   </Button>
@@ -537,6 +594,7 @@ export function LoginWizard() {
             </CardContent>
           </>
         );
+      }
 
       case "cadastro-codigo":
         return (
