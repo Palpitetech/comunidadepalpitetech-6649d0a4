@@ -17,7 +17,8 @@ type Etapa =
   | "cadastro-nome" 
   | "cadastro-email" 
   | "cadastro-whatsapp" 
-  | "cadastro-codigo";
+  | "cadastro-codigo"
+  | "verificacao-email-pendente";
 
 interface VerificationResult {
   exists: boolean;
