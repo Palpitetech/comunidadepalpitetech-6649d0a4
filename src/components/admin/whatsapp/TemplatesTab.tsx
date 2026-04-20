@@ -14,8 +14,21 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Plus, Pencil, Trash2, FileText, ChevronsUpDown, Check, Send, Pause, Play, Timer, Filter, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TemplateSegmentationSection } from "./TemplateSegmentationSection";
-import { VariantsDialog } from "./VariantsDialog";
+import { VariantSlotSelector, type VariantSlot } from "./VariantSlotSelector";
 import { getEventLabel } from "@/lib/whatsapp-event-labels";
+import type { MessageTemplateVariant } from "@/types/whatsapp";
+
+const MAX_SLOTS = 10;
+
+function buildEmptySlots(mainContent = ""): VariantSlot[] {
+  return Array.from({ length: MAX_SLOTS }, (_, i) => ({
+    position: i + 1,
+    content: i === 0 ? mainContent : "",
+    isActive: true,
+    timesUsed: 0,
+    exists: i === 0,
+  }));
+}
 
 interface MessageTemplate {
   id: string;
@@ -88,7 +101,12 @@ export function TemplatesTab() {
   const [allTags, setAllTags] = useState<string[]>([]);
   const [plans, setPlans] = useState<PlanOption[]>([]);
   const [variantCounts, setVariantCounts] = useState<Record<string, number>>({});
-  const [variantsDialogTpl, setVariantsDialogTpl] = useState<MessageTemplate | null>(null);
+  const [slots, setSlots] = useState<VariantSlot[]>(() => buildEmptySlots());
+  const [activeSlot, setActiveSlot] = useState<number>(1);
+  // Track ids of variants loaded from DB (position -> id) so we can update/delete on save
+  const [variantIds, setVariantIds] = useState<Record<number, string>>({});
+  // Track positions removed during the current edit session (to delete on save)
+  const [removedPositions, setRemovedPositions] = useState<number[]>([]);
 
   const fetchVariantCounts = useCallback(async () => {
     const { data, error } = await supabase
@@ -164,10 +182,14 @@ export function TemplatesTab() {
   const openCreate = () => {
     setEditingId(null);
     setForm(emptyForm);
+    setSlots(buildEmptySlots(""));
+    setVariantIds({});
+    setRemovedPositions([]);
+    setActiveSlot(1);
     setDialogOpen(true);
   };
 
-  const openEdit = (t: MessageTemplate) => {
+  const openEdit = async (t: MessageTemplate) => {
     setEditingId(t.id);
     setForm({
       name: t.name,
@@ -180,21 +202,50 @@ export function TemplatesTab() {
       plan_ids: t.plan_ids ?? [],
       tags_match_mode: (t.tags_match_mode as "any" | "all") ?? "any",
     });
+
+    const baseSlots = buildEmptySlots(t.content);
+    const ids: Record<number, string> = {};
+    const { data, error } = await supabase
+      .from("message_template_variants" as any)
+      .select("*")
+      .eq("template_id", t.id)
+      .order("position", { ascending: true });
+    if (error) {
+      console.error(error);
+      toast.error("Erro ao carregar variações");
+    } else {
+      ((data as any[]) || []).forEach((v: MessageTemplateVariant) => {
+        const idx = v.position - 1;
+        if (idx >= 0 && idx < MAX_SLOTS) {
+          baseSlots[idx] = {
+            position: v.position,
+            content: v.content,
+            isActive: v.is_active,
+            timesUsed: v.times_used,
+            exists: true,
+          };
+          ids[v.position] = v.id;
+        }
+      });
+    }
+    setSlots(baseSlots);
+    setVariantIds(ids);
+    setRemovedPositions([]);
+    setActiveSlot(1);
     setDialogOpen(true);
   };
 
   const insertVariable = (variable: string) => {
     const ta = textareaRef.current;
+    const current = slots[activeSlot - 1]?.content ?? "";
     if (!ta) {
-      setForm((f) => ({ ...f, content: f.content + variable }));
+      updateActiveSlotContent(current + variable);
       return;
     }
     const start = ta.selectionStart;
     const end = ta.selectionEnd;
-    const before = form.content.slice(0, start);
-    const after = form.content.slice(end);
-    const newContent = before + variable + after;
-    setForm((f) => ({ ...f, content: newContent }));
+    const newContent = current.slice(0, start) + variable + current.slice(end);
+    updateActiveSlotContent(newContent);
     requestAnimationFrame(() => {
       ta.focus();
       const pos = start + variable.length;
@@ -203,15 +254,16 @@ export function TemplatesTab() {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.content.trim() || !form.event_trigger) {
-      toast.error("Preencha todos os campos obrigatórios");
+    const mainContent = slots[0]?.content?.trim() ?? "";
+    if (!form.name.trim() || !mainContent || !form.event_trigger) {
+      toast.error("Preencha nome, evento e a mensagem principal (slot 1)");
       return;
     }
     setSaving(true);
     try {
       const payload = {
         name: form.name.trim(),
-        content: form.content.trim(),
+        content: mainContent,
         event_trigger: form.event_trigger,
         delay_enabled: form.delay_enabled,
         delay_minutes: form.delay_enabled ? form.delay_minutes : 0,
@@ -220,23 +272,107 @@ export function TemplatesTab() {
         plan_ids: form.plan_ids,
         tags_match_mode: form.tags_match_mode,
       };
+
+      let templateId = editingId;
       if (editingId) {
         const { error } = await supabase.from("message_templates" as any).update(payload).eq("id", editingId);
         if (error) throw error;
-        toast.success("Template atualizado");
       } else {
-        const { error } = await supabase.from("message_templates" as any).insert(payload);
+        const { data, error } = await supabase
+          .from("message_templates" as any)
+          .insert(payload)
+          .select("id")
+          .single();
         if (error) throw error;
-        toast.success("Template criado");
+        templateId = (data as any).id;
       }
+
+      // Sync variants (slots 2..10)
+      if (templateId) {
+        const variantOps: Array<PromiseLike<{ error: any }>> = [];
+        for (let i = 1; i < MAX_SLOTS; i++) {
+          const slot = slots[i];
+          const existingId = variantIds[slot.position];
+          const trimmed = slot.content.trim();
+          if (existingId && trimmed) {
+            variantOps.push(
+              supabase
+                .from("message_template_variants" as any)
+                .update({ content: trimmed, is_active: slot.isActive })
+                .eq("id", existingId) as unknown as PromiseLike<{ error: any }>
+            );
+          } else if (existingId && !trimmed) {
+            variantOps.push(
+              supabase.from("message_template_variants" as any).delete().eq("id", existingId) as unknown as PromiseLike<{ error: any }>
+            );
+          } else if (!existingId && trimmed) {
+            variantOps.push(
+              supabase.from("message_template_variants" as any).insert({
+                template_id: templateId,
+                position: slot.position,
+                content: trimmed,
+                is_active: slot.isActive,
+              }) as unknown as PromiseLike<{ error: any }>
+            );
+          }
+        }
+        // Explicit deletions queued via "excluir variação" button
+        for (const pos of removedPositions) {
+          const id = variantIds[pos];
+          if (id) {
+            variantOps.push(
+              supabase.from("message_template_variants" as any).delete().eq("id", id) as unknown as PromiseLike<{ error: any }>
+            );
+          }
+        }
+        const results = await Promise.all(variantOps);
+        const firstError = results.find((r) => r?.error);
+        if (firstError?.error) throw firstError.error;
+      }
+
+      toast.success(editingId ? "Template atualizado" : "Template criado");
       setDialogOpen(false);
       fetchTemplates();
+      fetchVariantCounts();
     } catch (err: any) {
       console.error(err);
       toast.error("Erro ao salvar template");
     } finally {
       setSaving(false);
     }
+  };
+
+  // Update content of the currently active slot
+  const updateActiveSlotContent = (value: string) => {
+    setSlots((prev) =>
+      prev.map((s) =>
+        s.position === activeSlot ? { ...s, content: value, exists: s.position === 1 ? true : value.length > 0 || s.exists } : s
+      )
+    );
+  };
+
+  const handleSlotSelect = (position: number) => {
+    setSlots((prev) =>
+      prev.map((s) => (s.position === position && !s.exists && position !== 1 ? { ...s, exists: true } : s))
+    );
+    setActiveSlot(position);
+  };
+
+  const toggleActiveSlotPaused = () => {
+    if (activeSlot === 1) return;
+    setSlots((prev) => prev.map((s) => (s.position === activeSlot ? { ...s, isActive: !s.isActive } : s)));
+  };
+
+  const deleteActiveSlot = () => {
+    if (activeSlot === 1) return;
+    const pos = activeSlot;
+    setSlots((prev) =>
+      prev.map((s) => (s.position === pos ? { ...s, content: "", isActive: true, exists: false, timesUsed: 0 } : s))
+    );
+    if (variantIds[pos]) {
+      setRemovedPositions((prev) => (prev.includes(pos) ? prev : [...prev, pos]));
+    }
+    setActiveSlot(1);
   };
 
   const handleDelete = async (id: string) => {
@@ -414,29 +550,72 @@ export function TemplatesTab() {
                   </div>
                 )}
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="tpl-content">Conteúdo da mensagem *</Label>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Conteúdo da mensagem (até 10 variações)</Label>
+                  <span className="text-[10px] text-muted-foreground">
+                    Variação ativa: <strong>#{activeSlot}</strong>
+                    {activeSlot === 1 && " (principal)"}
+                  </span>
+                </div>
+                <VariantSlotSelector slots={slots} activeSlot={activeSlot} onSelect={handleSlotSelect} />
+                <div className="rounded-md bg-muted/30 px-2.5 py-1.5 text-[11px] text-muted-foreground border border-border">
+                  Use até 10 variações com o <strong>mesmo conteúdo</strong> escrito de formas diferentes.
+                  O sistema rotaciona automaticamente para evitar bloqueio por mensagens repetidas.
+                </div>
                 <Textarea
                   id="tpl-content"
                   ref={textareaRef}
-                  placeholder="Olá {{nome}}, tudo bem?"
-                  value={form.content}
-                  onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
+                  placeholder={activeSlot === 1 ? "Olá {{nome}}, tudo bem?" : "Variação alternativa..."}
+                  value={slots[activeSlot - 1]?.content ?? ""}
+                  onChange={(e) => updateActiveSlotContent(e.target.value)}
                   rows={5}
                   maxLength={2000}
                 />
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {VARIABLES.map((v) => (
-                    <button
-                      key={v}
-                      type="button"
-                      onClick={() => insertVariable(v)}
-                      className="px-2 py-0.5 rounded-md bg-muted text-xs font-mono text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors border border-border"
-                    >
-                      {v}
-                    </button>
-                  ))}
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap gap-1.5">
+                    {VARIABLES.map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => insertVariable(v)}
+                        className="px-2 py-0.5 rounded-md bg-muted text-xs font-mono text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors border border-border"
+                      >
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground tabular-nums">
+                    {(slots[activeSlot - 1]?.content ?? "").length}/2000
+                  </span>
                 </div>
+                {activeSlot !== 1 && slots[activeSlot - 1]?.exists && (
+                  <div className="flex gap-2 pt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-xs"
+                      onClick={toggleActiveSlotPaused}
+                    >
+                      {slots[activeSlot - 1]?.isActive ? (
+                        <><Pause className="h-3.5 w-3.5" /> Pausar variação</>
+                      ) : (
+                        <><Play className="h-3.5 w-3.5" /> Ativar variação</>
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-xs text-destructive hover:text-destructive"
+                      onClick={deleteActiveSlot}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Excluir variação
+                    </Button>
+                  </div>
+                )}
               </div>
 
               <TemplateSegmentationSection
@@ -520,15 +699,6 @@ export function TemplatesTab() {
                     variant="outline"
                     size="sm"
                     className="gap-1.5 text-xs"
-                    onClick={() => setVariantsDialogTpl(tpl)}
-                    title="Gerenciar variantes"
-                  >
-                    <Repeat className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 text-xs"
                     onClick={() => handleTestSend(tpl)}
                     disabled={testingId === tpl.id}
                     title="Enviar teste"
@@ -573,22 +743,6 @@ export function TemplatesTab() {
         </div>
       )}
 
-      <VariantsDialog
-        open={variantsDialogTpl !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setVariantsDialogTpl(null);
-            fetchVariantCounts();
-          }
-        }}
-        templateId={variantsDialogTpl?.id ?? null}
-        templateName={variantsDialogTpl?.name ?? ""}
-        onCountChange={(count) => {
-          if (variantsDialogTpl) {
-            setVariantCounts((prev) => ({ ...prev, [variantsDialogTpl.id]: count }));
-          }
-        }}
-      />
     </div>
   );
 }
