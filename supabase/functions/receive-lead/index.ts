@@ -490,22 +490,12 @@ serve(async (req) => {
 
     await supabaseAdmin.rpc("increment_lead_webhook_count" as any, { webhook_id: webhook.id });
 
-    // Magic link de ativação
-    let magicLinkStatus = "skipped";
-    try {
-      const siteUrl = Deno.env.get("SITE_URL") || "https://comunidadepalpitetech.lovable.app";
-
-      const { data: magicData, error: magicError } = await supabaseAdmin.auth.admin.generateLink({
-        type: "magiclink",
-        email: emailLower,
-        options: {
-          redirectTo: `${siteUrl}/ativar-conta`,
-        },
-      });
-
-      if (!magicError && magicData?.properties?.hashed_token) {
-        const token_hash = magicData.properties.hashed_token;
-        const directLink = `${siteUrl}/ativar-conta?token_hash=${encodeURIComponent(token_hash)}&type=magiclink`;
+    // Email de boas-vindas (sem magic link — verificação acontece no /login via OTP de 6 dígitos)
+    let welcomeEmailStatus = "skipped";
+    if (isNew) {
+      try {
+        const siteUrl = Deno.env.get("SITE_URL") || "https://comunidadepalpitetech.com.br";
+        const loginUrl = `${siteUrl}/login`;
 
         const resendRes = await fetch("https://api.resend.com/emails", {
           method: "POST",
@@ -516,48 +506,52 @@ serve(async (req) => {
           body: JSON.stringify({
             from: Deno.env.get("RESEND_FROM_EMAIL") ?? "Comunidade Palpite Tech <solicitacao@palpitetech.com.br>",
             to: emailLower,
-            subject: "Ative sua conta e crie sua senha",
+            subject: "Bem-vindo ao Palpite Tech! Ative sua conta",
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; background: #ffffff;">
                 <h1 style="color: #1a2e4a; font-size: 22px; margin-bottom: 8px;">Olá, ${nome.trim()}!</h1>
                 <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
-                  Sua conta foi criada. Clique no botão abaixo para ativar e criar sua senha de acesso.
+                  Seu cadastro foi recebido. Para ativar sua conta e ganhar
+                  <strong>3 dias grátis de acesso premium</strong>, siga os passos:
                 </p>
+                <ol style="color: #4a5568; font-size: 15px; line-height: 1.8; padding-left: 20px;">
+                  <li>Acesse o site clicando no botão abaixo</li>
+                  <li>Digite seu email (<strong>${emailLower}</strong>)</li>
+                  <li>Você receberá um código de 6 dígitos por email</li>
+                  <li>Pronto! Trial liberado.</li>
+                </ol>
                 <div style="text-align: center; margin: 32px 0;">
-                  <a href="${directLink}" style="display: inline-block; background-color: #1a2e4a; color: #ffffff; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-size: 16px; font-weight: 600;">
+                  <a href="${loginUrl}" style="display: inline-block; background-color: #1a2e4a; color: #ffffff; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-size: 16px; font-weight: 600;">
                     Ativar minha conta
                   </a>
                 </div>
-                <p style="color: #8a94a6; font-size: 13px; text-align: center;">
-                  Este link expira em 24 horas.<br/>
-                  Se não solicitou, ignore este email.
+                <p style="color: #8a94a6; font-size: 13px; text-align: center; margin-top: 24px;">
+                  Dúvidas? WhatsApp: <a href="https://wa.me/5551981854281" style="color: #1a2e4a;">(51) 98185-4281</a>
                 </p>
               </div>
             `,
           }),
         });
 
-        magicLinkStatus = resendRes.ok ? "success" : "error";
+        welcomeEmailStatus = resendRes.ok ? "success" : "error";
         await resendRes.text();
-      } else {
-        magicLinkStatus = "error";
-      }
 
-      await supabaseAdmin.from("system_events").insert({
-        event_type: "lead_ativacao_email_enviado",
-        description: `Email de ativação enviado para ${email}`,
-        source: source || "webhook",
-        status: magicLinkStatus,
-        metadata: {
-          user_id: userId,
-          email,
-          is_new: isNew,
-          error: magicLinkStatus === "error" ? "Falha ao enviar magic link" : null,
-        },
-      });
-    } catch (e) {
-      console.error("Magic link error:", e);
-      magicLinkStatus = "error";
+        await supabaseAdmin.from("system_events").insert({
+          event_type: "lead_recebido_pendente",
+          description: `Lead criado e email de boas-vindas enviado para ${maskEmail(emailLower)}`,
+          source: source || "webhook",
+          status: welcomeEmailStatus,
+          metadata: {
+            user_id: userId,
+            email_mascarado: maskEmail(emailLower),
+            is_new: isNew,
+            webhook_name: webhook.name,
+          },
+        });
+      } catch (e) {
+        console.error("Welcome email error:", e);
+        welcomeEmailStatus = "error";
+      }
     }
 
     return json({
@@ -566,7 +560,8 @@ serve(async (req) => {
       is_new: isNew,
       tags: persistedTags,
       tags_verified: tagsOk,
-      activation_email: magicLinkStatus,
+      welcome_email: welcomeEmailStatus,
+      message: "Acesse o site e faça login com seu email para ativar sua conta",
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Erro interno";

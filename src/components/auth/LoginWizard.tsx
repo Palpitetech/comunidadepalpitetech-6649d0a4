@@ -17,7 +17,8 @@ type Etapa =
   | "cadastro-nome" 
   | "cadastro-email" 
   | "cadastro-whatsapp" 
-  | "cadastro-codigo";
+  | "cadastro-codigo"
+  | "verificacao-email-pendente";
 
 interface VerificationResult {
   exists: boolean;
@@ -36,6 +37,7 @@ export function LoginWizard() {
   const [whatsapp, setWhatsapp] = useState("");
   const [codigo, setCodigo] = useState("");
   const [nomeUsuarioEncontrado, setNomeUsuarioEncontrado] = useState("");
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
@@ -68,8 +70,35 @@ export function LoginWizard() {
       const result = data as unknown as VerificationResult;
 
       if (result.exists) {
+        const emailParaLogin = result.email || inputLimpo;
         setNomeUsuarioEncontrado(result.nome || "");
-        setEmailLogin(result.email || inputLimpo);
+        setEmailLogin(emailParaLogin);
+
+        // Verifica se o email já foi confirmado (lead pendente do webhook)
+        const { data: perfil } = await supabase
+          .from("perfis")
+          .select("id, email_verificado, nome")
+          .eq("email", emailParaLogin)
+          .maybeSingle();
+
+        if (perfil && perfil.email_verificado === false) {
+          // Lead pendente — dispara OTP automaticamente e pula pra etapa de verificação
+          setPendingUserId(perfil.id);
+          await supabase.functions.invoke("enviar-codigo-email", {
+            body: { 
+              user_id: perfil.id, 
+              email: emailParaLogin, 
+              nome: perfil.nome || result.nome || "" 
+            },
+          });
+          setEtapa("verificacao-email-pendente");
+          toast({ 
+            title: "Conta pendente de ativação", 
+            description: "Enviamos um código de 6 dígitos pro seu email." 
+          });
+          return;
+        }
+
         setEtapa("senha");
       } else {
         setEtapa("celular");
@@ -189,6 +218,63 @@ export function LoginWizard() {
       navigate(from, { replace: true });
     } catch (err) {
       toast({ title: "Código inválido", description: "Verifique o código e tente novamente.", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyPendingEmail = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (codigo.length < 6 || !pendingUserId) return;
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("verificar-codigo", {
+        body: { user_id: pendingUserId, codigo, tipo: "email" },
+      });
+
+      if (error || !data?.sucesso) {
+        throw new Error(data?.erro || "Código inválido");
+      }
+
+      // Email confirmado → trigger ativou trial 3 dias + role premium.
+      // Como a conta foi criada via webhook (sem senha conhecida), enviamos reset
+      // para o usuário criar senha e logar.
+      await resetPassword(emailLogin || email);
+
+      toast({ 
+        title: "Conta ativada! 🎉", 
+        description: "Trial de 3 dias liberado! Enviamos um link no seu email pra criar sua senha e acessar." 
+      });
+      setEtapa("email");
+      setCodigo("");
+      setPendingUserId(null);
+    } catch (err: any) {
+      toast({ 
+        title: "Código inválido", 
+        description: err?.message || "Verifique o código e tente novamente.", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendPendingCode = async () => {
+    if (!pendingUserId) return;
+    setIsLoading(true);
+    try {
+      await supabase.functions.invoke("enviar-codigo-email", {
+        body: { 
+          user_id: pendingUserId, 
+          email: emailLogin || email, 
+          nome: nomeUsuarioEncontrado || "" 
+        },
+      });
+      toast({ title: "Código reenviado", description: "Verifique seu email." });
+      setCodigo("");
+    } catch (err) {
+      toast({ title: "Erro ao reenviar", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -496,6 +582,68 @@ export function LoginWizard() {
                   </Button>
                 </div>
               </div>
+            </CardContent>
+          </>
+        );
+
+      case "verificacao-email-pendente":
+        return (
+          <>
+            <CardHeader className="text-center pb-4 md:pb-6 px-4 md:px-6">
+              <CardTitle className="text-xl md:text-senior-2xl">Ative sua conta</CardTitle>
+              <CardDescription className="text-sm md:text-senior-base">
+                Sua conta ainda não foi ativada. Enviamos um código de 6 dígitos para <span className="font-semibold text-primary">{emailLogin || email}</span>. Confira a caixa de Spam, Promoções e Outros.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-4 md:px-6">
+              <form onSubmit={handleVerifyPendingEmail} className="flex flex-col items-center space-y-6">
+                <div className="space-y-2">
+                  <Label className="text-sm md:text-senior-base block text-center">Código de 6 dígitos</Label>
+                  <InputOTP 
+                    maxLength={6} 
+                    value={codigo} 
+                    onChange={(val) => setCodigo(val)}
+                    onComplete={() => handleVerifyPendingEmail()}
+                    disabled={isLoading}
+                  >
+                    <InputOTPGroup className="gap-2">
+                      <InputOTPSlot index={0} className="h-12 w-10 md:h-14 md:w-12 border-2 text-xl" />
+                      <InputOTPSlot index={1} className="h-12 w-10 md:h-14 md:w-12 border-2 text-xl" />
+                      <InputOTPSlot index={2} className="h-12 w-10 md:h-14 md:w-12 border-2 text-xl" />
+                      <InputOTPSlot index={3} className="h-12 w-10 md:h-14 md:w-12 border-2 text-xl" />
+                      <InputOTPSlot index={4} className="h-12 w-10 md:h-14 md:w-12 border-2 text-xl" />
+                      <InputOTPSlot index={5} className="h-12 w-10 md:h-14 md:w-12 border-2 text-xl" />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+
+                <div className="flex flex-col w-full gap-3">
+                  <Button 
+                    type="submit"
+                    className="w-full h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl" 
+                    disabled={isLoading || codigo.length < 6}
+                  >
+                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <><ShieldCheck className="h-5 w-5 mr-2" /> Ativar conta e liberar trial</>}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    className="text-xs" 
+                    onClick={handleResendPendingCode}
+                    disabled={isLoading}
+                  >
+                    Não recebi — reenviar código
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    className="text-xs" 
+                    onClick={() => { setEtapa("email"); setCodigo(""); setPendingUserId(null); }}
+                  >
+                    Voltar
+                  </Button>
+                </div>
+              </form>
             </CardContent>
           </>
         );
