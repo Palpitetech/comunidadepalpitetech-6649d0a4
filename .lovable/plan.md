@@ -1,161 +1,211 @@
 
 
-## Gerar 9 variantes por IA com base no slot #1
+# Refatorar Dashboard Admin em Blocos com Filtros Globais
 
-### Objetivo
-Adicionar um botão **"Gerar variações com IA"** dentro do dialog de Novo/Editar Template. O botão fica âmbar/desabilitado enquanto o slot #1 estiver vazio, vira verde quando há mensagem principal escrita. Ao clicar, gera de uma vez as variantes #2-#10 mantendo as variáveis (`{{nome}}`, `{{produto}}`, etc.), no tom: amigável, direto, claro, sem acentos, com pontuação ocasional e leves erros de digitação humanos.
+## Objetivo
+Transformar `/admin` numa central de métricas em blocos focados em decisão (vendas, ativos, vencidos, oportunidades), com filtro global de período e opção de filtro independente por bloco. Remover **Saúde dos Bots** e **Módulos** desta tela (continuam acessíveis pelo sidebar).
 
 ---
 
-### Como o usuário vai ver
+## Como o usuário vai ver
 
+```text
+┌─ Período Global: [Hoje][Ontem][7d][14d][21d][Mês passado][1m][2m][3m][📅 custom]  [⚙ Toggle: Global / Por Bloco] ┐
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────── BLOCO 01 — Funil de Aquisição ───────────────────────────────────────────────┐
+│  [📈 Gráfico em linha — Cadastros / Verificados / Vendas (eixo tempo)]                                            │
+│  Lógica: Cadastros = Leads + Vendas (sem duplicar). Ex: 100 cadastros = 60 leads + 40 vendas                      │
+└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─ Total Vendas ──┐  ┌─ Total Cadastros ──┐  ┌─ Total Verificados ──┐
+│   R$ 1.234     │  │       100           │  │        78            │
+│   40 vendas    │  │  40 pagos · 60 leads│  │  78% do total        │
+└────────────────┘  └─────────────────────┘  └──────────────────────┘
+
+┌─ Contas Vencidas ┐  ┌─ Canceladas ───┐  ┌─ Ativas (Pago) ──┐  ┌─ Grupo VIP Lotofácil ┐
+│      28         │  │  26 · X ativ. │  │  35 ativas       │  │      127 membros      │
+│                 │  │       X inat. │  │  Mensal · Anual..│  │                       │
+└─────────────────┘  └────────────────┘  └──────────────────┘  └───────────────────────┘
+
+┌─ Trial Ativo ┐  ┌─ Trial Vencido ┐  ┌─ Total R$ Vendas ┐  ┌─ Oport. Vencidas R$ ┐  ┌─ PIX a Pagar R$ ┐
+│      12      │  │       45        │  │    R$ 3.450      │  │      R$ 890         │  │    R$ 423        │
+└──────────────┘  └─────────────────┘  └──────────────────┘  └─────────────────────┘  └──────────────────┘
+
+┌─────────── Vendas por Plano (no período) ───────────┐
+│  Mensal:        12 vendas  · R$ 564                  │
+│  Semestral:      4 vendas  · R$ 268                  │
+│  Anual:          2 vendas  · R$ 594                  │
+│  Anual VIP:      1 venda   · R$ 397                  │
+│  Grupo VIP Loto: 8 vendas  · R$ 152                  │
+└──────────────────────────────────────────────────────┘
 ```
-┌─ Conteúdo da mensagem (até 10 variações) ──┐
-│ [1][2][3][+][+][+][+][+][+][+]              │
-│                                              │
-│ [textarea da variação atual…]                │
-│ {{nome}} {{telefone}} {{email}} {{produto}}  │
-│                                              │
-│ [⚡ Gerar variações com IA]  ← âmbar/verde   │
-│ [Pausar variação] [Excluir variação]         │
-└──────────────────────────────────────────────┘
+
+**Cada bloco** tem no canto superior direito:
+- Quando filtro = **Global** → ícone discreto com período herdado
+- Quando filtro = **Por Bloco** → mini seletor próprio (mesma lista de períodos)
+
+---
+
+## Definição precisa dos blocos (lógica)
+
+| Bloco | Métrica | Fonte / Cálculo |
+|---|---|---|
+| **01 — Gráfico Funil** | Cadastros, Verificados, Vendas (linhas) | série diária baseada em `perfis.created_at` (cadastros), `perfis.email_verificado=true` (verificados), `kirvano_webhook_logs WHERE event='SALE_APPROVED'` (vendas) |
+| **Total Vendas** | nº + R$ | `event='SALE_APPROVED' OR 'SUBSCRIPTION_RENEWED'` no período, soma `raw_payload->>'total_price'` (parse "R$ 47,00") |
+| **Total Cadastros** | nº + breakdown | `perfis WHERE is_bot=false AND created_at NO PERÍODO`. Sub: pagos vs leads (regra: **se email do perfil existe em vendas aprovadas → pago**, senão lead) |
+| **Total Verificados** | nº + % | `perfis WHERE email_verificado=true` no período |
+| **Contas Vencidas** | nº | `perfis` com tag `plano_vencido` OU `validade_assinatura < now()` (não filtrado por período — é estado atual) |
+| **Canceladas** | nº + ativ/inat | conta de eventos `SUBSCRIPTION_CANCELED` no período. Sub: usuário ainda tem acesso (validade futura) vs já não tem |
+| **Ativas (Pago)** | nº + por plano | `perfis` com `plan_id` em planos pagos AND (`status_assinatura='ativa' OR validade_assinatura > now()`). Breakdown por `plan.name` (estado atual) |
+| **Grupo VIP Lotofácil** | nº | `count(perfis WHERE 'integrante_grupo_lotofacil_vip' = ANY(tags))` (estado atual) |
+| **Trial Ativo** | nº | `perfis WHERE plan_id = teste-gratis-3-dias AND validade_assinatura > now()` |
+| **Trial Vencido** | nº | `perfis WHERE trial_used=true AND (plan_id IS NULL OR plan_id = teste-gratis OR validade < now())` |
+| **Vendas por Plano** | lista | join `kirvano_webhook_logs` (SALE_APPROVED) → `kirvano_offer_plan_map.offer_id` → `plans` no período |
+| **Total Vendas R$** | R$ | mesma origem do bloco "Total Vendas", apenas o valor |
+| **Oport. Vencidas R$** | R$ | `event='PIX_EXPIRED' OR 'SUBSCRIPTION_EXPIRED'` no período, soma `total_price` |
+| **PIX a Pagar R$** | R$ | `event='PIX_GENERATED' AND` ainda não tem `SALE_APPROVED` correspondente (mesmo `checkout_id`), soma `total_price` (estado atual) |
+
+**Sugestões extras de métrica** (incluo no plano se aprovado):
+- **Carrinho Abandonado**: `event='ABANDONED_CART'` no período (potencial de recuperação)
+- **Renovações**: `event='SUBSCRIPTION_RENEWED'` no período (saúde da retenção)
+- **Ticket médio**: `total R$ vendas / nº vendas` no período
+- **% conversão lead→pago**: `pagos / cadastros * 100`
+
+---
+
+## Etapas de implementação
+
+### Etapa 1 — Hook central de filtros + período
+**Arquivo novo:** `src/hooks/useDashboardPeriod.ts`
+
+- Tipo `PeriodKey = "today"|"yesterday"|"7d"|"14d"|"21d"|"last_month"|"1m"|"2m"|"3m"|"custom"`
+- Função `resolvePeriod(key, customRange?) → { from: Date; to: Date; label: string }`
+- Reutilizável em qualquer bloco
+
+**Refator no fim da etapa:** garantir que `AdminMetricas.tsx` também possa adotar este hook depois (não muda agora, só prepara).
+
+### Etapa 2 — Componente `<PeriodFilter />`
+**Arquivo novo:** `src/components/admin/dashboard/PeriodFilter.tsx`
+
+- Props: `value`, `onChange`, `customRange`, `onCustomRangeChange`, `compact?: boolean` (compact = usado dentro dos blocos)
+- Renderiza pills de período + popover de calendário para `custom`
+- Modo compact: dropdown simples ao invés de pills
+
+### Etapa 3 — Hook de dados consolidado
+**Arquivo novo:** `src/hooks/admin/useDashboardMetrics.ts`
+
+- Recebe `period: { from, to }`
+- Faz **uma única tanda paralela** de queries:
+  1. `perfis` no período (cadastros + verificados)
+  2. `perfis` estado atual (ativas, vencidas, trials, grupo VIP) — **não filtrado por período**
+  3. `kirvano_webhook_logs` no período (vendas, PIX, cancelamentos, expirações)
+  4. `kirvano_webhook_logs` estado atual de PIX pendente (sem aprovação correspondente)
+  5. `plans` (para nomear breakdown)
+  6. `kirvano_offer_plan_map` (para mapear vendas → plano)
+- Retorna objeto tipado `DashboardMetrics` com todos os campos + série diária para o gráfico
+- Helper interno `parseBrazilianCurrency("R$ 47,00") → 47.0`
+- Helper `groupByDay(logs, dateField) → { date: string; count: number; sum?: number }[]`
+
+### Etapa 4 — Componentes de bloco (atômicos, reutilizáveis)
+**Arquivos novos em** `src/components/admin/dashboard/`:
+
+- `MetricBlock.tsx` — wrapper genérico (título, valor grande, sub-info, ícone, slot de filtro próprio quando modo "por bloco")
+- `FunnelChart.tsx` — gráfico de linha com Recharts (3 séries: cadastros, verificados, vendas)
+- `PlanBreakdownBlock.tsx` — lista de "Plano X = Y vendas · R$ Z"
+
+Cada `MetricBlock` aceita `localPeriod?: { from, to }` que sobrescreve o global quando modo "por bloco" estiver ativo.
+
+### Etapa 5 — Reescrever `AdminIndex.tsx`
+- **Remover** `BotHealthWidget` import e uso
+- **Remover** seção "Módulos" e array `ADMIN_MODULES`
+- **Manter** `UserStatsWidget` ou substituir pelo novo grid (decidir: novo grid cobre + bloco de cadastros já mostra a info → **remover** `UserStatsWidget` para evitar duplicação)
+- Adicionar:
+  - `<PeriodFilter />` global no topo
+  - `<Switch>` "Filtro por bloco" (controla se cada bloco renderiza filtro próprio)
+  - Grid responsivo de blocos (grid-cols-1 mobile, md:grid-cols-2, lg:grid-cols-3 / 4)
+  - Bloco 01 ocupa largura total (lg:col-span-full)
+
+### Etapa 6 — Limpeza / refatoração
+- Apagar `BotHealthWidget.tsx` se não for usado em outro lugar (`code--search_files` confirma uso único em `AdminIndex`)
+- Mover `UserStatsWidget` para arquivo próprio se ainda for útil em outra página, ou deletar
+- Garantir que `AdminMetricas` continua funcionando (sem mudanças, apenas seu hook de período pode ser unificado depois)
+- Rodar TypeScript check, remover imports não usados
+
+### Etapa 7 — Validação end-to-end
+1. Carregar `/admin` → vê filtro global + grid de blocos sem bots/módulos
+2. Trocar filtro global "7d" → todos blocos filtráveis por período recalculam; blocos de "estado atual" (vencidas, ativas, trial, grupo VIP, PIX a pagar) **ignoram** o período (mostram badge "estado atual")
+3. Ativar toggle "Por bloco" → cada bloco filtrável mostra mini seletor; blocos de "estado atual" não mostram (não faz sentido)
+4. Conferir gráfico de funil: cadastros = pagos + leads (sem duplicação)
+5. Conferir bloco "Vendas por Plano" cobre todos os planos com vendas no período
+6. Mobile: grid colapsa para 1 coluna; gráfico responsivo
+
+---
+
+## Detalhes técnicos sensíveis
+
+**Anti-duplicação no funil (regra crítica do usuário):**
+```ts
+const emailsComVendaAprovada = new Set(
+  vendasAprovadas.map(v => v.email.toLowerCase())
+);
+const cadastrosNoPeriodo = perfisCriadosNoPeriodo.length;
+const pagosNoPeriodo = perfisCriadosNoPeriodo.filter(
+  p => emailsComVendaAprovada.has(p.email?.toLowerCase())
+).length;
+const leadsNoPeriodo = cadastrosNoPeriodo - pagosNoPeriodo;
+// Total = cadastros (NÃO somar pagos+leads para evitar duplicar)
 ```
 
-**Estados do botão:**
-- **Cinza/desabilitado**: slot #1 vazio (`mensagem principal vazia`)
-- **Âmbar pulsante**: slot #1 com texto, ainda não gerou — sinaliza "ação recomendada"
-- **Verde**: variantes já geradas no menos uma vez (pode regenerar)
-- **Loading**: spinner + texto "Gerando 9 variações..."
+**PIX a pagar (estado atual):**
+```ts
+const pixGerados = logs.filter(l => l.event === 'PIX_GENERATED');
+const checkoutsAprovados = new Set(
+  logs.filter(l => l.event === 'SALE_APPROVED').map(l => l.checkout_id)
+);
+const pixAbertos = pixGerados.filter(p => 
+  !checkoutsAprovados.has(p.checkout_id) &&
+  parseDate(p.raw_payload?.payment?.expires_at) > now
+);
+```
 
-**Confirmação se sobrescrever:** se já houver variantes preenchidas em #2-#10, abre confirm: "Substituir as 9 variações existentes? (slot #1 não muda)"
+**Parse de valor BR:**
+```ts
+function parseBRL(s?: string | null): number {
+  if (!s) return 0;
+  return parseFloat(s.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+}
+```
 
----
-
-### Mudanças por arquivo
-
-#### 1. Nova edge function `supabase/functions/generate-message-variants/index.ts`
-
-**Input:** `{ main_content: string, count?: number }` (default count=9)
-
-**Lógica:**
-- Auth via `getClaims()` + checagem `has_role(user, 'admin')` (apenas admin gera via IA, segue regra do projeto)
-- Chama Lovable AI Gateway (`google/gemini-3-flash-preview`) via tool calling estruturado
-- Prompt sistema fixo no backend (não exposto):
-  ```
-  Você é um especialista em copywriting para WhatsApp transacional.
-  Gere {N} variações da mensagem original.
-  
-  REGRAS OBRIGATÓRIAS:
-  - Tom amigável, direto ao ponto, claro
-  - SEM acentos (use "voce" ao invés de "você", "nao" ao invés de "não")
-  - Pontuação final ocasional (nem sempre)
-  - Inserir 1-2 leves erros de digitação humanos (ex: "voce", "tbm", "agr", "obg")
-  - PRESERVAR EXATAMENTE todas as variáveis {{nome}} {{produto}} {{telefone}} {{email}} {{link_grupo_vip}} {{plano_nome}}
-  - Manter o mesmo significado e CTA da original
-  - Variar abertura, ordem das frases e fechamento
-  - NUNCA mudar links, números ou dados técnicos
-  - Tamanho similar à original (±20%)
-  ```
-- Tool schema força retorno de array: `{ variants: string[] }` com exatamente N itens
-- Log em `ai_usage_logs` com `edge_function='generate-message-variants'`, `action_type='generate_variants'`
-- Tratamento 429/402 com mensagem amigável
-- Retorna `{ variants: string[] }`
-
-**Validações de output:**
-- Valida que cada variante mantém TODAS as variáveis presentes na original (regex `{{[^}]+}}`)
-- Se uma variante perdeu variável, descarta e pede reposição (1 retry no máximo)
-- Trim e limita 2000 chars
-
-#### 2. `src/components/admin/whatsapp/TemplatesTab.tsx`
-
-**Adicionar:**
-- Estado: `const [generatingVariants, setGeneratingVariants] = useState(false)` e `const [hasGenerated, setHasGenerated] = useState(false)`
-- Função `handleGenerateVariants()`:
-  1. Verifica `slots[0].content.trim()` — se vazio, abort
-  2. Se algum slot 2-10 já preenchido → `confirm()` antes
-  3. `supabase.functions.invoke('generate-message-variants', { body: { main_content, count: 9 } })`
-  4. Atualiza slots[1..9] com as variantes retornadas, todas `exists: true, isActive: true`
-  5. `setHasGenerated(true)`, toast sucesso
-  6. Catch: toast com mensagem específica (rate limit, créditos, erro)
-- Botão posicionado **logo abaixo do textarea**, antes dos botões "Pausar/Excluir":
-  ```tsx
-  <Button
-    type="button"
-    variant="outline"
-    onClick={handleGenerateVariants}
-    disabled={!mainHasContent || generatingVariants}
-    className={cn(
-      "gap-1.5 transition-colors",
-      !mainHasContent && "opacity-50",
-      mainHasContent && !hasGenerated && "border-amber-500/60 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 animate-pulse",
-      hasGenerated && "border-emerald-500/60 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20"
-    )}
-  >
-    {generatingVariants ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-    {generatingVariants ? "Gerando 9 variações..." : hasGenerated ? "Regenerar variações" : "Gerar variações com IA"}
-  </Button>
-  ```
-- Reset `setHasGenerated(false)` em `openCreate()` e `openEdit()` (cada template começa neutro)
-
-#### 3. Sem mudanças em
-- `VariantSlotSelector.tsx` — slots populados pela IA reagem normalmente
-- Tabelas / migrações SQL — variantes geradas usam o mesmo schema
-- `process-queue/index.ts` — round robin já funciona com qualquer slot preenchido
-- `pick_template_variant` — sem mudança
+**Distinção temporal vs estado:**
+- "Por período": Cadastros, Verificados, Vendas, Canceladas, PIX gerado/expirado, Vendas por Plano, R$ Vendas, R$ Oport. Vencidas, Carrinho Abandonado
+- "Estado atual" (ignora período): Ativas, Vencidas, Trial Ativo/Vencido, Grupo VIP Lotofácil, PIX a Pagar (em aberto)
 
 ---
 
-### Etapa por etapa (com revisão e refatoração)
-
-**Etapa 1 — Edge function `generate-message-variants`**
-- Cria função, prompt, tool schema, validação de variáveis preservadas
-- Verifica: deploy automático, log no `ai_usage_logs`
-- Refator: extrair `extractVariables(text)` e `hasAllVariables(variant, required)` como helpers internos legíveis
-
-**Etapa 2 — UI no TemplatesTab**
-- Adiciona botão, estados, função `handleGenerateVariants`
-- Verifica: gerar com slot 1 vazio (deve estar disabled), gerar com slot 1 preenchido (âmbar), regenerar (verde + confirm)
-- Refator: extrair `mainHasContent` como `useMemo` para clareza, remover imports não usados
-
-**Etapa 3 — Validação end-to-end**
-- Cenário 1: novo template, escrever slot 1 com `{{nome}}` e `{{produto}}`, gerar 9, verificar todas mantêm as variáveis
-- Cenário 2: editar template existente sem variantes, gerar, salvar, verificar `message_template_variants` recebeu 9 rows
-- Cenário 3: editar template com variantes, regenerar, confirmar substituição
-- Cenário 4: testar envio (botão "Testar") após gerar — round robin alterna entre as 10
-
-**Etapa 4 — Refatoração final / cleanup**
-- Remover qualquer import não usado em `TemplatesTab.tsx`
-- Garantir `Sparkles` importado de `lucide-react`
-- Confirmar que erros 429/402 da edge function aparecem como toast amigável no front
-- Sem código morto: `hasGenerated` é resetado nos 2 abridores do dialog
-
----
-
-### Tom e regras de geração (garantidas no prompt do backend)
-- ✅ Amigável, direto, claro
-- ✅ Sem acentos (preferencial)
-- ✅ Pontuação final ocasional
-- ✅ Erros de digitação leves e naturais (não exagerados)
-- ✅ Variáveis 100% preservadas
-- ✅ Links e dados técnicos intocados
-
----
-
-### Resumo dos arquivos editados
+## Arquivos resumo
 
 | Arquivo | Ação |
 |---|---|
-| `supabase/functions/generate-message-variants/index.ts` | **Novo** — edge function que gera 9 variantes via Lovable AI |
-| `src/components/admin/whatsapp/TemplatesTab.tsx` | Adiciona botão "Gerar variações com IA" + estados + handler |
+| `src/hooks/useDashboardPeriod.ts` | **Novo** — hook de período + tipos |
+| `src/hooks/admin/useDashboardMetrics.ts` | **Novo** — busca consolidada de todas métricas |
+| `src/components/admin/dashboard/PeriodFilter.tsx` | **Novo** — pills + custom range |
+| `src/components/admin/dashboard/MetricBlock.tsx` | **Novo** — wrapper de bloco |
+| `src/components/admin/dashboard/FunnelChart.tsx` | **Novo** — gráfico Recharts |
+| `src/components/admin/dashboard/PlanBreakdownBlock.tsx` | **Novo** — lista vendas por plano |
+| `src/pages/admin/AdminIndex.tsx` | **Reescrever** — remover bots/módulos, novo grid |
+| `src/components/admin/BotHealthWidget.tsx` | **Apagar** (após confirmar uso único) |
 
-### Fora de escopo
-- Sem mudanças no schema do banco
-- Sem alteração no round robin (`pick_template_variant`)
-- Sem mudança em `process-queue` ou `VariantSlotSelector`
-- Geração só para admins (segue padrão de uso de IA do projeto)
+## Fora de escopo
+- Mudanças no sidebar admin (Módulos continuam acessíveis lá)
+- Página `/admin/metricas` (UTM) — fica como está
+- Novas tabelas / migrations (toda métrica vem de tabelas existentes)
+- Comparativo período-a-período (próximo ciclo, se quiser)
 
-### Resultado esperado
-- 1 clique gera 9 variantes contextuais, no tom certo, com variáveis preservadas
-- Botão sinaliza visualmente quando "está pronto pra usar" (âmbar) ou "já foi usado" (verde)
-- Zero risco de quebrar round robin existente — variantes geradas são salvas pelo mesmo fluxo já implementado
+## Resultado esperado
+- Dashboard limpa, focada em **decisão financeira** (vendas, ativas, oportunidades)
+- Filtro global + override por bloco (UX flexível, único na ferramenta)
+- Gráfico de funil com lógica anti-duplicação correta (60 leads + 40 vendas = 100 cadastros)
+- Cobertura completa: 13 blocos + 4 métricas extras sugeridas
+- Código modular: cada bloco é reutilizável em outras dashboards futuras
 
