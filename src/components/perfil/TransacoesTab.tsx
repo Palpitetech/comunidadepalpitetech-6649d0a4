@@ -10,6 +10,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Sparkles,
+  ShoppingCart,
+  type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -77,6 +79,33 @@ function EmptyState({
   );
 }
 
+function MetricCell({
+  icon: Icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: number;
+  tone: "blue" | "red" | "amber";
+}) {
+  const tones = {
+    blue: "bg-blue-500/10 text-blue-600",
+    red: "bg-destructive/10 text-destructive",
+    amber: "bg-amber-500/10 text-amber-600",
+  };
+  return (
+    <div className="flex flex-col items-center gap-1 p-2 rounded-xl bg-background/60">
+      <div className={cn("h-7 w-7 rounded-full flex items-center justify-center", tones[tone])}>
+        <Icon className="h-3.5 w-3.5" />
+      </div>
+      <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium">{label}</p>
+      <p className="text-xs font-bold text-foreground">{formatBRL(value)}</p>
+    </div>
+  );
+}
+
 export function TransacoesTab({ user }: TransacoesTabProps) {
   const userId = user?.id;
   const navigate = useNavigate();
@@ -132,15 +161,24 @@ export function TransacoesTab({ user }: TransacoesTabProps) {
   const cotasFiltradas = useMemo(() => filterByPeriod(cotas, periodo), [cotas, periodo]);
   const resgatesFiltrados = useMemo(() => filterByPeriod(resgates, periodo), [resgates, periodo]);
 
-  const { totalIn, totalOut, saldo } = useMemo(() => {
-    let inAmt = 0;
-    let outAmt = 0;
+  const { totalCompra, totalSaida, totalPremio, saldo } = useMemo(() => {
+    let compra = 0;
+    let saida = 0;
+    let premio = 0;
     movFiltradas.forEach((m: any) => {
       const v = Number(m.valor) || 0;
-      if (m.tipo === "entrada" || m.tipo === "premio" || m.tipo === "bonus") inAmt += v;
-      else outAmt += v;
+      const tipo = String(m.tipo || "").toLowerCase();
+      if (tipo === "premio" || tipo === "entrada_premio" || tipo === "bonus") {
+        premio += v;
+      } else if (tipo === "compra" || tipo === "saida_compra" || tipo === "compra_cota") {
+        compra += v;
+      } else if (tipo === "saida" || tipo === "debito" || tipo === "estorno_debito") {
+        saida += v;
+      } else if (tipo === "entrada" || tipo === "credito" || tipo === "deposito") {
+        premio += v;
+      }
     });
-    return { totalIn: inAmt, totalOut: outAmt, saldo: inAmt - outAmt };
+    return { totalCompra: compra, totalSaida: saida, totalPremio: premio, saldo: premio - compra - saida };
   }, [movFiltradas]);
 
   const grouped = useMemo(() => {
@@ -167,30 +205,18 @@ export function TransacoesTab({ user }: TransacoesTabProps) {
       <div className="rounded-2xl border bg-gradient-to-br from-primary/5 via-card to-card p-4">
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
           <Wallet className="h-3.5 w-3.5" />
-          Saldo do período
+          Saldo disponível
         </div>
         <p className={cn("text-3xl font-bold tracking-tight", saldo < 0 ? "text-destructive" : "text-foreground")}>
           {formatBRL(saldo)}
         </p>
-        <div className="flex items-center gap-4 mt-3 text-xs">
-          <div className="flex items-center gap-1.5">
-            <div className="h-6 w-6 rounded-full bg-emerald-500/10 flex items-center justify-center">
-              <ArrowUpRight className="h-3.5 w-3.5 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-[10px] text-muted-foreground uppercase">Entradas</p>
-              <p className="font-semibold text-emerald-600">{formatBRL(totalIn)}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="h-6 w-6 rounded-full bg-destructive/10 flex items-center justify-center">
-              <ArrowDownRight className="h-3.5 w-3.5 text-destructive" />
-            </div>
-            <div>
-              <p className="text-[10px] text-muted-foreground uppercase">Saídas</p>
-              <p className="font-semibold text-destructive">{formatBRL(totalOut)}</p>
-            </div>
-          </div>
+        <p className="text-[11px] text-muted-foreground mt-1">
+          {formatBRL(totalCompra)} comprado · {formatBRL(totalPremio)} em prêmios
+        </p>
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          <MetricCell icon={ShoppingCart} label="Compra" value={totalCompra} tone="blue" />
+          <MetricCell icon={ArrowDownRight} label="Saída" value={totalSaida} tone="red" />
+          <MetricCell icon={Trophy} label="Prêmio" value={totalPremio} tone="amber" />
         </div>
       </div>
 
