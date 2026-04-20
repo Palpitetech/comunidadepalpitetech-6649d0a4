@@ -1,139 +1,68 @@
 
 
-## Unificar verificação em OTP de 6 dígitos (sem magic link)
+## Padronizar celular obrigatório nos dois fluxos de cadastro
 
-### Problema
+### Estado atual
 
-Hoje o `receive-lead` gera **magic link** apontando para `/ativar-conta` (rota inexistente → 404). Sistema tem 2 fluxos de verificação confusos: OTP no `RegisterWizard` e magic link no webhook.
+| Fluxo | Campo coletado | Validação formato | Onde salva no perfil | Problema |
+|---|---|---|---|---|
+| **Webhook** (`receive-lead`) | `celular` | ✅ Forte (DDD, 9º dígito, 10-11 dígitos, anti-bot) | `perfis.celular` | Nenhum — OK |
+| **Cadastro manual** (`LoginWizard` etapa `cadastro-whatsapp`) | `whatsapp` | ❌ Só `!whatsapp.trim()` | `perfis.whatsapp` (celular fica vazio!) | Perfil criado sem `celular` → `RequireCelularModal` abre logo após cadastro pedindo de novo |
 
-### Solução
+### O que vou mudar
 
-**Eliminar magic link.** Webhook só cria perfil pendente. Verificação OTP acontece **na primeira tentativa de login** do usuário, reaproveitando o fluxo OTP que já existe (`enviar-codigo-email` + `verificar-codigo`).
+#### 1. `LoginWizard.tsx` — etapa `cadastro-whatsapp`
 
-### Novo fluxo
+- Renomear a etapa para `cadastro-celular` (mais claro — é o número que vira WhatsApp também)
+- **Adicionar máscara automática** `(00) 00000-0000` no input
+- **Validar formato** antes de avançar:
+  - 10-11 dígitos
+  - DDD válido (11-99)
+  - Se 11 dígitos → terceiro dígito obrigatoriamente `9`
+  - Bloquear sequências óbvias (`11111111111`, `12345678901`)
+- Mensagem de erro inline se inválido: `"Celular inválido. Use formato (DDD) 9XXXX-XXXX"`
 
-```text
-Lead chega no webhook
-   ↓
-Valida (MX, anti-bot, descartáveis)
-   ↓
-Cria perfil:
-  - email_verificado = false
-  - tag = 'email_pendente'
-  - SEM trial, SEM premium role
-   ↓
-Envia WhatsApp (se tiver celular) OU email simples
-"Bem-vindo! Acesse comunidadepalpitetech.com/login pra ativar"
-   ↓
-Usuário vai no /login, digita email
-   ↓
-LoginWizard detecta email_verificado=false
-   ↓
-Dispara enviar-codigo-email (OTP 6 dígitos)
-   ↓
-Usuário digita código
-   ↓
-verificar-codigo marca email_verificado=true
-   ↓
-Trigger ativar_trial_pos_confirmacao roda → ativa trial 3 dias + role premium
-```
+#### 2. `LoginWizard.tsx` — `handleVerifyCode`
 
-### Mudanças
-
-#### 1. `supabase/functions/receive-lead/index.ts`
-
-- **Remover** geração de magic link e envio do email "Ativar conta"
-- **Manter** validações (MX, descartáveis, anti-bot)
-- **Manter** criação do perfil pendente (`email_pendente`, sem trial)
-- **Adicionar** envio de email simples de boas-vindas (sem link de ativação, só CTA "acesse o site e faça login")
-- Resposta JSON: `{ success: true, user_id, message: "Acesse o site e faça login com seu email para ativar sua conta" }`
-
-#### 2. `src/components/auth/LoginWizard.tsx`
-
-Adicionar nova lógica no `handleCheckEmail`:
+Após verificar OTP do cadastro, salvar **o mesmo número em `celular` E `whatsapp`** (normalizado para só dígitos com prefixo `55`):
 
 ```ts
-// Após verificar que usuário existe, checar email_verificado
-const { data: perfil } = await supabase
-  .from('perfis')
-  .select('email_verificado, tags')
-  .eq('email', email)
-  .maybeSingle();
-
-if (perfil && perfil.email_verificado === false) {
-  // Dispara OTP automaticamente e pula pra etapa de código
-  await supabase.functions.invoke('enviar-codigo-email', {
-    body: { user_id: perfil.id, email, nome: perfil.nome }
-  });
-  setEtapa('verificacao-email-pendente');
-  toast({ title: 'Conta pendente', description: 'Enviamos um código pro seu email pra ativar sua conta.' });
-  return;
-}
+const digits = whatsapp.replace(/\D/g, "");
+const normalized = digits.length === 11 ? `55${digits}` : `55${digits}`;
+await updateProfile({ 
+  nome: nome.trim(), 
+  celular: normalized,
+  whatsapp: normalized
+});
 ```
 
-Nova etapa `verificacao-email-pendente`: tela com input OTP 6 dígitos + botão "Reenviar código". Ao verificar com sucesso, o trigger `ativar_trial_pos_confirmacao` ativa trial automaticamente e usuário cai logado em `/home`.
+Resultado: `RequireCelularModal` não abre mais após cadastro novo, e `celular`/`whatsapp` ficam consistentes.
 
-#### 3. Trigger `ativar_trial_pos_confirmacao` (já existe ✅)
+#### 3. Reaproveitar lógica de validação
 
-Funciona perfeitamente: detecta `email_verificado: false → true`, ativa trial 3 dias, troca tag, loga evento. **Sem mudanças.**
+Criar helper local `validateCelularBR(value: string)` no `LoginWizard.tsx` espelhando a regra do `receive-lead/index.ts` (mesmo conjunto de checks). **Não vou criar arquivo compartilhado** porque um é Deno (edge) e outro é browser — mantenho a lógica duplicada mas idêntica.
 
-#### 4. Adicionar role `premium` quando trial ativa
+#### 4. UX da etapa cadastro-celular
 
-O trigger atual só mexe em `perfis` (plan_id, status, validade), mas não cria `user_roles.premium`. Vou ajustar a função `ativar_trial_pos_confirmacao` pra inserir o role:
-
-```sql
-INSERT INTO public.user_roles (user_id, role)
-VALUES (NEW.id, 'premium')
-ON CONFLICT (user_id, role) DO NOTHING;
-```
-
-#### 5. NÃO criar página `/ativar-conta`
-
-Rota fica como 404 mesmo (ninguém vai cair lá já que removemos o link).
-
-### Email de boas-vindas (novo template no `receive-lead`)
-
-```text
-Subject: Bem-vindo ao Palpite Tech!
-
-Olá [nome],
-
-Seu cadastro foi recebido. Pra ativar sua conta e ganhar
-3 dias grátis de acesso premium:
-
-1. Acesse: https://comunidadepalpitetech.com.br/login
-2. Digite seu email
-3. Você receberá um código de 6 dígitos
-4. Pronto! Trial liberado.
-
-Qualquer dúvida: WhatsApp 51 98185-4281
-```
-
-### Logging em `system_events`
-
-- `lead_recebido_pendente` — perfil criado aguardando primeiro login
-- `lead_email_confirmado` — usuário ativou via OTP no login (já existe no trigger)
-
-### Arquivos editados
-
-| Arquivo | Mudança |
-|---|---|
-| `supabase/functions/receive-lead/index.ts` | Remove magic link, troca email pra texto simples |
-| `src/components/auth/LoginWizard.tsx` | Detecta `email_verificado=false`, dispara OTP, nova etapa de verificação |
-| Migration | Ajusta `ativar_trial_pos_confirmacao` pra inserir role `premium` |
+- Título: "Confirme seu celular"
+- Descrição: "Vamos enviar resultados e códigos de acesso pelo WhatsApp."
+- Input formata automaticamente enquanto digita
+- Botão fica desabilitado se não passar na validação
+- Texto de erro embaixo do input em vermelho
 
 ### Fora de escopo
 
-- Não mexo em Kirvano (compra continua confirmando email automaticamente)
-- Não mexo no `RegisterWizard` (cadastro manual continua igual com OTP)
-- Não apago leads pendentes antigos
-- Não crio página `/ativar-conta`
-- Não mexo em `enviar-codigo-email` nem `verificar-codigo` (já funcionam)
+- Não mexo no webhook (já está perfeito)
+- Não mexo no `RequireCelularModal` (continua existindo pra leads vindos do webhook que confirmam email mas têm celular ausente em algum edge case)
+- Não migro perfis antigos sem celular (o modal cuida)
+- Não mexo no `AlterarCelularDialog` (fluxo de troca já funciona)
 
 ### Resultado esperado
 
-- Lead via webhook → perfil pendente, recebe email/WhatsApp simples
-- Usuário tenta logar → sistema detecta pendente → OTP automático
-- Digita código → trial 3 dias ativado + role premium → cai em `/home`
-- Único fluxo de verificação no sistema: **OTP 6 dígitos**
+| Cenário | Antes | Depois |
+|---|---|---|
+| Cadastro manual com `(11) 98765-4321` | `whatsapp` salvo, `celular` vazio → modal aparece | Ambos salvos como `5511987654321`, sem modal |
+| Cadastro manual com `12345` | Aceitava, salvava lixo | Bloqueia: "Celular inválido" |
+| Cadastro manual com `(11) 88765-4321` (sem 9) | Aceitava | Bloqueia: "Celular inválido" |
+| Webhook | OK | OK (sem mudanças) |
 
