@@ -123,6 +123,38 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Financeiro */}
+        <SidebarGroup>
+          <Collapsible defaultOpen={financeiroOpen}>
+            <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors">
+              <div className="flex items-center gap-1.5">
+                <DollarSign className="h-3.5 w-3.5" />
+                {!collapsed && <span>Financeiro</span>}
+              </div>
+              {!collapsed && <ChevronDown className="h-3 w-3" />}
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {financeiroItems.map((item) => (
+                    <SidebarMenuItem key={item.url}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive(item.url)}
+                      >
+                        <Link to={item.url}>
+                          <item.icon className="h-4 w-4" />
+                          {!collapsed && <span>{item.title}</span>}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+
         {/* Bolões */}
         <SidebarGroup>
           <Collapsible defaultOpen={boloesOpen}>
