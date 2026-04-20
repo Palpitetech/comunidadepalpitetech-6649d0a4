@@ -1,81 +1,94 @@
 
 
-## Adicionar 5 novos subfiltros em `/admin/usuarios`
+## Adicionar colunas Verificado/Ativo + remover usuários sem celular
 
-### Novos subfiltros (linha secundária)
+### Parte 1 — Novas colunas na listagem `/admin/usuarios`
 
-| Filtro | Lógica |
-|---|---|
-| **Plano vencido** | `validade_assinatura < hoje` E `status_assinatura != 'cancelada'` (passou da data mas não foi cancelado formalmente) |
-| **Plano cancelado inativo** | `status_assinatura = 'cancelada'` E (`validade_assinatura < hoje` OU `validade_assinatura IS NULL`) |
-| **Plano cancelado mas ativo** | `status_assinatura = 'cancelada'` E `validade_assinatura >= hoje` (cancelou mas ainda tem dias restantes) |
-| **Trial ativo** | `plan.slug = 'teste-gratis-3-dias'` E `status_assinatura = 'ativa'` E `validade_assinatura >= hoje` |
-| **Celular OK** | `celular` preenchido E começa com `55` E tem 12-13 dígitos (formato normalizado válido do `validateCelularBR`) |
+**Coluna "Verificado":**
+- ✅ verde se `email_verificado = true`
+- ⚠️ âmbar se `email_verificado = false`
 
-### Mudanças
+**Coluna "Ativo":**
+- ✅ verde "Ativo" se tem plano pago ativo (`isPaidActive(u)` — slug pago + `status_assinatura = ativa` + dentro da validade)
+- ⚪ cinza "—" se não tem plano pago ativo (free, trial, vencido, cancelado)
 
-**1. `src/pages/admin/AdminUsuarios.tsx`**
+#### Desktop (tabela)
+Adicionar 2 colunas entre "Plano" e "Origem":
 
-Adicionar à união `FilterSecundario`:
-```ts
-type FilterSecundario =
-  | "nao_verificados" | "verificados" | "trial_ok"
-  | "pago_mensal" | "pago_anual" | "pago_anualvip" | "bloqueados"
-  | "plano_vencido"           // novo
-  | "plano_cancelado_inativo" // novo
-  | "plano_cancelado_ativo"   // novo
-  | "trial_ativo"             // novo
-  | "celular_ok"              // novo
-  | null;
+```
+| Usuário | Plano | Verificado | Ativo | Origem | Cadastro |
 ```
 
-Adicionar helpers:
-```ts
-const hoje = new Date().toISOString().split('T')[0];
+Cada célula renderiza um ícone + label compacta (`CheckCircle2` / `AlertCircle` do lucide).
 
-const isPlanoVencido = (u) => 
-  u.validade_assinatura && u.validade_assinatura < hoje && u.status_assinatura !== 'cancelada';
+#### Mobile (cards)
+Adicionar 2 micro-badges na linha de status (junto com plano/bloqueado):
+- `✓ Verificado` ou `⚠ Não verificado`
+- `● Ativo` (só aparece se pago ativo, pra não poluir)
 
-const isCanceladoInativo = (u) =>
-  u.status_assinatura === 'cancelada' && 
-  (!u.validade_assinatura || u.validade_assinatura < hoje);
+### Parte 2 — Limpeza de usuários sem celular
 
-const isCanceladoAtivo = (u) =>
-  u.status_assinatura === 'cancelada' && 
-  u.validade_assinatura && u.validade_assinatura >= hoje;
+Como celular agora é obrigatório nos 2 fluxos de cadastro, perfis antigos sem celular válido devem ser removidos.
 
-const isTrialAtivo = (u) =>
-  u.plan?.slug === 'teste-gratis-3-dias' && 
-  u.status_assinatura === 'ativa' &&
-  u.validade_assinatura && u.validade_assinatura >= hoje;
+**Critério de "sem celular":**
+- `celular IS NULL` OU
+- `celular = ''` OU
+- celular não-normalizado (não começa com `55`) OU
+- celular com menos de 12 dígitos OU mais de 13
 
-const isCelularOk = (u) => {
-  const digits = (u.celular || '').replace(/\D/g, '');
-  return digits.startsWith('55') && (digits.length === 12 || digits.length === 13);
-};
+**Proteções (NÃO deletar):**
+- Admins (têm role `admin` em `user_roles`)
+- Bots/sistema (`is_bot = true`)
+- Usuários com plano pago ativo (`status_assinatura = 'ativa'` E slug pago) — segurança extra: nunca deletar quem está pagando, mesmo sem celular
+
+**Como executar:**
+
+Criar migração SQL que:
+1. Lista quantos usuários se enquadram (preview no log)
+2. Chama `admin-delete-user` em loop? Não — vai por SQL direto via cascade já configurado em `perfis` → `auth.users` (ON DELETE CASCADE existe)
+3. Deleta de `auth.users` (cascateia tudo: perfis, palpites, etc.)
+
+```sql
+-- Preview
+SELECT COUNT(*) FROM perfis p
+WHERE p.is_bot = false
+  AND NOT EXISTS (SELECT 1 FROM user_roles ur WHERE ur.user_id = p.id AND ur.role = 'admin')
+  AND NOT (p.status_assinatura = 'ativa' AND p.plano_id IN (SELECT id FROM planos WHERE slug IN ('mensal','anual','plano-anual-vip','semestral','grupo')))
+  AND (
+    p.celular IS NULL 
+    OR p.celular = ''
+    OR length(regexp_replace(p.celular, '\D', '', 'g')) < 12
+    OR length(regexp_replace(p.celular, '\D', '', 'g')) > 13
+    OR regexp_replace(p.celular, '\D', '', 'g') NOT LIKE '55%'
+  );
+
+-- Delete via auth.users (cascade)
+DELETE FROM auth.users WHERE id IN ( <mesmo SELECT> );
 ```
 
-Adicionar contagens em `stats` (useMemo) e cases no pipeline de filtragem.
+A migração mostra a contagem antes de executar e o usuário aprova.
 
-**2. UI — linha de subfiltros**
+### Parte 3 — Atualizar o subfiltro "Celular OK"
 
-Agrupar visualmente os pills da linha 2 em 3 grupos com separador sutil:
-- **Verificação:** Verificados / Não Verificados / Celular OK
-- **Plano:** Pago Mensal / Pago Anual / Pago Anual VIP / Trial Ativo / Trial OK
-- **Status crítico:** Plano Vencido / Cancelado Ativo / Cancelado Inativo / Bloqueados
-
-Cada subfiltro mostra o `count` ao lado do label (ex: `Plano Vencido (12)`).
+Já existe e está correto. Após a limpeza, o contador ficará igual ao total — útil pra confirmar que a limpeza funcionou.
 
 ### Fora de escopo
 
-- Sem mudanças no banco
-- Sem mudanças em `UserDetailSheet`, `UserPlanTab`, `AdminMetricas`
-- Filtros continuam mutuamente exclusivos (1 subfiltro por vez)
-- Não toco em planos pagos cancelados que ainda têm tempo — aparecem em "Cancelado Ativo" e também em "Pagos" (intencional: ainda usam o sistema)
+- Não mexo em validação de cadastro (já obrigatório)
+- Não mexo no `RequireCelularModal` (continua disponível pra casos edge)
+- Não mexo em `UserDetailSheet` (já mostra celular)
+- Não mexo no schema do banco
 
-### Arquivo editado
+### Arquivos editados
 
 | Arquivo | Mudança |
 |---|---|
-| `src/pages/admin/AdminUsuarios.tsx` | +5 subfiltros, helpers de data, agrupamento visual da linha 2 |
+| `src/pages/admin/AdminUsuarios.tsx` | +2 colunas (Verificado, Ativo) na tabela desktop e cards mobile |
+| **Migração SQL nova** | Deleta usuários sem celular válido (com proteções pra admins/bots/pagantes) |
+
+### Resultado esperado
+
+- Admin vê de relance quem verificou email e quem tem assinatura ativa
+- Base limpa: 100% dos usuários têm celular válido normalizado
+- Subfiltro `Celular OK` passa a refletir 100% dos cadastros
 
