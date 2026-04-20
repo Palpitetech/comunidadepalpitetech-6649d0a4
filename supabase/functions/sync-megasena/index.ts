@@ -85,13 +85,11 @@ Deno.serve(async (req) => {
     let fromLatest = false;
     let limit = 50;
     let concursoEspecifico: number | null = null;
-    let action: string | null = null;
     try {
       const body = await req.json();
       fromLatest = body.from_latest === true;
       limit = body.limit || 50;
       concursoEspecifico = body.concurso || null;
-      action = body.action || null;
     } catch { /* defaults */ }
 
     // Helper: build a unified record for resultados_loterias

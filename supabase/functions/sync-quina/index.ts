@@ -105,13 +105,11 @@ Deno.serve(async (req) => {
     let limit = 50;
     let fromLatest = false;
     let concursoEspecifico: number | null = null;
-    let action: string | null = null;
     try {
       const body = await req.json();
       fromLatest = body.from_latest === true;
       limit = body.limit || 50;
       concursoEspecifico = body.concurso || null;
-      action = body.action || null;
     } catch { /* sem body */ }
 
     const LOTERIA_LABEL = "Quina";
