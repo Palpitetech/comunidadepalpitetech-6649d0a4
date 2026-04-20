@@ -101,7 +101,12 @@ export function TemplatesTab() {
   const [allTags, setAllTags] = useState<string[]>([]);
   const [plans, setPlans] = useState<PlanOption[]>([]);
   const [variantCounts, setVariantCounts] = useState<Record<string, number>>({});
-  const [variantsDialogTpl, setVariantsDialogTpl] = useState<MessageTemplate | null>(null);
+  const [slots, setSlots] = useState<VariantSlot[]>(() => buildEmptySlots());
+  const [activeSlot, setActiveSlot] = useState<number>(1);
+  // Track ids of variants loaded from DB (position -> id) so we can update/delete on save
+  const [variantIds, setVariantIds] = useState<Record<number, string>>({});
+  // Track positions removed during the current edit session (to delete on save)
+  const [removedPositions, setRemovedPositions] = useState<number[]>([]);
 
   const fetchVariantCounts = useCallback(async () => {
     const { data, error } = await supabase
