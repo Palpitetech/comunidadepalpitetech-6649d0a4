@@ -74,37 +74,76 @@ function validateName(nome: string, email: string): string | null {
   return null;
 }
 
-function validateEmail(email: string): string | null {
+type EmailValidationResult =
+  | { ok: true; normalized: string }
+  | { ok: false; reason: string; sugestao?: string };
+
+function validateEmail(email: string): EmailValidationResult {
   const e = email.trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return "formato_invalido";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return { ok: false, reason: "formato_invalido" };
 
   const [local, domain] = e.split("@");
-  if (!local || !domain) return "formato_invalido";
-  if (local.length < 4) return "local_curto";
+  if (!local || !domain) return { ok: false, reason: "formato_invalido" };
+  if (local.length < 4) return { ok: false, reason: "local_curto" };
 
-  // Domínio descartável
-  if (DISPOSABLE_DOMAINS.some((d) => domain === d || domain.endsWith(`.${d}`))) {
-    return "dominio_descartavel";
+  // Typo de provedor grande → sugestão
+  if (COMMON_TYPOS[domain]) {
+    return {
+      ok: false,
+      reason: "typo_detectado",
+      sugestao: `${local}@${COMMON_TYPOS[domain]}`,
+    };
+  }
+
+  // Domínio descartável (Set ~300+)
+  if (DISPOSABLE_DOMAINS.has(domain)) {
+    return { ok: false, reason: "dominio_descartavel" };
+  }
+  // Subdomínio de descartável (ex: foo.mailinator.com)
+  const parts = domain.split(".");
+  for (let i = 1; i < parts.length; i++) {
+    const candidate = parts.slice(i).join(".");
+    if (DISPOSABLE_DOMAINS.has(candidate)) {
+      return { ok: false, reason: "dominio_descartavel" };
+    }
   }
 
   // Repetição da mesma letra 3+ vezes (aaa, bbb)
-  if (/(.)\1{2,}/.test(local)) return "padrao_bot_repeticao";
+  if (/(.)\1{2,}/.test(local)) return { ok: false, reason: "padrao_bot_repeticao" };
 
   // Sequência de teclado
   for (const seq of KEYBOARD_SEQUENCES) {
-    if (local.includes(seq)) return "padrao_bot_teclado";
+    if (local.includes(seq)) return { ok: false, reason: "padrao_bot_teclado" };
   }
 
-  // 4+ consoantes seguidas sem vogal (jkhjk, gdfh, kjaslkdj)
-  if (/[bcdfghjklmnpqrstvwxyz]{4,}/i.test(local)) return "padrao_bot_consoantes";
+  // 4+ consoantes seguidas sem vogal
+  if (/[bcdfghjklmnpqrstvwxyz]{4,}/i.test(local)) return { ok: false, reason: "padrao_bot_consoantes" };
 
-  // Razão consoantes/vogais muito alta (ex: "kjslk" — 0 vogais)
+  // Sem nenhuma vogal
   const vowels = (local.match(/[aeiou]/gi) || []).length;
   const letters = (local.match(/[a-z]/gi) || []).length;
-  if (letters >= 5 && vowels === 0) return "padrao_bot_sem_vogal";
+  if (letters >= 5 && vowels === 0) return { ok: false, reason: "padrao_bot_sem_vogal" };
 
-  return null;
+  return { ok: true, normalized: e };
 }
+
+// MX lookup: domínio precisa aceitar email
+async function dominioTemMX(domain: string): Promise<boolean> {
+  try {
+    // Timeout de 3s para não travar a request
+    const ac = new AbortController();
+    const timeout = setTimeout(() => ac.abort(), 3000);
+    const records = await Deno.resolveDns(domain, "MX", { signal: ac.signal });
+    clearTimeout(timeout);
+    return Array.isArray(records) && records.length > 0;
+  } catch (_e) {
+    return false;
+  }
+}
+
+// TODO (Camada 4): Plugar SMTP probe (Hunter.io / Abstract API) aqui se spam continuar.
+// Adicionar secret HUNTER_API_KEY e checar resposta antes de criar perfil.
+
 
 function validateCelular(celular: string): { ok: boolean; normalized?: string; reason?: string } {
   const digits = celular.replace(/\D/g, "");
