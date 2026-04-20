@@ -12,25 +12,26 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAiUsageLogs, useAdminSettings, computeSummary, type Origem } from "@/hooks/useAiUsageLogs";
 import { useQueryClient } from "@tanstack/react-query";
-import { DollarSign, Coins, Bot, Wrench, Users, Settings, Loader2, RefreshCw, Cpu, UserCheck } from "lucide-react";
+import { DollarSign, Coins, Bot, Wrench, Users, Settings, Loader2, RefreshCw, Cpu, UserCheck, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const FUNCTION_LABELS: Record<string, string> = {
   // Automáticas (bots)
-  "generate-roundtable-post": "Post Automático Mesa Redonda (bot)",
-  "generate-guide-post": "Post Analítico (bot)",
-  "bot-interact-with-post": "Comentário Automático de Bot",
-  "bot-reply-user": "Resposta a Comentário de Usuário (bot)",
+  "generate-roundtable-post": "Post Automático Mesa Redonda — bot cria post sozinho",
+  "generate-guide-post": "Post Analítico de Guia — bot cria post sozinho",
+  "bot-interact-with-post": "Comentário Automático — bot comenta em post novo",
+  "bot-reply-user": "Resposta de Bot — bot responde comentário do usuário em post",
   // Disparadas por usuário
-  "chat-assistant": "Chat IA (usuário ↔ bot)",
-  "generate-palpites": "Gerador Lotofácil (usuário)",
-  "generate-palpites-megasena": "Gerador Mega Sena (usuário)",
-  "generate-palpites-duplasena": "Gerador Dupla Sena (usuário)",
-  "generate-palpites-quina": "Gerador Quina (usuário)",
-  "auto-fill-fechamento": "Auto-Fill Lotofácil (usuário)",
-  "auto-fill-megasena": "Auto-Fill Mega Sena (usuário)",
-  "auto-fill-duplasena": "Auto-Fill Dupla Sena (usuário)",
+  "chat-assistant": "Chat IA — conversa do usuário com bot no /chat",
+  "generate-palpites": "Gerador Lotofácil — gera N jogos no /gerador",
+  "generate-palpites-megasena": "Gerador Mega Sena — gera N jogos no /gerador-megasena",
+  "generate-palpites-duplasena": "Gerador Dupla Sena — gera N jogos no /gerador-duplasena",
+  "generate-palpites-quina": "Gerador Quina — gera N jogos no /gerador-quina",
+  "auto-fill-fechamento": "Auto-Preencher Fechamento Lotofácil — sugere dezenas no /fechamento (botão Quero Estratégia)",
+  "auto-fill-megasena": "Auto-Preencher Fechamento Mega Sena — sugere dezenas no fechamento",
+  "auto-fill-duplasena": "Auto-Preencher Fechamento Dupla Sena — sugere dezenas no fechamento",
 };
 
 const ORIGEM_LABELS: Record<Origem, string> = {
@@ -334,34 +335,69 @@ export default function AdminCustos() {
               </TabsContent>
 
               <TabsContent value="by-function">
-                <Card>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Ferramenta</TableHead>
-                        <TableHead className="text-right">Chamadas</TableHead>
-                        <TableHead className="text-right">Tokens</TableHead>
-                        <TableHead className="text-right">USD</TableHead>
-                        <TableHead className="text-right">BRL</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {Object.entries(summary.byFerramenta)
-                        .sort(([, a], [, b]) => b.costUsd - a.costUsd)
-                        .map(([key, data]) => (
-                          <TableRow key={key}>
-                            <TableCell className="font-medium">{FUNCTION_LABELS[key] || key}</TableCell>
-                            <TableCell className="text-right">{data.count}</TableCell>
-                            <TableCell className="text-right">{formatTokens(data.tokens)}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(data.costUsd)}</TableCell>
-                            <TableCell className="text-right text-green-600">{formatCurrency(data.costUsd * usdToBrl, "BRL")}</TableCell>
-                          </TableRow>
-                        ))}
-                      {Object.keys(summary.byFerramenta).length === 0 && (
-                        <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum dado encontrado</TableCell></TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                <Card className="overflow-x-auto">
+                  <TooltipProvider>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Ferramenta</TableHead>
+                          <TableHead>Origem</TableHead>
+                          <TableHead className="text-right">Chamadas</TableHead>
+                          <TableHead className="text-right">Tokens IN</TableHead>
+                          <TableHead className="text-right">Tokens OUT</TableHead>
+                          <TableHead className="text-right">Total</TableHead>
+                          <TableHead className="text-right">Tokens/chamada</TableHead>
+                          <TableHead className="text-right">USD</TableHead>
+                          <TableHead className="text-right">USD/chamada</TableHead>
+                          <TableHead className="text-right">BRL</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {Object.entries(summary.byFerramenta)
+                          .sort(([, a], [, b]) => b.costUsd - a.costUsd)
+                          .map(([key, data]) => {
+                            const label = FUNCTION_LABELS[key] || key;
+                            const shortLabel = label.split(" — ")[0];
+                            const isAuto = data.hasAuto && !data.hasUser;
+                            const isUser = data.hasUser && !data.hasAuto;
+                            const isMixed = data.hasAuto && data.hasUser;
+                            const tokensPerCall = data.count ? Math.round(data.tokens / data.count) : 0;
+                            const usdPerCall = data.count ? data.costUsd / data.count : 0;
+                            return (
+                              <TableRow key={key}>
+                                <TableCell className="font-medium">
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="inline-flex items-center gap-1.5 cursor-help">
+                                        {shortLabel}
+                                        <Info className="h-3 w-3 text-muted-foreground" />
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs">{label}</TooltipContent>
+                                  </Tooltip>
+                                </TableCell>
+                                <TableCell>
+                                  {isAuto && <Badge variant="outline" className="text-orange-600 border-orange-300">Auto</Badge>}
+                                  {isUser && <Badge variant="outline" className="text-blue-600 border-blue-300">Usuário</Badge>}
+                                  {isMixed && <Badge variant="outline" className="text-purple-600 border-purple-300">Misto</Badge>}
+                                </TableCell>
+                                <TableCell className="text-right">{data.count}</TableCell>
+                                <TableCell className="text-right">{formatTokens(data.tokensIn)}</TableCell>
+                                <TableCell className="text-right">{formatTokens(data.tokensOut)}</TableCell>
+                                <TableCell className="text-right font-semibold">{formatTokens(data.tokens)}</TableCell>
+                                <TableCell className="text-right text-muted-foreground">{formatTokens(tokensPerCall)}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(data.costUsd)}</TableCell>
+                                <TableCell className="text-right text-muted-foreground">{formatCurrency(usdPerCall)}</TableCell>
+                                <TableCell className="text-right text-green-600">{formatCurrency(data.costUsd * usdToBrl, "BRL")}</TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        {Object.keys(summary.byFerramenta).length === 0 && (
+                          <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">Nenhum dado encontrado</TableCell></TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TooltipProvider>
                 </Card>
               </TabsContent>
 
