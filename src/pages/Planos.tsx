@@ -19,6 +19,12 @@ const INSTALLMENTS: Record<string, { parcelas: number; valor: string }> = {
 
 // Compact highlights per plan slug
 const PLAN_HIGHLIGHTS: Record<string, string[]> = {
+  "grupo-vip-lotofacil": [
+    "Palpites prontos no WhatsApp",
+    "Grupo exclusivo Lotofácil",
+    "Análises diárias da equipe",
+    "Sem precisar usar ferramentas",
+  ],
   "mensal": [
     "Gerador de Jogos (10x/dia)",
     "Fechamento e Desdobramento",
