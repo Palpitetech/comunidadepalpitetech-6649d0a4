@@ -111,32 +111,6 @@ Deno.serve(async (req) => {
       };
     }
 
-    // ── REPROCESS HISTORY ──────────────────────────────────────
-    if (action === 'reprocess_history') {
-      console.log('[REPROCESS] Iniciando reprocessamento megasena...');
-      const { data: existentes } = await supabase.from(TABLE).select('concurso').eq('loteria', LOTERIA).order('concurso', { ascending: true });
-      if (!existentes?.length) return new Response(JSON.stringify({ success: true, reprocessados: 0 }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      let reprocessados = 0, erros = 0;
-      let prevDez: number[] = [];
-      for (const item of existentes) {
-        try {
-          const res = await fetch(`https://apiloterias.com.br/app/v2/resultado?loteria=megasena&token=${API_TOKEN}&concurso=${item.concurso}`);
-          if (!res.ok) { erros++; continue; }
-          const resultado = await res.json();
-          const dezenas = resultado.dezenas.map((d: string) => parseInt(d, 10)).sort((a: number, b: number) => a - b);
-          const ind = calcularIndicadores(dezenas, prevDez);
-          const reg = buildRegistro(resultado, dezenas, ind);
-          // Override concurso from item in case API returns different key
-          reg.concurso = item.concurso;
-          const { error } = await supabase.from(TABLE).upsert(reg, { onConflict: 'loteria,concurso' });
-          if (error) { erros++; } else { reprocessados++; }
-          prevDez = dezenas;
-          await new Promise(r => setTimeout(r, 300));
-        } catch { erros++; }
-      }
-      return new Response(JSON.stringify({ success: true, reprocessados, erros }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
-
     // ── SYNC NORMAL ────────────────────────────────────────────
     const latestUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=megasena&token=${API_TOKEN}&concurso=ultimos1`;
     console.log("Buscando último concurso da API...");

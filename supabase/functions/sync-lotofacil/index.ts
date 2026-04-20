@@ -629,69 +629,6 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // ── REPROCESS HISTORY ──────────────────────────────────────
-    let bodyAction: string | null = null;
-    try { const b = await req.clone().json(); bodyAction = b?.action || null; } catch {}
-
-    if (bodyAction === 'reprocess_history') {
-      console.log('[REPROCESS] Iniciando reprocessamento histórico lotofacil...');
-      const { data: existentes, error: fetchErr } = await supabase
-        .from('resultados')
-          .select('concurso_id as concurso')
-        .order('concurso_id', { ascending: true });
-      if (fetchErr) throw new Error(fetchErr.message);
-      if (!existentes?.length) {
-        return new Response(JSON.stringify({ success: true, reprocessados: 0 }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
-      console.log(`[REPROCESS] ${existentes.length} concursos para reprocessar`);
-      let reprocessados = 0, erros = 0;
-      let prevDez: number[] | undefined;
-      let prevFalt: number[] | null = null;
-      let prevCiclo: number | null = null;
-
-      for (const item of existentes) {
-        try {
-          const aUrl = `https://apiloterias.com.br/app/v2/resultado?loteria=lotofacil&token=${apiToken}&concurso=${item.concurso}`;
-          const res = await fetch(aUrl);
-          if (!res.ok) { erros++; continue; }
-          const raw = await res.json();
-          const data = Array.isArray(raw) ? raw[0] : raw;
-          const dezenas = extrairDezenas(data);
-          if (dezenas.length !== 15) { erros++; continue; }
-          const ind = calcularIndicadores(dezenas, prevDez);
-          const ciclo = calcularCiclo(dezenas, prevFalt, prevCiclo);
-          const dataSorteio = extrairData(data);
-          let prem: any[] = [];
-          if (Array.isArray(data.premiacao)) {
-            prem = data.premiacao.map((p: any) => ({ faixa: String(p.faixa ?? ''), descricao: p.descricao || `${p.faixa} acertos`, ganhadores: Number(p.numero_ganhadores ?? p.ganhadores ?? 0), valorPremio: parseFloat(String(p.valor_premio ?? p.valor ?? p.valorPremio ?? 0)) }));
-          } else if (Array.isArray(data.premiacoes)) {
-            prem = data.premiacoes.map((p: any) => ({ faixa: `${p.acertos || p.faixa || ''} acertos`, ganhadores: Number(p.vencedores ?? p.ganhadores ?? 0), valorPremio: parseFloat(String(p.premio ?? p.valor ?? 0)) }));
-          }
-          let locais: any[] = [];
-          if (Array.isArray(data.ganhadores)) {
-            locais = data.ganhadores.map((e: any) => ({ cidade: String(e.cidade ?? e.municipio ?? ''), uf: String(e.uf ?? ''), ganhadores: Number(e.ganhadores ?? 1) }));
-          } else if (Array.isArray(data.estadosPremiados)) {
-            locais = data.estadosPremiados.map((e: any) => ({ cidade: String(e.cidade ?? ''), uf: String(e.uf ?? ''), ganhadores: Number(e.vencedores ?? 0) }));
-          }
-          const reg = {
-            loteria: 'lotofacil', concurso: item.concurso, data_sorteio: dataSorteio, dezenas,
-            acumulou: data.acumulou ?? data.acumulado ?? false,
-            valor_estimado_proximo: data.valor_estimado_proximo ?? data.valorEstimadoProximoConcurso ?? null,
-            valor_acumulado_especial: data.valor_acumulado_especial ?? data.valorAcumuladoEspecial ?? null,
-            premiacao_json: prem, locais_ganhadores: locais,
-            local_sorteio: data.local_sorteio ?? data.localSorteio ?? data.local ?? null,
-            ...ind, ...ciclo,
-          };
-          const { error } = await supabase.from('resultados_loterias').upsert(reg, { onConflict: 'loteria,concurso' });
-          if (error) { console.error(`[REPROCESS] ${item.concurso}: ${error.message}`); erros++; } else { reprocessados++; }
-          prevDez = dezenas; prevFalt = ciclo.dezenas_faltantes_ciclo; prevCiclo = ciclo.ciclo_numero;
-          await new Promise(r => setTimeout(r, 300));
-        } catch (e) { console.error(`[REPROCESS] ${item.concurso}:`, e); erros++; }
-      }
-      return new Response(JSON.stringify({ success: true, reprocessados, erros }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
-    // ── END REPROCESS ──────────────────────────────────────────
-
     const url = new URL(req.url);
     
     // NOVO: Parâmetro 'quantidade' para definir quantos concursos buscar
