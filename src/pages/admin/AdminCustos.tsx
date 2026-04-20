@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAiUsageLogs, useAdminSettings, computeSummary, type Origem } from "@/hooks/useAiUsageLogs";
+import { useLastActivity } from "@/hooks/useLastActivity";
+import { EmptyTabState } from "@/components/admin/EmptyTabState";
 import { useQueryClient } from "@tanstack/react-query";
 import { DollarSign, Coins, Bot, Wrench, Users, Settings, Loader2, RefreshCw, Cpu, UserCheck, Info, ChevronRight, ChevronDown } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -99,6 +101,7 @@ export default function AdminCustos() {
   const [expandedBots, setExpandedBots] = useState<Set<string>>(new Set());
 
   const { data: settings } = useAdminSettings();
+  const { data: lastActivity } = useLastActivity();
   const { data: logs, isLoading: logsLoading, refetch } = useAiUsageLogs({
     startDate,
     endDate,
@@ -111,6 +114,21 @@ export default function AdminCustos() {
 
   const usdToBrl = settings?.usd_to_brl || 5.80;
   const summary = useMemo(() => computeSummary(logs || []), [logs]);
+
+  const expandTo30Days = () => {
+    const thirtyAgo = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
+    setStartDate(thirtyAgo);
+    setEndDate(today);
+  };
+
+  const jumpToDate = (iso: string) => {
+    const day = iso.split("T")[0];
+    // Janela de ±3 dias para garantir que pegue
+    const start = new Date(new Date(day).getTime() - 3 * 86400000).toISOString().split("T")[0];
+    const end = new Date(new Date(day).getTime() + 3 * 86400000).toISOString().split("T")[0];
+    setStartDate(start);
+    setEndDate(end > today ? today : end);
+  };
 
   const uniqueBots = useMemo(() => {
     const bots = new Map<string, string>();
@@ -422,7 +440,18 @@ export default function AdminCustos() {
                             );
                           })}
                         {Object.keys(summary.byFerramenta).length === 0 && (
-                          <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">Nenhum dado encontrado</TableCell></TableRow>
+                          <TableRow>
+                            <TableCell colSpan={10} className="p-0">
+                              <EmptyTabState
+                                what="ferramenta"
+                                startDate={startDate}
+                                endDate={endDate}
+                                lastActivity={lastActivity?.lastAny || null}
+                                onExpand30Days={expandTo30Days}
+                                onJumpToLastActivity={lastActivity?.lastAny ? () => jumpToDate(lastActivity.lastAny!) : undefined}
+                              />
+                            </TableCell>
+                          </TableRow>
                         )}
                       </TableBody>
                     </Table>
@@ -508,7 +537,19 @@ export default function AdminCustos() {
                           );
                         })}
                       {Object.keys(summary.byUsuario).length === 0 && (
-                        <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">Nenhum usuário com custo no período</TableCell></TableRow>
+                        <TableRow>
+                          <TableCell colSpan={10} className="p-0">
+                            <EmptyTabState
+                              what="usuário"
+                              startDate={startDate}
+                              endDate={endDate}
+                              lastActivity={lastActivity?.lastUser || null}
+                              lastActivitySuffix={lastActivity ? `${lastActivity.userCount30d} chamadas nos últimos 30 dias` : undefined}
+                              onExpand30Days={expandTo30Days}
+                              onJumpToLastActivity={lastActivity?.lastUser ? () => jumpToDate(lastActivity.lastUser!) : undefined}
+                            />
+                          </TableCell>
+                        </TableRow>
                       )}
                     </TableBody>
                   </Table>
@@ -606,7 +647,19 @@ export default function AdminCustos() {
                           );
                         })}
                       {Object.keys(summary.byBot).length === 0 && (
-                        <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhum bot envolvido no período</TableCell></TableRow>
+                        <TableRow>
+                          <TableCell colSpan={9} className="p-0">
+                            <EmptyTabState
+                              what="bot"
+                              startDate={startDate}
+                              endDate={endDate}
+                              lastActivity={lastActivity?.lastBot || null}
+                              lastActivitySuffix={lastActivity ? `${lastActivity.botCount30d} chamadas de bot nos últimos 30 dias` : undefined}
+                              onExpand30Days={expandTo30Days}
+                              onJumpToLastActivity={lastActivity?.lastBot ? () => jumpToDate(lastActivity.lastBot!) : undefined}
+                            />
+                          </TableCell>
+                        </TableRow>
                       )}
                     </TableBody>
                   </Table>
