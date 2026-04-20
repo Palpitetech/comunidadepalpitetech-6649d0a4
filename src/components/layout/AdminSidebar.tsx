@@ -50,17 +50,20 @@ const mainItems = [
   { title: "Planos", url: "/admin/planos", icon: FileText },
   { title: "Usuários", url: "/admin/usuarios", icon: Users },
   { title: "Bots", url: "/admin/bots", icon: Bot },
-  { title: "Custos IA", url: "/admin/custos", icon: DollarSign },
-  { title: "Assinaturas Op.", url: "/admin/assinaturas-operacionais", icon: PiggyBank },
-  { title: "Chip Celulares", url: "/admin/chip-celulares", icon: Smartphone },
-  { title: "Custos Operacionais", url: "/admin/custos-operacionais", icon: Receipt },
   { title: "Convites", url: "/admin/convites", icon: Gift },
-  { title: "Vendas", url: "/admin/vendas", icon: ShoppingCart },
   { title: "Eventos", url: "/admin/eventos", icon: Activity },
   { title: "Métricas", url: "/admin/metricas", icon: BarChart2 },
   { title: "WhatsApp", url: "/admin/whatsapp", icon: MessageCircle },
   { title: "Integrações", url: "/admin/integracoes", icon: Plug },
   { title: "Manutenção", url: "/admin/manutencao", icon: Wrench },
+];
+
+const financeiroItems = [
+  { title: "Custos IA", url: "/admin/custos", icon: DollarSign },
+  { title: "Assinaturas Op.", url: "/admin/assinaturas-operacionais", icon: PiggyBank },
+  { title: "Chip Celulares", url: "/admin/chip-celulares", icon: Smartphone },
+  { title: "Custos Operacionais", url: "/admin/custos-operacionais", icon: Receipt },
+  { title: "Vendas", url: "/admin/vendas", icon: ShoppingCart },
 ];
 
 const boloesItems = [
@@ -90,6 +93,7 @@ export function AdminSidebar() {
 
   const boloesOpen = boloesItems.some((i) => isActive(i.url));
   const gravacaoOpen = gravacaoItems.some((i) => isActive(i.url));
+  const financeiroOpen = financeiroItems.some((i) => isActive(i.url));
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
@@ -117,6 +121,38 @@ export function AdminSidebar() {
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Financeiro */}
+        <SidebarGroup>
+          <Collapsible defaultOpen={financeiroOpen}>
+            <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors">
+              <div className="flex items-center gap-1.5">
+                <DollarSign className="h-3.5 w-3.5" />
+                {!collapsed && <span>Financeiro</span>}
+              </div>
+              {!collapsed && <ChevronDown className="h-3 w-3" />}
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {financeiroItems.map((item) => (
+                    <SidebarMenuItem key={item.url}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive(item.url)}
+                      >
+                        <Link to={item.url}>
+                          <item.icon className="h-4 w-4" />
+                          {!collapsed && <span>{item.title}</span>}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
         </SidebarGroup>
 
         {/* Bolões */}
