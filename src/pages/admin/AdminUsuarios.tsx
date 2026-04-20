@@ -544,7 +544,6 @@ export default function AdminUsuarios() {
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-medium truncate max-w-[200px]">{user.nome || "Sem nome"}</span>
                       {user.is_blocked && <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" title="Bloqueado" />}
-                      {!user.email_verificado && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" title="Não verificado" />}
                     </div>
                   </TableCell>
                   <TableCell className="py-2.5 text-sm text-muted-foreground truncate max-w-[220px]">
