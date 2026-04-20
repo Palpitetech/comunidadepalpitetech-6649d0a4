@@ -178,30 +178,18 @@ export function TransacoesTab({ user }: TransacoesTabProps) {
       <div className="rounded-2xl border bg-gradient-to-br from-primary/5 via-card to-card p-4">
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
           <Wallet className="h-3.5 w-3.5" />
-          Saldo do período
+          Saldo disponível
         </div>
         <p className={cn("text-3xl font-bold tracking-tight", saldo < 0 ? "text-destructive" : "text-foreground")}>
           {formatBRL(saldo)}
         </p>
-        <div className="flex items-center gap-4 mt-3 text-xs">
-          <div className="flex items-center gap-1.5">
-            <div className="h-6 w-6 rounded-full bg-emerald-500/10 flex items-center justify-center">
-              <ArrowUpRight className="h-3.5 w-3.5 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-[10px] text-muted-foreground uppercase">Entradas</p>
-              <p className="font-semibold text-emerald-600">{formatBRL(totalIn)}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="h-6 w-6 rounded-full bg-destructive/10 flex items-center justify-center">
-              <ArrowDownRight className="h-3.5 w-3.5 text-destructive" />
-            </div>
-            <div>
-              <p className="text-[10px] text-muted-foreground uppercase">Saídas</p>
-              <p className="font-semibold text-destructive">{formatBRL(totalOut)}</p>
-            </div>
-          </div>
+        <p className="text-[11px] text-muted-foreground mt-1">
+          {formatBRL(totalCompra)} comprado · {formatBRL(totalPremio)} em prêmios
+        </p>
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          <MetricCell icon={ShoppingCart} label="Compra" value={totalCompra} tone="blue" />
+          <MetricCell icon={ArrowDownRight} label="Saída" value={totalSaida} tone="red" />
+          <MetricCell icon={Trophy} label="Prêmio" value={totalPremio} tone="amber" />
         </div>
       </div>
 
