@@ -542,13 +542,15 @@ export function LoginWizard() {
           </>
         );
 
-      case "cadastro-whatsapp":
+      case "cadastro-whatsapp": {
+        const whatsValidation = validateCelularBR(whatsapp);
+        const showError = whatsapp.replace(/\D/g, "").length >= 10 && !whatsValidation.ok;
         return (
           <>
             <CardHeader className="text-center pb-4 md:pb-6 px-4 md:px-6">
-              <CardTitle className="text-xl md:text-senior-2xl">Quase lá!</CardTitle>
+              <CardTitle className="text-xl md:text-senior-2xl">Confirme seu celular</CardTitle>
               <CardDescription className="text-sm md:text-senior-base">
-                Vamos enviar um convite para você receber diariamente os resultados no seu whatsapp.
+                Vamos enviar resultados e códigos de acesso pelo WhatsApp.
               </CardDescription>
             </CardHeader>
             <CardContent className="px-4 md:px-6">
@@ -556,24 +558,34 @@ export function LoginWizard() {
                 <div className="space-y-1.5 md:space-y-2">
                   <Label htmlFor="reg-whatsapp" className="text-sm md:text-senior-base flex items-center gap-2">
                     <MessageCircle className="h-4 w-4 md:h-5 md:w-5" />
-                    Informe seu Whatsapp
+                    Celular (WhatsApp)
                   </Label>
                   <Input
                     id="reg-whatsapp"
                     type="tel"
+                    inputMode="numeric"
                     placeholder="(00) 00000-0000"
                     value={whatsapp}
-                    onChange={(e) => setWhatsapp(e.target.value)}
+                    onChange={(e) => setWhatsapp(formatCelularMask(e.target.value))}
                     className="h-11 md:h-14 text-sm md:text-lg px-3 md:px-4 rounded-lg md:rounded-xl border-2 focus:border-primary"
                     autoFocus
                     required
                   />
+                  {showError && (
+                    <p className="text-destructive text-xs">
+                      {whatsValidation.reason || "Celular inválido. Use formato (DDD) 9XXXX-XXXX"}
+                    </p>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button type="button" variant="outline" className="h-11 md:h-14 px-4" onClick={() => setEtapa("cadastro-email")}>
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
-                  <Button type="submit" className="flex-1 h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl" disabled={isLoading}>
+                  <Button
+                    type="submit"
+                    className="flex-1 h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl"
+                    disabled={isLoading || !whatsValidation.ok}
+                  >
                     {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
                     Enviar Código de Acesso
                   </Button>
@@ -582,6 +594,7 @@ export function LoginWizard() {
             </CardContent>
           </>
         );
+      }
 
       case "cadastro-codigo":
         return (
