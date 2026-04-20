@@ -182,10 +182,14 @@ export function TemplatesTab() {
   const openCreate = () => {
     setEditingId(null);
     setForm(emptyForm);
+    setSlots(buildEmptySlots(""));
+    setVariantIds({});
+    setRemovedPositions([]);
+    setActiveSlot(1);
     setDialogOpen(true);
   };
 
-  const openEdit = (t: MessageTemplate) => {
+  const openEdit = async (t: MessageTemplate) => {
     setEditingId(t.id);
     setForm({
       name: t.name,
@@ -198,6 +202,36 @@ export function TemplatesTab() {
       plan_ids: t.plan_ids ?? [],
       tags_match_mode: (t.tags_match_mode as "any" | "all") ?? "any",
     });
+
+    const baseSlots = buildEmptySlots(t.content);
+    const ids: Record<number, string> = {};
+    const { data, error } = await supabase
+      .from("message_template_variants" as any)
+      .select("*")
+      .eq("template_id", t.id)
+      .order("position", { ascending: true });
+    if (error) {
+      console.error(error);
+      toast.error("Erro ao carregar variações");
+    } else {
+      ((data as any[]) || []).forEach((v: MessageTemplateVariant) => {
+        const idx = v.position - 1;
+        if (idx >= 0 && idx < MAX_SLOTS) {
+          baseSlots[idx] = {
+            position: v.position,
+            content: v.content,
+            isActive: v.is_active,
+            timesUsed: v.times_used,
+            exists: true,
+          };
+          ids[v.position] = v.id;
+        }
+      });
+    }
+    setSlots(baseSlots);
+    setVariantIds(ids);
+    setRemovedPositions([]);
+    setActiveSlot(1);
     setDialogOpen(true);
   };
 
