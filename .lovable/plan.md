@@ -1,82 +1,134 @@
 
 
-## Adicionar coluna "Próximo vencimento" na listagem de usuários
+## Diagnóstico — Eventos & Tags para disparos de mensagens
 
-### O que adiciona
+Após a refatoração de hoje (celular obrigatório, limpeza de 216 perfis, novos filtros), o motor de disparos está **funcional mas subutilizado**. Abaixo o estado real e o que recomendo ajustar.
 
-Nova coluna na tabela desktop e info no card mobile mostrando a data de validade da assinatura (`validade_assinatura`) com indicador visual de proximidade do vencimento.
+---
 
-### Lógica de exibição
+### 1. Eventos — como está hoje
 
-| Situação | Exibição |
+**Pipeline atual (já funcionando):**
+```text
+events INSERT → trigger on_event_queue_templates
+  → trigger_queue_event_templates() lê perfis
+  → queue_templates_for_event() filtra templates ativos
+  → respeita include_tags/exclude_tags/plan_ids/match_mode
+  → respeita delay_enabled + delay_minutes
+  → insere em message_queue com priority
+```
+
+**Eventos registrados no banco (últimos):**
+| event_type | total |
 |---|---|
-| Sem `validade_assinatura` | `—` cinza |
-| Vence em > 7 dias | Data + dias restantes (cinza neutro) |
-| Vence em 1-7 dias | Data + "Em X dias" (âmbar — atenção) |
-| Vence hoje | "Hoje" (âmbar) |
-| Vencido | "Há X dias" (vermelho) |
+| `assinatura_expirada` | 7 |
+| `carrinho_abandonado` | 6 |
+| `novo_cadastro` | 1 |
+| `subscription_expired` | 1 |
 
-Formato data: `dd/MM/yyyy` (date-fns ptBR, já importado no projeto).
+**Problemas identificados:**
 
-### Mudanças
+1. **Duplicidade de eventos** — temos `assinatura_expirada` (português, do `handle-subscription-expiration`) E `subscription_expired` (Kirvano). Ambos significam a mesma coisa mas só um vai disparar template.
+2. **Eventos novos não registrados** — depois da refatoração de filtros (Trial OK, Pago Mensal/Anual/AnualVIP, etc.) **não existem eventos correspondentes**. Ex: quando alguém vira "trial_ok" (usou trial e virou free), nada é registrado em `events`.
+3. **Apenas 1 template configurado** (`Cadastro Comunidade`, evento `novo_cadastro`) — 100% dos outros eventos passam batido sem disparar nada.
+4. **Telefones quebrados na fila antiga** — 3 das últimas 4 mensagens falharam com `11999887755` (números fake). Após a limpeza de hoje, isso não acontece mais (todos têm celular válido).
 
-**`src/pages/admin/AdminUsuarios.tsx`**
+---
 
-#### Desktop — tabela
-Adicionar coluna entre "Ativo" e "Origem":
+### 2. Tags — como está hoje
 
-```
-| Usuário | Plano | Verificado | Ativo | Próximo vencimento | Origem | Cadastro |
-```
+**Tags ativas no sistema (top 12):**
+| tag | total | origem |
+|---|---|---|
+| `comunidade` | 46 | cadastro padrão |
+| `ativo` | 29 | assinatura ativa |
+| `gratis` | 17 | plano free |
+| `mensal` | 17 | plano mensal |
+| `anual` | 10 | plano anual |
+| `expirado` | 7 | passou da validade |
+| `trial` | 7 | em período de teste |
+| `semestral` | 2 | plano semestral |
+| `bot` / `lead` / `carrinho_abandonado` / `grupo_salasecreta` | 1 cada | edge cases |
 
-Cada célula renderiza:
-- Linha 1: data formatada (`dd/MM/yyyy`)
-- Linha 2: badge pequeno com dias restantes/status, com cor conforme regra acima
+**Problemas identificados:**
 
-Atualizar `colSpan` da row de "nenhum usuário" de 10 → 11.
+1. **Falta a tag `anualvip`** — temos plano `pago_anualvip` no filtro mas nenhum perfil tem essa tag.
+2. **Tag `trial_ok` não existe** — no filtro de usuários adicionamos esse conceito (já usou trial), mas nenhuma tag marca isso.
+3. **Sem tag para `verificado` ou `nao_verificado`** — disparos não conseguem segmentar por verificação de email.
+4. **Sem tag para os novos status de plano** — `plano_vencido`, `cancelado_ativo`, `cancelado_inativo` não existem como tags, embora apareçam como filtros.
 
-#### Mobile — cards
-Adicionar linha extra no card (abaixo do plano) só quando `validade_assinatura` existir:
-- `📅 Vence 25/04/2026 · Em 5 dias` (cor conforme regra)
+---
 
-Se não tem validade, não exibe nada (não polui).
+### 3. UI — Templates vs Disparo Manual
 
-#### Helper function
-```ts
-const getValidadeInfo = (validade: string | null) => {
-  if (!validade) return null;
-  const dias = differenceInDays(new Date(validade), new Date());
-  const dataFormatada = format(new Date(validade), "dd/MM/yyyy", { locale: ptBR });
-  
-  let label: string;
-  let tone: "neutral" | "warning" | "danger";
-  
-  if (dias < 0) { label = `Há ${Math.abs(dias)} dia${Math.abs(dias) !== 1 ? 's' : ''}`; tone = "danger"; }
-  else if (dias === 0) { label = "Hoje"; tone = "warning"; }
-  else if (dias <= 7) { label = `Em ${dias} dia${dias !== 1 ? 's' : ''}`; tone = "warning"; }
-  else { label = `Em ${dias} dias`; tone = "neutral"; }
-  
-  return { dataFormatada, label, tone };
-};
-```
+| Recurso | Templates (automático) | Disparo Manual |
+|---|---|---|
+| Filtra por tag include/exclude | ✅ | ✅ |
+| Filtra por plano | ✅ | ✅ |
+| Filtra por evento | ✅ (gatilho único) | ✅ (filtro de público) |
+| Filtra por status assinatura | ❌ | ✅ |
+| Filtra por verificação email | ❌ | ❌ |
+| Modo "any/all" tags | ✅ | ✅ (exact match) |
+| Delay configurável | ✅ | ❌ |
 
-### Fora de escopo
+**Ambos compartilham a mesma fonte de tags** (RPC `get_distinct_tags` + fallback em `perfis.tags`), o que é bom — qualquer tag que existir aparece nos dois lugares.
 
-- Sem mudanças no banco
-- Sem mudanças em `UserDetailSheet` / `UserPlanTab` (já mostram validade)
-- Sem novo subfiltro (subfiltro `Plano vencido` já existe)
-- Imports `differenceInDays`, `format`, `ptBR` já estão disponíveis no padrão do projeto
+---
 
-### Arquivo editado
+### Recomendações (a serem implementadas em próximo loop)
 
-| Arquivo | Mudança |
-|---|---|
-| `src/pages/admin/AdminUsuarios.tsx` | +1 coluna desktop, +1 linha condicional no card mobile, +1 helper de formatação |
+#### A. Padronizar eventos (consolidar duplicatas)
 
-### Resultado esperado
+Criar migração que:
+- Renomeia `subscription_expired` → `assinatura_expirada` em `events` históricos
+- Documenta o "vocabulário oficial" de eventos em comentário SQL
+- Adiciona eventos faltantes no fluxo: `email_verificado`, `trial_iniciado`, `trial_finalizado`, `assinatura_renovada`
 
-Admin consegue, sem abrir o detalhe do usuário, identificar de relance:
-- Quem vai vencer nos próximos dias (âmbar)
-- Quem já venceu (vermelho)
-- Quem tem assinatura longa (cinza neutro)
+#### B. Sincronizar tags com os filtros novos
+
+Criar trigger/função que mantenha tags em dia automaticamente:
+- `verificado` / sem tag = não verificou
+- `trial_ativo` quando dentro do período de teste
+- `trial_ok` quando trial expirou (substitui `trial`+`expirado`)
+- `pago_mensal` / `pago_anual` / `pago_anualvip` (substitui as tags soltas `mensal`/`anual`)
+- `plano_vencido` / `cancelado_ativo` / `cancelado_inativo`
+
+Migração com backfill: aplica tags em todos os perfis existentes baseado no estado atual.
+
+#### C. Adicionar filtro "Verificação" no Disparo Manual e Templates
+
+Novo seletor: `Todos / Apenas verificados / Apenas não verificados` — útil para reativação de leads que não confirmaram email.
+
+#### D. Templates essenciais a criar
+
+Sugestão de 6 templates que cobrem o ciclo completo:
+
+| # | Nome | Evento | Filtro |
+|---|---|---|---|
+| 1 | Boas-vindas Cadastro | `novo_cadastro` | nenhum |
+| 2 | Lembrete verificar email | `novo_cadastro` (delay 30min) | tag exclude `verificado` |
+| 3 | Trial expirando em 1 dia | `trial_finalizado` (delay -24h via cron) | tag `trial_ativo` |
+| 4 | Compra aprovada | `sale_confirmed` | nenhum |
+| 5 | Assinatura vencida | `assinatura_expirada` | tag `expirado` |
+| 6 | Reativação 7 dias após corte | `acesso_cortado` (delay 7 dias) | tag `acesso_cortado` |
+
+#### E. Dashboard de diagnóstico (opcional, futuro)
+
+Página `/admin/whatsapp/diagnostico`:
+- Eventos disparados nos últimos 7 dias por tipo
+- Templates que dispararam (taxa de match)
+- Templates ativos sem nenhum evento correspondente nos últimos 30 dias (warning)
+
+---
+
+### O que NÃO vou mexer agora
+
+- Estrutura de `message_queue` / `message_templates` (está sólida)
+- `process-queue` edge function (funciona bem com Round Robin)
+- `queue_templates_for_event` (lógica genérica está correta)
+- Sistema de prioridades (já hierarquizado: transacional > automático > manual)
+
+---
+
+**Ação solicitada:** confirme quais dos blocos A–D você quer implementar primeiro. Eu sugiro a ordem **A → B (com backfill) → C → D**, porque cada bloco habilita o próximo. Posso fazer tudo em um único loop ou separar em etapas — você decide.
 
