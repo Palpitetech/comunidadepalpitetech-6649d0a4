@@ -19,19 +19,19 @@ import { ptBR } from "date-fns/locale";
 
 const FUNCTION_LABELS: Record<string, string> = {
   // Automáticas (bots)
-  "generate-roundtable-post": "Post Automático Mesa Redonda (bot)",
-  "generate-guide-post": "Post Analítico (bot)",
-  "bot-interact-with-post": "Comentário Automático de Bot",
-  "bot-reply-user": "Resposta a Comentário de Usuário (bot)",
+  "generate-roundtable-post": "Post Automático Mesa Redonda — bot cria post sozinho",
+  "generate-guide-post": "Post Analítico de Guia — bot cria post sozinho",
+  "bot-interact-with-post": "Comentário Automático — bot comenta em post novo",
+  "bot-reply-user": "Resposta de Bot — bot responde comentário do usuário em post",
   // Disparadas por usuário
-  "chat-assistant": "Chat IA (usuário ↔ bot)",
-  "generate-palpites": "Gerador Lotofácil (usuário)",
-  "generate-palpites-megasena": "Gerador Mega Sena (usuário)",
-  "generate-palpites-duplasena": "Gerador Dupla Sena (usuário)",
-  "generate-palpites-quina": "Gerador Quina (usuário)",
-  "auto-fill-fechamento": "Auto-Fill Lotofácil (usuário)",
-  "auto-fill-megasena": "Auto-Fill Mega Sena (usuário)",
-  "auto-fill-duplasena": "Auto-Fill Dupla Sena (usuário)",
+  "chat-assistant": "Chat IA — conversa do usuário com bot no /chat",
+  "generate-palpites": "Gerador Lotofácil — gera N jogos no /gerador",
+  "generate-palpites-megasena": "Gerador Mega Sena — gera N jogos no /gerador-megasena",
+  "generate-palpites-duplasena": "Gerador Dupla Sena — gera N jogos no /gerador-duplasena",
+  "generate-palpites-quina": "Gerador Quina — gera N jogos no /gerador-quina",
+  "auto-fill-fechamento": "Auto-Preencher Fechamento Lotofácil — sugere dezenas no /fechamento (botão Quero Estratégia)",
+  "auto-fill-megasena": "Auto-Preencher Fechamento Mega Sena — sugere dezenas no fechamento",
+  "auto-fill-duplasena": "Auto-Preencher Fechamento Dupla Sena — sugere dezenas no fechamento",
 };
 
 const ORIGEM_LABELS: Record<Origem, string> = {
