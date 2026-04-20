@@ -586,6 +586,68 @@ export function LoginWizard() {
           </>
         );
 
+      case "verificacao-email-pendente":
+        return (
+          <>
+            <CardHeader className="text-center pb-4 md:pb-6 px-4 md:px-6">
+              <CardTitle className="text-xl md:text-senior-2xl">Ative sua conta</CardTitle>
+              <CardDescription className="text-sm md:text-senior-base">
+                Sua conta ainda não foi ativada. Enviamos um código de 6 dígitos para <span className="font-semibold text-primary">{emailLogin || email}</span>. Confira a caixa de Spam, Promoções e Outros.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-4 md:px-6">
+              <form onSubmit={handleVerifyPendingEmail} className="flex flex-col items-center space-y-6">
+                <div className="space-y-2">
+                  <Label className="text-sm md:text-senior-base block text-center">Código de 6 dígitos</Label>
+                  <InputOTP 
+                    maxLength={6} 
+                    value={codigo} 
+                    onChange={(val) => setCodigo(val)}
+                    onComplete={() => handleVerifyPendingEmail()}
+                    disabled={isLoading}
+                  >
+                    <InputOTPGroup className="gap-2">
+                      <InputOTPSlot index={0} className="h-12 w-10 md:h-14 md:w-12 border-2 text-xl" />
+                      <InputOTPSlot index={1} className="h-12 w-10 md:h-14 md:w-12 border-2 text-xl" />
+                      <InputOTPSlot index={2} className="h-12 w-10 md:h-14 md:w-12 border-2 text-xl" />
+                      <InputOTPSlot index={3} className="h-12 w-10 md:h-14 md:w-12 border-2 text-xl" />
+                      <InputOTPSlot index={4} className="h-12 w-10 md:h-14 md:w-12 border-2 text-xl" />
+                      <InputOTPSlot index={5} className="h-12 w-10 md:h-14 md:w-12 border-2 text-xl" />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+
+                <div className="flex flex-col w-full gap-3">
+                  <Button 
+                    type="submit"
+                    className="w-full h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl" 
+                    disabled={isLoading || codigo.length < 6}
+                  >
+                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <><ShieldCheck className="h-5 w-5 mr-2" /> Ativar conta e liberar trial</>}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    className="text-xs" 
+                    onClick={handleResendPendingCode}
+                    disabled={isLoading}
+                  >
+                    Não recebi — reenviar código
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    className="text-xs" 
+                    onClick={() => { setEtapa("email"); setCodigo(""); setPendingUserId(null); }}
+                  >
+                    Voltar
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </>
+        );
+
       default:
         return null;
     }
