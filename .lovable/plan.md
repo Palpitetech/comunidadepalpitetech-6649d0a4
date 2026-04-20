@@ -1,106 +1,81 @@
 
 
-## Refatorar nomenclatura e filtros de Usuários no Admin
+## Adicionar 5 novos subfiltros em `/admin/usuarios`
 
-### Estado atual
+### Novos subfiltros (linha secundária)
 
-Hoje na `/admin/usuarios` temos 5 filtros: **Todos, Pagos, Trial, Free, Bloqueados** — sem distinção por tipo de plano pago, sem filtro por verificação de email, sem filtro por trial usado.
-
-### Nova estrutura de filtros
-
-**Linha 1 — Status do cadastro/pagamento (filtros principais):**
-
-| Filtro | Significado | Lógica |
-|---|---|---|
-| **Todos** | Todos os cadastros | sem filtro |
-| **Pagos** | Quem comprou | tem plano pago ativo (mensal/anual/anualvip/semestral/grupo) |
-| **Trial** | Quem está no teste agora | `plan.slug = teste-gratis-3-dias` E `status_assinatura = ativa` |
-
-**Linha 2 — Filtros secundários (subgrupo, combináveis):**
-
-| Filtro | Significado | Lógica |
-|---|---|---|
-| **Não Verificados** | Não confirmou email (independe de pago/free) | `email_verificado = false` |
-| **Verificados** | Confirmou email | `email_verificado = true` |
-| **Trial OK** | Já usou o trial (não importa se ainda está ativo) | `trial_used = true` |
-| **Pago Mensal** | Plano mensal ativo | `plan.slug = mensal` |
-| **Pago Anual** | Plano anual ativo | `plan.slug = anual` |
-| **Pago Anual VIP** | Plano anual VIP ativo | `plan.slug = plano-anual-vip` |
-| **Bloqueados** | Bloqueados | `is_blocked = true` |
+| Filtro | Lógica |
+|---|---|
+| **Plano vencido** | `validade_assinatura < hoje` E `status_assinatura != 'cancelada'` (passou da data mas não foi cancelado formalmente) |
+| **Plano cancelado inativo** | `status_assinatura = 'cancelada'` E (`validade_assinatura < hoje` OU `validade_assinatura IS NULL`) |
+| **Plano cancelado mas ativo** | `status_assinatura = 'cancelada'` E `validade_assinatura >= hoje` (cancelou mas ainda tem dias restantes) |
+| **Trial ativo** | `plan.slug = 'teste-gratis-3-dias'` E `status_assinatura = 'ativa'` E `validade_assinatura >= hoje` |
+| **Celular OK** | `celular` preenchido E começa com `55` E tem 12-13 dígitos (formato normalizado válido do `validateCelularBR`) |
 
 ### Mudanças
 
-#### 1. `src/pages/admin/AdminUsuarios.tsx`
+**1. `src/pages/admin/AdminUsuarios.tsx`**
 
-**Tipos:**
+Adicionar à união `FilterSecundario`:
 ```ts
-type FilterPrincipal = "todos" | "pagos" | "trial";
-type FilterSecundario = 
-  | "nao_verificados" 
-  | "verificados" 
-  | "trial_ok" 
-  | "pago_mensal" 
-  | "pago_anual" 
-  | "pago_anualvip"
-  | "bloqueados"
+type FilterSecundario =
+  | "nao_verificados" | "verificados" | "trial_ok"
+  | "pago_mensal" | "pago_anual" | "pago_anualvip" | "bloqueados"
+  | "plano_vencido"           // novo
+  | "plano_cancelado_inativo" // novo
+  | "plano_cancelado_ativo"   // novo
+  | "trial_ativo"             // novo
+  | "celular_ok"              // novo
   | null;
 ```
 
-State separado: `activeFilter` (principal, sempre 1 ativo) + `activeSubFilter` (secundário, 0 ou 1 ativo, toggleável).
-
-**Stats recomputados:**
+Adicionar helpers:
 ```ts
-const stats = {
-  total, pagos, trial,
-  nao_verificados: users.filter(u => !u.email_verificado).length,
-  verificados: users.filter(u => u.email_verificado).length,
-  trial_ok: users.filter(u => u.trial_used).length,
-  pago_mensal: users.filter(u => u.plan?.slug === 'mensal' && u.status_assinatura === 'ativa').length,
-  pago_anual: users.filter(u => u.plan?.slug === 'anual' && u.status_assinatura === 'ativa').length,
-  pago_anualvip: users.filter(u => u.plan?.slug === 'plano-anual-vip' && u.status_assinatura === 'ativa').length,
-  bloqueados: users.filter(u => u.is_blocked).length,
+const hoje = new Date().toISOString().split('T')[0];
+
+const isPlanoVencido = (u) => 
+  u.validade_assinatura && u.validade_assinatura < hoje && u.status_assinatura !== 'cancelada';
+
+const isCanceladoInativo = (u) =>
+  u.status_assinatura === 'cancelada' && 
+  (!u.validade_assinatura || u.validade_assinatura < hoje);
+
+const isCanceladoAtivo = (u) =>
+  u.status_assinatura === 'cancelada' && 
+  u.validade_assinatura && u.validade_assinatura >= hoje;
+
+const isTrialAtivo = (u) =>
+  u.plan?.slug === 'teste-gratis-3-dias' && 
+  u.status_assinatura === 'ativa' &&
+  u.validade_assinatura && u.validade_assinatura >= hoje;
+
+const isCelularOk = (u) => {
+  const digits = (u.celular || '').replace(/\D/g, '');
+  return digits.startsWith('55') && (digits.length === 12 || digits.length === 13);
 };
 ```
 
-**Filtragem em pipeline:** primeiro aplica filtro principal, depois aplica subfiltro (se houver), depois tags + busca.
+Adicionar contagens em `stats` (useMemo) e cases no pipeline de filtragem.
 
-**UI:**
-- Mobile: linha de 3 chips grandes (Todos/Pagos/Trial) + linha rolável horizontal com pills dos secundários
-- Desktop: 2 linhas de pills no toolbar — principais em destaque (bg-primary quando ativo), secundários menores (estilo outline)
-- Subfiltro ativo mostra X pra remover
+**2. UI — linha de subfiltros**
 
-#### 2. Remover filtros antigos
+Agrupar visualmente os pills da linha 2 em 3 grupos com separador sutil:
+- **Verificação:** Verificados / Não Verificados / Celular OK
+- **Plano:** Pago Mensal / Pago Anual / Pago Anual VIP / Trial Ativo / Trial OK
+- **Status crítico:** Plano Vencido / Cancelado Ativo / Cancelado Inativo / Bloqueados
 
-Tirar `Free` e `Bloqueados` da linha principal — `Bloqueados` vira subfiltro, `Free` deixa de existir como categoria primária (quem não é Pago nem Trial é Free implicitamente em "Todos"). Quem quer ver só free pode combinar `Todos` + filtro de tag `gratis`.
-
-#### 3. Verificar `email_verificado` no campo certo
-
-Os perfis já têm `email_verificado: boolean`. Confirmado pelo schema.
-
-#### 4. Sincronia com `UserDetailSheet.tsx` header
-
-Os badges no topo do sheet (Free/Mensal/etc + status) continuam iguais — só mudam os filtros da listagem.
+Cada subfiltro mostra o `count` ao lado do label (ex: `Plano Vencido (12)`).
 
 ### Fora de escopo
 
-- Não mexo em `AdminMetricas` (tem nomenclatura própria já consolidada)
-- Não mexo em `AdminEventos` (filtros são de event_type)
-- Não renomeio planos no banco (slugs `mensal`, `anual`, `plano-anual-vip` continuam)
-- Não mexo em tags (continuam como CRM auxiliar)
-- Não mexo em `useTrialOffer` nem `PermissionContext`
+- Sem mudanças no banco
+- Sem mudanças em `UserDetailSheet`, `UserPlanTab`, `AdminMetricas`
+- Filtros continuam mutuamente exclusivos (1 subfiltro por vez)
+- Não toco em planos pagos cancelados que ainda têm tempo — aparecem em "Cancelado Ativo" e também em "Pagos" (intencional: ainda usam o sistema)
 
-### Resultado esperado
-
-| Cenário | Antes | Depois |
-|---|---|---|
-| Ver só pagantes mensais | impossível direto | `Pagos` + subfiltro `Pago Mensal` |
-| Ver quem nunca verificou email | impossível | subfiltro `Não Verificados` (combinável com Todos/Pagos/Trial) |
-| Ver quem já usou trial e virou free | impossível | `Todos` + `Trial OK` (e excluir tag `ativo`) |
-| Ver bloqueados | filtro principal | subfiltro `Bloqueados` |
-
-### Arquivos editados
+### Arquivo editado
 
 | Arquivo | Mudança |
 |---|---|
-| `src/pages/admin/AdminUsuarios.tsx` | Reestrutura filtros (principal + secundário), nova UI de 2 linhas, novos stats, lógica de filtragem em pipeline |
+| `src/pages/admin/AdminUsuarios.tsx` | +5 subfiltros, helpers de data, agrupamento visual da linha 2 |
 
