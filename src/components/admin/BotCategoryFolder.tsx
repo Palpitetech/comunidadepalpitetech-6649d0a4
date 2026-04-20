@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronRight, ChevronDown, Folder, FolderOpen, MessageSquare, FileText, Bot, User } from "lucide-react";
+import { ChevronRight, ChevronDown, Folder, FolderOpen, Bot, User } from "lucide-react";
 import type { BotWithStats } from "@/types/bots";
 
 interface BotCategoryFolderProps {
@@ -74,7 +74,6 @@ export function BotCategoryFolder({
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[300px]">Bot</TableHead>
-                    <TableHead className="hidden md:table-cell">Estatísticas</TableHead>
                     <TableHead className="hidden sm:table-cell">Recursos</TableHead>
                     <TableHead className="w-[80px] text-center">Ativo</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
@@ -128,20 +127,6 @@ export function BotCategoryFolder({
                               )}
                             </div>
                           </div>
-                        </div>
-                      </TableCell>
-
-                      {/* Stats */}
-                      <TableCell className="hidden md:table-cell">
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <FileText className="h-3.5 w-3.5" />
-                            {bot.total_posts}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MessageSquare className="h-3.5 w-3.5" />
-                            {bot.total_comments}
-                          </span>
                         </div>
                       </TableCell>
 

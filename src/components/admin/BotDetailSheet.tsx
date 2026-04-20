@@ -7,7 +7,6 @@ import { Bot, User } from "lucide-react";
 import { BotProfileTab } from "./BotProfileTab";
 import { BotPromptTab } from "./BotPromptTab";
 import { BotAutomationTab } from "./BotAutomationTab";
-import { BotPostsTab } from "./BotPostsTab";
 import type { BotWithStats } from "@/types/bots";
 
 interface BotDetailSheetProps {
@@ -93,11 +92,10 @@ export function BotDetailSheet({ bot, open, onOpenChange, onBotUpdated }: BotDet
         )}
 
         <Tabs defaultValue="perfil" className="mt-6">
-          <TabsList className="w-full grid grid-cols-4">
+          <TabsList className="w-full grid grid-cols-3">
             <TabsTrigger value="perfil">Perfil</TabsTrigger>
             <TabsTrigger value="prompt">Prompt IA</TabsTrigger>
             <TabsTrigger value="automacao">Automação</TabsTrigger>
-            <TabsTrigger value="posts">Posts</TabsTrigger>
           </TabsList>
 
           <TabsContent value="perfil" className="mt-4">
@@ -110,10 +108,6 @@ export function BotDetailSheet({ bot, open, onOpenChange, onBotUpdated }: BotDet
 
           <TabsContent value="automacao" className="mt-4">
             <BotAutomationTab bot={bot} onUpdated={onBotUpdated} />
-          </TabsContent>
-
-          <TabsContent value="posts" className="mt-4">
-            <BotPostsTab bot={bot} />
           </TabsContent>
         </Tabs>
       </SheetContent>
