@@ -27,6 +27,7 @@ export function useDisparoManual() {
   const [plans, setPlans] = useState<PlanOption[]>([]);
   const [selectedPlanIds, setSelectedPlanIds] = useState<string[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [selectedVerification, setSelectedVerification] = useState<"all" | "verified" | "unverified">("all");
   const [eventTypes, setEventTypes] = useState<string[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<string>("");
 
