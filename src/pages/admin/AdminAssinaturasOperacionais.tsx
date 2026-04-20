@@ -28,7 +28,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, RefreshCw, Pencil, Trash2, TrendingUp, Wallet, Calendar, AlertCircle, CalendarClock } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Pencil, Trash2, TrendingUp, Wallet, Calendar, AlertCircle, CalendarClock, RotateCw } from "lucide-react";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -219,6 +219,26 @@ export default function AdminAssinaturasOperacionais() {
     }
   };
 
+  const handleRenovar = async (a: AssinaturaOperacional) => {
+    const payload = {
+      identificacao: a.identificacao,
+      valor: a.valor,
+      provedor: a.provedor,
+      periodo_validade: a.periodo_validade,
+      periodo_dias_custom: a.periodo_dias_custom,
+      data_inicio: new Date().toISOString().split("T")[0],
+    };
+    const { error } = await supabase
+      .from("assinaturas_operacionais" as any)
+      .insert(payload as any);
+    if (error) {
+      toast.error("Erro ao renovar: " + error.message);
+      return;
+    }
+    toast.success("Assinatura renovada — novo ciclo iniciado");
+    queryClient.invalidateQueries({ queryKey: ["admin-assinaturas-operacionais"] });
+  };
+
   const handleDelete = async () => {
     if (!deleteId) return;
     const { error } = await supabase.from("assinaturas_operacionais" as any).delete().eq("id", deleteId);
@@ -365,6 +385,17 @@ export default function AdminAssinaturasOperacionais() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
+                          {status.days !== null && status.days <= 30 && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-green-600 hover:text-green-700"
+                              onClick={() => handleRenovar(assinatura)}
+                              title="Renovar (criar novo ciclo)"
+                            >
+                              <RotateCw className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                           <Button
                             size="icon"
                             variant="ghost"
