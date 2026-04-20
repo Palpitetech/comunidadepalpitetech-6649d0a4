@@ -210,6 +210,45 @@ export type Database = {
           },
         ]
       }
+      assinaturas_operacionais: {
+        Row: {
+          created_at: string
+          data_fim: string | null
+          data_inicio: string
+          id: string
+          identificacao: string
+          periodo_dias_custom: number | null
+          periodo_validade: string
+          provedor: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          id?: string
+          identificacao: string
+          periodo_dias_custom?: number | null
+          periodo_validade: string
+          provedor: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          id?: string
+          identificacao?: string
+          periodo_dias_custom?: number | null
+          periodo_validade?: string
+          provedor?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       bolao_cotas: {
         Row: {
           bolao_id: string | null
@@ -1312,45 +1351,6 @@ export type Database = {
           slug?: string
           title?: string
           updated_at?: string
-        }
-        Relationships: []
-      }
-      investimentos: {
-        Row: {
-          created_at: string
-          data_fim: string | null
-          data_inicio: string
-          id: string
-          identificacao: string
-          periodo_dias_custom: number | null
-          periodo_validade: string
-          provedor: string
-          updated_at: string
-          valor: number
-        }
-        Insert: {
-          created_at?: string
-          data_fim?: string | null
-          data_inicio?: string
-          id?: string
-          identificacao: string
-          periodo_dias_custom?: number | null
-          periodo_validade: string
-          provedor: string
-          updated_at?: string
-          valor?: number
-        }
-        Update: {
-          created_at?: string
-          data_fim?: string | null
-          data_inicio?: string
-          id?: string
-          identificacao?: string
-          periodo_dias_custom?: number | null
-          periodo_validade?: string
-          provedor?: string
-          updated_at?: string
-          valor?: number
         }
         Relationships: []
       }
