@@ -478,27 +478,33 @@ export default function AdminUsuarios() {
           </div>
         </div>
 
-        {/* Toolbar — linha 2 (subfiltros) */}
-        <div className="border-b border-border bg-background px-6 py-2 flex items-center gap-1.5 flex-wrap">
+        {/* Toolbar — linha 2 (subfiltros agrupados) */}
+        <div className="border-b border-border bg-background px-6 py-2 flex items-center gap-2 flex-wrap">
           <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mr-1">Filtros:</span>
-          {FILTROS_SECUNDARIOS.map(({ key, label }) => {
-            const isActive = activeSubFilter === key;
-            return (
-              <button
-                key={key}
-                onClick={() => toggleSubFilter(key)}
-                className={cn(
-                  "px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-colors border inline-flex items-center gap-1",
-                  isActive
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background text-muted-foreground border-border hover:bg-muted"
-                )}
-              >
-                {label} <span className="opacity-70">{getSubCount(key)}</span>
-                {isActive && <X className="h-3 w-3" />}
-              </button>
-            );
-          })}
+          {FILTROS_SECUNDARIOS_GRUPOS.map((grupo, idx) => (
+            <div key={grupo.label} className="flex items-center gap-1.5">
+              {idx > 0 && <div className="h-4 w-px bg-border mx-1" aria-hidden />}
+              <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 font-medium">{grupo.label}</span>
+              {grupo.items.map(({ key, label }) => {
+                const isActive = activeSubFilter === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => toggleSubFilter(key)}
+                    className={cn(
+                      "px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-colors border inline-flex items-center gap-1",
+                      isActive
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-background text-muted-foreground border-border hover:bg-muted"
+                    )}
+                  >
+                    {label} <span className="opacity-70">{getSubCount(key)}</span>
+                    {isActive && <X className="h-3 w-3" />}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </div>
 
         {/* Table */}
