@@ -1,70 +1,84 @@
 
 
-## Plano: Renomear "Investimentos" → "Assinatura Operacional"
+## Plano: Botão "Renovado" — cria novo registro mantendo histórico
 
-Mudança cosmética + estrutural. Mantém toda a lógica, dados e cálculos atuais (incluindo "Custo Mensal").
+### Comportamento
 
-### 1. Banco de dados (migração SQL)
+Ao clicar em **Renovado** numa linha da tabela:
 
-Renomear a tabela e seus objetos relacionados:
+1. Lê os dados da assinatura atual (`identificacao`, `valor`, `provedor`, `periodo_validade`, `periodo_dias_custom`).
+2. Insere um **novo registro** na tabela `assinaturas_operacionais` com:
+   - Mesmos campos acima (cópia)
+   - `data_inicio = hoje` (CURRENT_DATE)
+   - `data_fim` será calculada automaticamente pelo trigger `validate_assinatura_operacional`
+3. **NÃO altera o registro antigo** — ele permanece como está e migra naturalmente para o status "Expirado" quando a `data_fim` passar.
+4. Exibe toast: *"Assinatura renovada — novo ciclo iniciado em [data]"*.
+5. Invalida a query → tabela atualiza automaticamente, mostrando os 2 registros (antigo expirando + novo ativo).
 
-- `ALTER TABLE public.investimentos RENAME TO assinaturas_operacionais;`
-- Renomear índices:
-  - `idx_investimentos_data_inicio` → `idx_assinaturas_operacionais_data_inicio`
-  - `idx_investimentos_provedor` → `idx_assinaturas_operacionais_provedor`
-- Renomear triggers:
-  - `trg_validate_investimento` → `trg_validate_assinatura_operacional`
-  - `trg_update_investimentos_updated_at` → `trg_update_assinaturas_operacionais_updated_at`
-- Renomear função: `public.validate_investimento()` → `public.validate_assinatura_operacional()` (recriar com `CREATE OR REPLACE` e dar `DROP` na antiga)
-- Recriar trigger apontando para a nova função
-- Atualizar política RLS (manter regra `has_role admin`, apenas renomear referência se necessário)
+### Visibilidade do botão
 
-Os tipos TypeScript em `src/integrations/supabase/types.ts` serão regenerados automaticamente.
-
-### 2. Sidebar (`src/components/layout/AdminSidebar.tsx`)
-
-No array `mainItems`, alterar o item "Investimentos":
+Aparece **apenas** quando a assinatura está **expirando ou expirada**:
 
 ```ts
-{ title: "Assinaturas Op.", url: "/admin/assinaturas-operacionais", icon: PiggyBank }
+const isRenewable =
+  status.days !== null && status.days <= 30; // inclui dias negativos (expirado)
 ```
 
-(Título abreviado para caber no sidebar; ícone `PiggyBank` mantido)
+- ✅ Mostra: 30 dias restantes ou menos, já expirado
+- ❌ Esconde: > 30 dias restantes, ou `nd` (sem validade — não há o que renovar)
 
-### 3. Rota (`src/App.tsx`)
+### Mudanças em `src/pages/admin/AdminAssinaturasOperacionais.tsx`
 
-- Renomear rota: `/admin/investimentos` → `/admin/assinaturas-operacionais`
-- Atualizar import: `AdminInvestimentos` → `AdminAssinaturasOperacionais`
+**1. Import**: adicionar ícone `RotateCw` do `lucide-react`.
 
-### 4. Página (renomear arquivo + conteúdo)
+**2. Nova função** `handleRenovar(assinatura)`:
+```ts
+const handleRenovar = async (a: AssinaturaOperacional) => {
+  const payload = {
+    identificacao: a.identificacao,
+    valor: a.valor,
+    provedor: a.provedor,
+    periodo_validade: a.periodo_validade,
+    periodo_dias_custom: a.periodo_dias_custom,
+    data_inicio: new Date().toISOString().split("T")[0],
+  };
+  const { error } = await supabase
+    .from("assinaturas_operacionais" as any)
+    .insert(payload as any);
+  if (error) {
+    toast.error("Erro ao renovar: " + error.message);
+    return;
+  }
+  toast.success("Assinatura renovada — novo ciclo iniciado");
+  queryClient.invalidateQueries({ queryKey: ["admin-assinaturas-operacionais"] });
+};
+```
 
-- Renomear `src/pages/admin/AdminInvestimentos.tsx` → `src/pages/admin/AdminAssinaturasOperacionais.tsx`
-- Atualizar dentro do arquivo:
-  - Componente: `export default function AdminAssinaturasOperacionais()`
-  - Query key: `["admin-investimentos"]` → `["admin-assinaturas-operacionais"]`
-  - Tabela Supabase: `.from("investimentos")` → `.from("assinaturas_operacionais")`
-  - Tipo: `Investimento` → `AssinaturaOperacional`
-  - Função: `calcularMensal(inv)` → `calcularMensal(assinatura)` (parâmetro renomeado)
-  - Textos visíveis:
-    - Título: "Investimentos" → "Assinaturas Operacionais"
-    - Subtítulo / breadcrumbs / botões: "Novo Investimento" → "Nova Assinatura"
-    - Mensagens toast e diálogos: "investimento" → "assinatura"
-    - Estado vazio: "Nenhum investimento cadastrado" → "Nenhuma assinatura cadastrada"
-
-### 5. Outras referências
-
-Buscar e atualizar qualquer link/menção a `/admin/investimentos` no resto do código (ex: cards de atalho em `AdminIndex.tsx` se houver).
-
-### Fora de escopo
-
-- Lógica de cálculo (mensal, status, validade) permanece idêntica
-- Estrutura das colunas do banco permanece idêntica (apenas o nome da tabela muda)
-- Dados existentes são preservados (RENAME não apaga registros)
+**3. Botão na coluna "Ações"** — adicionar antes do botão de editar, condicional:
+```tsx
+{status.days !== null && status.days <= 30 && (
+  <Button
+    size="icon"
+    variant="ghost"
+    className="h-8 w-8 text-green-600 hover:text-green-700"
+    onClick={() => handleRenovar(assinatura)}
+    title="Renovar (criar novo ciclo)"
+  >
+    <RotateCw className="h-3.5 w-3.5" />
+  </Button>
+)}
+```
 
 ### Resultado esperado
 
-- Nova URL: `/admin/assinaturas-operacionais`
-- Sidebar exibe "Assinaturas Op."
-- Tabela do banco: `assinaturas_operacionais`
-- Todos os cálculos, filtros e CRUD funcionam exatamente como antes
+- Linhas com ≤30 dias ou expiradas mostram um botão verde com ícone de seta circular (`RotateCw`).
+- Clique = novo registro criado imediatamente, sem confirmação.
+- Histórico preservado: você verá o gasto antigo + o novo lado a lado.
+- Card "Custo Mensal" e demais somas se ajustam automaticamente (o registro novo entra como ativo, o antigo eventualmente sai quando expirar).
+
+### Fora de escopo
+
+- Sem migração de banco (estrutura atual já suporta).
+- Não altera a função `validate_assinatura_operacional` (ela já recalcula `data_fim` no INSERT).
+- Não cria coluna de "renovado a partir de" — se quiser linkar pai→filho no futuro, é outra etapa.
 
