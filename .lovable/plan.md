@@ -1,84 +1,106 @@
 
 
-## Plano: Botão "Renovado" — cria novo registro mantendo histórico
+## Plano: Tabela "Chip Celulares" (gestão de chips com recargas)
 
-### Comportamento
+### 1. Banco de dados (migração SQL)
 
-Ao clicar em **Renovado** numa linha da tabela:
+**Tabela `chip_celulares`** (cadastro do chip):
+- `id` uuid PK (`gen_random_uuid()`)
+- `numero_id` integer — sequência única, gera ID `#0001`, `#0002`... (default via sequence)
+- `numero` text NOT NULL — telefone com DDD
+- `operadora` text NOT NULL — `tim` | `claro` | `vivo` (CHECK)
+- `plano_tipo` text NOT NULL — `pre` | `pos` | `controle` (CHECK)
+- `valor_plano` numeric NOT NULL DEFAULT 0 — mensal fixo
+- `custo_chip` numeric NOT NULL DEFAULT 0 — custo de aquisição (editável)
+- `data_compra` date NOT NULL DEFAULT CURRENT_DATE
+- `ultima_recarga_at` timestamptz NULL — preenchido por trigger ao inserir recarga
+- `ultima_recarga_valor` numeric NULL — idem
+- `ativo` boolean NOT NULL DEFAULT true
+- `observacao` text NULL
+- `created_at`, `updated_at`
 
-1. Lê os dados da assinatura atual (`identificacao`, `valor`, `provedor`, `periodo_validade`, `periodo_dias_custom`).
-2. Insere um **novo registro** na tabela `assinaturas_operacionais` com:
-   - Mesmos campos acima (cópia)
-   - `data_inicio = hoje` (CURRENT_DATE)
-   - `data_fim` será calculada automaticamente pelo trigger `validate_assinatura_operacional`
-3. **NÃO altera o registro antigo** — ele permanece como está e migra naturalmente para o status "Expirado" quando a `data_fim` passar.
-4. Exibe toast: *"Assinatura renovada — novo ciclo iniciado em [data]"*.
-5. Invalida a query → tabela atualiza automaticamente, mostrando os 2 registros (antigo expirando + novo ativo).
+Sequência + trigger para gerar `numero_id` automaticamente (ordem `#0001`, `#0002`…).
 
-### Visibilidade do botão
+**Tabela `chip_recargas`** (histórico):
+- `id` uuid PK
+- `chip_id` uuid NOT NULL → FK `chip_celulares(id)` ON DELETE CASCADE
+- `valor` numeric NOT NULL
+- `data_recarga` date NOT NULL DEFAULT CURRENT_DATE
+- `metodo` text NULL (Pix, cartão…)
+- `observacao` text NULL
+- `created_at`, `created_by` uuid
 
-Aparece **apenas** quando a assinatura está **expirando ou expirada**:
+**Trigger** `update_chip_ultima_recarga` em INSERT/DELETE de `chip_recargas` → atualiza `ultima_recarga_at`, `ultima_recarga_valor` em `chip_celulares` (último registro pela maior `data_recarga`).
 
+**RLS** (mesmo padrão de `assinaturas_operacionais`):
+- "Admins têm acesso total a chip_celulares" → `has_role(auth.uid(), 'admin')`
+- "Admins têm acesso total a chip_recargas" → `has_role(auth.uid(), 'admin')`
+
+**Índices**: `chip_id` em `chip_recargas`; `numero_id` único em `chip_celulares`.
+
+### 2. Página principal `src/pages/admin/AdminChipCelulares.tsx`
+
+Layout copiando o padrão de `AdminAssinaturasOperacionais`:
+
+**Cards de resumo (5)**:
+- Total de chips
+- Chips ativos
+- Custo total dos chips (soma de `custo_chip` de ativos)
+- Custo mensal de planos (soma de `valor_plano` de ativos)
+- Total recarregado no mês (soma de `chip_recargas.valor` do mês corrente)
+
+**Tabela** (colunas):
+| ID | Número | Operadora | Plano | Valor/mês | Última recarga | Custo chip | Status | Ações |
+
+- ID exibido como `#0001` (formatado: `#${String(numero_id).padStart(4, '0')}`)
+- Operadora com badge colorido (TIM amarelo, Claro vermelho, Vivo verde)
+- Plano com badge (Pré/Pós/Controle)
+- Última recarga: data + valor; "—" se nunca
+- Ações: **Recarga** (ícone Zap verde), **Histórico** (ícone Clock azul), **Editar** (lápis), **Excluir** (lixeira)
+
+### 3. Modais
+
+**Modal "Novo Chip / Editar Chip"**:
+- Campos: número, operadora (Select), plano (Select), valor do plano, custo do chip (default sugerido pelo último chip cadastrado, mas editável), data de compra, observação
+- ID `#0001` é gerado automaticamente — exibido como readonly após criação
+
+**Modal "Registrar Recarga"** (botão Zap verde):
+- Valor (default = `valor_plano` do chip), data (default hoje), método (texto livre opcional), observação opcional
+- Salva em `chip_recargas` e o trigger atualiza o pai
+
+**Modal "Histórico de Recargas"** (botão Clock azul):
+- Cabeçalho: chip `#0001` — número — operadora
+- Tabela: Data | Valor | Método | Observação | Ações (excluir)
+- Resumo: total recarregado, média mensal, última recarga
+
+### 4. Sidebar (`src/components/layout/AdminSidebar.tsx`)
+
+Adicionar item após "Assinaturas Op." em `mainItems`:
 ```ts
-const isRenewable =
-  status.days !== null && status.days <= 30; // inclui dias negativos (expirado)
+{ title: "Chip Celulares", url: "/admin/chip-celulares", icon: Smartphone }
 ```
+(Ícone `Smartphone` do lucide-react)
 
-- ✅ Mostra: 30 dias restantes ou menos, já expirado
-- ❌ Esconde: > 30 dias restantes, ou `nd` (sem validade — não há o que renovar)
+### 5. Rota (`src/App.tsx`)
 
-### Mudanças em `src/pages/admin/AdminAssinaturasOperacionais.tsx`
-
-**1. Import**: adicionar ícone `RotateCw` do `lucide-react`.
-
-**2. Nova função** `handleRenovar(assinatura)`:
-```ts
-const handleRenovar = async (a: AssinaturaOperacional) => {
-  const payload = {
-    identificacao: a.identificacao,
-    valor: a.valor,
-    provedor: a.provedor,
-    periodo_validade: a.periodo_validade,
-    periodo_dias_custom: a.periodo_dias_custom,
-    data_inicio: new Date().toISOString().split("T")[0],
-  };
-  const { error } = await supabase
-    .from("assinaturas_operacionais" as any)
-    .insert(payload as any);
-  if (error) {
-    toast.error("Erro ao renovar: " + error.message);
-    return;
-  }
-  toast.success("Assinatura renovada — novo ciclo iniciado");
-  queryClient.invalidateQueries({ queryKey: ["admin-assinaturas-operacionais"] });
-};
-```
-
-**3. Botão na coluna "Ações"** — adicionar antes do botão de editar, condicional:
+Após a rota de `/admin/assinaturas-operacionais`:
 ```tsx
-{status.days !== null && status.days <= 30 && (
-  <Button
-    size="icon"
-    variant="ghost"
-    className="h-8 w-8 text-green-600 hover:text-green-700"
-    onClick={() => handleRenovar(assinatura)}
-    title="Renovar (criar novo ciclo)"
-  >
-    <RotateCw className="h-3.5 w-3.5" />
-  </Button>
-)}
+<Route path="/admin/chip-celulares" element={<AdminRoute><AdminChipCelulares /></AdminRoute>} />
 ```
+Import: `import AdminChipCelulares from "./pages/admin/AdminChipCelulares";`
 
 ### Resultado esperado
 
-- Linhas com ≤30 dias ou expiradas mostram um botão verde com ícone de seta circular (`RotateCw`).
-- Clique = novo registro criado imediatamente, sem confirmação.
-- Histórico preservado: você verá o gasto antigo + o novo lado a lado.
-- Card "Custo Mensal" e demais somas se ajustam automaticamente (o registro novo entra como ativo, o antigo eventualmente sai quando expirar).
+- Nova URL `/admin/chip-celulares` no menu lateral
+- Cadastro de chips com ID sequencial fixo (`#0001`, `#0002`…)
+- Visualização de operadora, plano, valor mensal e última recarga em uma única tabela
+- Botão de recarga rápida com modal completo (valor, data, observação, método)
+- Histórico de recargas em modal separado por chip
+- Custo de aquisição (`custo_chip`) editável por registro, somado nos KPIs
 
 ### Fora de escopo
 
-- Sem migração de banco (estrutura atual já suporta).
-- Não altera a função `validate_assinatura_operacional` (ela já recalcula `data_fim` no INSERT).
-- Não cria coluna de "renovado a partir de" — se quiser linkar pai→filho no futuro, é outra etapa.
+- Sem integração com APIs de operadoras (recarga é manual)
+- Sem alertas automáticos de saldo baixo (pode virar feature futura)
+- Sem notificação WhatsApp ao registrar recarga
 
