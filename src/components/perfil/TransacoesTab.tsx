@@ -79,6 +79,33 @@ function EmptyState({
   );
 }
 
+function MetricCell({
+  icon: Icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: number;
+  tone: "blue" | "red" | "amber";
+}) {
+  const tones = {
+    blue: "bg-blue-500/10 text-blue-600",
+    red: "bg-destructive/10 text-destructive",
+    amber: "bg-amber-500/10 text-amber-600",
+  };
+  return (
+    <div className="flex flex-col items-center gap-1 p-2 rounded-xl bg-background/60">
+      <div className={cn("h-7 w-7 rounded-full flex items-center justify-center", tones[tone])}>
+        <Icon className="h-3.5 w-3.5" />
+      </div>
+      <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-medium">{label}</p>
+      <p className="text-xs font-bold text-foreground">{formatBRL(value)}</p>
+    </div>
+  );
+}
+
 export function TransacoesTab({ user }: TransacoesTabProps) {
   const userId = user?.id;
   const navigate = useNavigate();
