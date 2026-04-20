@@ -35,10 +35,15 @@ type FilterPrincipal = "todos" | "pagos" | "trial";
 type FilterSecundario =
   | "nao_verificados"
   | "verificados"
+  | "celular_ok"
   | "trial_ok"
+  | "trial_ativo"
   | "pago_mensal"
   | "pago_anual"
   | "pago_anualvip"
+  | "plano_vencido"
+  | "plano_cancelado_ativo"
+  | "plano_cancelado_inativo"
   | "bloqueados"
   | null;
 
@@ -48,15 +53,66 @@ const FILTROS_PRINCIPAIS: { key: FilterPrincipal; label: string; icon: typeof Us
   { key: "trial", label: "Trial", icon: Timer },
 ];
 
-const FILTROS_SECUNDARIOS: { key: Exclude<FilterSecundario, null>; label: string }[] = [
-  { key: "nao_verificados", label: "Não Verificados" },
-  { key: "verificados", label: "Verificados" },
-  { key: "trial_ok", label: "Trial OK" },
-  { key: "pago_mensal", label: "Pago Mensal" },
-  { key: "pago_anual", label: "Pago Anual" },
-  { key: "pago_anualvip", label: "Pago Anual VIP" },
-  { key: "bloqueados", label: "Bloqueados" },
+type SubFilterKey = Exclude<FilterSecundario, null>;
+type SubFilterGroup = { label: string; items: { key: SubFilterKey; label: string }[] };
+
+const FILTROS_SECUNDARIOS_GRUPOS: SubFilterGroup[] = [
+  {
+    label: "Verificação",
+    items: [
+      { key: "verificados", label: "Verificados" },
+      { key: "nao_verificados", label: "Não Verificados" },
+      { key: "celular_ok", label: "Celular OK" },
+    ],
+  },
+  {
+    label: "Plano",
+    items: [
+      { key: "pago_mensal", label: "Pago Mensal" },
+      { key: "pago_anual", label: "Pago Anual" },
+      { key: "pago_anualvip", label: "Pago Anual VIP" },
+      { key: "trial_ativo", label: "Trial Ativo" },
+      { key: "trial_ok", label: "Trial OK" },
+    ],
+  },
+  {
+    label: "Status",
+    items: [
+      { key: "plano_vencido", label: "Plano Vencido" },
+      { key: "plano_cancelado_ativo", label: "Cancelado Ativo" },
+      { key: "plano_cancelado_inativo", label: "Cancelado Inativo" },
+      { key: "bloqueados", label: "Bloqueados" },
+    ],
+  },
 ];
+
+// Helpers de status de assinatura
+const todayISO = () => new Date().toISOString().split("T")[0];
+
+const isPlanoVencido = (u: UserWithPlan) => {
+  const hoje = todayISO();
+  return !!u.validade_assinatura && u.validade_assinatura < hoje && u.status_assinatura !== "cancelada";
+};
+
+const isCanceladoInativo = (u: UserWithPlan) => {
+  const hoje = todayISO();
+  return u.status_assinatura === "cancelada" && (!u.validade_assinatura || u.validade_assinatura < hoje);
+};
+
+const isCanceladoAtivo = (u: UserWithPlan) => {
+  const hoje = todayISO();
+  return u.status_assinatura === "cancelada" && !!u.validade_assinatura && u.validade_assinatura >= hoje;
+};
+
+const isTrialAtivoFull = (u: UserWithPlan) => {
+  const hoje = todayISO();
+  return u.plan?.slug === TRIAL_SLUG && u.status_assinatura === "ativa" && !!u.validade_assinatura && u.validade_assinatura >= hoje;
+};
+
+const isCelularOk = (u: UserWithPlan) => {
+  const digits = (u.celular || "").replace(/\D/g, "");
+  return digits.startsWith("55") && (digits.length === 12 || digits.length === 13);
+};
 
 export default function AdminUsuarios() {
   const navigate = useNavigate();
@@ -114,10 +170,15 @@ export default function AdminUsuarios() {
     trial: users.filter(isTrialActive).length,
     nao_verificados: users.filter(u => !u.email_verificado).length,
     verificados: users.filter(u => !!u.email_verificado).length,
+    celular_ok: users.filter(isCelularOk).length,
     trial_ok: users.filter(u => !!u.trial_used).length,
+    trial_ativo: users.filter(isTrialAtivoFull).length,
     pago_mensal: users.filter(u => u.plan?.slug === "mensal" && u.status_assinatura === "ativa").length,
     pago_anual: users.filter(u => u.plan?.slug === "anual" && u.status_assinatura === "ativa").length,
     pago_anualvip: users.filter(u => u.plan?.slug === "plano-anual-vip" && u.status_assinatura === "ativa").length,
+    plano_vencido: users.filter(isPlanoVencido).length,
+    plano_cancelado_ativo: users.filter(isCanceladoAtivo).length,
+    plano_cancelado_inativo: users.filter(isCanceladoInativo).length,
     bloqueados: users.filter(u => u.is_blocked).length,
   }), [users]);
 
@@ -137,10 +198,15 @@ export default function AdminUsuarios() {
     // 2. Subfiltro
     if (activeSubFilter === "nao_verificados") list = list.filter(u => !u.email_verificado);
     else if (activeSubFilter === "verificados") list = list.filter(u => !!u.email_verificado);
+    else if (activeSubFilter === "celular_ok") list = list.filter(isCelularOk);
     else if (activeSubFilter === "trial_ok") list = list.filter(u => !!u.trial_used);
+    else if (activeSubFilter === "trial_ativo") list = list.filter(isTrialAtivoFull);
     else if (activeSubFilter === "pago_mensal") list = list.filter(u => u.plan?.slug === "mensal" && u.status_assinatura === "ativa");
     else if (activeSubFilter === "pago_anual") list = list.filter(u => u.plan?.slug === "anual" && u.status_assinatura === "ativa");
     else if (activeSubFilter === "pago_anualvip") list = list.filter(u => u.plan?.slug === "plano-anual-vip" && u.status_assinatura === "ativa");
+    else if (activeSubFilter === "plano_vencido") list = list.filter(isPlanoVencido);
+    else if (activeSubFilter === "plano_cancelado_ativo") list = list.filter(isCanceladoAtivo);
+    else if (activeSubFilter === "plano_cancelado_inativo") list = list.filter(isCanceladoInativo);
     else if (activeSubFilter === "bloqueados") list = list.filter(u => u.is_blocked);
 
     // 3. Tags
@@ -187,9 +253,9 @@ export default function AdminUsuarios() {
     return stats.trial;
   };
 
-  const getSubCount = (key: Exclude<FilterSecundario, null>) => stats[key];
+  const getSubCount = (key: SubFilterKey) => stats[key];
 
-  const toggleSubFilter = (key: Exclude<FilterSecundario, null>) => {
+  const toggleSubFilter = (key: SubFilterKey) => {
     setActiveSubFilter(prev => prev === key ? null : key);
   };
 
@@ -247,27 +313,32 @@ export default function AdminUsuarios() {
           })}
         </div>
 
-        {/* Subfiltros (rolagem horizontal) */}
+        {/* Subfiltros (rolagem horizontal, agrupados) */}
         <div className="-mx-4 px-4 overflow-x-auto">
-          <div className="flex items-center gap-1.5 w-max">
-            {FILTROS_SECUNDARIOS.map(({ key, label }) => {
-              const isActive = activeSubFilter === key;
-              return (
-                <button
-                  key={key}
-                  onClick={() => toggleSubFilter(key)}
-                  className={cn(
-                    "shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors border",
-                    isActive
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background text-muted-foreground border-border hover:bg-muted"
-                  )}
-                >
-                  {label} <span className="opacity-70">{getSubCount(key)}</span>
-                  {isActive && <X className="inline h-3 w-3 ml-1 -mt-0.5" />}
-                </button>
-              );
-            })}
+          <div className="flex items-center gap-2 w-max">
+            {FILTROS_SECUNDARIOS_GRUPOS.map((grupo, idx) => (
+              <div key={grupo.label} className="flex items-center gap-1.5">
+                {idx > 0 && <div className="h-5 w-px bg-border mx-1" aria-hidden />}
+                {grupo.items.map(({ key, label }) => {
+                  const isActive = activeSubFilter === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => toggleSubFilter(key)}
+                      className={cn(
+                        "shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors border inline-flex items-center gap-1",
+                        isActive
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background text-muted-foreground border-border hover:bg-muted"
+                      )}
+                    >
+                      {label} <span className="opacity-70">{getSubCount(key)}</span>
+                      {isActive && <X className="h-3 w-3" />}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         </div>
 
@@ -407,27 +478,33 @@ export default function AdminUsuarios() {
           </div>
         </div>
 
-        {/* Toolbar — linha 2 (subfiltros) */}
-        <div className="border-b border-border bg-background px-6 py-2 flex items-center gap-1.5 flex-wrap">
+        {/* Toolbar — linha 2 (subfiltros agrupados) */}
+        <div className="border-b border-border bg-background px-6 py-2 flex items-center gap-2 flex-wrap">
           <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mr-1">Filtros:</span>
-          {FILTROS_SECUNDARIOS.map(({ key, label }) => {
-            const isActive = activeSubFilter === key;
-            return (
-              <button
-                key={key}
-                onClick={() => toggleSubFilter(key)}
-                className={cn(
-                  "px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-colors border inline-flex items-center gap-1",
-                  isActive
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background text-muted-foreground border-border hover:bg-muted"
-                )}
-              >
-                {label} <span className="opacity-70">{getSubCount(key)}</span>
-                {isActive && <X className="h-3 w-3" />}
-              </button>
-            );
-          })}
+          {FILTROS_SECUNDARIOS_GRUPOS.map((grupo, idx) => (
+            <div key={grupo.label} className="flex items-center gap-1.5">
+              {idx > 0 && <div className="h-4 w-px bg-border mx-1" aria-hidden />}
+              <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 font-medium">{grupo.label}</span>
+              {grupo.items.map(({ key, label }) => {
+                const isActive = activeSubFilter === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => toggleSubFilter(key)}
+                    className={cn(
+                      "px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-colors border inline-flex items-center gap-1",
+                      isActive
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-background text-muted-foreground border-border hover:bg-muted"
+                    )}
+                  >
+                    {label} <span className="opacity-70">{getSubCount(key)}</span>
+                    {isActive && <X className="h-3 w-3" />}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </div>
 
         {/* Table */}
