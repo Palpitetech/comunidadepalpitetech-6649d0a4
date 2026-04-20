@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { MeusDadosTab } from "@/components/perfil/MeusDadosTab";
+import { PerfilDadosHero } from "@/components/perfil/PerfilDadosHero";
 
 export default function PerfilDados() {
   const { profile, user } = useAuthContext();
@@ -23,7 +24,7 @@ export default function PerfilDados() {
       </header>
       <ScrollArea className="flex-1">
         <div className="pb-8 max-w-lg mx-auto w-full">
-          
+          <PerfilDadosHero profile={profile} user={user} />
           <MeusDadosTab profile={profile} user={user} />
         </div>
       </ScrollArea>
