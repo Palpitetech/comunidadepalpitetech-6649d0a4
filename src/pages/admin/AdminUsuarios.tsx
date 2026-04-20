@@ -35,10 +35,15 @@ type FilterPrincipal = "todos" | "pagos" | "trial";
 type FilterSecundario =
   | "nao_verificados"
   | "verificados"
+  | "celular_ok"
   | "trial_ok"
+  | "trial_ativo"
   | "pago_mensal"
   | "pago_anual"
   | "pago_anualvip"
+  | "plano_vencido"
+  | "plano_cancelado_ativo"
+  | "plano_cancelado_inativo"
   | "bloqueados"
   | null;
 
@@ -48,15 +53,66 @@ const FILTROS_PRINCIPAIS: { key: FilterPrincipal; label: string; icon: typeof Us
   { key: "trial", label: "Trial", icon: Timer },
 ];
 
-const FILTROS_SECUNDARIOS: { key: Exclude<FilterSecundario, null>; label: string }[] = [
-  { key: "nao_verificados", label: "Não Verificados" },
-  { key: "verificados", label: "Verificados" },
-  { key: "trial_ok", label: "Trial OK" },
-  { key: "pago_mensal", label: "Pago Mensal" },
-  { key: "pago_anual", label: "Pago Anual" },
-  { key: "pago_anualvip", label: "Pago Anual VIP" },
-  { key: "bloqueados", label: "Bloqueados" },
+type SubFilterKey = Exclude<FilterSecundario, null>;
+type SubFilterGroup = { label: string; items: { key: SubFilterKey; label: string }[] };
+
+const FILTROS_SECUNDARIOS_GRUPOS: SubFilterGroup[] = [
+  {
+    label: "Verificação",
+    items: [
+      { key: "verificados", label: "Verificados" },
+      { key: "nao_verificados", label: "Não Verificados" },
+      { key: "celular_ok", label: "Celular OK" },
+    ],
+  },
+  {
+    label: "Plano",
+    items: [
+      { key: "pago_mensal", label: "Pago Mensal" },
+      { key: "pago_anual", label: "Pago Anual" },
+      { key: "pago_anualvip", label: "Pago Anual VIP" },
+      { key: "trial_ativo", label: "Trial Ativo" },
+      { key: "trial_ok", label: "Trial OK" },
+    ],
+  },
+  {
+    label: "Status",
+    items: [
+      { key: "plano_vencido", label: "Plano Vencido" },
+      { key: "plano_cancelado_ativo", label: "Cancelado Ativo" },
+      { key: "plano_cancelado_inativo", label: "Cancelado Inativo" },
+      { key: "bloqueados", label: "Bloqueados" },
+    ],
+  },
 ];
+
+// Helpers de status de assinatura
+const todayISO = () => new Date().toISOString().split("T")[0];
+
+const isPlanoVencido = (u: UserWithPlan) => {
+  const hoje = todayISO();
+  return !!u.validade_assinatura && u.validade_assinatura < hoje && u.status_assinatura !== "cancelada";
+};
+
+const isCanceladoInativo = (u: UserWithPlan) => {
+  const hoje = todayISO();
+  return u.status_assinatura === "cancelada" && (!u.validade_assinatura || u.validade_assinatura < hoje);
+};
+
+const isCanceladoAtivo = (u: UserWithPlan) => {
+  const hoje = todayISO();
+  return u.status_assinatura === "cancelada" && !!u.validade_assinatura && u.validade_assinatura >= hoje;
+};
+
+const isTrialAtivoFull = (u: UserWithPlan) => {
+  const hoje = todayISO();
+  return u.plan?.slug === TRIAL_SLUG && u.status_assinatura === "ativa" && !!u.validade_assinatura && u.validade_assinatura >= hoje;
+};
+
+const isCelularOk = (u: UserWithPlan) => {
+  const digits = (u.celular || "").replace(/\D/g, "");
+  return digits.startsWith("55") && (digits.length === 12 || digits.length === 13);
+};
 
 export default function AdminUsuarios() {
   const navigate = useNavigate();
