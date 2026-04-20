@@ -218,7 +218,11 @@ export function LoginWizard() {
 
   const handleRegisterWhatsapp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!whatsapp.trim()) return;
+    const validation = validateCelularBR(whatsapp);
+    if (!validation.ok) {
+      toast({ title: "Celular inválido", description: validation.reason || "Use formato (DDD) 9XXXX-XXXX", variant: "destructive" });
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -237,14 +241,22 @@ export function LoginWizard() {
     if (e) e.preventDefault();
     if (codigo.length < 6) return;
 
+    const validation = validateCelularBR(whatsapp);
+    if (!validation.ok) {
+      toast({ title: "Celular inválido", description: validation.reason, variant: "destructive" });
+      setEtapa("cadastro-whatsapp");
+      return;
+    }
+
     setIsLoading(true);
     try {
       await verifyOtp(email.trim().toLowerCase(), codigo);
-      // Após verificar, atualiza o perfil com nome, celular e whatsapp
+      // Salva o mesmo número normalizado em celular E whatsapp pra evitar
+      // que RequireCelularModal abra após cadastro novo
       await updateProfile({ 
         nome: nome.trim(), 
-        celular: celular.trim(),
-        whatsapp: whatsapp.trim()
+        celular: validation.normalized!,
+        whatsapp: validation.normalized!,
       });
       toast({ title: "Conta criada!", description: "Bem-vindo ao Palpite Tech." });
       const from = (location.state as any)?.from?.pathname || "/home";
