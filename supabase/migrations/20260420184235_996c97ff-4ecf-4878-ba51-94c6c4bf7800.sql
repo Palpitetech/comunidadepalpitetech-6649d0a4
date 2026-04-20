@@ -1,0 +1,1 @@
+ALTER VIEW public.vw_custos_operacionais SET (security_invoker = true);
