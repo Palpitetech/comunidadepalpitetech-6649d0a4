@@ -93,21 +93,11 @@ export default function AdminIndex() {
   return (
     <AdminLayout pageTitle="Dashboard">
       <div className="px-4 py-3 md:container-senior md:py-8 space-y-4 md:space-y-6">
-        <div className="hidden md:flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Painel Administrativo</h1>
-        </div>
-
-        {/* Header de filtros */}
-        <div className="bg-card border border-border/60 rounded-xl p-3 md:p-4 space-y-3">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <h1 className="text-xl md:text-3xl font-bold">Painel Administrativo</h1>
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Período {perBlock ? "(padrão)" : "global"}
-              </span>
-              <span className="text-xs text-muted-foreground">— {period.label}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="per-block-toggle" className="text-xs cursor-pointer">
+              <Label htmlFor="per-block-toggle" className="text-xs cursor-pointer text-muted-foreground">
                 Filtro por bloco
               </Label>
               <Switch
@@ -116,13 +106,13 @@ export default function AdminIndex() {
                 onCheckedChange={setPerBlock}
               />
             </div>
+            <PeriodFilter
+              value={periodKey}
+              onChange={setPeriodKey}
+              customRange={customRange}
+              onCustomRangeChange={setCustomRange}
+            />
           </div>
-          <PeriodFilter
-            value={periodKey}
-            onChange={setPeriodKey}
-            customRange={customRange}
-            onCustomRangeChange={setCustomRange}
-          />
         </div>
 
         {/* Bloco 01 — Funil */}
