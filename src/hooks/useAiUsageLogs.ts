@@ -44,7 +44,15 @@ export interface UsageSummary {
     lastActivity: string | null;
     byFerramenta: Record<string, { count: number; tokens: number; costUsd: number }>;
   }>;
-  byBot: Record<string, { name: string; costUsd: number; tokens: number; count: number }>;
+  byBot: Record<string, {
+    name: string;
+    cargo: string | null;
+    costUsd: number;
+    tokens: number;
+    count: number;
+    lastActivity: string | null;
+    byFerramenta: Record<string, { count: number; tokens: number; costUsd: number }>;
+  }>;
 }
 
 export function useAdminSettings() {
