@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAiUsageLogs, useAdminSettings, computeSummary, type Origem } from "@/hooks/useAiUsageLogs";
 import { useQueryClient } from "@tanstack/react-query";
-import { DollarSign, Coins, Bot, Wrench, Users, Settings, Loader2, RefreshCw, Cpu, UserCheck, Info } from "lucide-react";
+import { DollarSign, Coins, Bot, Wrench, Users, Settings, Loader2, RefreshCw, Cpu, UserCheck, Info, ChevronRight, ChevronDown } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -406,8 +406,12 @@ export default function AdminCustos() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-8"></TableHead>
                         <TableHead>Nome</TableHead>
                         <TableHead>Email</TableHead>
+                        <TableHead>Ferramenta principal</TableHead>
+                        <TableHead className="text-center">Ferramentas</TableHead>
+                        <TableHead>Última atividade</TableHead>
                         <TableHead className="text-right">Chamadas</TableHead>
                         <TableHead className="text-right">Tokens</TableHead>
                         <TableHead className="text-right">USD</TableHead>
@@ -417,18 +421,65 @@ export default function AdminCustos() {
                     <TableBody>
                       {Object.entries(summary.byUsuario)
                         .sort(([, a], [, b]) => b.costUsd - a.costUsd)
-                        .map(([key, data]) => (
-                          <TableRow key={key}>
-                            <TableCell className="font-medium">{data.name}</TableCell>
-                            <TableCell className="text-xs text-muted-foreground">{data.email || "—"}</TableCell>
-                            <TableCell className="text-right">{data.count}</TableCell>
-                            <TableCell className="text-right">{formatTokens(data.tokens)}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(data.costUsd)}</TableCell>
-                            <TableCell className="text-right text-green-600">{formatCurrency(data.costUsd * usdToBrl, "BRL")}</TableCell>
-                          </TableRow>
-                        ))}
+                        .map(([key, data]) => {
+                          const isExpanded = expandedUsers.has(key);
+                          const ferramentas = Object.entries(data.byFerramenta).sort(([, a], [, b]) => b.costUsd - a.costUsd);
+                          const principal = ferramentas[0];
+                          const principalLabel = principal
+                            ? (FUNCTION_LABELS[principal[0]] || principal[0]).split(" — ")[0]
+                            : "—";
+                          const lastActivityLabel = data.lastActivity
+                            ? format(new Date(data.lastActivity), "dd/MM HH:mm", { locale: ptBR })
+                            : "—";
+                          return (
+                            <>
+                              <TableRow
+                                key={key}
+                                className="cursor-pointer"
+                                onClick={() => {
+                                  setExpandedUsers((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(key)) next.delete(key);
+                                    else next.add(key);
+                                    return next;
+                                  });
+                                }}
+                              >
+                                <TableCell className="w-8 p-2">
+                                  {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                                </TableCell>
+                                <TableCell className="font-medium">{data.name}</TableCell>
+                                <TableCell className="text-xs text-muted-foreground">{data.email || "—"}</TableCell>
+                                <TableCell className="text-xs">{principalLabel}</TableCell>
+                                <TableCell className="text-center">
+                                  <Badge variant="outline">{ferramentas.length}</Badge>
+                                </TableCell>
+                                <TableCell className="text-xs text-muted-foreground">{lastActivityLabel}</TableCell>
+                                <TableCell className="text-right">{data.count}</TableCell>
+                                <TableCell className="text-right">{formatTokens(data.tokens)}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(data.costUsd)}</TableCell>
+                                <TableCell className="text-right text-green-600">{formatCurrency(data.costUsd * usdToBrl, "BRL")}</TableCell>
+                              </TableRow>
+                              {isExpanded && ferramentas.map(([fnKey, fnData]) => {
+                                const label = (FUNCTION_LABELS[fnKey] || fnKey).split(" — ")[0];
+                                return (
+                                  <TableRow key={`${key}-${fnKey}`} className="bg-muted/30 hover:bg-muted/40">
+                                    <TableCell></TableCell>
+                                    <TableCell colSpan={5} className="pl-8 text-xs text-muted-foreground">
+                                      └─ <span className="text-foreground">{label}</span>
+                                    </TableCell>
+                                    <TableCell className="text-right text-xs">{fnData.count}</TableCell>
+                                    <TableCell className="text-right text-xs">{formatTokens(fnData.tokens)}</TableCell>
+                                    <TableCell className="text-right text-xs">{formatCurrency(fnData.costUsd)}</TableCell>
+                                    <TableCell className="text-right text-xs text-green-600">{formatCurrency(fnData.costUsd * usdToBrl, "BRL")}</TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </>
+                          );
+                        })}
                       {Object.keys(summary.byUsuario).length === 0 && (
-                        <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum usuário com custo no período</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">Nenhum usuário com custo no período</TableCell></TableRow>
                       )}
                     </TableBody>
                   </Table>
