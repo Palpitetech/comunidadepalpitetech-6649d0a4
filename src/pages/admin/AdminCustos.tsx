@@ -18,11 +18,18 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const FUNCTION_LABELS: Record<string, string> = {
-  // Automáticas (bots)
+  // Automáticas (bots / sistema)
   "generate-roundtable-post": "Post Automático Mesa Redonda — bot cria post sozinho",
-  "generate-guide-post": "Post Analítico de Guia — bot cria post sozinho",
+  "generate-guide-post": "Post Analítico Comunidade — bot cria post de análise (cron)",
   "bot-interact-with-post": "Comentário Automático — bot comenta em post novo",
   "bot-reply-user": "Resposta de Bot — bot responde comentário do usuário em post",
+  "group-blast-ai-message": "Convite WhatsApp — bot gera msg de post p/ grupo (auto)",
+  "group-blast-palpite": "Palpite WhatsApp — bot gera palpite p/ grupo (auto)",
+  "group-blast-manual-ai-message": "Convite WhatsApp Manual — admin dispara",
+  "group-blast-manual-palpite": "Palpite WhatsApp Manual — admin dispara",
+  "warming-run": "Aquecimento de Chip — IA gera conversa entre chips (auto)",
+  "warming-manual": "Aquecimento de Chip Manual — admin dispara",
+  "sync-lotofacil": "Plantão Lotofácil — IA cria post de resultado oficial no sync",
   // Disparadas por usuário
   "chat-assistant": "Chat IA — conversa do usuário com bot no /chat",
   "generate-palpites": "Gerador Lotofácil — gera N jogos no /gerador",
@@ -33,6 +40,26 @@ const FUNCTION_LABELS: Record<string, string> = {
   "auto-fill-megasena": "Auto-Preencher Fechamento Mega Sena — sugere dezenas no fechamento",
   "auto-fill-duplasena": "Auto-Preencher Fechamento Dupla Sena — sugere dezenas no fechamento",
 };
+
+// Categoria visual por edge function (badge na aba Por Bot)
+type CategoriaBot = { label: string; classes: string };
+const FUNCTION_CATEGORIES: Record<string, CategoriaBot> = {
+  "generate-roundtable-post": { label: "Post", classes: "text-blue-600 border-blue-300" },
+  "generate-guide-post": { label: "Post", classes: "text-blue-600 border-blue-300" },
+  "sync-lotofacil": { label: "Post", classes: "text-blue-600 border-blue-300" },
+  "bot-interact-with-post": { label: "Comentário Auto", classes: "text-purple-600 border-purple-300" },
+  "bot-reply-user": { label: "Resposta", classes: "text-green-600 border-green-300" },
+  "chat-assistant": { label: "Chat IA", classes: "text-orange-600 border-orange-300" },
+  "group-blast-ai-message": { label: "WhatsApp Grupo", classes: "text-teal-600 border-teal-300" },
+  "group-blast-palpite": { label: "WhatsApp Grupo", classes: "text-teal-600 border-teal-300" },
+  "group-blast-manual-ai-message": { label: "WhatsApp Grupo", classes: "text-teal-600 border-teal-300" },
+  "group-blast-manual-palpite": { label: "WhatsApp Grupo", classes: "text-teal-600 border-teal-300" },
+  "warming-run": { label: "Aquecimento Chip", classes: "text-slate-600 border-slate-300" },
+  "warming-manual": { label: "Aquecimento Chip", classes: "text-slate-600 border-slate-300" },
+};
+function getCategoria(edgeFunction: string): CategoriaBot {
+  return FUNCTION_CATEGORIES[edgeFunction] || { label: "Outro", classes: "text-muted-foreground border-muted" };
+}
 
 const ORIGEM_LABELS: Record<Origem, string> = {
   automatico: "Automático (bots)",
