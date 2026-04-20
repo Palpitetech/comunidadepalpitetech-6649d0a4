@@ -28,6 +28,8 @@ export function DisparoManualTab() {
         }}
         selectedStatus={dm.selectedStatus}
         onStatusChange={(v) => dm.setSelectedStatus(v === "all" ? "" : v)}
+        selectedVerification={dm.selectedVerification}
+        onVerificationChange={dm.setSelectedVerification}
         eventTypes={dm.eventTypes}
         selectedEvent={dm.selectedEvent}
         onEventChange={(v) => dm.setSelectedEvent(v === "none" ? "" : v)}

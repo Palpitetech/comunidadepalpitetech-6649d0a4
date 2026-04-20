@@ -27,6 +27,7 @@ export function useDisparoManual() {
   const [plans, setPlans] = useState<PlanOption[]>([]);
   const [selectedPlanIds, setSelectedPlanIds] = useState<string[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [selectedVerification, setSelectedVerification] = useState<"all" | "verified" | "unverified">("all");
   const [eventTypes, setEventTypes] = useState<string[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<string>("");
 
@@ -109,8 +110,14 @@ export function useDisparoManual() {
       query = query.eq("status_assinatura", selectedStatus);
     }
 
+    if (selectedVerification === "verified") {
+      query = query.eq("email_verificado", true);
+    } else if (selectedVerification === "unverified") {
+      query = query.or("email_verificado.is.null,email_verificado.eq.false");
+    }
+
     return query;
-  }, [includeTags, excludeTags, exactMatch, selectedPlanIds, selectedStatus]);
+  }, [includeTags, excludeTags, exactMatch, selectedPlanIds, selectedStatus, selectedVerification]);
 
   // ── Count contacts ──
   const fetchCount = useCallback(async () => {
@@ -189,6 +196,8 @@ export function useDisparoManual() {
     activeFilters.push(`Plano: ${planNames.join(", ")}`);
   }
   if (selectedStatus) activeFilters.push(`Status: ${selectedStatus}`);
+  if (selectedVerification === "verified") activeFilters.push("Apenas verificados");
+  if (selectedVerification === "unverified") activeFilters.push("Apenas não verificados");
   if (selectedEvent) activeFilters.push(`Evento: ${selectedEvent}`);
 
   // ── Dispatch logic ──
@@ -286,6 +295,8 @@ export function useDisparoManual() {
     setSelectedPlanIds,
     selectedStatus,
     setSelectedStatus,
+    selectedVerification,
+    setSelectedVerification,
     eventTypes,
     selectedEvent,
     setSelectedEvent,

@@ -27,6 +27,9 @@ interface DisparoPublicoFilterProps {
   selectedStatus: string;
   onStatusChange: (v: string) => void;
 
+  selectedVerification: "all" | "verified" | "unverified";
+  onVerificationChange: (v: "all" | "verified" | "unverified") => void;
+
   eventTypes: string[];
   selectedEvent: string;
   onEventChange: (v: string) => void;
@@ -63,6 +66,8 @@ export function DisparoPublicoFilter({
   onPlanToggle,
   selectedStatus,
   onStatusChange,
+  selectedVerification,
+  onVerificationChange,
   eventTypes,
   selectedEvent,
   onEventChange,
@@ -115,7 +120,7 @@ export function DisparoPublicoFilter({
           Filtros Avançados
         </h3>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* Plan selector */}
           <div className="space-y-1.5">
             <Label className="text-xs">Plano</Label>
@@ -187,6 +192,21 @@ export function DisparoPublicoFilter({
                     {opt.label}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Verification selector */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Verificação Email</Label>
+            <Select value={selectedVerification} onValueChange={(v) => onVerificationChange(v as "all" | "verified" | "unverified")}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="verified">Apenas verificados</SelectItem>
+                <SelectItem value="unverified">Apenas não verificados</SelectItem>
               </SelectContent>
             </Select>
           </div>
