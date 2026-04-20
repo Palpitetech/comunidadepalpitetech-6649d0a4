@@ -402,6 +402,10 @@ serve(async (req) => {
     }
 
     const newTags = ["lead", webhook.source_tag, ...(payloadTags || [])];
+    // Se é novo lead, marcar como pendente de confirmação
+    if (isNew) {
+      newTags.push("email_pendente");
+    }
 
     if (isNew) {
       await new Promise((r) => setTimeout(r, 1000));
