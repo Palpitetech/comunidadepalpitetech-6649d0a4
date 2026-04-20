@@ -382,6 +382,66 @@ export function TemplatesTab() {
     setActiveSlot(1);
   };
 
+  const handleGenerateVariants = async () => {
+    const main = (slots[0]?.content ?? "").trim();
+    if (!main) {
+      toast.error("Escreva a mensagem principal (slot 1) primeiro");
+      return;
+    }
+    const hasExisting = slots.slice(1).some((s) => s.exists && s.content.trim().length > 0);
+    if (hasExisting) {
+      const ok = window.confirm(
+        "Substituir as 9 variações existentes? O slot #1 (principal) não muda."
+      );
+      if (!ok) return;
+    }
+    setGeneratingVariants(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-message-variants", {
+        body: { main_content: main, count: 9 },
+      });
+      if (error) {
+        // Tenta extrair mensagem amigável do contexto
+        const ctx: any = (error as any).context;
+        let msg = "Erro ao gerar variações";
+        if (ctx?.status === 429) msg = "Muitas requisições. Aguarde alguns segundos.";
+        else if (ctx?.status === 402) msg = "Créditos de IA esgotados. Adicione créditos no workspace.";
+        else if (ctx?.status === 403) msg = "Apenas administradores podem gerar variações.";
+        try {
+          const body = await ctx?.json?.();
+          if (body?.error) msg = body.error;
+        } catch { /* ignore */ }
+        toast.error(msg);
+        return;
+      }
+      const variants: string[] = Array.isArray(data?.variants) ? data.variants : [];
+      if (variants.length === 0) {
+        toast.error("A IA não retornou variações válidas. Tente novamente.");
+        return;
+      }
+      setSlots((prev) =>
+        prev.map((s, i) => {
+          if (i === 0) return s; // mantém slot #1
+          const v = variants[i - 1];
+          if (!v) return s;
+          return {
+            ...s,
+            content: v.slice(0, 2000),
+            isActive: true,
+            exists: true,
+          };
+        })
+      );
+      setHasGenerated(true);
+      toast.success(`${variants.length} variações geradas com IA`);
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Erro ao gerar variações");
+    } finally {
+      setGeneratingVariants(false);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm("Deseja realmente excluir este template?")) return;
     const { error } = await supabase.from("message_templates" as any).delete().eq("id", id);
