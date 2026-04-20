@@ -47,12 +47,8 @@ function maskEmail(email: string): string {
   return `${visible}${"*".repeat(Math.max(local.length - 2, 1))}@${domain}`;
 }
 
-const DISPOSABLE_DOMAINS = [
-  "mailinator.com", "tempmail.com", "10minutemail.com", "guerrillamail.com",
-  "yopmail.com", "throwaway.email", "trashmail.com", "fakeinbox.com",
-  "getnada.com", "maildrop.cc", "sharklasers.com", "temp-mail.org",
-  "dispostable.com", "mintemail.com",
-];
+// Lista de descartáveis agora vem de ./disposable-domains.ts (DISPOSABLE_DOMAINS Set ~300+)
+
 
 const KEYBOARD_SEQUENCES = [
   "qwer", "wert", "erty", "rtyu", "tyui", "yuio", "uiop",
