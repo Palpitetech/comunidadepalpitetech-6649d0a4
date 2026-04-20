@@ -313,27 +313,32 @@ export default function AdminUsuarios() {
           })}
         </div>
 
-        {/* Subfiltros (rolagem horizontal) */}
+        {/* Subfiltros (rolagem horizontal, agrupados) */}
         <div className="-mx-4 px-4 overflow-x-auto">
-          <div className="flex items-center gap-1.5 w-max">
-            {FILTROS_SECUNDARIOS.map(({ key, label }) => {
-              const isActive = activeSubFilter === key;
-              return (
-                <button
-                  key={key}
-                  onClick={() => toggleSubFilter(key)}
-                  className={cn(
-                    "shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors border",
-                    isActive
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background text-muted-foreground border-border hover:bg-muted"
-                  )}
-                >
-                  {label} <span className="opacity-70">{getSubCount(key)}</span>
-                  {isActive && <X className="inline h-3 w-3 ml-1 -mt-0.5" />}
-                </button>
-              );
-            })}
+          <div className="flex items-center gap-2 w-max">
+            {FILTROS_SECUNDARIOS_GRUPOS.map((grupo, idx) => (
+              <div key={grupo.label} className="flex items-center gap-1.5">
+                {idx > 0 && <div className="h-5 w-px bg-border mx-1" aria-hidden />}
+                {grupo.items.map(({ key, label }) => {
+                  const isActive = activeSubFilter === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => toggleSubFilter(key)}
+                      className={cn(
+                        "shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors border inline-flex items-center gap-1",
+                        isActive
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background text-muted-foreground border-border hover:bg-muted"
+                      )}
+                    >
+                      {label} <span className="opacity-70">{getSubCount(key)}</span>
+                      {isActive && <X className="h-3 w-3" />}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         </div>
 
