@@ -255,15 +255,16 @@ export function TemplatesTab() {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.content.trim() || !form.event_trigger) {
-      toast.error("Preencha todos os campos obrigatórios");
+    const mainContent = slots[0]?.content?.trim() ?? "";
+    if (!form.name.trim() || !mainContent || !form.event_trigger) {
+      toast.error("Preencha nome, evento e a mensagem principal (slot 1)");
       return;
     }
     setSaving(true);
     try {
       const payload = {
         name: form.name.trim(),
-        content: form.content.trim(),
+        content: mainContent,
         event_trigger: form.event_trigger,
         delay_enabled: form.delay_enabled,
         delay_minutes: form.delay_enabled ? form.delay_minutes : 0,
@@ -272,23 +273,107 @@ export function TemplatesTab() {
         plan_ids: form.plan_ids,
         tags_match_mode: form.tags_match_mode,
       };
+
+      let templateId = editingId;
       if (editingId) {
         const { error } = await supabase.from("message_templates" as any).update(payload).eq("id", editingId);
         if (error) throw error;
-        toast.success("Template atualizado");
       } else {
-        const { error } = await supabase.from("message_templates" as any).insert(payload);
+        const { data, error } = await supabase
+          .from("message_templates" as any)
+          .insert(payload)
+          .select("id")
+          .single();
         if (error) throw error;
-        toast.success("Template criado");
+        templateId = (data as any).id;
       }
+
+      // Sync variants (slots 2..10)
+      if (templateId) {
+        const variantOps: Promise<any>[] = [];
+        for (let i = 1; i < MAX_SLOTS; i++) {
+          const slot = slots[i];
+          const existingId = variantIds[slot.position];
+          const trimmed = slot.content.trim();
+          if (existingId && trimmed) {
+            variantOps.push(
+              supabase
+                .from("message_template_variants" as any)
+                .update({ content: trimmed, is_active: slot.isActive })
+                .eq("id", existingId)
+            );
+          } else if (existingId && !trimmed) {
+            variantOps.push(
+              supabase.from("message_template_variants" as any).delete().eq("id", existingId)
+            );
+          } else if (!existingId && trimmed) {
+            variantOps.push(
+              supabase.from("message_template_variants" as any).insert({
+                template_id: templateId,
+                position: slot.position,
+                content: trimmed,
+                is_active: slot.isActive,
+              })
+            );
+          }
+        }
+        // Explicit deletions queued via "excluir variação" button
+        for (const pos of removedPositions) {
+          const id = variantIds[pos];
+          if (id) {
+            variantOps.push(
+              supabase.from("message_template_variants" as any).delete().eq("id", id)
+            );
+          }
+        }
+        const results = await Promise.all(variantOps);
+        const firstError = results.find((r) => r?.error);
+        if (firstError?.error) throw firstError.error;
+      }
+
+      toast.success(editingId ? "Template atualizado" : "Template criado");
       setDialogOpen(false);
       fetchTemplates();
+      fetchVariantCounts();
     } catch (err: any) {
       console.error(err);
       toast.error("Erro ao salvar template");
     } finally {
       setSaving(false);
     }
+  };
+
+  // Update content of the currently active slot
+  const updateActiveSlotContent = (value: string) => {
+    setSlots((prev) =>
+      prev.map((s) =>
+        s.position === activeSlot ? { ...s, content: value, exists: s.position === 1 ? true : value.length > 0 || s.exists } : s
+      )
+    );
+  };
+
+  const handleSlotSelect = (position: number) => {
+    setSlots((prev) =>
+      prev.map((s) => (s.position === position && !s.exists && position !== 1 ? { ...s, exists: true } : s))
+    );
+    setActiveSlot(position);
+  };
+
+  const toggleActiveSlotPaused = () => {
+    if (activeSlot === 1) return;
+    setSlots((prev) => prev.map((s) => (s.position === activeSlot ? { ...s, isActive: !s.isActive } : s)));
+  };
+
+  const deleteActiveSlot = () => {
+    if (activeSlot === 1) return;
+    const pos = activeSlot;
+    setSlots((prev) =>
+      prev.map((s) => (s.position === pos ? { ...s, content: "", isActive: true, exists: false, timesUsed: 0 } : s))
+    );
+    if (variantIds[pos]) {
+      setRemovedPositions((prev) => (prev.includes(pos) ? prev : [...prev, pos]));
+    }
+    setActiveSlot(1);
   };
 
   const handleDelete = async (id: string) => {
