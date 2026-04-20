@@ -50,17 +50,20 @@ const mainItems = [
   { title: "Planos", url: "/admin/planos", icon: FileText },
   { title: "Usuários", url: "/admin/usuarios", icon: Users },
   { title: "Bots", url: "/admin/bots", icon: Bot },
-  { title: "Custos IA", url: "/admin/custos", icon: DollarSign },
-  { title: "Assinaturas Op.", url: "/admin/assinaturas-operacionais", icon: PiggyBank },
-  { title: "Chip Celulares", url: "/admin/chip-celulares", icon: Smartphone },
-  { title: "Custos Operacionais", url: "/admin/custos-operacionais", icon: Receipt },
   { title: "Convites", url: "/admin/convites", icon: Gift },
-  { title: "Vendas", url: "/admin/vendas", icon: ShoppingCart },
   { title: "Eventos", url: "/admin/eventos", icon: Activity },
   { title: "Métricas", url: "/admin/metricas", icon: BarChart2 },
   { title: "WhatsApp", url: "/admin/whatsapp", icon: MessageCircle },
   { title: "Integrações", url: "/admin/integracoes", icon: Plug },
   { title: "Manutenção", url: "/admin/manutencao", icon: Wrench },
+];
+
+const financeiroItems = [
+  { title: "Custos IA", url: "/admin/custos", icon: DollarSign },
+  { title: "Assinaturas Op.", url: "/admin/assinaturas-operacionais", icon: PiggyBank },
+  { title: "Chip Celulares", url: "/admin/chip-celulares", icon: Smartphone },
+  { title: "Custos Operacionais", url: "/admin/custos-operacionais", icon: Receipt },
+  { title: "Vendas", url: "/admin/vendas", icon: ShoppingCart },
 ];
 
 const boloesItems = [
