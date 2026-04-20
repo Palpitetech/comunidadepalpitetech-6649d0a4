@@ -62,8 +62,6 @@ import DezenasporPosicao from "./pages/DezenasporPosicao";
 import NotFound from "./pages/NotFound";
 import Termos from "./pages/Termos";
 import Privacidade from "./pages/Privacidade";
-import Ajuda from "./pages/Ajuda";
-import AjudaDetalhes from "./pages/AjudaDetalhes";
 
 // AtivarConta e VerificarEmail removidos
 import ResultadosMegaSena from "./pages/megasena/ResultadosMegaSena";
@@ -265,9 +263,6 @@ const App = () => (
                 <Route path="/admin/carteira" element={<AdminRoute><Carteira /></AdminRoute>} />
                 <Route path="/admin/gravacao/lotofacil" element={<AdminRoute><GravacaoLotofacil /></AdminRoute>} />
                 <Route path="/admin/gravacao/quina" element={<AdminRoute><GravacaoQuina /></AdminRoute>} />
-                
-                <Route path="/ajuda" element={<Ajuda />} />
-                <Route path="/ajuda/:slug" element={<AjudaDetalhes />} />
 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

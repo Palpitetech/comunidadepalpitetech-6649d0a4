@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { SegurancaTab } from "@/components/perfil/SegurancaTab";
+import { PerfilMiniHero } from "@/components/perfil/PerfilMiniHero";
 
 export default function PerfilSeguranca() {
   const { profile, user, signOut } = useAuthContext();
@@ -21,9 +22,9 @@ export default function PerfilSeguranca() {
           <div className="w-10" />
         </div>
       </header>
-      <ScrollArea className="flex-1">
-        <div className="pb-8 max-w-lg mx-auto w-full">
-          
+      <ScrollArea className="flex-1 overscroll-contain">
+        <div className="pb-24 max-w-xl mx-auto w-full">
+          <PerfilMiniHero profile={profile} user={user} />
           <SegurancaTab user={user} onSignOut={signOut} />
         </div>
       </ScrollArea>
