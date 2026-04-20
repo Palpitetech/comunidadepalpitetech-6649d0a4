@@ -53,6 +53,7 @@ interface ChipCelular {
   ultima_recarga_valor: number | null;
   ativo: boolean;
   observacao: string | null;
+  aparelho_conectado: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -89,6 +90,7 @@ interface FormState {
   data_compra: string;
   ativo: boolean;
   observacao: string;
+  aparelho_conectado: string;
 }
 
 const initialForm = (lastCusto?: number): FormState => ({
@@ -100,6 +102,7 @@ const initialForm = (lastCusto?: number): FormState => ({
   data_compra: new Date().toISOString().split("T")[0],
   ativo: true,
   observacao: "",
+  aparelho_conectado: "",
 });
 
 interface RecargaFormState {
@@ -208,6 +211,7 @@ export default function AdminChipCelulares() {
       data_compra: chip.data_compra,
       ativo: chip.ativo,
       observacao: chip.observacao ?? "",
+      aparelho_conectado: chip.aparelho_conectado ?? "",
     });
     setDialogOpen(true);
   };
@@ -230,6 +234,7 @@ export default function AdminChipCelulares() {
         data_compra: form.data_compra,
         ativo: form.ativo,
         observacao: form.observacao.trim() || null,
+        aparelho_conectado: form.aparelho_conectado.trim() || null,
       };
       if (editingId) {
         const { error } = await supabase.from("chip_celulares" as any).update(payload as any).eq("id", editingId);
@@ -399,6 +404,7 @@ export default function AdminChipCelulares() {
                   <TableHead>Número</TableHead>
                   <TableHead>Operadora</TableHead>
                   <TableHead>Plano</TableHead>
+                  <TableHead>Aparelho</TableHead>
                   <TableHead className="text-right">Valor/mês</TableHead>
                   <TableHead>Última recarga</TableHead>
                   <TableHead className="text-right">Custo chip</TableHead>
@@ -420,6 +426,13 @@ export default function AdminChipCelulares() {
                       <Badge variant="outline" className="text-[10px]">
                         {PLANO_LABELS[chip.plano_tipo]}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">
+                      {chip.aparelho_conectado ? (
+                        chip.aparelho_conectado
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">{formatBRL(Number(chip.valor_plano))}</TableCell>
                     <TableCell className="text-xs whitespace-nowrap">
@@ -575,6 +588,16 @@ export default function AdminChipCelulares() {
                 type="date"
                 value={form.data_compra}
                 onChange={(e) => setForm((f) => ({ ...f, data_compra: e.target.value }))}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="aparelho_conectado" className="text-xs">Aparelho conectado</Label>
+              <Input
+                id="aparelho_conectado"
+                value={form.aparelho_conectado}
+                onChange={(e) => setForm((f) => ({ ...f, aparelho_conectado: e.target.value }))}
+                placeholder="Ex: Samsung A15, iPhone 12, Modem 4G..."
               />
             </div>
 
