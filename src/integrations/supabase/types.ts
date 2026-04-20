@@ -1315,6 +1315,45 @@ export type Database = {
         }
         Relationships: []
       }
+      investimentos: {
+        Row: {
+          created_at: string
+          data_fim: string | null
+          data_inicio: string
+          id: string
+          identificacao: string
+          periodo_dias_custom: number | null
+          periodo_validade: string
+          provedor: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          id?: string
+          identificacao: string
+          periodo_dias_custom?: number | null
+          periodo_validade: string
+          provedor: string
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string
+          id?: string
+          identificacao?: string
+          periodo_dias_custom?: number | null
+          periodo_validade?: string
+          provedor?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       kirvano_offer_plan_map: {
         Row: {
           created_at: string
