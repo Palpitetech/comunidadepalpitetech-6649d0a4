@@ -158,7 +158,8 @@ export function TemplatesTab() {
     fetchTemplates();
     fetchEventTypes();
     fetchTagsAndPlans();
-  }, [fetchTemplates, fetchEventTypes, fetchTagsAndPlans]);
+    fetchVariantCounts();
+  }, [fetchTemplates, fetchEventTypes, fetchTagsAndPlans, fetchVariantCounts]);
 
   const openCreate = () => {
     setEditingId(null);
