@@ -1,182 +1,388 @@
-import { Link } from "react-router-dom";
 import { AdminLayout } from "@/components/layout/AdminLayout";
-import { Card, CardContent } from "@/components/ui/card";
-import { 
-  FileText, Users, Bot, DollarSign, Gift, ShoppingCart, Crown, 
-  UserCheck, UserX, Loader2, ChevronRight, Activity, Plug, Clock, BarChart2, Video
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  ShoppingCart,
+  Users,
+  UserCheck,
+  AlertTriangle,
+  XCircle,
+  Crown,
+  Star,
+  Timer,
+  TimerOff,
+  DollarSign,
+  TrendingDown,
+  Wallet,
+  ShoppingBag,
+  RefreshCw,
+  Percent,
 } from "lucide-react";
-import { BotHealthWidget } from "@/components/admin/BotHealthWidget";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import {
+  CustomRange,
+  PeriodKey,
+  resolvePeriod,
+  useDashboardPeriod,
+} from "@/hooks/useDashboardPeriod";
+import {
+  fmtBRL,
+  fmtNum,
+  useDashboardMetrics,
+} from "@/hooks/admin/useDashboardMetrics";
+import { PeriodFilter } from "@/components/admin/dashboard/PeriodFilter";
+import { MetricBlock } from "@/components/admin/dashboard/MetricBlock";
+import { FunnelChart } from "@/components/admin/dashboard/FunnelChart";
+import { PlanBreakdownBlock } from "@/components/admin/dashboard/PlanBreakdownBlock";
 
-function UserStatsWidget() {
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ["admin-user-stats"],
-    queryFn: async () => {
-      const [{ data: perfis }, { data: roles }, { data: plans }] = await Promise.all([
-        supabase.from("perfis").select("id, plan_id, is_bot, status_assinatura, email_verificado").eq("is_bot", false),
-        supabase.from("user_roles").select("user_id, role").eq("role", "premium"),
-        supabase.from("plans").select("id, name, price").order("display_order"),
-      ]);
-
-      const users = perfis || [];
-      const premiumUserIds = new Set((roles || []).map(r => r.user_id));
-      const paidPlanIds = new Set((plans || []).filter(p => p.price > 0).map(p => p.id));
-
-      const total = users.length;
-      const verificados = users.filter(u => u.email_verificado === true).length;
-      const pendentes = total - verificados;
-      const pagos = users.filter(u =>
-        premiumUserIds.has(u.id) ||
-        (u.plan_id && paidPlanIds.has(u.plan_id)) ||
-        u.status_assinatura === "ativa"
-      ).length;
-      const free = total - pagos;
-
-      const planList = (plans || []).map(plan => ({
-        name: plan.name,
-        count: users.filter(u => u.plan_id === plan.id).length,
-      })).filter(p => p.count > 0);
-
-      const semPlano = users.filter(u => !u.plan_id).length;
-
-      return { total, verificados, pendentes, pagos, free, planList, semPlano };
-    },
-  });
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center py-6">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (!stats) return null;
-
-  return (
-    <div className="space-y-3">
-      {/* Cadastros: total, verificados, pendentes */}
-      <div className="bg-muted/30 rounded-xl p-3 space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5 text-primary" /> Total cadastros
-          </p>
-          <span className="text-xl font-bold">{stats.total}</span>
-        </div>
-        <div className="flex items-center justify-between text-xs">
-          <span className="flex items-center gap-1 text-muted-foreground">
-            <UserCheck className="h-3 w-3 text-green-600" /> Verificados
-          </span>
-          <span className="font-medium">
-            {stats.verificados}
-            <span className="text-muted-foreground ml-1">
-              {stats.total > 0 ? `${Math.round((stats.verificados / stats.total) * 100)}%` : "0%"}
-            </span>
-          </span>
-        </div>
-        <div className="flex items-center justify-between text-xs">
-          <span className="flex items-center gap-1 text-muted-foreground">
-            <Clock className="h-3 w-3 text-yellow-500" /> Pendentes
-          </span>
-          <span className="font-medium">
-            {stats.pendentes}
-            <span className="text-muted-foreground ml-1">
-              {stats.total > 0 ? `${Math.round((stats.pendentes / stats.total) * 100)}%` : "0%"}
-            </span>
-          </span>
-        </div>
-      </div>
-
-      {/* Pagos / Free */}
-      <div className="grid grid-cols-2 gap-2">
-        <div className="bg-muted/40 rounded-xl p-3 text-center">
-          <UserCheck className="h-4 w-4 text-green-600 mx-auto mb-1" />
-          <p className="text-xl font-bold">{stats.pagos}</p>
-          <p className="text-[10px] text-muted-foreground">Pagos</p>
-        </div>
-        <div className="bg-muted/40 rounded-xl p-3 text-center">
-          <UserX className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
-          <p className="text-xl font-bold">{stats.free}</p>
-          <p className="text-[10px] text-muted-foreground">Free</p>
-        </div>
-      </div>
-
-      {/* Plan breakdown */}
-      <div className="bg-muted/30 rounded-xl p-3 space-y-1.5">
-        <p className="text-xs font-semibold flex items-center gap-1.5">
-          <Crown className="h-3.5 w-3.5 text-primary" /> Por Plano
-        </p>
-        {stats.planList.map(plan => (
-          <div key={plan.name} className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">{plan.name}</span>
-            <span className="font-medium">{plan.count}</span>
-          </div>
-        ))}
-        <div className="flex items-center justify-between text-xs border-t pt-1.5 border-border/50">
-          <span className="text-muted-foreground">Sem plano</span>
-          <span className="font-medium">{stats.semPlano}</span>
-        </div>
-      </div>
-    </div>
-  );
+// Estado local para filtro por bloco — usado quando "perBlock" está ativo
+function useBlockPeriod(globalKey: PeriodKey, globalCustom: CustomRange) {
+  const [key, setKey] = useState<PeriodKey>(globalKey);
+  const [custom, setCustom] = useState<CustomRange>(globalCustom);
+  return {
+    key,
+    setKey,
+    custom,
+    setCustom,
+    period: resolvePeriod(key, custom),
+  };
 }
 
-const ADMIN_MODULES = [
-  { to: "/admin/planos", icon: FileText, label: "Planos", desc: "Criar e configurar planos" },
-  { to: "/admin/usuarios", icon: Users, label: "Usuários", desc: "Perfis, planos e permissões" },
-  { to: "/admin/bots", icon: Bot, label: "Bots", desc: "Automação e especialistas" },
-  { to: "/admin/custos", icon: DollarSign, label: "Custos IA", desc: "Monitorar gastos com IA" },
-  { to: "/admin/convites", icon: Gift, label: "Convites", desc: "Ranking de indicações" },
-  { to: "/admin/vendas", icon: ShoppingCart, label: "Vendas", desc: "Histórico Kirvano" },
-  { to: "/admin/eventos", icon: Activity, label: "Eventos", desc: "Timeline de eventos por lead" },
-  { to: "/admin/metricas", icon: BarChart2, label: "Métricas", desc: "UTM, conversão e receita" },
-  { to: "/admin/integracoes", icon: Plug, label: "Integrações", desc: "Webhooks e fontes externas" },
-  { to: "/admin/gravacao/lotofacil", icon: Video, label: "Gravação", desc: "Slides para gravação OBS" },
-];
-
 export default function AdminIndex() {
+  const { period, periodKey, setPeriodKey, customRange, setCustomRange } =
+    useDashboardPeriod("7d");
+  const [perBlock, setPerBlock] = useState(false);
+
+  // Períodos locais por bloco (só ativam quando perBlock=true)
+  const vendasBlock = useBlockPeriod(periodKey, customRange);
+  const cadastrosBlock = useBlockPeriod(periodKey, customRange);
+  const verificadosBlock = useBlockPeriod(periodKey, customRange);
+  const canceladasBlock = useBlockPeriod(periodKey, customRange);
+  const renovacoesBlock = useBlockPeriod(periodKey, customRange);
+  const carrinhoBlock = useBlockPeriod(periodKey, customRange);
+  const oportBlock = useBlockPeriod(periodKey, customRange);
+  const totalRSBlock = useBlockPeriod(periodKey, customRange);
+  const ticketBlock = useBlockPeriod(periodKey, customRange);
+  const conversaoBlock = useBlockPeriod(periodKey, customRange);
+  const planosBlock = useBlockPeriod(periodKey, customRange);
+  const funnelBlock = useBlockPeriod(periodKey, customRange);
+
+  // Resolve período efetivo: global ou bloco
+  const eff = (b: ReturnType<typeof useBlockPeriod>) =>
+    perBlock ? b.period : period;
+
+  // Query global (cobre todos blocos no modo "global")
+  const globalQ = useDashboardMetrics(period);
+
+  // Queries por bloco — só ativadas se perBlock
+  const qVendas = useDashboardMetrics(vendasBlock.period);
+  const qCadastros = useDashboardMetrics(cadastrosBlock.period);
+  const qVerificados = useDashboardMetrics(verificadosBlock.period);
+  const qCanceladas = useDashboardMetrics(canceladasBlock.period);
+  const qRenovacoes = useDashboardMetrics(renovacoesBlock.period);
+  const qCarrinho = useDashboardMetrics(carrinhoBlock.period);
+  const qOport = useDashboardMetrics(oportBlock.period);
+  const qTotalRS = useDashboardMetrics(totalRSBlock.period);
+  const qTicket = useDashboardMetrics(ticketBlock.period);
+  const qConversao = useDashboardMetrics(conversaoBlock.period);
+  const qPlanos = useDashboardMetrics(planosBlock.period);
+  const qFunnel = useDashboardMetrics(funnelBlock.period);
+
+  const pick = (q: typeof globalQ) => (perBlock ? q : globalQ);
+
   return (
-    <AdminLayout
-      pageTitle="Admin"
-    >
+    <AdminLayout pageTitle="Dashboard">
       <div className="px-4 py-3 md:container-senior md:py-8 space-y-4 md:space-y-6">
-        {/* Desktop title */}
-        <h1 className="hidden md:block text-3xl font-bold">Painel Administrativo</h1>
-
-        {/* User Stats */}
-        <div>
-          <h2 className="text-sm font-semibold text-muted-foreground mb-2 md:text-lg md:text-foreground">Usuários</h2>
-          <UserStatsWidget />
+        <div className="hidden md:flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Painel Administrativo</h1>
         </div>
 
-        {/* Bot Health */}
-        <div>
-          <h2 className="text-sm font-semibold text-muted-foreground mb-2 md:text-lg md:text-foreground">Saúde dos Bots</h2>
-          <BotHealthWidget />
-        </div>
-
-        {/* Quick Access Modules */}
-        <div>
-          <h2 className="text-sm font-semibold text-muted-foreground mb-2 md:text-lg md:text-foreground">Módulos</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
-            {ADMIN_MODULES.map(({ to, icon: Icon, label, desc }) => (
-              <Link key={to} to={to}>
-                <Card className="hover:bg-accent/50 transition-colors border-border/60">
-                  <CardContent className="p-3 md:p-4 flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <Icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm">{label}</p>
-                      <p className="text-[11px] text-muted-foreground truncate">{desc}</p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+        {/* Header de filtros */}
+        <div className="bg-card border border-border/60 rounded-xl p-3 md:p-4 space-y-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Período {perBlock ? "(padrão)" : "global"}
+              </span>
+              <span className="text-xs text-muted-foreground">— {period.label}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="per-block-toggle" className="text-xs cursor-pointer">
+                Filtro por bloco
+              </Label>
+              <Switch
+                id="per-block-toggle"
+                checked={perBlock}
+                onCheckedChange={setPerBlock}
+              />
+            </div>
           </div>
+          <PeriodFilter
+            value={periodKey}
+            onChange={setPeriodKey}
+            customRange={customRange}
+            onCustomRangeChange={setCustomRange}
+          />
+        </div>
+
+        {/* Bloco 01 — Funil */}
+        <FunnelChart
+          data={pick(qFunnel).data?.serieDiaria || []}
+          loading={pick(qFunnel).isLoading}
+          totalCadastros={pick(qFunnel).data?.totalCadastros || 0}
+          totalPagos={pick(qFunnel).data?.totalPagos || 0}
+          totalLeads={pick(qFunnel).data?.totalLeads || 0}
+          totalVerificados={pick(qFunnel).data?.totalVerificados || 0}
+          showLocalFilter={perBlock}
+          localPeriodKey={funnelBlock.key}
+          onLocalPeriodChange={funnelBlock.setKey}
+          localCustomRange={funnelBlock.custom}
+          onLocalCustomRangeChange={funnelBlock.setCustom}
+        />
+
+        {/* Métricas-chave de período (vendas, cadastros, verificados) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <MetricBlock
+            title="Total Vendas"
+            value={fmtNum(pick(qVendas).data?.totalVendas || 0)}
+            icon={ShoppingCart}
+            accent="success"
+            loading={pick(qVendas).isLoading}
+            subInfo={
+              <>
+                <div>{fmtBRL(pick(qVendas).data?.totalVendasRS || 0)} em receita</div>
+                <div>{pick(qVendas).data?.totalRenovacoes || 0} renovações</div>
+              </>
+            }
+            showLocalFilter={perBlock}
+            localPeriodKey={vendasBlock.key}
+            onLocalPeriodChange={vendasBlock.setKey}
+            localCustomRange={vendasBlock.custom}
+            onLocalCustomRangeChange={vendasBlock.setCustom}
+          />
+          <MetricBlock
+            title="Total Cadastros"
+            value={fmtNum(pick(qCadastros).data?.totalCadastros || 0)}
+            icon={Users}
+            loading={pick(qCadastros).isLoading}
+            subInfo={
+              <div>
+                {pick(qCadastros).data?.totalPagos || 0} pagos ·{" "}
+                {pick(qCadastros).data?.totalLeads || 0} leads
+              </div>
+            }
+            showLocalFilter={perBlock}
+            localPeriodKey={cadastrosBlock.key}
+            onLocalPeriodChange={cadastrosBlock.setKey}
+            localCustomRange={cadastrosBlock.custom}
+            onLocalCustomRangeChange={cadastrosBlock.setCustom}
+          />
+          <MetricBlock
+            title="Total Verificados"
+            value={fmtNum(pick(qVerificados).data?.totalVerificados || 0)}
+            icon={UserCheck}
+            accent="info"
+            loading={pick(qVerificados).isLoading}
+            subInfo={
+              <div>
+                {(pick(qVerificados).data?.pctVerificados || 0).toFixed(1)}% do total
+              </div>
+            }
+            showLocalFilter={perBlock}
+            localPeriodKey={verificadosBlock.key}
+            onLocalPeriodChange={verificadosBlock.setKey}
+            localCustomRange={verificadosBlock.custom}
+            onLocalCustomRangeChange={verificadosBlock.setCustom}
+          />
+        </div>
+
+        {/* Estado atual: Vencidas, Canceladas, Ativas, Grupo VIP */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <MetricBlock
+            title="Contas Vencidas"
+            value={fmtNum(globalQ.data?.contasVencidas || 0)}
+            icon={AlertTriangle}
+            accent="warning"
+            loading={globalQ.isLoading}
+            isStateOnly
+          />
+          <MetricBlock
+            title="Canceladas (período)"
+            value={fmtNum(pick(qCanceladas).data?.totalCanceladas || 0)}
+            icon={XCircle}
+            accent="danger"
+            loading={pick(qCanceladas).isLoading}
+            subInfo={
+              <>
+                <div>{pick(qCanceladas).data?.canceladasComAcesso || 0} ainda c/ acesso</div>
+                <div>{pick(qCanceladas).data?.canceladasSemAcesso || 0} s/ acesso</div>
+              </>
+            }
+            showLocalFilter={perBlock}
+            localPeriodKey={canceladasBlock.key}
+            onLocalPeriodChange={canceladasBlock.setKey}
+            localCustomRange={canceladasBlock.custom}
+            onLocalCustomRangeChange={canceladasBlock.setCustom}
+          />
+          <MetricBlock
+            title="Contas Ativas (Pago)"
+            value={fmtNum(globalQ.data?.contasAtivas || 0)}
+            icon={Crown}
+            accent="success"
+            loading={globalQ.isLoading}
+            isStateOnly
+            subInfo={
+              <div className="space-y-0.5">
+                {(globalQ.data?.ativasPorPlano || []).slice(0, 4).map((p) => (
+                  <div key={p.name} className="flex justify-between gap-2">
+                    <span className="truncate">{p.name}</span>
+                    <span className="font-medium">{p.vendas}</span>
+                  </div>
+                ))}
+              </div>
+            }
+          />
+          <MetricBlock
+            title="Grupo VIP Lotofácil"
+            value={fmtNum(globalQ.data?.grupoVipLotofacil || 0)}
+            icon={Star}
+            accent="info"
+            loading={globalQ.isLoading}
+            isStateOnly
+            subInfo={<div>integrantes ativos</div>}
+          />
+        </div>
+
+        {/* Trial + financeiro pontual */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          <MetricBlock
+            title="Trial Ativo"
+            value={fmtNum(globalQ.data?.trialAtivo || 0)}
+            icon={Timer}
+            accent="info"
+            loading={globalQ.isLoading}
+            isStateOnly
+          />
+          <MetricBlock
+            title="Trial Vencido"
+            value={fmtNum(globalQ.data?.trialVencido || 0)}
+            icon={TimerOff}
+            accent="warning"
+            loading={globalQ.isLoading}
+            isStateOnly
+          />
+          <MetricBlock
+            title="Total R$ Vendas"
+            value={fmtBRL(pick(qTotalRS).data?.totalVendasRS || 0)}
+            icon={DollarSign}
+            accent="success"
+            loading={pick(qTotalRS).isLoading}
+            showLocalFilter={perBlock}
+            localPeriodKey={totalRSBlock.key}
+            onLocalPeriodChange={totalRSBlock.setKey}
+            localCustomRange={totalRSBlock.custom}
+            onLocalCustomRangeChange={totalRSBlock.setCustom}
+          />
+          <MetricBlock
+            title="Oport. Vencidas R$"
+            value={fmtBRL(pick(qOport).data?.oportunidadesVencidasRS || 0)}
+            icon={TrendingDown}
+            accent="danger"
+            loading={pick(qOport).isLoading}
+            subInfo={<div>PIX/assinaturas expiradas</div>}
+            showLocalFilter={perBlock}
+            localPeriodKey={oportBlock.key}
+            onLocalPeriodChange={oportBlock.setKey}
+            localCustomRange={oportBlock.custom}
+            onLocalCustomRangeChange={oportBlock.setCustom}
+          />
+          <MetricBlock
+            title="PIX a Pagar R$"
+            value={fmtBRL(globalQ.data?.pixAPagarRS || 0)}
+            icon={Wallet}
+            accent="warning"
+            loading={globalQ.isLoading}
+            isStateOnly
+            subInfo={<div>{globalQ.data?.pixAPagarCount || 0} em aberto</div>}
+          />
+        </div>
+
+        {/* Métricas de saúde extra: ticket médio, conversão, carrinho, renovações */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <MetricBlock
+            title="Ticket Médio"
+            value={fmtBRL(pick(qTicket).data?.ticketMedio || 0)}
+            icon={DollarSign}
+            loading={pick(qTicket).isLoading}
+            subInfo={<div>R$ vendas / nº vendas</div>}
+            showLocalFilter={perBlock}
+            localPeriodKey={ticketBlock.key}
+            onLocalPeriodChange={ticketBlock.setKey}
+            localCustomRange={ticketBlock.custom}
+            onLocalCustomRangeChange={ticketBlock.setCustom}
+          />
+          <MetricBlock
+            title="% Conversão"
+            value={`${(pick(qConversao).data?.pctConversao || 0).toFixed(1)}%`}
+            icon={Percent}
+            accent="info"
+            loading={pick(qConversao).isLoading}
+            subInfo={<div>pagos / cadastros</div>}
+            showLocalFilter={perBlock}
+            localPeriodKey={conversaoBlock.key}
+            onLocalPeriodChange={conversaoBlock.setKey}
+            localCustomRange={conversaoBlock.custom}
+            onLocalCustomRangeChange={conversaoBlock.setCustom}
+          />
+          <MetricBlock
+            title="Carrinho Abandonado"
+            value={fmtNum(pick(qCarrinho).data?.totalCarrinhoAbandonado || 0)}
+            icon={ShoppingBag}
+            accent="warning"
+            loading={pick(qCarrinho).isLoading}
+            subInfo={<div>potencial de recuperação</div>}
+            showLocalFilter={perBlock}
+            localPeriodKey={carrinhoBlock.key}
+            onLocalPeriodChange={carrinhoBlock.setKey}
+            localCustomRange={carrinhoBlock.custom}
+            onLocalCustomRangeChange={carrinhoBlock.setCustom}
+          />
+          <MetricBlock
+            title="Renovações"
+            value={fmtNum(pick(qRenovacoes).data?.totalRenovacoes || 0)}
+            icon={RefreshCw}
+            accent="success"
+            loading={pick(qRenovacoes).isLoading}
+            subInfo={<div>saúde da retenção</div>}
+            showLocalFilter={perBlock}
+            localPeriodKey={renovacoesBlock.key}
+            onLocalPeriodChange={renovacoesBlock.setKey}
+            localCustomRange={renovacoesBlock.custom}
+            onLocalCustomRangeChange={renovacoesBlock.setCustom}
+          />
+        </div>
+
+        {/* Vendas por Plano + Ativos por Plano */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <PlanBreakdownBlock
+            title="Vendas por Plano (período)"
+            items={pick(qPlanos).data?.vendasPorPlano || []}
+            loading={pick(qPlanos).isLoading}
+            countLabel="vendas"
+            showLocalFilter={perBlock}
+            localPeriodKey={planosBlock.key}
+            onLocalPeriodChange={planosBlock.setKey}
+            localCustomRange={planosBlock.custom}
+            onLocalCustomRangeChange={planosBlock.setCustom}
+          />
+          <PlanBreakdownBlock
+            title="Assinaturas Ativas por Plano"
+            items={globalQ.data?.ativasPorPlano || []}
+            loading={globalQ.isLoading}
+            countLabel="contas"
+            isStateOnly
+            emptyMessage="Nenhuma assinatura ativa"
+          />
         </div>
       </div>
     </AdminLayout>
