@@ -840,7 +840,7 @@ serve(async (req) => {
       if (insertError) logStep("Failed to insert premium role", { message: insertError.message });
     }
 
-    await insertEvent(targetPerfilId, "compra_aprovada", {
+    await insertEvent(targetPerfilId, "sale_confirmed", {
       plan_id: offerMap.plan_id,
       days_valid: daysValid,
       offer_id: offerId,
