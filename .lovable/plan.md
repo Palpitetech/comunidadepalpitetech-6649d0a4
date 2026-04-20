@@ -1,103 +1,165 @@
 
 
-## Refatoração: Aba "Por Usuário" — drill-down do que cada um gastou
+## Refatoração: Aba "Por Bot" — visão completa de todo bot que consome tokens
 
-### Diagnóstico (varredura completa)
+### Diagnóstico (varredura nos dados reais + código das edge functions)
 
-A aba está **tecnicamente funcionando**: JOIN com `perfis` traz `nome`/`email` reais, agregado por `user_id` bate com o banco (testado com SQL):
+**Bots que GASTAM tokens hoje** (logados em `ai_usage_logs` com `bot_persona_id`):
 
-| Nome | Chamadas | Tokens | USD |
-|---|---|---|---|
-| Augusto Honorato de Angelis | 118 | 192K | $0.084 |
-| Alex Sandro Pereira da Silva | 69 | 98K | $0.025 |
-| João Francisco Joaquim | 10 | 14K | $0.0037 |
-| kelyton dourado | 4 | 5.8K | $0.0016 |
-| Marcelo Dias ferreira | 4 | 4.4K | $0.0011 |
-| Juracy de Abreu e Silva | 2 | 2.7K | $0.0007 |
-| Maquilane Rodrigues Queiroz | 1 | 1.4K | $0.0004 |
-| Arlo Carlos Almeida | 1 | 743 | $0.0001 |
+| Bot | Cargo | Ferramenta | Chamadas | Tokens | USD |
+|---|---|---|---|---|---|
+| Estrategista Lucas | Estratégias Lotofácil | chat-assistant | 14 | 34K | $0.0061 |
+| Ana | Analista de Dados | generate-roundtable-post | 11 | 9.7K | $0.0028 |
+| Especialista Mega-Sena | Mega-Sena | bot-reply-user | 6 | 4.4K | $0.0008 |
+| Vendedor Matheus | Conversão | bot-interact-with-post | 2 | 1K | $0.0002 |
+| Carlos / Fernanda / Sistema Tech | Lotofácil | bot-interact-with-post | 1 cada | ~500 | $0.0001 |
 
-**Problema**: a tabela é uma linha-única por usuário. Você não vê **em que ferramenta** cada um gastou. Por exemplo, o Augusto:
-- 86 chamadas → Gerador Lotofácil ($0.0718)
-- 16 chamadas → Chat IA ($0.0067)
-- 10 chamadas → Gerador Quina ($0.0038)
-- 4 chamadas → Auto-Preencher Fechamento ($0.0015)
-- 2 chamadas → Resposta de Bot ($0.0003)
+**Problemas encontrados:**
 
-Hoje vira só "118 chamadas". Sem essa quebra, você não consegue responder "o Augusto está custando caro porque usa muito o gerador ou porque conversa muito no chat?"
+1. **`bot_name` vem `null` em vários logs** (chat-assistant grava `bot_name: null` propositalmente). Resultado: na tabela aparece "Bot" genérico em vez do nome real. Já temos o `bot_persona_id` — basta resolver via JOIN com `guide_personas`.
+2. **A aba mostra só o agregado** (`Bot · Chamadas · Tokens · USD · BRL`). Não mostra **em quê** o bot gastou: postou? respondeu comentário? atendeu chat? Cada bot pode aparecer em múltiplas ferramentas (ex: Estrategista Lucas usa chat-assistant; Especialista Mega-Sena usa chat-assistant E bot-reply-user) e isso fica invisível.
+3. **Falta categorização por tipo de ação** (Post automático / Comentário automático / Resposta a comentário / Chat com usuário).
+
+**Bots que DEVERIAM gastar mas hoje não logam (gap de instrumentação):**
+
+| Edge function | O que faz | Loga em `ai_usage_logs`? |
+|---|---|---|
+| `generate-guide-post` | Bot cria post analítico no /comunidade (cron) | ❌ não loga |
+| `group-blast-send` (AI message + palpite) | Bot gera msg/palpite e envia em grupos WhatsApp | ❌ não loga |
+| `group-blast` (mesmo) | idem (versão admin manual) | ❌ não loga |
+| `warming-run` / `warming-manual` | Aquecimento de chip via IA | ❌ não loga |
+| `sync-lotofacil` | IA dentro do sync? | ❌ não loga |
+
+→ Esses **gastam tokens** mas o custo não aparece em lugar nenhum no painel. O foco do usuário ("Postagem na comunidade, geração palpite envio grupo X, Y, Gravação e etc...") cai exatamente nessas funções.
 
 ### Mudanças
 
-#### 1. Hook `useAiUsageLogs.ts` — nova quebra `byFerramenta` dentro de cada usuário
+#### 1. Adicionar logging de IA nas edge functions que faltam (parte 1 — bots da comunidade e WhatsApp)
 
-`byUsuario[user_id]` passa a ter:
+Adicionar bloco `supabaseAdmin.from("ai_usage_logs").insert(...)` (mesmo padrão das outras 5 funções já instrumentadas) em:
+
+- **`generate-guide-post`** → `bot_persona_id = guide.id`, `bot_name = guide.perfis.nome`, `edge_function = "generate-guide-post"`, `action_type = "post_analitico_comunidade"`
+- **`group-blast-send`** (2 chamadas distintas):
+  - `generateAIMessage` → `edge_function = "group-blast-ai-message"`, `action_type = "msg_post_para_grupo_whatsapp"`
+  - `generatePalpiteMessage` → `edge_function = "group-blast-palpite"`, `action_type = "palpite_para_grupo_whatsapp"` (sem bot_persona_id — é sistema)
+- **`group-blast`** (versão admin manual): mesmas 2, mas `edge_function = "group-blast-manual-ai-message"` e `"group-blast-manual-palpite"` para diferenciar do automático
+- **`warming-run`** + **`warming-manual`** → `edge_function = "warming-run" / "warming-manual"`, `action_type = "aquecimento_chip"`
+- **`sync-lotofacil`** → `edge_function = "sync-lotofacil"`, `action_type = "ia_no_sync"` (se a chamada IA é executada)
+
+Isso fecha o buraco. Daqui pra frente tudo aparece.
+
+#### 2. Hook `useAiUsageLogs.ts` — resolver nome do bot quando `bot_name` é null
+
+Quando a query traz `bot_persona_id` mas `bot_name` é null (acontece com chat-assistant), JOIN extra com `guide_personas` (mesmo padrão do JOIN de `perfis` que já existe) para puxar `cargo + especialidade` como fallback.
+
+`UsageSummary.byBot[bot_id]` ganha campo novo:
 ```ts
 {
-  name, email, costUsd, tokens, count,
-  byFerramenta: Record<string, { count, tokens, costUsd }>  // novo
+  name, costUsd, tokens, count,
+  cargo: string | null,           // novo
+  byFerramenta: Record<string, { count, tokens, costUsd, label }>,  // novo
+  lastActivity: string | null,    // novo
 }
 ```
 
-Calculado no mesmo loop que já existe em `computeSummary` (sem custo extra de query).
+#### 3. Aba "Por Bot" — vira expansível com drill-down por ação
 
-#### 2. Aba "Por Usuário" vira **expansível**
+Mesmo padrão da aba "Por Usuário" (já refatorada): cada linha de bot tem chevron, expande mostrando exatamente em qual ferramenta gastou.
 
-Cada linha do usuário ganha um chevron à esquerda. Ao clicar, expande mostrando uma sub-tabela com **as ferramentas que ele usou**:
+**Linha principal (5 colunas + 3 novas):**
 
+| Bot (nome + cargo) | Tipo de Ação Principal | Ações usadas | Última atividade | Chamadas | Tokens | USD | BRL |
+
+- **Tipo de Ação Principal**: a ferramenta de maior `costUsd` traduzida (ex: "Chat com Usuário", "Post Comunidade")
+- **Ações usadas**: badge "3 ações"
+- **Última atividade**: data do último uso
+
+**Sub-linhas ao expandir** (uma por ferramenta que o bot usou):
 ```
-▼ Augusto Honorato de Angelis    augusto_h_@hotmail.com    118    192K    $0.0841    R$ 0.4878
-   └─ Gerador Lotofácil                                      86    132K    $0.0718    R$ 0.4164
-   └─ Chat IA                                                16     38K    $0.0067    R$ 0.0389
-   └─ Gerador Quina                                          10     15K    $0.0038    R$ 0.0223
-   └─ Auto-Preencher Fechamento Lotofácil                     4    5.8K    $0.0015    R$ 0.0086
-   └─ Resposta de Bot (comentário)                            2    1.5K    $0.0003    R$ 0.0016
-
-▶ Alex Sandro Pereira da Silva   alesaude@gmail.com         69    98K    $0.0252    R$ 0.1463
+▼ Especialista Mega-Sena · Especialista
+   └─ Chat com Usuário                   1     1.8K    $0.0003
+   └─ Resposta a Comentário              6     4.4K    $0.0008
 ```
 
-- Estado local `expandedUsers: Set<string>` controla quais estão abertos
-- Sub-linha indentada com `pl-8` e `text-muted-foreground`
-- Usa o mesmo `FUNCTION_LABELS` (rótulo curto, sem o "—" descritivo)
-- Ordenação interna: por `costUsd desc` (ferramenta mais cara primeiro)
+#### 4. Categorização visual por tipo de ação (badge ao lado da ferramenta)
 
-#### 3. Adicionar **3 colunas extras** na linha principal do usuário
+Cada `edge_function` ganha um **tipo** com cor (mesmo esquema do badge auto/usuário da aba Por Ferramenta):
 
-Para responder "como esse usuário usa a plataforma?" sem precisar expandir:
+| edge_function | Categoria | Cor |
+|---|---|---|
+| `generate-roundtable-post`, `generate-guide-post` | **Post** | azul |
+| `bot-interact-with-post` | **Comentário Automático** | roxo |
+| `bot-reply-user` | **Resposta ao Usuário** | verde |
+| `chat-assistant` | **Chat IA** | laranja |
+| `group-blast-ai-message`, `group-blast-palpite`, `group-blast-manual-*` | **WhatsApp Grupo** | teal |
+| `warming-run`, `warming-manual` | **Aquecimento Chip** | cinza |
 
-| Nome | Email | **Ferramenta principal** | **Ferramentas usadas** | **Última atividade** | Chamadas | Tokens | USD | BRL |
+#### 5. Atualizar `FUNCTION_LABELS` com as novas funções instrumentadas
 
-- **Ferramenta principal**: a de maior `costUsd` (ex: "Gerador Lotofácil")
-- **Ferramentas usadas**: contador (ex: "5 ferramentas")
-- **Última atividade**: data do log mais recente daquele usuário (`MAX(created_at)`)
-
-Isso permite bater o olho e ver: "Augusto usa 5 ferramentas diferentes, principalmente Gerador, ativo hoje".
+```ts
+"generate-guide-post": "Post Analítico Comunidade — bot cria post de análise (cron)",
+"group-blast-ai-message": "Convite WhatsApp — bot gera msg de post p/ grupo (auto)",
+"group-blast-palpite": "Palpite WhatsApp — bot gera palpite p/ grupo (auto)",
+"group-blast-manual-ai-message": "Convite WhatsApp Manual — admin dispara",
+"group-blast-manual-palpite": "Palpite WhatsApp Manual — admin dispara",
+"warming-run": "Aquecimento de Chip — IA gera conversa entre chips (auto)",
+"warming-manual": "Aquecimento de Chip Manual — admin dispara",
+"sync-lotofacil": "Análise no Sync Lotofácil — IA roda durante sincronização",
+```
 
 ### Detalhes técnicos
 
-- **Sem nova query**: o agrupamento por ferramenta dentro de cada usuário sai do mesmo `for (const log of logs)` que já existe em `computeSummary`.
-- **Última atividade**: armazena `lastActivity: string` no acumulador, atualiza com `Math.max` no timestamp.
-- **Ordenação default**: usuários por `costUsd desc`.
-- **`colSpan`** do empty state vai de 6 para 9.
+- Logging de IA nas edge functions usa exatamente o mesmo padrão das já instrumentadas (`supabaseAdmin.from("ai_usage_logs").insert({...})` com `prompt_tokens / completion_tokens / total_tokens / cost_usd` calculado com a função `estimateCost` já existente).
+- `group-blast-send` e `group-blast` são chamadas pelo cron sem usuário autenticado → `user_id: null` (origem = automático).
+- JOIN com `guide_personas` no hook é 1 query a mais agregada por ids únicos (mesma estratégia do JOIN com `perfis`).
+- Sem migração de banco. Sem nova coluna.
 
 ### Arquivos editados
 
-- `src/hooks/useAiUsageLogs.ts` — `UsageSummary.byUsuario[id]` ganha `byFerramenta` + `lastActivity`
-- `src/pages/admin/AdminCustos.tsx` — aba "Por Usuário" expansível com sub-linhas + 3 colunas novas
+**Frontend:**
+- `src/hooks/useAiUsageLogs.ts` — JOIN com guide_personas, novo shape de `byBot`
+- `src/pages/admin/AdminCustos.tsx` — aba expansível + 3 colunas novas + badges de categoria + labels
+
+**Edge functions (logging novo):**
+- `supabase/functions/generate-guide-post/index.ts`
+- `supabase/functions/group-blast-send/index.ts`
+- `supabase/functions/group-blast/index.ts`
+- `supabase/functions/warming-run/index.ts`
+- `supabase/functions/warming-manual/index.ts`
+- `supabase/functions/sync-lotofacil/index.ts`
 
 ### Resultado esperado
 
-Você passa de **"Augusto custou $0.084"** para **"Augusto custou $0.084, principalmente no Gerador Lotofácil (86 chamadas), ativo hoje, usa 5 ferramentas — clique para ver detalhe"**.
+Hoje você vê: "Estrategista Lucas — 14 chamadas — $0.006".
+
+Depois você verá:
+```
+▼ Estrategista Lucas · Estrategista     [Chat IA]   1 ação   há 2h    14   34K   $0.0061
+   └─ Chat IA                                                          14   34K   $0.0061
+
+▼ Ana · Analista de Dados               [Post]      1 ação   há 5h    11   9.7K  $0.0028
+   └─ Post Mesa Redonda                                                11   9.7K  $0.0028
+
+▼ Especialista Mega-Sena                [Resposta]  2 ações  há 1d    7    6.2K  $0.0011
+   └─ Resposta a Comentário                                             6   4.4K  $0.0008
+   └─ Chat com Usuário                                                  1   1.8K  $0.0003
+
+▼ [Sistema] WhatsApp Grupos             [Grupo]     2 ações  hoje     45   78K   $0.034
+   └─ Convite WhatsApp (auto)                                          30   52K   $0.022
+   └─ Palpite WhatsApp (auto)                                          15   26K   $0.012
+```
 
 Resposta direta às perguntas reais:
-- "Quanto cada usuário me custa?" → linha principal
-- "No quê ele gasta?" → expandir
-- "Está ativo?" → coluna última atividade
-- "Quem é power user?" → ordenação por custo + nº de ferramentas
+- "Qual bot mais consome?" → ordenação por custo
+- "Em quê ele gasta?" → expandir
+- "Tem bot dormindo?" → coluna última atividade
+- "Quanto custa o WhatsApp dos grupos?" → linha agrupada por categoria
+- "Quanto custa um post automático?" → coluna USD/chamada na sub-linha
 
 ### Fora de escopo
 
-- Não cria CSV export
-- Não cria gráfico de evolução por usuário
-- Não muda outras abas (Por Origem, Por Ferramenta, Por Bot, Log Detalhado)
-- Não cria limites/alertas por usuário
+- Não cria gráfico de evolução por bot
+- Não cria limite/alerta por bot
+- Não muda outras abas (Por Origem, Por Ferramenta, Por Usuário, Log)
+- Não mexe em `generate-palpites-megasena`/`duplasena`/`auto-fill-megasena`/`duplasena` (já têm padrão de logging similar — se faltar, fica em outro PR de auditoria)
 
