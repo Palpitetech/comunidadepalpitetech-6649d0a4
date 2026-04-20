@@ -1,56 +1,86 @@
 
 
-## Diagnóstico: por que "Por Bot" está vazia
+## Simplificar /admin/bots — manter o essencial, remover ruído
 
-**Sim, é normal — mas não é bom sinal.** Os dados existem no banco (39 logs de bot, 10 bots diferentes, último em 19/abr), mas o filtro padrão da página é **últimos 7 dias** (`weekAgo` → `today` = 13/abr a 20/abr).
+### Realidade dos bots (varredura agora)
 
-Olhando os últimos 14 dias:
+Os bots **estão ativíssimos**: 4 ativos, **155 posts nos últimos 30 dias** (último hoje 18:59), 27 logs de IA, 3 atendendo chat. A aba é necessária — mas tem coisas que sobram.
 
-| Dia | Logs com bot | Total |
-|---|---|---|
-| 19/abr → 09/abr | **0** | 26 |
-| **08/abr** | **12** | 25 |
-| 07/abr | 0 | 1 |
+### O que fica (essencial)
 
-**Tudo que é "Por Bot" parou em 08/abr.** Os 187 logs sem bot da última semana são 100% ações de usuário (Gerador, Chat, Auto-Fill).
+| Item | Por quê |
+|---|---|
+| **Lista de bots em pastas** (Especialistas para Postagens / Chat) | É onde você liga/desliga, vê quem está ativo, abre detalhe |
+| **Sheet de detalhe do bot** com abas Perfil / Prompt IA / Automação / Posts | Onde se edita prompt, modelo de IA, agenda semanal, autoria de resultados |
+| **Toggle ativo/inativo** na linha | Ação mais usada, fica acessível sem abrir |
 
-### Por que os bots pararam de logar?
+### O que sai (ruído)
 
-Três causas possíveis (preciso investigar para confirmar):
+#### 1. Botão "Disparar Post Manual" (header)
+**Remover.** Hoje os bots postam sozinhos por agenda (`process-scheduled-posts` cron) e o `sync-lotofacil` cria post automaticamente quando sai resultado. Disparo manual virou ferramenta legada que ninguém usa — e quando dispara, gera post fora de hora que confunde a comunidade.
 
-1. **Bots automáticos pararam de rodar** — `process-scheduled-posts` está rodando (vi nos logs: "✅ 4 bots encontrados"), mas todos retornam "Horário não bate com agenda" → nenhum post novo está sendo gerado, então nenhum log de IA novo aparece.
-2. **Chat com bots especialistas caiu** — `chat-assistant` não foi chamado nos últimos 11 dias por nenhum usuário em conversa com bot.
-3. **As edge functions que acabamos de instrumentar** (`generate-guide-post`, `group-blast-send`, `warming-run`, etc.) **ainda não dispararam nenhuma vez** desde o deploy — então também não geraram log.
+→ Remove `<Dialog>` "Disparar Post" do header de `AdminBots.tsx`
+→ Remove arquivo `src/components/admin/BotPostTrigger.tsx`
 
-### O que vou propor (após sua aprovação)
+#### 2. Aba "Posts" dentro do detalhe do bot
+**Remover.** Lista os últimos 20 posts do bot com botão de excluir. Você já tem isso melhor em `/comunidade` (vê o post no contexto real) e na aba "Por Bot" de `/admin/custos` (vê custo + frequência). Manter aqui é duplicar.
 
-#### 1. Mostrar mensagem clara quando vazio
+→ Remove arquivo `src/components/admin/BotPostsTab.tsx`
+→ Em `BotDetailSheet.tsx`: tabs vão de 4 → 3 colunas (`grid-cols-3`), remove `<TabsTrigger value="posts">` e `<TabsContent value="posts">`
 
-Em vez de tabela vazia silenciosa, mostrar:
-> "Nenhum bot consumiu tokens entre 13/abr e 20/abr. Último uso de bot: 08/abr (12 chamadas). Amplie o intervalo para ver dados anteriores."
+#### 3. Coluna "Estatísticas" da tabela (total_posts / total_comments)
+**Remover.** São contadores incrementados por trigger que ninguém olha — informação real está em `/admin/custos` aba "Por Bot" (com custo, tokens, última atividade). Aqui só ocupa espaço.
 
-Com botão **"Ver últimos 30 dias"** que ajusta o filtro automaticamente.
+→ Em `BotCategoryFolder.tsx`: remove `<TableHead>Estatísticas</TableHead>` e a `<TableCell>` correspondente
+→ Coluna "Recursos" (badges Posts/Auto-reply/Chat) **fica** — informa o que o bot faz num relance
 
-#### 2. Aplicar a mesma lógica nas outras abas (Por Usuário, Por Ferramenta)
+### O que NÃO mexo
 
-Quando uma aba estiver vazia mas houver dados em outro período, mostrar a data do último registro + atalho para expandir.
+- `useBots.ts`, tipos, edge functions, `guide_personas` no banco
+- Sub-abas Perfil / Prompt IA / Automação (são onde se configura tudo)
+- `BotHealthWidget` no painel principal
+- `BotCategoryFolder` (estrutura de pastas continua)
+- `WeeklyBotCalendar` dentro da aba Automação
+- Função `deleteBot` (pode ser usada em rota futura, sem custo)
 
-#### 3. Investigar por que os bots não estão postando/conversando
+### Antes / depois
 
-Causas reais a confirmar olhando o agendamento dos 4 bots e o cron:
-- **Ana** (Mesa Redonda) — última atividade 08/abr → agenda quebrada?
-- **Especialista Mega-Sena, Estrategista Lucas** (Chat) — sem conversas há 11 dias → ninguém está usando o /chat com bot?
-- **Vendedor Matheus, Carlos, Fernanda, Sistema Tech** (comentários automáticos) → `bot-interact-with-post` não roda há 11 dias
+**Header hoje:** título + 1 botão grande "Disparar Post"  
+**Header depois:** só título e descrição (mais limpo, foco na lista)
 
-→ Vou ler `process-scheduled-posts` + `bot-interact-with-post` + agenda dos bots e dizer **exatamente** o que está bloqueando cada um, com plano de correção (sem código ainda — só diagnóstico para você decidir).
+**Sheet hoje:** Perfil · Prompt IA · Automação · Posts (4 abas)  
+**Sheet depois:** Perfil · Prompt IA · Automação (3 abas)
 
-### Arquivos que serão editados (na implementação)
+**Linha do bot hoje:** Avatar+nome+badges · 📄12 💬45 · [Posts] [Auto-reply] [Chat] · Toggle  
+**Linha depois:** Avatar+nome+badges · [Posts] [Auto-reply] [Chat] · Toggle
 
-- `src/pages/admin/AdminCustos.tsx` — empty state inteligente nas 3 abas + botão "ampliar para 30 dias"
-- Possíveis correções de agenda nos bots (após o diagnóstico)
+### Detalhes técnicos
+
+- 2 arquivos deletados, 3 editados
+- Sem migração, sem mudança em edge functions
+- Imports `MessageSquare`, `Dialog*`, `BotPostTrigger`, `triggerDialogOpen` saem de `AdminBots.tsx`
+- Imports `FileText`, `MessageSquare` saem de `BotCategoryFolder.tsx` (não usados mais)
+- `BotPostsTab` import sai de `BotDetailSheet.tsx`
+
+### Arquivos editados
+
+- `src/pages/admin/AdminBots.tsx` — remove botão e dialog de disparo manual
+- `src/components/admin/BotDetailSheet.tsx` — remove aba Posts, vai pra grid-cols-3
+- `src/components/admin/BotCategoryFolder.tsx` — remove coluna Estatísticas
+
+### Arquivos deletados
+
+- `src/components/admin/BotPostTrigger.tsx`
+- `src/components/admin/BotPostsTab.tsx`
+
+### Resultado
+
+Aba mais enxuta, mesma capacidade de configurar tudo que importa (prompt, agenda, autoria, ligar/desligar). O que era duplicação com `/admin/custos` ou ação que nunca é usada some.
 
 ### Fora de escopo
 
-- Não muda lógica de cálculo
-- Não cria gráfico de evolução temporal (pode virar passo seguinte)
+- Não desativa nenhum bot
+- Não muda lógica de posts automáticos
+- Não remove edge functions
+- Não mexe em `BotHealthWidget` nem no calendário semanal
 
