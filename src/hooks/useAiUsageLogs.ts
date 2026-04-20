@@ -35,7 +35,15 @@ export interface UsageSummary {
   totalCalls: number;
   byOrigem: Record<Origem, { costUsd: number; tokens: number; count: number }>;
   byFerramenta: Record<string, { costUsd: number; tokens: number; tokensIn: number; tokensOut: number; count: number; hasUser: boolean; hasAuto: boolean }>;
-  byUsuario: Record<string, { name: string; email: string | null; costUsd: number; tokens: number; count: number }>;
+  byUsuario: Record<string, {
+    name: string;
+    email: string | null;
+    costUsd: number;
+    tokens: number;
+    count: number;
+    lastActivity: string | null;
+    byFerramenta: Record<string, { count: number; tokens: number; costUsd: number }>;
+  }>;
   byBot: Record<string, { name: string; costUsd: number; tokens: number; count: number }>;
 }
 
@@ -180,11 +188,23 @@ export function computeSummary(logs: AiUsageLog[]): UsageSummary {
           costUsd: 0,
           tokens: 0,
           count: 0,
+          lastActivity: null,
+          byFerramenta: {},
         };
       }
-      summary.byUsuario[log.user_id].costUsd += cost;
-      summary.byUsuario[log.user_id].tokens += tokens;
-      summary.byUsuario[log.user_id].count++;
+      const u = summary.byUsuario[log.user_id];
+      u.costUsd += cost;
+      u.tokens += tokens;
+      u.count++;
+      if (!u.lastActivity || log.created_at > u.lastActivity) {
+        u.lastActivity = log.created_at;
+      }
+      if (!u.byFerramenta[log.edge_function]) {
+        u.byFerramenta[log.edge_function] = { count: 0, tokens: 0, costUsd: 0 };
+      }
+      u.byFerramenta[log.edge_function].count++;
+      u.byFerramenta[log.edge_function].tokens += tokens;
+      u.byFerramenta[log.edge_function].costUsd += cost;
     }
 
     // By bot (only when bot_persona_id present)
