@@ -28,7 +28,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, RefreshCw, Pencil, Trash2, TrendingUp, Wallet, Calendar, AlertCircle } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Pencil, Trash2, TrendingUp, Wallet, Calendar, AlertCircle, CalendarClock } from "lucide-react";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -58,6 +58,21 @@ const PERIODO_LABELS: Record<PeriodoValidade, string> = {
 
 function formatBRL(v: number): string {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function calcularMensal(inv: Investimento): number | null {
+  const v = Number(inv.valor);
+  switch (inv.periodo_validade) {
+    case "1_mes": return v;
+    case "3_meses": return v / 3;
+    case "6_meses": return v / 6;
+    case "12_meses": return v / 12;
+    case "personalizado":
+      if (!inv.periodo_dias_custom || inv.periodo_dias_custom <= 0) return null;
+      return v / (inv.periodo_dias_custom / 30);
+    case "nd": return null;
+    default: return null;
+  }
 }
 
 function getStatus(data_fim: string | null): { label: string; variant: "default" | "secondary" | "destructive" | "outline"; days: number | null } {
@@ -116,12 +131,16 @@ export default function AdminInvestimentos() {
       return parseISO(i.data_fim) >= new Date();
     });
     const totalAtivo = ativos.reduce((acc, i) => acc + Number(i.valor), 0);
+    const mensalAtivo = ativos.reduce((acc, i) => {
+      const m = calcularMensal(i);
+      return acc + (m ?? 0);
+    }, 0);
     const expirando30 = list.filter((i) => {
       if (!i.data_fim) return false;
       const days = differenceInDays(parseISO(i.data_fim), new Date());
       return days >= 0 && days <= 30;
     }).length;
-    return { total, totalAtivo, totalCount: list.length, ativosCount: ativos.length, expirando30 };
+    return { total, totalAtivo, mensalAtivo, totalCount: list.length, ativosCount: ativos.length, expirando30 };
   }, [investimentos]);
 
   const openCreate = () => {
@@ -235,7 +254,7 @@ export default function AdminInvestimentos() {
         </div>
 
         {/* Summary */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <Card>
             <CardContent className="pt-4 pb-3">
               <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
@@ -258,6 +277,16 @@ export default function AdminInvestimentos() {
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 {summary.ativosCount} {summary.ativosCount === 1 ? "ativo" : "ativos"}
               </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-3">
+              <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                <CalendarClock className="h-3.5 w-3.5 text-blue-500" />
+                Custo Mensal
+              </div>
+              <p className="text-xl font-bold text-blue-600">{formatBRL(summary.mensalAtivo)}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">equivalente/mês</p>
             </CardContent>
           </Card>
           <Card>
@@ -293,6 +322,7 @@ export default function AdminInvestimentos() {
                   <TableHead>Identificação</TableHead>
                   <TableHead>Provedor</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="text-right">Mensal</TableHead>
                   <TableHead>Período</TableHead>
                   <TableHead>Início</TableHead>
                   <TableHead>Fim</TableHead>
@@ -303,11 +333,15 @@ export default function AdminInvestimentos() {
               <TableBody>
                 {(investimentos ?? []).map((inv) => {
                   const status = getStatus(inv.data_fim);
+                  const mensal = calcularMensal(inv);
                   return (
                     <TableRow key={inv.id}>
                       <TableCell className="font-medium">{inv.identificacao}</TableCell>
                       <TableCell>{inv.provedor}</TableCell>
                       <TableCell className="text-right">{formatBRL(Number(inv.valor))}</TableCell>
+                      <TableCell className="text-right text-xs text-muted-foreground">
+                        {mensal != null ? formatBRL(mensal) : "—"}
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="text-[10px]">
                           {PERIODO_LABELS[inv.periodo_validade]}
@@ -354,7 +388,7 @@ export default function AdminInvestimentos() {
                 })}
                 {(!investimentos || investimentos.length === 0) && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                       Nenhum investimento registrado
                     </TableCell>
                   </TableRow>
