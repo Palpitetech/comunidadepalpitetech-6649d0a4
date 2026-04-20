@@ -1,111 +1,150 @@
 
 
-## Ativar plano "Grupo VIP Lotofácil" e exibir em /planos
+## Diagnóstico — Grupo VIP Lotofácil no fluxo de mensagens
 
-### Diagnóstico — por que está inativo e oculto
+### Problemas críticos encontrados
 
-| Item | Estado atual |
-|---|---|
-| Nome no banco | "Grupo-vip-lotofacil" (capitalização ruim) |
-| Slug | `grupo-vip-lotofacil` ✅ (já está como pediu) |
-| Preço | R$ 19,00 ✅ |
-| Checkout link Kirvano | ✅ configurado |
-| `is_active` | **false** — provavelmente desativado quando foi criado como rascunho |
-| `display_order` | **0** — empatado com Grátis e Trial |
-| Aparece em `/planos`? | **Não.** A página filtra `price > 0` (passaria) MAS o grid é fixo em **3 colunas** (Mensal/Anual/AnualVIP) e usa configs hardcoded (`PLAN_HIGHLIGHTS`, `INSTALLMENTS`) que não incluem este slug |
+#### 🔴 1. Kirvano não tem oferta mapeada para Grupo VIP Lotofácil
+A tabela `kirvano_offer_plan_map` tem **3 mapeamentos** (mensal, semestral, anual) mas **nenhum** para Grupo VIP. Quando alguém comprar pelo checkout `pay.kirvano.com/19990908-ca9b-4df1-a0df-e2690927490b`, o webhook vai retornar `offer_mapping_not_found` e **a compra não será ativada nem disparará evento**.
 
-**Por que estava inativo:** plano foi criado em uma migração antiga como produto WhatsApp-only (palpites enviados pelo grupo, sem acesso premium ao app), provavelmente desativado por não ter UI pronta para exibir.
+#### 🔴 2. Evento errado disparado pela Kirvano
+O webhook Kirvano insere evento com `event_type = 'compra_aprovada'` (linha 843), mas o template "Compra aprovada" escuta `event_trigger = 'sale_confirmed'`. **Resultado: o template nunca dispara para nenhum plano.** Bug pré-existente, não específico do Grupo VIP.
+
+#### 🟡 3. Trigger usa nomenclatura antiga de prioridade
+A função `trigger_queue_event_templates` mapeia `'subscription_expired' → priority 8`, mas o vocabulário oficial agora é `'assinatura_expirada'`. Inconsistência que precisa alinhar.
+
+#### 🟡 4. Variável `{{produto}}` pode vir vazia
+O trigger monta variáveis `nome`, `telefone`, `email` mas **não inclui `produto`** (nome do plano). O template "Compra aprovada" usa `{{produto}}` — vai sair literal "{{produto}}" na mensagem.
+
+#### 🟢 5. Tags do Grupo VIP — OK
+A função `sync_perfil_tags()` já mapeia corretamente:
+- Ativa → `pago_grupovip_lotofacil`
+- Cancelada com validade → `grupovip_cancelado_ativo`
+- Cancelada vencida → `grupovip_cancelado_inativo`
+
+Tags estão prontas para segmentação.
 
 ---
 
 ### Mudanças propostas
 
-#### 1. Atualizar registro no banco (via insert tool — UPDATE)
+#### A. Cadastrar oferta Kirvano para Grupo VIP (insert tool)
 
 ```sql
-UPDATE plans SET
-  name = 'Grupo VIP Lotofácil',
-  is_active = true,
-  display_order = 1,        -- aparece antes do Mensal (que é 1) → ajustar Mensal pra 2, Anual 3, VIP 4
-  description = 'Receba palpites prontos da Lotofácil direto no seu WhatsApp em grupo exclusivo.'
-WHERE slug = 'grupo-vip-lotofacil';
-
--- Reordenar os outros para abrir espaço
-UPDATE plans SET display_order = 2 WHERE slug = 'mensal';
-UPDATE plans SET display_order = 3 WHERE slug = 'anual';
-UPDATE plans SET display_order = 4 WHERE slug = 'plano-anual-vip';
+INSERT INTO kirvano_offer_plan_map (offer_id, plan_id, days_valid, is_active)
+VALUES ('19990908-ca9b-4df1-a0df-e2690927490b', 'a23694fd-87f4-4edd-a6eb-8e51b3c90430', 30, true);
 ```
 
-#### 2. `src/pages/Planos.tsx` — exibir o 4º card
+Identifiquei o `offer_id` extraindo do checkout link já cadastrado no plano. Validade 30 dias (mensal).
 
-- Trocar grid `md:grid-cols-3` → **`md:grid-cols-2 lg:grid-cols-4`** (2 cols no tablet, 4 no desktop ≥1024px). No viewport atual (1147px) o usuário verá 4 colunas alinhadas.
-- Adicionar entradas no `PLAN_HIGHLIGHTS`:
-  ```ts
-  "grupo-vip-lotofacil": [
-    "Palpites prontos no WhatsApp",
-    "Grupo exclusivo Lotofácil",
-    "Análises diárias da equipe",
-    "Sem precisar usar ferramentas",
-  ],
-  ```
-- Sem entrada em `INSTALLMENTS` (R$ 19 à vista, sem parcelamento).
-- Adicionar nova "categoria visual" no card — ribbon `Mensal · Grupo` (cor secundária neutra, distinta dos 3 atuais).
-- Reduzir `min-h-[520px]` para `min-h-[480px]` (Grupo VIP tem menos features → não estica os outros).
-- Ajustar `max-w-4xl` do container para **`max-w-6xl`** para acomodar 4 cards confortavelmente.
+#### B. Corrigir nome do evento na Kirvano webhook
 
-#### 3. `supabase/functions/_shared/sync_perfil_tags` (DB function) — adicionar tag
-
-A função `sync_perfil_tags` mapeia slug → tag. Precisa incluir o novo slug para CRM/disparos:
-
-```sql
--- Migração: atualizar função sync_perfil_tags
--- Adicionar caso: WHEN 'grupo-vip-lotofacil' THEN tag = 'pago_grupovip_lotofacil'
+`supabase/functions/handle-kirvano-webhook/index.ts` linha 843:
+```ts
+// ANTES
+await insertEvent(targetPerfilId, "compra_aprovada", {...});
+// DEPOIS
+await insertEvent(targetPerfilId, "sale_confirmed", {...});
 ```
 
-Com isso, novos compradores do Grupo VIP recebem automaticamente a tag `pago_grupovip_lotofacil`, ficando segmentáveis no Disparo Manual e Templates.
+Alinha com o vocabulário oficial e faz o template "Compra aprovada" finalmente disparar.
 
-#### 4. Backfill de tags (se houver assinantes)
+#### C. Atualizar trigger para passar `produto` + alinhar prioridades
 
-```sql
--- Reaplicar trigger em quem já tem esse plano
-UPDATE perfis SET updated_at = now() WHERE plan_id = 'a23694fd-87f4-4edd-a6eb-8e51b3c90430';
+Migração SQL atualizando `trigger_queue_event_templates`:
+- Buscar `plans.name` via `plan_id` do perfil
+- Adicionar `produto` e `plano_nome` no objeto `v_variables`
+- Atualizar mapa de prioridades para usar `assinatura_expirada` (e manter `subscription_expired` como fallback temporário)
+- Adicionar `acesso_cortado`, `trial_iniciado` no mapa de prioridades
+
+#### D. Enriquecer template "Compra aprovada" com mensagem específica por plano
+
+Em vez de mensagem genérica, criar **2 variantes**:
+
+**Variante 1 — Compra aprovada (Acesso ao App)** — para Mensal/Anual/AnualVIP
+- Filtro: `include_tags: [pago_mensal, pago_anual, pago_anualvip]`, modo `any`
+- Conteúdo:
 ```
+🎉 Pagamento confirmado, {{nome}}!
+
+Seu plano *{{produto}}* já está ativo. ✅
+
+🔑 *Seus dados de acesso ao app:*
+📧 Email: {{email}}
+🔒 Senha: use *123456* no primeiro acesso e altere em seguida
+🔗 Login: https://www.palpitetech.com.br/login
+
+🎯 *O que você desbloqueou:*
+• Geradores ilimitados (Lotofácil, Mega, Quina, Dupla Sena)
+• Estatísticas avançadas e tendências
+• Bolões exclusivos
+• Chat IA com especialistas
+• Mentoria estratégica
+
+Bons palpites! Qualquer dúvida, é só chamar. 💬
+```
+
+**Variante 2 — Compra aprovada (Grupo VIP Lotofácil)** — só para Grupo VIP
+- Filtro: `include_tags: [pago_grupovip_lotofacil]`, modo `any`
+- Conteúdo:
+```
+🎉 Pagamento confirmado, {{nome}}!
+
+Bem-vindo(a) ao *Grupo VIP Lotofácil*! ✅
+
+📱 *Como funciona:*
+Você vai receber palpites prontos da Lotofácil direto neste WhatsApp, em grupo exclusivo, com análises diárias da nossa equipe.
+
+🔗 *Link de entrada no grupo VIP:*
+{{link_grupo_vip}}
+
+⚠️ *Importante:*
+Este produto é exclusivamente WhatsApp — não inclui acesso às ferramentas do app. Se quiser usar geradores, estatísticas e bolões, conheça nossos planos completos em https://www.palpitetech.com.br/planos
+
+Bons palpites! 🍀
+```
+
+A variável `{{link_grupo_vip}}` virá fixa do template hoje (link do grupo configurado no admin). Posso passar via `metadata` do evento se preferir dinâmico depois.
+
+**Desativar** o template "Compra aprovada" original (que era genérico).
+
+#### E. Atualizar `trigger_queue_event_templates` para incluir `link_grupo_vip` nas variáveis
+
+Buscar `group_blast_configs.vip_group_link` (primeiro ativo) e injetar como variável padrão. Assim a variante 2 funciona sem hard-code.
 
 ---
 
-### Visual esperado em /planos (desktop)
+### Tabela final de templates do evento `sale_confirmed`
 
-```text
-┌──────────┬──────────┬──────────┬──────────┐
-│ Grupo VIP│  Mensal  │   Anual  │  AnualVIP│
-│  R$ 19   │  R$ 47   │  R$ 297  │  R$ 397  │
-│ Mensal·  │ Flexível │ Melhor   │  Mais    │
-│ Grupo    │          │ custo-   │ completo │
-│          │          │ benef.   │          │
-└──────────┴──────────┴──────────┴──────────┘
-```
+| Template | Filtro de tags | Público |
+|---|---|---|
+| Compra aprovada (App) | `pago_mensal` ∪ `pago_anual` ∪ `pago_anualvip` | Assinantes plataforma |
+| Compra aprovada (Grupo VIP) | `pago_grupovip_lotofacil` | Compradores grupo WhatsApp |
 
-No mobile: 2 colunas (md), 1 coluna (sm).
+Cada comprador recebe **apenas a mensagem certa para o produto que comprou** — o motor de tags + filtros já garante isso.
 
 ---
 
-### Fora de escopo
+### Checklist de validação pós-deploy
 
-- Sem mudanças em `kirvano_offer_plan_map` (já está mapeado se houver oferta cadastrada — posso verificar se necessário num próximo loop)
-- Sem mudanças no AdminPlanos (já lista corretamente, vai mostrar como ativo após o UPDATE)
-- Sem novas features/permissões — Grupo VIP não dá acesso premium ao app, é produto WhatsApp puro
+1. ✅ Insert no `kirvano_offer_plan_map` para Grupo VIP
+2. ✅ Edge function `handle-kirvano-webhook` corrigida (`sale_confirmed`)
+3. ✅ Trigger SQL atualizado (variáveis `produto`, `link_grupo_vip`)
+4. ✅ 2 variantes de template criadas + original desativado
+5. 🧪 **Teste end-to-end:** simular webhook Kirvano para cada plano e verificar fila
+
+---
 
 ### Arquivos editados
 
 | Arquivo | Mudança |
 |---|---|
-| Insert tool (UPDATE plans) | Ativa, renomeia, reordena display_order dos 4 planos pagos |
-| `src/pages/Planos.tsx` | Grid 4 colunas, highlights + ribbon do novo plano, container largura maior |
-| Migração SQL nova | Atualiza função `sync_perfil_tags` para mapear slug → tag `pago_grupovip_lotofacil` |
+| Insert tool | Cadastra oferta Kirvano para Grupo VIP + cria 2 templates novos + desativa antigo |
+| `supabase/functions/handle-kirvano-webhook/index.ts` | Renomeia evento `compra_aprovada` → `sale_confirmed` |
+| Nova migração SQL | Atualiza `trigger_queue_event_templates` para incluir `produto`, `plano_nome`, `link_grupo_vip` e corrigir mapa de prioridades |
 
-### Resultado esperado
-
-- Plano aparece ativo no admin e visível em `/planos` para usuários
-- Compradores via Kirvano recebem automaticamente tag de CRM correta
-- Layout responsivo mantém 4 cards alinhados sem quebrar mobile
+### Fora de escopo
+- Sem mudança no `should_send_template` (lógica está correta)
+- Sem mudança em `sync_perfil_tags` (já cobre Grupo VIP)
+- Sem mudança no admin UI de templates (criação/edição via SQL pra ser preciso)
 
