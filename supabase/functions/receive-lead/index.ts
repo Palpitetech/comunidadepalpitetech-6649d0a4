@@ -344,10 +344,11 @@ serve(async (req) => {
     if (!userId) {
       const randomPassword = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
 
+      // email_confirm: false → email_verificado começa em false; trial ativa só após clique no magic link
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email: emailLower,
         password: randomPassword,
-        email_confirm: true,
+        email_confirm: false,
         user_metadata: {
           nome: nome.trim(),
           origem: source || "webhook",
@@ -361,10 +362,43 @@ serve(async (req) => {
       userId = newUser.user.id;
       isNew = true;
 
+      // Aguarda trigger handle_new_user popular o perfil
+      await new Promise((r) => setTimeout(r, 600));
+
+      // Reverte trial automático: lead fica PENDENTE até confirmar email.
+      // O trigger ativar_trial_pos_confirmacao reativa quando email_verificado vira true.
       await supabaseAdmin
         .from("perfis")
-        .update({ celular: normalizedCelular })
+        .update({
+          celular: normalizedCelular,
+          email_verificado: false,
+          plan_id: null,
+          status_assinatura: "pendente",
+          validade_assinatura: null,
+          trial_used: false,
+        })
         .eq("id", userId);
+
+      // Remove role premium (handle_new_user adiciona) — só ganha após confirmar
+      await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId)
+        .eq("role", "premium");
+
+      // Loga criação pendente
+      await supabaseAdmin.from("system_events").insert({
+        event_type: "email_pendente_criado",
+        description: `Lead criado aguardando confirmação de email: ${maskEmail(emailLower)}`,
+        source: "receive-lead",
+        status: "pending",
+        metadata: {
+          user_id: userId,
+          email_mascarado: maskEmail(emailLower),
+          ip,
+          webhook_name: webhook.name,
+        },
+      });
     }
 
     const newTags = ["lead", webhook.source_tag, ...(payloadTags || [])];
