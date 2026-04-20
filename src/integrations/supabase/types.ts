@@ -1631,6 +1631,7 @@ export type Database = {
           status: string | null
           template_id: string | null
           variables: Json | null
+          variant_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -1646,6 +1647,7 @@ export type Database = {
           status?: string | null
           template_id?: string | null
           variables?: Json | null
+          variant_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -1661,6 +1663,7 @@ export type Database = {
           status?: string | null
           template_id?: string | null
           variables?: Json | null
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -1672,6 +1675,57 @@ export type Database = {
           },
           {
             foreignKeyName: "message_queue_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "message_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_queue_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "message_template_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_template_variants: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_used_at: string | null
+          position: number
+          template_id: string
+          times_used: number
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          position: number
+          template_id: string
+          times_used?: number
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          position?: number
+          template_id?: string
+          times_used?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_template_variants_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "message_templates"
@@ -1690,6 +1744,7 @@ export type Database = {
           id: string
           include_tags: string[]
           is_active: boolean
+          last_variant_position: number
           name: string
           plan_ids: string[]
           tags_match_mode: string
@@ -1704,6 +1759,7 @@ export type Database = {
           id?: string
           include_tags?: string[]
           is_active?: boolean
+          last_variant_position?: number
           name: string
           plan_ids?: string[]
           tags_match_mode?: string
@@ -1718,6 +1774,7 @@ export type Database = {
           id?: string
           include_tags?: string[]
           is_active?: boolean
+          last_variant_position?: number
           name?: string
           plan_ids?: string[]
           tags_match_mode?: string
@@ -3351,6 +3408,10 @@ export type Database = {
       increment_smart_link_clicks: {
         Args: { p_slug: string }
         Returns: undefined
+      }
+      pick_template_variant: {
+        Args: { p_template_id: string }
+        Returns: string
       }
       queue_templates_for_event: {
         Args: {

@@ -11,9 +11,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Plus, Pencil, Trash2, FileText, ChevronsUpDown, Check, Send, Pause, Play, Timer, Filter } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, FileText, ChevronsUpDown, Check, Send, Pause, Play, Timer, Filter, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TemplateSegmentationSection } from "./TemplateSegmentationSection";
+import { VariantsDialog } from "./VariantsDialog";
+import { getEventLabel } from "@/lib/whatsapp-event-labels";
 
 interface MessageTemplate {
   id: string;
@@ -66,42 +68,7 @@ function formatDelay(minutes: number): string {
   return `${minutes} min`;
 }
 
-const EVENT_MASKS: Record<string, string> = {
-  novo_cadastro: "Novo Cadastro",
-  compra_aprovada: "Compra Aprovada",
-  pix_gerado: "PIX Gerado",
-  pix_expirado: "PIX Expirado",
-  boleto_gerado: "Boleto Gerado",
-  boleto_expirado: "Boleto Expirado",
-  assinatura_cancelada: "Assinatura Cancelada",
-  assinatura_inadimplente: "Inadimplente",
-  checkout_abandonado: "Checkout Abandonado",
-  carrinho_abandonado: "Carrinho Abandonado",
-  SALE_APPROVED: "Venda Aprovada",
-  SALE_REFUSED: "Venda Recusada",
-  SALE_CHARGEBACK: "Chargeback",
-  SALE_REFUNDED: "Reembolso",
-  BANK_SLIP_GENERATED: "Boleto Gerado",
-  BANK_SLIP_EXPIRED: "Boleto Expirado",
-  PIX_GENERATED: "PIX Gerado",
-  PIX_EXPIRED: "PIX Expirado",
-  SUBSCRIPTION_CANCELED: "Assinatura Cancelada",
-  SUBSCRIPTION_OVERDUE: "Inadimplente",
-  SUBSCRIPTION_RENEWED: "Assinatura Renovada",
-  SUBSCRIPTION_REACTIVATED: "Assinatura Reativada",
-  SUBSCRIPTION_TRIAL_STARTED: "Teste Iniciado",
-  SUBSCRIPTION_TRIAL_ENDED: "Teste Encerrado",
-  CHECKOUT_ABANDONED: "Checkout Abandonado",
-  ABANDONED_CART: "Carrinho Abandonado",
-  SUBSCRIPTION_EXPIRED: "Assinatura Expirada",
-  manual: "Manual",
-  lead_created: "Lead Cadastrado",
-  sale_confirmed: "Venda Confirmada",
-};
-
-function getEventLabel(eventType: string): string {
-  return EVENT_MASKS[eventType] || eventType;
-}
+// Event labels: usar helper compartilhado em src/lib/whatsapp-event-labels.ts
 
 const VARIABLES = ["{{nome}}", "{{telefone}}", "{{email}}", "{{produto}}"];
 const TEST_PHONE = "5516997175392";
@@ -120,6 +87,23 @@ export function TemplatesTab() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [allTags, setAllTags] = useState<string[]>([]);
   const [plans, setPlans] = useState<PlanOption[]>([]);
+  const [variantCounts, setVariantCounts] = useState<Record<string, number>>({});
+  const [variantsDialogTpl, setVariantsDialogTpl] = useState<MessageTemplate | null>(null);
+
+  const fetchVariantCounts = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("message_template_variants" as any)
+      .select("template_id");
+    if (error) {
+      console.error(error);
+      return;
+    }
+    const counts: Record<string, number> = {};
+    ((data as any[]) || []).forEach((v: any) => {
+      counts[v.template_id] = (counts[v.template_id] ?? 0) + 1;
+    });
+    setVariantCounts(counts);
+  }, []);
 
   const fetchTemplates = useCallback(async () => {
     setLoading(true);
@@ -174,7 +158,8 @@ export function TemplatesTab() {
     fetchTemplates();
     fetchEventTypes();
     fetchTagsAndPlans();
-  }, [fetchTemplates, fetchEventTypes, fetchTagsAndPlans]);
+    fetchVariantCounts();
+  }, [fetchTemplates, fetchEventTypes, fetchTagsAndPlans, fetchVariantCounts]);
 
   const openCreate = () => {
     setEditingId(null);
@@ -512,16 +497,33 @@ export function TemplatesTab() {
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground line-clamp-2">{tpl.content}</p>
-                {((tpl.include_tags && tpl.include_tags.length > 0) || (tpl.exclude_tags && tpl.exclude_tags.length > 0) || (tpl.plan_ids && tpl.plan_ids.length > 0)) && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {((tpl.include_tags && tpl.include_tags.length > 0) || (tpl.exclude_tags && tpl.exclude_tags.length > 0) || (tpl.plan_ids && tpl.plan_ids.length > 0)) && (
+                    <div className="flex items-center gap-1">
+                      <Filter className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-[10px] text-muted-foreground">Segmentado</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-1">
-                    <Filter className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-[10px] text-muted-foreground">Segmentado</span>
+                    <Repeat className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-[10px] text-muted-foreground">
+                      {variantCounts[tpl.id] ?? 0}/10 variantes
+                    </span>
                   </div>
-                )}
+                </div>
                 <div className="flex gap-2 pt-1">
                   <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs" onClick={() => openEdit(tpl)}>
                     <Pencil className="h-3.5 w-3.5" />
                     Editar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                    onClick={() => setVariantsDialogTpl(tpl)}
+                    title="Gerenciar variantes"
+                  >
+                    <Repeat className="h-3.5 w-3.5" />
                   </Button>
                   <Button
                     variant="outline"
@@ -570,6 +572,23 @@ export function TemplatesTab() {
           })}
         </div>
       )}
+
+      <VariantsDialog
+        open={variantsDialogTpl !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setVariantsDialogTpl(null);
+            fetchVariantCounts();
+          }
+        }}
+        templateId={variantsDialogTpl?.id ?? null}
+        templateName={variantsDialogTpl?.name ?? ""}
+        onCountChange={(count) => {
+          if (variantsDialogTpl) {
+            setVariantCounts((prev) => ({ ...prev, [variantsDialogTpl.id]: count }));
+          }
+        }}
+      />
     </div>
   );
 }
