@@ -68,7 +68,7 @@ export function RequireCelularModal() {
               inputMode="numeric"
               placeholder="(11) 99999-9999"
               value={celular}
-              onChange={(e) => setCelular(formatCelular(e.target.value))}
+              onChange={(e) => setCelular(formatCelularMask(e.target.value))}
               className="h-12 text-base"
               disabled={loading}
             />
