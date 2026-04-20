@@ -223,6 +223,63 @@ export function LoginWizard() {
     }
   };
 
+  const handleVerifyPendingEmail = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (codigo.length < 6 || !pendingUserId) return;
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("verificar-codigo", {
+        body: { user_id: pendingUserId, codigo, tipo: "email" },
+      });
+
+      if (error || !data?.sucesso) {
+        throw new Error(data?.erro || "Código inválido");
+      }
+
+      // Email confirmado → trigger ativou trial 3 dias + role premium.
+      // Como a conta foi criada via webhook (sem senha conhecida), enviamos reset
+      // para o usuário criar senha e logar.
+      await resetPassword(emailLogin || email);
+
+      toast({ 
+        title: "Conta ativada! 🎉", 
+        description: "Trial de 3 dias liberado! Enviamos um link no seu email pra criar sua senha e acessar." 
+      });
+      setEtapa("email");
+      setCodigo("");
+      setPendingUserId(null);
+    } catch (err: any) {
+      toast({ 
+        title: "Código inválido", 
+        description: err?.message || "Verifique o código e tente novamente.", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendPendingCode = async () => {
+    if (!pendingUserId) return;
+    setIsLoading(true);
+    try {
+      await supabase.functions.invoke("enviar-codigo-email", {
+        body: { 
+          user_id: pendingUserId, 
+          email: emailLogin || email, 
+          nome: nomeUsuarioEncontrado || "" 
+        },
+      });
+      toast({ title: "Código reenviado", description: "Verifique seu email." });
+      setCodigo("");
+    } catch (err) {
+      toast({ title: "Erro ao reenviar", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const renderStep = () => {
     switch (etapa) {
       case "email":
