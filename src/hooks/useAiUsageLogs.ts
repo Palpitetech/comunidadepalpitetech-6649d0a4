@@ -34,7 +34,7 @@ export interface UsageSummary {
   totalTokens: number;
   totalCalls: number;
   byOrigem: Record<Origem, { costUsd: number; tokens: number; count: number }>;
-  byFerramenta: Record<string, { costUsd: number; tokens: number; count: number }>;
+  byFerramenta: Record<string, { costUsd: number; tokens: number; tokensIn: number; tokensOut: number; count: number; hasUser: boolean; hasAuto: boolean }>;
   byUsuario: Record<string, { name: string; email: string | null; costUsd: number; tokens: number; count: number }>;
   byBot: Record<string, { name: string; costUsd: number; tokens: number; count: number }>;
 }
