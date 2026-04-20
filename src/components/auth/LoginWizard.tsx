@@ -70,8 +70,35 @@ export function LoginWizard() {
       const result = data as unknown as VerificationResult;
 
       if (result.exists) {
+        const emailParaLogin = result.email || inputLimpo;
         setNomeUsuarioEncontrado(result.nome || "");
-        setEmailLogin(result.email || inputLimpo);
+        setEmailLogin(emailParaLogin);
+
+        // Verifica se o email já foi confirmado (lead pendente do webhook)
+        const { data: perfil } = await supabase
+          .from("perfis")
+          .select("id, email_verificado, nome")
+          .eq("email", emailParaLogin)
+          .maybeSingle();
+
+        if (perfil && perfil.email_verificado === false) {
+          // Lead pendente — dispara OTP automaticamente e pula pra etapa de verificação
+          setPendingUserId(perfil.id);
+          await supabase.functions.invoke("enviar-codigo-email", {
+            body: { 
+              user_id: perfil.id, 
+              email: emailParaLogin, 
+              nome: perfil.nome || result.nome || "" 
+            },
+          });
+          setEtapa("verificacao-email-pendente");
+          toast({ 
+            title: "Conta pendente de ativação", 
+            description: "Enviamos um código de 6 dígitos pro seu email." 
+          });
+          return;
+        }
+
         setEtapa("senha");
       } else {
         setEtapa("celular");
