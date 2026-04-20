@@ -579,6 +579,22 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos do
     }
 
     const aiData = await aiRes.json();
+    const usage = aiData?.usage;
+    if (usage) {
+      const pt = usage.prompt_tokens || 0;
+      const ct = usage.completion_tokens || 0;
+      const cost = (pt / 1e6) * 0.15 + (ct / 1e6) * 0.60;
+      supabase.from("ai_usage_logs").insert({
+        edge_function: "group-blast-palpite",
+        action_type: "palpite_para_grupo_whatsapp",
+        prompt_tokens: pt,
+        completion_tokens: ct,
+        total_tokens: usage.total_tokens || (pt + ct),
+        model: "google/gemini-3-flash-preview",
+        cost_usd: cost,
+        metadata: {},
+      }).then(() => {}).catch((e: any) => console.error("Erro log IA:", e));
+    }
     const toolCall = aiData?.choices?.[0]?.message?.tool_calls?.[0];
 
     if (!toolCall?.function?.arguments) return null;
