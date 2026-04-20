@@ -27,6 +27,9 @@ interface DisparoPublicoFilterProps {
   selectedStatus: string;
   onStatusChange: (v: string) => void;
 
+  selectedVerification: "all" | "verified" | "unverified";
+  onVerificationChange: (v: "all" | "verified" | "unverified") => void;
+
   eventTypes: string[];
   selectedEvent: string;
   onEventChange: (v: string) => void;
