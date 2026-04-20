@@ -66,6 +66,8 @@ export function DisparoPublicoFilter({
   onPlanToggle,
   selectedStatus,
   onStatusChange,
+  selectedVerification,
+  onVerificationChange,
   eventTypes,
   selectedEvent,
   onEventChange,
