@@ -516,6 +516,14 @@ export default function AdminCustosOperacionais() {
                           {r.categoria.replace("_", " ")}
                         </Badge>
                       </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] ${periodoBadgeClass(r.periodo)}`}
+                        >
+                          {periodoLabel(r.periodo)}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="text-right font-semibold">
                         {formatBRL(Number(r.valor))}
                       </TableCell>
