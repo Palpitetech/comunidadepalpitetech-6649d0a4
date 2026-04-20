@@ -1,91 +1,111 @@
 
 
-## Revisão dos templates de WhatsApp
+## Ativar plano "Grupo VIP Lotofácil" e exibir em /planos
 
-### Problemas detectados nos templates atuais
+### Diagnóstico — por que está inativo e oculto
 
-| # | Template | Problema |
-|---|---|---|
-| 1 | Cadastro Comunidade | ✅ Único ativo. Tem link/email, mas falta variável `{{senha}}` (envia "123456" hardcoded sem deixar claro que é só fallback). |
-| 2 | Boas-vindas Cadastro | Inativo. Genérico demais — não passa email/login/senha. Redundante com #1. |
-| 3 | Trial expirando hoje | Inativo. Delay 0 + evento `trial_finalizado` = dispara DEPOIS que já expirou. Texto diz "termina hoje", mas só dispara quando já terminou. |
-| 4 | Compra aprovada | Inativo. **Faltam credenciais de acesso** (link, email, senha). |
-| 5 | Assinatura vencida | Inativo. Delay 0 está OK (avisar imediatamente). Texto OK. |
-| 6 | Lembrete verificar email | Inativo. Delay 1440min (24h) é muito tarde — verificação de email costuma ser nos primeiros 30-60min. |
-| 7 | Reativação 7 dias | Inativo. Delay 10080min (7d) está correto. Texto OK. |
+| Item | Estado atual |
+|---|---|
+| Nome no banco | "Grupo-vip-lotofacil" (capitalização ruim) |
+| Slug | `grupo-vip-lotofacil` ✅ (já está como pediu) |
+| Preço | R$ 19,00 ✅ |
+| Checkout link Kirvano | ✅ configurado |
+| `is_active` | **false** — provavelmente desativado quando foi criado como rascunho |
+| `display_order` | **0** — empatado com Grátis e Trial |
+| Aparece em `/planos`? | **Não.** A página filtra `price > 0` (passaria) MAS o grid é fixo em **3 colunas** (Mensal/Anual/AnualVIP) e usa configs hardcoded (`PLAN_HIGHLIGHTS`, `INSTALLMENTS`) que não incluem este slug |
 
-### Mudanças propostas (migração SQL)
+**Por que estava inativo:** plano foi criado em uma migração antiga como produto WhatsApp-only (palpites enviados pelo grupo, sem acesso premium ao app), provavelmente desativado por não ter UI pronta para exibir.
 
-**Template 1 — Cadastro Comunidade** (manter ativo)
-- Trocar bloco hardcoded "Senha criada / 123456" por variável real `{{senha}}` quando disponível, com fallback claro.
-- Delay: **0** (imediato) ✅
+---
 
-**Template 2 — Boas-vindas Cadastro** (manter inativo + arquivar)
-- Marcar `is_active=false` definitivamente. Já temos #1 cumprindo a função. Não dispara duplicidade.
+### Mudanças propostas
 
-**Template 3 — Trial expirando hoje**
-- Renomear para "Trial expirando em 1 dia"
-- Mudar evento para `trial_iniciado` + delay **2880min (2 dias)** → dispara no penúltimo dia do trial de 3 dias
-- Texto ajustado: "Seu período de teste termina amanhã"
+#### 1. Atualizar registro no banco (via insert tool — UPDATE)
 
-**Template 4 — Compra aprovada** ⭐ principal pedido
-- Adicionar bloco de credenciais:
+```sql
+UPDATE plans SET
+  name = 'Grupo VIP Lotofácil',
+  is_active = true,
+  display_order = 1,        -- aparece antes do Mensal (que é 1) → ajustar Mensal pra 2, Anual 3, VIP 4
+  description = 'Receba palpites prontos da Lotofácil direto no seu WhatsApp em grupo exclusivo.'
+WHERE slug = 'grupo-vip-lotofacil';
+
+-- Reordenar os outros para abrir espaço
+UPDATE plans SET display_order = 2 WHERE slug = 'mensal';
+UPDATE plans SET display_order = 3 WHERE slug = 'anual';
+UPDATE plans SET display_order = 4 WHERE slug = 'plano-anual-vip';
+```
+
+#### 2. `src/pages/Planos.tsx` — exibir o 4º card
+
+- Trocar grid `md:grid-cols-3` → **`md:grid-cols-2 lg:grid-cols-4`** (2 cols no tablet, 4 no desktop ≥1024px). No viewport atual (1147px) o usuário verá 4 colunas alinhadas.
+- Adicionar entradas no `PLAN_HIGHLIGHTS`:
+  ```ts
+  "grupo-vip-lotofacil": [
+    "Palpites prontos no WhatsApp",
+    "Grupo exclusivo Lotofácil",
+    "Análises diárias da equipe",
+    "Sem precisar usar ferramentas",
+  ],
   ```
-  🎉 Pagamento confirmado, {{nome}}!
+- Sem entrada em `INSTALLMENTS` (R$ 19 à vista, sem parcelamento).
+- Adicionar nova "categoria visual" no card — ribbon `Mensal · Grupo` (cor secundária neutra, distinta dos 3 atuais).
+- Reduzir `min-h-[520px]` para `min-h-[480px]` (Grupo VIP tem menos features → não estica os outros).
+- Ajustar `max-w-4xl` do container para **`max-w-6xl`** para acomodar 4 cards confortavelmente.
 
-  Seu plano "{{produto}}" já está ativo.
+#### 3. `supabase/functions/_shared/sync_perfil_tags` (DB function) — adicionar tag
 
-  🔑 Seus dados de acesso:
-  📧 Email: {{email}}
-  🔒 Senha: a mesma do cadastro (caso tenha esquecido, use "Resetar Senha")
-  🔗 Login: https://www.palpitetech.com.br/login
+A função `sync_perfil_tags` mapeia slug → tag. Precisa incluir o novo slug para CRM/disparos:
 
-  Aproveite todas as ferramentas premium!
-  Qualquer dúvida, é só chamar.
-  ```
-- Delay: **0** (imediato) ✅
+```sql
+-- Migração: atualizar função sync_perfil_tags
+-- Adicionar caso: WHEN 'grupo-vip-lotofacil' THEN tag = 'pago_grupovip_lotofacil'
+```
 
-**Template 5 — Assinatura vencida**
-- Manter texto. Delay **0** (imediato após evento `assinatura_expirada`).
+Com isso, novos compradores do Grupo VIP recebem automaticamente a tag `pago_grupovip_lotofacil`, ficando segmentáveis no Disparo Manual e Templates.
 
-**Template 6 — Lembrete verificar email**
-- Reduzir delay de 1440 → **60min** (1h após cadastro). Janela ideal para lembrete.
-- Manter `exclude_tags: [verificado]` para não enviar a quem já confirmou.
+#### 4. Backfill de tags (se houver assinantes)
 
-**Template 7 — Reativação 7 dias**
-- Manter como está. Delay 10080min (7d) ✅.
+```sql
+-- Reaplicar trigger em quem já tem esse plano
+UPDATE perfis SET updated_at = now() WHERE plan_id = 'a23694fd-87f4-4edd-a6eb-8e51b3c90430';
+```
 
-### Tabela final de delays revisados
+---
 
-| Template | Evento | Delay |
-|---|---|---|
-| Cadastro Comunidade | novo_cadastro | 0 (imediato) |
-| Lembrete verificar email | novo_cadastro | 60 min |
-| Trial expirando em 1 dia | trial_iniciado | 2880 min (2d) |
-| Compra aprovada (com credenciais) | sale_confirmed | 0 (imediato) |
-| Assinatura vencida | assinatura_expirada | 0 (imediato) |
-| Reativação 7 dias | acesso_cortado | 10080 min (7d) |
+### Visual esperado em /planos (desktop)
 
-### Sobre a variável `{{senha}}`
+```text
+┌──────────┬──────────┬──────────┬──────────┐
+│ Grupo VIP│  Mensal  │   Anual  │  AnualVIP│
+│  R$ 19   │  R$ 47   │  R$ 297  │  R$ 397  │
+│ Mensal·  │ Flexível │ Melhor   │  Mais    │
+│ Grupo    │          │ custo-   │ completo │
+│          │          │ benef.   │          │
+└──────────┴──────────┴──────────┴──────────┘
+```
 
-**Não vou adicioná-la em produção** — armazenar senha em texto puro viola LGPD e quebra o hash bcrypt do Supabase Auth. Em vez disso:
-- No template **Cadastro Comunidade** (cadastro manual via wizard): texto fica "Use a senha que você criou no cadastro" + fallback de reset.
-- No template **Compra aprovada** (cadastro automático via Kirvano webhook): texto fica "Use a senha provisória **123456** no primeiro acesso e altere em seguida" — é o padrão do `kirvano-auto-account-creation`.
+No mobile: 2 colunas (md), 1 coluna (sm).
+
+---
+
+### Fora de escopo
+
+- Sem mudanças em `kirvano_offer_plan_map` (já está mapeado se houver oferta cadastrada — posso verificar se necessário num próximo loop)
+- Sem mudanças no AdminPlanos (já lista corretamente, vai mostrar como ativo após o UPDATE)
+- Sem novas features/permissões — Grupo VIP não dá acesso premium ao app, é produto WhatsApp puro
 
 ### Arquivos editados
 
 | Arquivo | Mudança |
 |---|---|
-| Nova migração SQL | `UPDATE message_templates` para os 7 registros (texto, delay, evento, ativo/inativo) |
-
-### Fora de escopo
-- Sem mudanças em `useDisparoManual` / UI (templates editáveis pela tela de Templates)
-- Sem alteração no trigger `queue_templates_for_event`
-- Sem novo evento — uso os já existentes do vocabulário oficial
+| Insert tool (UPDATE plans) | Ativa, renomeia, reordena display_order dos 4 planos pagos |
+| `src/pages/Planos.tsx` | Grid 4 colunas, highlights + ribbon do novo plano, container largura maior |
+| Migração SQL nova | Atualiza função `sync_perfil_tags` para mapear slug → tag `pago_grupovip_lotofacil` |
 
 ### Resultado esperado
-- Compra aprovada entrega login completo (email + link + instrução de senha)
-- Lembrete de verificação chega em janela útil (1h, não 24h)
-- Trial avisa antes de expirar, não depois
-- Comunicações alinhadas ao vocabulário canônico de eventos/tags
+
+- Plano aparece ativo no admin e visível em `/planos` para usuários
+- Compradores via Kirvano recebem automaticamente tag de CRM correta
+- Layout responsivo mantém 4 cards alinhados sem quebrar mobile
 
