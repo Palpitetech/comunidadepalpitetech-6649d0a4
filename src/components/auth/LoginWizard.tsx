@@ -6,17 +6,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { Loader2, Mail, Lock, User, MessageCircle, ArrowRight, ArrowLeft, Phone, ShieldCheck } from "lucide-react";
+import { Loader2, Mail, Lock, User, MessageCircle, ArrowLeft, Phone, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { validateCelularBR, formatCelularMask } from "@/lib/celular";
 
-type Etapa = 
-  | "email" 
-  | "senha" 
-  | "celular" 
-  | "cadastro-nome" 
-  | "cadastro-email" 
-  | "cadastro-whatsapp" 
+type Etapa =
+  | "email"
+  | "senha"
+  | "celular"
+  | "cadastro-nome"
+  | "cadastro-email"
+  | "cadastro-whatsapp"
   | "cadastro-codigo"
   | "verificacao-email-pendente";
 
@@ -25,39 +26,6 @@ interface VerificationResult {
   nome: string | null;
   email: string | null;
   type: string | null;
-}
-
-// Espelha a regra do edge function receive-lead
-function validateCelularBR(value: string): { ok: boolean; normalized?: string; reason?: string } {
-  const digits = value.replace(/\D/g, "");
-  let normalized = digits;
-  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
-    normalized = digits.substring(2);
-  }
-  if (normalized.length < 10 || normalized.length > 11) {
-    return { ok: false, reason: "Celular precisa ter 10 ou 11 dígitos com DDD" };
-  }
-  const ddd = parseInt(normalized.substring(0, 2), 10);
-  if (isNaN(ddd) || ddd < 11 || ddd > 99) {
-    return { ok: false, reason: "DDD inválido" };
-  }
-  if (normalized.length === 11 && normalized[2] !== "9") {
-    return { ok: false, reason: "Celular deve começar com 9 após o DDD" };
-  }
-  if (/^(\d)\1+$/.test(normalized)) {
-    return { ok: false, reason: "Celular inválido" };
-  }
-  if (normalized === "12345678901" || normalized === "1234567890") {
-    return { ok: false, reason: "Celular inválido" };
-  }
-  return { ok: true, normalized: `55${normalized}` };
-}
-
-function formatCelularMask(value: string): string {
-  const n = value.replace(/\D/g, "").slice(0, 11);
-  if (n.length <= 2) return n;
-  if (n.length <= 7) return `(${n.slice(0, 2)}) ${n.slice(2)}`;
-  return `(${n.slice(0, 2)}) ${n.slice(2, 7)}-${n.slice(7, 11)}`;
 }
 
 export function LoginWizard() {
@@ -76,7 +44,8 @@ export function LoginWizard() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { signIn, signInWithOtp, verifyOtp, updateProfile, profile, resetPassword } = useAuthContext();
+  const { signIn, signInWithOtp, verifyOtp, updateProfile, resetPassword } = useAuthContext();
+
 
   const supportWhatsApp = "https://wa.me/5516997175392";
   const senderEmail = "contato@mail.palpitetech.com.br";

@@ -15,6 +15,7 @@ import { Phone, Loader2, ArrowRight, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { validateCelularBR, formatCelularMask } from "@/lib/celular";
 
 interface AlterarCelularDialogProps {
   celularAtual: string | null;
@@ -32,26 +33,17 @@ export function AlterarCelularDialog({ celularAtual, onSuccess, trigger }: Alter
   const { toast } = useToast();
   const { user, profile } = useAuthContext();
 
-  const formatCelular = (value: string) => {
-    const numeros = value.replace(/\D/g, "");
-    if (numeros.length <= 2) return numeros;
-    if (numeros.length <= 7) return `(${numeros.slice(0, 2)}) ${numeros.slice(2)}`;
-    if (numeros.length <= 11) {
-      return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7)}`;
-    }
-    return `(${numeros.slice(0, 2)}) ${numeros.slice(2, 7)}-${numeros.slice(7, 11)}`;
-  };
-
   const handleEnviarCodigo = async () => {
-    const numeros = novoCelular.replace(/\D/g, "");
-    if (numeros.length < 10 || numeros.length > 11) {
+    const validation = validateCelularBR(novoCelular);
+    if (!validation.ok) {
       toast({
         title: "Celular inválido",
-        description: "Digite um celular válido com DDD",
+        description: validation.reason || "Digite um celular válido com DDD",
         variant: "destructive",
       });
       return;
     }
+    const numeros = validation.normalized!.replace(/^55/, "");
 
     setIsLoading(true);
     try {
@@ -83,7 +75,7 @@ export function AlterarCelularDialog({ celularAtual, onSuccess, trigger }: Alter
 
       toast({
         title: "Código enviado!",
-        description: `Verifique seu celular ${formatCelular(numeros)}`,
+        description: `Verifique seu celular ${formatCelularMask(numeros)}`,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro ao enviar código";
@@ -116,11 +108,12 @@ export function AlterarCelularDialog({ celularAtual, onSuccess, trigger }: Alter
       if (error) throw error;
       if (!data.sucesso) throw new Error(data.erro);
 
-      // Atualizar celular no perfil
-      const numeros = novoCelular.replace(/\D/g, "");
+      // Atualizar celular no perfil (salva normalizado com prefixo 55 em ambos campos)
+      const validation = validateCelularBR(novoCelular);
+      const normalized = validation.normalized!;
       const { error: updateError } = await supabase
         .from("perfis")
-        .update({ celular: numeros, celular_verificado: true })
+        .update({ celular: normalized, whatsapp: normalized, celular_verificado: true })
         .eq("id", user?.id);
 
       if (updateError) throw updateError;
@@ -189,7 +182,7 @@ export function AlterarCelularDialog({ celularAtual, onSuccess, trigger }: Alter
               {celularAtual && (
                 <div className="p-3 bg-muted rounded-lg">
                   <p className="text-sm text-muted-foreground">Celular atual</p>
-                  <p className="font-medium">{formatCelular(celularAtual)}</p>
+                  <p className="font-medium">{formatCelularMask(celularAtual)}</p>
                 </div>
               )}
               <div className="space-y-2">
@@ -199,7 +192,7 @@ export function AlterarCelularDialog({ celularAtual, onSuccess, trigger }: Alter
                   type="tel"
                   placeholder="(11) 99999-9999"
                   value={novoCelular}
-                  onChange={(e) => setNovoCelular(formatCelular(e.target.value))}
+                  onChange={(e) => setNovoCelular(formatCelularMask(e.target.value))}
                   inputMode="numeric"
                   className="h-12 text-lg"
                 />
@@ -231,7 +224,7 @@ export function AlterarCelularDialog({ celularAtual, onSuccess, trigger }: Alter
               <DialogTitle>Verificar código</DialogTitle>
               <DialogDescription>
                 Digite o código de 6 dígitos enviado para{" "}
-                <strong>{formatCelular(novoCelular)}</strong>
+                <strong>{formatCelularMask(novoCelular)}</strong>
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
