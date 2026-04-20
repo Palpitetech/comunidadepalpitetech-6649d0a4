@@ -87,6 +87,23 @@ export function TemplatesTab() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [allTags, setAllTags] = useState<string[]>([]);
   const [plans, setPlans] = useState<PlanOption[]>([]);
+  const [variantCounts, setVariantCounts] = useState<Record<string, number>>({});
+  const [variantsDialogTpl, setVariantsDialogTpl] = useState<MessageTemplate | null>(null);
+
+  const fetchVariantCounts = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("message_template_variants" as any)
+      .select("template_id");
+    if (error) {
+      console.error(error);
+      return;
+    }
+    const counts: Record<string, number> = {};
+    ((data as any[]) || []).forEach((v: any) => {
+      counts[v.template_id] = (counts[v.template_id] ?? 0) + 1;
+    });
+    setVariantCounts(counts);
+  }, []);
 
   const fetchTemplates = useCallback(async () => {
     setLoading(true);
