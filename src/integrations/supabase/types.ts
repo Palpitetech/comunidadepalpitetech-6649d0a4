@@ -757,6 +757,98 @@ export type Database = {
           },
         ]
       }
+      chip_celulares: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          custo_chip: number
+          data_compra: string
+          id: string
+          numero: string
+          numero_id: number
+          observacao: string | null
+          operadora: string
+          plano_tipo: string
+          ultima_recarga_at: string | null
+          ultima_recarga_valor: number | null
+          updated_at: string
+          valor_plano: number
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          custo_chip?: number
+          data_compra?: string
+          id?: string
+          numero: string
+          numero_id?: number
+          observacao?: string | null
+          operadora: string
+          plano_tipo: string
+          ultima_recarga_at?: string | null
+          ultima_recarga_valor?: number | null
+          updated_at?: string
+          valor_plano?: number
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          custo_chip?: number
+          data_compra?: string
+          id?: string
+          numero?: string
+          numero_id?: number
+          observacao?: string | null
+          operadora?: string
+          plano_tipo?: string
+          ultima_recarga_at?: string | null
+          ultima_recarga_valor?: number | null
+          updated_at?: string
+          valor_plano?: number
+        }
+        Relationships: []
+      }
+      chip_recargas: {
+        Row: {
+          chip_id: string
+          created_at: string
+          created_by: string | null
+          data_recarga: string
+          id: string
+          metodo: string | null
+          observacao: string | null
+          valor: number
+        }
+        Insert: {
+          chip_id: string
+          created_at?: string
+          created_by?: string | null
+          data_recarga?: string
+          id?: string
+          metodo?: string | null
+          observacao?: string | null
+          valor: number
+        }
+        Update: {
+          chip_id?: string
+          created_at?: string
+          created_by?: string | null
+          data_recarga?: string
+          id?: string
+          metodo?: string | null
+          observacao?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chip_recargas_chip_id_fkey"
+            columns: ["chip_id"]
+            isOneToOne: false
+            referencedRelation: "chip_celulares"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       codigos_verificacao: {
         Row: {
           codigo: string
