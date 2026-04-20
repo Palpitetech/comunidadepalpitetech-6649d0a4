@@ -49,7 +49,7 @@ const mainItems = [
   { title: "Usuários", url: "/admin/usuarios", icon: Users },
   { title: "Bots", url: "/admin/bots", icon: Bot },
   { title: "Custos IA", url: "/admin/custos", icon: DollarSign },
-  { title: "Investimentos", url: "/admin/investimentos", icon: PiggyBank },
+  { title: "Assinaturas Op.", url: "/admin/assinaturas-operacionais", icon: PiggyBank },
   { title: "Convites", url: "/admin/convites", icon: Gift },
   { title: "Vendas", url: "/admin/vendas", icon: ShoppingCart },
   { title: "Eventos", url: "/admin/eventos", icon: Activity },

@@ -34,7 +34,7 @@ import { ptBR } from "date-fns/locale";
 
 type PeriodoValidade = "1_mes" | "3_meses" | "6_meses" | "12_meses" | "nd" | "personalizado";
 
-interface Investimento {
+interface AssinaturaOperacional {
   id: string;
   identificacao: string;
   valor: number;
@@ -60,16 +60,16 @@ function formatBRL(v: number): string {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function calcularMensal(inv: Investimento): number | null {
-  const v = Number(inv.valor);
-  switch (inv.periodo_validade) {
+function calcularMensal(assinatura: AssinaturaOperacional): number | null {
+  const v = Number(assinatura.valor);
+  switch (assinatura.periodo_validade) {
     case "1_mes": return v;
     case "3_meses": return v / 3;
     case "6_meses": return v / 6;
     case "12_meses": return v / 12;
     case "personalizado":
-      if (!inv.periodo_dias_custom || inv.periodo_dias_custom <= 0) return null;
-      return v / (inv.periodo_dias_custom / 30);
+      if (!assinatura.periodo_dias_custom || assinatura.periodo_dias_custom <= 0) return null;
+      return v / (assinatura.periodo_dias_custom / 30);
     case "nd": return null;
     default: return null;
   }
@@ -103,7 +103,7 @@ const initialForm = (): FormState => ({
   data_inicio: new Date().toISOString().split("T")[0],
 });
 
-export default function AdminInvestimentos() {
+export default function AdminAssinaturasOperacionais() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -111,20 +111,20 @@ export default function AdminInvestimentos() {
   const [form, setForm] = useState<FormState>(initialForm());
   const [saving, setSaving] = useState(false);
 
-  const { data: investimentos, isLoading, refetch } = useQuery({
-    queryKey: ["admin-investimentos"],
+  const { data: assinaturas, isLoading, refetch } = useQuery({
+    queryKey: ["admin-assinaturas-operacionais"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("investimentos" as any)
+        .from("assinaturas_operacionais" as any)
         .select("*")
         .order("data_inicio", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as Investimento[];
+      return (data ?? []) as unknown as AssinaturaOperacional[];
     },
   });
 
   const summary = useMemo(() => {
-    const list = investimentos ?? [];
+    const list = assinaturas ?? [];
     const total = list.reduce((acc, i) => acc + Number(i.valor), 0);
     const ativos = list.filter((i) => {
       if (!i.data_fim) return true;
@@ -141,7 +141,7 @@ export default function AdminInvestimentos() {
       return days >= 0 && days <= 30;
     }).length;
     return { total, totalAtivo, mensalAtivo, totalCount: list.length, ativosCount: ativos.length, expirando30 };
-  }, [investimentos]);
+  }, [assinaturas]);
 
   const openCreate = () => {
     setEditingId(null);
@@ -149,15 +149,15 @@ export default function AdminInvestimentos() {
     setDialogOpen(true);
   };
 
-  const openEdit = (inv: Investimento) => {
-    setEditingId(inv.id);
+  const openEdit = (assinatura: AssinaturaOperacional) => {
+    setEditingId(assinatura.id);
     setForm({
-      identificacao: inv.identificacao,
-      valor: String(inv.valor),
-      provedor: inv.provedor,
-      periodo_validade: inv.periodo_validade,
-      periodo_dias_custom: inv.periodo_dias_custom != null ? String(inv.periodo_dias_custom) : "",
-      data_inicio: inv.data_inicio,
+      identificacao: assinatura.identificacao,
+      valor: String(assinatura.valor),
+      provedor: assinatura.provedor,
+      periodo_validade: assinatura.periodo_validade,
+      periodo_dias_custom: assinatura.periodo_dias_custom != null ? String(assinatura.periodo_dias_custom) : "",
+      data_inicio: assinatura.data_inicio,
     });
     setDialogOpen(true);
   };
@@ -200,18 +200,18 @@ export default function AdminInvestimentos() {
 
       if (editingId) {
         const { error } = await supabase
-          .from("investimentos" as any)
+          .from("assinaturas_operacionais" as any)
           .update(payload as any)
           .eq("id", editingId);
         if (error) throw error;
-        toast.success("Investimento atualizado");
+        toast.success("Assinatura atualizada");
       } else {
-        const { error } = await supabase.from("investimentos" as any).insert(payload as any);
+        const { error } = await supabase.from("assinaturas_operacionais" as any).insert(payload as any);
         if (error) throw error;
-        toast.success("Investimento criado");
+        toast.success("Assinatura criada");
       }
       setDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["admin-investimentos"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-assinaturas-operacionais"] });
     } catch (err: any) {
       toast.error(err?.message || "Erro ao salvar");
     } finally {
@@ -221,12 +221,12 @@ export default function AdminInvestimentos() {
 
   const handleDelete = async () => {
     if (!deleteId) return;
-    const { error } = await supabase.from("investimentos" as any).delete().eq("id", deleteId);
+    const { error } = await supabase.from("assinaturas_operacionais" as any).delete().eq("id", deleteId);
     if (error) {
       toast.error("Erro ao excluir");
     } else {
-      toast.success("Investimento excluído");
-      queryClient.invalidateQueries({ queryKey: ["admin-investimentos"] });
+      toast.success("Assinatura excluída");
+      queryClient.invalidateQueries({ queryKey: ["admin-assinaturas-operacionais"] });
     }
     setDeleteId(null);
   };
@@ -236,7 +236,7 @@ export default function AdminInvestimentos() {
       <div className="container-senior py-6 space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-2xl font-bold">Investimentos</h1>
+            <h1 className="text-2xl font-bold">Assinaturas Operacionais</h1>
             <p className="text-sm text-muted-foreground">
               Controle de gastos com fornecedores e prazos de validade
             </p>
@@ -248,7 +248,7 @@ export default function AdminInvestimentos() {
             </Button>
             <Button size="sm" onClick={openCreate} className="gap-2">
               <Plus className="h-4 w-4" />
-              Novo Investimento
+              Nova Assinatura
             </Button>
           </div>
         </div>
@@ -259,7 +259,7 @@ export default function AdminInvestimentos() {
             <CardContent className="pt-4 pb-3">
               <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                 <Wallet className="h-3.5 w-3.5" />
-                Total Investido
+                Total Contratado
               </div>
               <p className="text-xl font-bold">{formatBRL(summary.total)}</p>
               <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -275,7 +275,7 @@ export default function AdminInvestimentos() {
               </div>
               <p className="text-xl font-bold text-green-600">{formatBRL(summary.totalAtivo)}</p>
               <p className="text-[11px] text-muted-foreground mt-0.5">
-                {summary.ativosCount} {summary.ativosCount === 1 ? "ativo" : "ativos"}
+                {summary.ativosCount} {summary.ativosCount === 1 ? "ativa" : "ativas"}
               </p>
             </CardContent>
           </Card>
@@ -331,31 +331,31 @@ export default function AdminInvestimentos() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(investimentos ?? []).map((inv) => {
-                  const status = getStatus(inv.data_fim);
-                  const mensal = calcularMensal(inv);
+                {(assinaturas ?? []).map((assinatura) => {
+                  const status = getStatus(assinatura.data_fim);
+                  const mensal = calcularMensal(assinatura);
                   return (
-                    <TableRow key={inv.id}>
-                      <TableCell className="font-medium">{inv.identificacao}</TableCell>
-                      <TableCell>{inv.provedor}</TableCell>
-                      <TableCell className="text-right">{formatBRL(Number(inv.valor))}</TableCell>
+                    <TableRow key={assinatura.id}>
+                      <TableCell className="font-medium">{assinatura.identificacao}</TableCell>
+                      <TableCell>{assinatura.provedor}</TableCell>
+                      <TableCell className="text-right">{formatBRL(Number(assinatura.valor))}</TableCell>
                       <TableCell className="text-right text-xs text-muted-foreground">
                         {mensal != null ? formatBRL(mensal) : "—"}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="text-[10px]">
-                          {PERIODO_LABELS[inv.periodo_validade]}
-                          {inv.periodo_validade === "personalizado" && inv.periodo_dias_custom
-                            ? ` (${inv.periodo_dias_custom}d)`
+                          {PERIODO_LABELS[assinatura.periodo_validade]}
+                          {assinatura.periodo_validade === "personalizado" && assinatura.periodo_dias_custom
+                            ? ` (${assinatura.periodo_dias_custom}d)`
                             : ""}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-xs whitespace-nowrap">
-                        {format(parseISO(inv.data_inicio), "dd/MM/yyyy", { locale: ptBR })}
+                        {format(parseISO(assinatura.data_inicio), "dd/MM/yyyy", { locale: ptBR })}
                       </TableCell>
                       <TableCell className="text-xs whitespace-nowrap">
-                        {inv.data_fim
-                          ? format(parseISO(inv.data_fim), "dd/MM/yyyy", { locale: ptBR })
+                        {assinatura.data_fim
+                          ? format(parseISO(assinatura.data_fim), "dd/MM/yyyy", { locale: ptBR })
                           : "—"}
                       </TableCell>
                       <TableCell>
@@ -369,7 +369,7 @@ export default function AdminInvestimentos() {
                             size="icon"
                             variant="ghost"
                             className="h-8 w-8"
-                            onClick={() => openEdit(inv)}
+                            onClick={() => openEdit(assinatura)}
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
@@ -377,7 +377,7 @@ export default function AdminInvestimentos() {
                             size="icon"
                             variant="ghost"
                             className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => setDeleteId(inv.id)}
+                            onClick={() => setDeleteId(assinatura.id)}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
@@ -386,10 +386,10 @@ export default function AdminInvestimentos() {
                     </TableRow>
                   );
                 })}
-                {(!investimentos || investimentos.length === 0) && (
+                {(!assinaturas || assinaturas.length === 0) && (
                   <TableRow>
                     <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                      Nenhum investimento registrado
+                      Nenhuma assinatura cadastrada
                     </TableCell>
                   </TableRow>
                 )}
@@ -403,7 +403,7 @@ export default function AdminInvestimentos() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingId ? "Editar Investimento" : "Novo Investimento"}</DialogTitle>
+            <DialogTitle>{editingId ? "Editar Assinatura" : "Nova Assinatura"}</DialogTitle>
             <DialogDescription>
               A data final é calculada automaticamente conforme o período escolhido.
             </DialogDescription>
@@ -503,7 +503,7 @@ export default function AdminInvestimentos() {
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir investimento?</AlertDialogTitle>
+            <AlertDialogTitle>Excluir assinatura?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta ação não pode ser desfeita. O registro será removido permanentemente.
             </AlertDialogDescription>
