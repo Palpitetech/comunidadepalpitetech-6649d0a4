@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { usePermissionContext } from "@/contexts/PermissionContext";
-import { ArrowLeft, HelpCircle } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import { usePermissions } from "@/hooks/usePermission";
 import { getFeatureForRoute, isVipFeature } from "@/lib/featureMap";
@@ -496,9 +496,6 @@ export function AppHeader({ pageTitle, onBack, hideBackButton }: AppHeaderProps)
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base">
                     <Link to="/convites"><Gift className="h-5 w-5" />Convidar Amigos</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base">
-                    <Link to="/ajuda"><HelpCircle className="h-5 w-5" />Ajuda</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
