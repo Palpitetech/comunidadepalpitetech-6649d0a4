@@ -295,6 +295,8 @@ export function useDisparoManual() {
     setSelectedPlanIds,
     selectedStatus,
     setSelectedStatus,
+    selectedVerification,
+    setSelectedVerification,
     eventTypes,
     selectedEvent,
     setSelectedEvent,
