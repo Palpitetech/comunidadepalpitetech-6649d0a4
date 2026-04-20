@@ -335,34 +335,69 @@ export default function AdminCustos() {
               </TabsContent>
 
               <TabsContent value="by-function">
-                <Card>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Ferramenta</TableHead>
-                        <TableHead className="text-right">Chamadas</TableHead>
-                        <TableHead className="text-right">Tokens</TableHead>
-                        <TableHead className="text-right">USD</TableHead>
-                        <TableHead className="text-right">BRL</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {Object.entries(summary.byFerramenta)
-                        .sort(([, a], [, b]) => b.costUsd - a.costUsd)
-                        .map(([key, data]) => (
-                          <TableRow key={key}>
-                            <TableCell className="font-medium">{FUNCTION_LABELS[key] || key}</TableCell>
-                            <TableCell className="text-right">{data.count}</TableCell>
-                            <TableCell className="text-right">{formatTokens(data.tokens)}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(data.costUsd)}</TableCell>
-                            <TableCell className="text-right text-green-600">{formatCurrency(data.costUsd * usdToBrl, "BRL")}</TableCell>
-                          </TableRow>
-                        ))}
-                      {Object.keys(summary.byFerramenta).length === 0 && (
-                        <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum dado encontrado</TableCell></TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                <Card className="overflow-x-auto">
+                  <TooltipProvider>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Ferramenta</TableHead>
+                          <TableHead>Origem</TableHead>
+                          <TableHead className="text-right">Chamadas</TableHead>
+                          <TableHead className="text-right">Tokens IN</TableHead>
+                          <TableHead className="text-right">Tokens OUT</TableHead>
+                          <TableHead className="text-right">Total</TableHead>
+                          <TableHead className="text-right">Tokens/chamada</TableHead>
+                          <TableHead className="text-right">USD</TableHead>
+                          <TableHead className="text-right">USD/chamada</TableHead>
+                          <TableHead className="text-right">BRL</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {Object.entries(summary.byFerramenta)
+                          .sort(([, a], [, b]) => b.costUsd - a.costUsd)
+                          .map(([key, data]) => {
+                            const label = FUNCTION_LABELS[key] || key;
+                            const shortLabel = label.split(" — ")[0];
+                            const isAuto = data.hasAuto && !data.hasUser;
+                            const isUser = data.hasUser && !data.hasAuto;
+                            const isMixed = data.hasAuto && data.hasUser;
+                            const tokensPerCall = data.count ? Math.round(data.tokens / data.count) : 0;
+                            const usdPerCall = data.count ? data.costUsd / data.count : 0;
+                            return (
+                              <TableRow key={key}>
+                                <TableCell className="font-medium">
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="inline-flex items-center gap-1.5 cursor-help">
+                                        {shortLabel}
+                                        <Info className="h-3 w-3 text-muted-foreground" />
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs">{label}</TooltipContent>
+                                  </Tooltip>
+                                </TableCell>
+                                <TableCell>
+                                  {isAuto && <Badge variant="outline" className="text-orange-600 border-orange-300">Auto</Badge>}
+                                  {isUser && <Badge variant="outline" className="text-blue-600 border-blue-300">Usuário</Badge>}
+                                  {isMixed && <Badge variant="outline" className="text-purple-600 border-purple-300">Misto</Badge>}
+                                </TableCell>
+                                <TableCell className="text-right">{data.count}</TableCell>
+                                <TableCell className="text-right">{formatTokens(data.tokensIn)}</TableCell>
+                                <TableCell className="text-right">{formatTokens(data.tokensOut)}</TableCell>
+                                <TableCell className="text-right font-semibold">{formatTokens(data.tokens)}</TableCell>
+                                <TableCell className="text-right text-muted-foreground">{formatTokens(tokensPerCall)}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(data.costUsd)}</TableCell>
+                                <TableCell className="text-right text-muted-foreground">{formatCurrency(usdPerCall)}</TableCell>
+                                <TableCell className="text-right text-green-600">{formatCurrency(data.costUsd * usdToBrl, "BRL")}</TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        {Object.keys(summary.byFerramenta).length === 0 && (
+                          <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">Nenhum dado encontrado</TableCell></TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TooltipProvider>
                 </Card>
               </TabsContent>
 
