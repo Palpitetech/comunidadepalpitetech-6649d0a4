@@ -1,160 +1,139 @@
 
 
-## Validar emails de verdade no `receive-lead`
+## Unificar verificação em OTP de 6 dígitos (sem magic link)
 
-### Como está hoje (só sintaxe)
+### Problema
 
-| Camada | Tem? | O que pega |
-|---|---|---|
-| Regex formato `a@b.c` | ✅ | `gdfh` (sem `@`) |
-| Local part ≥ 4 chars | ✅ | `fd@gmail.com` |
-| Domínios descartáveis (lista fixa de 14) | ✅ | `mailinator.com` etc |
-| Heurística anti-bot (teclado, consoantes, repetição) | ✅ | `jkhjk`, `gdfh`, `aaa` |
-| **MX do domínio existe?** | ❌ | `joao@dominioqueninguem.com` passa |
-| **Caixa de email existe?** | ❌ | `inexistente123@gmail.com` passa |
-| **Email confirmado pelo dono?** | ❌ | qualquer um pode botar email alheio |
+Hoje o `receive-lead` gera **magic link** apontando para `/ativar-conta` (rota inexistente → 404). Sistema tem 2 fluxos de verificação confusos: OTP no `RegisterWizard` e magic link no webhook.
 
-Resultado: bot esperto que escreve `mariasilva@gmail.com` (nome plausível, gmail real) **passa hoje**, conta é criada, magic link é enviado pro Resend, e se a caixa não existir o Resend dá bounce — mas o perfil já está no banco sujando métricas.
+### Solução
 
-### O que vou implementar (3 camadas, da mais barata pra mais forte)
+**Eliminar magic link.** Webhook só cria perfil pendente. Verificação OTP acontece **na primeira tentativa de login** do usuário, reaproveitando o fluxo OTP que já existe (`enviar-codigo-email` + `verificar-codigo`).
 
-#### Camada 1 — Validação de **MX do domínio** (DNS lookup, grátis, ~50ms)
+### Novo fluxo
 
-Antes de criar a conta, uso `Deno.resolveDns(domain, "MX")`. Se o domínio não tem MX, **não aceita correio** → bloqueia.
+```text
+Lead chega no webhook
+   ↓
+Valida (MX, anti-bot, descartáveis)
+   ↓
+Cria perfil:
+  - email_verificado = false
+  - tag = 'email_pendente'
+  - SEM trial, SEM premium role
+   ↓
+Envia WhatsApp (se tiver celular) OU email simples
+"Bem-vindo! Acesse comunidadepalpitetech.com/login pra ativar"
+   ↓
+Usuário vai no /login, digita email
+   ↓
+LoginWizard detecta email_verificado=false
+   ↓
+Dispara enviar-codigo-email (OTP 6 dígitos)
+   ↓
+Usuário digita código
+   ↓
+verificar-codigo marca email_verificado=true
+   ↓
+Trigger ativar_trial_pos_confirmacao roda → ativa trial 3 dias + role premium
+```
+
+### Mudanças
+
+#### 1. `supabase/functions/receive-lead/index.ts`
+
+- **Remover** geração de magic link e envio do email "Ativar conta"
+- **Manter** validações (MX, descartáveis, anti-bot)
+- **Manter** criação do perfil pendente (`email_pendente`, sem trial)
+- **Adicionar** envio de email simples de boas-vindas (sem link de ativação, só CTA "acesse o site e faça login")
+- Resposta JSON: `{ success: true, user_id, message: "Acesse o site e faça login com seu email para ativar sua conta" }`
+
+#### 2. `src/components/auth/LoginWizard.tsx`
+
+Adicionar nova lógica no `handleCheckEmail`:
 
 ```ts
-async function dominioTemMX(domain: string): Promise<boolean> {
-  try {
-    const records = await Deno.resolveDns(domain, "MX");
-    return records.length > 0;
-  } catch {
-    return false; // NXDOMAIN ou sem MX
-  }
+// Após verificar que usuário existe, checar email_verificado
+const { data: perfil } = await supabase
+  .from('perfis')
+  .select('email_verificado, tags')
+  .eq('email', email)
+  .maybeSingle();
+
+if (perfil && perfil.email_verificado === false) {
+  // Dispara OTP automaticamente e pula pra etapa de código
+  await supabase.functions.invoke('enviar-codigo-email', {
+    body: { user_id: perfil.id, email, nome: perfil.nome }
+  });
+  setEtapa('verificacao-email-pendente');
+  toast({ title: 'Conta pendente', description: 'Enviamos um código pro seu email pra ativar sua conta.' });
+  return;
 }
 ```
 
-Pega:
-- Domínios inventados (`palpite@xyzabc123.com`)
-- Typos óbvios (`joao@gmial.com` → gmial.com não tem MX)
-- Domínios descartáveis novos (que ainda não estão na nossa lista)
+Nova etapa `verificacao-email-pendente`: tela com input OTP 6 dígitos + botão "Reenviar código". Ao verificar com sucesso, o trigger `ativar_trial_pos_confirmacao` ativa trial automaticamente e usuário cai logado em `/home`.
 
-Não pega: caixa específica que não existe (mas o domínio é real).
+#### 3. Trigger `ativar_trial_pos_confirmacao` (já existe ✅)
 
-#### Camada 2 — Lista expandida de descartáveis + **typos comuns**
+Funciona perfeitamente: detecta `email_verificado: false → true`, ativa trial 3 dias, troca tag, loga evento. **Sem mudanças.**
 
-Hoje tenho 14 domínios. Vou:
-- Subir lista para **~200 domínios descartáveis** (do projeto open-source `disposable-email-domains`, embutido como const)
-- Adicionar detecção de **typos de provedores grandes** e sugerir correção:
+#### 4. Adicionar role `premium` quando trial ativa
 
-| Digitado | Sugestão | Ação |
-|---|---|---|
-| `gmial.com`, `gmai.com`, `gnail.com` | `gmail.com` | Bloqueia + retorna `{sugestao: "gmail.com"}` |
-| `hotmial.com`, `hotmai.com` | `hotmail.com` | idem |
-| `outloo.com`, `outlok.com` | `outlook.com` | idem |
-| `yaho.com`, `yahho.com` | `yahoo.com` | idem |
-
-Mensagem na resposta: `"Você quis dizer joao@gmail.com?"` — landing page pode mostrar.
-
-#### Camada 3 — **Confirmação ativa** via magic link (já existe, só endurecer)
-
-Hoje a conta é criada **antes** do magic link e o usuário ganha trial automático. Vou inverter:
-
-**Novo fluxo:**
-1. Lead chega → valida sintaxe + MX + descartáveis (camadas 1 e 2)
-2. Cria perfil com tag **`email_pendente`** (sem trial ativo, sem `premium` role)
-3. Envia magic link
-4. Quando usuário clica e confirma → trigger ou edge function remove `email_pendente`, adiciona `email_verificado`, ativa o trial de 3 dias
-
-**Ganhos:**
-- Bot que usar email alheio nunca confirma → fica como `email_pendente` e some das métricas
-- Trial só conta a partir da confirmação (justo pro usuário real)
-- Bot que usar email inventado (passou MX mas caixa não existe) → Resend bounceia, perfil fica pendente
-
-Existe uma **flag no `/admin/eventos`** já: vou criar event_type `lead_email_confirmado` quando ativar o trial, pra você ver taxa de conversão real.
-
-#### Camada 4 (opcional, **não vou habilitar** por padrão) — **SMTP probe**
-
-Tem APIs grátis (Hunter.io free 25/mês, Abstract API free 100/dia) que fazem SMTP `RCPT TO` e devolvem se a caixa existe. Não vou plugar agora porque:
-- Custa secret + cota
-- MX + magic link já resolve 95% dos casos
-- Dá pra adicionar depois se o spam continuar
-
-Deixo um **TODO comentado** no código pra plugar fácil.
-
-### Mudanças no banco (migration)
+O trigger atual só mexe em `perfis` (plan_id, status, validade), mas não cria `user_roles.premium`. Vou ajustar a função `ativar_trial_pos_confirmacao` pra inserir o role:
 
 ```sql
--- Adicionar campo email_verificado no perfis (já existe, só garantir default)
--- Já tem coluna email_verificado boolean. Vou usar.
-
--- Função pra ativar trial só depois de confirmar email
-CREATE OR REPLACE FUNCTION public.ativar_trial_pos_confirmacao()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public' AS $$
-DECLARE
-  trial_plan_id UUID := 'b3a2a9e3-8e3b-4e3b-8e3b-8e3b8e3b8e3b';
-BEGIN
-  -- Só ativa se mudou de false → true
-  IF OLD.email_verificado IS FALSE AND NEW.email_verificado IS TRUE THEN
-    -- Remove tag pendente, adiciona verificado
-    NEW.tags := array_remove(NEW.tags, 'email_pendente');
-    IF NOT ('email_verificado' = ANY(NEW.tags)) THEN
-      NEW.tags := array_append(NEW.tags, 'email_verificado');
-    END IF;
-    -- Ativa trial se ainda não ativou
-    IF NEW.status_assinatura IS NULL OR NEW.status_assinatura != 'ativa' THEN
-      NEW.plan_id := trial_plan_id;
-      NEW.status_assinatura := 'ativa';
-      NEW.validade_assinatura := now() + interval '3 days';
-      NEW.trial_used := true;
-    END IF;
-  END IF;
-  RETURN NEW;
-END;
-$$;
-
-CREATE TRIGGER trigger_ativar_trial_pos_confirmacao
-BEFORE UPDATE ON public.perfis
-FOR EACH ROW EXECUTE FUNCTION public.ativar_trial_pos_confirmacao();
+INSERT INTO public.user_roles (user_id, role)
+VALUES (NEW.id, 'premium')
+ON CONFLICT (user_id, role) DO NOTHING;
 ```
 
-### Mudanças no código
+#### 5. NÃO criar página `/ativar-conta`
 
-| Arquivo | Mudança |
-|---|---|
-| `supabase/functions/receive-lead/index.ts` | + `dominioTemMX()`, lista expandida de descartáveis, detecção de typos, criar perfil com `tag: email_pendente` em vez de trial direto |
-| `supabase/functions/receive-lead/disposable-domains.ts` | Novo arquivo com lista de ~200 domínios |
-| `src/pages/AtivarConta.tsx` | Sem mudança (já marca `email_verificado = true` ao processar token) |
+Rota fica como 404 mesmo (ninguém vai cair lá já que removemos o link).
 
-### Mensagens de erro novas
+### Email de boas-vindas (novo template no `receive-lead`)
 
-| Erro | Mensagem |
-|---|---|
-| MX inválido | `"Domínio do email não recebe correio. Verifique o endereço."` |
-| Typo detectado | `"Você quis dizer joao@gmail.com?"` (com campo `sugestao`) |
-| Descartável (nova lista) | `"Use um email pessoal permanente"` |
+```text
+Subject: Bem-vindo ao Palpite Tech!
+
+Olá [nome],
+
+Seu cadastro foi recebido. Pra ativar sua conta e ganhar
+3 dias grátis de acesso premium:
+
+1. Acesse: https://comunidadepalpitetech.com.br/login
+2. Digite seu email
+3. Você receberá um código de 6 dígitos
+4. Pronto! Trial liberado.
+
+Qualquer dúvida: WhatsApp 51 98185-4281
+```
 
 ### Logging em `system_events`
 
-Adiciono novos motivos que aparecem em `/admin/eventos`:
-- `mx_inexistente` — domínio sem MX
-- `typo_detectado` — sugestão oferecida
-- `email_pendente_criado` — conta criada aguardando confirmação
-- `email_confirmado_trial_ativado` — usuário clicou no link
+- `lead_recebido_pendente` — perfil criado aguardando primeiro login
+- `lead_email_confirmado` — usuário ativou via OTP no login (já existe no trigger)
 
-Você consegue ver a taxa real: quantos leads chegam → quantos confirmam.
+### Arquivos editados
+
+| Arquivo | Mudança |
+|---|---|
+| `supabase/functions/receive-lead/index.ts` | Remove magic link, troca email pra texto simples |
+| `src/components/auth/LoginWizard.tsx` | Detecta `email_verificado=false`, dispara OTP, nova etapa de verificação |
+| Migration | Ajusta `ativar_trial_pos_confirmacao` pra inserir role `premium` |
 
 ### Fora de escopo
 
-- Não plugo Hunter.io / Abstract API (camada 4)
-- Não mexo em `RegisterWizard` (já tem OTP que é mais forte que magic link)
-- Não invalido leads pendentes antigos (só daqui pra frente)
-- Não mexo no fluxo Kirvano (compra confirma email automaticamente)
-- Não mudo aparência da landing page externa (só o JSON de resposta)
+- Não mexo em Kirvano (compra continua confirmando email automaticamente)
+- Não mexo no `RegisterWizard` (cadastro manual continua igual com OTP)
+- Não apago leads pendentes antigos
+- Não crio página `/ativar-conta`
+- Não mexo em `enviar-codigo-email` nem `verificar-codigo` (já funcionam)
 
 ### Resultado esperado
 
-- `joao@gmial.com` → **400** com `{sugestao: "gmail.com"}`
-- `teste@dominioinventado.xyz` → **400** "Domínio não recebe correio"
-- `mariasilva@gmail.com` (caixa real) → cria pendente → email chega → clica → trial ativa
-- `inexistente@gmail.com` (caixa fake mas gmail real) → cria pendente → Resend bounceia → fica pendente eterno → não suja métrica de "verificados"
+- Lead via webhook → perfil pendente, recebe email/WhatsApp simples
+- Usuário tenta logar → sistema detecta pendente → OTP automático
+- Digita código → trial 3 dias ativado + role premium → cai em `/home`
+- Único fluxo de verificação no sistema: **OTP 6 dígitos**
 
