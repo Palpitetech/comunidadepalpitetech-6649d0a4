@@ -786,7 +786,7 @@ export function TemplatesTab() {
                   <div className="flex items-center gap-1">
                     <Repeat className="h-3 w-3 text-muted-foreground" />
                     <span className="text-[10px] text-muted-foreground">
-                      {variantCounts[tpl.id] ?? 0}/10 variantes
+                      {(variantCounts[tpl.id] ?? 0) + 1}/10 variantes
                     </span>
                   </div>
                 </div>
