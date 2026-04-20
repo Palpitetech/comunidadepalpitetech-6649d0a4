@@ -110,8 +110,14 @@ export function useDisparoManual() {
       query = query.eq("status_assinatura", selectedStatus);
     }
 
+    if (selectedVerification === "verified") {
+      query = query.eq("email_verificado", true);
+    } else if (selectedVerification === "unverified") {
+      query = query.or("email_verificado.is.null,email_verificado.eq.false");
+    }
+
     return query;
-  }, [includeTags, excludeTags, exactMatch, selectedPlanIds, selectedStatus]);
+  }, [includeTags, excludeTags, exactMatch, selectedPlanIds, selectedStatus, selectedVerification]);
 
   // ── Count contacts ──
   const fetchCount = useCallback(async () => {
