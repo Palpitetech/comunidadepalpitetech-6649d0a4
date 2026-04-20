@@ -7,13 +7,7 @@ import { Loader2, Phone } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-function formatCelular(value: string) {
-  const n = value.replace(/\D/g, "");
-  if (n.length <= 2) return n;
-  if (n.length <= 7) return `(${n.slice(0, 2)}) ${n.slice(2)}`;
-  return `(${n.slice(0, 2)}) ${n.slice(2, 7)}-${n.slice(7, 11)}`;
-}
+import { validateCelularBR, formatCelularMask } from "@/lib/celular";
 
 export function RequireCelularModal() {
   const { profile, user, updateProfile } = useAuthContext();
@@ -26,21 +20,20 @@ export function RequireCelularModal() {
   const isOpen = !!user && !!profile && !profile.is_bot && !profile.celular;
 
   const handleSave = async () => {
-    const digits = celular.replace(/\D/g, "");
-    if (digits.length < 10 || digits.length > 11) {
-      setError("Celular deve ter 10 ou 11 dígitos");
+    const validation = validateCelularBR(celular);
+    if (!validation.ok) {
+      setError(validation.reason || "Celular inválido");
       return;
     }
 
     setLoading(true);
     setError("");
     try {
-      const celularFormatted = digits.length === 11 ? `55${digits}` : `55${digits}`;
-      await updateProfile({ celular: celularFormatted });
+      await updateProfile({ celular: validation.normalized!, whatsapp: validation.normalized! });
 
       // Trigger tag sync in background
       supabase.functions.invoke("sync-group-members", {
-        body: { phone: celularFormatted },
+        body: { phone: validation.normalized! },
       }).catch(() => {});
 
       toast({ title: "Celular salvo!", description: "Seu número foi cadastrado com sucesso." });
