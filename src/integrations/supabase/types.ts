@@ -1006,6 +1006,45 @@ export type Database = {
           },
         ]
       }
+      custos_operacionais_manuais: {
+        Row: {
+          categoria: string
+          created_at: string
+          created_by: string | null
+          data_custo: string
+          descricao: string
+          id: string
+          observacao: string | null
+          recorrente: boolean
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          created_by?: string | null
+          data_custo?: string
+          descricao: string
+          id?: string
+          observacao?: string | null
+          recorrente?: boolean
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          created_by?: string | null
+          data_custo?: string
+          descricao?: string
+          id?: string
+          observacao?: string | null
+          recorrente?: boolean
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           created_at: string | null
@@ -3261,6 +3300,18 @@ export type Database = {
           id: string | null
           nome: string | null
           role: Database["public"]["Enums"]["app_role"] | null
+        }
+        Relationships: []
+      }
+      vw_custos_operacionais: {
+        Row: {
+          categoria: string | null
+          data_custo: string | null
+          descricao: string | null
+          mes_ref: string | null
+          origem: string | null
+          origem_id: string | null
+          valor: number | null
         }
         Relationships: []
       }
