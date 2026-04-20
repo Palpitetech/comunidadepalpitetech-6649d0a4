@@ -78,6 +78,7 @@ export interface ExtendedProfile {
   avatar_url: string | null;
   email_verificado?: boolean;
   celular_verificado?: boolean;
+  trial_used?: boolean;
   is_bot: boolean;
   is_blocked: boolean;
   admin_notes: string | null;
