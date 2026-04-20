@@ -572,6 +572,23 @@ export function TemplatesTab() {
           })}
         </div>
       )}
+
+      <VariantsDialog
+        open={variantsDialogTpl !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setVariantsDialogTpl(null);
+            fetchVariantCounts();
+          }
+        }}
+        templateId={variantsDialogTpl?.id ?? null}
+        templateName={variantsDialogTpl?.name ?? ""}
+        onCountChange={(count) => {
+          if (variantsDialogTpl) {
+            setVariantCounts((prev) => ({ ...prev, [variantsDialogTpl.id]: count }));
+          }
+        }}
+      />
     </div>
   );
 }
