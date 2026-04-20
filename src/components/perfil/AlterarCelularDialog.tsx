@@ -15,6 +15,7 @@ import { Phone, Loader2, ArrowRight, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { validateCelularBR, formatCelularMask } from "@/lib/celular";
 
 interface AlterarCelularDialogProps {
   celularAtual: string | null;
