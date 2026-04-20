@@ -520,7 +520,11 @@ export default function AdminCustos() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-8"></TableHead>
                         <TableHead>Bot</TableHead>
+                        <TableHead>Tipo de Ação Principal</TableHead>
+                        <TableHead className="text-center">Ações</TableHead>
+                        <TableHead>Última atividade</TableHead>
                         <TableHead className="text-right">Chamadas</TableHead>
                         <TableHead className="text-right">Tokens</TableHead>
                         <TableHead className="text-right">USD</TableHead>
@@ -530,17 +534,79 @@ export default function AdminCustos() {
                     <TableBody>
                       {Object.entries(summary.byBot)
                         .sort(([, a], [, b]) => b.costUsd - a.costUsd)
-                        .map(([key, data]) => (
-                          <TableRow key={key}>
-                            <TableCell className="font-medium">{data.name}</TableCell>
-                            <TableCell className="text-right">{data.count}</TableCell>
-                            <TableCell className="text-right">{formatTokens(data.tokens)}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(data.costUsd)}</TableCell>
-                            <TableCell className="text-right text-green-600">{formatCurrency(data.costUsd * usdToBrl, "BRL")}</TableCell>
-                          </TableRow>
-                        ))}
+                        .map(([key, data]) => {
+                          const isExpanded = expandedBots.has(key);
+                          const ferramentas = Object.entries(data.byFerramenta).sort(([, a], [, b]) => b.costUsd - a.costUsd);
+                          const principal = ferramentas[0];
+                          const principalCat = principal ? getCategoria(principal[0]) : null;
+                          const principalLabel = principal
+                            ? (FUNCTION_LABELS[principal[0]] || principal[0]).split(" — ")[0]
+                            : "—";
+                          const lastActivityLabel = data.lastActivity
+                            ? format(new Date(data.lastActivity), "dd/MM HH:mm", { locale: ptBR })
+                            : "—";
+                          return (
+                            <>
+                              <TableRow
+                                key={key}
+                                className="cursor-pointer"
+                                onClick={() => {
+                                  setExpandedBots((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(key)) next.delete(key);
+                                    else next.add(key);
+                                    return next;
+                                  });
+                                }}
+                              >
+                                <TableCell className="w-8 p-2">
+                                  {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                                </TableCell>
+                                <TableCell className="font-medium">
+                                  <div className="flex flex-col">
+                                    <span>{data.name}</span>
+                                    {data.cargo && <span className="text-[10px] text-muted-foreground font-normal">{data.cargo}</span>}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-xs">
+                                  <div className="flex items-center gap-1.5">
+                                    {principalCat && (
+                                      <Badge variant="outline" className={`text-[10px] ${principalCat.classes}`}>{principalCat.label}</Badge>
+                                    )}
+                                    <span className="text-muted-foreground">{principalLabel}</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Badge variant="outline">{ferramentas.length}</Badge>
+                                </TableCell>
+                                <TableCell className="text-xs text-muted-foreground">{lastActivityLabel}</TableCell>
+                                <TableCell className="text-right">{data.count}</TableCell>
+                                <TableCell className="text-right">{formatTokens(data.tokens)}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(data.costUsd)}</TableCell>
+                                <TableCell className="text-right text-green-600">{formatCurrency(data.costUsd * usdToBrl, "BRL")}</TableCell>
+                              </TableRow>
+                              {isExpanded && ferramentas.map(([fnKey, fnData]) => {
+                                const cat = getCategoria(fnKey);
+                                const label = (FUNCTION_LABELS[fnKey] || fnKey).split(" — ")[0];
+                                return (
+                                  <TableRow key={`${key}-${fnKey}`} className="bg-muted/30 hover:bg-muted/40">
+                                    <TableCell></TableCell>
+                                    <TableCell colSpan={4} className="pl-8 text-xs text-muted-foreground">
+                                      └─ <Badge variant="outline" className={`text-[10px] mr-1.5 ${cat.classes}`}>{cat.label}</Badge>
+                                      <span className="text-foreground">{label}</span>
+                                    </TableCell>
+                                    <TableCell className="text-right text-xs">{fnData.count}</TableCell>
+                                    <TableCell className="text-right text-xs">{formatTokens(fnData.tokens)}</TableCell>
+                                    <TableCell className="text-right text-xs">{formatCurrency(fnData.costUsd)}</TableCell>
+                                    <TableCell className="text-right text-xs text-green-600">{formatCurrency(fnData.costUsd * usdToBrl, "BRL")}</TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </>
+                          );
+                        })}
                       {Object.keys(summary.byBot).length === 0 && (
-                        <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhum bot envolvido no período</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhum bot envolvido no período</TableCell></TableRow>
                       )}
                     </TableBody>
                   </Table>
