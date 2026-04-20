@@ -1,134 +1,91 @@
 
 
-## Diagnóstico — Eventos & Tags para disparos de mensagens
+## Revisão dos templates de WhatsApp
 
-Após a refatoração de hoje (celular obrigatório, limpeza de 216 perfis, novos filtros), o motor de disparos está **funcional mas subutilizado**. Abaixo o estado real e o que recomendo ajustar.
+### Problemas detectados nos templates atuais
 
----
+| # | Template | Problema |
+|---|---|---|
+| 1 | Cadastro Comunidade | ✅ Único ativo. Tem link/email, mas falta variável `{{senha}}` (envia "123456" hardcoded sem deixar claro que é só fallback). |
+| 2 | Boas-vindas Cadastro | Inativo. Genérico demais — não passa email/login/senha. Redundante com #1. |
+| 3 | Trial expirando hoje | Inativo. Delay 0 + evento `trial_finalizado` = dispara DEPOIS que já expirou. Texto diz "termina hoje", mas só dispara quando já terminou. |
+| 4 | Compra aprovada | Inativo. **Faltam credenciais de acesso** (link, email, senha). |
+| 5 | Assinatura vencida | Inativo. Delay 0 está OK (avisar imediatamente). Texto OK. |
+| 6 | Lembrete verificar email | Inativo. Delay 1440min (24h) é muito tarde — verificação de email costuma ser nos primeiros 30-60min. |
+| 7 | Reativação 7 dias | Inativo. Delay 10080min (7d) está correto. Texto OK. |
 
-### 1. Eventos — como está hoje
+### Mudanças propostas (migração SQL)
 
-**Pipeline atual (já funcionando):**
-```text
-events INSERT → trigger on_event_queue_templates
-  → trigger_queue_event_templates() lê perfis
-  → queue_templates_for_event() filtra templates ativos
-  → respeita include_tags/exclude_tags/plan_ids/match_mode
-  → respeita delay_enabled + delay_minutes
-  → insere em message_queue com priority
-```
+**Template 1 — Cadastro Comunidade** (manter ativo)
+- Trocar bloco hardcoded "Senha criada / 123456" por variável real `{{senha}}` quando disponível, com fallback claro.
+- Delay: **0** (imediato) ✅
 
-**Eventos registrados no banco (últimos):**
-| event_type | total |
+**Template 2 — Boas-vindas Cadastro** (manter inativo + arquivar)
+- Marcar `is_active=false` definitivamente. Já temos #1 cumprindo a função. Não dispara duplicidade.
+
+**Template 3 — Trial expirando hoje**
+- Renomear para "Trial expirando em 1 dia"
+- Mudar evento para `trial_iniciado` + delay **2880min (2 dias)** → dispara no penúltimo dia do trial de 3 dias
+- Texto ajustado: "Seu período de teste termina amanhã"
+
+**Template 4 — Compra aprovada** ⭐ principal pedido
+- Adicionar bloco de credenciais:
+  ```
+  🎉 Pagamento confirmado, {{nome}}!
+
+  Seu plano "{{produto}}" já está ativo.
+
+  🔑 Seus dados de acesso:
+  📧 Email: {{email}}
+  🔒 Senha: a mesma do cadastro (caso tenha esquecido, use "Resetar Senha")
+  🔗 Login: https://www.palpitetech.com.br/login
+
+  Aproveite todas as ferramentas premium!
+  Qualquer dúvida, é só chamar.
+  ```
+- Delay: **0** (imediato) ✅
+
+**Template 5 — Assinatura vencida**
+- Manter texto. Delay **0** (imediato após evento `assinatura_expirada`).
+
+**Template 6 — Lembrete verificar email**
+- Reduzir delay de 1440 → **60min** (1h após cadastro). Janela ideal para lembrete.
+- Manter `exclude_tags: [verificado]` para não enviar a quem já confirmou.
+
+**Template 7 — Reativação 7 dias**
+- Manter como está. Delay 10080min (7d) ✅.
+
+### Tabela final de delays revisados
+
+| Template | Evento | Delay |
+|---|---|---|
+| Cadastro Comunidade | novo_cadastro | 0 (imediato) |
+| Lembrete verificar email | novo_cadastro | 60 min |
+| Trial expirando em 1 dia | trial_iniciado | 2880 min (2d) |
+| Compra aprovada (com credenciais) | sale_confirmed | 0 (imediato) |
+| Assinatura vencida | assinatura_expirada | 0 (imediato) |
+| Reativação 7 dias | acesso_cortado | 10080 min (7d) |
+
+### Sobre a variável `{{senha}}`
+
+**Não vou adicioná-la em produção** — armazenar senha em texto puro viola LGPD e quebra o hash bcrypt do Supabase Auth. Em vez disso:
+- No template **Cadastro Comunidade** (cadastro manual via wizard): texto fica "Use a senha que você criou no cadastro" + fallback de reset.
+- No template **Compra aprovada** (cadastro automático via Kirvano webhook): texto fica "Use a senha provisória **123456** no primeiro acesso e altere em seguida" — é o padrão do `kirvano-auto-account-creation`.
+
+### Arquivos editados
+
+| Arquivo | Mudança |
 |---|---|
-| `assinatura_expirada` | 7 |
-| `carrinho_abandonado` | 6 |
-| `novo_cadastro` | 1 |
-| `subscription_expired` | 1 |
+| Nova migração SQL | `UPDATE message_templates` para os 7 registros (texto, delay, evento, ativo/inativo) |
 
-**Problemas identificados:**
+### Fora de escopo
+- Sem mudanças em `useDisparoManual` / UI (templates editáveis pela tela de Templates)
+- Sem alteração no trigger `queue_templates_for_event`
+- Sem novo evento — uso os já existentes do vocabulário oficial
 
-1. **Duplicidade de eventos** — temos `assinatura_expirada` (português, do `handle-subscription-expiration`) E `subscription_expired` (Kirvano). Ambos significam a mesma coisa mas só um vai disparar template.
-2. **Eventos novos não registrados** — depois da refatoração de filtros (Trial OK, Pago Mensal/Anual/AnualVIP, etc.) **não existem eventos correspondentes**. Ex: quando alguém vira "trial_ok" (usou trial e virou free), nada é registrado em `events`.
-3. **Apenas 1 template configurado** (`Cadastro Comunidade`, evento `novo_cadastro`) — 100% dos outros eventos passam batido sem disparar nada.
-4. **Telefones quebrados na fila antiga** — 3 das últimas 4 mensagens falharam com `11999887755` (números fake). Após a limpeza de hoje, isso não acontece mais (todos têm celular válido).
-
----
-
-### 2. Tags — como está hoje
-
-**Tags ativas no sistema (top 12):**
-| tag | total | origem |
-|---|---|---|
-| `comunidade` | 46 | cadastro padrão |
-| `ativo` | 29 | assinatura ativa |
-| `gratis` | 17 | plano free |
-| `mensal` | 17 | plano mensal |
-| `anual` | 10 | plano anual |
-| `expirado` | 7 | passou da validade |
-| `trial` | 7 | em período de teste |
-| `semestral` | 2 | plano semestral |
-| `bot` / `lead` / `carrinho_abandonado` / `grupo_salasecreta` | 1 cada | edge cases |
-
-**Problemas identificados:**
-
-1. **Falta a tag `anualvip`** — temos plano `pago_anualvip` no filtro mas nenhum perfil tem essa tag.
-2. **Tag `trial_ok` não existe** — no filtro de usuários adicionamos esse conceito (já usou trial), mas nenhuma tag marca isso.
-3. **Sem tag para `verificado` ou `nao_verificado`** — disparos não conseguem segmentar por verificação de email.
-4. **Sem tag para os novos status de plano** — `plano_vencido`, `cancelado_ativo`, `cancelado_inativo` não existem como tags, embora apareçam como filtros.
-
----
-
-### 3. UI — Templates vs Disparo Manual
-
-| Recurso | Templates (automático) | Disparo Manual |
-|---|---|---|
-| Filtra por tag include/exclude | ✅ | ✅ |
-| Filtra por plano | ✅ | ✅ |
-| Filtra por evento | ✅ (gatilho único) | ✅ (filtro de público) |
-| Filtra por status assinatura | ❌ | ✅ |
-| Filtra por verificação email | ❌ | ❌ |
-| Modo "any/all" tags | ✅ | ✅ (exact match) |
-| Delay configurável | ✅ | ❌ |
-
-**Ambos compartilham a mesma fonte de tags** (RPC `get_distinct_tags` + fallback em `perfis.tags`), o que é bom — qualquer tag que existir aparece nos dois lugares.
-
----
-
-### Recomendações (a serem implementadas em próximo loop)
-
-#### A. Padronizar eventos (consolidar duplicatas)
-
-Criar migração que:
-- Renomeia `subscription_expired` → `assinatura_expirada` em `events` históricos
-- Documenta o "vocabulário oficial" de eventos em comentário SQL
-- Adiciona eventos faltantes no fluxo: `email_verificado`, `trial_iniciado`, `trial_finalizado`, `assinatura_renovada`
-
-#### B. Sincronizar tags com os filtros novos
-
-Criar trigger/função que mantenha tags em dia automaticamente:
-- `verificado` / sem tag = não verificou
-- `trial_ativo` quando dentro do período de teste
-- `trial_ok` quando trial expirou (substitui `trial`+`expirado`)
-- `pago_mensal` / `pago_anual` / `pago_anualvip` (substitui as tags soltas `mensal`/`anual`)
-- `plano_vencido` / `cancelado_ativo` / `cancelado_inativo`
-
-Migração com backfill: aplica tags em todos os perfis existentes baseado no estado atual.
-
-#### C. Adicionar filtro "Verificação" no Disparo Manual e Templates
-
-Novo seletor: `Todos / Apenas verificados / Apenas não verificados` — útil para reativação de leads que não confirmaram email.
-
-#### D. Templates essenciais a criar
-
-Sugestão de 6 templates que cobrem o ciclo completo:
-
-| # | Nome | Evento | Filtro |
-|---|---|---|---|
-| 1 | Boas-vindas Cadastro | `novo_cadastro` | nenhum |
-| 2 | Lembrete verificar email | `novo_cadastro` (delay 30min) | tag exclude `verificado` |
-| 3 | Trial expirando em 1 dia | `trial_finalizado` (delay -24h via cron) | tag `trial_ativo` |
-| 4 | Compra aprovada | `sale_confirmed` | nenhum |
-| 5 | Assinatura vencida | `assinatura_expirada` | tag `expirado` |
-| 6 | Reativação 7 dias após corte | `acesso_cortado` (delay 7 dias) | tag `acesso_cortado` |
-
-#### E. Dashboard de diagnóstico (opcional, futuro)
-
-Página `/admin/whatsapp/diagnostico`:
-- Eventos disparados nos últimos 7 dias por tipo
-- Templates que dispararam (taxa de match)
-- Templates ativos sem nenhum evento correspondente nos últimos 30 dias (warning)
-
----
-
-### O que NÃO vou mexer agora
-
-- Estrutura de `message_queue` / `message_templates` (está sólida)
-- `process-queue` edge function (funciona bem com Round Robin)
-- `queue_templates_for_event` (lógica genérica está correta)
-- Sistema de prioridades (já hierarquizado: transacional > automático > manual)
-
----
-
-**Ação solicitada:** confirme quais dos blocos A–D você quer implementar primeiro. Eu sugiro a ordem **A → B (com backfill) → C → D**, porque cada bloco habilita o próximo. Posso fazer tudo em um único loop ou separar em etapas — você decide.
+### Resultado esperado
+- Compra aprovada entrega login completo (email + link + instrução de senha)
+- Lembrete de verificação chega em janela útil (1h, não 24h)
+- Trial avisa antes de expirar, não depois
+- Comunicações alinhadas ao vocabulário canônico de eventos/tags
 
