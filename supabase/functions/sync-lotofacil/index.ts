@@ -208,6 +208,27 @@ Responda APENAS no formato JSON:
 
     const aiData = await aiResponse.json();
     const content = aiData.choices?.[0]?.message?.content;
+    const usage = aiData.usage;
+    const modelUsed = author.ai_model || "google/gemini-3-flash-preview";
+
+    // Log de uso de IA
+    if (usage) {
+      const promptTokens = usage.prompt_tokens || 0;
+      const completionTokens = usage.completion_tokens || 0;
+      const costUsd = (promptTokens / 1e6) * 0.15 + (completionTokens / 1e6) * 0.60;
+      supabase.from("ai_usage_logs").insert({
+        bot_persona_id: author.id,
+        bot_name: author.perfis?.nome || "Palpite Tech",
+        edge_function: "sync-lotofacil",
+        action_type: "plantao_resultado_oficial",
+        prompt_tokens: promptTokens,
+        completion_tokens: completionTokens,
+        total_tokens: usage.total_tokens || (promptTokens + completionTokens),
+        model: modelUsed,
+        cost_usd: costUsd,
+        metadata: { concurso },
+      }).then(() => {}).catch((e: any) => console.error("[RESULT-POST] Erro log IA:", e));
+    }
 
     let parsed;
     try {
