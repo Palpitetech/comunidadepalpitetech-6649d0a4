@@ -1,68 +1,70 @@
 
 
-## Plano: Adicionar campo "Investimento Mensal" (custo mensal normalizado)
+## Plano: Renomear "Investimentos" → "Assinatura Operacional"
 
-### Conceito
+Mudança cosmética + estrutural. Mantém toda a lógica, dados e cálculos atuais (incluindo "Custo Mensal").
 
-Cada investimento tem um valor total pago para cobrir um período (ex: R$ 240 por 6 meses = R$ 40/mês). O novo campo **Investimento Mensal** mostra esse custo normalizado para 1 mês, permitindo comparar gastos de fornecedores com prazos diferentes.
+### 1. Banco de dados (migração SQL)
 
-### Cálculo (frontend, derivado — sem mudar o banco)
+Renomear a tabela e seus objetos relacionados:
 
-Função `calcularMensal(inv)` retorna o valor mensal:
+- `ALTER TABLE public.investimentos RENAME TO assinaturas_operacionais;`
+- Renomear índices:
+  - `idx_investimentos_data_inicio` → `idx_assinaturas_operacionais_data_inicio`
+  - `idx_investimentos_provedor` → `idx_assinaturas_operacionais_provedor`
+- Renomear triggers:
+  - `trg_validate_investimento` → `trg_validate_assinatura_operacional`
+  - `trg_update_investimentos_updated_at` → `trg_update_assinaturas_operacionais_updated_at`
+- Renomear função: `public.validate_investimento()` → `public.validate_assinatura_operacional()` (recriar com `CREATE OR REPLACE` e dar `DROP` na antiga)
+- Recriar trigger apontando para a nova função
+- Atualizar política RLS (manter regra `has_role admin`, apenas renomear referência se necessário)
 
-| `periodo_validade` | Fórmula |
-|---|---|
-| `1_mes` | `valor / 1` |
-| `3_meses` | `valor / 3` |
-| `6_meses` | `valor / 6` |
-| `12_meses` | `valor / 12` |
-| `personalizado` | `valor / (periodo_dias_custom / 30)` |
-| `nd` | `—` (sem período definido, não calcula) |
+Os tipos TypeScript em `src/integrations/supabase/types.ts` serão regenerados automaticamente.
 
-### Mudanças em `src/pages/admin/AdminInvestimentos.tsx`
+### 2. Sidebar (`src/components/layout/AdminSidebar.tsx`)
 
-**1. Helper novo** (logo abaixo de `formatBRL`):
+No array `mainItems`, alterar o item "Investimentos":
+
 ```ts
-function calcularMensal(inv: Investimento): number | null {
-  const v = Number(inv.valor);
-  switch (inv.periodo_validade) {
-    case "1_mes": return v;
-    case "3_meses": return v / 3;
-    case "6_meses": return v / 6;
-    case "12_meses": return v / 12;
-    case "personalizado":
-      if (!inv.periodo_dias_custom || inv.periodo_dias_custom <= 0) return null;
-      return v / (inv.periodo_dias_custom / 30);
-    case "nd": return null;
-  }
-}
+{ title: "Assinaturas Op.", url: "/admin/assinaturas-operacionais", icon: PiggyBank }
 ```
 
-**2. Novo card no resumo (summary)** — adicionar 5º card "Custo Mensal Total":
-- Soma `calcularMensal()` de todos os investimentos **ativos** (ignora `nd` e expirados)
-- Grid passa de `lg:grid-cols-4` → `lg:grid-cols-5`
-- Ícone: `CalendarClock` (lucide-react), cor azul
-- Label: "Custo Mensal" / valor em destaque / sub: "equivalente/mês"
+(Título abreviado para caber no sidebar; ícone `PiggyBank` mantido)
 
-**3. Nova coluna na tabela** — entre "Valor" e "Período":
-- Header: `Mensal` (alinhado à direita)
-- Célula: `formatBRL(calcularMensal(inv))` ou `—` se `nd`/personalizado inválido
-- Estilo: `text-xs text-muted-foreground` (secundário, para não competir com o valor principal)
-- Atualizar `colSpan={9}` no estado vazio
+### 3. Rota (`src/App.tsx`)
 
-**4. Atualizar `summary` (useMemo)**:
-- Adicionar `mensalAtivo`: soma de `calcularMensal` apenas dos ativos com valor não-nulo
+- Renomear rota: `/admin/investimentos` → `/admin/assinaturas-operacionais`
+- Atualizar import: `AdminInvestimentos` → `AdminAssinaturasOperacionais`
+
+### 4. Página (renomear arquivo + conteúdo)
+
+- Renomear `src/pages/admin/AdminInvestimentos.tsx` → `src/pages/admin/AdminAssinaturasOperacionais.tsx`
+- Atualizar dentro do arquivo:
+  - Componente: `export default function AdminAssinaturasOperacionais()`
+  - Query key: `["admin-investimentos"]` → `["admin-assinaturas-operacionais"]`
+  - Tabela Supabase: `.from("investimentos")` → `.from("assinaturas_operacionais")`
+  - Tipo: `Investimento` → `AssinaturaOperacional`
+  - Função: `calcularMensal(inv)` → `calcularMensal(assinatura)` (parâmetro renomeado)
+  - Textos visíveis:
+    - Título: "Investimentos" → "Assinaturas Operacionais"
+    - Subtítulo / breadcrumbs / botões: "Novo Investimento" → "Nova Assinatura"
+    - Mensagens toast e diálogos: "investimento" → "assinatura"
+    - Estado vazio: "Nenhum investimento cadastrado" → "Nenhuma assinatura cadastrada"
+
+### 5. Outras referências
+
+Buscar e atualizar qualquer link/menção a `/admin/investimentos` no resto do código (ex: cards de atalho em `AdminIndex.tsx` se houver).
 
 ### Fora de escopo
 
-- **Sem migração de banco** — o campo é 100% derivado/calculado em runtime
-- Não alterar formulário (não há novo input)
-- Não alterar lógica de `data_fim`, validações ou triggers
-- Não alterar outras páginas do admin
+- Lógica de cálculo (mensal, status, validade) permanece idêntica
+- Estrutura das colunas do banco permanece idêntica (apenas o nome da tabela muda)
+- Dados existentes são preservados (RENAME não apaga registros)
 
 ### Resultado esperado
 
-- Coluna "Mensal" na tabela mostrando custo normalizado por investimento
-- Card "Custo Mensal" no topo somando todos os ativos
-- Investimentos `nd` (sem validade) exibem `—` (não entram na soma mensal)
+- Nova URL: `/admin/assinaturas-operacionais`
+- Sidebar exibe "Assinaturas Op."
+- Tabela do banco: `assinaturas_operacionais`
+- Todos os cálculos, filtros e CRUD funcionam exatamente como antes
 
