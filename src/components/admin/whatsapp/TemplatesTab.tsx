@@ -290,7 +290,7 @@ export function TemplatesTab() {
 
       // Sync variants (slots 2..10)
       if (templateId) {
-        const variantOps: Promise<any>[] = [];
+        const variantOps: Array<PromiseLike<{ error: any }>> = [];
         for (let i = 1; i < MAX_SLOTS; i++) {
           const slot = slots[i];
           const existingId = variantIds[slot.position];
@@ -300,11 +300,11 @@ export function TemplatesTab() {
               supabase
                 .from("message_template_variants" as any)
                 .update({ content: trimmed, is_active: slot.isActive })
-                .eq("id", existingId)
+                .eq("id", existingId) as unknown as PromiseLike<{ error: any }>
             );
           } else if (existingId && !trimmed) {
             variantOps.push(
-              supabase.from("message_template_variants" as any).delete().eq("id", existingId)
+              supabase.from("message_template_variants" as any).delete().eq("id", existingId) as unknown as PromiseLike<{ error: any }>
             );
           } else if (!existingId && trimmed) {
             variantOps.push(
@@ -313,7 +313,7 @@ export function TemplatesTab() {
                 position: slot.position,
                 content: trimmed,
                 is_active: slot.isActive,
-              })
+              }) as unknown as PromiseLike<{ error: any }>
             );
           }
         }
@@ -322,7 +322,7 @@ export function TemplatesTab() {
           const id = variantIds[pos];
           if (id) {
             variantOps.push(
-              supabase.from("message_template_variants" as any).delete().eq("id", id)
+              supabase.from("message_template_variants" as any).delete().eq("id", id) as unknown as PromiseLike<{ error: any }>
             );
           }
         }
