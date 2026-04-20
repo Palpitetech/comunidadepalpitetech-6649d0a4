@@ -69,9 +69,40 @@ interface CustoRow {
   origem_id: string;
   descricao: string;
   categoria: string;
+  periodo: string | null;
   valor: number;
   data_custo: string;
   mes_ref: string;
+}
+
+const PERIODO_LABEL: Record<string, string> = {
+  "1_mes": "Mensal",
+  "3_meses": "Trimestral",
+  "6_meses": "Semestral",
+  "12_meses": "Anual",
+  mensal_recorrente: "Mensal recorrente",
+  avulso: "Avulso",
+  unico: "Único",
+};
+
+const PERIODO_BADGE: Record<string, string> = {
+  "1_mes": "bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/30",
+  "3_meses": "bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border-cyan-500/30",
+  "6_meses": "bg-teal-500/15 text-teal-700 dark:text-teal-300 border-teal-500/30",
+  "12_meses": "bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-500/30",
+  mensal_recorrente: "bg-violet-500/15 text-violet-700 dark:text-violet-300 border-violet-500/30",
+  avulso: "bg-muted text-muted-foreground border-border",
+  unico: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30",
+};
+
+function periodoLabel(p: string | null): string {
+  if (!p) return "—";
+  return PERIODO_LABEL[p] ?? p.replace(/_/g, " ");
+}
+
+function periodoBadgeClass(p: string | null): string {
+  if (!p) return "bg-muted text-muted-foreground border-border";
+  return PERIODO_BADGE[p] ?? "bg-muted text-muted-foreground border-border";
 }
 
 interface CustoManual {
