@@ -1,106 +1,97 @@
 
 
-## Refatoração: Página `/admin/custos` (Custos IA)
+## Refatoração: Aba "Por Ferramenta" — visão real do gasto de tokens
 
-Hoje tudo que **não tem `bot_persona_id`** cai no balde genérico **"Ação de Usuário"** — mesmo quando há um `user_id` claro (Augusto, João, Marcelo, Alex). E ferramentas que rodam com bot (chat-assistant, posts, replies) ficam misturadas com ações humanas. Vamos separar de verdade.
+### Diagnóstico (dados reais do banco agora)
 
-### Diagnóstico do que está acontecendo hoje
+7 ferramentas estão gerando custo. O nome "Auto-Fill Lotofácil" está **correto mas pouco explicativo** — confunde porque não diz o que ele realmente faz.
 
-7 edge functions geram custo, em 2 categorias:
+| edge_function | O que é de verdade | Disparo | Chamadas | Tokens (in / out) | USD |
+|---|---|---|---|---|---|
+| `generate-palpites` | Gera N jogos de Lotofácil para o usuário no Gerador | Usuário clica "Gerar palpites" | 167 | 181K / 66K | $0.1018 |
+| `chat-assistant` | Conversa do usuário com bot especialista no Chat IA | Usuário envia msg no /chat | 16 | 35K / 2K | $0.0067 |
+| `generate-palpites-quina` | Gera jogos de Quina para o usuário | Usuário clica "Gerar" na Quina | 12 | 13K / 4K | $0.0046 |
+| **`auto-fill-fechamento`** | **Preenche automaticamente as dezenas do Fechamento da Lotofácil** com sugestão IA (botão "Quero Estratégia" em /fechamento) | Usuário clica "Quero Estratégia" no Fechamento | 8 | 8K / 2K | $0.0028 |
+| `generate-roundtable-post` | Cria posts da Mesa Redonda automaticamente (Ana, etc.) | Cron / sistema | 11 | 6K / 2K | $0.0027 |
+| `bot-reply-user` | Bot responde a comentário que o usuário deixou em post | Usuário comenta → bot responde | 6 | 4K / 0.2K | $0.0007 |
+| `bot-interact-with-post` | Bot comenta automaticamente em post novo | Sistema | 6 | 2K / 0.4K | $0.0006 |
 
-**Custo automático (bot/sistema, sem usuário pagante)**
-- `generate-roundtable-post` → posts da Mesa Redonda (Ana, etc.)
-- `bot-interact-with-post` → comentários automáticos de bots
-
-**Custo por usuário (alguém real disparou)**
-- `generate-palpites` (Lotofácil) — 167 chamadas, todas com `user_id`
-- `generate-palpites-quina` — 12 chamadas, todas com `user_id`
-- `auto-fill-fechamento` — 8 chamadas, todas com `user_id`
-- `chat-assistant` — 16 chamadas, com `user_id` E `bot_persona_id` (o bot é o atendente)
-- `bot-reply-user` — 6 chamadas, com `user_id` E `bot_persona_id` (resposta a comentário do user)
-
-**Conclusão:** o balde "Ação de Usuário" da aba "Por Bot" é na verdade `chat-assistant` para o bot Especialista X mais geradores e auto-fills disparados por usuários reais identificáveis. Faltam: classificação por origem (auto vs humano), nome do usuário e detalhamento por ação.
+**O que é "Auto-Fill Lotofácil":** é a função `auto-fill-fechamento` chamada quando o usuário aperta o botão **"Quero Estratégia"** dentro de `/fechamento`. A IA analisa os últimos 4 concursos e sugere as dezenas que devem entrar no fechamento (separa fixas/variáveis quando a estratégia exige). Não é gerar palpite — é **preencher dezenas do fechamento automaticamente**.
 
 ### Mudanças
 
-#### 1. Hook `useAiUsageLogs.ts` — enriquecer e reclassificar
+#### 1. Rótulos mais explícitos (`FUNCTION_LABELS` em `AdminCustos.tsx`)
 
-- **JOIN com `perfis`** para trazer `nome` e `email` do `user_id` em cada log (1 fetch extra agrupado por ids únicos).
-- Adicionar campo `origem` derivado:
-  - `automatico` → `user_id IS NULL` (post de bot, comentário de bot)
-  - `usuario` → `user_id IS NOT NULL` (geradores, chat, auto-fill, reply)
-- Reescrever `computeSummary` para quebrar em 4 visões:
-  - `byOrigem`: Automático vs Usuário (totais e %)
-  - `byFerramenta`: por edge_function (renomeado, hoje "byFunction" já existe)
-  - `byUsuario`: agrupado por `user_id` com nome/email reais (somente origem=usuario)
-  - `byBot`: agrupado por `bot_persona_id` (somente onde existe — chat, posts, replies)
+Cada label vira uma frase curta que diz **o que é + onde acontece**:
 
-#### 2. Página `AdminCustos.tsx` — nova UI
-
-**Novo card de resumo (5 cards em vez de 4):**
-1. Custo Total USD
-2. Custo Total BRL
-3. Custo Automático (% do total) — bots postando/comentando sozinhos
-4. Custo de Usuários (% do total) — disparado por usuários reais
-5. Câmbio USD→BRL (mantém)
-
-**Tabs reorganizadas (5 abas em vez de 4):**
-
-| Aba | O que mostra | Por linha |
-|---|---|---|
-| **Por Origem** | Automático vs Usuário | Origem · Chamadas · Tokens · USD · BRL · % do total |
-| **Por Ferramenta** | edge_function | Ferramenta (label PT) · Chamadas · Tokens · USD · BRL |
-| **Por Usuário Real** | Apenas user_id (com JOIN perfis) | **Nome** · Email · Chamadas · Tokens · USD · BRL |
-| **Por Bot** | Apenas bot_persona_id | Bot · Chamadas · Tokens · USD · BRL |
-| **Log Detalhado** | Linha a linha (já existe) | Data · Ferramenta · **Nome do usuário ou Bot** · Modelo · Tokens · USD |
-
-A coluna "Bot/Usuário" do log detalhado passa a mostrar:
-- Se tem `user_id` → **nome** do `perfis` (em vez de `18688d84...`) com tooltip do email
-- Se só tem `bot_persona_id` → nome do bot com badge "auto"
-- Se tem os dois (chat/reply) → "Augusto → Especialista Mega-Sena"
-
-**Filtros adicionais:**
-- Manter: Data início/fim, Bot, Ferramenta
-- Adicionar: **Filtro por Origem** (Todos / Automático / Usuário) e **Filtro por Usuário** (dropdown com nomes reais)
-
-#### 3. Adicionar `FUNCTION_LABELS` faltantes
-
-Hoje faltam labels para as 2 funções que aparecem nos dados reais:
 ```ts
-"bot-interact-with-post": "Comentário Automático de Bot",
-"bot-reply-user": "Resposta a Comentário de Usuário",
-"generate-palpites-quina": "Gerador Quina",
+const FUNCTION_LABELS = {
+  // Por usuário
+  "generate-palpites": "Gerador Lotofácil — gera N jogos no /gerador",
+  "generate-palpites-quina": "Gerador Quina — gera N jogos no /gerador-quina",
+  "generate-palpites-megasena": "Gerador Mega Sena — gera N jogos no /gerador-megasena",
+  "generate-palpites-duplasena": "Gerador Dupla Sena — gera N jogos no /gerador-duplasena",
+  "auto-fill-fechamento": "Auto-Preencher Fechamento Lotofácil — sugere dezenas no /fechamento",
+  "auto-fill-megasena": "Auto-Preencher Fechamento Mega Sena",
+  "auto-fill-duplasena": "Auto-Preencher Fechamento Dupla Sena",
+  "chat-assistant": "Chat IA — conversa do usuário com bot no /chat",
+  "bot-reply-user": "Resposta de Bot — bot responde comentário do usuário em post",
+  // Automáticas
+  "generate-roundtable-post": "Post Automático Mesa Redonda — bot cria post sozinho",
+  "generate-guide-post": "Post Analítico de Guia — bot cria post sozinho",
+  "bot-interact-with-post": "Comentário Automático — bot comenta em post novo",
+};
 ```
 
-E renomear para ficar mais explícito o que cada uma gasta:
-- `generate-palpites` → "Gerador Lotofácil (usuário)"
-- `chat-assistant` → "Chat IA (usuário ↔ bot)"
-- `generate-roundtable-post` → "Post Automático Mesa Redonda (bot)"
-- `auto-fill-fechamento` → "Auto-Fill Lotofácil (usuário)"
+Cada linha da tabela ganha também um **badge de origem** ao lado do nome (Auto/Usuário) para deixar visual.
 
-### Detalhes técnicos
+#### 2. Tabela "Por Ferramenta" com breakdown real de tokens
 
-- JOIN feito em JS (1 query separada `SELECT id, nome, email FROM perfis WHERE id = ANY(...)` com lista de ids únicos do batch de logs) para não precisar criar view nem mexer em RLS.
-- Tipo `AiUsageLog` ganha `user_name?: string | null` e `user_email?: string | null` opcionais.
-- `computeSummary` retorna shape novo `{ totalCostUsd, totalTokens, byOrigem, byFerramenta, byUsuario, byBot }` — mantém compatibilidade renomeando o que já existia.
-- Sem migração de banco. Sem nova coluna. Apenas leitura + JOIN.
+Hoje só mostra `tokens` (soma). Vai virar:
+
+| Ferramenta | Origem | Chamadas | Tokens IN (prompt) | Tokens OUT (resposta) | Total | Tokens / chamada | USD | USD / chamada | BRL |
+|---|---|---|---|---|---|---|---|---|---|
+
+- **Tokens IN (prompt)**: quanto contexto a função manda pra IA (geralmente é o maior — históricos, regras, etc.)
+- **Tokens OUT (completion)**: quanto a IA respondeu (jogos, texto)
+- **Tokens / chamada**: média por uso → mostra qual ferramenta é mais "pesada"
+- **USD / chamada**: custo médio por uso → mostra qual cobra caro por interação
+- Ordenação default: por USD desc (já está)
+- Tooltip no nome da ferramenta com a descrição completa do que ela faz
+
+Exemplo do que vai aparecer (dados reais):
+
+```
+Gerador Lotofácil [usuário]   167  181K  66K  248K  1.5K  $0.1018  $0.00061  R$ 0.5904
+Chat IA [usuário]              16   35K   2K  38K   2.4K  $0.0067  $0.00042  R$ 0.0389
+Auto-Preencher Fechamento Lotofácil [usuário]   8  8K  2K  11K  1.4K  $0.0028  $0.00036  R$ 0.0167
+Post Mesa Redonda [auto]       11   6K    2K  9K    884   $0.0027  $0.00025  R$ 0.0161
+```
+
+#### 3. Atualizar `computeSummary` em `useAiUsageLogs.ts`
+
+`byFerramenta` passa de `{ costUsd, tokens, count }` para:
+```ts
+{ costUsd, tokensIn, tokensOut, tokensTotal, count }
+```
+Soma `prompt_tokens` em `tokensIn` e `completion_tokens` em `tokensOut` (campos já existem em `AiUsageLog`).
 
 ### Arquivos editados
 
-- `src/hooks/useAiUsageLogs.ts` — enriquecer logs com perfis, novo `computeSummary`
-- `src/pages/admin/AdminCustos.tsx` — 5 cards, 5 abas, filtros novos, nomes reais
+- `src/hooks/useAiUsageLogs.ts` — `byFerramenta` ganha `tokensIn`/`tokensOut`
+- `src/pages/admin/AdminCustos.tsx` — labels explicativos + 4 colunas novas na aba "Por Ferramenta" + badge de origem por linha
 
 ### Resultado esperado
 
-- Em vez de "Ação de Usuário · 18 chamadas · 27K tokens", você verá:
-  - **Augusto Honorato** · Chat IA · 11 chamadas · 27K tokens · $0.0046
-  - **Augusto Honorato** · Gerador Lotofácil · 81 chamadas · 123K tokens · $0.034
-- Card "Custo Automático" deixa claro quanto a operação gasta sem ninguém clicar (bots postando) vs quanto vem de uso real.
-- Filtro por usuário permite ver: "quanto o Augusto sozinho me custou esse mês?"
+Você vai bater o olho na aba e entender na hora:
+- **O que** cada ferramenta faz (label completo + tooltip)
+- **Quanto** ela manda de input vs gera de output
+- **Quanto custa por chamada** — fácil identificar a mais cara por uso
+- **Quem dispara** (auto vs usuário) com badge ao lado
 
 ### Fora de escopo
 
-- Não cria limites/alertas por usuário (pode virar feature depois).
-- Não exporta CSV.
-- Não muda nada nas edge functions — elas já gravam `user_id` corretamente.
+- Não muda as outras abas (Por Origem, Por Usuário, Por Bot, Log)
+- Não cria gráfico de evolução
+- Não muda nada nas edge functions
 
