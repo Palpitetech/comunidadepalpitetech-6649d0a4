@@ -494,7 +494,7 @@ export function AdminSidebar() {
 
   return (
     <TooltipProvider delayDuration={100}>
-      <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+      <Sidebar collapsible="none" className="border-r border-sidebar-border">
         <SidebarContent className="bg-gradient-to-b from-card via-card to-card/95">
           <AdminSidebarHeader collapsed={collapsed} />
           <AdminSidebarSearch collapsed={collapsed} onOpen={() => setPaletteOpen(true)} />
