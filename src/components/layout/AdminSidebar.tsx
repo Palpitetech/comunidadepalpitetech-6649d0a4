@@ -176,24 +176,29 @@ function NavLeaf({
   badgeCount?: number;
 }) {
   const active = isActive(item.url, item.exact);
-  const content = (
-    <Link to={item.url} aria-current={active ? "page" : undefined} className="relative">
-      {active && !collapsed && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r bg-primary" />
-      )}
-      <item.icon className="h-4 w-4 shrink-0 text-primary-foreground" />
-      <span className="truncate text-primary-foreground bg-white/0">{item.title}</span>
-      {badgeCount ? <NavBadge count={badgeCount} tone={item.badgeTone} /> : null}
-    </Link>
-  );
 
   if (collapsed) {
     return (
       <SidebarMenuItem>
         <Tooltip>
           <TooltipTrigger asChild>
-            <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-              {content}
+            <SidebarMenuButton
+              asChild
+              isActive={active}
+              tooltip={item.title}
+              className="!h-10 !w-10 !p-0 mx-auto justify-center rounded-lg"
+            >
+              <Link
+                to={item.url}
+                aria-current={active ? "page" : undefined}
+                aria-label={item.title}
+                className="relative flex items-center justify-center"
+              >
+                <item.icon className="!h-5 !w-5 shrink-0" />
+                {badgeCount ? (
+                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-sidebar" />
+                ) : null}
+              </Link>
             </SidebarMenuButton>
           </TooltipTrigger>
           <TooltipContent side="right" className="font-medium flex items-center gap-2">
@@ -204,6 +209,17 @@ function NavLeaf({
       </SidebarMenuItem>
     );
   }
+
+  const content = (
+    <Link to={item.url} aria-current={active ? "page" : undefined} className="relative">
+      {active && (
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r bg-primary" />
+      )}
+      <item.icon className="h-4 w-4 shrink-0 text-primary-foreground" />
+      <span className="truncate text-primary-foreground bg-white/0">{item.title}</span>
+      {badgeCount ? <NavBadge count={badgeCount} tone={item.badgeTone} /> : null}
+    </Link>
+  );
 
   return (
     <SidebarMenuItem>
