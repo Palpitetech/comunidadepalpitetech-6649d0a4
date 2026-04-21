@@ -1,0 +1,128 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
+import {
+  LayoutDashboard,
+  FileText,
+  Users,
+  Bot,
+  Gift,
+  Activity,
+  BarChart2,
+  MessageCircle,
+  Plug,
+  DollarSign,
+  PiggyBank,
+  Smartphone,
+  Receipt,
+  ShoppingCart,
+  PlusCircle,
+  List,
+  CreditCard,
+  Trophy,
+  Wallet,
+  BarChart3,
+  type LucideIcon,
+} from "lucide-react";
+
+interface CmdItem {
+  label: string;
+  url: string;
+  icon: LucideIcon;
+  group: string;
+  keywords?: string[];
+}
+
+const ITEMS: CmdItem[] = [
+  { label: "Painel", url: "/admin", icon: LayoutDashboard, group: "Principal", keywords: ["dashboard", "home"] },
+  { label: "Planos", url: "/admin/planos", icon: FileText, group: "Principal" },
+  { label: "Usuários", url: "/admin/usuarios", icon: Users, group: "Principal" },
+  { label: "Bots", url: "/admin/bots", icon: Bot, group: "Principal" },
+
+  { label: "WhatsApp", url: "/admin/whatsapp", icon: MessageCircle, group: "Comunicação" },
+  { label: "Convites", url: "/admin/convites", icon: Gift, group: "Comunicação" },
+  { label: "Eventos", url: "/admin/eventos", icon: Activity, group: "Comunicação" },
+
+  { label: "Custos IA", url: "/admin/custos", icon: DollarSign, group: "Financeiro" },
+  { label: "Assinaturas Operacionais", url: "/admin/assinaturas-operacionais", icon: PiggyBank, group: "Financeiro" },
+  { label: "Chip Celulares", url: "/admin/chip-celulares", icon: Smartphone, group: "Financeiro" },
+  { label: "Custos Operacionais", url: "/admin/custos-operacionais", icon: Receipt, group: "Financeiro" },
+  { label: "Vendas", url: "/admin/vendas", icon: ShoppingCart, group: "Financeiro" },
+
+  { label: "Novo Bolão", url: "/admin/novo-bolao", icon: PlusCircle, group: "Bolões" },
+  { label: "Listagem de Bolões", url: "/admin/listagem-bolao", icon: List, group: "Bolões" },
+  { label: "Pagamentos de Bolões", url: "/admin/boloes-pagamento", icon: CreditCard, group: "Bolões" },
+  { label: "Premiação", url: "/admin/premiacao", icon: Trophy, group: "Bolões" },
+  { label: "Carteira", url: "/admin/carteira", icon: Wallet, group: "Bolões" },
+  { label: "Solicitação de Resgate", url: "/admin/solicitacao-resgate", icon: Trophy, group: "Bolões" },
+  { label: "Compras Saldo", url: "/admin/compras-saldo", icon: Wallet, group: "Bolões" },
+  { label: "Compras Cotas", url: "/admin/compras-cotas", icon: CreditCard, group: "Bolões" },
+
+  { label: "Gravação Lotofácil", url: "/admin/gravacao/lotofacil", icon: BarChart3, group: "Gravação" },
+  { label: "Gravação Quina", url: "/admin/gravacao/quina", icon: BarChart3, group: "Gravação" },
+
+  { label: "Métricas", url: "/admin/metricas", icon: BarChart2, group: "Sistema" },
+  { label: "Integrações", url: "/admin/integracoes", icon: Plug, group: "Sistema" },
+];
+
+interface AdminCommandPaletteProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function AdminCommandPalette({ open, onOpenChange }: AdminCommandPaletteProps) {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        onOpenChange(!open);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onOpenChange]);
+
+  const grouped = ITEMS.reduce<Record<string, CmdItem[]>>((acc, item) => {
+    (acc[item.group] ||= []).push(item);
+    return acc;
+  }, {});
+
+  return (
+    <CommandDialog open={open} onOpenChange={onOpenChange}>
+      <CommandInput placeholder="Buscar página do admin..." />
+      <CommandList>
+        <CommandEmpty>Nenhuma página encontrada.</CommandEmpty>
+        {Object.entries(grouped).map(([group, items], idx) => (
+          <div key={group}>
+            {idx > 0 && <CommandSeparator />}
+            <CommandGroup heading={group}>
+              {items.map((item) => (
+                <CommandItem
+                  key={item.url}
+                  value={`${item.label} ${item.keywords?.join(" ") ?? ""}`}
+                  onSelect={() => {
+                    navigate(item.url);
+                    onOpenChange(false);
+                  }}
+                >
+                  <item.icon className="mr-2 h-4 w-4" />
+                  <span>{item.label}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </div>
+        ))}
+      </CommandList>
+    </CommandDialog>
+  );
+}
