@@ -181,8 +181,8 @@ function NavLeaf({
       {active && !collapsed && (
         <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r bg-primary" />
       )}
-      <item.icon className="h-4 w-4 shrink-0 text-primary-foreground" />
-      <span className="truncate text-primary-foreground bg-white/0">{item.title}</span>
+      <item.icon className="h-4 w-4 shrink-0" />
+      <span className="truncate">{item.title}</span>
       {badgeCount ? <NavBadge count={badgeCount} tone={item.badgeTone} /> : null}
     </Link>
   );
