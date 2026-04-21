@@ -295,9 +295,9 @@ function NavGroup({
   return (
     <SidebarGroup>
       <Collapsible defaultOpen={groupActive}>
-        <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1.5 text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-[0.12em] hover:text-foreground transition-colors group">
+        <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1.5 text-[11px] font-bold text-sidebar-foreground/85 uppercase tracking-[0.12em] hover:text-sidebar-foreground transition-colors group">
           <div className="flex items-center gap-1.5">
-            <GroupIcon className="h-3 w-3" />
+            <GroupIcon className="h-3.5 w-3.5 text-sidebar-primary" />
             <span>{section.label}</span>
             {groupBadgeTotal > 0 && (
               <NavBadge count={groupBadgeTotal} tone="danger" />
@@ -495,7 +495,7 @@ export function AdminSidebar() {
   return (
     <TooltipProvider delayDuration={100}>
       <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-        <SidebarContent className="bg-gradient-to-b from-card via-card to-card/95">
+        <SidebarContent className="bg-sidebar text-sidebar-foreground">
           <AdminSidebarHeader collapsed={collapsed} />
           <AdminSidebarSearch collapsed={collapsed} onOpen={() => setPaletteOpen(true)} />
 
