@@ -176,29 +176,24 @@ function NavLeaf({
   badgeCount?: number;
 }) {
   const active = isActive(item.url, item.exact);
+  const content = (
+    <Link to={item.url} aria-current={active ? "page" : undefined} className="relative">
+      {active && !collapsed && (
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r bg-primary" />
+      )}
+      <item.icon className="h-4 w-4 shrink-0 text-primary-foreground" />
+      <span className="truncate text-primary-foreground bg-white/0">{item.title}</span>
+      {badgeCount ? <NavBadge count={badgeCount} tone={item.badgeTone} /> : null}
+    </Link>
+  );
 
   if (collapsed) {
     return (
       <SidebarMenuItem>
         <Tooltip>
           <TooltipTrigger asChild>
-            <SidebarMenuButton
-              asChild
-              isActive={active}
-              tooltip={item.title}
-              className="!h-10 !w-10 !p-0 mx-auto justify-center rounded-lg"
-            >
-              <Link
-                to={item.url}
-                aria-current={active ? "page" : undefined}
-                aria-label={item.title}
-                className="relative flex items-center justify-center"
-              >
-                <item.icon className="!h-5 !w-5 shrink-0" />
-                {badgeCount ? (
-                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-sidebar" />
-                ) : null}
-              </Link>
+            <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
+              {content}
             </SidebarMenuButton>
           </TooltipTrigger>
           <TooltipContent side="right" className="font-medium flex items-center gap-2">
@@ -209,17 +204,6 @@ function NavLeaf({
       </SidebarMenuItem>
     );
   }
-
-  const content = (
-    <Link to={item.url} aria-current={active ? "page" : undefined} className="relative">
-      {active && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r bg-primary" />
-      )}
-      <item.icon className="h-4 w-4 shrink-0 text-primary-foreground" />
-      <span className="truncate text-primary-foreground bg-white/0">{item.title}</span>
-      {badgeCount ? <NavBadge count={badgeCount} tone={item.badgeTone} /> : null}
-    </Link>
-  );
 
   return (
     <SidebarMenuItem>
@@ -264,12 +248,12 @@ function NavGroup({
                   <SidebarMenuButton
                     isActive={groupActive}
                     tooltip={section.label}
-                    aria-label={section.label}
-                    className="!h-10 !w-10 !p-0 mx-auto justify-center rounded-lg data-[state=open]:bg-sidebar-accent relative"
+                    className="data-[state=open]:bg-sidebar-accent relative"
                   >
-                    <GroupIcon className="!h-5 !w-5" />
+                    <GroupIcon className="h-4 w-4" />
+                    <span>{section.label}</span>
                     {groupBadgeTotal > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-sidebar" />
+                      <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
                     )}
                   </SidebarMenuButton>
                 </PopoverTrigger>
@@ -348,16 +332,11 @@ function AdminSidebarHeader({ collapsed }: { collapsed: boolean }) {
       <div
         className={cn(
           "flex items-center gap-2 px-1 py-1",
-          collapsed && "justify-center px-0"
+          collapsed && "justify-center"
         )}
       >
-        <div
-          className={cn(
-            "flex shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm",
-            collapsed ? "h-10 w-10" : "h-8 w-8"
-          )}
-        >
-          <Zap className={collapsed ? "h-5 w-5" : "h-4 w-4"} />
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm">
+          <Zap className="h-4 w-4" />
         </div>
         {!collapsed && (
           <div className="flex flex-col min-w-0 flex-1">
@@ -385,15 +364,15 @@ function AdminSidebarSearch({
 }) {
   if (collapsed) {
     return (
-      <div className="px-0 py-1 flex justify-center">
+      <div className="px-1.5 py-1.5">
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={onOpen}
-              className="flex h-10 w-10 items-center justify-center rounded-lg border border-sidebar-border bg-sidebar-accent/60 hover:bg-sidebar-accent transition-colors"
+              className="flex h-8 w-full items-center justify-center rounded-md border border-sidebar-border bg-sidebar-accent/60 hover:bg-sidebar-accent transition-colors"
               aria-label="Buscar"
             >
-              <Search className="h-5 w-5 text-sidebar-foreground" />
+              <Search className="h-4 w-4 text-sidebar-foreground" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="right">Buscar (Ctrl+K)</TooltipContent>
@@ -431,15 +410,15 @@ function AdminSidebarFooter({ collapsed }: { collapsed: boolean }) {
 
   if (collapsed) {
     return (
-      <SidebarFooter className="border-t border-sidebar-border p-0 py-1.5 gap-1 items-center">
+      <SidebarFooter className="border-t border-sidebar-border p-1.5 gap-1.5">
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={() => navigate("/")}
-              className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-sidebar-accent transition-colors"
+              className="flex h-8 w-full items-center justify-center rounded-md hover:bg-sidebar-accent transition-colors"
               aria-label="Voltar ao app"
             >
-              <ArrowLeft className="h-5 w-5 text-sidebar-foreground" />
+              <ArrowLeft className="h-4 w-4 text-sidebar-foreground" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="right">Voltar ao app</TooltipContent>
@@ -448,12 +427,11 @@ function AdminSidebarFooter({ collapsed }: { collapsed: boolean }) {
           <TooltipTrigger asChild>
             <Link
               to="/perfil"
-              className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-sidebar-accent transition-colors"
-              aria-label={profile?.nome || "Admin"}
+              className="flex h-8 w-full items-center justify-center rounded-md hover:bg-sidebar-accent transition-colors"
             >
-              <Avatar className="h-8 w-8">
+              <Avatar className="h-7 w-7">
                 <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="text-[11px] bg-sidebar-primary text-sidebar-primary-foreground font-bold">
+                <AvatarFallback className="text-[10px] bg-sidebar-primary text-sidebar-primary-foreground font-bold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
