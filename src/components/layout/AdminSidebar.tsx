@@ -152,10 +152,10 @@ function NavBadge({ count, tone = "info" }: { count: number; tone?: "danger" | "
   return (
     <span
       className={cn(
-        "ml-auto inline-flex items-center justify-center rounded-full px-1.5 min-w-[1.1rem] h-[1.1rem] text-[10px] font-bold leading-none ring-1",
+        "ml-auto inline-flex items-center justify-center rounded-full px-1.5 min-w-[1.1rem] h-[1.1rem] text-[10px] font-semibold leading-none",
         tone === "danger"
-          ? "bg-destructive text-destructive-foreground ring-destructive/40"
-          : "bg-primary text-primary-foreground ring-primary/40"
+          ? "bg-destructive/15 text-destructive"
+          : "bg-primary/15 text-primary"
       )}
     >
       {count > 99 ? "99+" : count}
@@ -295,9 +295,9 @@ function NavGroup({
   return (
     <SidebarGroup>
       <Collapsible defaultOpen={groupActive}>
-        <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1.5 text-[11px] font-bold text-sidebar-foreground/85 uppercase tracking-[0.12em] hover:text-sidebar-foreground transition-colors group">
+        <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1.5 text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-[0.12em] hover:text-foreground transition-colors group">
           <div className="flex items-center gap-1.5">
-            <GroupIcon className="h-3.5 w-3.5 text-sidebar-primary" />
+            <GroupIcon className="h-3 w-3" />
             <span>{section.label}</span>
             {groupBadgeTotal > 0 && (
               <NavBadge count={groupBadgeTotal} tone="danger" />
@@ -341,12 +341,12 @@ function AdminSidebarHeader({ collapsed }: { collapsed: boolean }) {
         {!collapsed && (
           <div className="flex flex-col min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold text-sidebar-foreground truncate">Painel</span>
-              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-destructive text-destructive-foreground">
+              <span className="text-sm font-bold truncate">Painel</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-destructive/15 text-destructive">
                 Admin
               </span>
             </div>
-            <span className="text-[10px] text-sidebar-foreground/70 truncate">Palpite Tech</span>
+            <span className="text-[10px] text-muted-foreground truncate">Palpite Tech</span>
           </div>
         )}
       </div>
@@ -369,10 +369,10 @@ function AdminSidebarSearch({
           <TooltipTrigger asChild>
             <button
               onClick={onOpen}
-              className="flex h-8 w-full items-center justify-center rounded-md border border-sidebar-border bg-sidebar-accent/60 hover:bg-sidebar-accent transition-colors"
+              className="flex h-8 w-full items-center justify-center rounded-md border border-sidebar-border bg-sidebar-accent/30 hover:bg-sidebar-accent transition-colors"
               aria-label="Buscar"
             >
-              <Search className="h-4 w-4 text-sidebar-foreground" />
+              <Search className="h-4 w-4 text-muted-foreground" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="right">Buscar (Ctrl+K)</TooltipContent>
@@ -384,11 +384,11 @@ function AdminSidebarSearch({
     <div className="px-2 py-2">
       <button
         onClick={onOpen}
-        className="flex w-full items-center gap-2 rounded-md border border-sidebar-border bg-sidebar-accent/60 px-2.5 py-1.5 text-xs text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+        className="flex w-full items-center gap-2 rounded-md border border-sidebar-border bg-sidebar-accent/30 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-sidebar-accent transition-colors"
       >
         <Search className="h-3.5 w-3.5" />
         <span className="flex-1 text-left">Buscar página...</span>
-        <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-sidebar-border bg-sidebar text-sidebar-foreground/80 px-1.5 font-mono text-[10px] font-medium">
+        <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-background px-1.5 font-mono text-[10px] font-medium">
           ⌘K
         </kbd>
       </button>
@@ -418,7 +418,7 @@ function AdminSidebarFooter({ collapsed }: { collapsed: boolean }) {
               className="flex h-8 w-full items-center justify-center rounded-md hover:bg-sidebar-accent transition-colors"
               aria-label="Voltar ao app"
             >
-              <ArrowLeft className="h-4 w-4 text-sidebar-foreground" />
+              <ArrowLeft className="h-4 w-4 text-muted-foreground" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="right">Voltar ao app</TooltipContent>
@@ -431,7 +431,7 @@ function AdminSidebarFooter({ collapsed }: { collapsed: boolean }) {
             >
               <Avatar className="h-7 w-7">
                 <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="text-[10px] bg-sidebar-primary text-sidebar-primary-foreground font-bold">
+                <AvatarFallback className="text-[10px] bg-primary/15 text-primary">
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -451,27 +451,27 @@ function AdminSidebarFooter({ collapsed }: { collapsed: boolean }) {
       >
         <Avatar className="h-8 w-8">
           <AvatarImage src={profile?.avatar_url || undefined} />
-          <AvatarFallback className="text-xs bg-sidebar-primary text-sidebar-primary-foreground font-bold">
+          <AvatarFallback className="text-xs bg-primary/15 text-primary">
             {initials}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-semibold text-sidebar-foreground truncate">
+            <span className="text-xs font-medium truncate">
               {profile?.nome || user?.email?.split("@")[0] || "Admin"}
             </span>
-            <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-destructive text-destructive-foreground">
+            <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-destructive/15 text-destructive">
               Admin
             </span>
           </div>
-          <span className="text-[10px] text-sidebar-foreground/70 truncate block">
+          <span className="text-[10px] text-muted-foreground truncate block">
             {user?.email}
           </span>
         </div>
       </Link>
       <button
         onClick={() => navigate("/")}
-        className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+        className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         <span>Voltar ao app</span>
@@ -495,7 +495,7 @@ export function AdminSidebar() {
   return (
     <TooltipProvider delayDuration={100}>
       <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-        <SidebarContent className="bg-sidebar text-sidebar-foreground">
+        <SidebarContent className="bg-gradient-to-b from-card via-card to-card/95">
           <AdminSidebarHeader collapsed={collapsed} />
           <AdminSidebarSearch collapsed={collapsed} onOpen={() => setPaletteOpen(true)} />
 
@@ -541,10 +541,10 @@ export function AdminSidebar() {
                 <TooltipTrigger asChild>
                   <button
                     onClick={toggleSidebar}
-                    className="flex h-7 w-full items-center justify-center rounded-md bg-sidebar-accent/60 hover:bg-sidebar-accent transition-colors"
+                    className="flex h-7 w-full items-center justify-center rounded-md bg-sidebar-accent/40 hover:bg-sidebar-accent transition-colors"
                     aria-label="Expandir menu"
                   >
-                    <ChevronsRight className="h-3.5 w-3.5 text-sidebar-foreground" />
+                    <ChevronsRight className="h-3.5 w-3.5 text-muted-foreground" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="right">Expandir (Ctrl+B)</TooltipContent>
