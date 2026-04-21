@@ -348,11 +348,16 @@ function AdminSidebarHeader({ collapsed }: { collapsed: boolean }) {
       <div
         className={cn(
           "flex items-center gap-2 px-1 py-1",
-          collapsed && "justify-center"
+          collapsed && "justify-center px-0"
         )}
       >
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm">
-          <Zap className="h-4 w-4" />
+        <div
+          className={cn(
+            "flex shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm",
+            collapsed ? "h-10 w-10" : "h-8 w-8"
+          )}
+        >
+          <Zap className={collapsed ? "h-5 w-5" : "h-4 w-4"} />
         </div>
         {!collapsed && (
           <div className="flex flex-col min-w-0 flex-1">
@@ -380,15 +385,15 @@ function AdminSidebarSearch({
 }) {
   if (collapsed) {
     return (
-      <div className="px-1.5 py-1.5">
+      <div className="px-0 py-1 flex justify-center">
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={onOpen}
-              className="flex h-8 w-full items-center justify-center rounded-md border border-sidebar-border bg-sidebar-accent/60 hover:bg-sidebar-accent transition-colors"
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-sidebar-border bg-sidebar-accent/60 hover:bg-sidebar-accent transition-colors"
               aria-label="Buscar"
             >
-              <Search className="h-4 w-4 text-sidebar-foreground" />
+              <Search className="h-5 w-5 text-sidebar-foreground" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="right">Buscar (Ctrl+K)</TooltipContent>
