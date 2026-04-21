@@ -152,10 +152,10 @@ function NavBadge({ count, tone = "info" }: { count: number; tone?: "danger" | "
   return (
     <span
       className={cn(
-        "ml-auto inline-flex items-center justify-center rounded-full px-1.5 min-w-[1.1rem] h-[1.1rem] text-[10px] font-semibold leading-none",
+        "ml-auto inline-flex items-center justify-center rounded-full px-1.5 min-w-[1.1rem] h-[1.1rem] text-[10px] font-bold leading-none ring-1",
         tone === "danger"
-          ? "bg-destructive/15 text-destructive"
-          : "bg-primary/15 text-primary"
+          ? "bg-destructive text-destructive-foreground ring-destructive/40"
+          : "bg-primary text-primary-foreground ring-primary/40"
       )}
     >
       {count > 99 ? "99+" : count}
@@ -341,12 +341,12 @@ function AdminSidebarHeader({ collapsed }: { collapsed: boolean }) {
         {!collapsed && (
           <div className="flex flex-col min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold truncate">Painel</span>
-              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-destructive/15 text-destructive">
+              <span className="text-sm font-bold text-sidebar-foreground truncate">Painel</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-destructive text-destructive-foreground">
                 Admin
               </span>
             </div>
-            <span className="text-[10px] text-muted-foreground truncate">Palpite Tech</span>
+            <span className="text-[10px] text-sidebar-foreground/70 truncate">Palpite Tech</span>
           </div>
         )}
       </div>
@@ -369,10 +369,10 @@ function AdminSidebarSearch({
           <TooltipTrigger asChild>
             <button
               onClick={onOpen}
-              className="flex h-8 w-full items-center justify-center rounded-md border border-sidebar-border bg-sidebar-accent/30 hover:bg-sidebar-accent transition-colors"
+              className="flex h-8 w-full items-center justify-center rounded-md border border-sidebar-border bg-sidebar-accent/60 hover:bg-sidebar-accent transition-colors"
               aria-label="Buscar"
             >
-              <Search className="h-4 w-4 text-muted-foreground" />
+              <Search className="h-4 w-4 text-sidebar-foreground" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="right">Buscar (Ctrl+K)</TooltipContent>
@@ -384,11 +384,11 @@ function AdminSidebarSearch({
     <div className="px-2 py-2">
       <button
         onClick={onOpen}
-        className="flex w-full items-center gap-2 rounded-md border border-sidebar-border bg-sidebar-accent/30 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-sidebar-accent transition-colors"
+        className="flex w-full items-center gap-2 rounded-md border border-sidebar-border bg-sidebar-accent/60 px-2.5 py-1.5 text-xs text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
       >
         <Search className="h-3.5 w-3.5" />
         <span className="flex-1 text-left">Buscar página...</span>
-        <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-background px-1.5 font-mono text-[10px] font-medium">
+        <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-sidebar-border bg-sidebar text-sidebar-foreground/80 px-1.5 font-mono text-[10px] font-medium">
           ⌘K
         </kbd>
       </button>
