@@ -418,7 +418,7 @@ function AdminSidebarFooter({ collapsed }: { collapsed: boolean }) {
               className="flex h-8 w-full items-center justify-center rounded-md hover:bg-sidebar-accent transition-colors"
               aria-label="Voltar ao app"
             >
-              <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+              <ArrowLeft className="h-4 w-4 text-sidebar-foreground" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="right">Voltar ao app</TooltipContent>
@@ -431,7 +431,7 @@ function AdminSidebarFooter({ collapsed }: { collapsed: boolean }) {
             >
               <Avatar className="h-7 w-7">
                 <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="text-[10px] bg-primary/15 text-primary">
+                <AvatarFallback className="text-[10px] bg-sidebar-primary text-sidebar-primary-foreground font-bold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -451,27 +451,27 @@ function AdminSidebarFooter({ collapsed }: { collapsed: boolean }) {
       >
         <Avatar className="h-8 w-8">
           <AvatarImage src={profile?.avatar_url || undefined} />
-          <AvatarFallback className="text-xs bg-primary/15 text-primary">
+          <AvatarFallback className="text-xs bg-sidebar-primary text-sidebar-primary-foreground font-bold">
             {initials}
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium truncate">
+            <span className="text-xs font-semibold text-sidebar-foreground truncate">
               {profile?.nome || user?.email?.split("@")[0] || "Admin"}
             </span>
-            <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-destructive/15 text-destructive">
+            <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-destructive text-destructive-foreground">
               Admin
             </span>
           </div>
-          <span className="text-[10px] text-muted-foreground truncate block">
+          <span className="text-[10px] text-sidebar-foreground/70 truncate block">
             {user?.email}
           </span>
         </div>
       </Link>
       <button
         onClick={() => navigate("/")}
-        className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors"
+        className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         <span>Voltar ao app</span>
@@ -541,10 +541,10 @@ export function AdminSidebar() {
                 <TooltipTrigger asChild>
                   <button
                     onClick={toggleSidebar}
-                    className="flex h-7 w-full items-center justify-center rounded-md bg-sidebar-accent/40 hover:bg-sidebar-accent transition-colors"
+                    className="flex h-7 w-full items-center justify-center rounded-md bg-sidebar-accent/60 hover:bg-sidebar-accent transition-colors"
                     aria-label="Expandir menu"
                   >
-                    <ChevronsRight className="h-3.5 w-3.5 text-muted-foreground" />
+                    <ChevronsRight className="h-3.5 w-3.5 text-sidebar-foreground" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="right">Expandir (Ctrl+B)</TooltipContent>
