@@ -264,12 +264,12 @@ function NavGroup({
                   <SidebarMenuButton
                     isActive={groupActive}
                     tooltip={section.label}
-                    className="data-[state=open]:bg-sidebar-accent relative"
+                    aria-label={section.label}
+                    className="!h-10 !w-10 !p-0 mx-auto justify-center rounded-lg data-[state=open]:bg-sidebar-accent relative"
                   >
-                    <GroupIcon className="h-4 w-4" />
-                    <span>{section.label}</span>
+                    <GroupIcon className="!h-5 !w-5" />
                     {groupBadgeTotal > 0 && (
-                      <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
+                      <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-sidebar" />
                     )}
                   </SidebarMenuButton>
                 </PopoverTrigger>
