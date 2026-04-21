@@ -1,10 +1,12 @@
-import { Link, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -26,7 +28,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { useAdminBadges } from "@/hooks/useAdminBadges";
+import { AdminCommandPalette } from "@/components/admin/AdminCommandPalette";
 import {
   LayoutDashboard,
   FileText,
@@ -51,63 +57,135 @@ import {
   Video,
   BarChart3,
   ChevronDown,
+  ChevronsRight,
+  Search,
+  Zap,
+  ArrowLeft,
+  Settings,
+  Radio,
   type LucideIcon,
 } from "lucide-react";
+
+type BadgeKey = "usuarios" | "pagamentos" | "resgates";
 
 interface NavItem {
   title: string;
   url: string;
   icon: LucideIcon;
   exact?: boolean;
+  badge?: BadgeKey;
+  badgeTone?: "danger" | "info";
 }
 
-const mainItems: NavItem[] = [
-  { title: "Painel", url: "/admin", icon: LayoutDashboard, exact: true },
-  { title: "Planos", url: "/admin/planos", icon: FileText },
-  { title: "Usuários", url: "/admin/usuarios", icon: Users },
-  { title: "Bots", url: "/admin/bots", icon: Bot },
-  { title: "Convites", url: "/admin/convites", icon: Gift },
-  { title: "Eventos", url: "/admin/eventos", icon: Activity },
-  { title: "Métricas", url: "/admin/metricas", icon: BarChart2 },
-  { title: "WhatsApp", url: "/admin/whatsapp", icon: MessageCircle },
-  { title: "Integrações", url: "/admin/integracoes", icon: Plug },
+interface NavSection {
+  label?: string;
+  icon?: LucideIcon;
+  items: NavItem[];
+  inline?: boolean; // sem submenu — sempre expandido inline
+}
+
+const sections: NavSection[] = [
+  {
+    inline: true,
+    items: [
+      { title: "Painel", url: "/admin", icon: LayoutDashboard, exact: true },
+      { title: "Planos", url: "/admin/planos", icon: FileText },
+      { title: "Usuários", url: "/admin/usuarios", icon: Users, badge: "usuarios", badgeTone: "info" },
+      { title: "Bots", url: "/admin/bots", icon: Bot },
+    ],
+  },
+  {
+    label: "Comunicação",
+    icon: Radio,
+    items: [
+      { title: "WhatsApp", url: "/admin/whatsapp", icon: MessageCircle },
+      { title: "Convites", url: "/admin/convites", icon: Gift },
+      { title: "Eventos", url: "/admin/eventos", icon: Activity },
+    ],
+  },
+  {
+    label: "Financeiro",
+    icon: DollarSign,
+    items: [
+      { title: "Custos IA", url: "/admin/custos", icon: DollarSign },
+      { title: "Assinaturas Op.", url: "/admin/assinaturas-operacionais", icon: PiggyBank },
+      { title: "Chip Celulares", url: "/admin/chip-celulares", icon: Smartphone },
+      { title: "Custos Operacionais", url: "/admin/custos-operacionais", icon: Receipt },
+      { title: "Vendas", url: "/admin/vendas", icon: ShoppingCart },
+    ],
+  },
+  {
+    label: "Bolões",
+    icon: Ticket,
+    items: [
+      { title: "Novo Bolão", url: "/admin/novo-bolao", icon: PlusCircle },
+      { title: "Listagem", url: "/admin/listagem-bolao", icon: List },
+      { title: "Pagamentos", url: "/admin/boloes-pagamento", icon: CreditCard, badge: "pagamentos", badgeTone: "danger" },
+      { title: "Premiação", url: "/admin/premiacao", icon: Trophy },
+      { title: "Carteira", url: "/admin/carteira", icon: Wallet },
+      { title: "Resgates", url: "/admin/solicitacao-resgate", icon: Trophy, badge: "resgates", badgeTone: "danger" },
+      { title: "Compras Saldo", url: "/admin/compras-saldo", icon: Wallet },
+      { title: "Compras Cotas", url: "/admin/compras-cotas", icon: CreditCard },
+    ],
+  },
+  {
+    label: "Gravação",
+    icon: Video,
+    items: [
+      { title: "Lotofácil", url: "/admin/gravacao/lotofacil", icon: BarChart3 },
+      { title: "Quina", url: "/admin/gravacao/quina", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Sistema",
+    icon: Settings,
+    items: [
+      { title: "Métricas", url: "/admin/metricas", icon: BarChart2 },
+      { title: "Integrações", url: "/admin/integracoes", icon: Plug },
+    ],
+  },
 ];
 
-const financeiroItems: NavItem[] = [
-  { title: "Custos IA", url: "/admin/custos", icon: DollarSign },
-  { title: "Assinaturas Op.", url: "/admin/assinaturas-operacionais", icon: PiggyBank },
-  { title: "Chip Celulares", url: "/admin/chip-celulares", icon: Smartphone },
-  { title: "Custos Operacionais", url: "/admin/custos-operacionais", icon: Receipt },
-  { title: "Vendas", url: "/admin/vendas", icon: ShoppingCart },
-];
+// ---------- Badge ----------
+function NavBadge({ count, tone = "info" }: { count: number; tone?: "danger" | "info" }) {
+  if (!count) return null;
+  return (
+    <span
+      className={cn(
+        "ml-auto inline-flex items-center justify-center rounded-full px-1.5 min-w-[1.1rem] h-[1.1rem] text-[10px] font-semibold leading-none",
+        tone === "danger"
+          ? "bg-destructive/15 text-destructive"
+          : "bg-primary/15 text-primary"
+      )}
+    >
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
 
-const boloesItems: NavItem[] = [
-  { title: "Novo Bolão", url: "/admin/novo-bolao", icon: PlusCircle },
-  { title: "Listagem", url: "/admin/listagem-bolao", icon: List },
-  { title: "Pagamentos", url: "/admin/boloes-pagamento", icon: CreditCard },
-  { title: "Premiação", url: "/admin/premiacao", icon: Trophy },
-  { title: "Carteira", url: "/admin/carteira", icon: Wallet },
-  { title: "Resgates", url: "/admin/solicitacao-resgate", icon: Trophy },
-  { title: "Compras Saldo", url: "/admin/compras-saldo", icon: Wallet },
-  { title: "Compras Cotas", url: "/admin/compras-cotas", icon: CreditCard },
-];
-
-const gravacaoItems: NavItem[] = [
-  { title: "Lotofácil", url: "/admin/gravacao/lotofacil", icon: BarChart3 },
-  { title: "Quina", url: "/admin/gravacao/quina", icon: BarChart3 },
-];
-
-// Render a single nav item with tooltip when collapsed
+// ---------- Leaf nav item ----------
 function NavLeaf({
   item,
   collapsed,
   isActive,
+  badgeCount,
 }: {
   item: NavItem;
   collapsed: boolean;
   isActive: (url: string, exact?: boolean) => boolean;
+  badgeCount?: number;
 }) {
   const active = isActive(item.url, item.exact);
+  const content = (
+    <Link to={item.url} aria-current={active ? "page" : undefined} className="relative">
+      {active && !collapsed && (
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r bg-primary" />
+      )}
+      <item.icon className="h-4 w-4 shrink-0" />
+      <span className="truncate">{item.title}</span>
+      {badgeCount ? <NavBadge count={badgeCount} tone={item.badgeTone} /> : null}
+    </Link>
+  );
 
   if (collapsed) {
     return (
@@ -115,14 +193,12 @@ function NavLeaf({
         <Tooltip>
           <TooltipTrigger asChild>
             <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-              <Link to={item.url}>
-                <item.icon className="h-4 w-4" />
-                <span>{item.title}</span>
-              </Link>
+              {content}
             </SidebarMenuButton>
           </TooltipTrigger>
-          <TooltipContent side="right" className="font-medium">
+          <TooltipContent side="right" className="font-medium flex items-center gap-2">
             {item.title}
+            {badgeCount ? <NavBadge count={badgeCount} tone={item.badgeTone} /> : null}
           </TooltipContent>
         </Tooltip>
       </SidebarMenuItem>
@@ -131,34 +207,37 @@ function NavLeaf({
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton asChild isActive={active}>
-        <Link to={item.url}>
-          <item.icon className="h-4 w-4" />
-          <span>{item.title}</span>
-        </Link>
+      <SidebarMenuButton
+        asChild
+        isActive={active}
+        className="transition-all hover:translate-x-0.5"
+      >
+        {content}
       </SidebarMenuButton>
     </SidebarMenuItem>
   );
 }
 
-// Render a group: collapsible when expanded, popover (flyout) when collapsed
+// ---------- Group with submenu ----------
 function NavGroup({
-  label,
-  icon: GroupIcon,
-  items,
+  section,
   collapsed,
   isActive,
+  badges,
 }: {
-  label: string;
-  icon: LucideIcon;
-  items: NavItem[];
+  section: NavSection;
   collapsed: boolean;
   isActive: (url: string, exact?: boolean) => boolean;
+  badges: ReturnType<typeof useAdminBadges>["data"];
 }) {
-  const groupActive = items.some((i) => isActive(i.url));
+  const GroupIcon = section.icon!;
+  const groupActive = section.items.some((i) => isActive(i.url));
+  const groupBadgeTotal = section.items.reduce(
+    (sum, i) => sum + (i.badge ? badges?.[i.badge] ?? 0 : 0),
+    0
+  );
 
   if (collapsed) {
-    // Flyout submenu via Popover (hover/click on icon)
     return (
       <SidebarGroup>
         <SidebarGroupContent>
@@ -168,27 +247,26 @@ function NavGroup({
                 <PopoverTrigger asChild>
                   <SidebarMenuButton
                     isActive={groupActive}
-                    tooltip={label}
-                    className="data-[state=open]:bg-sidebar-accent"
+                    tooltip={section.label}
+                    className="data-[state=open]:bg-sidebar-accent relative"
                   >
                     <GroupIcon className="h-4 w-4" />
-                    <span>{label}</span>
+                    <span>{section.label}</span>
+                    {groupBadgeTotal > 0 && (
+                      <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
+                    )}
                   </SidebarMenuButton>
                 </PopoverTrigger>
-                <PopoverContent
-                  side="right"
-                  align="start"
-                  sideOffset={8}
-                  className="p-1 w-56"
-                >
-                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <PopoverContent side="right" align="start" sideOffset={8} className="p-1 w-60">
+                  <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.12em] flex items-center gap-1.5">
                     <GroupIcon className="h-3.5 w-3.5" />
-                    {label}
+                    {section.label}
                   </div>
                   <div className="h-px bg-border my-1" />
                   <div className="flex flex-col gap-0.5">
-                    {items.map((item) => {
+                    {section.items.map((item) => {
                       const active = isActive(item.url, item.exact);
+                      const count = item.badge ? badges?.[item.badge] ?? 0 : 0;
                       return (
                         <Link
                           key={item.url}
@@ -199,7 +277,8 @@ function NavGroup({
                           )}
                         >
                           <item.icon className="h-4 w-4 shrink-0" />
-                          <span className="truncate">{item.title}</span>
+                          <span className="truncate flex-1">{item.title}</span>
+                          {count ? <NavBadge count={count} tone={item.badgeTone} /> : null}
                         </Link>
                       );
                     })}
@@ -213,26 +292,29 @@ function NavGroup({
     );
   }
 
-  // Expanded: keep classic collapsible behavior
   return (
     <SidebarGroup>
       <Collapsible defaultOpen={groupActive}>
-        <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors">
+        <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1.5 text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-[0.12em] hover:text-foreground transition-colors group">
           <div className="flex items-center gap-1.5">
-            <GroupIcon className="h-3.5 w-3.5" />
-            <span>{label}</span>
+            <GroupIcon className="h-3 w-3" />
+            <span>{section.label}</span>
+            {groupBadgeTotal > 0 && (
+              <NavBadge count={groupBadgeTotal} tone="danger" />
+            )}
           </div>
-          <ChevronDown className="h-3 w-3" />
+          <ChevronDown className="h-3 w-3 transition-transform group-data-[state=closed]:-rotate-90" />
         </CollapsibleTrigger>
         <CollapsibleContent>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {section.items.map((item) => (
                 <NavLeaf
                   key={item.url}
                   item={item}
                   collapsed={collapsed}
                   isActive={isActive}
+                  badgeCount={item.badge ? badges?.[item.badge] ?? 0 : 0}
                 />
               ))}
             </SidebarMenu>
@@ -243,71 +325,238 @@ function NavGroup({
   );
 }
 
+// ---------- Header ----------
+function AdminSidebarHeader({ collapsed }: { collapsed: boolean }) {
+  return (
+    <SidebarHeader className="border-b border-sidebar-border">
+      <div
+        className={cn(
+          "flex items-center gap-2 px-1 py-1",
+          collapsed && "justify-center"
+        )}
+      >
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm">
+          <Zap className="h-4 w-4" />
+        </div>
+        {!collapsed && (
+          <div className="flex flex-col min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-bold truncate">Painel</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-destructive/15 text-destructive">
+                Admin
+              </span>
+            </div>
+            <span className="text-[10px] text-muted-foreground truncate">Palpite Tech</span>
+          </div>
+        )}
+      </div>
+    </SidebarHeader>
+  );
+}
+
+// ---------- Search trigger ----------
+function AdminSidebarSearch({
+  collapsed,
+  onOpen,
+}: {
+  collapsed: boolean;
+  onOpen: () => void;
+}) {
+  if (collapsed) {
+    return (
+      <div className="px-1.5 py-1.5">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onOpen}
+              className="flex h-8 w-full items-center justify-center rounded-md border border-sidebar-border bg-sidebar-accent/30 hover:bg-sidebar-accent transition-colors"
+              aria-label="Buscar"
+            >
+              <Search className="h-4 w-4 text-muted-foreground" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Buscar (Ctrl+K)</TooltipContent>
+        </Tooltip>
+      </div>
+    );
+  }
+  return (
+    <div className="px-2 py-2">
+      <button
+        onClick={onOpen}
+        className="flex w-full items-center gap-2 rounded-md border border-sidebar-border bg-sidebar-accent/30 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-sidebar-accent transition-colors"
+      >
+        <Search className="h-3.5 w-3.5" />
+        <span className="flex-1 text-left">Buscar página...</span>
+        <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-background px-1.5 font-mono text-[10px] font-medium">
+          ⌘K
+        </kbd>
+      </button>
+    </div>
+  );
+}
+
+// ---------- Footer ----------
+function AdminSidebarFooter({ collapsed }: { collapsed: boolean }) {
+  const { profile, user } = useAuth();
+  const navigate = useNavigate();
+  const initials = (profile?.nome || user?.email || "A")
+    .split(" ")
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  if (collapsed) {
+    return (
+      <SidebarFooter className="border-t border-sidebar-border p-1.5 gap-1.5">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => navigate("/")}
+              className="flex h-8 w-full items-center justify-center rounded-md hover:bg-sidebar-accent transition-colors"
+              aria-label="Voltar ao app"
+            >
+              <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Voltar ao app</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              to="/perfil"
+              className="flex h-8 w-full items-center justify-center rounded-md hover:bg-sidebar-accent transition-colors"
+            >
+              <Avatar className="h-7 w-7">
+                <AvatarImage src={profile?.avatar_url || undefined} />
+                <AvatarFallback className="text-[10px] bg-primary/15 text-primary">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="right">{profile?.nome || "Admin"}</TooltipContent>
+        </Tooltip>
+      </SidebarFooter>
+    );
+  }
+
+  return (
+    <SidebarFooter className="border-t border-sidebar-border p-2 gap-1.5">
+      <Link
+        to="/perfil"
+        className="flex items-center gap-2 rounded-md p-1.5 hover:bg-sidebar-accent transition-colors"
+      >
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={profile?.avatar_url || undefined} />
+          <AvatarFallback className="text-xs bg-primary/15 text-primary">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-medium truncate">
+              {profile?.nome || user?.email?.split("@")[0] || "Admin"}
+            </span>
+            <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-destructive/15 text-destructive">
+              Admin
+            </span>
+          </div>
+          <span className="text-[10px] text-muted-foreground truncate block">
+            {user?.email}
+          </span>
+        </div>
+      </Link>
+      <button
+        onClick={() => navigate("/")}
+        className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        <span>Voltar ao app</span>
+      </button>
+    </SidebarFooter>
+  );
+}
+
+// ---------- Main ----------
 export function AdminSidebar() {
-  const { state } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
   const currentPath = location.pathname;
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const { data: badges } = useAdminBadges();
 
   const isActive = (url: string, exact?: boolean) =>
     exact ? currentPath === url : currentPath === url || currentPath.startsWith(url + "/");
 
   return (
     <TooltipProvider delayDuration={100}>
-      <Sidebar collapsible="icon" className="border-r border-border">
-        <SidebarContent className="bg-card">
-          {/* Main Nav */}
-          <SidebarGroup>
-            {!collapsed && (
-              <SidebarGroupLabel className="text-xs text-destructive font-bold uppercase tracking-wider">
-                Admin
-              </SidebarGroupLabel>
-            )}
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {mainItems.map((item) => (
-                  <NavLeaf
-                    key={item.url}
-                    item={item}
+      <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+        <SidebarContent className="bg-gradient-to-b from-card via-card to-card/95">
+          <AdminSidebarHeader collapsed={collapsed} />
+          <AdminSidebarSearch collapsed={collapsed} onOpen={() => setPaletteOpen(true)} />
+
+          {sections.map((section, idx) => {
+            const isLast = idx === sections.length - 1;
+            return (
+              <div key={section.label ?? `inline-${idx}`}>
+                {section.inline ? (
+                  <SidebarGroup>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        {section.items.map((item) => (
+                          <NavLeaf
+                            key={item.url}
+                            item={item}
+                            collapsed={collapsed}
+                            isActive={isActive}
+                            badgeCount={item.badge ? badges?.[item.badge] ?? 0 : 0}
+                          />
+                        ))}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </SidebarGroup>
+                ) : (
+                  <NavGroup
+                    section={section}
                     collapsed={collapsed}
                     isActive={isActive}
+                    badges={badges}
                   />
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+                )}
+                {collapsed && !isLast && (
+                  <div className="h-px bg-sidebar-border/60 mx-2 my-0.5" />
+                )}
+              </div>
+            );
+          })}
 
-          {collapsed && <div className="h-px bg-sidebar-border mx-2 my-1" />}
-
-          <NavGroup
-            label="Financeiro"
-            icon={DollarSign}
-            items={financeiroItems}
-            collapsed={collapsed}
-            isActive={isActive}
-          />
-
-          {collapsed && <div className="h-px bg-sidebar-border mx-2 my-1" />}
-
-          <NavGroup
-            label="Bolões"
-            icon={Ticket}
-            items={boloesItems}
-            collapsed={collapsed}
-            isActive={isActive}
-          />
-
-          {collapsed && <div className="h-px bg-sidebar-border mx-2 my-1" />}
-
-          <NavGroup
-            label="Gravação"
-            icon={Video}
-            items={gravacaoItems}
-            collapsed={collapsed}
-            isActive={isActive}
-          />
+          {/* Expand button when collapsed (extra to header trigger) */}
+          {collapsed && (
+            <div className="mt-auto px-1.5 pb-1.5">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={toggleSidebar}
+                    className="flex h-7 w-full items-center justify-center rounded-md bg-sidebar-accent/40 hover:bg-sidebar-accent transition-colors"
+                    aria-label="Expandir menu"
+                  >
+                    <ChevronsRight className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right">Expandir (Ctrl+B)</TooltipContent>
+              </Tooltip>
+            </div>
+          )}
         </SidebarContent>
+
+        <AdminSidebarFooter collapsed={collapsed} />
       </Sidebar>
+
+      <AdminCommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </TooltipProvider>
   );
 }
