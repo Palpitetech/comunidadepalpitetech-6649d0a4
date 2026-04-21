@@ -431,15 +431,15 @@ function AdminSidebarFooter({ collapsed }: { collapsed: boolean }) {
 
   if (collapsed) {
     return (
-      <SidebarFooter className="border-t border-sidebar-border p-1.5 gap-1.5">
+      <SidebarFooter className="border-t border-sidebar-border p-0 py-1.5 gap-1 items-center">
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={() => navigate("/")}
-              className="flex h-8 w-full items-center justify-center rounded-md hover:bg-sidebar-accent transition-colors"
+              className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-sidebar-accent transition-colors"
               aria-label="Voltar ao app"
             >
-              <ArrowLeft className="h-4 w-4 text-sidebar-foreground" />
+              <ArrowLeft className="h-5 w-5 text-sidebar-foreground" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="right">Voltar ao app</TooltipContent>
@@ -448,11 +448,12 @@ function AdminSidebarFooter({ collapsed }: { collapsed: boolean }) {
           <TooltipTrigger asChild>
             <Link
               to="/perfil"
-              className="flex h-8 w-full items-center justify-center rounded-md hover:bg-sidebar-accent transition-colors"
+              className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-sidebar-accent transition-colors"
+              aria-label={profile?.nome || "Admin"}
             >
-              <Avatar className="h-7 w-7">
+              <Avatar className="h-8 w-8">
                 <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="text-[10px] bg-sidebar-primary text-sidebar-primary-foreground font-bold">
+                <AvatarFallback className="text-[11px] bg-sidebar-primary text-sidebar-primary-foreground font-bold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
