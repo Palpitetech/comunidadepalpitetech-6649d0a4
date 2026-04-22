@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { InstanciasTab } from "@/components/admin/whatsapp/InstanciasTab";
 import { TemplatesTab } from "@/components/admin/whatsapp/TemplatesTab";
+import { LogsTemplatesTab } from "@/components/admin/whatsapp/LogsTemplatesTab";
 import { FilaTab } from "@/components/admin/whatsapp/FilaTab";
 import { LogsTab } from "@/components/admin/whatsapp/LogsTab";
 import { AquecimentoTab } from "@/components/admin/whatsapp/AquecimentoTab";
@@ -17,6 +18,7 @@ import { cn } from "@/lib/utils";
 const TAB_TITLES: Record<string, string> = {
   instancias: "Instâncias",
   templates: "Templates",
+  "logs-templates": "Logs Templates",
   fila: "Fila de Envio",
   mensagens: "Mensagens",
   disparo: "Disparo Manual",
@@ -68,6 +70,7 @@ export default function AdminWhatsApp() {
             <div className="max-w-5xl">
               {activeTab === "instancias" && <InstanciasTab />}
               {activeTab === "templates" && <TemplatesTab />}
+              {activeTab === "logs-templates" && <LogsTemplatesTab />}
               {activeTab === "fila" && <FilaTab />}
               {activeTab === "mensagens" && <MensagensTab />}
               {activeTab === "disparo" && <DisparoManualTab />}
