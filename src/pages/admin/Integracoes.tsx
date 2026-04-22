@@ -223,7 +223,7 @@ export default function Integracoes() {
           nome: testNome || undefined,
           email: testEmail || undefined,
           celular: testCelular || undefined,
-          source: testSource || "teste-admin",
+          slug: testSource || "teste-admin",
         }),
       });
       const data = await res.json();
@@ -243,13 +243,20 @@ export default function Integracoes() {
 Content-Type: application/json
 
 {
-  "nome": "João Silva",        // opcional
-  "email": "joao@email.com",   // opcional
-  "celular": "11999999999",    // opcional
-  "tags": ["tag_extra"],
-  "source": "nome-da-pagina",
-  "utm_source": "instagram",
-  "pagina_origem": "https://meusite.com/promo"
+  "nome": "João Silva",                    // opcional
+  "email": "joao@email.com",               // opcional
+  "celular": "11999999999",                // opcional
+  "tags": ["promo-julho"],                 // opcional
+  "slug": "lp-mega-julho",                 // opcional — identifica a página
+  "pagina_origem": "https://meusite.com/promo",
+  "utm_source": "instagram",               // opcional
+  "utm_medium": "cpc",                     // opcional
+  "utm_campaign": "mega-julho",            // opcional
+  "utm_content": "story-3",                // opcional
+  "utm_term": "bolao mega",                // opcional
+  "referrer": "https://google.com/",       // opcional
+  "gclid": "Cj0KCQ...",                    // opcional (Google Ads)
+  "fbclid": "IwAR..."                      // opcional (Meta Ads)
 }`;
 
   if (loading) {

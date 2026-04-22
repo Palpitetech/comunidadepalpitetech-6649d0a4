@@ -252,8 +252,15 @@ serve(async (req) => {
       email,
       celular,
       tags: payloadTags,
-      source,
+      slug,
       utm_source,
+      utm_medium,
+      utm_campaign,
+      utm_content,
+      utm_term,
+      referrer,
+      gclid,
+      fbclid,
       pagina_origem,
       page_url,
     } = body as {
@@ -261,11 +268,35 @@ serve(async (req) => {
       email?: string;
       celular?: string;
       tags?: string[];
-      source?: string;
+      slug?: string;
       utm_source?: string;
+      utm_medium?: string;
+      utm_campaign?: string;
+      utm_content?: string;
+      utm_term?: string;
+      referrer?: string;
+      gclid?: string;
+      fbclid?: string;
       pagina_origem?: string;
       page_url?: string;
     };
+
+    // Helper to normalize empty strings to null
+    const cleanStr = (v: string | undefined | null) => {
+      if (v === undefined || v === null) return null;
+      const t = String(v).trim();
+      return t.length > 0 ? t : null;
+    };
+
+    const slugClean = cleanStr(slug);
+    const utmSourceClean = cleanStr(utm_source);
+    const utmMediumClean = cleanStr(utm_medium);
+    const utmCampaignClean = cleanStr(utm_campaign);
+    const utmContentClean = cleanStr(utm_content);
+    const utmTermClean = cleanStr(utm_term);
+    const referrerClean = cleanStr(referrer);
+    const gclidClean = cleanStr(gclid);
+    const fbclidClean = cleanStr(fbclid);
 
     const hasNome = !!nome?.trim();
     const hasEmail = !!email?.trim();
@@ -327,22 +358,36 @@ serve(async (req) => {
             nome: nome?.trim() || undefined,
             email: emailLowerLead || undefined,
             celular: celularSave || undefined,
-            source: source || undefined,
-            utm_source: utm_source || undefined,
+            slug: slugClean || undefined,
+            utm_source: utmSourceClean || undefined,
+            utm_medium: utmMediumClean || undefined,
+            utm_campaign: utmCampaignClean || undefined,
+            utm_content: utmContentClean || undefined,
+            utm_term: utmTermClean || undefined,
+            referrer: referrerClean || undefined,
+            gclid: gclidClean || undefined,
+            fbclid: fbclidClean || undefined,
             pagina_origem: paginaOrigemValor || undefined,
             tags: tagsLead,
             raw_payload: body,
             ip,
             updated_at: new Date().toISOString(),
-          })
+          } as any)
           .eq("id", existingLeadId);
       } else {
         await supabaseAdmin.from("leads_inbox").insert({
           nome: nome?.trim() || null,
           email: emailLowerLead,
           celular: celularSave,
-          source: source || null,
-          utm_source: utm_source || null,
+          slug: slugClean,
+          utm_source: utmSourceClean,
+          utm_medium: utmMediumClean,
+          utm_campaign: utmCampaignClean,
+          utm_content: utmContentClean,
+          utm_term: utmTermClean,
+          referrer: referrerClean,
+          gclid: gclidClean,
+          fbclid: fbclidClean,
           pagina_origem: paginaOrigemValor,
           tags: tagsLead,
           webhook_id: webhook.id,
@@ -350,7 +395,7 @@ serve(async (req) => {
           ip,
           raw_payload: body,
           status: "novo",
-        });
+        } as any);
       }
 
       await supabaseAdmin.rpc("increment_lead_webhook_count" as any, { webhook_id: webhook.id });
@@ -366,6 +411,11 @@ serve(async (req) => {
           tem_email: hasEmail,
           tem_celular: hasCelular,
           dedup: !!existingLeadId,
+          slug: slugClean,
+          utm_source: utmSourceClean,
+          utm_campaign: utmCampaignClean,
+          has_gclid: !!gclidClean,
+          has_fbclid: !!fbclidClean,
           ip,
         },
       });
@@ -454,7 +504,7 @@ serve(async (req) => {
         email_confirm: false,
         user_metadata: {
           nome: nome.trim(),
-          origem: source || "webhook",
+          origem: slugClean || "webhook",
         },
       } as any);
 
@@ -540,8 +590,8 @@ serve(async (req) => {
 
     const updatePayload: Record<string, unknown> = { tags: mergedTags };
     if (nome.trim() && isNew) updatePayload.nome = nome.trim();
-    if (utm_source && !profileData?.utm_source) {
-      updatePayload.utm_source = utm_source;
+    if (utmSourceClean && !profileData?.utm_source) {
+      updatePayload.utm_source = utmSourceClean;
     }
 
     const { error: updateError } = await supabaseAdmin
@@ -554,7 +604,7 @@ serve(async (req) => {
       await supabaseAdmin.from("system_events").insert({
         event_type: "lead_tag_update_error",
         description: `Falha ao atualizar tags do lead ${email || celular}`,
-        source: source || "webhook",
+        source: slugClean || "webhook",
         status: "error",
         metadata: {
           user_id: userId,
@@ -580,7 +630,7 @@ serve(async (req) => {
       await supabaseAdmin.from("system_events").insert({
         event_type: "lead_tag_persist_mismatch",
         description: `Tags não persistiram para ${email || celular}`,
-        source: source || "webhook",
+        source: slugClean || "webhook",
         status: "error",
         metadata: {
           user_id: userId,
@@ -653,7 +703,7 @@ serve(async (req) => {
         await supabaseAdmin.from("system_events").insert({
           event_type: "lead_recebido_pendente",
           description: `Lead criado e email de boas-vindas enviado para ${maskEmail(emailLower)}`,
-          source: source || "webhook",
+          source: slugClean || "webhook",
           status: welcomeEmailStatus,
           metadata: {
             user_id: userId,
