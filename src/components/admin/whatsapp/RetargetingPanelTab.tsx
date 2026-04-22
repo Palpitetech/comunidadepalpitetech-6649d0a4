@@ -54,21 +54,24 @@ export function RetargetingPanelTab() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     const since = subDays(new Date(), 7).toISOString();
-    const [runsRes, schedRes] = await Promise.all([
-      supabase
-        .from("lead_retargeting_runs" as never)
-        .select("*")
-        .gte("ran_at", since)
-        .order("ran_at", { ascending: false })
-        .limit(200),
-      supabase.rpc("get_lead_retargeting_schedule" as never),
-    ]);
+
+    const runsRes = await supabase
+      .from("lead_retargeting_runs" as never)
+      .select("*")
+      .gte("ran_at", since)
+      .order("ran_at", { ascending: false })
+      .limit(200);
     if (!runsRes.error && runsRes.data) setRuns(runsRes.data as unknown as RunRow[]);
-    if (!schedRes.error && schedRes.data && Array.isArray(schedRes.data) && schedRes.data.length > 0) {
-      setSchedule(schedRes.data[0] as unknown as ScheduleInfo);
+
+    const schedRes = await (supabase.rpc as unknown as (
+      fn: string
+    ) => Promise<{ data: unknown; error: unknown }>)("get_lead_retargeting_schedule");
+    if (!schedRes.error && Array.isArray(schedRes.data) && schedRes.data.length > 0) {
+      setSchedule(schedRes.data[0] as ScheduleInfo);
     } else {
       setSchedule(null);
     }
+
     setLoading(false);
   }, []);
 
