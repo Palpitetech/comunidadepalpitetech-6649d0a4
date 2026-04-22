@@ -605,6 +605,17 @@ serve(async (req) => {
 
     await supabaseAdmin.rpc("increment_lead_webhook_count" as any, { webhook_id: webhook.id });
 
+    // Marca leads_inbox prévios como convertidos (mesmo email/celular)
+    try {
+      await supabaseAdmin
+        .from("leads_inbox")
+        .update({ status: "convertido", perfil_id: userId, updated_at: new Date().toISOString() })
+        .or(`email.eq.${emailLower},celular.eq.${normalizedCelular}`)
+        .neq("status", "convertido");
+    } catch (e) {
+      console.warn("[receive-lead] erro ao marcar leads_inbox como convertido:", e);
+    }
+
     // Email de boas-vindas (sem magic link — verificação acontece no /login via OTP de 6 dígitos)
     let welcomeEmailStatus = "skipped";
     if (isNew) {
