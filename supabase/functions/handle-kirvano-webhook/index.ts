@@ -612,9 +612,33 @@ serve(async (req) => {
           abandoned_cart: "carrinho_abandonado",
         };
         const mappedType = eventMap[ev] ?? ev;
+
+        // Resolve plan slug via offer mapping (para montar link mascarado /gerar-novo-pix/<slug>)
+        let planSlug: string | null = null;
+        if (offerId) {
+          try {
+            const { data: mapRow } = await admin
+              .from("kirvano_offer_plan_map")
+              .select("plan_id, plans:plan_id(slug)")
+              .eq("offer_id", offerId)
+              .eq("is_active", true)
+              .maybeSingle();
+            const planRel: any = (mapRow as any)?.plans;
+            if (planRel?.slug) planSlug = planRel.slug as string;
+          } catch (e) {
+            logStep("Failed to resolve plan slug for intermediate event", {
+              message: e instanceof Error ? e.message : String(e),
+            });
+          }
+        }
+
+        const pixPaymentMeta = payload?.payment ?? {};
         await insertEvent(perfilIgnore.id, mappedType, {
           payment_method: payload?.payment_method ?? null,
           total_price: payload?.total_price ?? null,
+          pix_codigo: pixPaymentMeta?.qrcode ?? null,
+          pix_expires_at: pixPaymentMeta?.expires_at ?? null,
+          plan_slug: planSlug,
         });
 
         // Atribuição: first-touch também em PIX/checkout (não marca compra)

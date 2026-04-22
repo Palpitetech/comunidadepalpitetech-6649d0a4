@@ -109,6 +109,7 @@ import HubLotofacil from "./pages/lotofacil/HubLotofacil";
 import GravacaoLotofacil from "./pages/admin/gravacao/GravacaoLotofacil";
 import GravacaoQuina from "./pages/admin/gravacao/GravacaoQuina";
 import SmartLinkRedirect from "./pages/SmartLinkRedirect";
+import GerarNovoPix from "./pages/GerarNovoPix";
 import PerfilDados from "./pages/PerfilDados";
 import PerfilTransacoes from "./pages/PerfilTransacoes";
 import PerfilAssinatura from "./pages/PerfilAssinatura";
@@ -156,6 +157,7 @@ const App = () => (
                 <Route path="/privacidade" element={<Privacidade />} />
                 <Route path="/proximos-concursos" element={<ProximosConcursos />} />
                 <Route path="/g/:slug" element={<SmartLinkRedirect />} />
+                <Route path="/gerar-novo-pix/:slug" element={<GerarNovoPix />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Index /></ProtectedRoute>} />
 
 
