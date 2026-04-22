@@ -246,43 +246,6 @@ export function RetargetingPanelTab() {
   );
 }
 
-type Tone = "success" | "warning" | "error" | "muted";
-
-function toneClass(tone: Tone): string {
-  switch (tone) {
-    case "success":
-      return "text-green-700 bg-green-500/10 border-green-500/30";
-    case "warning":
-      return "text-amber-700 bg-amber-500/10 border-amber-500/30";
-    case "error":
-      return "text-red-700 bg-red-500/10 border-red-500/30";
-    default:
-      return "text-muted-foreground bg-muted/40 border-border";
-  }
-}
-
-function MetricCard({
-  icon: Icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: number;
-  tone: Tone;
-}) {
-  return (
-    <div className={`rounded-lg border p-3 ${toneClass(tone)}`}>
-      <div className="flex items-center gap-1.5 mb-1">
-        <Icon className="h-3.5 w-3.5" />
-        <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide">{label}</span>
-      </div>
-      <p className="text-xl sm:text-2xl font-bold tabular-nums">{value}</p>
-    </div>
-  );
-}
-
 function Stat({ label, value, tone }: { label: string; value: number; tone: Tone }) {
   return (
     <div className={`rounded-md border px-2 py-1 text-center min-w-[58px] ${toneClass(tone)}`}>
