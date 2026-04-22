@@ -5,19 +5,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, UserPlus, Trash2, Mail, Phone, Globe, Tag } from "lucide-react";
+import { Loader2, UserPlus, Trash2, Globe, Tag, ChevronDown, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 export interface LeadInbox {
   id: string;
   nome: string | null;
   email: string | null;
   celular: string | null;
-  source: string | null;
+  slug: string | null;
   utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  utm_term: string | null;
+  referrer: string | null;
+  gclid: string | null;
+  fbclid: string | null;
   pagina_origem: string | null;
   tags: string[] | null;
   webhook_name: string | null;
@@ -43,12 +52,35 @@ const STATUS_OPTIONS: { key: string; label: string; className: string }[] = [
   { key: "descartado", label: "Descartado", className: "bg-muted text-muted-foreground border-border" },
 ];
 
+function AttrRow({ label, value, mono = true, link = false }: { label: string; value: string | null | undefined; mono?: boolean; link?: boolean }) {
+  if (!value) return null;
+  return (
+    <div className="grid grid-cols-[88px_1fr] gap-2 items-start text-xs">
+      <span className="text-muted-foreground uppercase tracking-wider text-[10px] pt-0.5">{label}</span>
+      {link ? (
+        <a
+          href={value}
+          target="_blank"
+          rel="noreferrer"
+          className="text-primary hover:underline inline-flex items-center gap-1 break-all"
+        >
+          <span className="truncate">{value.replace(/^https?:\/\//, "")}</span>
+          <ExternalLink className="h-3 w-3 shrink-0" />
+        </a>
+      ) : (
+        <span className={cn("break-all", mono && "font-mono")}>{value}</span>
+      )}
+    </div>
+  );
+}
+
 export function LeadDetailSheet({ lead, open, onOpenChange, onChanged }: Props) {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [celular, setCelular] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showFullAttribution, setShowFullAttribution] = useState(false);
 
   useEffect(() => {
     if (lead) {
@@ -56,6 +88,7 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onChanged }: Props) 
       setEmail(lead.email || "");
       setCelular(lead.celular || "");
       setConfirmDelete(false);
+      setShowFullAttribution(false);
     }
   }, [lead]);
 
@@ -122,6 +155,10 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onChanged }: Props) 
 
   const currentStatusOpt = STATUS_OPTIONS.find((s) => s.key === lead.status) || STATUS_OPTIONS[0];
 
+  // Quick attribution summary (always visible)
+  const hasAnyUtm = !!(lead.utm_source || lead.utm_medium || lead.utm_campaign || lead.utm_content || lead.utm_term);
+  const hasAnyClickId = !!(lead.gclid || lead.fbclid);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
@@ -181,40 +218,79 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onChanged }: Props) 
 
           <Separator />
 
-          {/* Origin info */}
-          <div className="space-y-2 text-sm">
-            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Origem</Label>
-            <div className="grid grid-cols-1 gap-1.5 text-xs">
-              {lead.source && (
-                <div className="flex items-center gap-2">
-                  <Tag className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-muted-foreground">Source:</span>
-                  <span className="font-mono">{lead.source}</span>
+          {/* Origin / Attribution */}
+          <div className="space-y-3">
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Origem & atribuição</Label>
+
+            {/* Always-visible essentials */}
+            <div className="space-y-1.5">
+              {lead.slug && (
+                <div className="flex items-center gap-2 text-xs">
+                  <Tag className="h-3 w-3 text-muted-foreground shrink-0" />
+                  <span className="text-muted-foreground">Slug:</span>
+                  <span className="font-mono">{lead.slug}</span>
                 </div>
               )}
               {lead.utm_source && (
-                <div className="flex items-center gap-2">
-                  <Tag className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-muted-foreground">UTM:</span>
-                  <span className="font-mono">{lead.utm_source}</span>
-                </div>
+                <AttrRow label="Source" value={lead.utm_source} />
+              )}
+              {lead.utm_campaign && (
+                <AttrRow label="Campaign" value={lead.utm_campaign} />
               )}
               {lead.pagina_origem && (
-                <div className="flex items-center gap-2">
-                  <Globe className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-muted-foreground">Página:</span>
-                  <a href={lead.pagina_origem} target="_blank" rel="noreferrer" className="text-primary hover:underline truncate">
-                    {lead.pagina_origem}
+                <div className="flex items-start gap-2 text-xs">
+                  <Globe className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
+                  <a
+                    href={lead.pagina_origem}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary hover:underline truncate"
+                    title={lead.pagina_origem}
+                  >
+                    {lead.pagina_origem.replace(/^https?:\/\//, "")}
                   </a>
                 </div>
               )}
-              {lead.ip && (
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">IP:</span>
-                  <span className="font-mono">{lead.ip}</span>
-                </div>
-              )}
             </div>
+
+            {/* Click IDs badges */}
+            {hasAnyClickId && (
+              <div className="flex flex-wrap gap-1.5">
+                {lead.gclid && (
+                  <Badge variant="outline" className="bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30 text-[10px] gap-1">
+                    🔍 Google Ads
+                  </Badge>
+                )}
+                {lead.fbclid && (
+                  <Badge variant="outline" className="bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/30 text-[10px] gap-1">
+                    📣 Meta Ads
+                  </Badge>
+                )}
+              </div>
+            )}
+
+            {/* Collapsible: full attribution */}
+            {(hasAnyUtm || hasAnyClickId || lead.referrer || lead.ip) && (
+              <Collapsible open={showFullAttribution} onOpenChange={setShowFullAttribution}>
+                <CollapsibleTrigger asChild>
+                  <button className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors">
+                    <ChevronDown className={cn("h-3 w-3 transition-transform", showFullAttribution && "rotate-180")} />
+                    Atribuição completa
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-2 space-y-1.5 border-l-2 border-border pl-3 ml-1">
+                  <AttrRow label="Source" value={lead.utm_source} />
+                  <AttrRow label="Medium" value={lead.utm_medium} />
+                  <AttrRow label="Campaign" value={lead.utm_campaign} />
+                  <AttrRow label="Content" value={lead.utm_content} />
+                  <AttrRow label="Term" value={lead.utm_term} />
+                  <AttrRow label="Referrer" value={lead.referrer} link />
+                  <AttrRow label="gclid" value={lead.gclid} />
+                  <AttrRow label="fbclid" value={lead.fbclid} />
+                  <AttrRow label="IP" value={lead.ip} />
+                </CollapsibleContent>
+              </Collapsible>
+            )}
           </div>
 
           {lead.tags && lead.tags.length > 0 && (
