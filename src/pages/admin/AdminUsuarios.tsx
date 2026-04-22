@@ -371,7 +371,7 @@ export default function AdminUsuarios() {
       {/* ======= MOBILE ======= */}
       <div className="md:hidden px-4 py-3 space-y-3">
         {/* Filtros principais */}
-        <div className="grid grid-cols-3 gap-1">
+        <div className="grid grid-cols-4 gap-1">
           {FILTROS_PRINCIPAIS.map(({ key, label, icon: Icon }) => {
             const isActive = activeFilter === key;
             return (
@@ -443,7 +443,43 @@ export default function AdminUsuarios() {
           />
         </div>
 
-        {/* User list */}
+        {/* Lista — usuários OU leads */}
+        {activeFilter === "leads" ? (
+          <div className="space-y-0.5">
+            {filteredLeads.map((lead) => (
+              <button
+                key={lead.id}
+                className="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg active:bg-muted/60 transition-colors border-b border-border/30 last:border-0"
+                onClick={() => handleLeadClick(lead)}
+              >
+                <div className="h-9 w-9 shrink-0 rounded-full bg-muted flex items-center justify-center">
+                  <Inbox className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-medium truncate">{lead.nome || "Sem nome"}</p>
+                    <span className={cn("text-[9px] px-1.5 py-0.5 rounded border", getLeadStatusClass(lead.status))}>
+                      {lead.status}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {lead.email || lead.celular || "—"}
+                  </p>
+                  {lead.pagina_origem && (
+                    <p className="text-[10px] text-muted-foreground/70 truncate">{lead.pagina_origem}</p>
+                  )}
+                </div>
+                {getUtmBadge(lead.utm_source)}
+                <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+              </button>
+            ))}
+            {filteredLeads.length === 0 && (
+              <div className="text-center py-12 text-sm text-muted-foreground">
+                {searchTerm ? "Nenhum lead encontrado" : "Nenhum lead capturado ainda"}
+              </div>
+            )}
+          </div>
+        ) : (
         <div className="space-y-0.5">
           {paginatedUsers.map((user) => (
             <button
@@ -494,6 +530,7 @@ export default function AdminUsuarios() {
             </div>
           )}
         </div>
+        )}
 
         {/* Bottom pagination mobile */}
         {totalPages > 1 && (
