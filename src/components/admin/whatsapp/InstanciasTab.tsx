@@ -225,7 +225,21 @@ export function InstanciasTab() {
     setQrInstanceId(inst.id);
     setQrDialogOpen(true);
     try {
-      const data = await callEvolution("connect", inst.evolution_instance_id);
+      // Chamada direta para capturar response completo (incluindo code: proxy_invalid)
+      const { data, error } = await supabase.functions.invoke("evolution-proxy", {
+        body: { action: "connect", instanceName: inst.evolution_instance_id },
+      });
+      if (error) throw new Error(error.message || "Erro ao gerar QR Code");
+      if (data?.code === "proxy_invalid") {
+        toast.error(`Proxy ${data.proxyLabel || ""} com dados inválidos`, {
+          description: `Faltam: ${(data.invalidFields || []).join(", ")}. Corrija em WhatsApp → Proxies antes de tentar novamente.`,
+          duration: 8000,
+        });
+        setQrDialogOpen(false);
+        return;
+      }
+      if (data?.error) throw new Error(data.error);
+
       const base64 = data?.base64 || data?.qrcode?.base64 || data?.qr || null;
       if (!base64) {
         toast.success("Instância já conectada!");
@@ -272,6 +286,13 @@ export function InstanciasTab() {
         body: { action: "assignProxy", instanceName: inst.evolution_instance_id },
       });
       if (error) throw new Error(error.message);
+      if (data?.code === "proxy_invalid") {
+        toast.error(`Proxy ${data.proxyLabel || ""} com dados inválidos`, {
+          description: `Faltam: ${(data.invalidFields || []).join(", ")}. Corrija em WhatsApp → Proxies antes de tentar novamente.`,
+          duration: 8000,
+        });
+        return;
+      }
       if (data?.error) throw new Error(data.error);
       toast.success(`Proxy atribuído: ${data?.proxy?.label || "OK"}`, {
         description: "A instância foi reiniciada para aplicar o novo IP.",
@@ -403,7 +424,9 @@ export function InstanciasTab() {
 
       let imported = 0;
       let skippedNoProxy = 0;
+      let invalidProxy = 0;
       let failed = 0;
+      const invalidProxyLabels = new Set<string>();
 
       for (const evo of novas) {
         const instanceName = evo.name || evo.instance?.instanceName || evo.instanceName;
@@ -428,6 +451,9 @@ export function InstanciasTab() {
           imported++;
         } else if (result?.code === "no_proxy_available") {
           skippedNoProxy++;
+        } else if (result?.code === "proxy_invalid") {
+          invalidProxy++;
+          if (result.proxyLabel) invalidProxyLabels.add(result.proxyLabel);
         } else {
           failed++;
         }
@@ -442,10 +468,17 @@ export function InstanciasTab() {
           { duration: 8000 }
         );
       }
+      if (invalidProxy > 0) {
+        const labels = Array.from(invalidProxyLabels).join(", ");
+        toast.error(
+          `${invalidProxy} instância(s) puladas: proxy com dados incompletos${labels ? ` (${labels})` : ""}. Corrija em WhatsApp → Proxies.`,
+          { duration: 10000 }
+        );
+      }
       if (failed > 0) {
         toast.error(`${failed} instância(s) falharam ao importar/aplicar proxy`);
       }
-      if (imported === 0 && skippedNoProxy === 0 && failed === 0) {
+      if (imported === 0 && skippedNoProxy === 0 && invalidProxy === 0 && failed === 0) {
         toast.info("Nenhuma instância nova encontrada");
       }
 
