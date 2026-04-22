@@ -278,17 +278,33 @@ export function ProxiesTab() {
   };
 
   const handleSave = async () => {
-    if (!form.label.trim() || !form.host.trim() || !form.port.trim()) {
+    const label = form.label.trim();
+    const host = form.host.trim();
+    const portStr = form.port.trim();
+    const protocol = form.protocol.trim().toLowerCase();
+    const allowedProtocols = ["http", "https", "socks4", "socks5"];
+
+    if (!label || !host || !portStr) {
       toast.error("Label, host e porta são obrigatórios");
       return;
     }
+    const portNum = parseInt(portStr, 10);
+    if (!Number.isInteger(portNum) || portNum < 1 || portNum > 65535) {
+      toast.error("Porta inválida (1–65535)");
+      return;
+    }
+    if (!allowedProtocols.includes(protocol)) {
+      toast.error("Protocolo inválido (use http, https, socks4 ou socks5)");
+      return;
+    }
+
     setSaving(true);
     try {
       const { error } = await supabase.from("whatsapp_proxies" as any).insert({
-        label: form.label.trim(),
-        protocol: form.protocol,
-        host: form.host.trim(),
-        port: parseInt(form.port),
+        label,
+        protocol,
+        host,
+        port: portNum,
         username: form.username.trim() || null,
         password: form.password.trim() || null,
         status: "available",
