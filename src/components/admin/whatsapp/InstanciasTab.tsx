@@ -646,7 +646,27 @@ export function InstanciasTab() {
                             )}
                           </span>
                         ) : (
-                          <span className="text-muted-foreground">Sem proxy</span>
+                          <>
+                            <span className="text-muted-foreground">Sem proxy</span>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-6 px-2 ml-auto text-xs"
+                                  onClick={() => handleAssignProxy(inst)}
+                                  disabled={!!currentAction}
+                                >
+                                  {currentAction === "assign" ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    "Atribuir proxy"
+                                  )}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Reserva e aplica um proxy nesta instância (reinicia)</TooltipContent>
+                            </Tooltip>
+                          </>
                         )}
                         {proxy && (
                           <Tooltip>
