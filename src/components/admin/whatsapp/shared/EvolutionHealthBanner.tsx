@@ -84,13 +84,13 @@ export function EvolutionHealthBanner() {
   // Tudo certo
   if (result.ok && !hasWarnings) {
     return (
-      <div className="flex items-center justify-between gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-400">
+      <div className="flex items-center justify-between gap-2 rounded-md border border-accent/30 bg-accent/10 px-3 py-2 text-xs">
         <div className="flex items-center gap-2 min-w-0">
-          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-accent" />
           <span className="truncate">
-            Evolution API conectada
-            {result.evolutionVersion ? ` · v${result.evolutionVersion}` : ""}
-            <span className="text-emerald-700/70 dark:text-emerald-400/70"> · {result.url}</span>
+            <span className="text-foreground font-medium">Evolution API conectada</span>
+            {result.evolutionVersion ? <span className="text-muted-foreground"> · v{result.evolutionVersion}</span> : null}
+            <span className="text-muted-foreground"> · {result.url}</span>
           </span>
         </div>
         <Button variant="ghost" size="sm" className="h-6 gap-1 text-xs shrink-0" onClick={check} disabled={loading}>
