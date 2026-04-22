@@ -236,6 +236,33 @@ function pickCustomerName(payload: any): string | null {
   return typeof name === "string" && name.trim() ? name.trim() : null;
 }
 
+function pickAttribution(payload: any): Record<string, string> {
+  const utm = payload?.utm ?? {};
+  const cookies = payload?.cookies ?? {};
+  const attr: Record<string, string> = {};
+
+  const set = (key: string, val: unknown) => {
+    if (typeof val === "string") {
+      const trimmed = val.trim();
+      if (trimmed && trimmed.toLowerCase() !== "null") attr[key] = trimmed;
+    }
+  };
+
+  set("utm_source", utm.utm_source || utm.src);
+  set("utm_medium", utm.utm_medium);
+  set("utm_campaign", utm.utm_campaign);
+  set("utm_content", utm.utm_content);
+  set("utm_term", utm.utm_term);
+  set("gclid", cookies.gclid);
+  set("fbclid", cookies.fbclid);
+  set("fbp", cookies.fbp);
+  set("ttp", cookies.ttp);
+  set("landing_page", payload?.checkout_url);
+  set("source_channel", "kirvano");
+
+  return attr;
+}
+
 async function isAdminFromBearer(authHeader: string | null) {
   if (!authHeader?.startsWith("Bearer ")) return false;
 
@@ -589,6 +616,20 @@ serve(async (req) => {
           payment_method: payload?.payment_method ?? null,
           total_price: payload?.total_price ?? null,
         });
+
+        // Atribuição: first-touch também em PIX/checkout (não marca compra)
+        try {
+          const attr = pickAttribution(payload);
+          if (Object.keys(attr).length > 0) {
+            await admin.rpc("merge_user_attribution", {
+              p_user_id: perfilIgnore.id,
+              p_new_attr: attr,
+              p_mark_purchase: false,
+            });
+          }
+        } catch (e) {
+          logStep("Attribution merge error on intermediate event", { message: e instanceof Error ? e.message : String(e) });
+        }
       }
     }
 
@@ -873,6 +914,20 @@ serve(async (req) => {
       customer_name: customerName,
       is_new_account: isNewAccount,
     });
+
+    // Atribuição de marketing — first-touch + marca primeira compra
+    try {
+      const attr = pickAttribution(payload);
+      await admin.rpc("merge_user_attribution", {
+        p_user_id: targetPerfilId,
+        p_new_attr: attr,
+        p_mark_purchase: true,
+        p_purchase_at: new Date().toISOString(),
+      });
+      logStep("Attribution merged on activation", { user_id: targetPerfilId, keys: Object.keys(attr) });
+    } catch (e) {
+      logStep("Attribution merge error (non-fatal)", { message: e instanceof Error ? e.message : String(e) });
+    }
 
     await finalizeLog({ processed: true, process_result: targetPerfilId === perfil?.id ? "updated_user_activated" : "created_user_activated" });
   } else if (action === "cancel_end_of_period") {
