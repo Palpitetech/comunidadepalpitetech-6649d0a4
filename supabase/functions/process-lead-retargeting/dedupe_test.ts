@@ -471,3 +471,103 @@ Deno.test(
     assertEquals(res, { count: 0, error: "boom" });
   },
 );
+
+// =========================================================================
+// dedupeLowerBoundIso — boundary precision & timezone consistency
+// =========================================================================
+
+Deno.test("dedupeLowerBoundIso: 0ms precision (now exact whole second) → exact 7-day shift", () => {
+  const exactSecond = new Date("2026-04-22T12:00:00.000Z");
+  const result = dedupeLowerBoundIso(exactSecond);
+  assertEquals(result, "2026-04-15T12:00:00.000Z");
+});
+
+Deno.test("dedupeLowerBoundIso: 1ms precision is preserved in subtraction", () => {
+  const oneMs = new Date("2026-04-22T12:00:00.001Z");
+  const result = dedupeLowerBoundIso(oneMs);
+  assertEquals(result, "2026-04-15T12:00:00.001Z");
+});
+
+Deno.test("dedupeLowerBoundIso: 500ms precision is preserved in subtraction", () => {
+  const halfSecond = new Date("2026-04-22T12:00:00.500Z");
+  const result = dedupeLowerBoundIso(halfSecond);
+  assertEquals(result, "2026-04-15T12:00:00.500Z");
+});
+
+Deno.test("dedupeLowerBoundIso: 999ms precision is preserved in subtraction", () => {
+  const almostSecond = new Date("2026-04-22T12:00:00.999Z");
+  const result = dedupeLowerBoundIso(almostSecond);
+  assertEquals(result, "2026-04-15T12:00:00.999Z");
+});
+
+Deno.test("dedupeLowerBoundIso: always returns a Z-suffixed UTC ISO string", () => {
+  const dates = [
+    new Date("2026-04-22T12:00:00.000Z"),
+    new Date("2026-01-01T00:00:00.000Z"),
+    new Date("2026-12-31T23:59:59.999Z"),
+  ];
+  for (const d of dates) {
+    const result = dedupeLowerBoundIso(d);
+    assertEquals(result.endsWith("Z"), true, `Expected Z suffix on ${result}`);
+    assertEquals(
+      result,
+      new Date(result).toISOString(),
+      `Result must roundtrip through Date: ${result}`,
+    );
+  }
+});
+
+Deno.test(
+  "dedupeLowerBoundIso: same instant produces same lower bound regardless of input timezone offset",
+  () => {
+    // Same UTC instant expressed with different TZ offsets in the literal.
+    // The Date object stores the absolute instant — the source TZ should not affect the result.
+    const utc = new Date("2026-04-22T12:00:00.000Z");
+    const sameInstantInBrt = new Date("2026-04-22T09:00:00.000-03:00");
+    const sameInstantInJst = new Date("2026-04-22T21:00:00.000+09:00");
+
+    // Sanity check: all three are the same absolute instant
+    assertEquals(utc.getTime(), sameInstantInBrt.getTime());
+    assertEquals(utc.getTime(), sameInstantInJst.getTime());
+
+    const a = dedupeLowerBoundIso(utc);
+    const b = dedupeLowerBoundIso(sameInstantInBrt);
+    const c = dedupeLowerBoundIso(sameInstantInJst);
+
+    assertEquals(a, b);
+    assertEquals(b, c);
+    assertEquals(a, "2026-04-15T12:00:00.000Z");
+  },
+);
+
+Deno.test(
+  "dedupeLowerBoundIso: handles DST-spring-forward instant (US/Brazil) without drift",
+  () => {
+    // Pick an instant that crosses DST in some zones — in UTC it is just an instant.
+    // The function works in pure UTC, so DST cannot affect output.
+    const dstSpringInstant = new Date("2026-03-08T07:00:00.000Z"); // 2am→3am EST→EDT
+    const result = dedupeLowerBoundIso(dstSpringInstant);
+    assertEquals(result, "2026-03-01T07:00:00.000Z");
+  },
+);
+
+Deno.test(
+  "dedupeLowerBoundIso: handles year/month/leap-day boundary correctly",
+  () => {
+    // 7 days before March 5, 2028 lands on Feb 27 — and 2028 IS a leap year (Feb 29 exists).
+    const afterLeap = new Date("2028-03-05T10:30:00.000Z");
+    const result = dedupeLowerBoundIso(afterLeap);
+    assertEquals(result, "2028-02-27T10:30:00.000Z");
+  },
+);
+
+Deno.test(
+  "dedupeLowerBoundIso: window length is exactly DEDUPE_WINDOW_MS milliseconds",
+  () => {
+    const now = new Date("2026-04-22T12:34:56.789Z");
+    const lower = dedupeLowerBoundIso(now);
+    const diff = now.getTime() - new Date(lower).getTime();
+    assertEquals(diff, DEDUPE_WINDOW_MS);
+    assertEquals(diff, 604_800_000); // 7 * 24 * 60 * 60 * 1000
+  },
+);

@@ -47,13 +47,49 @@ interface TemplateRow {
   exclude_tags: string[];
 }
 
+interface TemplateMetrics {
+  enqueued: number;
+  skipped: number;
+  /** Skipped because of dedupe (already queued in last 7d). */
+  skipped_dedupe: number;
+  /** Skipped because of recent paid conversion (anti-conversion). */
+  skipped_converted: number;
+  /** Skipped because the linked profile already has a paid tag. */
+  skipped_paid_profile: number;
+  /** Skipped because the lead has no phone after trim. */
+  skipped_no_phone: number;
+  /** Atomic dedupe at DB level (exclusion constraint) — race-condition catches. */
+  blocked_by_db_constraint: number;
+  /** Lead was skipped because the dedupe DB query itself failed. */
+  errors_dedupe_db: number;
+  /** Lead was skipped because the anti-conversion DB query failed. */
+  errors_sales_db: number;
+  /** Insert into message_queue failed (other reasons). */
+  errors_insert_db: number;
+  errors: string[];
+}
+
+function emptyMetrics(): TemplateMetrics {
+  return {
+    enqueued: 0,
+    skipped: 0,
+    skipped_dedupe: 0,
+    skipped_converted: 0,
+    skipped_paid_profile: 0,
+    skipped_no_phone: 0,
+    blocked_by_db_constraint: 0,
+    errors_dedupe_db: 0,
+    errors_sales_db: 0,
+    errors_insert_db: 0,
+    errors: [],
+  };
+}
+
 async function processOneTemplate(
   supabase: ReturnType<typeof createClient>,
   template: TemplateRow
-): Promise<{ enqueued: number; skipped: number; errors: string[] }> {
-  const errors: string[] = [];
-  let enqueued = 0;
-  let skipped = 0;
+): Promise<TemplateMetrics> {
+  const metrics = emptyMetrics();
 
   const delayMin = Math.max(0, template.delay_minutes ?? 60);
   const upperBound = new Date(Date.now() - delayMin * 60_000).toISOString();
@@ -71,11 +107,12 @@ async function processOneTemplate(
     .limit(200);
 
   if (leadsErr) {
-    return { enqueued: 0, skipped: 0, errors: [leadsErr.message] };
+    metrics.errors.push(leadsErr.message);
+    return metrics;
   }
 
   if (!leads || leads.length === 0) {
-    return { enqueued: 0, skipped: 0, errors: [] };
+    return metrics;
   }
 
   const linkSalaSecreta = buildSalaSecretaLink();
@@ -84,7 +121,8 @@ async function processOneTemplate(
     try {
       const phone = (lead.celular ?? "").trim();
       if (!phone) {
-        skipped++;
+        metrics.skipped++;
+        metrics.skipped_no_phone++;
         continue;
       }
 
@@ -105,11 +143,13 @@ async function processOneTemplate(
         );
 
       if (salesErr) {
-        errors.push(`sales check ${lead.id}: ${salesErr.message}`);
+        metrics.errors.push(`sales check ${lead.id}: ${salesErr.message}`);
+        metrics.errors_sales_db++;
         continue;
       }
       if ((salesCount ?? 0) > 0) {
-        skipped++;
+        metrics.skipped++;
+        metrics.skipped_converted++;
         continue;
       }
 
@@ -126,7 +166,8 @@ async function processOneTemplate(
           template.exclude_tags.includes(t)
         );
         if (hasPaidTag) {
-          skipped++;
+          metrics.skipped++;
+          metrics.skipped_paid_profile++;
           continue;
         }
       }
@@ -135,11 +176,13 @@ async function processOneTemplate(
       const dedupeClient = makeSupabaseDedupeClient(supabase as never);
       const dedupeRes = await isEnqueueAllowed(dedupeClient, template.id, phone);
       if (dedupeRes.error) {
-        errors.push(`dedupe ${lead.id}: ${dedupeRes.error}`);
+        metrics.errors.push(`dedupe ${lead.id}: ${dedupeRes.error}`);
+        metrics.errors_dedupe_db++;
         continue;
       }
       if (!dedupeRes.allowed) {
-        skipped++;
+        metrics.skipped++;
+        metrics.skipped_dedupe++;
         continue;
       }
 
@@ -149,7 +192,7 @@ async function processOneTemplate(
         { p_template_id: template.id }
       );
       if (variantErr) {
-        errors.push(`variant ${lead.id}: ${variantErr.message}`);
+        metrics.errors.push(`variant ${lead.id}: ${variantErr.message}`);
       }
 
       // 5) Enfileira
@@ -171,18 +214,30 @@ async function processOneTemplate(
       });
 
       if (insErr) {
-        errors.push(`insert ${lead.id}: ${insErr.message}`);
+        // Race condition: a constraint atômica do banco rejeitou — outra execução enfileirou primeiro
+        const errMsg = insErr.message ?? "";
+        const isDedupeRace =
+          errMsg.includes("message_queue_dedupe_7d_excl") ||
+          (insErr as { code?: string }).code === "23P01";
+        if (isDedupeRace) {
+          metrics.skipped++;
+          metrics.skipped_dedupe++;
+          metrics.blocked_by_db_constraint++;
+        } else {
+          metrics.errors.push(`insert ${lead.id}: ${errMsg}`);
+          metrics.errors_insert_db++;
+        }
         continue;
       }
 
-      enqueued++;
+      metrics.enqueued++;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      errors.push(`lead ${lead.id}: ${msg}`);
+      metrics.errors.push(`lead ${lead.id}: ${msg}`);
     }
   }
 
-  return { enqueued, skipped, errors };
+  return metrics;
 }
 
 async function processAll() {
@@ -202,9 +257,7 @@ async function processAll() {
     return { processed_templates: 0, enqueued: 0, errors: [] };
   }
 
-  let enqueued = 0;
-  let skipped = 0;
-  const errors: string[] = [];
+  const totals = emptyMetrics();
 
   for (const tpl of templates) {
     const tplRow: TemplateRow = {
@@ -217,17 +270,38 @@ async function processAll() {
     if (tplRow.include_tags.length === 0) continue;
 
     const r = await processOneTemplate(supabase, tplRow);
-    enqueued += r.enqueued;
-    skipped += r.skipped;
-    errors.push(...r.errors);
+    totals.enqueued += r.enqueued;
+    totals.skipped += r.skipped;
+    totals.skipped_dedupe += r.skipped_dedupe;
+    totals.skipped_converted += r.skipped_converted;
+    totals.skipped_paid_profile += r.skipped_paid_profile;
+    totals.skipped_no_phone += r.skipped_no_phone;
+    totals.blocked_by_db_constraint += r.blocked_by_db_constraint;
+    totals.errors_dedupe_db += r.errors_dedupe_db;
+    totals.errors_sales_db += r.errors_sales_db;
+    totals.errors_insert_db += r.errors_insert_db;
+    totals.errors.push(...r.errors);
   }
 
-  return {
+  const result = {
     processed_templates: templates.length,
-    enqueued,
-    skipped,
-    errors,
+    enqueued: totals.enqueued,
+    skipped: totals.skipped,
+    skipped_dedupe: totals.skipped_dedupe,
+    skipped_converted: totals.skipped_converted,
+    skipped_paid_profile: totals.skipped_paid_profile,
+    skipped_no_phone: totals.skipped_no_phone,
+    blocked_by_db_constraint: totals.blocked_by_db_constraint,
+    errors_dedupe_db: totals.errors_dedupe_db,
+    errors_sales_db: totals.errors_sales_db,
+    errors_insert_db: totals.errors_insert_db,
+    errors: totals.errors,
   };
+
+  // Log estruturado para acompanhamento diário
+  console.log("[process-lead-retargeting] run summary", JSON.stringify(result));
+
+  return result;
 }
 
 Deno.serve(async (req) => {
