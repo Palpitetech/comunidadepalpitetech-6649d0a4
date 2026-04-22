@@ -64,7 +64,7 @@ export function RetargetingPanelTab() {
       supabase.rpc("get_lead_retargeting_schedule" as never),
     ]);
     if (!runsRes.error && runsRes.data) setRuns(runsRes.data as unknown as RunRow[]);
-    if (!schedRes.error && Array.isArray(schedRes.data) && schedRes.data.length > 0) {
+    if (!schedRes.error && schedRes.data && Array.isArray(schedRes.data) && schedRes.data.length > 0) {
       setSchedule(schedRes.data[0] as unknown as ScheduleInfo);
     } else {
       setSchedule(null);
