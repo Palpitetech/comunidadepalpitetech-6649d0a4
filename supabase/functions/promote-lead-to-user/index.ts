@@ -1,0 +1,180 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, apikey, content-type",
+};
+
+function json(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function normalizeCelular(v: string): { ok: boolean; normalized?: string } {
+  const digits = v.replace(/\D/g, "");
+  let n = digits;
+  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) n = digits.substring(2);
+  if (n.length < 10 || n.length > 11) return { ok: false };
+  const ddd = parseInt(n.substring(0, 2), 10);
+  if (isNaN(ddd) || ddd < 11 || ddd > 99) return { ok: false };
+  if (n.length === 11 && n[2] !== "9") return { ok: false };
+  return { ok: true, normalized: n };
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Método não permitido" }, 405);
+
+  try {
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.replace(/^Bearer\s+/i, "");
+    if (!token) return json({ error: "Não autenticado" }, 401);
+
+    const supabaseAuth = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: `Bearer ${token}` } } }
+    );
+
+    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser();
+    if (userError || !user) return json({ error: "Sessão inválida" }, 401);
+
+    // Verifica se é admin
+    const { data: roleData } = await supabaseAuth
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!roleData) return json({ error: "Acesso restrito a administradores" }, 403);
+
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    const body = await req.json();
+    const { lead_id, nome: bodyNome, email: bodyEmail, celular: bodyCelular } = body as {
+      lead_id?: string;
+      nome?: string;
+      email?: string;
+      celular?: string;
+    };
+
+    if (!lead_id) return json({ error: "lead_id obrigatório" }, 400);
+
+    const { data: lead, error: leadErr } = await supabaseAdmin
+      .from("leads_inbox")
+      .select("*")
+      .eq("id", lead_id)
+      .maybeSingle();
+
+    if (leadErr || !lead) return json({ error: "Lead não encontrado" }, 404);
+    if (lead.status === "convertido") return json({ error: "Lead já foi convertido" }, 400);
+
+    const nome = (bodyNome || lead.nome || "").trim();
+    const email = (bodyEmail || lead.email || "").trim().toLowerCase();
+    const celularRaw = (bodyCelular || lead.celular || "").trim();
+
+    if (!nome || !email || !celularRaw) {
+      return json({ error: "Nome, email e celular são obrigatórios para promover o lead" }, 400);
+    }
+
+    const celCheck = normalizeCelular(celularRaw);
+    if (!celCheck.ok) return json({ error: "Celular inválido" }, 400);
+    const celular = celCheck.normalized!;
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Email inválido" }, 400);
+
+    // Verifica se já existe perfil
+    const { data: existingByEmail } = await supabaseAdmin
+      .from("perfis")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+
+    let userId: string | null = existingByEmail?.id ?? null;
+
+    if (!userId) {
+      const { data: existingByCel } = await supabaseAdmin
+        .from("perfis")
+        .select("id")
+        .eq("celular", celular)
+        .maybeSingle();
+      if (existingByCel) userId = existingByCel.id;
+    }
+
+    let isNew = false;
+    if (!userId) {
+      const randomPassword = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password: randomPassword,
+        email_confirm: false,
+        user_metadata: { nome, origem: lead.source || "lead_inbox_promote" },
+      } as any);
+
+      if (createError) return json({ error: `Erro ao criar usuário: ${createError.message}` }, 400);
+
+      userId = newUser.user.id;
+      isNew = true;
+
+      // Aguarda trigger handle_new_user
+      await new Promise((r) => setTimeout(r, 600));
+
+      // Lead inbox → perfil pendente até confirmar email
+      await supabaseAdmin
+        .from("perfis")
+        .update({
+          celular,
+          email_verificado: false,
+          plan_id: null,
+          status_assinatura: "pendente",
+          validade_assinatura: null,
+          trial_used: false,
+          utm_source: lead.utm_source || null,
+        })
+        .eq("id", userId);
+
+      await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId)
+        .eq("role", "premium");
+    }
+
+    // Merge tags (lead tags + tag de promoção)
+    const baseTags = ["lead", "promovido_de_lead", ...(lead.tags || [])].filter((t: string) => t && t !== "lead_inbox");
+    const { data: currentProfile } = await supabaseAdmin
+      .from("perfis")
+      .select("tags")
+      .eq("id", userId)
+      .single();
+    const merged = Array.from(new Set([...(currentProfile?.tags || []), ...baseTags]));
+    await supabaseAdmin.from("perfis").update({ tags: merged }).eq("id", userId);
+
+    // Marca lead como convertido
+    await supabaseAdmin
+      .from("leads_inbox")
+      .update({ status: "convertido", perfil_id: userId, updated_at: new Date().toISOString() })
+      .eq("id", lead_id);
+
+    await supabaseAdmin.from("system_events").insert({
+      event_type: "lead_inbox_promovido",
+      description: `Lead promovido a usuário pelo admin`,
+      source: "promote-lead-to-user",
+      status: "success",
+      metadata: { lead_id, user_id: userId, is_new: isNew, admin_id: user.id },
+    });
+
+    return json({ success: true, user_id: userId, is_new: isNew });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erro interno";
+    console.error("promote-lead-to-user error:", err);
+    return json({ error: message }, 500);
+  }
+});
