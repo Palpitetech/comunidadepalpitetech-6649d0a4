@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Trash2, Globe, Activity, Power, Eye, EyeOff, AlertTriangle, Unlink, ListPlus } from "lucide-react";
+import { Loader2, Plus, Trash2, Globe, Activity, Power, Eye, EyeOff, AlertTriangle, Unlink, ListPlus, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -62,6 +62,89 @@ function maskIp(ip: string | null) {
   return `${parts[0]}.xxx.xxx.${parts[3]}`;
 }
 
+type ProxyFormat = "format1" | "format2" | "format3" | "format4";
+
+const FORMAT_LABELS: Record<ProxyFormat, string> = {
+  format1: "HOST:PORTA:USUÁRIO:SENHA",
+  format2: "HOST:PORTA@USUÁRIO:SENHA",
+  format3: "USUÁRIO:SENHA:HOST:PORTA",
+  format4: "USUÁRIO:SENHA@HOST:PORTA",
+};
+
+const FORMAT_PLACEHOLDERS: Record<ProxyFormat, string> = {
+  format1: "proxy.iproyal.com:12321:user1:pass1\nproxy.iproyal.com:12322:user1:pass1",
+  format2: "proxy.iproyal.com:12321@user1:pass1\nproxy.iproyal.com:12322@user1:pass1",
+  format3: "user1:pass1:proxy.iproyal.com:12321\nuser1:pass1:proxy.iproyal.com:12322",
+  format4: "user1:pass1@proxy.iproyal.com:12321\nuser1:pass1@proxy.iproyal.com:12322",
+};
+
+interface ParsedProxy {
+  host: string;
+  port: number;
+  username: string | null;
+  password: string | null;
+}
+
+function parseProxyLine(line: string, format: ProxyFormat): ParsedProxy | null {
+  const trimmed = line.trim();
+  if (!trimmed || trimmed.startsWith("#")) return null;
+
+  const validatePort = (s: string) => {
+    const n = parseInt(s, 10);
+    return !isNaN(n) && n >= 1 && n <= 65535 ? n : null;
+  };
+
+  try {
+    if (format === "format1") {
+      const parts = trimmed.split(":");
+      if (parts.length < 2) return null;
+      const [host, portStr, username, password] = parts;
+      const port = validatePort(portStr);
+      if (!host || !port) return null;
+      return {
+        host: host.trim(),
+        port,
+        username: username?.trim() || null,
+        password: password?.trim() || null,
+      };
+    }
+    if (format === "format2") {
+      const [hostPart, authPart] = trimmed.split("@");
+      if (!hostPart || !authPart) return null;
+      const [host, portStr] = hostPart.split(":");
+      const [username, password] = authPart.split(":");
+      const port = validatePort(portStr);
+      if (!host || !port || !username || !password) return null;
+      return { host: host.trim(), port, username: username.trim(), password: password.trim() };
+    }
+    if (format === "format3") {
+      const parts = trimmed.split(":");
+      if (parts.length < 4) return null;
+      const [username, password, host, portStr] = parts;
+      const port = validatePort(portStr);
+      if (!host || !port || !username || !password) return null;
+      return { host: host.trim(), port, username: username.trim(), password: password.trim() };
+    }
+    if (format === "format4") {
+      const [authPart, hostPart] = trimmed.split("@");
+      if (!hostPart || !authPart) return null;
+      const [username, password] = authPart.split(":");
+      const [host, portStr] = hostPart.split(":");
+      const port = validatePort(portStr);
+      if (!host || !port || !username || !password) return null;
+      return { host: host.trim(), port, username: username.trim(), password: password.trim() };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function isHeaderLine(line: string): boolean {
+  const lower = line.toLowerCase();
+  return /\b(host|user|proxy|port|username|password)\b/.test(lower) && !/\d/.test(line.split(/[:,@]/)[1] || "");
+}
+
 export function ProxiesTab() {
   const [proxies, setProxies] = useState<ProxyRow[]>([]);
   const [instances, setInstances] = useState<Map<string, InstanceLite>>(new Map());
@@ -70,7 +153,9 @@ export function ProxiesTab() {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkText, setBulkText] = useState("");
   const [bulkLabelPrefix, setBulkLabelPrefix] = useState("IPRoyal BR");
+  const [bulkFormat, setBulkFormat] = useState<ProxyFormat>("format1");
   const [bulkSaving, setBulkSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<FormData>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -183,48 +268,61 @@ export function ProxiesTab() {
     }
   };
 
+  const bulkPreview = useMemo(() => {
+    const rawLines = bulkText.split("\n");
+    const valid: ParsedProxy[] = [];
+    let invalid = 0;
+    let skippedHeader = false;
+    for (let i = 0; i < rawLines.length; i++) {
+      const line = rawLines[i].trim();
+      if (!line || line.startsWith("#")) continue;
+      if (i === 0 && isHeaderLine(line)) {
+        skippedHeader = true;
+        continue;
+      }
+      const parsed = parseProxyLine(line, bulkFormat);
+      if (parsed) valid.push(parsed);
+      else invalid++;
+    }
+    return { valid, invalid, skippedHeader };
+  }, [bulkText, bulkFormat]);
+
+  const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const text = String(evt.target?.result ?? "");
+      setBulkText(text);
+    };
+    reader.onerror = () => toast.error("Falha ao ler o arquivo");
+    reader.readAsText(file);
+    // reset input para permitir re-upload do mesmo arquivo
+    e.target.value = "";
+  };
+
   const handleBulkSave = async () => {
-    const lines = bulkText.split("\n").map((l) => l.trim()).filter(Boolean);
-    if (lines.length === 0) {
-      toast.error("Cole pelo menos uma linha");
+    const { valid } = bulkPreview;
+    if (valid.length === 0) {
+      toast.error("Nenhuma linha válida encontrada");
       return;
     }
     setBulkSaving(true);
-    const rows: any[] = [];
-    let invalid = 0;
     let counter = proxies.length + 1;
-    for (const line of lines) {
-      const parts = line.split(":");
-      if (parts.length < 2) {
-        invalid++;
-        continue;
-      }
-      const [host, portStr, username, password] = parts;
-      const port = parseInt(portStr);
-      if (!host || !port || isNaN(port)) {
-        invalid++;
-        continue;
-      }
-      rows.push({
-        label: `${bulkLabelPrefix.trim() || "Proxy"} #${counter}`,
-        protocol: "socks5",
-        host: host.trim(),
-        port,
-        username: username?.trim() || null,
-        password: password?.trim() || null,
-        status: "available",
-      });
-      counter++;
-    }
-    if (rows.length === 0) {
-      toast.error("Nenhuma linha válida encontrada");
-      setBulkSaving(false);
-      return;
-    }
+    const rows = valid.map((p) => ({
+      label: `${bulkLabelPrefix.trim() || "Proxy"} #${counter++}`,
+      protocol: "socks5",
+      host: p.host,
+      port: p.port,
+      username: p.username,
+      password: p.password,
+      status: "available",
+    }));
     try {
       const { error } = await supabase.from("whatsapp_proxies" as any).insert(rows);
       if (error) throw error;
-      toast.success(`${rows.length} proxy(ies) adicionados${invalid > 0 ? ` — ${invalid} ignorada(s)` : ""}`);
+      const invalidNote = bulkPreview.invalid > 0 ? ` — ${bulkPreview.invalid} ignorada(s)` : "";
+      toast.success(`${rows.length} proxy(ies) adicionados${invalidNote}`);
       setBulkOpen(false);
       setBulkText("");
       fetchData();
@@ -371,21 +469,78 @@ export function ProxiesTab() {
                   <Input value={bulkLabelPrefix} onChange={(e) => setBulkLabelPrefix(e.target.value)} placeholder="IPRoyal BR" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Lista (host:port:user:pass — uma por linha)</Label>
+                  <Label>Formato do arquivo</Label>
+                  <Select value={bulkFormat} onValueChange={(v) => setBulkFormat(v as ProxyFormat)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(FORMAT_LABELS) as ProxyFormat[]).map((k) => (
+                        <SelectItem key={k} value={k} className="font-mono text-xs">
+                          {FORMAT_LABELS[k]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,.txt,text/plain,text/csv"
+                  hidden
+                  onChange={handleFilePick}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full gap-1.5"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="h-4 w-4" />
+                  Importar CSV / TXT
+                </Button>
+
+                <div className="space-y-1.5">
+                  <Label>Cole as linhas abaixo</Label>
                   <Textarea
                     value={bulkText}
                     onChange={(e) => setBulkText(e.target.value)}
-                    placeholder={`proxy.iproyal.com:12321:user:pass\nproxy.iproyal.com:12322:user:pass`}
+                    placeholder={FORMAT_PLACEHOLDERS[bulkFormat]}
                     rows={8}
                     className="font-mono text-xs"
                   />
                   <p className="text-[11px] text-muted-foreground">
-                    Aceita também <code>host:port</code> sem autenticação. Todos serão criados como <strong>SOCKS5</strong> e <strong>disponíveis</strong>.
+                    Linhas em branco e iniciadas com <code>#</code> são ignoradas. Cabeçalho do CSV é detectado automaticamente. Todos serão criados como <strong>SOCKS5</strong> e <strong>disponíveis</strong>.
                   </p>
                 </div>
-                <Button onClick={handleBulkSave} disabled={bulkSaving} className="w-full">
+
+                {bulkText.trim() && (
+                  <div className="rounded-md border bg-muted/30 p-2.5 text-xs space-y-1.5">
+                    <div className="flex items-center gap-3">
+                      <span className="text-accent font-medium tabular-nums">{bulkPreview.valid.length} válidas</span>
+                      {bulkPreview.invalid > 0 && (
+                        <span className="text-destructive tabular-nums">{bulkPreview.invalid} inválidas</span>
+                      )}
+                      {bulkPreview.skippedHeader && (
+                        <span className="text-muted-foreground">cabeçalho ignorado</span>
+                      )}
+                    </div>
+                    {bulkPreview.valid.length > 0 && (
+                      <div className="space-y-0.5 pt-1 border-t font-mono text-[11px] text-muted-foreground">
+                        {bulkPreview.valid.slice(0, 3).map((p, i) => (
+                          <div key={i}>• {p.host}:{p.port} {p.username ? `· ${p.username}` : ""}</div>
+                        ))}
+                        {bulkPreview.valid.length > 3 && (
+                          <div className="text-[10px] opacity-70">… e mais {bulkPreview.valid.length - 3}</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <Button onClick={handleBulkSave} disabled={bulkSaving || bulkPreview.valid.length === 0} className="w-full">
                   {bulkSaving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                  Importar
+                  Importar {bulkPreview.valid.length > 0 ? `${bulkPreview.valid.length} proxies` : ""}
                 </Button>
               </div>
             </DialogContent>
