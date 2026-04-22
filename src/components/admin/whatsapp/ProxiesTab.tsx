@@ -85,59 +85,101 @@ interface ParsedProxy {
   password: string | null;
 }
 
-function parseProxyLine(line: string, format: ProxyFormat): ParsedProxy | null {
-  const trimmed = line.trim();
-  if (!trimmed || trimmed.startsWith("#")) return null;
+type ParseResult =
+  | { ok: true; proxy: ParsedProxy }
+  | { ok: false; reason: string };
 
-  const validatePort = (s: string) => {
-    const n = parseInt(s, 10);
-    return !isNaN(n) && n >= 1 && n <= 65535 ? n : null;
-  };
+const HOST_REGEX = /^[a-zA-Z0-9]([a-zA-Z0-9\-.]*[a-zA-Z0-9])?$/;
+
+function validatePort(s: string | undefined): number | null {
+  if (!s) return null;
+  const n = parseInt(s.trim(), 10);
+  if (isNaN(n) || String(n) !== s.trim()) return null;
+  return n >= 1 && n <= 65535 ? n : null;
+}
+
+function validateHost(h: string | undefined): boolean {
+  if (!h) return false;
+  const trimmed = h.trim();
+  if (trimmed.length === 0 || trimmed.length > 253) return false;
+  return HOST_REGEX.test(trimmed);
+}
+
+function parseProxyLine(line: string, format: ProxyFormat): ParseResult {
+  const trimmed = line.trim();
+  if (!trimmed) return { ok: false, reason: "linha vazia" };
 
   try {
     if (format === "format1") {
       const parts = trimmed.split(":");
-      if (parts.length < 2) return null;
+      if (parts.length !== 2 && parts.length !== 4) {
+        return { ok: false, reason: "esperado HOST:PORTA ou HOST:PORTA:USUÁRIO:SENHA" };
+      }
       const [host, portStr, username, password] = parts;
+      if (!validateHost(host)) return { ok: false, reason: "host inválido" };
       const port = validatePort(portStr);
-      if (!host || !port) return null;
+      if (!port) return { ok: false, reason: "porta inválida (1–65535)" };
+      if (parts.length === 4 && (!username?.trim() || !password?.trim())) {
+        return { ok: false, reason: "usuário/senha vazios" };
+      }
       return {
-        host: host.trim(),
-        port,
-        username: username?.trim() || null,
-        password: password?.trim() || null,
+        ok: true,
+        proxy: {
+          host: host.trim(),
+          port,
+          username: username?.trim() || null,
+          password: password?.trim() || null,
+        },
       };
     }
     if (format === "format2") {
-      const [hostPart, authPart] = trimmed.split("@");
-      if (!hostPart || !authPart) return null;
-      const [host, portStr] = hostPart.split(":");
-      const [username, password] = authPart.split(":");
+      const atParts = trimmed.split("@");
+      if (atParts.length !== 2) return { ok: false, reason: "esperado HOST:PORTA@USUÁRIO:SENHA" };
+      const [hostPart, authPart] = atParts;
+      const hp = hostPart.split(":");
+      const ap = authPart.split(":");
+      if (hp.length !== 2 || ap.length !== 2) return { ok: false, reason: "formato incorreto" };
+      const [host, portStr] = hp;
+      const [username, password] = ap;
+      if (!validateHost(host)) return { ok: false, reason: "host inválido" };
       const port = validatePort(portStr);
-      if (!host || !port || !username || !password) return null;
-      return { host: host.trim(), port, username: username.trim(), password: password.trim() };
+      if (!port) return { ok: false, reason: "porta inválida (1–65535)" };
+      if (!username.trim() || !password.trim()) return { ok: false, reason: "usuário/senha obrigatórios" };
+      return { ok: true, proxy: { host: host.trim(), port, username: username.trim(), password: password.trim() } };
     }
     if (format === "format3") {
       const parts = trimmed.split(":");
-      if (parts.length < 4) return null;
+      if (parts.length !== 4) return { ok: false, reason: "esperado USUÁRIO:SENHA:HOST:PORTA" };
       const [username, password, host, portStr] = parts;
+      if (!username.trim() || !password.trim()) return { ok: false, reason: "usuário/senha obrigatórios" };
+      if (!validateHost(host)) return { ok: false, reason: "host inválido" };
       const port = validatePort(portStr);
-      if (!host || !port || !username || !password) return null;
-      return { host: host.trim(), port, username: username.trim(), password: password.trim() };
+      if (!port) return { ok: false, reason: "porta inválida (1–65535)" };
+      return { ok: true, proxy: { host: host.trim(), port, username: username.trim(), password: password.trim() } };
     }
     if (format === "format4") {
-      const [authPart, hostPart] = trimmed.split("@");
-      if (!hostPart || !authPart) return null;
-      const [username, password] = authPart.split(":");
-      const [host, portStr] = hostPart.split(":");
+      const atParts = trimmed.split("@");
+      if (atParts.length !== 2) return { ok: false, reason: "esperado USUÁRIO:SENHA@HOST:PORTA" };
+      const [authPart, hostPart] = atParts;
+      const ap = authPart.split(":");
+      const hp = hostPart.split(":");
+      if (ap.length !== 2 || hp.length !== 2) return { ok: false, reason: "formato incorreto" };
+      const [username, password] = ap;
+      const [host, portStr] = hp;
+      if (!username.trim() || !password.trim()) return { ok: false, reason: "usuário/senha obrigatórios" };
+      if (!validateHost(host)) return { ok: false, reason: "host inválido" };
       const port = validatePort(portStr);
-      if (!host || !port || !username || !password) return null;
-      return { host: host.trim(), port, username: username.trim(), password: password.trim() };
+      if (!port) return { ok: false, reason: "porta inválida (1–65535)" };
+      return { ok: true, proxy: { host: host.trim(), port, username: username.trim(), password: password.trim() } };
     }
-  } catch {
-    return null;
+  } catch (err: any) {
+    return { ok: false, reason: "erro ao processar" };
   }
-  return null;
+  return { ok: false, reason: "formato desconhecido" };
+}
+
+function proxyDedupKey(p: ParsedProxy): string {
+  return `${p.host.toLowerCase()}:${p.port}:${p.username ?? ""}:${p.password ?? ""}`;
 }
 
 function isHeaderLine(line: string): boolean {
