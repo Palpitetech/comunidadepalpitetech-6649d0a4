@@ -147,6 +147,36 @@ serve(async (req) => {
     const merged = Array.from(new Set([...(currentProfile?.tags || []), ...baseTags]));
     await supabaseAdmin.from("perfis").update({ tags: merged }).eq("id", userId);
 
+    // Propaga atribuição do lead → perfis.attribution (first-touch)
+    try {
+      const promoteAttr: Record<string, string> = {};
+      const setAttr = (k: string, v: string | null | undefined) => {
+        if (v && String(v).trim()) promoteAttr[k] = String(v).trim();
+      };
+      setAttr("utm_source", lead.utm_source);
+      setAttr("utm_medium", lead.utm_medium);
+      setAttr("utm_campaign", lead.utm_campaign);
+      setAttr("utm_content", lead.utm_content);
+      setAttr("utm_term", lead.utm_term);
+      setAttr("gclid", lead.gclid);
+      setAttr("fbclid", lead.fbclid);
+      setAttr("referrer", lead.referrer);
+      setAttr("landing_page", lead.pagina_origem);
+      setAttr("slug", lead.slug);
+      setAttr("lead_id", lead.id);
+      setAttr("source_channel", "lead_promote");
+
+      if (Object.keys(promoteAttr).length > 0) {
+        await supabaseAdmin.rpc("merge_user_attribution" as any, {
+          p_user_id: userId,
+          p_new_attr: promoteAttr,
+          p_mark_purchase: false,
+        });
+      }
+    } catch (e) {
+      console.warn("[promote-lead-to-user] erro ao propagar atribuição:", e);
+    }
+
     // Marca lead como convertido
     await supabaseAdmin
       .from("leads_inbox")

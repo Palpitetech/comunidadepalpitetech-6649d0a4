@@ -616,6 +616,35 @@ serve(async (req) => {
       return json({ error: "Falha ao salvar tags", details: updateError.message }, 500);
     }
 
+    // Propaga atribuição completa do lead → perfis.attribution (first-touch)
+    try {
+      const leadAttr: Record<string, string> = {};
+      const setAttr = (k: string, v: string | null) => {
+        if (v && v.trim()) leadAttr[k] = v.trim();
+      };
+      setAttr("utm_source", utmSourceClean);
+      setAttr("utm_medium", utmMediumClean);
+      setAttr("utm_campaign", utmCampaignClean);
+      setAttr("utm_content", utmContentClean);
+      setAttr("utm_term", utmTermClean);
+      setAttr("gclid", gclidClean);
+      setAttr("fbclid", fbclidClean);
+      setAttr("referrer", referrerClean);
+      setAttr("landing_page", pagina_origem || page_url || null);
+      setAttr("slug", slugClean);
+      setAttr("source_channel", "lead_webhook");
+
+      if (Object.keys(leadAttr).length > 0) {
+        await supabaseAdmin.rpc("merge_user_attribution" as any, {
+          p_user_id: userId,
+          p_new_attr: leadAttr,
+          p_mark_purchase: false,
+        });
+      }
+    } catch (e) {
+      console.warn("[receive-lead] erro ao propagar atribuição:", e);
+    }
+
     const { data: verifyProfile } = await supabaseAdmin
       .from("perfis")
       .select("tags")
