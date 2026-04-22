@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Plus, Trash2, Globe, Activity, Power, Eye, EyeOff, AlertTriangle, Unlink, ListPlus, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { maskIp } from "./shared/mask-ip";
 
 interface ProxyRow {
   id: string;
@@ -55,12 +56,7 @@ const emptyForm: FormData = {
   password: "",
 };
 
-function maskIp(ip: string | null) {
-  if (!ip) return "—";
-  const parts = ip.split(".");
-  if (parts.length !== 4) return ip;
-  return `${parts[0]}.xxx.xxx.${parts[3]}`;
-}
+// maskIp moved to ./shared/mask-ip
 
 type ProxyFormat = "format1" | "format2" | "format3" | "format4";
 
