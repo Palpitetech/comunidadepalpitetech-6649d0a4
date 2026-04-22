@@ -3530,6 +3530,10 @@ export type Database = {
       }
     }
     Functions: {
+      _message_queue_dedupe_window: {
+        Args: { p_created_at: string }
+        Returns: unknown
+      }
       audit_webhook_access: { Args: never; Returns: undefined }
       check_referral_milestones: {
         Args: { p_referrer_id: string }
