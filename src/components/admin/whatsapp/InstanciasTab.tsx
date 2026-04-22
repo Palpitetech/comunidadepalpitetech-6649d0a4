@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, Plus, Pencil, Trash2, Smartphone, QrCode, RefreshCw, Power, LogOut, MessageSquare, Clock, Link2 } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Smartphone, QrCode, RefreshCw, Power, LogOut, MessageSquare, Clock, Link2, Globe, Replace } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -56,8 +56,22 @@ async function callEvolution(action: string, instanceName?: string) {
   return data;
 }
 
+interface ProxyInfo {
+  id: string;
+  label: string;
+  external_ip: string | null;
+}
+
+function maskIp(ip: string | null) {
+  if (!ip) return "";
+  const parts = ip.split(".");
+  if (parts.length !== 4) return ip;
+  return `${parts[0]}.xxx.xxx.${parts[3]}`;
+}
+
 export function InstanciasTab() {
   const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
+  const [proxiesByInstance, setProxiesByInstance] = useState<Map<string, ProxyInfo>>(new Map());
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
