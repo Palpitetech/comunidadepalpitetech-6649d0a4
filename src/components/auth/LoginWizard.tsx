@@ -266,6 +266,7 @@ export function LoginWizard() {
               p_user_id: user.id,
               p_new_attr: attr,
               p_mark_purchase: false,
+              p_source: "signup_otp",
             });
           }
         }

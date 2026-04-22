@@ -625,6 +625,7 @@ serve(async (req) => {
               p_user_id: perfilIgnore.id,
               p_new_attr: attr,
               p_mark_purchase: false,
+              p_source: `kirvano:${mappedType || "intermediate"}`,
             });
           }
         } catch (e) {
@@ -923,6 +924,7 @@ serve(async (req) => {
         p_new_attr: attr,
         p_mark_purchase: true,
         p_purchase_at: new Date().toISOString(),
+        p_source: "kirvano:sale_approved",
       });
       logStep("Attribution merged on activation", { user_id: targetPerfilId, keys: Object.keys(attr) });
     } catch (e) {
