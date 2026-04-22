@@ -3347,6 +3347,68 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_proxies: {
+        Row: {
+          assigned_at: string | null
+          created_at: string
+          external_ip: string | null
+          host: string
+          id: string
+          instance_id: string | null
+          label: string
+          last_error: string | null
+          last_health_check_at: string | null
+          password: string | null
+          port: number
+          protocol: string
+          status: string
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          created_at?: string
+          external_ip?: string | null
+          host: string
+          id?: string
+          instance_id?: string | null
+          label: string
+          last_error?: string | null
+          last_health_check_at?: string | null
+          password?: string | null
+          port: number
+          protocol?: string
+          status?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          created_at?: string
+          external_ip?: string | null
+          host?: string
+          id?: string
+          instance_id?: string | null
+          label?: string
+          last_error?: string | null
+          last_health_check_at?: string | null
+          password?: string | null
+          port?: number
+          protocol?: string
+          status?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_proxies_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: true
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_smart_links: {
         Row: {
           clicks: number
@@ -3590,6 +3652,10 @@ export type Database = {
         Args: { p_referrer_id: string }
         Returns: undefined
       }
+      claim_proxy_for_instance: {
+        Args: { p_instance_id: string }
+        Returns: Json
+      }
       claim_referral_reward: { Args: { p_reward_id: string }; Returns: Json }
       count_array_overlap: {
         Args: { a: number[]; b: number[] }
@@ -3665,6 +3731,10 @@ export type Database = {
       register_warming_usage: {
         Args: { p_instance_id: string }
         Returns: undefined
+      }
+      release_proxy_for_instance: {
+        Args: { p_instance_id: string }
+        Returns: Json
       }
       select_best_instance: {
         Args: never
