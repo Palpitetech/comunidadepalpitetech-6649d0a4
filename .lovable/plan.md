@@ -1,78 +1,54 @@
 
 
-# Importação Segura: Buscar Instâncias da Evolution + Atribuir Proxy
+## Validação defensiva de proxy antes de chamar a Evolution
 
-## Problema
+### Problema
 
-Hoje, **"Buscar Instâncias"** (`handleSyncFromEvolution`) só insere a instância no banco, **sem reservar/aplicar proxy**. Resultado: a instância importada fica navegando **sem IP residencial** (insegurança = risco de ban). Além disso, a instância "Tablet" recém-importada veio sem proxy justamente por isso.
+Hoje, `applyProxyToInstance` envia o payload direto para a Evolution mesmo se algum campo crítico (`host`, `port`, `protocol`) vier nulo/vazio do banco. Isso resulta em erro genérico 400 da Evolution (`instance requires property "host"`) que confunde o usuário e suja o log.
 
-A regra de segurança correta é: **nenhuma instância opera sem proxy**. Se não houver proxy disponível, a instância **não deve ser importada**.
+Os dados atuais estão íntegros, mas no futuro um proxy mal cadastrado (ex.: import CSV com coluna vazia) quebraria o fluxo de connect/import com erro técnico opaco.
 
-## Solução
+### Mudanças
 
-Reformular o fluxo de **"Buscar Instâncias"** para tratar cada instância da Evolution como uma transação atômica de 3 passos:
+**1. `supabase/functions/evolution-proxy/index.ts` — guard no helper `applyProxyToInstance`**
 
-```text
-Para cada instância nova encontrada na Evolution:
-  1. INSERIR no banco (whatsapp_instances)
-  2. RESERVAR proxy disponível (claim_proxy_for_instance)
-     ├─ se NÃO houver proxy → ROLLBACK (deletar do banco) e pular
-     └─ se houver           → continua
-  3. APLICAR proxy na Evolution (POST /proxy/set/:name)
-     ├─ se falhar → ROLLBACK (release_proxy + deletar do banco)
-     └─ se OK     → restart da instância e mantém importada
-```
+No início do helper, antes do `fetch`, validar que quando `proxy != null`:
+- `host` é string não-vazia (após `trim()`)
+- `port` é número/string parseável para inteiro entre 1 e 65535
+- `protocol` está em `["http", "https", "socks4", "socks5"]`
 
-Resumo final ao usuário: `X importadas com proxy, Y puladas por falta de proxy, Z falharam ao aplicar`.
+Se inválido, retornar `{ ok: false, status: 0, body: { message: "proxy_invalid", invalidFields: [...] } }` **sem chamar a Evolution**, e logar `[applyProxyToInstance] PROXY INVÁLIDO id=<id> motivos=<...>`.
 
-## Mudanças
+**2. Tratamento nas 3 actions que aplicam proxy (`importInstanceWithProxy`, `assignProxy`, `connect`)**
 
-### 1. Edge Function `evolution-proxy` — nova action `importInstanceWithProxy`
+Quando `applyProxyToInstance` retorna o novo erro `proxy_invalid`:
+- Rollback do claim (`releaseProxyForInstance`).
+- No `importInstanceWithProxy`: também deletar a instância recém-inserida.
+- Devolver para o front: `{ success: false, code: "proxy_invalid", error: "Proxy <label> está com dados incompletos (host/port/protocol). Edite o proxy em WhatsApp → Proxies.", proxyId, invalidFields }` com HTTP 200 (erro tratado, não 502).
 
-Centraliza a transação no servidor (mais seguro, não depende do navegador). Recebe `{ instanceName, phone, status }` e:
+**3. `src/components/admin/whatsapp/InstanciasTab.tsx` — mensagens claras**
 
-- Insere em `whatsapp_instances` (service role, bypass RLS).
-- Chama `claim_proxy_for_instance` com o UUID recém-criado.
-- Se claim falhar com `no_proxy_available` → deleta a instância do banco e devolve `{ success: false, code: "no_proxy_available" }`.
-- Se claim OK → chama `applyProxyToInstance` na Evolution.
-- Se aplicar falhar → `release_proxy_for_instance` + deleta a instância + devolve erro.
-- Se tudo OK → `PUT /instance/restart/:name` e devolve `{ success: true, proxy: { label, host } }`.
+- `handleConnect` / `handleAssignProxy` / `handleSyncFromEvolution`: tratar `code === "proxy_invalid"` exibindo `toast.error` específico ("Proxy X com dados inválidos. Corrija em WhatsApp → Proxies antes de tentar novamente.") em vez do erro genérico 502.
+- No resumo do `handleSyncFromEvolution`, somar contador `invalidProxy` separado de `failed`.
 
-Reutiliza helpers já existentes: `getSupabase`, `applyProxyToInstance`, `claimProxyForInstance`, `releaseProxyForInstance`, `getInstanceUuid`.
+**4. `src/components/admin/whatsapp/ProxiesTab.tsx` — validação na origem (defesa em profundidade)**
 
-### 2. `InstanciasTab.tsx` — refatorar `handleSyncFromEvolution`
+Reforçar `handleSave` e `handleBulkSave` para rejeitar entradas onde `host`, `port` ou `protocol` venham vazios após `trim()` — já existe parsing, mas o save direto via formulário precisa dessa checagem extra antes do `supabase.insert`.
 
-```text
-const evoData = await callEvolution("fetchInstances")
-filtrar instâncias não existentes no banco
-para cada nova:
-  invoke("evolution-proxy", { action: "importInstanceWithProxy", instanceName, phone, status })
-  contabilizar: imported / skippedNoProxy / failed
-```
+### Resultado esperado
 
-Toast final consolidado:
-- `3 importadas com proxy`
-- `2 puladas: sem proxy disponível. Adicione proxies em WhatsApp → Proxies.` (com `toast.warning`)
-- `1 falhou ao aplicar proxy` (com `toast.error`)
+- Nenhuma chamada à Evolution sai com payload incompleto.
+- Quando um proxy estiver corrompido no banco, o admin vê: *"Proxy IPRoyal BR #2 está com dados incompletos (faltam: host). Corrija em WhatsApp → Proxies."* — não mais o 400 técnico da Evolution.
+- Rollback atômico continua funcionando: instância importada não fica órfã.
+- Cadastro novo de proxy via UI não permite salvar incompleto.
 
-Se **nenhum proxy disponível** logo no início, pula direto sem nem tentar (uma única consulta antes do loop).
+### Detalhes técnicos
 
-### 3. Pequeno ajuste em `handleAssignProxy` (já existente)
-
-Sem mudanças funcionais — apenas garantir que mensagem de erro de "sem proxy" aponte para `WhatsApp → Proxies` (já faz).
-
-## Resultado esperado
-
-- Buscar Instâncias **nunca mais traz instância sem proxy**.
-- Mensagens claras: o admin sabe exatamente quantas vieram, quantas faltaram proxy e quantas falharam.
-- Rollback atômico: nenhum estado intermediário inconsistente (instância no banco + proxy não aplicado).
-- Botão "Atribuir proxy" continua existindo para casos legados (instâncias antigas que ficaram sem proxy).
-
-## Detalhes técnicos
-
-- Toda a transação roda na edge function com `SUPABASE_SERVICE_ROLE_KEY` — RLS não interfere.
-- `claim_proxy_for_instance` já é atômico (`FOR UPDATE SKIP LOCKED`), então mesmo importações concorrentes não duplicam reserva.
-- O `restart` da instância após aplicar proxy é necessário para o IP novo passar a vigorar (mesmo padrão já usado em `assignProxy`).
-- Não muda schema do banco, não muda RLS, não muda RPC.
-- Arquivos tocados: `supabase/functions/evolution-proxy/index.ts` (+ ~50 linhas), `src/components/admin/whatsapp/InstanciasTab.tsx` (refatorar `handleSyncFromEvolution`).
+- Sem mudanças em schema, RLS ou RPC.
+- Helper `applyProxyToInstance` ganha ~15 linhas de validação no topo.
+- Cada call site existente do helper (`importInstanceWithProxy`, `assignProxy`, bloco `connect`, `swapProxy` para reset) ganha um `if (apply.body?.message === "proxy_invalid")` para tratar o caso específico antes do branch genérico de falha.
+- Arquivos tocados:
+  - `supabase/functions/evolution-proxy/index.ts`
+  - `src/components/admin/whatsapp/InstanciasTab.tsx`
+  - `src/components/admin/whatsapp/ProxiesTab.tsx`
 
