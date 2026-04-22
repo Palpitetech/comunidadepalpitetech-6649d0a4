@@ -100,7 +100,7 @@ function LogDetail({ row, profile }: { row: LogRow; profile?: ProfileMini }) {
 
       <div className="grid md:grid-cols-2 gap-3">
         <div>
-          <div className="text-xs font-semibold mb-1 text-emerald-600">
+          <div className="text-xs font-semibold mb-1 text-primary">
             ✓ Campos preenchidos ({row.fields_added.length})
           </div>
           <div className="flex flex-wrap gap-1">
@@ -115,7 +115,7 @@ function LogDetail({ row, profile }: { row: LogRow; profile?: ProfileMini }) {
           </div>
         </div>
         <div>
-          <div className="text-xs font-semibold mb-1 text-amber-600">
+          <div className="text-xs font-semibold mb-1 text-muted-foreground">
             ⊘ Campos ignorados — first-touch ({row.fields_skipped.length})
           </div>
           <div className="flex flex-wrap gap-1">
@@ -239,13 +239,13 @@ export default function AdminAtribuicaoAuditoria() {
           <Card>
             <CardContent className="p-3">
               <div className="text-xs text-muted-foreground">Campos preenchidos</div>
-              <div className="text-2xl font-bold text-emerald-600">{stats.totalAdded}</div>
+              <div className="text-2xl font-bold text-primary">{stats.totalAdded}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-3">
               <div className="text-xs text-muted-foreground">Skips first-touch</div>
-              <div className="text-2xl font-bold text-amber-600">{stats.totalSkipped}</div>
+              <div className="text-2xl font-bold text-muted-foreground">{stats.totalSkipped}</div>
             </CardContent>
           </Card>
           <Card>
