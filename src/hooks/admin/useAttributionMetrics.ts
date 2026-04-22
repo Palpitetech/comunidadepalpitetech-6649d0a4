@@ -52,6 +52,25 @@ export interface BuyerRow {
   utmCampaign: string | null;
 }
 
+export interface ClickAttributionRow {
+  origem: string;
+  vendas: number;
+  compradoresUnicos: number;
+  receita: number;
+  ticketMedio: number;
+  pctTotal: number; // 0..100
+}
+
+export interface ClickComparisonRow {
+  origem: string;
+  vendasFirst: number;
+  receitaFirst: number;
+  vendasLast: number;
+  receitaLast: number;
+  deltaVendas: number;
+  deltaReceita: number;
+}
+
 export interface AttributionMetrics {
   // KPIs período
   totalLeads: number;
@@ -66,6 +85,15 @@ export interface AttributionMetrics {
   // Tabelas
   rows: AttributionRow[];
   buyers: BuyerRow[];
+  // First vs Last click — por dimensão
+  firstClickByDim: Record<AttributionDimension, ClickAttributionRow[]>;
+  lastClickByDim: Record<AttributionDimension, ClickAttributionRow[]>;
+  comparisonByDim: Record<AttributionDimension, ClickComparisonRow[]>;
+  // KPIs de cobertura first/last
+  vendasComFirstClick: number;
+  vendasComLastClick: number;
+  vendasMesmoCanal: number;
+  vendasCanalDivergente: number;
   // Para dropdown gerador
   uniqueUtmSources: string[];
 }
