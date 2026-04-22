@@ -252,8 +252,15 @@ serve(async (req) => {
       email,
       celular,
       tags: payloadTags,
-      source,
+      slug,
       utm_source,
+      utm_medium,
+      utm_campaign,
+      utm_content,
+      utm_term,
+      referrer,
+      gclid,
+      fbclid,
       pagina_origem,
       page_url,
     } = body as {
@@ -261,11 +268,35 @@ serve(async (req) => {
       email?: string;
       celular?: string;
       tags?: string[];
-      source?: string;
+      slug?: string;
       utm_source?: string;
+      utm_medium?: string;
+      utm_campaign?: string;
+      utm_content?: string;
+      utm_term?: string;
+      referrer?: string;
+      gclid?: string;
+      fbclid?: string;
       pagina_origem?: string;
       page_url?: string;
     };
+
+    // Helper to normalize empty strings to null
+    const cleanStr = (v: string | undefined | null) => {
+      if (v === undefined || v === null) return null;
+      const t = String(v).trim();
+      return t.length > 0 ? t : null;
+    };
+
+    const slugClean = cleanStr(slug);
+    const utmSourceClean = cleanStr(utm_source);
+    const utmMediumClean = cleanStr(utm_medium);
+    const utmCampaignClean = cleanStr(utm_campaign);
+    const utmContentClean = cleanStr(utm_content);
+    const utmTermClean = cleanStr(utm_term);
+    const referrerClean = cleanStr(referrer);
+    const gclidClean = cleanStr(gclid);
+    const fbclidClean = cleanStr(fbclid);
 
     const hasNome = !!nome?.trim();
     const hasEmail = !!email?.trim();
