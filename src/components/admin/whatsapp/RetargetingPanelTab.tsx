@@ -3,9 +3,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, TrendingUp, ShieldAlert, AlertTriangle, Inbox } from "lucide-react";
-import { format, startOfDay, subDays } from "date-fns";
+import { Loader2, RefreshCw, TrendingUp, ShieldAlert, AlertTriangle, Inbox, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { format, startOfDay, subDays, formatDistanceToNowStrict } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+interface ScheduleInfo {
+  jobid: number;
+  jobname: string;
+  schedule: string;
+  active: boolean;
+  last_ran_at: string | null;
+  next_run_at: string | null;
+}
+
+function describeSchedule(schedule: string): string {
+  const m = schedule.match(/^\*\/(\d+)\s+\*\s+\*\s+\*\s+\*$/);
+  if (m) return `A cada ${m[1]} minuto${m[1] === "1" ? "" : "s"}`;
+  return schedule;
+}
 
 interface RunRow {
   id: string;
@@ -33,23 +48,39 @@ interface DailyAgg {
 export function RetargetingPanelTab() {
   const [loading, setLoading] = useState(true);
   const [runs, setRuns] = useState<RunRow[]>([]);
+  const [schedule, setSchedule] = useState<ScheduleInfo | null>(null);
+  const [now, setNow] = useState(() => new Date());
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     const since = subDays(new Date(), 7).toISOString();
-    const { data, error } = await supabase
-      .from("lead_retargeting_runs" as never)
-      .select("*")
-      .gte("ran_at", since)
-      .order("ran_at", { ascending: false })
-      .limit(200);
-    if (!error && data) setRuns(data as unknown as RunRow[]);
+    const [runsRes, schedRes] = await Promise.all([
+      supabase
+        .from("lead_retargeting_runs" as never)
+        .select("*")
+        .gte("ran_at", since)
+        .order("ran_at", { ascending: false })
+        .limit(200),
+      supabase.rpc("get_lead_retargeting_schedule" as never),
+    ]);
+    if (!runsRes.error && runsRes.data) setRuns(runsRes.data as unknown as RunRow[]);
+    if (!schedRes.error && Array.isArray(schedRes.data) && schedRes.data.length > 0) {
+      setSchedule(schedRes.data[0] as unknown as ScheduleInfo);
+    } else {
+      setSchedule(null);
+    }
     setLoading(false);
   }, []);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Tick a cada 30s para atualizar contagem regressiva da próxima execução
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   // Aggregate by day
   const byDay = new Map<string, DailyAgg>();
