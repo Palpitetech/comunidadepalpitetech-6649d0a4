@@ -24,11 +24,11 @@ async function applyProxyToInstance(
   const body = proxy
     ? {
         enabled: true,
-        host: proxy.host,
+        host: String(proxy.host),
         port: String(proxy.port),
-        protocol: proxy.protocol,
-        username: proxy.username || "",
-        password: proxy.password || "",
+        protocol: String(proxy.protocol),
+        username: proxy.username ? String(proxy.username) : "",
+        password: proxy.password ? String(proxy.password) : "",
       }
     : {
         enabled: false,
@@ -38,6 +38,8 @@ async function applyProxyToInstance(
         username: "",
         password: "",
       };
+
+  console.log(`[applyProxyToInstance] POST ${url}`, JSON.stringify({ ...body, password: body.password ? "***" : "" }));
 
   const res = await fetch(url, {
     method: "POST",
