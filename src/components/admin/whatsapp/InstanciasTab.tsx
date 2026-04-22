@@ -608,6 +608,42 @@ export function InstanciasTab() {
                     )}
                   </div>
 
+                  {/* Proxy chip */}
+                  {(() => {
+                    const proxy = proxiesByInstance.get(inst.id);
+                    return (
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <Globe className={`h-3.5 w-3.5 shrink-0 ${proxy ? "text-accent" : "text-muted-foreground"}`} />
+                        {proxy ? (
+                          <span className="text-card-foreground truncate">
+                            {proxy.label}
+                            {proxy.external_ip && (
+                              <span className="text-muted-foreground font-mono ml-1">· {maskIp(proxy.external_ip)}</span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">Sem proxy</span>
+                        )}
+                        {proxy && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 ml-auto"
+                                onClick={() => handleSwapProxy(inst)}
+                                disabled={!!currentAction}
+                              >
+                                {currentAction === "swap" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Replace className="h-3 w-3" />}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Trocar proxy (libera o atual)</TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   {/* Stats */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
