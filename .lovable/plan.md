@@ -1,182 +1,228 @@
 
 
-# Refatoração 100% do Sidebar Admin — nova arquitetura visual e UX
+# Separar "Leads" de "Usuários" — webhooks parciais sem criar conta
 
-## Objetivo
-Reconstruir o sidebar de `/admin` com identidade visual profissional, navegação mais clara, busca rápida, agrupamento melhor balanceado e UX superior em ambos estados (expandido e colapsado).
+## Problema atual
+Hoje a edge function `receive-lead` exige **nome + email + celular** e, se algum falta, rejeita o lead com 400. Isso significa que integrações que enviam só celular (ou só email, ou sem email) **perdem o contato** — não fica registrado em lugar nenhum.
 
----
+Você quer:
+1. Aceitar leads **mesmo faltando algum dos 3 dados principais** (sem criar conta de auth)
+2. Guardar UTM, página de origem, source, tags
+3. Exibir esses contatos em `/admin/usuarios` numa **4ª aba "Leads"** ao lado de Todos / Pagos / Trial
+4. **Não quebrar** o fluxo atual (webhooks que mandam os 3 dados continuam criando conta como hoje)
 
-## Visão geral
+## Visão geral da solução
 
 ```text
-EXPANDIDO (16rem)                   COLAPSADO (4rem)
-┌─────────────────────────┐         ┌──────┐
-│ ⚡ Painel Admin         │         │  ⚡  │  ← logo + trigger
-│ ──────────────────────  │         │      │
-│ 🔍 Buscar... (Ctrl+K)   │         │  🔍  │  ← abre command palette
-│ ──────────────────────  │         │ ──── │
-│ PRINCIPAL               │         │  ⌂   │  ← Painel
-│  ⌂ Painel               │         │  📄  │  ← Planos
-│  📄 Planos              │         │  👥  │  ← Usuários
-│  👥 Usuários       [12] │         │  🤖  │
-│  🤖 Bots                │         │  🎁  │
-│                         │         │ ──── │
-│ COMUNICAÇÃO             │         │  💬  │  ← WhatsApp (flyout)
-│  💬 WhatsApp     ▸      │         │  🎁  │
-│  🎁 Convites            │         │ ──── │
-│  📊 Eventos             │         │  💲  │  ← Financeiro (flyout)
-│                         │         │  🎫  │  ← Bolões (flyout)
-│ FINANCEIRO        ▾     │         │  🎥  │  ← Gravação (flyout)
-│  💲 Custos IA           │         │ ──── │
-│  🐷 Assinaturas Op.     │         │  ⚙   │  ← Sistema
-│  📱 Chip Celulares      │         │      │
-│  🧾 Custos Op.          │         │  👤  │  ← perfil admin
-│  🛒 Vendas              │         └──────┘
-│                         │
-│ BOLÕES            ▾     │
-│  ➕ Novo Bolão          │
-│  📋 Listagem            │
-│  💳 Pagamentos     [3]  │  ← badge pendentes
-│  🏆 Premiação           │
-│  💰 Carteira            │
-│  🏆 Resgates       [5]  │
-│  💰 Compras Saldo       │
-│  💳 Compras Cotas       │
-│                         │
-│ GRAVAÇÃO          ▾     │
-│  📊 Lotofácil           │
-│  📊 Quina               │
-│                         │
-│ SISTEMA                 │
-│  📈 Métricas            │
-│  🔌 Integrações         │
-│ ──────────────────────  │
-│ 👤 Bruno (admin)        │
-│  ↩ Voltar ao app        │
-└─────────────────────────┘
+WEBHOOK recebe payload
+        │
+        ▼
+   ┌─────────────────────────────────┐
+   │ Tem nome + email + celular?     │
+   └─────────────────────────────────┘
+       SIM │              │ NÃO (falta algum)
+           ▼              ▼
+   FLUXO ATUAL:    NOVO FLUXO:
+   - cria perfil   - grava em `leads_inbox`
+   - manda email   - apenas registro
+   - ativa trial   - sem auth, sem email
+                   - aparece em /admin/usuarios → aba "Leads"
 ```
+
+A aba "Leads" mostra contatos **soltos** (não viraram conta). Quando o lead se cadastra de fato (manualmente ou completa os dados), vira usuário normal.
 
 ---
 
-## Mudanças principais
+## Mudanças concretas
 
-### 1. Cabeçalho com identidade
-- **Header fixo no topo** com logo "⚡ Painel Admin" (text-sm font-bold + chip vermelho `Admin`)
-- Quando colapsado: só o ícone do raio centralizado
-- Substitui o `SidebarGroupLabel "Admin"` atual (que sumia ao colapsar)
+### 1. Nova tabela `leads_inbox` (migration)
 
-### 2. Busca rápida (Command Palette)
-- Input com placeholder "Buscar página... (Ctrl+K)" abaixo do header
-- Atalho `Ctrl/Cmd + K` abre `CommandDialog` (shadcn) com **todas as 24+ páginas** indexadas (label, ícone, grupo, url)
-- Quando colapsado: só o ícone 🔍 → abre o mesmo dialog
-- Reduz drasticamente a fricção para chegar em páginas profundas
+Tabela independente de `perfis`/`auth.users` para guardar contatos parciais.
 
-### 3. Reagrupamento dos itens (4 → 5 grupos mais coerentes)
+```sql
+CREATE TABLE public.leads_inbox (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  nome text,
+  email text,
+  celular text,                   -- normalizado (10-11 dígitos sem 55)
+  source text,                    -- "landing-mega", "elementor", etc
+  utm_source text,
+  pagina_origem text,             -- nova: URL de onde veio
+  tags text[] DEFAULT '{}',       -- inclui source_tag do webhook
+  webhook_id uuid REFERENCES public.lead_webhooks(id) ON DELETE SET NULL,
+  webhook_name text,              -- snapshot do nome (resiste a delete)
+  ip text,
+  raw_payload jsonb,              -- payload original p/ auditoria
+  status text DEFAULT 'novo',     -- 'novo' | 'contatado' | 'convertido' | 'descartado'
+  perfil_id uuid REFERENCES public.perfis(id) ON DELETE SET NULL, -- preenche quando vira conta
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
 
-**Antes:** Principal (9 itens, denso), Financeiro, Bolões, Gravação
-**Depois:**
+CREATE INDEX idx_leads_inbox_created ON public.leads_inbox(created_at DESC);
+CREATE INDEX idx_leads_inbox_email ON public.leads_inbox(lower(email)) WHERE email IS NOT NULL;
+CREATE INDEX idx_leads_inbox_celular ON public.leads_inbox(celular) WHERE celular IS NOT NULL;
+CREATE INDEX idx_leads_inbox_status ON public.leads_inbox(status);
 
-| Grupo | Itens |
-|---|---|
-| **Principal** (sem label) | Painel, Planos, Usuários, Bots |
-| **Comunicação** | WhatsApp, Convites, Eventos |
-| **Financeiro** | Custos IA, Assinaturas Op., Chip Celulares, Custos Op., Vendas |
-| **Bolões** | Novo Bolão, Listagem, Pagamentos, Premiação, Carteira, Resgates, Compras Saldo, Compras Cotas |
-| **Gravação** | Lotofácil, Quina |
-| **Sistema** | Métricas, Integrações |
+ALTER TABLE public.leads_inbox ENABLE ROW LEVEL SECURITY;
 
-Distribui melhor a carga cognitiva (4 itens "Principal" + grupos balanceados) em vez dos 9 itens soltos atuais.
-
-### 4. Badges de notificação dinâmicos
-Itens que precisam de atenção mostram contador discreto à direita:
-- **Usuários**: novos cadastros últimas 24h (query `perfis` count)
-- **Pagamentos**: bolões com status `pendente_aprovacao`
-- **Resgates**: solicitações `status='pendente'`
-
-Hook novo: `useAdminBadges()` — uma query agregada com `useQuery` (refetch a cada 60s), retorna `{ usuarios, pagamentos, resgates }`. Badge renderiza como `<span className="ml-auto text-[10px] bg-destructive/15 text-destructive rounded-full px-1.5">N</span>` (ou `bg-amber-500/15` para info).
-
-### 5. Footer com identidade do admin + atalho voltar
-- Mini card: avatar do admin + nome + role chip "admin"
-- Botão "↩ Voltar ao App" (link para `/`) — facilita troca de contexto
-- Quando colapsado: só o avatar (clicável → mesmo menu)
-
-### 6. Estado colapsado refinado
-- Manter a largura `3.5rem` atual (já corrigida)
-- Submenus continuam via Popover lateral (já funciona)
-- **Adicionar:** label de grupo aparece como header dentro do popover (já existe)
-- **Adicionar:** botão de expansão "→" na borda inferior do sidebar (afora do `SidebarTrigger` no header) para expandir sem precisar ir ao topo
-
-### 7. Estilização visual
-- Background `bg-card` mantido + sutil `bg-gradient-to-b from-card via-card to-card/95`
-- Item ativo: barra vertical 3px à esquerda em `bg-primary` + `bg-sidebar-accent`
-- Hover: `bg-sidebar-accent/60` + leve `translate-x-0.5` (microinteração)
-- Group label: `text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70`
-- Ícones leaves: `h-4 w-4` expandido / `h-5 w-5` colapsado (já corrigido)
-- Separadores entre grupos no estado colapsado: `h-px` mais sutil (já existe, manter)
-
-### 8. Persistência e atalhos
-- Estado expandido/colapsado já persiste em cookie (já funciona)
-- Atalho `Ctrl/Cmd + B` toggle sidebar (já existe)
-- Novo: `Ctrl/Cmd + K` abre busca
-
----
-
-## Arquitetura — refator do `AdminSidebar.tsx`
-
-Quebrar em sub-componentes locais (no mesmo arquivo, organização):
-
-```tsx
-// AdminSidebar.tsx
-- AdminSidebarHeader          // logo + chip Admin
-- AdminSidebarSearch          // input + Ctrl+K trigger
-- AdminSidebarSection         // wrapper de grupo (label + items)
-- AdminNavItem                // leaf com badge opcional
-- AdminNavGroup               // grupo com submenus (collapsible / popover)
-- AdminSidebarFooter          // perfil admin + voltar app
-- AdminSidebarCommandPalette  // CommandDialog com todas as páginas
+CREATE POLICY "Admins gerenciam leads_inbox"
+  ON public.leads_inbox FOR ALL
+  USING (public.has_role(auth.uid(), 'admin'))
+  WITH CHECK (public.has_role(auth.uid(), 'admin'));
 ```
 
-E um hook novo:
+> Não toco em `perfis` — sua estrutura, RLS, triggers e fluxo de trial continuam **idênticos**.
 
-```tsx
-// src/hooks/useAdminBadges.ts
-export function useAdminBadges() {
-  return useQuery({
-    queryKey: ['admin-sidebar-badges'],
-    queryFn: async () => {
-      const [usuariosNovos, pagPendentes, resgPendentes] = await Promise.all([
-        supabase.from('perfis').select('id', { count: 'exact', head: true })
-          .gte('created_at', dayjs().subtract(1, 'day').toISOString()),
-        supabase.from('bolao_pagamentos').select('id', { count: 'exact', head: true })
-          .eq('status', 'pendente_aprovacao'),
-        supabase.from('bolao_resgates').select('id', { count: 'exact', head: true })
-          .eq('status', 'pendente'),
-      ]);
-      return {
-        usuarios: usuariosNovos.count ?? 0,
-        pagamentos: pagPendentes.count ?? 0,
-        resgates: resgPendentes.count ?? 0,
-      };
-    },
-    refetchInterval: 60_000,
-    staleTime: 30_000,
+### 2. Refatorar `supabase/functions/receive-lead/index.ts`
+
+Lógica nova no início, **antes** das validações estritas atuais:
+
+```ts
+const hasNome = !!nome?.trim();
+const hasEmail = !!email?.trim();
+const hasCelular = !!celular?.trim();
+
+const camposCompletos = hasNome && hasEmail && hasCelular;
+
+if (!camposCompletos) {
+  // ── NOVO FLUXO: grava em leads_inbox e termina
+  
+  // Validação leve do que veio (sem MX, sem typo check, sem disposable):
+  // - email: se veio, precisa ter formato @
+  // - celular: se veio, normaliza
+  // Pelo menos 1 dado precisa existir (senão é spam puro)
+  if (!hasEmail && !hasCelular && !hasNome) {
+    return json({ error: "Informe ao menos um dado de contato" }, 400);
+  }
+  
+  let normalizedCelular: string | null = null;
+  if (hasCelular) {
+    const v = validateCelular(celular!);
+    if (v.ok) normalizedCelular = v.normalized!;
+    // se inválido, salva como veio mesmo (pra não perder)
+  }
+  
+  await supabaseAdmin.from("leads_inbox").insert({
+    nome: nome?.trim() || null,
+    email: hasEmail ? email!.trim().toLowerCase() : null,
+    celular: normalizedCelular || celular || null,
+    source: source || null,
+    utm_source: utm_source || null,
+    pagina_origem: body.pagina_origem || body.page_url || null,
+    tags: ["lead_inbox", webhook.source_tag, ...(payloadTags || [])],
+    webhook_id: webhook.id,
+    webhook_name: webhook.name,
+    ip,
+    raw_payload: body,
+    status: "novo",
   });
+  
+  // Conta no contador do webhook (mesma RPC já existente)
+  await supabaseAdmin.rpc("increment_lead_webhook_count", { webhook_id: webhook.id });
+  
+  await supabaseAdmin.from("system_events").insert({
+    event_type: "lead_inbox_capturado",
+    description: `Lead parcial capturado (campos incompletos)`,
+    source: "receive-lead",
+    status: "success",
+    metadata: { 
+      webhook_name: webhook.name, 
+      tem_nome: hasNome, tem_email: hasEmail, tem_celular: hasCelular,
+      ip,
+    },
+  });
+  
+  return json({ 
+    success: true, 
+    lead_inbox: true,
+    message: "Lead capturado (sem conta — dados incompletos)" 
+  });
+}
+
+// ── FLUXO ATUAL (intacto): segue para validações estritas + cria perfil
+// ... resto do código atual sem mudança
+```
+
+**Importante:** as validações pesadas (disposable domain, MX lookup, padrão bot, typo) **continuam só para o fluxo de criação de conta**. Lead inbox aceita mais largamente porque é só "guardar contato".
+
+Adicionar também `body.pagina_origem` ao tipo do body e ao payload de exemplo na UI.
+
+### 3. UI `/admin/integracoes` — atualizar exemplo de payload
+
+No `examplePayload` (`Integracoes.tsx` linha ~242), adicionar campo `pagina_origem`:
+
+```text
+{
+  "nome": "João Silva",      // opcional
+  "email": "joao@email.com", // opcional
+  "celular": "11999999999",  // opcional
+  "tags": ["tag_extra"],
+  "source": "nome-da-pagina",
+  "utm_source": "instagram",
+  "pagina_origem": "https://meusite.com/promo"
 }
 ```
 
-> Tabelas exatas (`bolao_pagamentos`, `bolao_resgates`) serão validadas no momento da implementação contra o schema; se nomes/colunas diferirem, ajusto sem mudar a UX.
+E uma nota explicativa (Card/alert sutil):
+
+> **Campos opcionais:** se vierem **nome + email + celular**, criamos a conta automaticamente. Se faltar algum, o contato vai para a aba **Leads** em `/admin/usuarios` para você acompanhar.
+
+### 4. UI `/admin/usuarios` — nova aba "Leads"
+
+Em `AdminUsuarios.tsx`:
+
+**a)** Estender `FilterPrincipal`:
+```ts
+type FilterPrincipal = "todos" | "pagos" | "trial" | "leads";
+```
+
+**b)** Adicionar ao array `FILTROS_PRINCIPAIS`:
+```ts
+{ key: "leads", label: "Leads", icon: Inbox },  // ou Mail
+```
+
+**c)** Buscar leads em paralelo no `fetchData`:
+```ts
+const [{ data: plansData }, { data: usersData }, { data: leadsData }] = 
+  await Promise.all([
+    supabase.from("plans").select("*").order("display_order"),
+    supabase.from("perfis").select("*").eq("is_bot", false).order("created_at", { ascending: false }),
+    supabase.from("leads_inbox").select("*").order("created_at", { ascending: false }).limit(500),
+  ]);
+setLeads(leadsData || []);
+```
+
+**d)** Quando `activeFilter === "leads"`, **trocar a fonte da lista renderizada** para `leads` (com uma forma adaptada minimamente para reusar a tabela: nome, email/celular, origem, tags, data). Para evitar refatorar toda a tabela existente:
+
+- Quando `activeFilter === "leads"` → renderizar uma **tabela específica simples** (nova função `renderLeadsTable()`) com colunas: **Nome · Email · Celular · Origem (UTM/source) · Página · Tags · Data**
+- Linha clicável abre um drawer simples (`LeadDetailSheet` novo, leve) com:
+  - dados completos do lead
+  - botão **"Marcar como contatado / convertido / descartado"** (atualiza `status`)
+  - botão **"Promover a usuário"** (pré-preenche um modal com nome/email/celular, ao confirmar dispara o fluxo padrão de criação de conta — efetivamente posta no webhook do receive-lead com os campos completos OU usa um RPC dedicado; **nesse plano vou usar caminho mais simples: fazer admin invocar manualmente `auth.admin.createUser` via edge function nova `promote-lead-to-user` que reaproveita lógica do receive-lead**)
+  - botão **"Excluir lead"**
+
+**e)** Total da aba "Todos" (stats):
+- O usuário pediu: *"deve ser computado como Todos"*. Decisão: **manter `stats.total = users.length`** (usuários reais) e **adicionar contador separado `stats.leads = leads.length`** exibido no chip da aba "Leads". Mostrar no card "Todos" um sub-texto opcional: *"+ N leads"* discreto.
+
+> Justificativa: misturar leads no `total` quebraria todas as outras stats que dependem de `users` (pagos, trial, etc). Manter contadores separados é mais correto e transparente.
+
+### 5. Edge function nova: `promote-lead-to-user` (opcional na primeira versão)
+
+Função simples que recebe `{ lead_id }`, autoriza admin via JWT, lê o lead, valida que tem os 3 campos preenchidos (admin pode editar antes), e **reaproveita 100% a lógica de criação** do `receive-lead` (cria perfil, manda email de boas-vindas, marca `lead.status='convertido'` e `lead.perfil_id=novo_id`).
+
+> Se preferir, posso entregar a aba "Leads" sem o botão "Promover" na primeira iteração (admin manualmente cadastra o lead pelo fluxo público) e adicionar o botão depois. Vou incluir como **escopo principal** porque é o que fecha o ciclo.
 
 ---
 
 ## Detalhes técnicos sensíveis
 
-- **Reuso do componente shadcn `sidebar.tsx`**: NÃO mexo nele. Toda customização visual fica em `AdminSidebar.tsx` via classes/composição.
-- **CommandDialog**: já existe `@/components/ui/command`. Vou reutilizar.
-- **Dependência `dayjs`**: já está no projeto (verificar via search). Se não, uso `date-fns` que já é dependência.
-- **Mobile**: o sidebar shadcn já vira `Sheet` em mobile automaticamente — herda toda a nova UI sem trabalho extra.
-- **Acessibilidade**: cada `Link` mantém label visível (expandido) ou tooltip (colapsado). `aria-current="page"` no item ativo.
-- **Performance**: `useAdminBadges` agrupa 3 contagens em `Promise.all`, refetch a cada 60s, usa `head: true` (sem trafegar dados).
+- **Nada muda no fluxo atual** quando o webhook recebe os 3 campos completos: validação anti-bot, MX lookup, criação de auth user, email de boas-vindas, trial pendente, tudo idêntico.
+- **`leads_inbox` é tabela separada de `perfis`** — não tem trigger, não tem RLS além de admin, não interfere em `sync_perfil_tags` nem em `ativar_trial_pos_confirmacao`.
+- **Rate limiting do receive-lead continua** (5/min/IP) — protege ambos os fluxos.
+- **Stats da aba "Todos" ficam intactas** (continua contando só `perfis`). A aba "Leads" tem contagem própria.
+- **Deduplicação**: ao salvar um lead em `leads_inbox`, se já existe outro lead com mesmo email/celular **nas últimas 24h**, posso atualizar o existente (merge de tags + raw_payload mais recente) em vez de criar duplicata. Vou implementar isso para evitar inflar a aba.
+- **Quando o lead se cadastrar depois** (pelo site normal): o trigger `handle_new_user` já cria o perfil — vou adicionar uma lógica leve no `receive-lead` (e idealmente no fluxo de cadastro manual) para procurar `leads_inbox` por email/celular e marcar `status='convertido'` + `perfil_id`. Mas isso é um nice-to-have; na primeira versão, basta o admin marcar manualmente.
 
 ---
 
@@ -184,23 +230,24 @@ export function useAdminBadges() {
 
 | Arquivo | Ação |
 |---|---|
-| `src/components/layout/AdminSidebar.tsx` | **Reescrever 100%** — nova arquitetura com header, busca, 6 grupos, badges, footer |
-| `src/components/admin/AdminCommandPalette.tsx` | **Novo** — CommandDialog com todas as páginas indexadas |
-| `src/hooks/useAdminBadges.ts` | **Novo** — fetch agregado de contadores pendentes |
-| `src/components/layout/AdminLayout.tsx` | **Editar levemente** — pode remover `SidebarTrigger` redundante já que o sidebar terá seu próprio botão de expand interno (ou manter ambos para conveniência) |
+| **Migration nova** | Criar tabela `leads_inbox` + índices + RLS (somente admin) |
+| `supabase/functions/receive-lead/index.ts` | **Editar** — branch novo no início para gravar em `leads_inbox` quando faltar campo, sem tocar no fluxo completo |
+| `src/pages/admin/Integracoes.tsx` | **Editar levemente** — atualizar `examplePayload` (adicionar `pagina_origem`, marcar campos opcionais) + nota explicativa sobre aba Leads |
+| `src/pages/admin/AdminUsuarios.tsx` | **Editar** — nova aba "Leads", buscar `leads_inbox`, renderização condicional da tabela de leads, contador separado |
+| `src/components/admin/LeadDetailSheet.tsx` | **Novo** — drawer/sheet com detalhes do lead + ações (status, excluir, promover) |
+| `supabase/functions/promote-lead-to-user/index.ts` | **Novo** — promove lead em conta reaproveitando lógica de criação |
+| `supabase/config.toml` | **Editar** — registrar nova função (se necessário; geralmente automático) |
 
 ## Fora de escopo
-- Mexer no `src/components/ui/sidebar.tsx` (shadcn primitivo — fica intocado)
-- Mudar o sidebar do app público
-- Adicionar novas páginas/rotas admin
-- Migration de banco
+- Importação CSV de leads (pode vir depois)
+- Métricas/conversão de leads (taxa de conversão lead→usuário) — pode ser próxima iteração na página `/admin/metricas`
+- Atribuição automática retroativa de `leads_inbox` → `perfis` quando o lead cadastra depois (vou implementar busca por email/celular durante criação de perfil, mas sem garantir todas as bordas)
+- Mudar nome/identidade de tags geradas pelo `sync_perfil_tags` (separado)
 
 ## Resultado esperado
-- Sidebar admin com **identidade visual própria** (header com chip Admin, footer com perfil)
-- **Busca instantânea** (Ctrl+K) para chegar em qualquer página em <2s
-- **6 grupos balanceados** em vez de 9 itens soltos no topo
-- **Badges em tempo quase real** mostrando o que precisa atenção (usuários novos, pagamentos pendentes, resgates)
-- Estado colapsado **profissional** (icones centrados, popover de submenus, expand button extra)
-- **Atalhos de teclado** (Ctrl+B toggle, Ctrl+K busca)
-- Zero impacto no app público ou no componente shadcn base
+- Webhooks externos podem mandar **qualquer combinação de campos** sem perder o contato
+- Contatos parciais aparecem em **`/admin/usuarios` → aba Leads** com origem, UTM, página, tags
+- Admin pode triar leads (contatado/descartado), excluir, ou **promover a usuário** quando completar os dados
+- Fluxo atual de webhooks com 3 campos completos **funciona exatamente como hoje** (zero regressão)
+- Aba "Todos" continua refletindo só usuários reais; "Leads" tem seu próprio contador
 
