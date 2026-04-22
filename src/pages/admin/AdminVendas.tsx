@@ -493,6 +493,7 @@ export default function AdminVendas() {
                 const name = customerName(latest);
                 const price = totalPrice(latest);
                 const resultInfo = getResultInfo(latest.process_result);
+                const pixCode = pixCodeFromEvents(events);
                 return (
                   <TableRow key={key} className="cursor-pointer group" onClick={() => setSelectedLog(latest)}>
                     <TableCell className="pl-6 py-2.5">
