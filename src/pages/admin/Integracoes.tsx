@@ -243,11 +243,13 @@ export default function Integracoes() {
 Content-Type: application/json
 
 {
-  "nome": "João Silva",
-  "email": "joao@email.com",
-  "celular": "11999999999",
+  "nome": "João Silva",        // opcional
+  "email": "joao@email.com",   // opcional
+  "celular": "11999999999",    // opcional
   "tags": ["tag_extra"],
-  "source": "nome-da-pagina"
+  "source": "nome-da-pagina",
+  "utm_source": "instagram",
+  "pagina_origem": "https://meusite.com/promo"
 }`;
 
   if (loading) {
@@ -430,6 +432,19 @@ Content-Type: application/json
                   A tag exclusiva do webhook é aplicada automaticamente.
                   Você pode adicionar tags extras no campo <code className="text-primary">"tags"</code>.
                 </p>
+                <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-foreground/90 leading-relaxed">
+                  <strong className="text-primary">Campos opcionais:</strong> se vierem{" "}
+                  <strong>nome + email + celular</strong>, criamos a conta automaticamente.
+                  Se faltar algum, o contato vai para a aba <strong>Leads</strong> em{" "}
+                  <button
+                    type="button"
+                    onClick={() => navigate("/admin/usuarios")}
+                    className="text-primary hover:underline font-medium"
+                  >
+                    /admin/usuarios
+                  </button>{" "}
+                  para você acompanhar.
+                </div>
                 <p className="text-xs text-muted-foreground">
                   ✅ Compatível com Elementor, Typeform, Make, Zapier e outros.
                 </p>

@@ -7,9 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, Users, UserCheck, ChevronRight, ChevronLeft, X, ArrowLeft, Timer, CheckCircle2, AlertCircle, Circle } from "lucide-react";
+import { Search, Loader2, Users, UserCheck, ChevronRight, ChevronLeft, X, ArrowLeft, Timer, CheckCircle2, AlertCircle, Circle, Inbox, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
+import { LeadDetailSheet, type LeadInbox } from "@/components/admin/LeadDetailSheet";
 import { TagFilterPopover } from "@/components/admin/TagFilterPopover";
 import { cn } from "@/lib/utils";
 
@@ -65,7 +66,7 @@ const isPaidActive = (u: UserWithPlan) =>
 const isTrialActive = (u: UserWithPlan) =>
   u.plan?.slug === TRIAL_SLUG && u.status_assinatura === "ativa";
 
-type FilterPrincipal = "todos" | "pagos" | "trial";
+type FilterPrincipal = "todos" | "pagos" | "trial" | "leads";
 type FilterSecundario =
   | "nao_verificados"
   | "verificados"
@@ -85,6 +86,7 @@ const FILTROS_PRINCIPAIS: { key: FilterPrincipal; label: string; icon: typeof Us
   { key: "todos", label: "Todos", icon: Users },
   { key: "pagos", label: "Pagos", icon: UserCheck },
   { key: "trial", label: "Trial", icon: Timer },
+  { key: "leads", label: "Leads", icon: Inbox },
 ];
 
 type SubFilterKey = Exclude<FilterSecundario, null>;
@@ -151,11 +153,14 @@ const isCelularOk = (u: UserWithPlan) => {
 export default function AdminUsuarios() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<UserWithPlan[]>([]);
+  const [leads, setLeads] = useState<LeadInbox[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserWithPlan | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<LeadInbox | null>(null);
+  const [leadSheetOpen, setLeadSheetOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterPrincipal>("todos");
   const [activeSubFilter, setActiveSubFilter] = useState<FilterSecundario>(null);
   const [page, setPage] = useState(0);
@@ -166,9 +171,18 @@ export default function AdminUsuarios() {
 
   const fetchData = async () => {
     try {
-      const [{ data: plansData, error: plansError }, { data: usersData, error: usersError }] = await Promise.all([
+      const [
+        { data: plansData, error: plansError },
+        { data: usersData, error: usersError },
+        { data: leadsData },
+      ] = await Promise.all([
         supabase.from("plans").select("*").order("display_order"),
         supabase.from("perfis").select("*").eq("is_bot", false).order("created_at", { ascending: false }),
+        supabase
+          .from("leads_inbox" as any)
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(500),
       ]);
 
       if (plansError) throw plansError;
@@ -188,6 +202,7 @@ export default function AdminUsuarios() {
       }));
 
       setUsers(usersWithPlans);
+      setLeads(((leadsData as any) || []) as LeadInbox[]);
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
       toast.error("Erro ao carregar usuários");
@@ -202,6 +217,7 @@ export default function AdminUsuarios() {
     total: users.length,
     pagos: users.filter(isPaidActive).length,
     trial: users.filter(isTrialActive).length,
+    leads: leads.length,
     nao_verificados: users.filter(u => !u.email_verificado).length,
     verificados: users.filter(u => !!u.email_verificado).length,
     celular_ok: users.filter(isCelularOk).length,
@@ -214,7 +230,20 @@ export default function AdminUsuarios() {
     plano_cancelado_ativo: users.filter(isCanceladoAtivo).length,
     plano_cancelado_inativo: users.filter(isCanceladoInativo).length,
     bloqueados: users.filter(u => u.is_blocked).length,
-  }), [users]);
+  }), [users, leads]);
+
+  const filteredLeads = useMemo(() => {
+    if (!searchTerm) return leads;
+    const s = searchTerm.toLowerCase();
+    return leads.filter((l) =>
+      l.nome?.toLowerCase().includes(s) ||
+      l.email?.toLowerCase().includes(s) ||
+      l.celular?.includes(s) ||
+      l.source?.toLowerCase().includes(s) ||
+      l.utm_source?.toLowerCase().includes(s) ||
+      l.tags?.some((t) => t.toLowerCase().includes(s)),
+    );
+  }, [leads, searchTerm]);
 
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
@@ -284,7 +313,22 @@ export default function AdminUsuarios() {
   const getPrincipalCount = (key: FilterPrincipal) => {
     if (key === "todos") return stats.total;
     if (key === "pagos") return stats.pagos;
-    return stats.trial;
+    if (key === "trial") return stats.trial;
+    return stats.leads;
+  };
+
+  const handleLeadClick = (lead: LeadInbox) => {
+    setSelectedLead(lead);
+    setLeadSheetOpen(true);
+  };
+
+  const getLeadStatusClass = (status: string) => {
+    switch (status) {
+      case "novo": return "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30";
+      case "contatado": return "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30";
+      case "convertido": return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30";
+      default: return "bg-muted text-muted-foreground border-border";
+    }
   };
 
   const getSubCount = (key: SubFilterKey) => stats[key];
@@ -327,7 +371,7 @@ export default function AdminUsuarios() {
       {/* ======= MOBILE ======= */}
       <div className="md:hidden px-4 py-3 space-y-3">
         {/* Filtros principais */}
-        <div className="grid grid-cols-3 gap-1">
+        <div className="grid grid-cols-4 gap-1">
           {FILTROS_PRINCIPAIS.map(({ key, label, icon: Icon }) => {
             const isActive = activeFilter === key;
             return (
@@ -399,7 +443,43 @@ export default function AdminUsuarios() {
           />
         </div>
 
-        {/* User list */}
+        {/* Lista — usuários OU leads */}
+        {activeFilter === "leads" ? (
+          <div className="space-y-0.5">
+            {filteredLeads.map((lead) => (
+              <button
+                key={lead.id}
+                className="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg active:bg-muted/60 transition-colors border-b border-border/30 last:border-0"
+                onClick={() => handleLeadClick(lead)}
+              >
+                <div className="h-9 w-9 shrink-0 rounded-full bg-muted flex items-center justify-center">
+                  <Inbox className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-medium truncate">{lead.nome || "Sem nome"}</p>
+                    <span className={cn("text-[9px] px-1.5 py-0.5 rounded border", getLeadStatusClass(lead.status))}>
+                      {lead.status}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {lead.email || lead.celular || "—"}
+                  </p>
+                  {lead.pagina_origem && (
+                    <p className="text-[10px] text-muted-foreground/70 truncate">{lead.pagina_origem}</p>
+                  )}
+                </div>
+                {getUtmBadge(lead.utm_source)}
+                <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+              </button>
+            ))}
+            {filteredLeads.length === 0 && (
+              <div className="text-center py-12 text-sm text-muted-foreground">
+                {searchTerm ? "Nenhum lead encontrado" : "Nenhum lead capturado ainda"}
+              </div>
+            )}
+          </div>
+        ) : (
         <div className="space-y-0.5">
           {paginatedUsers.map((user) => (
             <button
@@ -450,6 +530,7 @@ export default function AdminUsuarios() {
             </div>
           )}
         </div>
+        )}
 
         {/* Bottom pagination mobile */}
         {totalPages > 1 && (
