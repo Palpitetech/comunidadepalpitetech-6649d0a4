@@ -225,7 +225,21 @@ export default function AdminUsuarios() {
   const [includeTags, setIncludeTags] = useState<string[]>([]);
   const [excludeTags, setExcludeTags] = useState<string[]>([]);
   const [exactMatch, setExactMatch] = useState(false);
+  const [visibleLeadCols, setVisibleLeadCols] = useState<Set<LeadColumnKey>>(() => new Set(loadStoredColumns()));
   const PAGE_SIZE = 25;
+
+  const isLeadColVisible = (key: LeadColumnKey) => visibleLeadCols.has(key);
+  const toggleLeadCol = (key: LeadColumnKey) => {
+    setVisibleLeadCols((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      try {
+        localStorage.setItem(LEAD_COLUMNS_STORAGE_KEY, JSON.stringify(Array.from(next)));
+      } catch {/* ignore */}
+      return next;
+    });
+  };
 
   const fetchData = async () => {
     try {
