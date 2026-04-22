@@ -24,17 +24,19 @@ async function applyProxyToInstance(
   const body = proxy
     ? {
         enabled: true,
-        proxy: {
-          host: proxy.host,
-          port: String(proxy.port),
-          protocol: proxy.protocol,
-          username: proxy.username || "",
-          password: proxy.password || "",
-        },
+        host: proxy.host,
+        port: String(proxy.port),
+        protocol: proxy.protocol,
+        username: proxy.username || "",
+        password: proxy.password || "",
       }
     : {
         enabled: false,
-        proxy: { host: "", port: "80", protocol: "http", username: "", password: "" },
+        host: "",
+        port: "80",
+        protocol: "http",
+        username: "",
+        password: "",
       };
 
   const res = await fetch(url, {
