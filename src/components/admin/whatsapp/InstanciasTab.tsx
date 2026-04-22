@@ -138,6 +138,18 @@ export function InstanciasTab() {
     }
 
     setInstances(localInstances);
+
+    // Carrega proxies vinculados
+    const { data: proxData } = await supabase
+      .from("whatsapp_proxies" as any)
+      .select("id, label, external_ip, instance_id")
+      .not("instance_id", "is", null);
+    const map = new Map<string, ProxyInfo>();
+    for (const p of (proxData as any[]) || []) {
+      if (p.instance_id) map.set(p.instance_id, { id: p.id, label: p.label, external_ip: p.external_ip });
+    }
+    setProxiesByInstance(map);
+
     setLoading(false);
   }, []);
 
