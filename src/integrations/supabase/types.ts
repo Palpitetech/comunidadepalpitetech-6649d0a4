@@ -249,6 +249,48 @@ export type Database = {
         }
         Relationships: []
       }
+      attribution_merge_logs: {
+        Row: {
+          attribution_after: Json
+          attribution_before: Json
+          created_at: string
+          fields_added: string[]
+          fields_skipped: string[]
+          id: string
+          marked_purchase: boolean
+          new_attr_input: Json
+          source: string
+          user_existed: boolean
+          user_id: string | null
+        }
+        Insert: {
+          attribution_after?: Json
+          attribution_before?: Json
+          created_at?: string
+          fields_added?: string[]
+          fields_skipped?: string[]
+          id?: string
+          marked_purchase?: boolean
+          new_attr_input?: Json
+          source?: string
+          user_existed?: boolean
+          user_id?: string | null
+        }
+        Update: {
+          attribution_after?: Json
+          attribution_before?: Json
+          created_at?: string
+          fields_added?: string[]
+          fields_skipped?: string[]
+          id?: string
+          marked_purchase?: boolean
+          new_attr_input?: Json
+          source?: string
+          user_existed?: boolean
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       bolao_cotas: {
         Row: {
           bolao_id: string | null
@@ -3526,15 +3568,26 @@ export type Database = {
         Args: { p_slug: string }
         Returns: undefined
       }
-      merge_user_attribution: {
-        Args: {
-          p_mark_purchase?: boolean
-          p_new_attr: Json
-          p_purchase_at?: string
-          p_user_id: string
-        }
-        Returns: undefined
-      }
+      merge_user_attribution:
+        | {
+            Args: {
+              p_mark_purchase?: boolean
+              p_new_attr: Json
+              p_purchase_at?: string
+              p_user_id: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_mark_purchase?: boolean
+              p_new_attr: Json
+              p_purchase_at?: string
+              p_source?: string
+              p_user_id: string
+            }
+            Returns: undefined
+          }
       pick_template_variant: {
         Args: { p_template_id: string }
         Returns: string
