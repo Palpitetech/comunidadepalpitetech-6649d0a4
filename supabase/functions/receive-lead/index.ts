@@ -435,26 +435,14 @@ serve(async (req) => {
     let userId: string | null = null;
     let isNew = false;
 
-    // Check existência por email
+    // Check existência centralizada (email → celular) via RPC
     const emailLower = email.trim().toLowerCase();
-    const { data: existingByEmail } = await supabaseAdmin
-      .from("perfis")
-      .select("id")
-      .eq("email", emailLower)
-      .maybeSingle();
-
-    if (existingByEmail) userId = existingByEmail.id;
-
-    // Check existência por celular
-    if (!userId) {
-      const { data: existingByCel } = await supabaseAdmin
-        .from("perfis")
-        .select("id")
-        .eq("celular", normalizedCelular)
-        .maybeSingle();
-
-      if (existingByCel) userId = existingByCel.id;
-    }
+    const { data: foundUser } = await supabaseAdmin.rpc("find_user_by_contact", {
+      p_email: emailLower,
+      p_celular: normalizedCelular,
+    });
+    const found = foundUser as { user_id?: string | null } | null;
+    if (found?.user_id) userId = found.user_id;
 
     if (!userId) {
       const randomPassword = crypto.randomUUID().replace(/-/g, "").slice(0, 16);

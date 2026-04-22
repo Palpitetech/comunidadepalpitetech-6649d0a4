@@ -195,6 +195,26 @@ export function LoginWizard() {
 
     setIsLoading(true);
     try {
+      // Bloqueia cadastro se já existir conta com esse celular (evita estourar UNIQUE depois do OTP)
+      // perfis.celular guarda 10-11 dígitos sem prefixo 55 — strippar antes de checar
+      const celularSemPrefixo = (validation.normalized || "").replace(/^55/, "");
+      const { data: checkCel } = await supabase.rpc("verificar_existencia_usuario", {
+        p_celular: celularSemPrefixo,
+      });
+      const existing = checkCel as { exists?: boolean; email?: string | null; type?: string | null } | null;
+      if (existing?.exists) {
+        toast({
+          title: "Celular já cadastrado",
+          description: existing.email
+            ? `Já existe uma conta com este número (${existing.email}). Faça login.`
+            : "Já existe uma conta com este número. Faça login.",
+          variant: "destructive",
+        });
+        if (existing.email) setEmail(existing.email);
+        setEtapa("email");
+        return;
+      }
+
       // Dispara o OTP via email (Supabase criará o usuário)
       await signInWithOtp(email.trim().toLowerCase());
       setEtapa("cadastro-codigo");
