@@ -1621,17 +1621,24 @@ export type Database = {
           celular: string | null
           created_at: string
           email: string | null
+          fbclid: string | null
+          gclid: string | null
           id: string
           ip: string | null
           nome: string | null
           pagina_origem: string | null
           perfil_id: string | null
           raw_payload: Json | null
-          source: string | null
+          referrer: string | null
+          slug: string | null
           status: string
           tags: string[] | null
           updated_at: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
           utm_source: string | null
+          utm_term: string | null
           webhook_id: string | null
           webhook_name: string | null
         }
@@ -1639,17 +1646,24 @@ export type Database = {
           celular?: string | null
           created_at?: string
           email?: string | null
+          fbclid?: string | null
+          gclid?: string | null
           id?: string
           ip?: string | null
           nome?: string | null
           pagina_origem?: string | null
           perfil_id?: string | null
           raw_payload?: Json | null
-          source?: string | null
+          referrer?: string | null
+          slug?: string | null
           status?: string
           tags?: string[] | null
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
           utm_source?: string | null
+          utm_term?: string | null
           webhook_id?: string | null
           webhook_name?: string | null
         }
@@ -1657,17 +1671,24 @@ export type Database = {
           celular?: string | null
           created_at?: string
           email?: string | null
+          fbclid?: string | null
+          gclid?: string | null
           id?: string
           ip?: string | null
           nome?: string | null
           pagina_origem?: string | null
           perfil_id?: string | null
           raw_payload?: Json | null
-          source?: string | null
+          referrer?: string | null
+          slug?: string | null
           status?: string
           tags?: string[] | null
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
           utm_source?: string | null
+          utm_term?: string | null
           webhook_id?: string | null
           webhook_name?: string | null
         }
