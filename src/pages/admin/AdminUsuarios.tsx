@@ -217,6 +217,7 @@ export default function AdminUsuarios() {
     total: users.length,
     pagos: users.filter(isPaidActive).length,
     trial: users.filter(isTrialActive).length,
+    leads: leads.length,
     nao_verificados: users.filter(u => !u.email_verificado).length,
     verificados: users.filter(u => !!u.email_verificado).length,
     celular_ok: users.filter(isCelularOk).length,
@@ -229,7 +230,20 @@ export default function AdminUsuarios() {
     plano_cancelado_ativo: users.filter(isCanceladoAtivo).length,
     plano_cancelado_inativo: users.filter(isCanceladoInativo).length,
     bloqueados: users.filter(u => u.is_blocked).length,
-  }), [users]);
+  }), [users, leads]);
+
+  const filteredLeads = useMemo(() => {
+    if (!searchTerm) return leads;
+    const s = searchTerm.toLowerCase();
+    return leads.filter((l) =>
+      l.nome?.toLowerCase().includes(s) ||
+      l.email?.toLowerCase().includes(s) ||
+      l.celular?.includes(s) ||
+      l.source?.toLowerCase().includes(s) ||
+      l.utm_source?.toLowerCase().includes(s) ||
+      l.tags?.some((t) => t.toLowerCase().includes(s)),
+    );
+  }, [leads, searchTerm]);
 
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
@@ -299,7 +313,22 @@ export default function AdminUsuarios() {
   const getPrincipalCount = (key: FilterPrincipal) => {
     if (key === "todos") return stats.total;
     if (key === "pagos") return stats.pagos;
-    return stats.trial;
+    if (key === "trial") return stats.trial;
+    return stats.leads;
+  };
+
+  const handleLeadClick = (lead: LeadInbox) => {
+    setSelectedLead(lead);
+    setLeadSheetOpen(true);
+  };
+
+  const getLeadStatusClass = (status: string) => {
+    switch (status) {
+      case "novo": return "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30";
+      case "contatado": return "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30";
+      case "convertido": return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30";
+      default: return "bg-muted text-muted-foreground border-border";
+    }
   };
 
   const getSubCount = (key: SubFilterKey) => stats[key];
