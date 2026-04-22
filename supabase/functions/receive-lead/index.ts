@@ -604,7 +604,7 @@ serve(async (req) => {
       await supabaseAdmin.from("system_events").insert({
         event_type: "lead_tag_update_error",
         description: `Falha ao atualizar tags do lead ${email || celular}`,
-        source: source || "webhook",
+        source: slugClean || "webhook",
         status: "error",
         metadata: {
           user_id: userId,
@@ -630,7 +630,7 @@ serve(async (req) => {
       await supabaseAdmin.from("system_events").insert({
         event_type: "lead_tag_persist_mismatch",
         description: `Tags não persistiram para ${email || celular}`,
-        source: source || "webhook",
+        source: slugClean || "webhook",
         status: "error",
         metadata: {
           user_id: userId,
@@ -703,7 +703,7 @@ serve(async (req) => {
         await supabaseAdmin.from("system_events").insert({
           event_type: "lead_recebido_pendente",
           description: `Lead criado e email de boas-vindas enviado para ${maskEmail(emailLower)}`,
-          source: source || "webhook",
+          source: slugClean || "webhook",
           status: welcomeEmailStatus,
           metadata: {
             user_id: userId,
