@@ -1,80 +1,109 @@
 
 
-# Importação de Proxies via CSV (4 formatos do IPRoyal)
+# Template "PIX Gerado" + link grupo VIP em Compra Aprovada
 
-## O que muda
+## 1. Rota mascarada `/gerar-novo-pix/:slug`
 
-A aba **WhatsApp → Proxies → Adicionar em lote** ganha um seletor de **formato** (igual ao print do IPRoyal) e suporte a **upload de arquivo .csv/.txt** além de colar o texto. O parser entende os 4 formatos abaixo e transforma cada linha em um proxy `available` no pool.
+Nova página `src/pages/GerarNovoPix.tsx` registrada em `App.tsx` que recebe um slug de plano (`grupo-vip-lotofacil`, `mensal`, `anual`, `plano-anual-vip`), consulta `plans.checkout_link` no Supabase e redireciona via `window.location.replace`.
 
-## Formatos suportados
+- Tela mínima (logo + spinner + "Redirecionando para o pagamento seguro…") por 1s antes do redirect, para o usuário ver o domínio palpitetech.com.br carregando.
+- Slug inválido → mostra fallback com link para `/planos`.
+- Não exige autenticação (público).
+- URL final: `https://www.palpitetech.com.br/gerar-novo-pix/grupo-vip-lotofacil`.
 
-| Formato                          | Exemplo                                |
-| -------------------------------- | -------------------------------------- |
-| `HOST:PORTA:USUÁRIO:SENHA`       | `proxy.iproyal.com:12321:user1:pass1`  |
-| `HOST:PORTA@USUÁRIO:SENHA`       | `proxy.iproyal.com:12321@user1:pass1`  |
-| `USUÁRIO:SENHA:HOST:PORTA`       | `user1:pass1:proxy.iproyal.com:12321`  |
-| `USUÁRIO:SENHA@HOST:PORTA`       | `user1:pass1@proxy.iproyal.com:12321`  |
+## 2. Novo template "PIX Gerado" (1 mensagem com quebra dupla)
 
-Também continua aceitando `HOST:PORTA` (sem auth) — só no formato 1.
+Criar em `message_templates`:
 
-## UI no modal "Adicionar em lote"
+- **Nome:** `PIX Gerado - Pagamento pendente`
+- **event_trigger:** `pix_gerado` (já existe e dispara via trigger automática quando webhook Kirvano grava o evento)
+- **delay_enabled:** `false` · **delay_minutes:** `0` (envio imediato)
+- **is_active:** `true`
+- **Sem segmentação** (sem tags/planos restritos)
 
-```text
-┌─ Adicionar proxies em lote ──────────────────────────┐
-│                                                       │
-│  Prefixo do label:  [ IPRoyal BR              ]      │
-│                                                       │
-│  Formato do arquivo:                                  │
-│  [ HOST:PORTA:USUÁRIO:SENHA              ▼ ]        │
-│                                                       │
-│  ┌────────────────────────────────────────────────┐  │
-│  │  📎 Importar CSV / TXT       ou cole abaixo   │  │
-│  └────────────────────────────────────────────────┘  │
-│                                                       │
-│  ┌────────────────────────────────────────────────┐  │
-│  │ proxy.iproyal.com:12321:user1:pass1            │  │
-│  │ proxy.iproyal.com:12322:user1:pass1            │  │
-│  │ ...                                             │  │
-│  └────────────────────────────────────────────────┘  │
-│                                                       │
-│  Pré-visualização: 47 válidas · 1 inválida           │
-│  Primeiras 3:                                         │
-│   • proxy.iproyal.com:12321  user1                   │
-│   • proxy.iproyal.com:12322  user1                   │
-│   • proxy.iproyal.com:12323  user1                   │
-│                                                       │
-│  [ Importar 47 proxies ]                             │
-└───────────────────────────────────────────────────────┘
+**Conteúdo principal** (com `\n\n---\n\n` separando bloco do código PIX):
+
+```
+Olá {{nome}}, você está pertinho de receber todos os dias 15 palpites quentes da Lotofácil direto no seu WhatsApp 🍀
+
+Seu PIX de {{produto}} ({{valor}}) já foi gerado. Faça o pagamento e o acesso ao grupo VIP é liberado na hora.
+
+Caso queira gerar um novo PIX ou trocar a forma de pagamento:
+{{link_novo_pix}}
+
+---
+
+Código PIX copia e cola:
+{{pix_codigo}}
 ```
 
-- Botão **"Importar CSV / TXT"** abre file picker (`.csv,.txt`), lê com `FileReader.readAsText`, e preenche o textarea automaticamente.
-- **Seletor de formato** define como cada linha é interpretada — escolha do usuário (não autodetecta, evita ambiguidade).
-- **Pré-visualização** ao vivo: mostra contagem de linhas válidas/inválidas e as 3 primeiras parseadas (host + user) — sem expor senhas.
-- O CSV pode ter cabeçalho (`host,port,user,pass`) — primeira linha é detectada e ignorada se contém palavras-chave (`host`, `user`, `proxy`).
-- Linhas em branco e iniciadas com `#` são ignoradas.
+**10 variações** (geradas com leves trocas de abertura, ordem e tom — sempre preservando `{{nome}} {{produto}} {{valor}} {{link_novo_pix}} {{pix_codigo}}` e o separador `---` entre os dois blocos). Todas via `generate-message-variants`.
 
-## Implementação técnica
+## 3. Novas variáveis no engine de templates
 
-- **Parser único** `parseProxyLine(line, format)` em `src/components/admin/whatsapp/ProxiesTab.tsx`:
-  - `format1`: `split(':')` → `[host, port, user, pass]`
-  - `format2`: `split('@')` → `[host:port, user:pass]` → split cada parte por `:`
-  - `format3`: `split(':')` → `[user, pass, host, port]`
-  - `format4`: `split('@')` → `[user:pass, host:port]` → split cada parte por `:`
-  - Validações: `port` numérico (1-65535), `host` não vazio, `user/pass` opcionais só no formato 1.
-- **Upload de arquivo**: `<input type="file" accept=".csv,.txt,text/plain,text/csv" hidden>` com `ref`, lê via `FileReader` e popula `bulkText`.
-- **Pré-visualização** memoizada com `useMemo` rodando o parser sobre `bulkText` em cada keystroke (debounced via state).
-- **Insert no banco**: continua usando o mesmo path atual — `supabase.from("whatsapp_proxies").insert(rows)`. Nada muda no banco nem na edge function `evolution-proxy`.
-- **Label**: continua sendo `${prefixo} #${n}` incrementando a partir do total atual.
+A trigger `trigger_queue_event_templates` hoje injeta `nome / telefone / email / produto / plano_nome / link_grupo_vip`. Vou expandir para também produzir:
 
-## Não muda
+- `{{valor}}` → `total_price` do payload Kirvano (formatado `R$ XX,XX`), passado em `events.metadata.total_price` pelo webhook
+- `{{link_novo_pix}}` → derivado do slug do plano: `https://www.palpitetech.com.br/gerar-novo-pix/<slug>` (lookup `plans.slug` via `plan_id` ou via offer mapping)
+- `{{pix_codigo}}` → `qrcode` do payload Kirvano, passado em `events.metadata.pix_codigo`
 
-- Tabela `whatsapp_proxies`, RPCs `claim_proxy_for_instance` / `release_proxy_for_instance`, edge function `evolution-proxy`, lógica de reserva 1:1 com instância.
-- Modal "Adicionar Proxy" (single) — fica igual.
-- Ações por linha (testar, desativar, excluir, liberar).
+**Webhook (`handle-kirvano-webhook/index.ts`)** será ajustado para gravar esses campos em `events.metadata` quando registrar `pix_gerado`:
+
+```ts
+await insertEvent(perfilIgnore.id, "pix_gerado", {
+  payment_method, total_price,
+  pix_codigo: payload?.payment?.qrcode ?? null,
+  pix_expires_at: payload?.payment?.expires_at ?? null,
+  plan_slug: <slug resolvido via offer_id>,
+});
+```
+
+**Trigger SQL (`trigger_queue_event_templates`)** atualizada para ler do `metadata` e do `plans.slug`, montando `link_novo_pix` e formatando `valor`.
+
+## 4. Atualização dos templates "Compra Aprovada"
+
+Editar os 2 templates existentes para incluir o link do grupo VIP de assinantes:
+
+- **`Compra aprovada (Acesso ao App)`** → adicionar bloco antes do "Bons palpites":
+  ```
+  🎁 *Bônus exclusivo:* entre no nosso grupo VIP de assinantes para receber palpites diários da equipe:
+  https://www.palpitetech.com.br/g/grupo-vip-assinantes
+  ```
+- **`Compra aprovada (Grupo VIP Lotofácil)`** → o `{{link_grupo_vip}}` já está lá, mas hoje ele é puxado de `group_blast_configs.vip_group_link`. Vou **fazer UPDATE em `group_blast_configs`** setando `vip_group_link = 'https://www.palpitetech.com.br/g/grupo-vip-assinantes'` no config ativo mais antigo.
+
+Também regenero variações desses 2 templates (se houver) preservando o novo link.
+
+## 5. Detalhes técnicos
+
+**Arquivos novos/alterados:**
+
+- `src/pages/GerarNovoPix.tsx` (novo) — página de redirect público
+- `src/App.tsx` — registrar rota `/gerar-novo-pix/:slug` (pública, fora do `ProtectedRoute`)
+- `supabase/functions/handle-kirvano-webhook/index.ts` — incluir `pix_codigo`, `total_price` formatado e `plan_slug` resolvido no `metadata` do evento `pix_gerado`
+- **Migration:** atualizar `trigger_queue_event_templates` adicionando as 3 variáveis novas (`valor`, `link_novo_pix`, `pix_codigo`) ao `jsonb_build_object`
+
+**Operações de dados (insert tool, sem migration):**
+- INSERT do template `PIX Gerado - Pagamento pendente`
+- INSERT das 10 variações em `message_template_variants`
+- UPDATE dos 2 templates de compra aprovada
+- UPDATE em `group_blast_configs` para setar `vip_group_link`
+
+**Fluxo end-to-end do PIX:**
+```text
+Cliente gera PIX no Kirvano
+  → webhook handle-kirvano-webhook (ev=pix_generated, action=ignore)
+  → INSERT events (event_type=pix_gerado, metadata={pix_codigo, valor, plan_slug, ...})
+  → trigger_queue_event_templates dispara
+  → queue_templates_for_event busca templates com event_trigger=pix_gerado
+  → INSERT em message_queue com variables resolvidas
+  → process-queue (cron) envia via Evolution API em ~30s
+```
+
+Como o template `Compra Aprovada` também dispara automaticamente em `sale_confirmed` (via mesma trigger), quando o cliente paga ele recebe primeiro a confirmação e logo depois a mensagem de boas-vindas com link do grupo VIP — exatamente o comportamento desejado.
 
 ## Fora de escopo
 
-- Auto-detecção de formato (preferi seletor explícito — mais previsível).
-- Importação de arquivos `.xlsx` (só `.csv` e `.txt`).
-- Teste automático de cada proxy logo após importar (continua manual via botão "Testar" em cada linha — pra evitar bombardear a API e o saldo do IPRoyal).
+- Tracking de clique no `/gerar-novo-pix/:slug` (pode ser adicionado depois com analytics).
+- Disparo de **2 mensagens separadas** para o código PIX (preferimos 1 mensagem com `---`, conforme aprovado).
+- Trocar o link do grupo VIP em outras tabelas/configs além de `group_blast_configs`.
 
