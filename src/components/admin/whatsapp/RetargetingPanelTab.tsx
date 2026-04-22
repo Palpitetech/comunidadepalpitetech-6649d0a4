@@ -291,3 +291,89 @@ function Stat({ label, value, tone }: { label: string; value: number; tone: Tone
     </div>
   );
 }
+
+function ScheduleStatusCard({
+  schedule,
+  now,
+}: {
+  schedule: ScheduleInfo | null;
+  now: Date;
+}) {
+  if (!schedule) {
+    return (
+      <Card className="p-3 flex items-center gap-2 border-amber-500/40 bg-amber-500/5">
+        <XCircle className="h-4 w-4 text-amber-600 shrink-0" />
+        <p className="text-xs text-amber-700">
+          Nenhum agendamento automático foi encontrado para o retargeting.
+        </p>
+      </Card>
+    );
+  }
+
+  const next = schedule.next_run_at ? new Date(schedule.next_run_at) : null;
+  const last = schedule.last_ran_at ? new Date(schedule.last_ran_at) : null;
+  const inFuture = next && next.getTime() > now.getTime();
+  const countdown = inFuture
+    ? formatDistanceToNowStrict(next, { locale: ptBR, addSuffix: false })
+    : null;
+
+  return (
+    <Card className="p-3 sm:p-4 border-primary/30 bg-primary/5">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-5">
+        <div className="flex items-center gap-2 min-w-0">
+          {schedule.active ? (
+            <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+          ) : (
+            <XCircle className="h-4 w-4 text-red-600 shrink-0" />
+          )}
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Frequência</p>
+            <p className="text-sm font-semibold leading-tight truncate">
+              {describeSchedule(schedule.schedule)}
+            </p>
+            <p className="text-[10px] text-muted-foreground font-mono leading-tight">
+              {schedule.schedule} {schedule.active ? "" : "(inativo)"}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 min-w-0">
+          <Clock className="h-4 w-4 text-primary shrink-0" />
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              Próxima execução
+            </p>
+            <p className="text-sm font-semibold leading-tight tabular-nums">
+              {next ? format(next, "HH:mm", { locale: ptBR }) : "—"}
+              {countdown && (
+                <span className="ml-1 text-xs font-normal text-muted-foreground">
+                  (em {countdown})
+                </span>
+              )}
+            </p>
+            <p className="text-[10px] text-muted-foreground leading-tight">
+              {next ? format(next, "dd/MM 'às' HH:mm:ss", { locale: ptBR }) : "indisponível"}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 min-w-0">
+          <RefreshCw className="h-4 w-4 text-muted-foreground shrink-0" />
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              Última execução
+            </p>
+            <p className="text-sm font-semibold leading-tight tabular-nums">
+              {last ? format(last, "HH:mm:ss", { locale: ptBR }) : "—"}
+            </p>
+            <p className="text-[10px] text-muted-foreground leading-tight">
+              {last
+                ? `há ${formatDistanceToNowStrict(last, { locale: ptBR })}`
+                : "nunca executou"}
+            </p>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
