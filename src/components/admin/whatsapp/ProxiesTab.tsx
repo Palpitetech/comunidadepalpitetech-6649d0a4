@@ -469,21 +469,78 @@ export function ProxiesTab() {
                   <Input value={bulkLabelPrefix} onChange={(e) => setBulkLabelPrefix(e.target.value)} placeholder="IPRoyal BR" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Lista (host:port:user:pass — uma por linha)</Label>
+                  <Label>Formato do arquivo</Label>
+                  <Select value={bulkFormat} onValueChange={(v) => setBulkFormat(v as ProxyFormat)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(FORMAT_LABELS) as ProxyFormat[]).map((k) => (
+                        <SelectItem key={k} value={k} className="font-mono text-xs">
+                          {FORMAT_LABELS[k]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,.txt,text/plain,text/csv"
+                  hidden
+                  onChange={handleFilePick}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full gap-1.5"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="h-4 w-4" />
+                  Importar CSV / TXT
+                </Button>
+
+                <div className="space-y-1.5">
+                  <Label>Cole as linhas abaixo</Label>
                   <Textarea
                     value={bulkText}
                     onChange={(e) => setBulkText(e.target.value)}
-                    placeholder={`proxy.iproyal.com:12321:user:pass\nproxy.iproyal.com:12322:user:pass`}
+                    placeholder={FORMAT_PLACEHOLDERS[bulkFormat]}
                     rows={8}
                     className="font-mono text-xs"
                   />
                   <p className="text-[11px] text-muted-foreground">
-                    Aceita também <code>host:port</code> sem autenticação. Todos serão criados como <strong>SOCKS5</strong> e <strong>disponíveis</strong>.
+                    Linhas em branco e iniciadas com <code>#</code> são ignoradas. Cabeçalho do CSV é detectado automaticamente. Todos serão criados como <strong>SOCKS5</strong> e <strong>disponíveis</strong>.
                   </p>
                 </div>
-                <Button onClick={handleBulkSave} disabled={bulkSaving} className="w-full">
+
+                {bulkText.trim() && (
+                  <div className="rounded-md border bg-muted/30 p-2.5 text-xs space-y-1.5">
+                    <div className="flex items-center gap-3">
+                      <span className="text-accent font-medium tabular-nums">{bulkPreview.valid.length} válidas</span>
+                      {bulkPreview.invalid > 0 && (
+                        <span className="text-destructive tabular-nums">{bulkPreview.invalid} inválidas</span>
+                      )}
+                      {bulkPreview.skippedHeader && (
+                        <span className="text-muted-foreground">cabeçalho ignorado</span>
+                      )}
+                    </div>
+                    {bulkPreview.valid.length > 0 && (
+                      <div className="space-y-0.5 pt-1 border-t font-mono text-[11px] text-muted-foreground">
+                        {bulkPreview.valid.slice(0, 3).map((p, i) => (
+                          <div key={i}>• {p.host}:{p.port} {p.username ? `· ${p.username}` : ""}</div>
+                        ))}
+                        {bulkPreview.valid.length > 3 && (
+                          <div className="text-[10px] opacity-70">… e mais {bulkPreview.valid.length - 3}</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <Button onClick={handleBulkSave} disabled={bulkSaving || bulkPreview.valid.length === 0} className="w-full">
                   {bulkSaving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                  Importar
+                  Importar {bulkPreview.valid.length > 0 ? `${bulkPreview.valid.length} proxies` : ""}
                 </Button>
               </div>
             </DialogContent>
