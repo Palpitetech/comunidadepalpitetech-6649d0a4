@@ -10,6 +10,7 @@ import { Loader2, Mail, Lock, User, MessageCircle, ArrowLeft, Phone, ShieldCheck
 import { supabase } from "@/integrations/supabase/client";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { validateCelularBR, formatCelularMask } from "@/lib/celular";
+import { getStoredAttribution } from "@/hooks/useUTM";
 
 type Etapa =
   | "email"
