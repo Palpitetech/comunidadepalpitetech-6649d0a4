@@ -36,6 +36,7 @@ export const EVENT_MASKS: Record<string, string> = {
   manual: "Manual",
   lead_created: "Lead Cadastrado",
   sale_confirmed: "Venda Confirmada",
+  lead_pre_checkout_abandono: "Lead — Pré-checkout abandonado",
 };
 
 export function getEventLabel(eventType: string): string {
