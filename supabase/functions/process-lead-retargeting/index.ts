@@ -47,13 +47,49 @@ interface TemplateRow {
   exclude_tags: string[];
 }
 
+interface TemplateMetrics {
+  enqueued: number;
+  skipped: number;
+  /** Skipped because of dedupe (already queued in last 7d). */
+  skipped_dedupe: number;
+  /** Skipped because of recent paid conversion (anti-conversion). */
+  skipped_converted: number;
+  /** Skipped because the linked profile already has a paid tag. */
+  skipped_paid_profile: number;
+  /** Skipped because the lead has no phone after trim. */
+  skipped_no_phone: number;
+  /** Atomic dedupe at DB level (exclusion constraint) — race-condition catches. */
+  blocked_by_db_constraint: number;
+  /** Lead was skipped because the dedupe DB query itself failed. */
+  errors_dedupe_db: number;
+  /** Lead was skipped because the anti-conversion DB query failed. */
+  errors_sales_db: number;
+  /** Insert into message_queue failed (other reasons). */
+  errors_insert_db: number;
+  errors: string[];
+}
+
+function emptyMetrics(): TemplateMetrics {
+  return {
+    enqueued: 0,
+    skipped: 0,
+    skipped_dedupe: 0,
+    skipped_converted: 0,
+    skipped_paid_profile: 0,
+    skipped_no_phone: 0,
+    blocked_by_db_constraint: 0,
+    errors_dedupe_db: 0,
+    errors_sales_db: 0,
+    errors_insert_db: 0,
+    errors: [],
+  };
+}
+
 async function processOneTemplate(
   supabase: ReturnType<typeof createClient>,
   template: TemplateRow
-): Promise<{ enqueued: number; skipped: number; errors: string[] }> {
-  const errors: string[] = [];
-  let enqueued = 0;
-  let skipped = 0;
+): Promise<TemplateMetrics> {
+  const metrics = emptyMetrics();
 
   const delayMin = Math.max(0, template.delay_minutes ?? 60);
   const upperBound = new Date(Date.now() - delayMin * 60_000).toISOString();
