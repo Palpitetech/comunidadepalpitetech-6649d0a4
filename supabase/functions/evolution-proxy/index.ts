@@ -147,6 +147,76 @@ Deno.serve(async (req) => {
     const reqBody = await req.json();
     const { action, instanceName, number, text } = reqBody;
 
+    // === Health check: valida formato da URL e conectividade com a Evolution ===
+    if (action === "healthCheck") {
+      const rawUrl = EVOLUTION_API_URL;
+      const issues: { type: "error" | "warning"; message: string }[] = [];
+
+      const hasTrailingSlash = rawUrl.endsWith("/");
+      const normalizedUrl = hasTrailingSlash ? rawUrl.replace(/\/+$/, "") : rawUrl;
+
+      if (hasTrailingSlash) {
+        issues.push({
+          type: "warning",
+          message: "EVOLUTION_API_URL contém barra '/' no final. Remova para evitar URLs com barra dupla nas chamadas.",
+        });
+      }
+      if (!/^https?:\/\//i.test(rawUrl)) {
+        issues.push({
+          type: "error",
+          message: "EVOLUTION_API_URL não começa com http:// ou https://.",
+        });
+      }
+
+      let reachable = false;
+      let authValid = false;
+      let httpStatus = 0;
+      let evolutionVersion: string | null = null;
+
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 8000);
+        const res = await fetch(`${normalizedUrl}/`, {
+          method: "GET",
+          headers: { apikey: EVOLUTION_API_KEY },
+          signal: ctrl.signal,
+        });
+        clearTimeout(t);
+        httpStatus = res.status;
+        reachable = true;
+        const data = await res.json().catch(() => ({}));
+        evolutionVersion = data?.version || data?.message || null;
+        // Se conseguiu chamar e não retornou 401/403, a key é válida
+        authValid = res.status !== 401 && res.status !== 403;
+        if (!authValid) {
+          issues.push({
+            type: "error",
+            message: `EVOLUTION_API_KEY inválida (HTTP ${res.status}).`,
+          });
+        }
+      } catch (err: any) {
+        issues.push({
+          type: "error",
+          message: `Servidor Evolution inacessível: ${err?.message || "timeout"}`,
+        });
+      }
+
+      return new Response(
+        JSON.stringify({
+          ok: issues.filter((i) => i.type === "error").length === 0 && !hasTrailingSlash,
+          url: rawUrl,
+          normalizedUrl,
+          hasTrailingSlash,
+          reachable,
+          authValid,
+          httpStatus,
+          evolutionVersion,
+          issues,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // === Proxy management actions (não chamam Evolution direto, ou chamam de forma especial) ===
     if (action === "testProxy") {
       // Testa um proxy fazendo GET https://api.ipify.org via Deno.createHttpClient
