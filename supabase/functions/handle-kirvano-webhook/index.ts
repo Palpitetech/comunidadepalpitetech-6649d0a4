@@ -599,11 +599,36 @@ serve(async (req) => {
     });
   }
 
-  const { data: perfil, error: perfilError } = await admin
-    .from("perfis")
-    .select("id, email, status_assinatura, validade_assinatura")
-    .ilike("email", email)
-    .maybeSingle();
+  // Busca centralizada: email → celular (evita duplicar conta quando cliente paga
+  // com email diferente do cadastro mas mesmo WhatsApp)
+  const phoneNorm = phone ? normalizePhone(phone) : null;
+  const { data: foundContact, error: foundErr } = await admin.rpc("find_user_by_contact", {
+    p_email: email,
+    p_celular: phoneNorm,
+  });
+  if (foundErr) {
+    logStep("Error in find_user_by_contact", { message: foundErr.message });
+  }
+  const foundData = foundContact as { user_id?: string | null; found_by?: string | null; email?: string | null } | null;
+
+  let perfil: { id: string; email: string | null; status_assinatura: string | null; validade_assinatura: string | null } | null = null;
+  let perfilError: { message: string } | null = null;
+
+  if (foundData?.user_id) {
+    const { data: perfilFound, error: perfilFoundError } = await admin
+      .from("perfis")
+      .select("id, email, status_assinatura, validade_assinatura")
+      .eq("id", foundData.user_id)
+      .maybeSingle();
+    perfil = perfilFound;
+    perfilError = perfilFoundError;
+    if (foundData.found_by === "celular") {
+      logStep("Reusing existing account matched by phone", {
+        original_email: foundData.email,
+        kirvano_email: email,
+      });
+    }
+  }
 
   if (perfilError) {
     logStep("Error fetching perfil", { message: perfilError.message });

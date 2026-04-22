@@ -178,15 +178,17 @@ serve(async (req) => {
       }
 
       try {
-        // Check if user already exists
-        const { data: existing } = await supabase
-          .from("perfis")
-          .select("id")
-          .ilike("email", email)
-          .maybeSingle();
+        // Pre-normaliza o celular para usar tanto no check quanto no update
+        const celularPre = normalizePhone(u.Telefone || u.telefone || "");
 
-        if (existing) {
-          results.push({ email, status: "skipped", error: "Já existe" });
+        // Check centralizado (email → celular) — evita duplicar quando email é novo mas celular já existe
+        const { data: foundContact } = await supabase.rpc("find_user_by_contact", {
+          p_email: email,
+          p_celular: celularPre,
+        });
+        const found = foundContact as { user_id?: string | null; found_by?: string | null } | null;
+        if (found?.user_id) {
+          results.push({ email, status: "skipped", error: `Já existe (match por ${found.found_by})` });
           continue;
         }
 

@@ -3472,6 +3472,10 @@ export type Database = {
         Returns: number
       }
       count_sequences: { Args: { arr: number[] }; Returns: number }
+      find_user_by_contact: {
+        Args: { p_celular?: string; p_email?: string }
+        Returns: Json
+      }
       generate_bolao_codigo: {
         Args: { p_mes_ano: string; p_sigla: string }
         Returns: string

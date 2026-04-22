@@ -90,23 +90,13 @@ serve(async (req) => {
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Email inválido" }, 400);
 
-    // Verifica se já existe perfil
-    const { data: existingByEmail } = await supabaseAdmin
-      .from("perfis")
-      .select("id")
-      .eq("email", email)
-      .maybeSingle();
-
-    let userId: string | null = existingByEmail?.id ?? null;
-
-    if (!userId) {
-      const { data: existingByCel } = await supabaseAdmin
-        .from("perfis")
-        .select("id")
-        .eq("celular", celular)
-        .maybeSingle();
-      if (existingByCel) userId = existingByCel.id;
-    }
+    // Verifica se já existe perfil (busca centralizada email → celular)
+    const { data: foundUser } = await supabaseAdmin.rpc("find_user_by_contact", {
+      p_email: email,
+      p_celular: celular,
+    });
+    const foundData = foundUser as { user_id?: string | null } | null;
+    let userId: string | null = foundData?.user_id ?? null;
 
     let isNew = false;
     if (!userId) {
