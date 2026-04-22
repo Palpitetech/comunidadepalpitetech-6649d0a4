@@ -22,6 +22,7 @@ import {
 import { MetricsKPIs } from "@/components/admin/metricas/MetricsKPIs";
 import { AttributionTable } from "@/components/admin/metricas/AttributionTable";
 import { BuyersLTVTable } from "@/components/admin/metricas/BuyersLTVTable";
+import { FirstVsLastClickTable } from "@/components/admin/metricas/FirstVsLastClickTable";
 
 const BASE_URL = "comunidadepalpitetech.lovable.app";
 
