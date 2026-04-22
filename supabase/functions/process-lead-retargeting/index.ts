@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isEnqueueAllowed, makeSupabaseDedupeClient } from "./dedupe.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -131,19 +132,13 @@ async function processOneTemplate(
       }
 
       // 3) Dedupe forte: 7 dias por (template_id + recipient_phone)
-      const since7d = new Date(Date.now() - 7 * 24 * 60 * 60_000).toISOString();
-      const { count: dupCount, error: dupErr } = await supabase
-        .from("message_queue")
-        .select("id", { count: "exact", head: true })
-        .eq("template_id", template.id)
-        .eq("recipient_phone", phone)
-        .gte("created_at", since7d);
-
-      if (dupErr) {
-        errors.push(`dedupe ${lead.id}: ${dupErr.message}`);
+      const dedupeClient = makeSupabaseDedupeClient(supabase as never);
+      const dedupeRes = await isEnqueueAllowed(dedupeClient, template.id, phone);
+      if (dedupeRes.error) {
+        errors.push(`dedupe ${lead.id}: ${dedupeRes.error}`);
         continue;
       }
-      if ((dupCount ?? 0) > 0) {
+      if (!dedupeRes.allowed) {
         skipped++;
         continue;
       }
