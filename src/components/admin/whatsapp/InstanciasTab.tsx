@@ -375,30 +375,80 @@ export function InstanciasTab() {
         .select("evolution_instance_id");
       const existingIds = new Set((existing as any[] || []).map((e: any) => e.evolution_instance_id));
 
-      let imported = 0;
-      for (const evo of evoData) {
+      // Filtra somente as novas
+      const novas = evoData.filter((evo: any) => {
         const instanceName = evo.name || evo.instance?.instanceName || evo.instanceName;
-        if (!instanceName || existingIds.has(instanceName)) continue;
+        return instanceName && !existingIds.has(instanceName);
+      });
 
+      if (novas.length === 0) {
+        toast.info("Nenhuma instância nova encontrada");
+        return;
+      }
+
+      // Pré-checagem: existe algum proxy disponível?
+      const { count: availableProxies } = await supabase
+        .from("whatsapp_proxies" as any)
+        .select("id", { count: "exact", head: true })
+        .eq("status", "available")
+        .is("instance_id", null);
+
+      if (!availableProxies || availableProxies < 1) {
+        toast.warning(
+          `${novas.length} instância(s) encontrada(s), mas nenhum proxy disponível. Adicione proxies em WhatsApp → Proxies antes de importar.`,
+          { duration: 8000 }
+        );
+        return;
+      }
+
+      let imported = 0;
+      let skippedNoProxy = 0;
+      let failed = 0;
+
+      for (const evo of novas) {
+        const instanceName = evo.name || evo.instance?.instanceName || evo.instanceName;
         const connStatus = evo.connectionStatus || evo.instance?.status || evo.state;
         const phone = evo.ownerJid || evo.instance?.owner || evo.owner || "";
 
-        await supabase.from("whatsapp_instances" as any).insert({
-          name: instanceName,
-          friendly_name: instanceName,
-          phone_number: phone.replace("@s.whatsapp.net", ""),
-          evolution_instance_id: instanceName,
-          status: connStatus === "open" ? "online" : "offline",
-          daily_limit: 100,
+        const { data: result, error } = await supabase.functions.invoke("evolution-proxy", {
+          body: {
+            action: "importInstanceWithProxy",
+            instanceName,
+            phone,
+            status: connStatus,
+          },
         });
-        imported++;
+
+        if (error) {
+          failed++;
+          continue;
+        }
+
+        if (result?.success) {
+          imported++;
+        } else if (result?.code === "no_proxy_available") {
+          skippedNoProxy++;
+        } else {
+          failed++;
+        }
       }
 
       if (imported > 0) {
-        toast.success(`${imported} instância(s) importada(s)`);
-      } else {
+        toast.success(`${imported} instância(s) importada(s) com proxy aplicado`);
+      }
+      if (skippedNoProxy > 0) {
+        toast.warning(
+          `${skippedNoProxy} instância(s) puladas: sem proxy disponível. Adicione mais proxies em WhatsApp → Proxies.`,
+          { duration: 8000 }
+        );
+      }
+      if (failed > 0) {
+        toast.error(`${failed} instância(s) falharam ao importar/aplicar proxy`);
+      }
+      if (imported === 0 && skippedNoProxy === 0 && failed === 0) {
         toast.info("Nenhuma instância nova encontrada");
       }
+
       fetchInstances();
     } catch (err: any) {
       toast.error(err.message || "Erro ao buscar instâncias da Evolution");
