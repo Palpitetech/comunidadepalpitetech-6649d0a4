@@ -319,17 +319,20 @@ export default function AdminVendas() {
 
         {/* Sales list */}
         <div className="space-y-0.5">
-          {paginatedSales.map(({ key, latest }) => {
+          {paginatedSales.map(({ key, events, latest }) => {
             const evInfo = getEventInfo(latest.event);
             const name = customerName(latest);
             const price = totalPrice(latest);
+            const pixCode = pixCodeFromEvents(events);
             return (
-              <button
+              <div
                 key={key}
-                className="flex items-center gap-3 w-full text-left px-3 py-2 rounded-lg active:bg-muted/60 transition-colors border-b border-border/30 last:border-0"
-                onClick={() => setSelectedLog(latest)}
+                className="flex items-center gap-3 w-full px-3 py-2 rounded-lg active:bg-muted/60 transition-colors border-b border-border/30 last:border-0"
               >
-                <div className="flex-1 min-w-0">
+                <button
+                  className="flex-1 min-w-0 text-left"
+                  onClick={() => setSelectedLog(latest)}
+                >
                   <p className="text-sm font-medium truncate">{name || latest.email || "Sem identificação"}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 inline-flex", evInfo.color)}>
@@ -341,9 +344,21 @@ export default function AdminVendas() {
                       </span>
                     )}
                   </div>
-                </div>
+                </button>
+                {pixCode && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2 gap-1 shrink-0"
+                    onClick={(e) => copyPixCode(e, pixCode)}
+                    title="Copiar código PIX"
+                  >
+                    <QrCode className="h-3.5 w-3.5" />
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                )}
                 <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
-              </button>
+              </div>
             );
           })}
           {filteredSales.length === 0 && (
