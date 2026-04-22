@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, RefreshCw, TrendingUp, ShieldAlert, AlertTriangle, Inbox, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { format, startOfDay, subDays, formatDistanceToNowStrict } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { MetricCard, toneClass, type Tone } from "./shared/MetricCard";
 
 interface ScheduleInfo {
   jobid: number;
@@ -85,32 +86,31 @@ export function RetargetingPanelTab() {
     return () => clearInterval(id);
   }, []);
 
-  // Aggregate by day
-  const byDay = new Map<string, DailyAgg>();
-  for (const r of runs) {
-    const day = startOfDay(new Date(r.ran_at)).toISOString().slice(0, 10);
-    const acc = byDay.get(day) ?? { day, enqueued: 0, dedupe: 0, db_errors: 0, runs: 0 };
-    acc.enqueued += r.enqueued;
-    acc.dedupe += r.skipped_dedupe + r.blocked_by_db_constraint;
-    acc.db_errors += r.errors_dedupe_db + r.errors_sales_db + r.errors_insert_db;
-    acc.runs += 1;
-    byDay.set(day, acc);
-  }
-  const dailyRows = Array.from(byDay.values()).sort((a, b) => b.day.localeCompare(a.day));
-
-  // Today totals
-  const todayKey = startOfDay(new Date()).toISOString().slice(0, 10);
-  const today = byDay.get(todayKey) ?? { day: todayKey, enqueued: 0, dedupe: 0, db_errors: 0, runs: 0 };
-
-  // 7-day totals
-  const total7d = dailyRows.reduce(
-    (acc, d) => ({
-      enqueued: acc.enqueued + d.enqueued,
-      dedupe: acc.dedupe + d.dedupe,
-      db_errors: acc.db_errors + d.db_errors,
-    }),
-    { enqueued: 0, dedupe: 0, db_errors: 0 }
-  );
+  // Aggregate by day (memoized)
+  const { dailyRows, today, total7d } = useMemo(() => {
+    const byDay = new Map<string, DailyAgg>();
+    for (const r of runs) {
+      const day = startOfDay(new Date(r.ran_at)).toISOString().slice(0, 10);
+      const acc = byDay.get(day) ?? { day, enqueued: 0, dedupe: 0, db_errors: 0, runs: 0 };
+      acc.enqueued += r.enqueued;
+      acc.dedupe += r.skipped_dedupe + r.blocked_by_db_constraint;
+      acc.db_errors += r.errors_dedupe_db + r.errors_sales_db + r.errors_insert_db;
+      acc.runs += 1;
+      byDay.set(day, acc);
+    }
+    const dailyRows = Array.from(byDay.values()).sort((a, b) => b.day.localeCompare(a.day));
+    const todayKey = startOfDay(new Date()).toISOString().slice(0, 10);
+    const today = byDay.get(todayKey) ?? { day: todayKey, enqueued: 0, dedupe: 0, db_errors: 0, runs: 0 };
+    const total7d = dailyRows.reduce(
+      (acc, d) => ({
+        enqueued: acc.enqueued + d.enqueued,
+        dedupe: acc.dedupe + d.dedupe,
+        db_errors: acc.db_errors + d.db_errors,
+      }),
+      { enqueued: 0, dedupe: 0, db_errors: 0 }
+    );
+    return { dailyRows, today, total7d };
+  }, [runs]);
 
   if (loading) {
     return (
@@ -242,43 +242,6 @@ export function RetargetingPanelTab() {
           </Card>
         </div>
       )}
-    </div>
-  );
-}
-
-type Tone = "success" | "warning" | "error" | "muted";
-
-function toneClass(tone: Tone): string {
-  switch (tone) {
-    case "success":
-      return "text-green-700 bg-green-500/10 border-green-500/30";
-    case "warning":
-      return "text-amber-700 bg-amber-500/10 border-amber-500/30";
-    case "error":
-      return "text-red-700 bg-red-500/10 border-red-500/30";
-    default:
-      return "text-muted-foreground bg-muted/40 border-border";
-  }
-}
-
-function MetricCard({
-  icon: Icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: number;
-  tone: Tone;
-}) {
-  return (
-    <div className={`rounded-lg border p-3 ${toneClass(tone)}`}>
-      <div className="flex items-center gap-1.5 mb-1">
-        <Icon className="h-3.5 w-3.5" />
-        <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide">{label}</span>
-      </div>
-      <p className="text-xl sm:text-2xl font-bold tabular-nums">{value}</p>
     </div>
   );
 }

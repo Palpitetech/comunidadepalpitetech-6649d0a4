@@ -3,7 +3,6 @@ import { AdminLayout } from "@/components/layout/AdminLayout";
 import { InstanciasTab } from "@/components/admin/whatsapp/InstanciasTab";
 import { ProxiesTab } from "@/components/admin/whatsapp/ProxiesTab";
 import { TemplatesTab } from "@/components/admin/whatsapp/TemplatesTab";
-import { LogsTemplatesTab } from "@/components/admin/whatsapp/LogsTemplatesTab";
 import { FilaTab } from "@/components/admin/whatsapp/FilaTab";
 import { LogsTab } from "@/components/admin/whatsapp/LogsTab";
 import { AquecimentoTab } from "@/components/admin/whatsapp/AquecimentoTab";
@@ -20,7 +19,6 @@ const TAB_TITLES: Record<string, string> = {
   instancias: "Instâncias",
   proxies: "Proxies",
   templates: "Templates",
-  "logs-templates": "Logs Templates",
   fila: "Fila de Envio",
   mensagens: "Mensagens",
   disparo: "Disparo Manual",
@@ -73,7 +71,6 @@ export default function AdminWhatsApp() {
               {activeTab === "instancias" && <InstanciasTab />}
               {activeTab === "proxies" && <ProxiesTab />}
               {activeTab === "templates" && <TemplatesTab />}
-              {activeTab === "logs-templates" && <LogsTemplatesTab />}
               {activeTab === "fila" && <FilaTab />}
               {activeTab === "mensagens" && <MensagensTab />}
               {activeTab === "disparo" && <DisparoManualTab />}

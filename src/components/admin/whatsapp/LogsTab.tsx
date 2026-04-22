@@ -1,15 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, ScrollText, Filter, X } from "lucide-react";
-import { toast } from "sonner";
-import { format, startOfDay } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { startOfDay } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { MessageStatusBadge } from "./shared/MessageStatusBadge";
+import { fmtDate } from "./shared/format-date";
 
 interface SendLog {
   id: string;
@@ -51,21 +50,21 @@ export function LogsTab() {
 
     const [logsRes, instancesRes] = await Promise.all([
       supabase
-        .from("send_logs" as any)
+        .from("send_logs")
         .select("*")
         .order("sent_at", { ascending: false })
         .limit(500),
       supabase
-        .from("whatsapp_instances" as any)
+        .from("whatsapp_instances")
         .select("id, name")
         .order("name"),
     ]);
 
-    const instancesList: InstanceOption[] = (instancesRes.data as any[]) || [];
+    const instancesList: InstanceOption[] = instancesRes.data || [];
     setInstances(instancesList);
 
     const instanceMap = new Map(instancesList.map((i) => [i.id, i.name]));
-    const rawLogs: SendLog[] = ((logsRes.data as any[]) || []).map((l: any) => ({
+    const rawLogs: SendLog[] = (logsRes.data || []).map((l) => ({
       ...l,
       instance_name: l.instance_id ? instanceMap.get(l.instance_id) || "—" : "—",
     }));
@@ -82,22 +81,6 @@ export function LogsTab() {
     fetchData();
   }, [fetchData]);
 
-  const statusBadge = (status: string | null) => {
-    switch (status) {
-      case "sent":
-        return <Badge className="bg-green-500/15 text-green-700 border-green-500/30 text-[11px]">Enviado</Badge>;
-      case "failed":
-        return <Badge className="bg-red-500/15 text-red-700 border-red-500/30 text-[11px]">Falhou</Badge>;
-      case "sending":
-        return <Badge className="bg-blue-500/15 text-blue-700 border-blue-500/30 text-[11px]">Enviando</Badge>;
-      default:
-        return <Badge variant="secondary" className="text-[11px]">{status || "—"}</Badge>;
-    }
-  };
-
-  const formatDateStr = (d: string | null) =>
-    d ? format(new Date(d), "dd/MM/yy HH:mm", { locale: ptBR }) : "—";
-
   const filtered = logs.filter((log) => {
     if (filterInstance !== "all" && log.instance_id !== filterInstance) return false;
     if (filterStatus !== "all" && log.status !== filterStatus) return false;
@@ -106,7 +89,7 @@ export function LogsTab() {
     return true;
   });
 
-  const hasActiveFilters = filterInstance !== "all" || filterStatus !== "all" || filterDateFrom || filterDateTo;
+  const hasActiveFilters = filterInstance !== "all" || filterStatus !== "all" || !!filterDateFrom || !!filterDateTo;
 
   const clearFilters = () => {
     setFilterInstance("all");
@@ -125,7 +108,6 @@ export function LogsTab() {
 
   return (
     <div className="space-y-4">
-      {/* Today counter + actions */}
       <div className="flex items-center justify-between gap-3">
         <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 flex items-center gap-2 flex-1">
           <span className="text-xl sm:text-2xl font-bold tabular-nums">{todayCount}</span>
@@ -145,7 +127,6 @@ export function LogsTab() {
         </div>
       </div>
 
-      {/* Collapsible filters */}
       {showFilters && (
         <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg border border-border bg-muted/30">
           <Select value={filterInstance} onValueChange={setFilterInstance}>
@@ -175,7 +156,6 @@ export function LogsTab() {
               className="w-[130px] h-8 text-xs"
               value={filterDateFrom}
               onChange={(e) => setFilterDateFrom(e.target.value)}
-              placeholder="De"
             />
             <span className="text-xs text-muted-foreground">a</span>
             <Input
@@ -183,7 +163,6 @@ export function LogsTab() {
               className="w-[130px] h-8 text-xs"
               value={filterDateTo}
               onChange={(e) => setFilterDateTo(e.target.value)}
-              placeholder="Até"
             />
           </div>
           {hasActiveFilters && (
@@ -194,14 +173,12 @@ export function LogsTab() {
         </div>
       )}
 
-      {/* Content */}
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
           <ScrollText className="h-8 w-8 opacity-40" />
           <p className="text-sm">Nenhum log encontrado</p>
         </div>
       ) : isMobile ? (
-        /* Mobile card list */
         <div className="space-y-2">
           {filtered.slice(0, 50).map((log) => (
             <div key={log.id} className="rounded-xl border border-border bg-card p-3.5 space-y-1.5">
@@ -210,7 +187,7 @@ export function LogsTab() {
                   <p className="text-sm font-medium tabular-nums">{log.recipient_phone}</p>
                   <p className="text-[11px] text-muted-foreground">{log.instance_name}</p>
                 </div>
-                {statusBadge(log.status)}
+                <MessageStatusBadge status={log.status} variant="short" />
               </div>
               {log.message_content && (
                 <p className="text-[11px] text-muted-foreground line-clamp-2">
@@ -218,7 +195,7 @@ export function LogsTab() {
                 </p>
               )}
               <p className="text-[11px] text-muted-foreground tabular-nums">
-                {formatDateStr(log.sent_at)}
+                {fmtDate(log.sent_at, "full")}
               </p>
             </div>
           ))}
@@ -229,7 +206,6 @@ export function LogsTab() {
           )}
         </div>
       ) : (
-        /* Desktop table */
         <div className="rounded-lg border overflow-x-auto">
           <Table>
             <TableHeader>
@@ -244,7 +220,7 @@ export function LogsTab() {
             <TableBody>
               {filtered.map((log) => (
                 <TableRow key={log.id}>
-                  <TableCell className="text-xs tabular-nums whitespace-nowrap">{formatDateStr(log.sent_at)}</TableCell>
+                  <TableCell className="text-xs tabular-nums whitespace-nowrap">{fmtDate(log.sent_at, "full")}</TableCell>
                   <TableCell className="text-xs">{log.instance_name}</TableCell>
                   <TableCell className="text-xs">{log.recipient_phone}</TableCell>
                   <TableCell className="text-xs max-w-[200px] truncate">
@@ -254,7 +230,7 @@ export function LogsTab() {
                         : log.message_content
                       : "—"}
                   </TableCell>
-                  <TableCell>{statusBadge(log.status)}</TableCell>
+                  <TableCell><MessageStatusBadge status={log.status} variant="short" /></TableCell>
                 </TableRow>
               ))}
             </TableBody>

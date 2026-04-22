@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Plus, Pencil, Pause, Play, TestTube, X, Clock, Send, Trash2, Sparkles, Bot, PenLine, Dices, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
+import { MessageStatusBadge } from "./shared/MessageStatusBadge";
 
 interface Slot {
   id: string;
@@ -348,18 +349,7 @@ export function DisparoGrupoTab() {
     return true;
   });
 
-  const statusBadge = (status: string) => {
-    switch (status) {
-      case "sent":
-        return <Badge className="bg-green-600 text-white">✅ Enviado</Badge>;
-      case "pending":
-        return <Badge variant="secondary">⏳ Pendente</Badge>;
-      case "failed":
-        return <Badge variant="destructive">❌ Falhou</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
+  const statusBadge = (status: string) => <MessageStatusBadge status={status} variant="short" />;
 
   if (loading) {
     return <div className="text-center py-8 text-muted-foreground">Carregando...</div>;

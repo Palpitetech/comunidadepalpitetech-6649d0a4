@@ -12,6 +12,7 @@ import { Loader2, Plus, Pencil, Trash2, Smartphone, QrCode, RefreshCw, Power, Lo
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { maskIp } from "./shared/mask-ip";
 
 interface WhatsAppInstance {
   id: string;
@@ -62,12 +63,7 @@ interface ProxyInfo {
   external_ip: string | null;
 }
 
-function maskIp(ip: string | null) {
-  if (!ip) return "";
-  const parts = ip.split(".");
-  if (parts.length !== 4) return ip;
-  return `${parts[0]}.xxx.xxx.${parts[3]}`;
-}
+// maskIp moved to ./shared/mask-ip
 
 export function InstanciasTab() {
   const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
