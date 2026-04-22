@@ -13,20 +13,60 @@ function getSupabase() {
   );
 }
 
+/** Valida campos críticos de um proxy antes de enviar à Evolution */
+function validateProxyFields(
+  proxy: { id?: string; host: string; port: number | string; protocol: string }
+): { valid: true } | { valid: false; invalidFields: string[] } {
+  const invalidFields: string[] = [];
+  const allowedProtocols = ["http", "https", "socks4", "socks5"];
+
+  const host = typeof proxy.host === "string" ? proxy.host.trim() : "";
+  if (!host) invalidFields.push("host");
+
+  const portNum = typeof proxy.port === "number" ? proxy.port : parseInt(String(proxy.port ?? "").trim(), 10);
+  if (!Number.isInteger(portNum) || portNum < 1 || portNum > 65535) invalidFields.push("port");
+
+  const protocol = typeof proxy.protocol === "string" ? proxy.protocol.trim().toLowerCase() : "";
+  if (!protocol || !allowedProtocols.includes(protocol)) invalidFields.push("protocol");
+
+  if (invalidFields.length > 0) return { valid: false, invalidFields };
+  return { valid: true };
+}
+
 /** Aplica um proxy à instância na Evolution API */
 async function applyProxyToInstance(
   evolutionUrl: string,
   evolutionKey: string,
   instanceName: string,
-  proxy: { host: string; port: number; protocol: string; username?: string | null; password?: string | null } | null
+  proxy: { id?: string; label?: string; host: string; port: number; protocol: string; username?: string | null; password?: string | null } | null
 ): Promise<{ ok: boolean; status: number; body: any }> {
+  // Guard: valida proxy antes de chamar Evolution
+  if (proxy) {
+    const check = validateProxyFields(proxy);
+    if (!check.valid) {
+      console.error(
+        `[applyProxyToInstance] PROXY INVÁLIDO id=${proxy.id ?? "?"} label=${proxy.label ?? "?"} motivos=${check.invalidFields.join(",")}`
+      );
+      return {
+        ok: false,
+        status: 0,
+        body: {
+          message: "proxy_invalid",
+          invalidFields: check.invalidFields,
+          proxyId: proxy.id ?? null,
+          proxyLabel: proxy.label ?? null,
+        },
+      };
+    }
+  }
+
   const url = `${evolutionUrl}/proxy/set/${instanceName}`;
   const body = proxy
     ? {
         enabled: true,
-        host: String(proxy.host),
-        port: String(proxy.port),
-        protocol: String(proxy.protocol),
+        host: String(proxy.host).trim(),
+        port: String(proxy.port).trim(),
+        protocol: String(proxy.protocol).trim().toLowerCase(),
         username: proxy.username ? String(proxy.username) : "",
         password: proxy.password ? String(proxy.password) : "",
       }
