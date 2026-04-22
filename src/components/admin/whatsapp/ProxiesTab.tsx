@@ -592,23 +592,44 @@ export function ProxiesTab() {
                 </div>
 
                 {bulkText.trim() && (
-                  <div className="rounded-md border bg-muted/30 p-2.5 text-xs space-y-1.5">
-                    <div className="flex items-center gap-3">
+                  <div className="rounded-md border bg-muted/30 p-2.5 text-xs space-y-2">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                       <span className="text-accent font-medium tabular-nums">{bulkPreview.valid.length} válidas</span>
-                      {bulkPreview.invalid > 0 && (
-                        <span className="text-destructive tabular-nums">{bulkPreview.invalid} inválidas</span>
+                      {bulkPreview.invalidLines.length > 0 && (
+                        <span className="text-destructive tabular-nums">{bulkPreview.invalidLines.length} inválidas</span>
+                      )}
+                      {bulkPreview.dupInBatch > 0 && (
+                        <span className="text-muted-foreground tabular-nums">{bulkPreview.dupInBatch} dup. na lista</span>
+                      )}
+                      {bulkPreview.dupInDb > 0 && (
+                        <span className="text-muted-foreground tabular-nums">{bulkPreview.dupInDb} já existem</span>
                       )}
                       {bulkPreview.skippedHeader && (
                         <span className="text-muted-foreground">cabeçalho ignorado</span>
                       )}
                     </div>
+
                     {bulkPreview.valid.length > 0 && (
-                      <div className="space-y-0.5 pt-1 border-t font-mono text-[11px] text-muted-foreground">
+                      <div className="space-y-0.5 pt-1.5 border-t font-mono text-[11px] text-muted-foreground">
                         {bulkPreview.valid.slice(0, 3).map((p, i) => (
-                          <div key={i}>• {p.host}:{p.port} {p.username ? `· ${p.username}` : ""}</div>
+                          <div key={i}>
+                            • {p.host}:{p.port}
+                            {p.username && <span className="opacity-60"> · auth ••••••</span>}
+                          </div>
                         ))}
                         {bulkPreview.valid.length > 3 && (
                           <div className="text-[10px] opacity-70">… e mais {bulkPreview.valid.length - 3}</div>
+                        )}
+                      </div>
+                    )}
+
+                    {bulkPreview.invalidLines.length > 0 && (
+                      <div className="space-y-0.5 pt-1.5 border-t border-destructive/20 font-mono text-[11px] text-destructive/90 max-h-28 overflow-y-auto">
+                        {bulkPreview.invalidLines.slice(0, 5).map((err, i) => (
+                          <div key={i}>✗ linha {err.line}: {err.reason}</div>
+                        ))}
+                        {bulkPreview.invalidLines.length > 5 && (
+                          <div className="text-[10px] opacity-70">… e mais {bulkPreview.invalidLines.length - 5} erro(s)</div>
                         )}
                       </div>
                     )}
