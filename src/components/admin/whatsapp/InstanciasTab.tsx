@@ -239,10 +239,32 @@ export function InstanciasTab() {
       }
       setQrData(base64);
     } catch (err: any) {
-      toast.error(err.message || "Erro ao gerar QR Code");
+      const msg = err?.message || "Erro ao gerar QR Code";
+      if (msg.includes("Sem proxy disponível") || msg.includes("no_proxy_available")) {
+        toast.error("Sem proxy disponível", { description: "Adicione novos proxies em WhatsApp → Proxies." });
+      } else {
+        toast.error(msg);
+      }
       setQrDialogOpen(false);
     } finally {
       setQrLoading(false);
+    }
+  };
+
+  const handleSwapProxy = async (inst: WhatsAppInstance) => {
+    setInstanceAction(inst.id, "swap");
+    try {
+      const { data, error } = await supabase.functions.invoke("evolution-proxy", {
+        body: { action: "swapProxy", instanceName: inst.evolution_instance_id },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      toast.success("Proxy liberado. O próximo Conectar reservará um novo IP.");
+      fetchInstances();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao trocar proxy");
+    } finally {
+      setInstanceAction(inst.id, null);
     }
   };
 
