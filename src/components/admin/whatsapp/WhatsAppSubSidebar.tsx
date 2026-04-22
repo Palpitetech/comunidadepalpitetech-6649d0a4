@@ -1,8 +1,9 @@
-import { Smartphone, FileText, Send, ScrollText, Flame, Users, Megaphone, MessageSquare, Link2, Target, Inbox, FileClock } from "lucide-react";
+import { Smartphone, FileText, Send, ScrollText, Flame, Users, Megaphone, MessageSquare, Link2, Target, Inbox, FileClock, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { value: "instancias", label: "Instâncias", icon: Smartphone },
+  { value: "proxies", label: "Proxies", icon: Globe },
   { value: "templates", label: "Templates", icon: FileText },
   { value: "logs-templates", label: "Logs Templates", icon: FileClock },
   { value: "fila", label: "Fila", icon: Send },
