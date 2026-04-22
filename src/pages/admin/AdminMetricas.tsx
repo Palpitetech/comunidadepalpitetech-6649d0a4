@@ -146,6 +146,9 @@ export default function AdminMetricas() {
             {/* Bloco C — Compradores LTV */}
             <BuyersLTVTable data={data} />
 
+            {/* Bloco C2 — First vs Last Click */}
+            <FirstVsLastClickTable data={data} />
+
             {/* Bloco D — Funil + Gerador */}
             <div className="grid md:grid-cols-2 gap-4">
               <Card>
