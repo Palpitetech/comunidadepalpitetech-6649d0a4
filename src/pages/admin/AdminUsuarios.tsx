@@ -7,11 +7,19 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, Users, UserCheck, ChevronRight, ChevronLeft, X, ArrowLeft, Timer, CheckCircle2, AlertCircle, Circle, Inbox, Globe } from "lucide-react";
+import { Search, Loader2, Users, UserCheck, ChevronRight, ChevronLeft, X, ArrowLeft, Timer, CheckCircle2, AlertCircle, Circle, Inbox, Globe, Columns3 } from "lucide-react";
 import { toast } from "sonner";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
 import { LeadDetailSheet, type LeadInbox } from "@/components/admin/LeadDetailSheet";
 import { TagFilterPopover } from "@/components/admin/TagFilterPopover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 import type { Plan, PlanFeatures, ExtendedProfile } from "@/types/plans";
@@ -239,8 +247,9 @@ export default function AdminUsuarios() {
       l.nome?.toLowerCase().includes(s) ||
       l.email?.toLowerCase().includes(s) ||
       l.celular?.includes(s) ||
-      l.source?.toLowerCase().includes(s) ||
+      l.slug?.toLowerCase().includes(s) ||
       l.utm_source?.toLowerCase().includes(s) ||
+      l.utm_campaign?.toLowerCase().includes(s) ||
       l.tags?.some((t) => t.toLowerCase().includes(s)),
     );
   }, [leads, searchTerm]);
