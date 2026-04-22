@@ -2029,6 +2029,7 @@ export type Database = {
           admin_notes: string | null
           asaas_customer_id: string | null
           asaas_subscription_id: string | null
+          attribution: Json
           avatar_url: string | null
           celular: string | null
           celular_verificado: boolean | null
@@ -2037,6 +2038,7 @@ export type Database = {
           custom_features: Json | null
           email: string | null
           email_verificado: boolean | null
+          first_purchase_at: string | null
           id: string
           is_blocked: boolean
           is_bot: boolean | null
@@ -2055,6 +2057,7 @@ export type Database = {
           admin_notes?: string | null
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
+          attribution?: Json
           avatar_url?: string | null
           celular?: string | null
           celular_verificado?: boolean | null
@@ -2063,6 +2066,7 @@ export type Database = {
           custom_features?: Json | null
           email?: string | null
           email_verificado?: boolean | null
+          first_purchase_at?: string | null
           id: string
           is_blocked?: boolean
           is_bot?: boolean | null
@@ -2081,6 +2085,7 @@ export type Database = {
           admin_notes?: string | null
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
+          attribution?: Json
           avatar_url?: string | null
           celular?: string | null
           celular_verificado?: boolean | null
@@ -2089,6 +2094,7 @@ export type Database = {
           custom_features?: Json | null
           email?: string | null
           email_verificado?: boolean | null
+          first_purchase_at?: string | null
           id?: string
           is_blocked?: boolean
           is_bot?: boolean | null
@@ -3518,6 +3524,15 @@ export type Database = {
       }
       increment_smart_link_clicks: {
         Args: { p_slug: string }
+        Returns: undefined
+      }
+      merge_user_attribution: {
+        Args: {
+          p_mark_purchase?: boolean
+          p_new_attr: Json
+          p_purchase_at?: string
+          p_user_id: string
+        }
         Returns: undefined
       }
       pick_template_variant: {
