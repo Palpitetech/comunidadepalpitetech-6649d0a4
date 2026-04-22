@@ -432,8 +432,8 @@ Content-Type: application/json
                   A tag exclusiva do webhook é aplicada automaticamente.
                   Você pode adicionar tags extras no campo <code className="text-primary">"tags"</code>.
                 </p>
-                <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-foreground/90 leading-relaxed">
-                  <strong className="text-amber-700 dark:text-amber-400">Campos opcionais:</strong> se vierem{" "}
+                <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-foreground/90 leading-relaxed">
+                  <strong className="text-primary">Campos opcionais:</strong> se vierem{" "}
                   <strong>nome + email + celular</strong>, criamos a conta automaticamente.
                   Se faltar algum, o contato vai para a aba <strong>Leads</strong> em{" "}
                   <button
