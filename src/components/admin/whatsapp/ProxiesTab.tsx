@@ -85,59 +85,101 @@ interface ParsedProxy {
   password: string | null;
 }
 
-function parseProxyLine(line: string, format: ProxyFormat): ParsedProxy | null {
-  const trimmed = line.trim();
-  if (!trimmed || trimmed.startsWith("#")) return null;
+type ParseResult =
+  | { ok: true; proxy: ParsedProxy }
+  | { ok: false; reason: string };
 
-  const validatePort = (s: string) => {
-    const n = parseInt(s, 10);
-    return !isNaN(n) && n >= 1 && n <= 65535 ? n : null;
-  };
+const HOST_REGEX = /^[a-zA-Z0-9]([a-zA-Z0-9\-.]*[a-zA-Z0-9])?$/;
+
+function validatePort(s: string | undefined): number | null {
+  if (!s) return null;
+  const n = parseInt(s.trim(), 10);
+  if (isNaN(n) || String(n) !== s.trim()) return null;
+  return n >= 1 && n <= 65535 ? n : null;
+}
+
+function validateHost(h: string | undefined): boolean {
+  if (!h) return false;
+  const trimmed = h.trim();
+  if (trimmed.length === 0 || trimmed.length > 253) return false;
+  return HOST_REGEX.test(trimmed);
+}
+
+function parseProxyLine(line: string, format: ProxyFormat): ParseResult {
+  const trimmed = line.trim();
+  if (!trimmed) return { ok: false, reason: "linha vazia" };
 
   try {
     if (format === "format1") {
       const parts = trimmed.split(":");
-      if (parts.length < 2) return null;
+      if (parts.length !== 2 && parts.length !== 4) {
+        return { ok: false, reason: "esperado HOST:PORTA ou HOST:PORTA:USUÁRIO:SENHA" };
+      }
       const [host, portStr, username, password] = parts;
+      if (!validateHost(host)) return { ok: false, reason: "host inválido" };
       const port = validatePort(portStr);
-      if (!host || !port) return null;
+      if (!port) return { ok: false, reason: "porta inválida (1–65535)" };
+      if (parts.length === 4 && (!username?.trim() || !password?.trim())) {
+        return { ok: false, reason: "usuário/senha vazios" };
+      }
       return {
-        host: host.trim(),
-        port,
-        username: username?.trim() || null,
-        password: password?.trim() || null,
+        ok: true,
+        proxy: {
+          host: host.trim(),
+          port,
+          username: username?.trim() || null,
+          password: password?.trim() || null,
+        },
       };
     }
     if (format === "format2") {
-      const [hostPart, authPart] = trimmed.split("@");
-      if (!hostPart || !authPart) return null;
-      const [host, portStr] = hostPart.split(":");
-      const [username, password] = authPart.split(":");
+      const atParts = trimmed.split("@");
+      if (atParts.length !== 2) return { ok: false, reason: "esperado HOST:PORTA@USUÁRIO:SENHA" };
+      const [hostPart, authPart] = atParts;
+      const hp = hostPart.split(":");
+      const ap = authPart.split(":");
+      if (hp.length !== 2 || ap.length !== 2) return { ok: false, reason: "formato incorreto" };
+      const [host, portStr] = hp;
+      const [username, password] = ap;
+      if (!validateHost(host)) return { ok: false, reason: "host inválido" };
       const port = validatePort(portStr);
-      if (!host || !port || !username || !password) return null;
-      return { host: host.trim(), port, username: username.trim(), password: password.trim() };
+      if (!port) return { ok: false, reason: "porta inválida (1–65535)" };
+      if (!username.trim() || !password.trim()) return { ok: false, reason: "usuário/senha obrigatórios" };
+      return { ok: true, proxy: { host: host.trim(), port, username: username.trim(), password: password.trim() } };
     }
     if (format === "format3") {
       const parts = trimmed.split(":");
-      if (parts.length < 4) return null;
+      if (parts.length !== 4) return { ok: false, reason: "esperado USUÁRIO:SENHA:HOST:PORTA" };
       const [username, password, host, portStr] = parts;
+      if (!username.trim() || !password.trim()) return { ok: false, reason: "usuário/senha obrigatórios" };
+      if (!validateHost(host)) return { ok: false, reason: "host inválido" };
       const port = validatePort(portStr);
-      if (!host || !port || !username || !password) return null;
-      return { host: host.trim(), port, username: username.trim(), password: password.trim() };
+      if (!port) return { ok: false, reason: "porta inválida (1–65535)" };
+      return { ok: true, proxy: { host: host.trim(), port, username: username.trim(), password: password.trim() } };
     }
     if (format === "format4") {
-      const [authPart, hostPart] = trimmed.split("@");
-      if (!hostPart || !authPart) return null;
-      const [username, password] = authPart.split(":");
-      const [host, portStr] = hostPart.split(":");
+      const atParts = trimmed.split("@");
+      if (atParts.length !== 2) return { ok: false, reason: "esperado USUÁRIO:SENHA@HOST:PORTA" };
+      const [authPart, hostPart] = atParts;
+      const ap = authPart.split(":");
+      const hp = hostPart.split(":");
+      if (ap.length !== 2 || hp.length !== 2) return { ok: false, reason: "formato incorreto" };
+      const [username, password] = ap;
+      const [host, portStr] = hp;
+      if (!username.trim() || !password.trim()) return { ok: false, reason: "usuário/senha obrigatórios" };
+      if (!validateHost(host)) return { ok: false, reason: "host inválido" };
       const port = validatePort(portStr);
-      if (!host || !port || !username || !password) return null;
-      return { host: host.trim(), port, username: username.trim(), password: password.trim() };
+      if (!port) return { ok: false, reason: "porta inválida (1–65535)" };
+      return { ok: true, proxy: { host: host.trim(), port, username: username.trim(), password: password.trim() } };
     }
-  } catch {
-    return null;
+  } catch (err: any) {
+    return { ok: false, reason: "erro ao processar" };
   }
-  return null;
+  return { ok: false, reason: "formato desconhecido" };
+}
+
+function proxyDedupKey(p: ParsedProxy): string {
+  return `${p.host.toLowerCase()}:${p.port}:${p.username ?? ""}:${p.password ?? ""}`;
 }
 
 function isHeaderLine(line: string): boolean {
@@ -268,24 +310,56 @@ export function ProxiesTab() {
     }
   };
 
+  const existingDedupKeys = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of proxies) {
+      set.add(proxyDedupKey({
+        host: p.host,
+        port: p.port,
+        username: p.username,
+        password: p.password,
+      }));
+    }
+    return set;
+  }, [proxies]);
+
   const bulkPreview = useMemo(() => {
     const rawLines = bulkText.split("\n");
     const valid: ParsedProxy[] = [];
-    let invalid = 0;
+    const invalidLines: { line: number; reason: string }[] = [];
+    let dupInBatch = 0;
+    let dupInDb = 0;
     let skippedHeader = false;
+    const seenInBatch = new Set<string>();
+
     for (let i = 0; i < rawLines.length; i++) {
-      const line = rawLines[i].trim();
+      const raw = rawLines[i];
+      const line = raw.trim();
       if (!line || line.startsWith("#")) continue;
       if (i === 0 && isHeaderLine(line)) {
         skippedHeader = true;
         continue;
       }
-      const parsed = parseProxyLine(line, bulkFormat);
-      if (parsed) valid.push(parsed);
-      else invalid++;
+      const result = parseProxyLine(line, bulkFormat);
+      if (result.ok === false) {
+        invalidLines.push({ line: i + 1, reason: result.reason });
+        continue;
+      }
+      const proxy = result.proxy;
+      const key = proxyDedupKey(proxy);
+      if (seenInBatch.has(key)) {
+        dupInBatch++;
+        continue;
+      }
+      if (existingDedupKeys.has(key)) {
+        dupInDb++;
+        continue;
+      }
+      seenInBatch.add(key);
+      valid.push(proxy);
     }
-    return { valid, invalid, skippedHeader };
-  }, [bulkText, bulkFormat]);
+    return { valid, invalidLines, dupInBatch, dupInDb, skippedHeader };
+  }, [bulkText, bulkFormat, existingDedupKeys]);
 
   const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -297,12 +371,11 @@ export function ProxiesTab() {
     };
     reader.onerror = () => toast.error("Falha ao ler o arquivo");
     reader.readAsText(file);
-    // reset input para permitir re-upload do mesmo arquivo
     e.target.value = "";
   };
 
   const handleBulkSave = async () => {
-    const { valid } = bulkPreview;
+    const { valid, invalidLines, dupInBatch, dupInDb } = bulkPreview;
     if (valid.length === 0) {
       toast.error("Nenhuma linha válida encontrada");
       return;
@@ -321,8 +394,12 @@ export function ProxiesTab() {
     try {
       const { error } = await supabase.from("whatsapp_proxies" as any).insert(rows);
       if (error) throw error;
-      const invalidNote = bulkPreview.invalid > 0 ? ` — ${bulkPreview.invalid} ignorada(s)` : "";
-      toast.success(`${rows.length} proxy(ies) adicionados${invalidNote}`);
+      const notes: string[] = [];
+      if (invalidLines.length) notes.push(`${invalidLines.length} inválida(s)`);
+      if (dupInBatch) notes.push(`${dupInBatch} duplicada(s) na lista`);
+      if (dupInDb) notes.push(`${dupInDb} já existente(s)`);
+      const suffix = notes.length ? ` — ignorados: ${notes.join(", ")}` : "";
+      toast.success(`${rows.length} proxy(ies) adicionados${suffix}`);
       setBulkOpen(false);
       setBulkText("");
       fetchData();
@@ -515,23 +592,44 @@ export function ProxiesTab() {
                 </div>
 
                 {bulkText.trim() && (
-                  <div className="rounded-md border bg-muted/30 p-2.5 text-xs space-y-1.5">
-                    <div className="flex items-center gap-3">
+                  <div className="rounded-md border bg-muted/30 p-2.5 text-xs space-y-2">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                       <span className="text-accent font-medium tabular-nums">{bulkPreview.valid.length} válidas</span>
-                      {bulkPreview.invalid > 0 && (
-                        <span className="text-destructive tabular-nums">{bulkPreview.invalid} inválidas</span>
+                      {bulkPreview.invalidLines.length > 0 && (
+                        <span className="text-destructive tabular-nums">{bulkPreview.invalidLines.length} inválidas</span>
+                      )}
+                      {bulkPreview.dupInBatch > 0 && (
+                        <span className="text-muted-foreground tabular-nums">{bulkPreview.dupInBatch} dup. na lista</span>
+                      )}
+                      {bulkPreview.dupInDb > 0 && (
+                        <span className="text-muted-foreground tabular-nums">{bulkPreview.dupInDb} já existem</span>
                       )}
                       {bulkPreview.skippedHeader && (
                         <span className="text-muted-foreground">cabeçalho ignorado</span>
                       )}
                     </div>
+
                     {bulkPreview.valid.length > 0 && (
-                      <div className="space-y-0.5 pt-1 border-t font-mono text-[11px] text-muted-foreground">
+                      <div className="space-y-0.5 pt-1.5 border-t font-mono text-[11px] text-muted-foreground">
                         {bulkPreview.valid.slice(0, 3).map((p, i) => (
-                          <div key={i}>• {p.host}:{p.port} {p.username ? `· ${p.username}` : ""}</div>
+                          <div key={i}>
+                            • {p.host}:{p.port}
+                            {p.username && <span className="opacity-60"> · auth ••••••</span>}
+                          </div>
                         ))}
                         {bulkPreview.valid.length > 3 && (
                           <div className="text-[10px] opacity-70">… e mais {bulkPreview.valid.length - 3}</div>
+                        )}
+                      </div>
+                    )}
+
+                    {bulkPreview.invalidLines.length > 0 && (
+                      <div className="space-y-0.5 pt-1.5 border-t border-destructive/20 font-mono text-[11px] text-destructive/90 max-h-28 overflow-y-auto">
+                        {bulkPreview.invalidLines.slice(0, 5).map((err, i) => (
+                          <div key={i}>✗ linha {err.line}: {err.reason}</div>
+                        ))}
+                        {bulkPreview.invalidLines.length > 5 && (
+                          <div className="text-[10px] opacity-70">… e mais {bulkPreview.invalidLines.length - 5} erro(s)</div>
                         )}
                       </div>
                     )}
