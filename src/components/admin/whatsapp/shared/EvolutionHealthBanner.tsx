@@ -106,7 +106,7 @@ export function EvolutionHealthBanner() {
       className={`rounded-md border px-3 py-2 text-xs ${
         hasErrors
           ? "border-destructive/40 bg-destructive/10 text-destructive"
-          : "border-warning/40 bg-warning/10 text-warning-foreground"
+          : "border-accent/40 bg-accent/10 text-foreground"
       }`}
     >
       <div className="flex items-start justify-between gap-2">
