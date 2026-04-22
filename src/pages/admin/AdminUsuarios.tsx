@@ -638,6 +638,108 @@ export default function AdminUsuarios() {
 
         {/* Table */}
         <div className="flex-1 overflow-auto">
+          {activeFilter === "leads" ? (
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-24 pl-6 text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Nome</TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Email</TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Celular</TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Origem</TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Página</TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Tags</TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Data</TableHead>
+                  <TableHead className="w-8"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredLeads.map((lead) => {
+                  const origem = lead.webhook_name || lead.source || lead.utm_source || "—";
+                  const statusClass =
+                    lead.status === "convertido"
+                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                      : lead.status === "contatado"
+                      ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
+                      : lead.status === "descartado"
+                      ? "bg-muted text-muted-foreground border-border"
+                      : "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30";
+                  return (
+                    <TableRow
+                      key={lead.id}
+                      className="cursor-pointer group"
+                      onClick={() => handleLeadClick(lead)}
+                    >
+                      <TableCell className="pl-6 py-2.5">
+                        <Badge variant="outline" className={cn("text-[10px] capitalize", statusClass)}>
+                          {lead.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-2.5 text-sm font-medium truncate max-w-[180px]">
+                        {lead.nome || <span className="text-muted-foreground italic">sem nome</span>}
+                      </TableCell>
+                      <TableCell className="py-2.5 text-sm text-muted-foreground truncate max-w-[200px]">
+                        {lead.email || "—"}
+                      </TableCell>
+                      <TableCell className="py-2.5 text-sm text-muted-foreground tabular-nums">
+                        {lead.celular || "—"}
+                      </TableCell>
+                      <TableCell className="py-2.5">
+                        <span className="inline-block px-2 py-0.5 rounded bg-muted text-[10px] text-foreground/80 truncate max-w-[140px]">
+                          {origem}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-2.5 text-xs text-muted-foreground max-w-[200px]">
+                        {lead.pagina_origem ? (
+                          <a
+                            href={lead.pagina_origem}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-primary hover:underline truncate"
+                            title={lead.pagina_origem}
+                          >
+                            <Globe className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{lead.pagina_origem.replace(/^https?:\/\//, "")}</span>
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground/60">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="py-2.5">
+                        <div className="flex flex-wrap gap-1 max-w-[200px]">
+                          {lead.tags?.slice(0, 2).map((tag) => (
+                            <span key={tag} className="inline-block px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">
+                              {tag}
+                            </span>
+                          ))}
+                          {lead.tags && lead.tags.length > 2 && (
+                            <span className="inline-block px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">
+                              +{lead.tags.length - 2}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-2.5 text-xs text-muted-foreground tabular-nums">
+                        {format(new Date(lead.created_at), "dd/MM HH:mm", { locale: ptBR })}
+                      </TableCell>
+                      <TableCell className="py-2.5 pr-4">
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                {filteredLeads.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-16 text-sm text-muted-foreground">
+                      <Inbox className="h-8 w-8 mx-auto mb-2 text-muted-foreground/40" />
+                      {searchTerm ? "Nenhum lead encontrado" : "Nenhum lead capturado ainda"}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          ) : (
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
@@ -758,6 +860,7 @@ export default function AdminUsuarios() {
               )}
             </TableBody>
           </Table>
+          )}
         </div>
 
         {totalPages > 1 && (
