@@ -1616,6 +1616,92 @@ export type Database = {
         }
         Relationships: []
       }
+      leads_inbox: {
+        Row: {
+          celular: string | null
+          created_at: string
+          email: string | null
+          id: string
+          ip: string | null
+          nome: string | null
+          pagina_origem: string | null
+          perfil_id: string | null
+          raw_payload: Json | null
+          source: string | null
+          status: string
+          tags: string[] | null
+          updated_at: string
+          utm_source: string | null
+          webhook_id: string | null
+          webhook_name: string | null
+        }
+        Insert: {
+          celular?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          ip?: string | null
+          nome?: string | null
+          pagina_origem?: string | null
+          perfil_id?: string | null
+          raw_payload?: Json | null
+          source?: string | null
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+          utm_source?: string | null
+          webhook_id?: string | null
+          webhook_name?: string | null
+        }
+        Update: {
+          celular?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          ip?: string | null
+          nome?: string | null
+          pagina_origem?: string | null
+          perfil_id?: string | null
+          raw_payload?: Json | null
+          source?: string | null
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+          utm_source?: string | null
+          webhook_id?: string | null
+          webhook_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_inbox_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_inbox_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_publicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_inbox_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios_notificaveis_hoje"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_inbox_webhook_id_fkey"
+            columns: ["webhook_id"]
+            isOneToOne: false
+            referencedRelation: "lead_webhooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_queue: {
         Row: {
           created_at: string | null
