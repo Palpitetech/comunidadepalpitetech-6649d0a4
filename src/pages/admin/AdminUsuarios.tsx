@@ -737,11 +737,6 @@ export default function AdminUsuarios() {
             </DropdownMenu>
           </div>
         )}
-                })}
-              </div>
-            ))}
-          </div>
-        )}
 
         {/* Table */}
         <div className="flex-1 overflow-auto">
