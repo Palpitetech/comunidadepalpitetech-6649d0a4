@@ -97,23 +97,14 @@ async function sendMessage(
     .update({ status: "sending" })
     .eq("id", item.id);
 
-  // Retry loop: wait for an available instance (up to 3 attempts, 60s between)
-  let instance: any = null;
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    instance = await selectInstance(supabase);
-    if (instance) break;
-    if (attempt < 3) {
-      console.warn(`[process-queue] Aguardando instância disponível (tentativa ${attempt}/3) para item ${item.id}...`);
-      await new Promise((r) => setTimeout(r, 60_000));
-    }
-  }
-
+  // Single instance lookup — if none available, leave as pending and let cron retry
+  const instance = await selectInstance(supabase);
   if (!instance) {
     await supabase
       .from("message_queue")
       .update({ status: "pending" })
       .eq("id", item.id);
-    return { success: false, error: "Nenhuma instância disponível após 3 tentativas" };
+    return { success: false, error: "Nenhuma instância disponível" };
   }
 
   // Resolve template (com variante) ou mensagem livre
