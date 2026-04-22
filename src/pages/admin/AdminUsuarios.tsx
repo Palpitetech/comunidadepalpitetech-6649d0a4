@@ -863,7 +863,7 @@ export default function AdminUsuarios() {
           )}
         </div>
 
-        {totalPages > 1 && (
+        {activeFilter !== "leads" && totalPages > 1 && (
           <div className="border-t border-border px-6 py-2 flex items-center justify-between">
             <p className="text-xs text-muted-foreground">
               {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredUsers.length)} de {filteredUsers.length}
@@ -883,6 +883,13 @@ export default function AdminUsuarios() {
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         onUserUpdated={() => fetchData()}
+      />
+
+      <LeadDetailSheet
+        lead={selectedLead}
+        open={leadSheetOpen}
+        onOpenChange={setLeadSheetOpen}
+        onChanged={() => fetchData()}
       />
     </AdminLayout>
   );
