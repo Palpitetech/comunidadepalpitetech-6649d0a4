@@ -131,6 +131,9 @@ export function RetargetingPanelTab() {
         </Button>
       </div>
 
+      {/* Status do agendamento */}
+      <ScheduleStatusCard schedule={schedule} now={now} />
+
       {/* Hoje */}
       <div>
         <h3 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Hoje</h3>
