@@ -276,6 +276,89 @@ Deno.serve(async (req) => {
       );
     }
 
+    // === Importação atômica de instância da Evolution + reserva e aplicação de proxy ===
+    if (action === "importInstanceWithProxy") {
+      const { instanceName: impName, phone: impPhone, status: impStatus } = reqBody;
+      if (!impName) {
+        return new Response(
+          JSON.stringify({ success: false, error: "instanceName obrigatório" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const supabase = getSupabase();
+
+      // 1. INSERIR no banco
+      const { data: inserted, error: insertErr } = await supabase
+        .from("whatsapp_instances")
+        .insert({
+          name: impName,
+          friendly_name: impName,
+          phone_number: (impPhone || "").replace("@s.whatsapp.net", ""),
+          evolution_instance_id: impName,
+          status: impStatus === "open" ? "online" : "offline",
+          daily_limit: 100,
+        })
+        .select("id")
+        .single();
+
+      if (insertErr || !inserted) {
+        return new Response(
+          JSON.stringify({ success: false, code: "insert_failed", error: insertErr?.message || "Falha ao inserir instância" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const newUuid = inserted.id;
+
+      // 2. RESERVAR proxy
+      const claim = await claimProxyForInstance(newUuid);
+      if (!claim.success) {
+        // ROLLBACK
+        await supabase.from("whatsapp_instances").delete().eq("id", newUuid);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            code: claim.error === "no_proxy_available" ? "no_proxy_available" : "claim_failed",
+            error: claim.error,
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // 3. APLICAR proxy na Evolution
+      const apply = await applyProxyToInstance(EVOLUTION_API_URL, EVOLUTION_API_KEY, impName, claim.proxy);
+      if (!apply.ok) {
+        // ROLLBACK: libera proxy + deleta instância
+        await releaseProxyForInstance(newUuid).catch(() => null);
+        await supabase.from("whatsapp_instances").delete().eq("id", newUuid);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            code: "apply_failed",
+            error: `Falha ao aplicar proxy na Evolution: ${apply.body?.message || apply.status}`,
+            details: apply.body,
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Restart para o IP entrar em vigor
+      await fetch(`${EVOLUTION_API_URL}/instance/restart/${impName}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", apikey: EVOLUTION_API_KEY },
+      }).catch(() => null);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          instanceId: newUuid,
+          proxy: { id: claim.proxy.id, label: claim.proxy.label, host: claim.proxy.host },
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // === Reserva e aplica um proxy a uma instância JÁ conectada (sem precisar de QR novo) ===
     if (action === "assignProxy") {
       if (!instanceName) {
