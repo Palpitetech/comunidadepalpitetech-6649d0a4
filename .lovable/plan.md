@@ -1,109 +1,134 @@
 
 
-# Template "PIX Gerado" + link grupo VIP em Compra Aprovada
+# Varredura WhatsApp — Limpeza, Padronização e Otimizações
 
-## 1. Rota mascarada `/gerar-novo-pix/:slug`
+## Diagnóstico
 
-Nova página `src/pages/GerarNovoPix.tsx` registrada em `App.tsx` que recebe um slug de plano (`grupo-vip-lotofacil`, `mensal`, `anual`, `plano-anual-vip`), consulta `plans.checkout_link` no Supabase e redireciona via `window.location.replace`.
+**O que funciona bem:**
+- 13 sub-tabs respondem; a sub-sidebar e os pills mobile estão consistentes.
+- `ProxiesTab` (parser/dedupe) e `InstanciasTab` (CRUD/QR/swap proxy) estão sólidos.
+- `RetargetingPanelTab` mostra schedule correto com countdown.
+- Nenhum arquivo órfão dentro de `src/components/admin/whatsapp/` (todos os 16 arquivos são importados).
+- Edge functions WhatsApp (`process-queue`, `warming-run`, `warming-manual`, `evolution-proxy`, `group-blast*`, `group-member-webhook`, `sync-group-members`, `process-lead-retargeting`) estão todas referenciadas e ativas.
 
-- Tela mínima (logo + spinner + "Redirecionando para o pagamento seguro…") por 1s antes do redirect, para o usuário ver o domínio palpitetech.com.br carregando.
-- Slug inválido → mostra fallback com link para `/planos`.
-- Não exige autenticação (público).
-- URL final: `https://www.palpitetech.com.br/gerar-novo-pix/grupo-vip-lotofacil`.
+**Problemas encontrados:**
 
-## 2. Novo template "PIX Gerado" (1 mensagem com quebra dupla)
+### 1. Duplicação massiva entre 3 abas que leem `message_queue`
+| Aba | Lê | Diferencial real |
+|-----|----|------------------|
+| **Fila** | `message_queue` ordenado por `scheduled_at` | Inserção manual + Processar Fila + Retentar |
+| **Mensagens** | `message_queue` ordenado por `created_at` | Counters por status + busca por telefone + drawer detalhes |
+| **Logs Templates** | `message_queue` filtrado por `template_id IS NOT NULL` | Filter pills + drawer detalhes |
 
-Criar em `message_templates`:
+As 3 abas duplicam: `QueueRow` interface, `StatusBadge`, `Field`, `fmtDate`, fetch de templates+instances. **Logs Templates é praticamente um subset de Mensagens.**
 
-- **Nome:** `PIX Gerado - Pagamento pendente`
-- **event_trigger:** `pix_gerado` (já existe e dispara via trigger automática quando webhook Kirvano grava o evento)
-- **delay_enabled:** `false` · **delay_minutes:** `0` (envio imediato)
-- **is_active:** `true`
-- **Sem segmentação** (sem tags/planos restritos)
+### 2. Componentes utilitários duplicados em 4+ arquivos
+- `statusBadge` para mensagem (`sent`/`failed`/`sending`/`pending`) reescrito em `FilaTab`, `LogsTab`, `LogsTemplatesTab`, `MensagensTab`, `DisparoGrupoTab` → 5 cópias da mesma função.
+- `Field`/`fmtDate` duplicados em `MensagensTab` e `LogsTemplatesTab`.
+- `MetricCard`/`Tone`/`toneClass` duplicados entre `MensagensTab` (`CounterCard`) e `RetargetingPanelTab` (`MetricCard`).
+- `maskIp` duplicado em `InstanciasTab` e `ProxiesTab`.
+- `randomInt`/`delay` duplicados em `warming-run` e `warming-manual`.
 
-**Conteúdo principal** (com `\n\n---\n\n` separando bloco do código PIX):
+### 3. Type-safety relaxado sem motivo
+Várias queries usam `.from("message_queue" as any)` ou `.from("whatsapp_instances" as never)` mesmo quando os tipos já existem em `src/integrations/supabase/types.ts`. Espalha por `FilaTab`, `LogsTab`, `MensagensTab`, `LogsTemplatesTab`, `InstanciasTab`, `ProxiesTab`.
 
-```
-Olá {{nome}}, você está pertinho de receber todos os dias 15 palpites quentes da Lotofácil direto no seu WhatsApp 🍀
+### 4. UX pequena
+- `MensagensTab` está duplicada com `LogsTemplatesTab` (mesmo público interno, mesmo dado, dois lugares no menu).
+- `FilaTab` em desktop é tabela e tem ainda Dialog "Novo Envio Manual" — esse fluxo já existe em `DisparoManualTab` de forma muito mais rica. O dialog de Fila é redundante.
 
-Seu PIX de {{produto}} ({{valor}}) já foi gerado. Faça o pagamento e o acesso ao grupo VIP é liberado na hora.
+## Plano de execução
 
-Caso queira gerar um novo PIX ou trocar a forma de pagamento:
-{{link_novo_pix}}
+### A. Criar utilitários compartilhados (sem quebrar nada)
 
----
+Novos arquivos em `src/components/admin/whatsapp/shared/`:
 
-Código PIX copia e cola:
-{{pix_codigo}}
-```
+1. **`MessageStatusBadge.tsx`** — único `<MessageStatusBadge status={...} variant="long" | "short" />` que cobre os 4 estados (`sent`/`failed`/`sending`/`pending`) e o `StatusDot`.
+2. **`MetricCard.tsx`** — `<MetricCard icon label value tone active? onClick? />` reaproveitado por `MensagensTab` e `RetargetingPanelTab`. Inclui o helper `toneClass(tone)`.
+3. **`Field.tsx`** — `<Field label value />` (label esquerda, valor direita com `border-b`).
+4. **`format-date.ts`** — `fmtDate(d, format?)` com presets `"short"` (`dd/MM HH:mm`), `"full"` (`dd/MM/yy HH:mm`), `"time"` (`HH:mm`).
+5. **`mask-ip.ts`** — única `maskIp(ip)`.
+6. **`MessageDetailDialog.tsx`** — drawer compartilhado entre `MensagensTab` e `LogsTemplatesTab` (ou usado no que sobrar após consolidação — ver C).
 
-**10 variações** (geradas com leves trocas de abertura, ordem e tom — sempre preservando `{{nome}} {{produto}} {{valor}} {{link_novo_pix}} {{pix_codigo}}` e o separador `---` entre os dois blocos). Todas via `generate-message-variants`.
+### B. Refactor das abas existentes para consumir utilitários
 
-## 3. Novas variáveis no engine de templates
+Substituir nas 5 abas as cópias locais por imports dos novos utilitários. Sem mudar layout, sem mudar comportamento. Resultado esperado: ~-400 linhas redundantes.
 
-A trigger `trigger_queue_event_templates` hoje injeta `nome / telefone / email / produto / plano_nome / link_grupo_vip`. Vou expandir para também produzir:
+### C. Consolidar Mensagens + Logs Templates → única aba "Mensagens"
 
-- `{{valor}}` → `total_price` do payload Kirvano (formatado `R$ XX,XX`), passado em `events.metadata.total_price` pelo webhook
-- `{{link_novo_pix}}` → derivado do slug do plano: `https://www.palpitetech.com.br/gerar-novo-pix/<slug>` (lookup `plans.slug` via `plan_id` ou via offer mapping)
-- `{{pix_codigo}}` → `qrcode` do payload Kirvano, passado em `events.metadata.pix_codigo`
+`MensagensTab` já tem tudo que `LogsTemplatesTab` faz e mais:
+- Counters (Aguardando/Enviando/Enviadas/Erro)
+- Filtro por status + busca por telefone
+- Drawer com variáveis e erro
 
-**Webhook (`handle-kirvano-webhook/index.ts`)** será ajustado para gravar esses campos em `events.metadata` quando registrar `pix_gerado`:
+**Mudança:**
+- Adicionar em `MensagensTab` um pill toggle "Apenas templates" (filtra `template_id IS NOT NULL`) que cobre o caso de uso de "Logs Templates".
+- Remover `LogsTemplatesTab.tsx` e o item `"logs-templates"` de `WhatsAppSubSidebar` + `TAB_TITLES` em `AdminWhatsApp.tsx`.
 
-```ts
-await insertEvent(perfilIgnore.id, "pix_gerado", {
-  payment_method, total_price,
-  pix_codigo: payload?.payment?.qrcode ?? null,
-  pix_expires_at: payload?.payment?.expires_at ?? null,
-  plan_slug: <slug resolvido via offer_id>,
-});
-```
+Resultado: 1 aba em vez de 2; menos confusão; mesma funcionalidade preservada.
 
-**Trigger SQL (`trigger_queue_event_templates`)** atualizada para ler do `metadata` e do `plans.slug`, montando `link_novo_pix` e formatando `valor`.
+### D. Enxugar `FilaTab`
 
-## 4. Atualização dos templates "Compra Aprovada"
+`FilaTab` permanece, mas:
+- **Remove** o dialog "Novo Envio Manual" (redundante com `DisparoManualTab`). Mantém só o botão "Processar Fila" e a lista filtrável.
+- Renomeia o título para "Fila de Envio" e adiciona link visual "Para enviar para múltiplos contatos use Disparo Manual" no estado vazio.
+- Usa o novo `MessageStatusBadge` e `fmtDate`.
 
-Editar os 2 templates existentes para incluir o link do grupo VIP de assinantes:
+Resultado: -150 linhas e fluxo claro (Fila = monitor + retry; Disparo = composição).
 
-- **`Compra aprovada (Acesso ao App)`** → adicionar bloco antes do "Bons palpites":
-  ```
-  🎁 *Bônus exclusivo:* entre no nosso grupo VIP de assinantes para receber palpites diários da equipe:
-  https://www.palpitetech.com.br/g/grupo-vip-assinantes
-  ```
-- **`Compra aprovada (Grupo VIP Lotofácil)`** → o `{{link_grupo_vip}}` já está lá, mas hoje ele é puxado de `group_blast_configs.vip_group_link`. Vou **fazer UPDATE em `group_blast_configs`** setando `vip_group_link = 'https://www.palpitetech.com.br/g/grupo-vip-assinantes'` no config ativo mais antigo.
+### E. Tipagem e correções sem risco
 
-Também regenero variações desses 2 templates (se houver) preservando o novo link.
+- Trocar `"message_queue" as any` por `"message_queue"` (tipo já existe em `types.ts`). Idem para `whatsapp_instances`, `whatsapp_proxies`, `send_logs`, `warming_schedule`, `warming_logs`. Mantém apenas `as never`/`as any` onde a tabela realmente não está nos tipos.
+- Adicionar memoization (`useMemo`) em `MensagensTab.counts` e `RetargetingPanelTab.byDay`/`dailyRows` (recalculam a cada render hoje).
+- `process-queue`: o retry-loop espera 60s síncronos quando não há instância — em produção isso ocupa o worker desnecessariamente. Substituir por **um único select e early-return `pending` se nenhuma disponível** (o cron já roda a cada minuto, então o retry natural acontece).
 
-## 5. Detalhes técnicos
+### F. Padronização de edge functions WhatsApp
 
-**Arquivos novos/alterados:**
+Criar `supabase/functions/_shared/whatsapp-utils.ts` (Deno, importável por outras functions) com:
+- `corsHeaders` padrão
+- `randomInt(min, max)` / `delay(ms)`
+- `getEvolutionEnv()` → retorna `{ url, key }` ou lança erro 500 padronizado
+- `validateAdmin(req, supabase)` → padroniza o bloco de auth+role usado em `warming-manual` (e que pode ser reusado em `warming-run`).
 
-- `src/pages/GerarNovoPix.tsx` (novo) — página de redirect público
-- `src/App.tsx` — registrar rota `/gerar-novo-pix/:slug` (pública, fora do `ProtectedRoute`)
-- `supabase/functions/handle-kirvano-webhook/index.ts` — incluir `pix_codigo`, `total_price` formatado e `plan_slug` resolvido no `metadata` do evento `pix_gerado`
-- **Migration:** atualizar `trigger_queue_event_templates` adicionando as 3 variáveis novas (`valor`, `link_novo_pix`, `pix_codigo`) ao `jsonb_build_object`
+Sem reescrever nada: as functions atuais permanecem, só passam a importar dali.
 
-**Operações de dados (insert tool, sem migration):**
-- INSERT do template `PIX Gerado - Pagamento pendente`
-- INSERT das 10 variações em `message_template_variants`
-- UPDATE dos 2 templates de compra aprovada
-- UPDATE em `group_blast_configs` para setar `vip_group_link`
+## Detalhes técnicos
 
-**Fluxo end-to-end do PIX:**
-```text
-Cliente gera PIX no Kirvano
-  → webhook handle-kirvano-webhook (ev=pix_generated, action=ignore)
-  → INSERT events (event_type=pix_gerado, metadata={pix_codigo, valor, plan_slug, ...})
-  → trigger_queue_event_templates dispara
-  → queue_templates_for_event busca templates com event_trigger=pix_gerado
-  → INSERT em message_queue com variables resolvidas
-  → process-queue (cron) envia via Evolution API em ~30s
-```
+**Arquivos novos:**
+- `src/components/admin/whatsapp/shared/MessageStatusBadge.tsx`
+- `src/components/admin/whatsapp/shared/MetricCard.tsx`
+- `src/components/admin/whatsapp/shared/Field.tsx`
+- `src/components/admin/whatsapp/shared/format-date.ts`
+- `src/components/admin/whatsapp/shared/mask-ip.ts`
+- `src/components/admin/whatsapp/shared/MessageDetailDialog.tsx`
+- `supabase/functions/_shared/whatsapp-utils.ts`
 
-Como o template `Compra Aprovada` também dispara automaticamente em `sale_confirmed` (via mesma trigger), quando o cliente paga ele recebe primeiro a confirmação e logo depois a mensagem de boas-vindas com link do grupo VIP — exatamente o comportamento desejado.
+**Arquivos editados (refactor):**
+- `MensagensTab.tsx` — usa shared, ganha toggle "Apenas templates"
+- `FilaTab.tsx` — remove dialog manual, usa shared
+- `LogsTab.tsx` — usa shared
+- `DisparoGrupoTab.tsx` — usa `MessageStatusBadge`
+- `RetargetingPanelTab.tsx` — usa shared `MetricCard`
+- `InstanciasTab.tsx`, `ProxiesTab.tsx` — usam shared `maskIp`
+- `WhatsAppSubSidebar.tsx`, `AdminWhatsApp.tsx` — remove item `logs-templates`
+- `process-queue/index.ts` — remove retry síncrono
+- `warming-run/index.ts`, `warming-manual/index.ts`, `evolution-proxy/index.ts` — importam helpers compartilhados
 
-## Fora de escopo
+**Arquivos removidos:**
+- `src/components/admin/whatsapp/LogsTemplatesTab.tsx`
 
-- Tracking de clique no `/gerar-novo-pix/:slug` (pode ser adicionado depois com analytics).
-- Disparo de **2 mensagens separadas** para o código PIX (preferimos 1 mensagem com `---`, conforme aprovado).
-- Trocar o link do grupo VIP em outras tabelas/configs além de `group_blast_configs`.
+## O que NÃO vou mudar
+
+- Nenhuma alteração nas tabelas/triggers/RPCs do banco.
+- Nenhuma mudança de comportamento dos templates, fila, retargeting ou aquecimento.
+- Sub-sidebar continua igual exceto pela remoção de "Logs Templates".
+- Smart Links, Grupos, Disparo Manual, Disparo Grupo, Templates ficam intactos exceto por trocar o badge/utilitário.
+- O servidor Evolution offline continua sendo só impossibilidade de chamar a API — o admin de instâncias/proxies/templates funciona normal localmente.
+
+## Resultado esperado
+
+- **~600 linhas a menos** entre os 3 arquivos de fila/mensagens/logs-templates.
+- 1 ponto único para alterar visual de status badge / metric card / fmt date.
+- 1 aba a menos no menu (Logs Templates fundido em Mensagens).
+- Worker de `process-queue` libera mais rápido quando não há instâncias.
+- Evolution helpers compartilhados entre 4 functions Deno.
 
