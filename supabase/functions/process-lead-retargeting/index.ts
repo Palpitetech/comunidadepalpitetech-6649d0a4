@@ -301,6 +301,30 @@ async function processAll() {
   // Log estruturado para acompanhamento diário
   console.log("[process-lead-retargeting] run summary", JSON.stringify(result));
 
+  // Persistir métricas para o painel admin
+  const { error: runInsertErr } = await supabase
+    .from("lead_retargeting_runs")
+    .insert({
+      processed_templates: result.processed_templates,
+      enqueued: result.enqueued,
+      skipped: result.skipped,
+      skipped_dedupe: result.skipped_dedupe,
+      skipped_converted: result.skipped_converted,
+      skipped_paid_profile: result.skipped_paid_profile,
+      skipped_no_phone: result.skipped_no_phone,
+      blocked_by_db_constraint: result.blocked_by_db_constraint,
+      errors_dedupe_db: result.errors_dedupe_db,
+      errors_sales_db: result.errors_sales_db,
+      errors_insert_db: result.errors_insert_db,
+      errors: result.errors,
+    });
+  if (runInsertErr) {
+    console.error(
+      "[process-lead-retargeting] failed to persist run metrics",
+      runInsertErr.message
+    );
+  }
+
   return result;
 }
 
