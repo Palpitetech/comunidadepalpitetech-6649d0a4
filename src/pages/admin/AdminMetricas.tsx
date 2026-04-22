@@ -9,7 +9,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, CalendarIcon, Copy } from "lucide-react";
+import { Loader2, CalendarIcon, Copy, ShieldCheck } from "lucide-react";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useDashboardPeriod, PERIOD_OPTIONS, PeriodKey } from "@/hooks/useDashboardPeriod";
 import {
@@ -71,6 +72,16 @@ export default function AdminMetricas() {
   return (
     <AdminLayout pageTitle="Métricas">
       <div className="px-4 py-3 md:container md:py-6 space-y-5 max-w-6xl mx-auto">
+        {/* Atalho auditoria */}
+        <div className="flex justify-end">
+          <Button size="sm" variant="outline" asChild className="h-8 text-xs gap-1.5">
+            <Link to="/admin/metricas/auditoria-atribuicao">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Auditoria de Atribuição
+            </Link>
+          </Button>
+        </div>
+
         {/* Filtro de período */}
         <div className="flex flex-wrap gap-1.5 items-center">
           {PERIOD_OPTIONS.filter((o) => o.key !== "custom").map(({ key, label }) => (
