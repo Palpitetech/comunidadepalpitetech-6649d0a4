@@ -105,7 +105,7 @@ serve(async (req) => {
         email,
         password: randomPassword,
         email_confirm: false,
-        user_metadata: { nome, origem: lead.source || "lead_inbox_promote" },
+        user_metadata: { nome, origem: lead.slug || lead.utm_source || "lead_inbox_promote" },
       } as any);
 
       if (createError) return json({ error: `Erro ao criar usuário: ${createError.message}` }, 400);
