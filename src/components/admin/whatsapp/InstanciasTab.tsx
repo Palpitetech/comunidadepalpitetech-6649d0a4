@@ -390,8 +390,8 @@ export function InstanciasTab() {
       const { count: availableProxies } = await supabase
         .from("whatsapp_proxies" as any)
         .select("id", { count: "exact", head: true })
-        .eq("is_active", true)
-        .is("assigned_instance_id", null);
+        .eq("status", "available")
+        .is("instance_id", null);
 
       if (!availableProxies || availableProxies < 1) {
         toast.warning(
