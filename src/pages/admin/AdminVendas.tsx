@@ -200,6 +200,20 @@ export default function AdminVendas() {
 
   const customerName = (log: WebhookLog) => log.raw_payload?.customer?.name || null;
   const totalPrice = (log: WebhookLog) => log.raw_payload?.total_price || null;
+  const pixCodeFromEvents = (events: WebhookLog[]): string | null => {
+    const pixEvent = events.find((e) => e.event === "PIX_GENERATED");
+    return pixEvent?.raw_payload?.payment?.qrcode || null;
+  };
+
+  const copyPixCode = async (e: React.MouseEvent, code: string) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.success("Código PIX copiado!");
+    } catch {
+      toast.error("Erro ao copiar");
+    }
+  };
 
   const getFilterCount = (key: FilterTab) => stats[key === "todos" ? "total" : key];
 
@@ -305,17 +319,20 @@ export default function AdminVendas() {
 
         {/* Sales list */}
         <div className="space-y-0.5">
-          {paginatedSales.map(({ key, latest }) => {
+          {paginatedSales.map(({ key, events, latest }) => {
             const evInfo = getEventInfo(latest.event);
             const name = customerName(latest);
             const price = totalPrice(latest);
+            const pixCode = pixCodeFromEvents(events);
             return (
-              <button
+              <div
                 key={key}
-                className="flex items-center gap-3 w-full text-left px-3 py-2 rounded-lg active:bg-muted/60 transition-colors border-b border-border/30 last:border-0"
-                onClick={() => setSelectedLog(latest)}
+                className="flex items-center gap-3 w-full px-3 py-2 rounded-lg active:bg-muted/60 transition-colors border-b border-border/30 last:border-0"
               >
-                <div className="flex-1 min-w-0">
+                <button
+                  className="flex-1 min-w-0 text-left"
+                  onClick={() => setSelectedLog(latest)}
+                >
                   <p className="text-sm font-medium truncate">{name || latest.email || "Sem identificação"}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 inline-flex", evInfo.color)}>
@@ -327,9 +344,21 @@ export default function AdminVendas() {
                       </span>
                     )}
                   </div>
-                </div>
+                </button>
+                {pixCode && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2 gap-1 shrink-0"
+                    onClick={(e) => copyPixCode(e, pixCode)}
+                    title="Copiar código PIX"
+                  >
+                    <QrCode className="h-3.5 w-3.5" />
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                )}
                 <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
-              </button>
+              </div>
             );
           })}
           {filteredSales.length === 0 && (
@@ -454,6 +483,7 @@ export default function AdminVendas() {
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Resultado</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Data</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Eventos</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">PIX</TableHead>
                 <TableHead className="w-8"></TableHead>
               </TableRow>
             </TableHeader>
@@ -463,6 +493,7 @@ export default function AdminVendas() {
                 const name = customerName(latest);
                 const price = totalPrice(latest);
                 const resultInfo = getResultInfo(latest.process_result);
+                const pixCode = pixCodeFromEvents(events);
                 return (
                   <TableRow key={key} className="cursor-pointer group" onClick={() => setSelectedLog(latest)}>
                     <TableCell className="pl-6 py-2.5">
@@ -498,6 +529,23 @@ export default function AdminVendas() {
                     <TableCell className="py-2.5 text-xs text-muted-foreground text-center tabular-nums">
                       {events.length}
                     </TableCell>
+                    <TableCell className="py-2.5">
+                      {pixCode ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2 gap-1 text-xs"
+                          onClick={(e) => copyPixCode(e, pixCode)}
+                          title="Copiar código PIX"
+                        >
+                          <QrCode className="h-3 w-3" />
+                          <Copy className="h-3 w-3" />
+                          Copiar
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     <TableCell className="py-2.5 pr-4">
                       <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
                     </TableCell>
@@ -506,7 +554,7 @@ export default function AdminVendas() {
               })}
               {filteredSales.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-16 text-sm text-muted-foreground">
+                  <TableCell colSpan={10} className="text-center py-16 text-sm text-muted-foreground">
                     {search ? "Nenhuma venda encontrada" : "Nenhuma venda registrada"}
                   </TableCell>
                 </TableRow>
