@@ -483,6 +483,7 @@ export default function AdminVendas() {
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Resultado</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Data</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Eventos</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">PIX</TableHead>
                 <TableHead className="w-8"></TableHead>
               </TableRow>
             </TableHeader>
