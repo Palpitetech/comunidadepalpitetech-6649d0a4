@@ -7,9 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, Users, UserCheck, ChevronRight, ChevronLeft, X, ArrowLeft, Timer, CheckCircle2, AlertCircle, Circle } from "lucide-react";
+import { Search, Loader2, Users, UserCheck, ChevronRight, ChevronLeft, X, ArrowLeft, Timer, CheckCircle2, AlertCircle, Circle, Inbox, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
+import { LeadDetailSheet, type LeadInbox } from "@/components/admin/LeadDetailSheet";
 import { TagFilterPopover } from "@/components/admin/TagFilterPopover";
 import { cn } from "@/lib/utils";
 
@@ -65,7 +66,7 @@ const isPaidActive = (u: UserWithPlan) =>
 const isTrialActive = (u: UserWithPlan) =>
   u.plan?.slug === TRIAL_SLUG && u.status_assinatura === "ativa";
 
-type FilterPrincipal = "todos" | "pagos" | "trial";
+type FilterPrincipal = "todos" | "pagos" | "trial" | "leads";
 type FilterSecundario =
   | "nao_verificados"
   | "verificados"
@@ -85,6 +86,7 @@ const FILTROS_PRINCIPAIS: { key: FilterPrincipal; label: string; icon: typeof Us
   { key: "todos", label: "Todos", icon: Users },
   { key: "pagos", label: "Pagos", icon: UserCheck },
   { key: "trial", label: "Trial", icon: Timer },
+  { key: "leads", label: "Leads", icon: Inbox },
 ];
 
 type SubFilterKey = Exclude<FilterSecundario, null>;
@@ -151,11 +153,14 @@ const isCelularOk = (u: UserWithPlan) => {
 export default function AdminUsuarios() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<UserWithPlan[]>([]);
+  const [leads, setLeads] = useState<LeadInbox[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserWithPlan | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<LeadInbox | null>(null);
+  const [leadSheetOpen, setLeadSheetOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterPrincipal>("todos");
   const [activeSubFilter, setActiveSubFilter] = useState<FilterSecundario>(null);
   const [page, setPage] = useState(0);
@@ -166,9 +171,18 @@ export default function AdminUsuarios() {
 
   const fetchData = async () => {
     try {
-      const [{ data: plansData, error: plansError }, { data: usersData, error: usersError }] = await Promise.all([
+      const [
+        { data: plansData, error: plansError },
+        { data: usersData, error: usersError },
+        { data: leadsData },
+      ] = await Promise.all([
         supabase.from("plans").select("*").order("display_order"),
         supabase.from("perfis").select("*").eq("is_bot", false).order("created_at", { ascending: false }),
+        supabase
+          .from("leads_inbox" as any)
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(500),
       ]);
 
       if (plansError) throw plansError;
@@ -188,6 +202,7 @@ export default function AdminUsuarios() {
       }));
 
       setUsers(usersWithPlans);
+      setLeads(((leadsData as any) || []) as LeadInbox[]);
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
       toast.error("Erro ao carregar usuários");
