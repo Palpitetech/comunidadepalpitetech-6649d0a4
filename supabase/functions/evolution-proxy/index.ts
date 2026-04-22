@@ -13,6 +13,67 @@ function getSupabase() {
   );
 }
 
+/** Aplica um proxy à instância na Evolution API */
+async function applyProxyToInstance(
+  evolutionUrl: string,
+  evolutionKey: string,
+  instanceName: string,
+  proxy: { host: string; port: number; protocol: string; username?: string | null; password?: string | null } | null
+): Promise<{ ok: boolean; status: number; body: any }> {
+  const url = `${evolutionUrl}/proxy/set/${instanceName}`;
+  const body = proxy
+    ? {
+        enabled: true,
+        proxy: {
+          host: proxy.host,
+          port: String(proxy.port),
+          protocol: proxy.protocol,
+          username: proxy.username || "",
+          password: proxy.password || "",
+        },
+      }
+    : {
+        enabled: false,
+        proxy: { host: "", port: "80", protocol: "http", username: "", password: "" },
+      };
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: evolutionKey },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, status: res.status, body: data };
+}
+
+/** Lookup instance UUID by evolution_instance_id */
+async function getInstanceUuid(evolutionInstanceId: string): Promise<string | null> {
+  const supabase = getSupabase();
+  const { data } = await supabase
+    .from("whatsapp_instances")
+    .select("id")
+    .eq("evolution_instance_id", evolutionInstanceId)
+    .maybeSingle();
+  return data?.id ?? null;
+}
+
+/** Reserva proxy para a instância (atomic claim) */
+async function claimProxyForInstance(instanceUuid: string): Promise<
+  | { success: true; proxy: { id: string; label: string; protocol: string; host: string; port: number; username: string | null; password: string | null }; reused: boolean }
+  | { success: false; error: string }
+> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase.rpc("claim_proxy_for_instance", { p_instance_id: instanceUuid });
+  if (error) return { success: false, error: error.message };
+  if (!data?.success) return { success: false, error: data?.error || "claim_failed" };
+  return { success: true, proxy: data.proxy, reused: !!data.reused };
+}
+
+async function releaseProxyForInstance(instanceUuid: string) {
+  const supabase = getSupabase();
+  await supabase.rpc("release_proxy_for_instance", { p_instance_id: instanceUuid });
+}
+
 /** Auto-configure the group-member-webhook on an instance if not yet done */
 async function ensureWebhookConfigured(
   instanceName: string,
@@ -86,6 +147,65 @@ Deno.serve(async (req) => {
     const reqBody = await req.json();
     const { action, instanceName, number, text } = reqBody;
 
+    // === Proxy management actions (não chamam Evolution direto, ou chamam de forma especial) ===
+    if (action === "testProxy") {
+      // Testa um proxy fazendo GET https://api.ipify.org via Deno.createHttpClient
+      const { host, port, protocol, username, password } = reqBody;
+      if (!host || !port) {
+        return new Response(
+          JSON.stringify({ success: false, error: "host e port obrigatórios" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      try {
+        const auth = username && password ? `${encodeURIComponent(username)}:${encodeURIComponent(password)}@` : "";
+        const proxyUrl = `${protocol || "socks5"}://${auth}${host}:${port}`;
+        // @ts-ignore Deno.createHttpClient is unstable
+        const client = (Deno as any).createHttpClient ? (Deno as any).createHttpClient({ proxy: { url: proxyUrl } }) : undefined;
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 12000);
+        const res = await fetch("https://api.ipify.org?format=json", {
+          // @ts-ignore client option
+          client,
+          signal: ctrl.signal,
+        });
+        clearTimeout(t);
+        const data = await res.json();
+        return new Response(
+          JSON.stringify({ success: true, ip: data?.ip, status: res.status }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } catch (err: any) {
+        return new Response(
+          JSON.stringify({ success: false, error: err?.message || "Falha ao testar proxy" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    if (action === "swapProxy") {
+      // Libera proxy atual da instância (próximo connect reserva um novo)
+      if (!instanceName) {
+        return new Response(
+          JSON.stringify({ error: "instanceName obrigatório" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const uuid = await getInstanceUuid(instanceName);
+      if (!uuid) {
+        return new Response(
+          JSON.stringify({ error: "Instância não encontrada" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      await applyProxyToInstance(EVOLUTION_API_URL, EVOLUTION_API_KEY, instanceName, null).catch(() => null);
+      await releaseProxyForInstance(uuid);
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       apikey: EVOLUTION_API_KEY,
@@ -112,23 +232,31 @@ Deno.serve(async (req) => {
       case "logout": {
         url = `${EVOLUTION_API_URL}/instance/logout/${instanceName}`;
         method = "DELETE";
-        // Reset webhook_configured on logout
+        // Reset webhook_configured on logout + libera proxy
         const supabase = getSupabase();
+        const uuid = await getInstanceUuid(instanceName);
         await supabase
           .from("whatsapp_instances")
           .update({ webhook_configured: false })
           .eq("evolution_instance_id", instanceName);
+        if (uuid) {
+          await applyProxyToInstance(EVOLUTION_API_URL, EVOLUTION_API_KEY, instanceName, null).catch(() => null);
+          await releaseProxyForInstance(uuid);
+        }
         break;
       }
       case "delete": {
         url = `${EVOLUTION_API_URL}/instance/delete/${instanceName}`;
         method = "DELETE";
-        // Reset webhook_configured on delete
         const supabaseDel = getSupabase();
+        const uuidDel = await getInstanceUuid(instanceName);
         await supabaseDel
           .from("whatsapp_instances")
           .update({ webhook_configured: false })
           .eq("evolution_instance_id", instanceName);
+        if (uuidDel) {
+          await releaseProxyForInstance(uuidDel);
+        }
         break;
       }
       case "sendText":
@@ -169,6 +297,39 @@ Deno.serve(async (req) => {
         );
     }
 
+    // === Antes de connect: reserva proxy e aplica na Evolution ===
+    if (action === "connect" && instanceName) {
+      const uuid = await getInstanceUuid(instanceName);
+      if (!uuid) {
+        return new Response(
+          JSON.stringify({ error: "Instância não cadastrada no banco" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const claim = await claimProxyForInstance(uuid);
+      if (!claim.success) {
+        if (claim.error === "no_proxy_available") {
+          return new Response(
+            JSON.stringify({
+              error: "Sem proxy disponível. Compre novos proxies na IPRoyal e adicione em WhatsApp → Proxies.",
+              code: "no_proxy_available",
+            }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        return new Response(
+          JSON.stringify({ error: `Falha ao reservar proxy: ${claim.error}` }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      // Aplica o proxy na instância (mesmo se reused, garante que está aplicado)
+      const apply = await applyProxyToInstance(EVOLUTION_API_URL, EVOLUTION_API_KEY, instanceName, claim.proxy);
+      if (!apply.ok) {
+        console.error(`[evolution-proxy] Falha ao aplicar proxy ${claim.proxy.id} em ${instanceName}:`, apply.body);
+        // Não bloqueia a tentativa de connect, mas reporta no log
+      }
+    }
+
     const res = await fetch(url, { method, headers, body });
     const data = await res.json().catch(() => ({}));
 
@@ -181,10 +342,8 @@ Deno.serve(async (req) => {
 
     // Auto-configure webhook when instance connects successfully
     if (action === "connect" && instanceName) {
-      // If no QR returned, instance is already connected → configure webhook
       const base64 = data?.base64 || data?.qrcode?.base64 || data?.qr || null;
       if (!base64) {
-        // Already connected, ensure webhook is set
         ensureWebhookConfigured(instanceName, EVOLUTION_API_URL, EVOLUTION_API_KEY).catch(console.error);
       }
     }
