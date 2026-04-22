@@ -504,7 +504,7 @@ serve(async (req) => {
         email_confirm: false,
         user_metadata: {
           nome: nome.trim(),
-          origem: source || "webhook",
+          origem: slugClean || "webhook",
         },
       } as any);
 
@@ -590,8 +590,8 @@ serve(async (req) => {
 
     const updatePayload: Record<string, unknown> = { tags: mergedTags };
     if (nome.trim() && isNew) updatePayload.nome = nome.trim();
-    if (utm_source && !profileData?.utm_source) {
-      updatePayload.utm_source = utm_source;
+    if (utmSourceClean && !profileData?.utm_source) {
+      updatePayload.utm_source = utmSourceClean;
     }
 
     const { error: updateError } = await supabaseAdmin
