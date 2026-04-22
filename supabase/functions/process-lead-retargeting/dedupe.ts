@@ -89,27 +89,16 @@ export async function isEnqueueAllowed(
  * a query de contagem usada pela função de retargeting.
  *
  * Aplica `.in("status", statuses)` apenas quando há filtro definido.
+ *
+ * Tipado de forma permissiva (`any`) porque o builder do supabase-js é
+ * fluente/encadeável; tipos rígidos quebram com mocks parciais nos testes.
  */
-type GteResult = Promise<{
-  count: number | null;
-  error: { message: string } | null;
-}>;
-type GteBuilder = {
-  gte: (col: string, val: string) => GteResult;
-  in?: (col: string, vals: string[]) => GteBuilder;
-};
-type EqBuilder = {
-  eq: (col: string, val: string) => EqBuilder;
-} & GteBuilder;
+// deno-lint-ignore no-explicit-any
+type SupabaseLike = { from: (table: string) => any };
 
-export function makeSupabaseDedupeClient(supabase: {
-  from: (table: string) => {
-    select: (
-      cols: string,
-      opts: { count: "exact"; head: true }
-    ) => EqBuilder;
-  };
-}): DedupeQueueClient {
+export function makeSupabaseDedupeClient(
+  supabase: SupabaseLike,
+): DedupeQueueClient {
   return {
     async countRecentForTemplatePhone({
       templateId,
@@ -117,13 +106,14 @@ export function makeSupabaseDedupeClient(supabase: {
       sinceIso,
       statuses,
     }) {
-      let q: EqBuilder = supabase
+      // deno-lint-ignore no-explicit-any
+      let q: any = supabase
         .from("message_queue")
         .select("id", { count: "exact", head: true })
         .eq("template_id", templateId)
         .eq("recipient_phone", phone);
 
-      if (statuses && statuses.length > 0 && q.in) {
+      if (statuses && statuses.length > 0 && typeof q.in === "function") {
         q = q.in("status", statuses);
       }
 
