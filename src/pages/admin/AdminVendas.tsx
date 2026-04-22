@@ -529,6 +529,23 @@ export default function AdminVendas() {
                     <TableCell className="py-2.5 text-xs text-muted-foreground text-center tabular-nums">
                       {events.length}
                     </TableCell>
+                    <TableCell className="py-2.5">
+                      {pixCode ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2 gap-1 text-xs"
+                          onClick={(e) => copyPixCode(e, pixCode)}
+                          title="Copiar código PIX"
+                        >
+                          <QrCode className="h-3 w-3" />
+                          <Copy className="h-3 w-3" />
+                          Copiar
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     <TableCell className="py-2.5 pr-4">
                       <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
                     </TableCell>
@@ -537,7 +554,7 @@ export default function AdminVendas() {
               })}
               {filteredSales.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-16 text-sm text-muted-foreground">
+                  <TableCell colSpan={10} className="text-center py-16 text-sm text-muted-foreground">
                     {search ? "Nenhuma venda encontrada" : "Nenhuma venda registrada"}
                   </TableCell>
                 </TableRow>
