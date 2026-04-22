@@ -3,9 +3,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, TrendingUp, ShieldAlert, AlertTriangle, Inbox } from "lucide-react";
-import { format, startOfDay, subDays } from "date-fns";
+import { Loader2, RefreshCw, TrendingUp, ShieldAlert, AlertTriangle, Inbox, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { format, startOfDay, subDays, formatDistanceToNowStrict } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+interface ScheduleInfo {
+  jobid: number;
+  jobname: string;
+  schedule: string;
+  active: boolean;
+  last_ran_at: string | null;
+  next_run_at: string | null;
+}
+
+function describeSchedule(schedule: string): string {
+  const m = schedule.match(/^\*\/(\d+)\s+\*\s+\*\s+\*\s+\*$/);
+  if (m) return `A cada ${m[1]} minuto${m[1] === "1" ? "" : "s"}`;
+  return schedule;
+}
 
 interface RunRow {
   id: string;
@@ -33,23 +48,42 @@ interface DailyAgg {
 export function RetargetingPanelTab() {
   const [loading, setLoading] = useState(true);
   const [runs, setRuns] = useState<RunRow[]>([]);
+  const [schedule, setSchedule] = useState<ScheduleInfo | null>(null);
+  const [now, setNow] = useState(() => new Date());
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     const since = subDays(new Date(), 7).toISOString();
-    const { data, error } = await supabase
+
+    const runsRes = await supabase
       .from("lead_retargeting_runs" as never)
       .select("*")
       .gte("ran_at", since)
       .order("ran_at", { ascending: false })
       .limit(200);
-    if (!error && data) setRuns(data as unknown as RunRow[]);
+    if (!runsRes.error && runsRes.data) setRuns(runsRes.data as unknown as RunRow[]);
+
+    const schedRes = await (supabase.rpc as unknown as (
+      fn: string
+    ) => Promise<{ data: unknown; error: unknown }>)("get_lead_retargeting_schedule");
+    if (!schedRes.error && Array.isArray(schedRes.data) && schedRes.data.length > 0) {
+      setSchedule(schedRes.data[0] as ScheduleInfo);
+    } else {
+      setSchedule(null);
+    }
+
     setLoading(false);
   }, []);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Tick a cada 30s para atualizar contagem regressiva da próxima execução
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   // Aggregate by day
   const byDay = new Map<string, DailyAgg>();
@@ -96,6 +130,9 @@ export function RetargetingPanelTab() {
           <RefreshCw className="h-3.5 w-3.5" /> Atualizar
         </Button>
       </div>
+
+      {/* Status do agendamento */}
+      <ScheduleStatusCard schedule={schedule} now={now} />
 
       {/* Hoje */}
       <div>
@@ -252,5 +289,91 @@ function Stat({ label, value, tone }: { label: string; value: number; tone: Tone
       <p className="text-sm font-bold tabular-nums leading-none">{value}</p>
       <p className="text-[9px] uppercase tracking-wide opacity-80 mt-0.5">{label}</p>
     </div>
+  );
+}
+
+function ScheduleStatusCard({
+  schedule,
+  now,
+}: {
+  schedule: ScheduleInfo | null;
+  now: Date;
+}) {
+  if (!schedule) {
+    return (
+      <Card className="p-3 flex items-center gap-2 border-amber-500/40 bg-amber-500/5">
+        <XCircle className="h-4 w-4 text-amber-600 shrink-0" />
+        <p className="text-xs text-amber-700">
+          Nenhum agendamento automático foi encontrado para o retargeting.
+        </p>
+      </Card>
+    );
+  }
+
+  const next = schedule.next_run_at ? new Date(schedule.next_run_at) : null;
+  const last = schedule.last_ran_at ? new Date(schedule.last_ran_at) : null;
+  const inFuture = next && next.getTime() > now.getTime();
+  const countdown = inFuture
+    ? formatDistanceToNowStrict(next, { locale: ptBR, addSuffix: false })
+    : null;
+
+  return (
+    <Card className="p-3 sm:p-4 border-primary/30 bg-primary/5">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-5">
+        <div className="flex items-center gap-2 min-w-0">
+          {schedule.active ? (
+            <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+          ) : (
+            <XCircle className="h-4 w-4 text-red-600 shrink-0" />
+          )}
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Frequência</p>
+            <p className="text-sm font-semibold leading-tight truncate">
+              {describeSchedule(schedule.schedule)}
+            </p>
+            <p className="text-[10px] text-muted-foreground font-mono leading-tight">
+              {schedule.schedule} {schedule.active ? "" : "(inativo)"}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 min-w-0">
+          <Clock className="h-4 w-4 text-primary shrink-0" />
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              Próxima execução
+            </p>
+            <p className="text-sm font-semibold leading-tight tabular-nums">
+              {next ? format(next, "HH:mm", { locale: ptBR }) : "—"}
+              {countdown && (
+                <span className="ml-1 text-xs font-normal text-muted-foreground">
+                  (em {countdown})
+                </span>
+              )}
+            </p>
+            <p className="text-[10px] text-muted-foreground leading-tight">
+              {next ? format(next, "dd/MM 'às' HH:mm:ss", { locale: ptBR }) : "indisponível"}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 min-w-0">
+          <RefreshCw className="h-4 w-4 text-muted-foreground shrink-0" />
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              Última execução
+            </p>
+            <p className="text-sm font-semibold leading-tight tabular-nums">
+              {last ? format(last, "HH:mm:ss", { locale: ptBR }) : "—"}
+            </p>
+            <p className="text-[10px] text-muted-foreground leading-tight">
+              {last
+                ? `há ${formatDistanceToNowStrict(last, { locale: ptBR })}`
+                : "nunca executou"}
+            </p>
+          </div>
+        </div>
+      </div>
+    </Card>
   );
 }
