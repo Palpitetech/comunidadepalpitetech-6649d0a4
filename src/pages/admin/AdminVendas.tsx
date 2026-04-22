@@ -200,6 +200,20 @@ export default function AdminVendas() {
 
   const customerName = (log: WebhookLog) => log.raw_payload?.customer?.name || null;
   const totalPrice = (log: WebhookLog) => log.raw_payload?.total_price || null;
+  const pixCodeFromEvents = (events: WebhookLog[]): string | null => {
+    const pixEvent = events.find((e) => e.event === "PIX_GENERATED");
+    return pixEvent?.raw_payload?.payment?.qrcode || null;
+  };
+
+  const copyPixCode = async (e: React.MouseEvent, code: string) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.success("Código PIX copiado!");
+    } catch {
+      toast.error("Erro ao copiar");
+    }
+  };
 
   const getFilterCount = (key: FilterTab) => stats[key === "todos" ? "total" : key];
 
