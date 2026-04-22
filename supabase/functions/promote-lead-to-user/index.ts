@@ -171,6 +171,7 @@ serve(async (req) => {
           p_user_id: userId,
           p_new_attr: promoteAttr,
           p_mark_purchase: false,
+          p_source: "lead_promote",
         });
       }
     } catch (e) {

@@ -639,6 +639,7 @@ serve(async (req) => {
           p_user_id: userId,
           p_new_attr: leadAttr,
           p_mark_purchase: false,
+          p_source: "lead_webhook",
         });
       }
     } catch (e) {
