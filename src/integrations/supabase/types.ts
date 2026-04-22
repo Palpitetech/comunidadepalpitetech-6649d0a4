@@ -1622,6 +1622,57 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_retargeting_runs: {
+        Row: {
+          blocked_by_db_constraint: number
+          enqueued: number
+          errors: Json
+          errors_dedupe_db: number
+          errors_insert_db: number
+          errors_sales_db: number
+          id: string
+          processed_templates: number
+          ran_at: string
+          skipped: number
+          skipped_converted: number
+          skipped_dedupe: number
+          skipped_no_phone: number
+          skipped_paid_profile: number
+        }
+        Insert: {
+          blocked_by_db_constraint?: number
+          enqueued?: number
+          errors?: Json
+          errors_dedupe_db?: number
+          errors_insert_db?: number
+          errors_sales_db?: number
+          id?: string
+          processed_templates?: number
+          ran_at?: string
+          skipped?: number
+          skipped_converted?: number
+          skipped_dedupe?: number
+          skipped_no_phone?: number
+          skipped_paid_profile?: number
+        }
+        Update: {
+          blocked_by_db_constraint?: number
+          enqueued?: number
+          errors?: Json
+          errors_dedupe_db?: number
+          errors_insert_db?: number
+          errors_sales_db?: number
+          id?: string
+          processed_templates?: number
+          ran_at?: string
+          skipped?: number
+          skipped_converted?: number
+          skipped_dedupe?: number
+          skipped_no_phone?: number
+          skipped_paid_profile?: number
+        }
+        Relationships: []
+      }
       lead_webhooks: {
         Row: {
           created_at: string | null
