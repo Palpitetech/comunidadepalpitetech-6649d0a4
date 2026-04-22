@@ -257,9 +257,7 @@ async function processAll() {
     return { processed_templates: 0, enqueued: 0, errors: [] };
   }
 
-  let enqueued = 0;
-  let skipped = 0;
-  const errors: string[] = [];
+  const totals = emptyMetrics();
 
   for (const tpl of templates) {
     const tplRow: TemplateRow = {
@@ -272,17 +270,38 @@ async function processAll() {
     if (tplRow.include_tags.length === 0) continue;
 
     const r = await processOneTemplate(supabase, tplRow);
-    enqueued += r.enqueued;
-    skipped += r.skipped;
-    errors.push(...r.errors);
+    totals.enqueued += r.enqueued;
+    totals.skipped += r.skipped;
+    totals.skipped_dedupe += r.skipped_dedupe;
+    totals.skipped_converted += r.skipped_converted;
+    totals.skipped_paid_profile += r.skipped_paid_profile;
+    totals.skipped_no_phone += r.skipped_no_phone;
+    totals.blocked_by_db_constraint += r.blocked_by_db_constraint;
+    totals.errors_dedupe_db += r.errors_dedupe_db;
+    totals.errors_sales_db += r.errors_sales_db;
+    totals.errors_insert_db += r.errors_insert_db;
+    totals.errors.push(...r.errors);
   }
 
-  return {
+  const result = {
     processed_templates: templates.length,
-    enqueued,
-    skipped,
-    errors,
+    enqueued: totals.enqueued,
+    skipped: totals.skipped,
+    skipped_dedupe: totals.skipped_dedupe,
+    skipped_converted: totals.skipped_converted,
+    skipped_paid_profile: totals.skipped_paid_profile,
+    skipped_no_phone: totals.skipped_no_phone,
+    blocked_by_db_constraint: totals.blocked_by_db_constraint,
+    errors_dedupe_db: totals.errors_dedupe_db,
+    errors_sales_db: totals.errors_sales_db,
+    errors_insert_db: totals.errors_insert_db,
+    errors: totals.errors,
   };
+
+  // Log estruturado para acompanhamento diário
+  console.log("[process-lead-retargeting] run summary", JSON.stringify(result));
+
+  return result;
 }
 
 Deno.serve(async (req) => {
