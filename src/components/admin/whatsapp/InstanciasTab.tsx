@@ -265,6 +265,30 @@ export function InstanciasTab() {
     }
   };
 
+  const handleAssignProxy = async (inst: WhatsAppInstance) => {
+    setInstanceAction(inst.id, "assign");
+    try {
+      const { data, error } = await supabase.functions.invoke("evolution-proxy", {
+        body: { action: "assignProxy", instanceName: inst.evolution_instance_id },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Proxy atribuído: ${data?.proxy?.label || "OK"}`, {
+        description: "A instância foi reiniciada para aplicar o novo IP.",
+      });
+      fetchInstances();
+    } catch (err: any) {
+      const msg = err.message || "Erro ao atribuir proxy";
+      if (msg.includes("Sem proxy") || msg.includes("no_proxy_available")) {
+        toast.error("Sem proxy disponível", { description: "Adicione novos proxies em WhatsApp → Proxies." });
+      } else {
+        toast.error(msg);
+      }
+    } finally {
+      setInstanceAction(inst.id, null);
+    }
+  };
+
   const handleCheckStatus = async (inst: WhatsAppInstance) => {
     setInstanceAction(inst.id, "status");
     try {
@@ -622,7 +646,27 @@ export function InstanciasTab() {
                             )}
                           </span>
                         ) : (
-                          <span className="text-muted-foreground">Sem proxy</span>
+                          <>
+                            <span className="text-muted-foreground">Sem proxy</span>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-6 px-2 ml-auto text-xs"
+                                  onClick={() => handleAssignProxy(inst)}
+                                  disabled={!!currentAction}
+                                >
+                                  {currentAction === "assign" ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    "Atribuir proxy"
+                                  )}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Reserva e aplica um proxy nesta instância (reinicia)</TooltipContent>
+                            </Tooltip>
+                          </>
                         )}
                         {proxy && (
                           <Tooltip>

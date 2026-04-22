@@ -276,6 +276,49 @@ Deno.serve(async (req) => {
       );
     }
 
+    // === Reserva e aplica um proxy a uma instância JÁ conectada (sem precisar de QR novo) ===
+    if (action === "assignProxy") {
+      if (!instanceName) {
+        return new Response(
+          JSON.stringify({ error: "instanceName obrigatório" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const uuid = await getInstanceUuid(instanceName);
+      if (!uuid) {
+        return new Response(
+          JSON.stringify({ error: "Instância não cadastrada no banco" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const claim = await claimProxyForInstance(uuid);
+      if (!claim.success) {
+        const status = claim.error === "no_proxy_available" ? 409 : 500;
+        return new Response(
+          JSON.stringify({ error: claim.error === "no_proxy_available" ? "Sem proxy disponível." : `Falha ao reservar proxy: ${claim.error}`, code: claim.error }),
+          { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const apply = await applyProxyToInstance(EVOLUTION_API_URL, EVOLUTION_API_KEY, instanceName, claim.proxy);
+      if (!apply.ok) {
+        // rollback do claim
+        await releaseProxyForInstance(uuid).catch(() => null);
+        return new Response(
+          JSON.stringify({ error: `Falha ao aplicar proxy na Evolution: ${apply.body?.message || apply.status}`, details: apply.body }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      // Reinicia a instância para o proxy passar a vigorar
+      await fetch(`${EVOLUTION_API_URL}/instance/restart/${instanceName}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", apikey: EVOLUTION_API_KEY },
+      }).catch(() => null);
+      return new Response(
+        JSON.stringify({ success: true, proxy: { id: claim.proxy.id, label: claim.proxy.label, host: claim.proxy.host }, reused: claim.reused }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       apikey: EVOLUTION_API_KEY,
