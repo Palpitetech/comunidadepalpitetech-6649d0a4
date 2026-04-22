@@ -243,11 +243,13 @@ export default function Integracoes() {
 Content-Type: application/json
 
 {
-  "nome": "João Silva",
-  "email": "joao@email.com",
-  "celular": "11999999999",
+  "nome": "João Silva",        // opcional
+  "email": "joao@email.com",   // opcional
+  "celular": "11999999999",    // opcional
   "tags": ["tag_extra"],
-  "source": "nome-da-pagina"
+  "source": "nome-da-pagina",
+  "utm_source": "instagram",
+  "pagina_origem": "https://meusite.com/promo"
 }`;
 
   if (loading) {
