@@ -341,11 +341,12 @@ export function ProxiesTab() {
         continue;
       }
       const result = parseProxyLine(line, bulkFormat);
-      if (!result.ok) {
+      if (result.ok === false) {
         invalidLines.push({ line: i + 1, reason: result.reason });
         continue;
       }
-      const key = proxyDedupKey(result.proxy);
+      const proxy = result.proxy;
+      const key = proxyDedupKey(proxy);
       if (seenInBatch.has(key)) {
         dupInBatch++;
         continue;
@@ -355,7 +356,7 @@ export function ProxiesTab() {
         continue;
       }
       seenInBatch.add(key);
-      valid.push(result.proxy);
+      valid.push(proxy);
     }
     return { valid, invalidLines, dupInBatch, dupInDb, skippedHeader };
   }, [bulkText, bulkFormat, existingDedupKeys]);
