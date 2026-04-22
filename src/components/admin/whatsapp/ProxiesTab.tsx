@@ -62,6 +62,89 @@ function maskIp(ip: string | null) {
   return `${parts[0]}.xxx.xxx.${parts[3]}`;
 }
 
+type ProxyFormat = "format1" | "format2" | "format3" | "format4";
+
+const FORMAT_LABELS: Record<ProxyFormat, string> = {
+  format1: "HOST:PORTA:USUÁRIO:SENHA",
+  format2: "HOST:PORTA@USUÁRIO:SENHA",
+  format3: "USUÁRIO:SENHA:HOST:PORTA",
+  format4: "USUÁRIO:SENHA@HOST:PORTA",
+};
+
+const FORMAT_PLACEHOLDERS: Record<ProxyFormat, string> = {
+  format1: "proxy.iproyal.com:12321:user1:pass1\nproxy.iproyal.com:12322:user1:pass1",
+  format2: "proxy.iproyal.com:12321@user1:pass1\nproxy.iproyal.com:12322@user1:pass1",
+  format3: "user1:pass1:proxy.iproyal.com:12321\nuser1:pass1:proxy.iproyal.com:12322",
+  format4: "user1:pass1@proxy.iproyal.com:12321\nuser1:pass1@proxy.iproyal.com:12322",
+};
+
+interface ParsedProxy {
+  host: string;
+  port: number;
+  username: string | null;
+  password: string | null;
+}
+
+function parseProxyLine(line: string, format: ProxyFormat): ParsedProxy | null {
+  const trimmed = line.trim();
+  if (!trimmed || trimmed.startsWith("#")) return null;
+
+  const validatePort = (s: string) => {
+    const n = parseInt(s, 10);
+    return !isNaN(n) && n >= 1 && n <= 65535 ? n : null;
+  };
+
+  try {
+    if (format === "format1") {
+      const parts = trimmed.split(":");
+      if (parts.length < 2) return null;
+      const [host, portStr, username, password] = parts;
+      const port = validatePort(portStr);
+      if (!host || !port) return null;
+      return {
+        host: host.trim(),
+        port,
+        username: username?.trim() || null,
+        password: password?.trim() || null,
+      };
+    }
+    if (format === "format2") {
+      const [hostPart, authPart] = trimmed.split("@");
+      if (!hostPart || !authPart) return null;
+      const [host, portStr] = hostPart.split(":");
+      const [username, password] = authPart.split(":");
+      const port = validatePort(portStr);
+      if (!host || !port || !username || !password) return null;
+      return { host: host.trim(), port, username: username.trim(), password: password.trim() };
+    }
+    if (format === "format3") {
+      const parts = trimmed.split(":");
+      if (parts.length < 4) return null;
+      const [username, password, host, portStr] = parts;
+      const port = validatePort(portStr);
+      if (!host || !port || !username || !password) return null;
+      return { host: host.trim(), port, username: username.trim(), password: password.trim() };
+    }
+    if (format === "format4") {
+      const [authPart, hostPart] = trimmed.split("@");
+      if (!hostPart || !authPart) return null;
+      const [username, password] = authPart.split(":");
+      const [host, portStr] = hostPart.split(":");
+      const port = validatePort(portStr);
+      if (!host || !port || !username || !password) return null;
+      return { host: host.trim(), port, username: username.trim(), password: password.trim() };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function isHeaderLine(line: string): boolean {
+  const lower = line.toLowerCase();
+  return /\b(host|user|proxy|port|username|password)\b/.test(lower) && !/\d/.test(line.split(/[:,@]/)[1] || "");
+}
+
 export function ProxiesTab() {
   const [proxies, setProxies] = useState<ProxyRow[]>([]);
   const [instances, setInstances] = useState<Map<string, InstanceLite>>(new Map());
