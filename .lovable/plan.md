@@ -1,147 +1,111 @@
 
 
-# Template de retargeting para leads do pré-checkout `/2-grupo-vip-lf`
+# Pool de Proxies SOCKS5 (IPRoyal) → 1 proxy por instância WhatsApp
 
-## Por que precisa de uma arquitetura diferente
+## Contexto
 
-Os templates atuais disparam por evento em `events.event_type` → `trigger_queue_event_templates` → busca `perfis.celular`. **Leads do pré-checkout não viram perfil** — ficam só em `leads_inbox` (já tem 6 leads aguardando, alguns sem email, todos com celular). A engine atual ignora eles.
+Você comprou proxies ISP residenciais SOCKS5 brasileiros na IPRoyal. O objetivo é vinculá-los às instâncias da Evolution API para que cada chip WhatsApp use um IP residencial dedicado e estável (reduz risco de ban e melhora entregabilidade). A Evolution API suporta proxy nativo via endpoint `/instance/setProxy/{instance}` por instância.
 
-Solução: criar uma engine de "retargeting de leads" baseada em **cron** que varre `leads_inbox`, valida janela de tempo + ausência de conversão, e enfileira em `message_queue` direto.
-
-## Arquitetura
-
-### 1. Novo `event_trigger` virtual: `lead_pre_checkout_abandono`
-
-Adiciono na lista canônica de eventos. Não é gravado em `events` — é só um identificador pra ligar template ↔ filtro de cron.
-
-### 2. Novo template (1 registro em `message_templates` + 10 variantes)
-
-| Campo | Valor |
-|---|---|
-| name | `Lead pré-checkout - Sala Secreta Lotofácil` |
-| event_trigger | `lead_pre_checkout_abandono` |
-| delay_enabled | `true` |
-| delay_minutes | `60` (1h após o lead chegar — janela de espera para ver se converte) |
-| include_tags | `{pre_checkout_lp_2grupoviplf}` |
-| exclude_tags | `{pago_grupovip_lotofacil, pago_mensal, pago_anual, pago_anualvip}` |
-| is_active | `true` |
-| 10 variantes | first-touch rotativas (mesma lógica `pick_template_variant` já em produção) |
-
-Variáveis disponíveis nas mensagens: `{{nome}}`, `{{telefone}}`, `{{link_sala_secreta}}` (= https://www.palpitetech.com.br/g/entrar-sala-secreta).
-
-### 3. Nova edge function `process-lead-retargeting` (cron a cada 15 min)
-
-**Lógica:**
-1. Lê `message_templates` com `event_trigger = 'lead_pre_checkout_abandono'` e `is_active = true`. Pra cada um:
-2. Busca `leads_inbox` onde:
-   - tag contém `pre_checkout_lp_2grupoviplf` (ou genericamente: `webhook.source_tag` casa com algum `include_tags` do template)
-   - `created_at` entre `now() - 24h` e `now() - delay_minutes`
-   - `celular IS NOT NULL`
-   - `status` ≠ `descartado`
-   - Não foi convertido em compra: `NOT EXISTS` em `kirvano_webhook_logs` aprovado pelo mesmo email/celular nas últimas 24h
-   - Não tem perfil pago: `perfil_id IS NULL` OU perfil sem tags de pago
-   - **Dedupe**: nenhum registro em `message_queue` com `template_id` + `recipient_phone` nos últimos 7 dias
-3. Pra cada lead elegível:
-   - Chama `pick_template_variant(template_id)` (rotação já existente)
-   - INSERT em `message_queue` com `priority=4`, `variables={nome, telefone, link_sala_secreta}`, `scheduled_at=now()`
-
-A função `process-queue` existente já cuida do envio.
-
-### 4. Cron schedule
-
-`pg_cron` rodando `process-lead-retargeting` a cada 15 minutos (mesma cadência que outras funções de fila).
-
-## As 10 variações de mensagem
-
-Tom: amigável, direto, sem pressão de venda. Sempre oferece **valor primeiro** (estudos diários grátis na sala secreta) e nunca pressiona compra. Cada variação tem leve "humanização" (vc, tbm, agr) e usa as variáveis preservadas `{{nome}}` e `{{link_sala_secreta}}`.
+## Como vai funcionar (visão geral)
 
 ```text
-1. Oi {{nome}}, vi que vc deu uma olhada no nosso grupo VIP da Lotofácil 👀
-   Ficou alguma dúvida? Posso te ajudar por aqui.
-   Enquanto isso, entra na nossa sala secreta gratuita pra receber
-   estudos e resultados todo dia: {{link_sala_secreta}}
-
-2. Eai {{nome}}! Tudo bem? Reparei q vc se interessou pelo grupo VIP de Lotofácil
-   Antes de decidir, tal entrar na nossa sala secreta? É grátis e vc recebe
-   os estudos do dia + resultado: {{link_sala_secreta}}
-
-3. {{nome}}, aqui é da Palpite Tech 🎯
-   Vi q vc chegou no checkout do Grupo VIP Lotofácil mas não finalizou.
-   Tem alguma dúvida? Me chama aqui que respondo
-   E pra te ajudar: entra na sala secreta gratuita {{link_sala_secreta}}
-
-4. Oi {{nome}} td bem? Vc deu uma olhada no nosso Grupo VIP de Lotofacil hj
-   Posso tirar alguma duvida pra vc? 😊
-   Aproveita e entra na sala secreta enquanto isso, é gratis e vc recebe
-   estudos diarios: {{link_sala_secreta}}
-
-5. {{nome}}, ficou faltando algo no seu cadastro do Grupo VIP?
-   Se quiser entender melhor como funciona, é so me responder por aqui.
-   Tbm temos uma sala secreta gratuita com estudos diarios da
-   Lotofacil: {{link_sala_secreta}}
-
-6. Opa {{nome}}! Notamos q vc se cadastrou no Grupo VIP da Lotofacil mas
-   nao concluiu. Alguma duvida q eu possa esclarecer?
-   Pra ja ir testando nosso conteudo, entra aqui: {{link_sala_secreta}}
-   (sala secreta gratuita)
-
-7. Oi {{nome}}, espero q esteja bem 🍀
-   Vc ficou interessado no Grupo VIP de Lotofacil mas nao finalizou,
-   ta tudo certo? Se ficou alguma duvida me chama
-   Enquanto isso ja entra na sala secreta gratis: {{link_sala_secreta}}
-
-8. {{nome}} tudo certo?
-   Vi q vc parou no meio do cadastro do nosso Grupo VIP da Lotofacil
-   Quer q eu te explique como funciona? Responde aqui q te ajudo
-   E pra acompanhar os estudos do dia: {{link_sala_secreta}}
-
-9. Eai {{nome}}, td bom? 👋
-   Da uma olhada na sala secreta da Lotofacil, é grátis e ja vai te dar
-   uma ideia da qualidade dos nossos estudos: {{link_sala_secreta}}
-   Se ficou alguma duvida sobre o Grupo VIP é so me chamar
-
-10. {{nome}}, aqui é o time da Palpite Tech
-    Reparamos q vc se interessou pelo nosso Grupo VIP de Lotofacil
-    Tem alguma duvida? Posso te ajudar
-    Pra ja receber estudos gratuitos diariamente entra
-    aqui: {{link_sala_secreta}}
+┌─────────────────────────────────────────────────────────────────┐
+│  Tabela whatsapp_proxies (pool)                                 │
+│  ┌──────────┬──────────┬────────┬──────────┬─────────────────┐  │
+│  │ host     │ port     │ user   │ status   │ instance_id     │  │
+│  │ br.ipr   │ 12321    │ usr_x  │ available│ NULL            │  │
+│  │ br.ipr   │ 12322    │ usr_x  │ in_use   │ <uuid_inst_A>   │  │
+│  │ br.ipr   │ 12323    │ usr_x  │ disabled │ NULL            │  │
+│  └──────────┴──────────┴────────┴──────────┴─────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+        │                                     ▲
+        │ "Conectar instância"                │ Liberado no
+        │ → reserva 1 proxy livre             │ Logout/Delete
+        ▼                                     │
+┌─────────────────────────────────────────────────────────────────┐
+│  Edge Function evolution-proxy                                  │
+│  • action "connect": atomic claim do proxy → setProxy →         │
+│    connect → retorna QR                                         │
+│  • action "logout"/"delete": setProxy(null) + libera no pool    │
+│  • Sem proxy disponível → erro claro: "Sem proxy disponível"    │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-Todas dentro do limite de 2000 chars, sem markdown, com variáveis preservadas (validação automática já existente em `generate-message-variants`).
+**Regras chave:**
+- 1 instância = 1 proxy. Vínculo é exclusivo (`UNIQUE` em `instance_id`).
+- Reserva é **atômica** (via função SQL com `FOR UPDATE SKIP LOCKED`) — sem corrida.
+- Proxy só é liberado em **logout** ou **delete** da instância (reconectar mantém o mesmo IP — importante para reputação).
+- Se acabarem proxies disponíveis na hora de conectar → erro com instrução "compre mais e adicione na aba Proxies".
+
+## O que será construído
+
+### 1. Banco de dados — tabela `whatsapp_proxies`
+
+Colunas:
+- `id` (uuid PK)
+- `label` (texto, ex: "IPRoyal BR #1") — pra você reconhecer
+- `protocol` (`socks5` default, com opção `http` no futuro)
+- `host`, `port`, `username`, `password` — credenciais do IPRoyal
+- `status` (`available` | `in_use` | `disabled`) — `disabled` = você desativou manualmente
+- `instance_id` (uuid FK → `whatsapp_instances`, **UNIQUE**, nullable) — quem está usando
+- `assigned_at`, `last_health_check_at`, `last_error`
+- `created_at`, `updated_at`
+
+RLS: só admins acessam. Senhas ficam no banco (já protegido por RLS estrito).
+
+### 2. Função SQL atômica `claim_proxy_for_instance(p_instance_id uuid)`
+
+- Se a instância já tem proxy → devolve o mesmo (idempotente).
+- Senão pega o primeiro `available` com `FOR UPDATE SKIP LOCKED`, marca `in_use`, vincula `instance_id`, retorna credenciais.
+- Se não houver disponível → retorna NULL (a edge function devolve erro amigável).
+
+E `release_proxy_for_instance(p_instance_id uuid)` — usada no logout/delete.
+
+### 3. Edge function `evolution-proxy` — alterações
+
+- **`connect`**: antes de chamar `/instance/connect`, chama `claim_proxy_for_instance` e aplica em `POST /proxy/set/{instance}` da Evolution com `{enabled, host, port, protocol, username, password}`. Se claim falhar → resposta `409` com mensagem "Sem proxy disponível. Compre novos proxies na IPRoyal e adicione em WhatsApp → Proxies."
+- **`logout`** e **`delete`**: depois da chamada na Evolution, chama `release_proxy_for_instance` (zera `instance_id`, volta status para `available`, e faz `POST /proxy/set/{instance}` com `enabled:false` no caso de logout).
+- Novas actions internas: `testProxy` (faz uma chamada de teste de IP via proxy pra validar que está funcionando antes de salvar).
+
+### 4. Nova aba `Proxies` no admin (`/admin/whatsapp`)
+
+Posicionada **logo após "Instâncias"** na sub-sidebar. Funcionalidades:
+
+- **Lista de proxies** com colunas: Label · Host:Port · Status (badge colorido) · Instância vinculada · Última verificação
+- **Botão "Adicionar Proxy"** — modal com campos: label, protocolo (default socks5), host, porta, usuário, senha, e botão "Testar conexão" antes de salvar
+- **Botão "Adicionar em lote"** — textarea aceitando o formato que o IPRoyal exporta (ex: `host:port:user:pass` uma por linha) → faz parse e insere todos como `available`
+- **Ações por linha**: Testar · Desativar/Ativar · Excluir (só permite excluir se não estiver `in_use`)
+- **Card de resumo no topo**: "X disponíveis · Y em uso · Z desativados"
+- **Aviso visível** quando `disponíveis = 0`: "Atenção: não há proxies livres. Novas instâncias não conseguirão conectar."
+
+### 5. Aba "Instâncias" — pequenos ajustes
+
+- Cada card de instância mostra um chip com o proxy vinculado (label + IP mascarado, ex: `IPRoyal BR #1 · 45.xxx.xxx.42`) ou "Sem proxy" (quando offline e nunca conectou).
+- Botão "Trocar Proxy" (ícone) — libera o atual e força nova reserva no próximo connect. Útil se o IP estiver queimado.
+- Mensagem de erro do "Conectar" agora pode ser "Sem proxy disponível" — toast com link "Adicionar proxies".
+
+## Passo a passo do uso (depois de implementado)
+
+1. Ligue seu servidor Evolution de volta.
+2. Vá em **WhatsApp → Proxies → Adicionar em lote** e cole as linhas do IPRoyal (`host:port:user:pass`). Salvar.
+3. Clique em **Testar** em cada um (ou todos) pra confirmar que respondem. Os que falharem vão pra `disabled` automaticamente.
+4. Vá em **Instâncias**, clique **Conectar** numa instância. O sistema reserva 1 proxy livre, aplica na Evolution, e mostra o QR.
+5. Escaneie. Pronto — aquela instância ficará permanentemente colada naquele IP residencial até você dar logout/delete.
+6. Quando comprar mais proxies: volta na aba Proxies → adiciona em lote → já ficam disponíveis pro próximo connect.
 
 ## Detalhes técnicos
 
-- **Janela de espera**: 60 min (configurável via `delay_minutes` do template). Lead de 19:57 só recebe às 20:57.
-- **Janela máxima**: 24h. Lead com mais de 24h não é mais perseguido (evita spam para leads frios).
-- **Dedupe forte**: 7 dias por `template_id + recipient_phone` em `message_queue` — mesmo lead nunca recebe 2x.
-- **Anti-conversão**: cruza com `kirvano_webhook_logs` (`status = approved`) por email **OU** celular nas últimas 24h. Se converteu, pula.
-- **Fonte do telefone**: `leads_inbox.celular` (já normalizado pelo `validateCelular` na hora do recebimento).
-- **Rotação de variantes**: usa `pick_template_variant()` já em produção — same first-touch + round-robin.
-- **Atribuição**: as URLs da sala secreta serão acrescidas de `?utm_source=whatsapp&utm_medium=lead_retarget&utm_campaign=pre_checkout_2grupoviplf` automaticamente pela edge function (igual fizemos no group-blast). Mantém rastreamento na dashboard de métricas.
+- **Formato IPRoyal**: SOCKS5 normalmente vem como `proxy.ipr.com:12321:usuario:senha`. O parser do "adicionar em lote" aceita esse formato e também `host:port` (sem auth).
+- **Endpoint Evolution**: `POST {EVOLUTION_API_URL}/proxy/set/{instanceName}` com body `{enabled: true, proxy: {host, port, protocol, username, password}}`. Documentação oficial Evolution API v2.
+- **Atomicidade**: `SELECT ... FROM whatsapp_proxies WHERE status='available' ORDER BY created_at LIMIT 1 FOR UPDATE SKIP LOCKED` — garante que dois connects simultâneos nunca pegam o mesmo proxy.
+- **Health-check**: o "Testar" faz uma chamada `GET https://api.ipify.org` através do proxy via fetch no edge (Deno suporta proxy via `Deno.createHttpClient`). Salva o IP retornado em `last_health_check_at` + um campo `external_ip` pra você ver qual IP cada proxy entrega.
+- **Segurança**: senhas ficam apenas no banco (RLS admin-only) e nunca aparecem na UI depois de salvas (mostradas como `••••••••` com botão "revelar"). Edge function lê via service role.
+- **Recuperação**: se uma instância sumir do banco mas o proxy ficar marcado `in_use`, há um botão "Liberar manualmente" no card do proxy.
 
-## Arquivos
+## Fora de escopo (próxima iteração se quiser)
 
-| Arquivo | Ação |
-|---|---|
-| **Migration nova** | Insere o template + 10 variantes; agenda `pg_cron` para `process-lead-retargeting` a cada 15min |
-| `supabase/functions/process-lead-retargeting/index.ts` | **Nova** edge function com lógica de varredura + dedupe + enfile |
-| `supabase/config.toml` | Adicionar bloco da nova função (verify_jwt false, é cron interno) |
-| `src/lib/whatsapp-event-labels.ts` | Adicionar label "Lead — Pré-checkout abandonado" para o novo `event_trigger` (aparece no dropdown de templates) |
-
-## Resultado esperado
-
-- Lead chega no pré-checkout (`/2-grupo-vip-lf`) → cria registro em `leads_inbox`
-- Aguarda 60 min
-- Cron de 15 em 15 min varre, valida que não comprou, enfileira variante rotativa
-- Mensagem sai com link UTM rastreado pra Sala Secreta
-- Conversões aparecem como `whatsapp / lead_retarget / pre_checkout_2grupoviplf` na dashboard de atribuição (last-click)
-- Nenhum lead recebe a mesma mensagem 2x em 7 dias
-- Quem comprar nesse meio tempo não recebe nada (filtro por `kirvano_webhook_logs`)
-
-## Fora de escopo
-
-- 2ª e 3ª onda de remarketing (D+3, D+7) — fica pra próxima iteração
-- Templates específicos por slug de outras LPs (`lp-quina-abril`, etc) — esse plano é só pra `2-grupo-vip-lf`
-- A/B testing automático entre as 10 variantes — usa só rotação simples
-- Tracking de quem clicou no link (precisaria smart-link dedicado por lead)
+- Rotação automática de proxy se o atual ficar offline (por enquanto só manual via "Trocar Proxy")
+- Health-check automático periódico (cron) — agora é só sob demanda
+- Suporte a proxies HTTP/HTTPS (estrutura aceita, mas UI focada em SOCKS5)
+- Métricas de uso por proxy (mensagens enviadas, etc) — pode vir depois cruzando com `send_logs`
 
