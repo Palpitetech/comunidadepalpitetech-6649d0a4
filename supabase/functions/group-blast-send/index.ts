@@ -322,6 +322,7 @@ async function generateAIMessage(
   if (!apiKey) return null;
 
   const postPath = post.slug || post.id;
+  const trackedLink = `${baseUrl}/comunidade/post/${postPath}?utm_source=whatsapp&utm_medium=group&utm_campaign=blast_post&utm_content=${encodeURIComponent(postPath)}`;
   const prompt = `Você é assistente de uma comunidade de loterias.
 Crie uma mensagem para WhatsApp seguindo EXATAMENTE este formato:
 
@@ -330,13 +331,13 @@ Crie uma mensagem para WhatsApp seguindo EXATAMENTE este formato:
 [RESUMO — máximo 2 linhas diretas sobre o conteúdo do post]
 
 Vamos interagir lá na comunidade, deixe seu comentário lá 👇
-${baseUrl}/comunidade/post/${postPath}?utm=grupo
+${trackedLink}
 
 Regras obrigatórias:
 - Gancho: 1 linha curta e impactante, desperta curiosidade, sem revelar tudo
 - Resumo: máximo 2 linhas, direto ao ponto
 - A penúltima linha SEMPRE deve ser exatamente: "Vamos interagir lá na comunidade, deixe seu comentário lá 👇"
-- O link SEMPRE na última linha sozinho, sem texto antes dele
+- O link SEMPRE na última linha sozinho, sem texto antes dele, EXATAMENTE como recebido (não modifique parâmetros UTM)
 - Use 1 emoji no gancho, nenhum no resto (exceto o 👇 do CTA)
 - NÃO use saudações como "Olá", "Oi", "Pessoal"
 - NÃO use asteriscos ou formatação markdown
