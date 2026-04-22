@@ -350,6 +350,151 @@ export function useAttributionMetrics(period: PeriodRange, dimension: Attributio
         ),
       );
 
+      // ===== First-Click vs Last-Click =====
+      const CLICK_DIMS: AttributionDimension[] = [
+        "utm_source",
+        "utm_medium",
+        "utm_campaign",
+        "utm_content",
+        "utm_term",
+      ];
+
+      type ClickAcc = { vendas: number; receita: number; emails: Set<string> };
+      const firstAccByDim: Record<string, Record<string, ClickAcc>> = {};
+      const lastAccByDim: Record<string, Record<string, ClickAcc>> = {};
+      for (const d of CLICK_DIMS) {
+        firstAccByDim[d] = {};
+        lastAccByDim[d] = {};
+      }
+
+      let vendasComFirstClick = 0;
+      let vendasComLastClick = 0;
+      let vendasMesmoCanal = 0;
+      let vendasCanalDivergente = 0;
+
+      const getFirstClickValue = (
+        attr: Record<string, any> | null | undefined,
+        dim: AttributionDimension,
+      ): string => {
+        const a = attr || {};
+        const v = typeof a[dim] === "string" ? (a[dim] as string).trim() : "";
+        return v || DIRECT;
+      };
+
+      const getLastClickValue = (payload: any, dim: AttributionDimension): string => {
+        const utm = payload?.utm || {};
+        const cookies = payload?.cookies || {};
+        const raw =
+          (typeof utm[dim] === "string" && utm[dim]) ||
+          (typeof cookies[dim] === "string" && cookies[dim]) ||
+          (typeof payload?.[dim] === "string" && payload?.[dim]) ||
+          "";
+        return String(raw || "").trim() || DIRECT;
+      };
+
+      for (const v of vendasPeriodo) {
+        const valor = parseBRL((v.raw_payload as any)?.total_price);
+        const emailKey = (v.email || "").toLowerCase().trim();
+        const perfil = emailKey ? perfilByEmail.get(emailKey) : undefined;
+        const attr = (perfil?.attribution as Record<string, any>) || null;
+        const payload = (v.raw_payload as any) || {};
+
+        const firstSrcRaw = attr?.utm_source && String(attr.utm_source).trim();
+        const lastSrcRaw =
+          (payload?.utm?.utm_source && String(payload.utm.utm_source).trim()) ||
+          (payload?.cookies?.utm_source && String(payload.cookies.utm_source).trim()) ||
+          "";
+        const hasFirst = !!firstSrcRaw;
+        const hasLast = !!lastSrcRaw;
+        if (hasFirst) vendasComFirstClick++;
+        if (hasLast) vendasComLastClick++;
+        if (hasFirst && hasLast) {
+          if (firstSrcRaw!.toLowerCase() === lastSrcRaw!.toLowerCase()) vendasMesmoCanal++;
+          else vendasCanalDivergente++;
+        }
+
+        for (const dim of CLICK_DIMS) {
+          const fk = getFirstClickValue(attr, dim);
+          const lk = getLastClickValue(payload, dim);
+
+          const fAcc =
+            firstAccByDim[dim][fk] ||
+            (firstAccByDim[dim][fk] = { vendas: 0, receita: 0, emails: new Set() });
+          fAcc.vendas++;
+          fAcc.receita += valor;
+          if (emailKey) fAcc.emails.add(emailKey);
+
+          const lAcc =
+            lastAccByDim[dim][lk] ||
+            (lastAccByDim[dim][lk] = { vendas: 0, receita: 0, emails: new Set() });
+          lAcc.vendas++;
+          lAcc.receita += valor;
+          if (emailKey) lAcc.emails.add(emailKey);
+        }
+      }
+
+      const totalVendasPeriodo = vendasPeriodo.length;
+      const toClickRows = (acc: Record<string, ClickAcc>): ClickAttributionRow[] =>
+        Object.entries(acc)
+          .map(([origem, a]) => ({
+            origem,
+            vendas: a.vendas,
+            compradoresUnicos: a.emails.size,
+            receita: a.receita,
+            ticketMedio: a.vendas > 0 ? a.receita / a.vendas : 0,
+            pctTotal: totalVendasPeriodo > 0 ? (a.vendas / totalVendasPeriodo) * 100 : 0,
+          }))
+          .sort((a, b) => b.vendas - a.vendas || b.receita - a.receita);
+
+      const firstClickByDim = {} as Record<AttributionDimension, ClickAttributionRow[]>;
+      const lastClickByDim = {} as Record<AttributionDimension, ClickAttributionRow[]>;
+      const comparisonByDim = {} as Record<AttributionDimension, ClickComparisonRow[]>;
+
+      for (const dim of CLICK_DIMS) {
+        firstClickByDim[dim] = toClickRows(firstAccByDim[dim]);
+        lastClickByDim[dim] = toClickRows(lastAccByDim[dim]);
+
+        const keys = new Set<string>([
+          ...Object.keys(firstAccByDim[dim]),
+          ...Object.keys(lastAccByDim[dim]),
+        ]);
+        comparisonByDim[dim] = Array.from(keys)
+          .map((k) => {
+            const f = firstAccByDim[dim][k];
+            const l = lastAccByDim[dim][k];
+            const vF = f?.vendas || 0;
+            const rF = f?.receita || 0;
+            const vL = l?.vendas || 0;
+            const rL = l?.receita || 0;
+            return {
+              origem: k,
+              vendasFirst: vF,
+              receitaFirst: rF,
+              vendasLast: vL,
+              receitaLast: rL,
+              deltaVendas: vL - vF,
+              deltaReceita: rL - rF,
+            } as ClickComparisonRow;
+          })
+          .sort(
+            (a, b) =>
+              Math.max(b.vendasFirst, b.vendasLast) - Math.max(a.vendasFirst, a.vendasLast) ||
+              Math.abs(b.deltaVendas) - Math.abs(a.deltaVendas),
+          );
+      }
+
+      const emptyDims: AttributionDimension[] = [
+        "slug",
+        "referrer_host",
+        "gclid_present",
+        "fbclid_present",
+      ];
+      for (const d of emptyDims) {
+        firstClickByDim[d] = [];
+        lastClickByDim[d] = [];
+        comparisonByDim[d] = [];
+      }
+
       return {
         totalLeads,
         totalCadastros,
@@ -362,6 +507,13 @@ export function useAttributionMetrics(period: PeriodRange, dimension: Attributio
         ltvMedioDias,
         rows,
         buyers,
+        firstClickByDim,
+        lastClickByDim,
+        comparisonByDim,
+        vendasComFirstClick,
+        vendasComLastClick,
+        vendasMesmoCanal,
+        vendasCanalDivergente,
         uniqueUtmSources,
       };
     },
