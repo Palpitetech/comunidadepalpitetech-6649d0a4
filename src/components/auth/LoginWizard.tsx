@@ -247,6 +247,31 @@ export function LoginWizard() {
         celular: validation.normalized!,
         whatsapp: validation.normalized!,
       });
+
+      // Propaga atribuição do localStorage → perfis.attribution (first-touch)
+      try {
+        const stored = getStoredAttribution();
+        if (stored) {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user?.id) {
+            const attr: Record<string, string> = {};
+            for (const [k, v] of Object.entries(stored)) {
+              if (k === "captured_at") continue;
+              if (typeof v === "string" && v.trim()) attr[k] = v.trim();
+            }
+            if (stored.captured_at) attr.first_click_at = stored.captured_at;
+            attr.source_channel = "signup_otp";
+            await supabase.rpc("merge_user_attribution" as any, {
+              p_user_id: user.id,
+              p_new_attr: attr,
+              p_mark_purchase: false,
+            });
+          }
+        }
+      } catch (attrErr) {
+        console.warn("[LoginWizard] erro ao propagar atribuição:", attrErr);
+      }
+
       toast({ title: "Conta criada!", description: "Bem-vindo ao Palpite Tech." });
       const from = (location.state as any)?.from?.pathname || "/home";
       navigate(from, { replace: true });
