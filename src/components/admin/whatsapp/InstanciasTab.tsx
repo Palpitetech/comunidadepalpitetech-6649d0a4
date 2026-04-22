@@ -768,6 +768,19 @@ export function InstanciasTab() {
                           <Plus className="h-3 w-3 mr-1" /> Adicionar
                         </Button>
                       )}
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={() => {
+                          const randomQueue = Array.from({ length: 10 }, () => Math.floor(Math.random() * 15) + 1);
+                          setForm((f) => ({ ...f, cooldown_queue: randomQueue }));
+                        }}
+                        title="Preenche os 10 slots com valores aleatórios entre 1 e 15 minutos"
+                      >
+                        🎲 Aleatório (1-15min)
+                      </Button>
                     </div>
                     <p className="text-[10px] text-muted-foreground">
                       Ciclo: {form.cooldown_queue.map((v) => `${v}min`).join(" → ")} → volta ao início
