@@ -162,7 +162,7 @@ export function InstanciasTab() {
 
   const openCreate = () => {
     setEditingId(null);
-    setForm(emptyForm);
+    setCreateApelido("");
     setDialogOpen(true);
   };
 
@@ -179,7 +179,149 @@ export function InstanciasTab() {
     setDialogOpen(true);
   };
 
+  // Polling de status para detectar conexão automaticamente
+  useEffect(() => {
+    if (!qrDialogOpen || qrPhase !== "waiting" || !qrInstanceId) return;
+
+    let cancelled = false;
+    setQrSecondsLeft(90);
+
+    const tick = async () => {
+      if (cancelled) return;
+      try {
+        const { data } = await supabase.functions.invoke("evolution-proxy", {
+          body: { action: "syncInstancePhone", instanceId: qrInstanceId },
+        });
+        if (cancelled) return;
+        if (data?.status === "online") {
+          setQrPhone(data.phone || "");
+          setQrPhase("connected");
+          setTimeout(() => {
+            if (!cancelled) {
+              setQrDialogOpen(false);
+              fetchInstances();
+            }
+          }, 1500);
+        }
+      } catch {
+        /* mantém polling */
+      }
+    };
+
+    const pollId = setInterval(tick, 2000);
+    const countdownId = setInterval(() => {
+      setQrSecondsLeft((s) => {
+        if (s <= 1) {
+          setQrPhase("expired");
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+
+    // primeira chamada imediata
+    tick();
+
+    return () => {
+      cancelled = true;
+      clearInterval(pollId);
+      clearInterval(countdownId);
+    };
+  }, [qrDialogOpen, qrPhase, qrInstanceId, fetchInstances]);
+
+  // Cleanup ao fechar manualmente o dialog
+  useEffect(() => {
+    if (!qrDialogOpen) {
+      setQrData(null);
+      setQrPhase("creating");
+      setQrPhone("");
+      setQrErrorMsg("");
+    }
+  }, [qrDialogOpen]);
+
+  const startCreateAndConnect = async (apelido: string) => {
+    setQrPhase("creating");
+    setQrData(null);
+    setQrErrorMsg("");
+    setQrPhone("");
+    setQrDialogOpen(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("evolution-proxy", {
+        body: { action: "createAndConnect", apelido },
+      });
+      if (error) throw new Error(error.message || "Erro ao criar instância");
+
+      if (data?.code === "no_proxy_available") {
+        setQrPhase("no_proxy");
+        setQrErrorMsg(data.error || "Sem proxy disponível.");
+        return;
+      }
+      if (data?.code === "proxy_invalid") {
+        setQrPhase("error");
+        setQrErrorMsg(data.error || "Proxy com dados inválidos.");
+        return;
+      }
+      if (!data?.success) {
+        setQrPhase("error");
+        setQrErrorMsg(data?.error || "Falha ao criar instância na Evolution.");
+        return;
+      }
+
+      setQrInstanceId(data.instanceId);
+      setQrEvolutionId(data.evolutionInstanceId);
+      setQrData(data.qrCode || null);
+      setQrPhase("waiting");
+      // refetch para o card já aparecer offline imediatamente
+      fetchInstances();
+    } catch (err: any) {
+      setQrPhase("error");
+      setQrErrorMsg(err?.message || "Erro inesperado");
+    }
+  };
+
+  const handleCreateSubmit = async () => {
+    const apelido = createApelido.trim();
+    if (!apelido) {
+      toast.error("Digite um apelido");
+      return;
+    }
+    setDialogOpen(false);
+    await startCreateAndConnect(apelido);
+  };
+
+  const handleRetryQr = async () => {
+    // Apaga a instância criada e tenta novamente com o mesmo apelido
+    if (qrInstanceId && qrEvolutionId) {
+      try {
+        await callEvolution("delete", qrEvolutionId);
+      } catch { /* ignore */ }
+      await supabase.from("whatsapp_instances" as any).delete().eq("id", qrInstanceId);
+      setQrInstanceId(null);
+      setQrEvolutionId(null);
+    }
+    const apelido = createApelido || "instancia";
+    await startCreateAndConnect(apelido);
+  };
+
+  const handleCancelQr = async () => {
+    if (qrInstanceId && qrEvolutionId && qrPhase !== "connected") {
+      try {
+        await callEvolution("delete", qrEvolutionId);
+      } catch { /* ignore */ }
+      await supabase.from("whatsapp_instances" as any).delete().eq("id", qrInstanceId);
+    }
+    setQrDialogOpen(false);
+    setQrInstanceId(null);
+    setQrEvolutionId(null);
+    fetchInstances();
+  };
+
   const handleSave = async () => {
+    if (!editingId) {
+      // Modo criação agora usa startCreateAndConnect via handleCreateSubmit
+      return;
+    }
     if (!form.name.trim() || !form.friendly_name.trim() || !form.phone_number.trim() || !form.evolution_instance_id.trim()) {
       toast.error("Preencha todos os campos obrigatórios");
       return;
@@ -187,34 +329,19 @@ export function InstanciasTab() {
 
     setSaving(true);
     try {
-      if (editingId) {
-        const { error } = await supabase
-          .from("whatsapp_instances" as any)
-          .update({
-            name: form.name.trim(),
-            friendly_name: form.friendly_name.trim(),
-            phone_number: form.phone_number.trim(),
-            evolution_instance_id: form.evolution_instance_id.trim(),
-            daily_limit: form.daily_limit,
-            cooldown_queue: form.cooldown_queue,
-          })
-          .eq("id", editingId);
-        if (error) throw error;
-        toast.success("Instância atualizada");
-      } else {
-        const { error } = await supabase
-          .from("whatsapp_instances" as any)
-          .insert({
-            name: form.name.trim(),
-            friendly_name: form.friendly_name.trim(),
-            phone_number: form.phone_number.trim(),
-            evolution_instance_id: form.evolution_instance_id.trim(),
-            daily_limit: form.daily_limit,
-            cooldown_queue: form.cooldown_queue,
-          });
-        if (error) throw error;
-        toast.success("Instância criada");
-      }
+      const { error } = await supabase
+        .from("whatsapp_instances" as any)
+        .update({
+          name: form.name.trim(),
+          friendly_name: form.friendly_name.trim(),
+          phone_number: form.phone_number.trim(),
+          evolution_instance_id: form.evolution_instance_id.trim(),
+          daily_limit: form.daily_limit,
+          cooldown_queue: form.cooldown_queue,
+        })
+        .eq("id", editingId);
+      if (error) throw error;
+      toast.success("Instância atualizada");
       setDialogOpen(false);
       fetchInstances();
     } catch (err: any) {
