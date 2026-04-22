@@ -668,115 +668,238 @@ export function InstanciasTab() {
               <DialogHeader>
                 <DialogTitle>{editingId ? "Editar Instância" : "Nova Instância"}</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 pt-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="name">Apelido *</Label>
-                  <Input id="name" placeholder="Ex: Chip Principal" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} maxLength={100} />
+
+              {!editingId ? (
+                /* === Modo CRIAÇÃO: 1 campo, gera QR automático === */
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="apelido">Apelido *</Label>
+                    <Input
+                      id="apelido"
+                      placeholder="Ex: Tablet Sala"
+                      value={createApelido}
+                      onChange={(e) => setCreateApelido(e.target.value)}
+                      maxLength={100}
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && createApelido.trim()) {
+                          e.preventDefault();
+                          handleCreateSubmit();
+                        }
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Este será o nome interno e o identificador na Evolution. Telefone e configurações serão preenchidos automaticamente após conectar.
+                    </p>
+                  </div>
+                  <Button className="w-full" onClick={handleCreateSubmit} disabled={!createApelido.trim()}>
+                    <QrCode className="h-4 w-4 mr-2" />
+                    Criar e gerar QR Code
+                  </Button>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="friendly_name">Nome de amigo *</Label>
-                  <Input id="friendly_name" placeholder="Ex: Carlos" value={form.friendly_name} onChange={(e) => setForm((f) => ({ ...f, friendly_name: e.target.value }))} maxLength={100} />
-                  <p className="text-xs text-muted-foreground">Este nome será usado nas conversas de aquecimento</p>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="phone_number">Número de telefone *</Label>
-                  <Input id="phone_number" placeholder="5511999999999" value={form.phone_number} onChange={(e) => setForm((f) => ({ ...f, phone_number: e.target.value }))} maxLength={20} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="evolution_id">ID da instância na Evolution API *</Label>
-                  <Input id="evolution_id" placeholder="Ex: instance_abc123" value={form.evolution_instance_id} onChange={(e) => setForm((f) => ({ ...f, evolution_instance_id: e.target.value }))} maxLength={200} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="daily_limit">Limite diário de mensagens *</Label>
-                  <Input id="daily_limit" type="number" min={1} value={form.daily_limit} onChange={(e) => setForm((f) => ({ ...f, daily_limit: parseInt(e.target.value) || 1 }))} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Fila de descanso (minutos) — ciclo rotativo</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Após cada envio, a instância descansa pelo tempo atual e avança para o próximo. Máximo 10 tempos.
-                  </p>
-                  <div className="flex flex-wrap gap-2 items-center">
-                    {form.cooldown_queue.map((val, idx) => (
-                      <div key={idx} className="flex items-center gap-1">
-                        <Input
-                          type="number"
-                          min={1}
-                          max={60}
-                          className="w-16 h-8 text-xs text-center"
-                          value={val}
-                          onChange={(e) => {
-                            const newQueue = [...form.cooldown_queue];
-                            newQueue[idx] = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
-                            setForm((f) => ({ ...f, cooldown_queue: newQueue }));
-                          }}
-                        />
-                        {form.cooldown_queue.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-destructive hover:text-destructive"
-                            onClick={() => {
-                              const newQueue = form.cooldown_queue.filter((_, i) => i !== idx);
+              ) : (
+                /* === Modo EDIÇÃO: campos completos === */
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="name">Apelido *</Label>
+                    <Input id="name" placeholder="Ex: Chip Principal" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} maxLength={100} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="friendly_name">Nome de amigo *</Label>
+                    <Input id="friendly_name" placeholder="Ex: Carlos" value={form.friendly_name} onChange={(e) => setForm((f) => ({ ...f, friendly_name: e.target.value }))} maxLength={100} />
+                    <p className="text-xs text-muted-foreground">Este nome será usado nas conversas de aquecimento</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="phone_number">Número de telefone *</Label>
+                    <Input id="phone_number" placeholder="5511999999999" value={form.phone_number} onChange={(e) => setForm((f) => ({ ...f, phone_number: e.target.value }))} maxLength={20} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="evolution_id">ID na Evolution (gerado automaticamente)</Label>
+                    <Input id="evolution_id" value={form.evolution_instance_id} readOnly disabled className="font-mono text-xs bg-muted" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="daily_limit">Limite diário de mensagens *</Label>
+                    <Input id="daily_limit" type="number" min={1} value={form.daily_limit} onChange={(e) => setForm((f) => ({ ...f, daily_limit: parseInt(e.target.value) || 1 }))} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Fila de descanso (minutos) — ciclo rotativo</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Após cada envio, a instância descansa pelo tempo atual e avança para o próximo. Máximo 10 tempos.
+                    </p>
+                    <div className="flex flex-wrap gap-2 items-center">
+                      {form.cooldown_queue.map((val, idx) => (
+                        <div key={idx} className="flex items-center gap-1">
+                          <Input
+                            type="number"
+                            min={1}
+                            max={60}
+                            className="w-16 h-8 text-xs text-center"
+                            value={val}
+                            onChange={(e) => {
+                              const newQueue = [...form.cooldown_queue];
+                              newQueue[idx] = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
                               setForm((f) => ({ ...f, cooldown_queue: newQueue }));
                             }}
-                          >
-                            ×
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                    {form.cooldown_queue.length < 10 && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-8 text-xs"
-                        onClick={() => setForm((f) => ({ ...f, cooldown_queue: [...f.cooldown_queue, 3] }))}
-                      >
-                        <Plus className="h-3 w-3 mr-1" /> Adicionar
-                      </Button>
-                    )}
+                          />
+                          {form.cooldown_queue.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-destructive hover:text-destructive"
+                              onClick={() => {
+                                const newQueue = form.cooldown_queue.filter((_, i) => i !== idx);
+                                setForm((f) => ({ ...f, cooldown_queue: newQueue }));
+                              }}
+                            >
+                              ×
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                      {form.cooldown_queue.length < 10 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-xs"
+                          onClick={() => setForm((f) => ({ ...f, cooldown_queue: [...f.cooldown_queue, 3] }))}
+                        >
+                          <Plus className="h-3 w-3 mr-1" /> Adicionar
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      Ciclo: {form.cooldown_queue.map((v) => `${v}min`).join(" → ")} → volta ao início
+                    </p>
                   </div>
-                  <p className="text-[10px] text-muted-foreground">
-                    Ciclo: {form.cooldown_queue.map((v) => `${v}min`).join(" → ")} → volta ao início
-                  </p>
+                  <Button className="w-full" onClick={handleSave} disabled={saving}>
+                    {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    Salvar Alterações
+                  </Button>
                 </div>
-                <Button className="w-full" onClick={handleSave} disabled={saving}>
-                  {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                  {editingId ? "Salvar Alterações" : "Criar Instância"}
-                </Button>
-              </div>
+              )}
             </DialogContent>
           </Dialog>
         </div>
       </div>
 
-      {/* QR Code Dialog */}
-      <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+      {/* QR Code Dialog — fluxo guiado com fallbacks visuais */}
+      <Dialog
+        open={qrDialogOpen}
+        onOpenChange={(open) => {
+          if (!open && qrPhase !== "connected") {
+            handleCancelQr();
+          } else if (!open) {
+            setQrDialogOpen(false);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Conectar Instância</DialogTitle>
+            <DialogTitle>
+              {qrPhase === "connected" ? "Conectado!" : qrPhase === "expired" ? "QR Code expirou" : qrPhase === "error" ? "Falha ao conectar" : qrPhase === "no_proxy" ? "Sem proxy disponível" : "Conectar Instância"}
+            </DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col items-center gap-4 py-4">
-            {qrLoading ? (
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            ) : qrData ? (
+          <div className="flex flex-col items-center gap-4 py-4 min-h-[280px] justify-center">
+            {qrPhase === "creating" && (
+              <>
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                <div className="text-center space-y-1">
+                  <p className="text-sm font-medium text-card-foreground">Criando instância…</p>
+                  <p className="text-xs text-muted-foreground">Reservando proxy e gerando QR Code</p>
+                </div>
+              </>
+            )}
+
+            {qrPhase === "waiting" && qrData && (
               <>
                 <img
                   src={qrData.startsWith("data:") ? qrData : `data:image/png;base64,${qrData}`}
                   alt="QR Code"
-                  className="w-56 h-56 sm:w-64 sm:h-64 rounded-lg border"
+                  className="w-56 h-56 sm:w-64 sm:h-64 rounded-lg border bg-white p-1"
                 />
-                <p className="text-sm text-muted-foreground text-center">
-                  Escaneie o QR Code com o WhatsApp no celular
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
+                  </span>
+                  Aguardando leitura do QR Code…
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  Abra o WhatsApp → Aparelhos conectados → Conectar aparelho
+                  <br />
+                  <span className="text-[10px] tabular-nums">Expira em {qrSecondsLeft}s</span>
                 </p>
-                <Button onClick={handleQrScanned} className="w-full">
-                  Já escaneei o QR Code
+              </>
+            )}
+
+            {qrPhase === "waiting" && !qrData && (
+              <>
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Gerando QR Code…</p>
+              </>
+            )}
+
+            {qrPhase === "connected" && (
+              <>
+                <div className="rounded-full bg-accent/10 p-4">
+                  <CheckCircle2 className="h-12 w-12 text-accent" />
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="text-base font-semibold text-card-foreground">Conectado com sucesso!</p>
+                  {qrPhone && (
+                    <p className="text-sm text-muted-foreground font-mono">+{qrPhone}</p>
+                  )}
+                </div>
+              </>
+            )}
+
+            {qrPhase === "expired" && (
+              <>
+                <div className="rounded-full bg-yellow-500/10 p-4">
+                  <AlertTriangle className="h-10 w-10 text-yellow-500" />
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="text-sm font-medium text-card-foreground">QR Code expirou</p>
+                  <p className="text-xs text-muted-foreground">Gere um novo QR para continuar.</p>
+                </div>
+                <div className="flex gap-2 w-full">
+                  <Button variant="outline" className="flex-1" onClick={handleCancelQr}>Cancelar</Button>
+                  <Button className="flex-1" onClick={handleRetryQr}>Gerar novo QR</Button>
+                </div>
+              </>
+            )}
+
+            {qrPhase === "error" && (
+              <>
+                <div className="rounded-full bg-destructive/10 p-4">
+                  <AlertCircle className="h-10 w-10 text-destructive" />
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="text-sm font-medium text-card-foreground">Falha ao conectar</p>
+                  <p className="text-xs text-muted-foreground">{qrErrorMsg}</p>
+                </div>
+                <div className="flex gap-2 w-full">
+                  <Button variant="outline" className="flex-1" onClick={handleCancelQr}>Cancelar</Button>
+                  <Button className="flex-1" onClick={handleRetryQr}>Tentar novamente</Button>
+                </div>
+              </>
+            )}
+
+            {qrPhase === "no_proxy" && (
+              <>
+                <div className="rounded-full bg-yellow-500/10 p-4">
+                  <Globe className="h-10 w-10 text-yellow-500" />
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="text-sm font-medium text-card-foreground">Sem proxy disponível</p>
+                  <p className="text-xs text-muted-foreground">{qrErrorMsg}</p>
+                </div>
+                <Button variant="outline" className="w-full" onClick={handleCancelQr}>
+                  Fechar
                 </Button>
               </>
-            ) : (
-              <p className="text-sm text-muted-foreground">Nenhum QR Code disponível</p>
             )}
           </div>
         </DialogContent>
