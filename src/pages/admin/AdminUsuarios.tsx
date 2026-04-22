@@ -130,6 +130,56 @@ const FILTROS_SECUNDARIOS_GRUPOS: SubFilterGroup[] = [
   },
 ];
 
+// ── Lead table column config ───────────────────────────────────
+type LeadColumnKey =
+  | "status"
+  | "nome"
+  | "email"
+  | "celular"
+  | "origem"      // slug → utm_source fallback
+  | "campanha"    // utm_campaign
+  | "medium"
+  | "content"
+  | "term"
+  | "referrer"
+  | "click_ids"
+  | "pagina"
+  | "tags"
+  | "data";
+
+const LEAD_COLUMNS: { key: LeadColumnKey; label: string; defaultVisible: boolean }[] = [
+  { key: "status",    label: "Status",    defaultVisible: true },
+  { key: "nome",      label: "Nome",      defaultVisible: true },
+  { key: "email",     label: "Email",     defaultVisible: true },
+  { key: "celular",   label: "Celular",   defaultVisible: true },
+  { key: "origem",    label: "Origem",    defaultVisible: true },
+  { key: "campanha",  label: "Campanha",  defaultVisible: true },
+  { key: "data",      label: "Data",      defaultVisible: true },
+  { key: "medium",    label: "Medium",    defaultVisible: false },
+  { key: "content",   label: "Content",   defaultVisible: false },
+  { key: "term",      label: "Term",      defaultVisible: false },
+  { key: "referrer",  label: "Referrer",  defaultVisible: false },
+  { key: "click_ids", label: "Click IDs", defaultVisible: false },
+  { key: "pagina",    label: "Página",    defaultVisible: false },
+  { key: "tags",      label: "Tags",      defaultVisible: false },
+];
+
+const LEAD_COLUMNS_STORAGE_KEY = "admin_leads_columns_v1";
+
+const loadStoredColumns = (): LeadColumnKey[] => {
+  try {
+    const raw = localStorage.getItem(LEAD_COLUMNS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as string[];
+      if (Array.isArray(parsed)) {
+        const valid = LEAD_COLUMNS.map((c) => c.key);
+        return parsed.filter((k): k is LeadColumnKey => valid.includes(k as LeadColumnKey));
+      }
+    }
+  } catch {/* ignore */}
+  return LEAD_COLUMNS.filter((c) => c.defaultVisible).map((c) => c.key);
+};
+
 // Helpers de status de assinatura
 const todayISO = () => new Date().toISOString().split("T")[0];
 
