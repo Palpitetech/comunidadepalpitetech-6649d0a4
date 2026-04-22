@@ -857,8 +857,8 @@ export function InstanciasTab() {
 
             {qrPhase === "expired" && (
               <>
-                <div className="rounded-full bg-yellow-500/10 p-4">
-                  <AlertTriangle className="h-10 w-10 text-yellow-500" />
+                <div className="rounded-full bg-muted p-4">
+                  <AlertTriangle className="h-10 w-10 text-muted-foreground" />
                 </div>
                 <div className="text-center space-y-1">
                   <p className="text-sm font-medium text-card-foreground">QR Code expirou</p>
@@ -889,8 +889,8 @@ export function InstanciasTab() {
 
             {qrPhase === "no_proxy" && (
               <>
-                <div className="rounded-full bg-yellow-500/10 p-4">
-                  <Globe className="h-10 w-10 text-yellow-500" />
+                <div className="rounded-full bg-muted p-4">
+                  <Globe className="h-10 w-10 text-muted-foreground" />
                 </div>
                 <div className="text-center space-y-1">
                   <p className="text-sm font-medium text-card-foreground">Sem proxy disponível</p>
