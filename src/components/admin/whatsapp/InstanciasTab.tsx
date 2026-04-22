@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, Plus, Pencil, Trash2, Smartphone, QrCode, RefreshCw, Power, LogOut, MessageSquare, Clock, Link2 } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Smartphone, QrCode, RefreshCw, Power, LogOut, MessageSquare, Clock, Link2, Globe, Replace } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -56,8 +56,22 @@ async function callEvolution(action: string, instanceName?: string) {
   return data;
 }
 
+interface ProxyInfo {
+  id: string;
+  label: string;
+  external_ip: string | null;
+}
+
+function maskIp(ip: string | null) {
+  if (!ip) return "";
+  const parts = ip.split(".");
+  if (parts.length !== 4) return ip;
+  return `${parts[0]}.xxx.xxx.${parts[3]}`;
+}
+
 export function InstanciasTab() {
   const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
+  const [proxiesByInstance, setProxiesByInstance] = useState<Map<string, ProxyInfo>>(new Map());
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -124,6 +138,18 @@ export function InstanciasTab() {
     }
 
     setInstances(localInstances);
+
+    // Carrega proxies vinculados
+    const { data: proxData } = await supabase
+      .from("whatsapp_proxies" as any)
+      .select("id, label, external_ip, instance_id")
+      .not("instance_id", "is", null);
+    const map = new Map<string, ProxyInfo>();
+    for (const p of (proxData as any[]) || []) {
+      if (p.instance_id) map.set(p.instance_id, { id: p.id, label: p.label, external_ip: p.external_ip });
+    }
+    setProxiesByInstance(map);
+
     setLoading(false);
   }, []);
 
@@ -213,10 +239,32 @@ export function InstanciasTab() {
       }
       setQrData(base64);
     } catch (err: any) {
-      toast.error(err.message || "Erro ao gerar QR Code");
+      const msg = err?.message || "Erro ao gerar QR Code";
+      if (msg.includes("Sem proxy disponível") || msg.includes("no_proxy_available")) {
+        toast.error("Sem proxy disponível", { description: "Adicione novos proxies em WhatsApp → Proxies." });
+      } else {
+        toast.error(msg);
+      }
       setQrDialogOpen(false);
     } finally {
       setQrLoading(false);
+    }
+  };
+
+  const handleSwapProxy = async (inst: WhatsAppInstance) => {
+    setInstanceAction(inst.id, "swap");
+    try {
+      const { data, error } = await supabase.functions.invoke("evolution-proxy", {
+        body: { action: "swapProxy", instanceName: inst.evolution_instance_id },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      toast.success("Proxy liberado. O próximo Conectar reservará um novo IP.");
+      fetchInstances();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao trocar proxy");
+    } finally {
+      setInstanceAction(inst.id, null);
     }
   };
 
@@ -559,6 +607,42 @@ export function InstanciasTab() {
                       </Tooltip>
                     )}
                   </div>
+
+                  {/* Proxy chip */}
+                  {(() => {
+                    const proxy = proxiesByInstance.get(inst.id);
+                    return (
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <Globe className={`h-3.5 w-3.5 shrink-0 ${proxy ? "text-accent" : "text-muted-foreground"}`} />
+                        {proxy ? (
+                          <span className="text-card-foreground truncate">
+                            {proxy.label}
+                            {proxy.external_ip && (
+                              <span className="text-muted-foreground font-mono ml-1">· {maskIp(proxy.external_ip)}</span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">Sem proxy</span>
+                        )}
+                        {proxy && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 ml-auto"
+                                onClick={() => handleSwapProxy(inst)}
+                                disabled={!!currentAction}
+                              >
+                                {currentAction === "swap" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Replace className="h-3 w-3" />}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Trocar proxy (libera o atual)</TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Stats */}
                   <div className="space-y-2">
