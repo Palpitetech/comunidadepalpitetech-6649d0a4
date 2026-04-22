@@ -310,24 +310,55 @@ export function ProxiesTab() {
     }
   };
 
+  const existingDedupKeys = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of proxies) {
+      set.add(proxyDedupKey({
+        host: p.host,
+        port: p.port,
+        username: p.username,
+        password: p.password,
+      }));
+    }
+    return set;
+  }, [proxies]);
+
   const bulkPreview = useMemo(() => {
     const rawLines = bulkText.split("\n");
     const valid: ParsedProxy[] = [];
-    let invalid = 0;
+    const invalidLines: { line: number; reason: string }[] = [];
+    let dupInBatch = 0;
+    let dupInDb = 0;
     let skippedHeader = false;
+    const seenInBatch = new Set<string>();
+
     for (let i = 0; i < rawLines.length; i++) {
-      const line = rawLines[i].trim();
+      const raw = rawLines[i];
+      const line = raw.trim();
       if (!line || line.startsWith("#")) continue;
       if (i === 0 && isHeaderLine(line)) {
         skippedHeader = true;
         continue;
       }
-      const parsed = parseProxyLine(line, bulkFormat);
-      if (parsed) valid.push(parsed);
-      else invalid++;
+      const result = parseProxyLine(line, bulkFormat);
+      if (!result.ok) {
+        invalidLines.push({ line: i + 1, reason: result.reason });
+        continue;
+      }
+      const key = proxyDedupKey(result.proxy);
+      if (seenInBatch.has(key)) {
+        dupInBatch++;
+        continue;
+      }
+      if (existingDedupKeys.has(key)) {
+        dupInDb++;
+        continue;
+      }
+      seenInBatch.add(key);
+      valid.push(result.proxy);
     }
-    return { valid, invalid, skippedHeader };
-  }, [bulkText, bulkFormat]);
+    return { valid, invalidLines, dupInBatch, dupInDb, skippedHeader };
+  }, [bulkText, bulkFormat, existingDedupKeys]);
 
   const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -339,12 +370,11 @@ export function ProxiesTab() {
     };
     reader.onerror = () => toast.error("Falha ao ler o arquivo");
     reader.readAsText(file);
-    // reset input para permitir re-upload do mesmo arquivo
     e.target.value = "";
   };
 
   const handleBulkSave = async () => {
-    const { valid } = bulkPreview;
+    const { valid, invalidLines, dupInBatch, dupInDb } = bulkPreview;
     if (valid.length === 0) {
       toast.error("Nenhuma linha válida encontrada");
       return;
@@ -363,8 +393,12 @@ export function ProxiesTab() {
     try {
       const { error } = await supabase.from("whatsapp_proxies" as any).insert(rows);
       if (error) throw error;
-      const invalidNote = bulkPreview.invalid > 0 ? ` — ${bulkPreview.invalid} ignorada(s)` : "";
-      toast.success(`${rows.length} proxy(ies) adicionados${invalidNote}`);
+      const notes: string[] = [];
+      if (invalidLines.length) notes.push(`${invalidLines.length} inválida(s)`);
+      if (dupInBatch) notes.push(`${dupInBatch} duplicada(s) na lista`);
+      if (dupInDb) notes.push(`${dupInDb} já existente(s)`);
+      const suffix = notes.length ? ` — ignorados: ${notes.join(", ")}` : "";
+      toast.success(`${rows.length} proxy(ies) adicionados${suffix}`);
       setBulkOpen(false);
       setBulkText("");
       fetchData();
