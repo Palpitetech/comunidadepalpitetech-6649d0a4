@@ -1,190 +1,118 @@
 
 
-# Centralizar identificação de usuário por celular (sem duplicar)
+# Expansão do payload de leads — slug + UTMs completos + Click IDs
 
-## Diagnóstico
+## Decisões confirmadas
+1. **`source` removido já** — payload novo usa `slug`. Sem fallback.
+2. **Todos os UTMs capturados** (`utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, `utm_term`) + `gclid`, `fbclid`, `referrer`. Tabela admin com **dropdown de colunas visíveis** (default mostra só Origem + Campanha; resto sob demanda).
+3. **Hook `useUTM` primeiro**, depois frontend admin.
 
-`perfis.celular` já tem UNIQUE no banco (não há duplicatas hoje), mas a lógica de "achar conta existente por celular antes de criar" só está bem feita em **2 dos 5 pontos** que criam usuários. Nos outros 3, o sistema:
-- ou cria conta nova com email diferente e quebra ao gravar celular (estoura UNIQUE)
-- ou deixa o usuário num estado órfão (auth criado, perfil sem celular)
+## Novo payload aceito pelo `receive-lead`
 
-A consequência prática: **um mesmo cliente pode ter 2 contas** se chegar por caminhos diferentes com emails diferentes mas mesmo celular.
-
-## Pontos de criação hoje
-
-| Origem | Checa email? | Checa celular? | Status |
-|---|---|---|---|
-| `receive-lead` (webhook integrações) | ✅ | ✅ | OK |
-| `promote-lead-to-user` (admin promove lead) | ✅ | ✅ | OK |
-| `LoginWizard` (cadastro manual no site) | ✅ (via OTP) | ❌ | **quebra** se celular existir |
-| `handle-kirvano-webhook` (compra Kirvano) | ✅ | ❌ | **cria duplicata por email diferente** |
-| `import-csv-users` (admin importa CSV) | ✅ | ❌ | **mesmo problema** |
-
-## Estratégia: helper único `find_or_create_user_by_contact`
-
-Criar uma **função SQL central** (`SECURITY DEFINER`) que recebe `(email, celular_normalizado)` e devolve `{ user_id, found_by, is_new_needed }`. **Toda** criação passa por ela primeiro.
-
-```sql
-CREATE OR REPLACE FUNCTION public.find_user_by_contact(
-  p_email text DEFAULT NULL,
-  p_celular text DEFAULT NULL  -- já normalizado: 10-11 dígitos sem 55
-)
-RETURNS jsonb
-LANGUAGE plpgsql
-STABLE SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  v_id uuid;
-  v_found_email text;
-  v_found_celular text;
-  v_match text;  -- 'email' | 'celular' | null
-BEGIN
-  IF p_email IS NOT NULL AND p_email <> '' THEN
-    SELECT id, email, celular INTO v_id, v_found_email, v_found_celular
-    FROM public.perfis
-    WHERE lower(email) = lower(p_email) AND is_bot = false
-    LIMIT 1;
-    IF v_id IS NOT NULL THEN
-      RETURN jsonb_build_object('user_id', v_id, 'found_by', 'email',
-        'email', v_found_email, 'celular', v_found_celular);
-    END IF;
-  END IF;
-
-  IF p_celular IS NOT NULL AND p_celular <> '' THEN
-    SELECT id, email, celular INTO v_id, v_found_email, v_found_celular
-    FROM public.perfis
-    WHERE celular = p_celular AND is_bot = false
-    LIMIT 1;
-    IF v_id IS NOT NULL THEN
-      RETURN jsonb_build_object('user_id', v_id, 'found_by', 'celular',
-        'email', v_found_email, 'celular', v_found_celular);
-    END IF;
-  END IF;
-
-  RETURN jsonb_build_object('user_id', null, 'found_by', null);
-END;
-$$;
-```
-
-A regra **cardinal**: ordem de prioridade é **email → celular**. Se achou por email, esse é o dono. Se não achou por email mas achou por celular, **reusa** essa conta (não cria nova) — opcionalmente atualiza email se o novo for "melhor" (lógica abaixo).
-
-## Mudanças por arquivo
-
-### 1. Migration nova
-- Criar `find_user_by_contact(email, celular)` como acima
-- (Opcional, recomendado) Adicionar índice `CREATE INDEX idx_perfis_email_lower ON perfis (lower(email)) WHERE is_bot=false;` — acelera a busca
-
-### 2. `supabase/functions/handle-kirvano-webhook/index.ts` (linhas ~600–700)
-
-Hoje busca perfil **só por email**. Refatorar:
-```ts
-// Antes de criar auth user, buscar por email + celular normalizado
-const phoneNorm = normalizeKirvanoPhone(phone);
-const { data: found } = await admin.rpc("find_user_by_contact", {
-  p_email: email,
-  p_celular: phoneNorm,
-});
-
-if (found?.user_id) {
-  // Reusa conta existente. Se achou por celular mas email é diferente,
-  // mantém o email original (não sobrescreve identidade) — só atualiza
-  // dados do plano (já é o que faz na linha 798).
-  targetPerfilId = found.user_id;
-  isNewAccount = false;
-  // Skip createUser
-} else {
-  // mesmo fluxo atual de createUser
+```json
+{
+  "nome": "João",
+  "email": "joao@email.com",
+  "celular": "11999999999",
+  "tags": ["promo-julho"],
+  "slug": "lp-mega-julho",
+  "pagina_origem": "https://meusite.com/promo?utm_source=...",
+  "utm_source": "instagram",
+  "utm_medium": "cpc",
+  "utm_campaign": "mega-julho",
+  "utm_content": "story-3",
+  "utm_term": "bolao mega",
+  "referrer": "https://google.com/",
+  "gclid": "Cj0KCQ...",
+  "fbclid": "IwAR..."
 }
 ```
 
-Isso impede duplicação quando o cliente paga com email diferente do cadastro original mas mesmo WhatsApp.
+Todos os campos opcionais (anti-bot e dedupe atuais permanecem).
 
-### 3. `supabase/functions/import-csv-users/index.ts` (linha ~180)
+## Mudanças
 
-Substituir o check só-por-email pelo RPC:
+### 1. Migration (schema)
+- `ALTER TABLE leads_inbox`:
+  - `RENAME COLUMN source TO slug`
+  - `ADD COLUMN utm_medium text`, `utm_campaign text`, `utm_content text`, `utm_term text`, `referrer text`, `gclid text`, `fbclid text`
+- Index parcial em `slug` e `utm_campaign` para filtros futuros
+
+### 2. `src/hooks/useUTM.ts` (refatorar primeiro)
+Trocar o storage de uma chave única `utm_source` por um **objeto único `lead_attribution`** em localStorage:
+
 ```ts
-const phoneNorm = normalizePhone(...);
-const { data: found } = await supabase.rpc("find_user_by_contact", {
-  p_email: email, p_celular: phoneNorm,
-});
-if (found?.user_id) {
-  results.push({ email, status: "skipped", error: `Já existe (match por ${found.found_by})` });
-  continue;
-}
+type LeadAttribution = {
+  utm_source?: string; utm_medium?: string; utm_campaign?: string;
+  utm_content?: string; utm_term?: string;
+  gclid?: string; fbclid?: string;
+  referrer?: string; landing_page?: string;
+  captured_at: string;
+};
 ```
 
-### 4. `src/components/auth/LoginWizard.tsx` (handleRegisterWhatsapp, ~linha 188)
+- `useUTM()` lê todos os params da URL no mount, salva o objeto se tiver pelo menos 1 valor relevante. **Não sobrescreve** se já existe (first-touch attribution).
+- Aceita também o param legacy `?utm=...` (mapeia para `utm_source`) por compatibilidade
+- Captura `document.referrer` e `window.location.href` como `landing_page` na primeira visita
+- Exports: `getStoredAttribution(): LeadAttribution | null`, `clearAttribution()`, e mantém `getStoredUTM()` (retorna só `utm_source`) como **shim** pra não quebrar chamadas antigas
 
-Adicionar **check de celular antes de disparar o OTP**, igual já é feito na etapa de email/celular do login:
-```ts
-// Antes de signInWithOtp:
-const { data: check } = await supabase.rpc("verificar_existencia_usuario", {
-  p_celular: validation.normalized,
-});
-if (check?.exists) {
-  toast({
-    title: "Celular já cadastrado",
-    description: `Já existe uma conta com este número (${check.email}). Faça login em vez de cadastrar.`,
-    variant: "destructive",
-  });
-  setEtapa("email");  // volta para login
-  setEmailLogin(check.email);
-  return;
-}
-// Só então signInWithOtp(...)
-```
+### 3. `supabase/functions/receive-lead/index.ts`
+- Aceitar `slug` (substituindo `source`); se vier `source` no payload, **ignorar** (não popular slug — usuário já decidiu remover já)
+- Extrair e gravar: `utm_medium`, `utm_campaign`, `utm_content`, `utm_term`, `referrer`, `gclid`, `fbclid` no insert do `leads_inbox`
+- Quando promove a usuário (lead completo): propagar `utm_source` para `perfis.utm_source` (já é o que faz). Demais UTMs ficam só em `leads_inbox` por ora — não inflar `perfis`
+- Ajustar log de auditoria pra incluir os novos campos mascarados
 
-Isso evita: usuário verificar OTP, tentar gravar celular no `updateProfile`, e estourar UNIQUE deixando perfil quebrado.
+### 4. `src/components/admin/LeadDetailSheet.tsx`
+Bloco "Origem" expandido pra mostrar:
+- Slug (com ícone Tag)
+- UTM Source / Medium / Campaign / Content / Term (cada um com label e valor mono)
+- Página de origem (link)
+- Referrer (link, se existir)
+- Click IDs (`gclid`, `fbclid`) com badge identificando a plataforma (Google Ads / Meta Ads)
+- IP (mantém)
 
-### 5. `supabase/functions/receive-lead/index.ts` (linhas 438–457)
+Layout em grid 2-col no desktop, stacked no mobile, com seção colapsável "Atribuição completa" pra esconder os campos vazios.
 
-Já checa email e celular separadamente (OK), mas vou substituir os 2 SELECTs pelo RPC único, **mantendo comportamento idêntico** — só centraliza a lógica para evitar drift futuro.
+### 5. `src/pages/admin/AdminUsuarios.tsx`
+Tabela de leads (desktop): adicionar **dropdown "Colunas"** no header da aba Leads, controlando visibilidade:
 
-### 6. `supabase/functions/promote-lead-to-user/index.ts` (linhas 93–109)
+- **Default visível**: Status, Nome, Email, Celular, **Origem** (slug ou utm_source), **Campanha** (utm_campaign), Data
+- **Toggle opcional**: Medium, Content, Term, Referrer, Click IDs, Página
 
-Mesma refatoração — trocar os 2 SELECTs pelo RPC único.
+Estado salvo em localStorage `admin_leads_columns` pra persistir entre sessões.
 
-### 7. (Bonus, opcional) `enviar-codigo-email` / fluxo OTP
+Atualizar interface `LeadInbox` (no `LeadDetailSheet.tsx`) com os novos campos opcionais.
 
-Quando o usuário pede OTP de email novo mas o celular já existe em outra conta, idealmente bloquear no servidor também. Mas como já bloqueamos no LoginWizard antes de chamar OTP, **não é crítico** — fica como nota para próxima iteração se quiser hardening extra.
+### 6. Atualizar guia em `src/pages/admin/Integracoes.tsx`
+Trocar exemplo de payload pra mostrar `slug` + todos os UTMs + click IDs. Marcar todos como opcionais. Remover qualquer menção a `source`.
 
-## O que NÃO muda
-- UNIQUE constraint do `celular` — fica como **rede de segurança** final no banco
-- Trigger `handle_new_user` — não toca
-- Trigger `ativar_trial_pos_confirmacao` — não toca
-- Fluxo de leads parciais (`leads_inbox`) — não toca, continua aceitando dados incompletos
-- Fluxo de OTP / verificação de email — não toca
-- RLS de `perfis` — não toca
-
-## Detalhes técnicos sensíveis
-
-- **Normalização do celular** precisa ser **idêntica** em todo lugar (10-11 dígitos sem `55`). Hoje cada função tem sua própria `normalizeCelular`/`normalizePhone`. Vou garantir que **todas chamem o RPC com o mesmo formato** — se diferirem, o match por celular falha. (Opcional: criar helper TS compartilhado em `_shared/`, mas Lovable não permite subpastas em functions, então vou padronizar inline em cada uma.)
-- **Race condition**: dois webhooks simultâneos com mesmo celular podem passar do RPC antes de qualquer um inserir. UNIQUE no DB pega isso — vou tratar o erro `23505` (unique_violation) em todas as funções como "já existe, busca de novo e reusa".
-- **Kirvano com email novo + celular existente**: política decidida = **reusar conta existente, manter email original do perfil**. Só atualiza `nome`, `plan_id`, `validade_assinatura`, etc. (não sobrescreve `email` nem `celular`). Isso evita perder a identidade da conta original.
-- **CSV import com celular existente**: trata como skipped (mesma política do email duplicado hoje).
+## Detalhes técnicos
+- Hook `useUTM` mantém função exportada `getStoredUTM` (retorna `string | null`) pra compatibilidade — código que importa essa função continua funcionando
+- Migração `RENAME COLUMN source TO slug` quebra qualquer leitura/escrita de `source` — todos os pontos serão atualizados na mesma iteração (`receive-lead`, `LeadDetailSheet`, `AdminUsuarios`)
+- Edge function aceita payload sem campos novos (compat com integrações antigas) — só ignora `source` se vier
+- Dropdown de colunas usa `DropdownMenuCheckboxItem` (já em uso no projeto)
 
 ## Arquivos
 
 | Arquivo | Ação |
 |---|---|
-| **Migration nova** | Criar `find_user_by_contact(email, celular)` + índice em `lower(email)` |
-| `supabase/functions/handle-kirvano-webhook/index.ts` | Editar — usar RPC antes de createUser, tratar duplicata UNIQUE |
-| `supabase/functions/import-csv-users/index.ts` | Editar — usar RPC para check, skip se achar por celular |
-| `supabase/functions/receive-lead/index.ts` | Editar — substituir 2 SELECTs pelo RPC único |
-| `supabase/functions/promote-lead-to-user/index.ts` | Editar — substituir 2 SELECTs pelo RPC único |
-| `src/components/auth/LoginWizard.tsx` | Editar — check de celular antes do OTP no cadastro |
+| **Migration nova** | Renomear `source→slug`, adicionar 7 colunas em `leads_inbox` |
+| `src/hooks/useUTM.ts` | Refatorar pra capturar todos UTMs + click IDs + referrer |
+| `supabase/functions/receive-lead/index.ts` | Aceitar `slug` + novos UTMs + click IDs; remover `source` |
+| `src/components/admin/LeadDetailSheet.tsx` | Expandir bloco Origem; atualizar interface `LeadInbox` |
+| `src/pages/admin/AdminUsuarios.tsx` | Dropdown de colunas visíveis na tabela de leads |
+| `src/pages/admin/Integracoes.tsx` | Atualizar exemplo do payload no guia |
 
 ## Fora de escopo
-- Mesclar contas duplicadas que já existem (não há duplicatas hoje, mas se aparecer no futuro vira tarefa separada)
-- Verificação por CPF (sistema não usa CPF como chave)
-- Refatorar normalização de celular para um pacote compartilhado
-- Mudar UNIQUE constraint (já existe, fica)
+- Migrar dados antigos de `utm_source` em `perfis` (já funciona)
+- Filtros server-side por UTM/campanha (próxima iteração se virar relevante)
+- Dashboard de atribuição multi-touch
+- Capturar UTMs no cadastro manual (`LoginWizard`) — hoje já passa pra `perfis.utm_source`, fica como nota
 
 ## Resultado esperado
-- **Zero possibilidade de duplicar conta** por celular, vindo de qualquer um dos 5 caminhos
-- Cliente Kirvano que paga com email diferente do cadastro original → **mantém a mesma conta**, plano é atualizado nela
-- Cadastro manual com celular já existente → **mensagem clara** "já tem conta com esse número, faça login", redireciona pro login com email pré-preenchido
-- Import CSV pula linhas cujo celular já existe (mesmo se email é novo)
-- Lógica de identificação **centralizada em uma função SQL** — futuras alterações ficam em um lugar só
+- Webhooks externos podem mandar atribuição **completa de marketing** (UTMs + click IDs + referrer)
+- Frontend captura tudo na **primeira visita** e persiste até virar lead/usuário
+- Admin vê tabela limpa por padrão e ativa colunas extras conforme precisa
+- Detalhe do lead mostra atribuição completa pra rastreabilidade
+- `source` some do sistema — único campo de identificação de página é `slug`
 
