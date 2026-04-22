@@ -780,7 +780,8 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos do
     }
 
     // ─── Format rich WhatsApp message ───
-    const linkUrl = `${baseUrl}/lotofacil`;
+    const trackedPalpiteLink = `${baseUrl}/lotofacil?utm_source=whatsapp&utm_medium=group&utm_campaign=blast_palpite&utm_content=lotofacil`;
+    const trackedVipLink = `${baseUrl}/lotofacil?utm_source=whatsapp&utm_medium=group&utm_campaign=blast_vip&utm_content=lotofacil`;
     let msg = `🎰 *Palpites Lotofácil — Concurso ${concursoMax + 1}*\n\n`;
     msg += `📢 *Último Resultado (Concurso ${ultimoResultado.concurso_id}):*\n`;
     msg += `${ultimoResultado.dezenas.sort((a: number, b: number) => a - b).map(pad).join(" - ")}\n\n`;
@@ -835,7 +836,7 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos do
       for (let i = 0; i < jogosValidos.length; i++) {
         msg += `🎯 Jogo ${String(i + 1).padStart(2, "0")}: ${jogosValidos[i]}\n`;
       }
-      msg += `\nBoa sorte! 🍀\nMais análises na comunidade 👇\n${linkUrl}?utm=grupo`;
+      msg += `\nBoa sorte! 🍀\nMais análises na comunidade 👇\n${trackedPalpiteLink}`;
     } else {
       // Modo SEM palpites: CTA para grupo VIP
       msg += `━━━━━━━━━━━━━━━━━━━━\n`;
@@ -847,7 +848,7 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos do
         msg += `👉 Fale com a gente para entrar no Grupo VIP!\n`;
       }
       msg += `━━━━━━━━━━━━━━━━━━━━\n`;
-      msg += `\nMais análises na comunidade 👇\n${linkUrl}?utm=grupo`;
+      msg += `\nMais análises na comunidade 👇\n${trackedVipLink}`;
     }
 
     return msg;
