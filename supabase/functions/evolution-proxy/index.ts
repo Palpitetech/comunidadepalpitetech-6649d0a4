@@ -297,6 +297,251 @@ Deno.serve(async (req) => {
       }
     }
 
+    // === Cria nova instância na Evolution + reserva e aplica proxy + retorna QR ===
+    if (action === "createAndConnect") {
+      const apelido = String(reqBody.apelido || "").trim();
+      if (!apelido) {
+        return new Response(
+          JSON.stringify({ success: false, code: "missing_apelido", error: "Apelido obrigatório" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // 1. Slugify
+      const baseSlug = apelido
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 40);
+      const randSuffix = Math.random().toString(36).slice(2, 6);
+      const slug = `${baseSlug || "instance"}-${randSuffix}`;
+
+      const supabase = getSupabase();
+
+      // 2. Pré-checagem: existe proxy disponível?
+      const { count: availableProxies } = await supabase
+        .from("whatsapp_proxies")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "available")
+        .is("instance_id", null);
+
+      if (!availableProxies || availableProxies < 1) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            code: "no_proxy_available",
+            error: "Sem proxy disponível. Adicione proxies em WhatsApp → Proxies antes de criar instâncias.",
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // 3. INSERIR no banco
+      const { data: inserted, error: insertErr } = await supabase
+        .from("whatsapp_instances")
+        .insert({
+          name: apelido,
+          friendly_name: apelido,
+          phone_number: "",
+          evolution_instance_id: slug,
+          status: "offline",
+          daily_limit: 100,
+          cooldown_queue: [3],
+        })
+        .select("id")
+        .single();
+
+      if (insertErr || !inserted) {
+        return new Response(
+          JSON.stringify({ success: false, code: "insert_failed", error: insertErr?.message || "Falha ao inserir instância no banco" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const newUuid = inserted.id;
+
+      // 4. CRIAR na Evolution
+      let qrBase64: string | null = null;
+      try {
+        const createRes = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", apikey: EVOLUTION_API_KEY },
+          body: JSON.stringify({
+            instanceName: slug,
+            integration: "WHATSAPP-BAILEYS",
+            qrcode: true,
+          }),
+        });
+        const createData = await createRes.json().catch(() => ({}));
+        if (!createRes.ok) {
+          await supabase.from("whatsapp_instances").delete().eq("id", newUuid);
+          return new Response(
+            JSON.stringify({
+              success: false,
+              code: "evolution_create_failed",
+              error: `Falha ao criar na Evolution: ${createData?.message || createRes.status}`,
+              details: createData,
+            }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        qrBase64 = createData?.qrcode?.base64 || createData?.base64 || null;
+      } catch (err: any) {
+        await supabase.from("whatsapp_instances").delete().eq("id", newUuid);
+        return new Response(
+          JSON.stringify({ success: false, code: "evolution_create_failed", error: err?.message || "Erro de rede ao criar na Evolution" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // 5. RESERVAR proxy
+      const claim = await claimProxyForInstance(newUuid);
+      if (!claim.success) {
+        await fetch(`${EVOLUTION_API_URL}/instance/delete/${slug}`, { method: "DELETE", headers: { apikey: EVOLUTION_API_KEY } }).catch(() => null);
+        await supabase.from("whatsapp_instances").delete().eq("id", newUuid);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            code: claim.error === "no_proxy_available" ? "no_proxy_available" : "claim_failed",
+            error: claim.error,
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // 6. APLICAR proxy
+      const apply = await applyProxyToInstance(EVOLUTION_API_URL, EVOLUTION_API_KEY, slug, claim.proxy);
+      if (!apply.ok) {
+        await releaseProxyForInstance(newUuid).catch(() => null);
+        await fetch(`${EVOLUTION_API_URL}/instance/delete/${slug}`, { method: "DELETE", headers: { apikey: EVOLUTION_API_KEY } }).catch(() => null);
+        await supabase.from("whatsapp_instances").delete().eq("id", newUuid);
+
+        if (apply.body?.message === "proxy_invalid") {
+          const fields = (apply.body.invalidFields || []).join(", ");
+          return new Response(
+            JSON.stringify({
+              success: false,
+              code: "proxy_invalid",
+              error: `Proxy ${apply.body.proxyLabel || ""} está com dados incompletos (faltam: ${fields}). Edite em WhatsApp → Proxies.`,
+              proxyId: apply.body.proxyId,
+              proxyLabel: apply.body.proxyLabel,
+              invalidFields: apply.body.invalidFields,
+            }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        return new Response(
+          JSON.stringify({
+            success: false,
+            code: "apply_failed",
+            error: `Falha ao aplicar proxy: ${apply.body?.message || apply.status}`,
+            details: apply.body,
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // 7. Restart para o IP entrar em vigor (não bloqueia QR)
+      fetch(`${EVOLUTION_API_URL}/instance/restart/${slug}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", apikey: EVOLUTION_API_KEY },
+      }).catch(() => null);
+
+      // 8. Se não veio QR no create, tenta /connect
+      if (!qrBase64) {
+        try {
+          const connRes = await fetch(`${EVOLUTION_API_URL}/instance/connect/${slug}`, {
+            method: "GET",
+            headers: { apikey: EVOLUTION_API_KEY },
+          });
+          const connData = await connRes.json().catch(() => ({}));
+          qrBase64 = connData?.base64 || connData?.qrcode?.base64 || connData?.qr || null;
+        } catch { /* ignore */ }
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          instanceId: newUuid,
+          evolutionInstanceId: slug,
+          qrCode: qrBase64,
+          proxy: { id: claim.proxy.id, label: claim.proxy.label },
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // === Sincroniza status + telefone da instância com a Evolution ===
+    if (action === "syncInstancePhone") {
+      const { instanceId } = reqBody;
+      if (!instanceId) {
+        return new Response(
+          JSON.stringify({ error: "instanceId obrigatório" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const supabase = getSupabase();
+      const { data: inst } = await supabase
+        .from("whatsapp_instances")
+        .select("id, evolution_instance_id, phone_number, status")
+        .eq("id", instanceId)
+        .maybeSingle();
+      if (!inst) {
+        return new Response(
+          JSON.stringify({ error: "Instância não encontrada" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const evoName = inst.evolution_instance_id;
+      let state = "close";
+      try {
+        const stateRes = await fetch(`${EVOLUTION_API_URL}/instance/connectionState/${evoName}`, {
+          headers: { apikey: EVOLUTION_API_KEY },
+        });
+        const stateData = await stateRes.json().catch(() => ({}));
+        state = stateData?.instance?.state || stateData?.state || stateData?.connectionStatus || "close";
+      } catch { /* ignore */ }
+
+      if (state !== "open") {
+        return new Response(
+          JSON.stringify({ status: "waiting", state }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Conectada → busca o owner via fetchInstances
+      let phone = inst.phone_number || "";
+      try {
+        const fetchRes = await fetch(`${EVOLUTION_API_URL}/instance/fetchInstances?instanceName=${encodeURIComponent(evoName)}`, {
+          headers: { apikey: EVOLUTION_API_KEY },
+        });
+        const fetchData = await fetchRes.json().catch(() => null);
+        const arr = Array.isArray(fetchData) ? fetchData : (fetchData ? [fetchData] : []);
+        for (const evo of arr) {
+          const name = evo.name || evo.instance?.instanceName || evo.instanceName;
+          if (name === evoName) {
+            const owner = evo.ownerJid || evo.instance?.owner || evo.owner || "";
+            if (owner) phone = String(owner).replace(/@s\.whatsapp\.net$/, "");
+            break;
+          }
+        }
+      } catch { /* ignore */ }
+
+      await supabase
+        .from("whatsapp_instances")
+        .update({ status: "online", phone_number: phone })
+        .eq("id", instanceId);
+
+      ensureWebhookConfigured(evoName, EVOLUTION_API_URL, EVOLUTION_API_KEY).catch(console.error);
+
+      return new Response(
+        JSON.stringify({ status: "online", phone }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     if (action === "swapProxy") {
       // Libera proxy atual da instância (próximo connect reserva um novo)
       if (!instanceName) {
