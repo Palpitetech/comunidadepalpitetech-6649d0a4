@@ -268,48 +268,61 @@ export function ProxiesTab() {
     }
   };
 
+  const bulkPreview = useMemo(() => {
+    const rawLines = bulkText.split("\n");
+    const valid: ParsedProxy[] = [];
+    let invalid = 0;
+    let skippedHeader = false;
+    for (let i = 0; i < rawLines.length; i++) {
+      const line = rawLines[i].trim();
+      if (!line || line.startsWith("#")) continue;
+      if (i === 0 && isHeaderLine(line)) {
+        skippedHeader = true;
+        continue;
+      }
+      const parsed = parseProxyLine(line, bulkFormat);
+      if (parsed) valid.push(parsed);
+      else invalid++;
+    }
+    return { valid, invalid, skippedHeader };
+  }, [bulkText, bulkFormat]);
+
+  const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const text = String(evt.target?.result ?? "");
+      setBulkText(text);
+    };
+    reader.onerror = () => toast.error("Falha ao ler o arquivo");
+    reader.readAsText(file);
+    // reset input para permitir re-upload do mesmo arquivo
+    e.target.value = "";
+  };
+
   const handleBulkSave = async () => {
-    const lines = bulkText.split("\n").map((l) => l.trim()).filter(Boolean);
-    if (lines.length === 0) {
-      toast.error("Cole pelo menos uma linha");
+    const { valid } = bulkPreview;
+    if (valid.length === 0) {
+      toast.error("Nenhuma linha válida encontrada");
       return;
     }
     setBulkSaving(true);
-    const rows: any[] = [];
-    let invalid = 0;
     let counter = proxies.length + 1;
-    for (const line of lines) {
-      const parts = line.split(":");
-      if (parts.length < 2) {
-        invalid++;
-        continue;
-      }
-      const [host, portStr, username, password] = parts;
-      const port = parseInt(portStr);
-      if (!host || !port || isNaN(port)) {
-        invalid++;
-        continue;
-      }
-      rows.push({
-        label: `${bulkLabelPrefix.trim() || "Proxy"} #${counter}`,
-        protocol: "socks5",
-        host: host.trim(),
-        port,
-        username: username?.trim() || null,
-        password: password?.trim() || null,
-        status: "available",
-      });
-      counter++;
-    }
-    if (rows.length === 0) {
-      toast.error("Nenhuma linha válida encontrada");
-      setBulkSaving(false);
-      return;
-    }
+    const rows = valid.map((p) => ({
+      label: `${bulkLabelPrefix.trim() || "Proxy"} #${counter++}`,
+      protocol: "socks5",
+      host: p.host,
+      port: p.port,
+      username: p.username,
+      password: p.password,
+      status: "available",
+    }));
     try {
       const { error } = await supabase.from("whatsapp_proxies" as any).insert(rows);
       if (error) throw error;
-      toast.success(`${rows.length} proxy(ies) adicionados${invalid > 0 ? ` — ${invalid} ignorada(s)` : ""}`);
+      const invalidNote = bulkPreview.invalid > 0 ? ` — ${bulkPreview.invalid} ignorada(s)` : "";
+      toast.success(`${rows.length} proxy(ies) adicionados${invalidNote}`);
       setBulkOpen(false);
       setBulkText("");
       fetchData();
