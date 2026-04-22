@@ -678,8 +678,8 @@ export default function AdminUsuarios() {
           </div>
         </div>
 
-        {/* Toolbar — linha 2 (subfiltros agrupados) — escondido em Leads */}
-        {activeFilter !== "leads" && (
+        {/* Toolbar — linha 2: subfiltros (não-leads) OU dropdown de colunas (leads) */}
+        {activeFilter !== "leads" ? (
           <div className="border-b border-border bg-background px-6 py-2 flex items-center gap-2 flex-wrap">
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mr-1">Filtros:</span>
             {FILTROS_SECUNDARIOS_GRUPOS.map((grupo, idx) => (
@@ -703,6 +703,40 @@ export default function AdminUsuarios() {
                       {isActive && <X className="h-3 w-3" />}
                     </button>
                   );
+                })}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="border-b border-border bg-background px-6 py-2 flex items-center justify-between">
+            <span className="text-[11px] text-muted-foreground">
+              {filteredLeads.length} lead{filteredLeads.length !== 1 ? "s" : ""}
+            </span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
+                  <Columns3 className="h-3.5 w-3.5" />
+                  Colunas
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel className="text-[11px]">Colunas visíveis</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {LEAD_COLUMNS.map((col) => (
+                  <DropdownMenuCheckboxItem
+                    key={col.key}
+                    checked={isLeadColVisible(col.key)}
+                    onCheckedChange={() => toggleLeadCol(col.key)}
+                    onSelect={(e) => e.preventDefault()}
+                    className="text-xs"
+                  >
+                    {col.label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
                 })}
               </div>
             ))}
