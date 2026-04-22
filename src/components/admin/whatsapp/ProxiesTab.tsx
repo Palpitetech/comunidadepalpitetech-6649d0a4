@@ -153,7 +153,9 @@ export function ProxiesTab() {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkText, setBulkText] = useState("");
   const [bulkLabelPrefix, setBulkLabelPrefix] = useState("IPRoyal BR");
+  const [bulkFormat, setBulkFormat] = useState<ProxyFormat>("format1");
   const [bulkSaving, setBulkSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<FormData>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
