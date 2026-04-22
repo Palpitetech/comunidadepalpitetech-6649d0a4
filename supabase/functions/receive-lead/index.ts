@@ -358,22 +358,36 @@ serve(async (req) => {
             nome: nome?.trim() || undefined,
             email: emailLowerLead || undefined,
             celular: celularSave || undefined,
-            source: source || undefined,
-            utm_source: utm_source || undefined,
+            slug: slugClean || undefined,
+            utm_source: utmSourceClean || undefined,
+            utm_medium: utmMediumClean || undefined,
+            utm_campaign: utmCampaignClean || undefined,
+            utm_content: utmContentClean || undefined,
+            utm_term: utmTermClean || undefined,
+            referrer: referrerClean || undefined,
+            gclid: gclidClean || undefined,
+            fbclid: fbclidClean || undefined,
             pagina_origem: paginaOrigemValor || undefined,
             tags: tagsLead,
             raw_payload: body,
             ip,
             updated_at: new Date().toISOString(),
-          })
+          } as any)
           .eq("id", existingLeadId);
       } else {
         await supabaseAdmin.from("leads_inbox").insert({
           nome: nome?.trim() || null,
           email: emailLowerLead,
           celular: celularSave,
-          source: source || null,
-          utm_source: utm_source || null,
+          slug: slugClean,
+          utm_source: utmSourceClean,
+          utm_medium: utmMediumClean,
+          utm_campaign: utmCampaignClean,
+          utm_content: utmContentClean,
+          utm_term: utmTermClean,
+          referrer: referrerClean,
+          gclid: gclidClean,
+          fbclid: fbclidClean,
           pagina_origem: paginaOrigemValor,
           tags: tagsLead,
           webhook_id: webhook.id,
@@ -381,7 +395,7 @@ serve(async (req) => {
           ip,
           raw_payload: body,
           status: "novo",
-        });
+        } as any);
       }
 
       await supabaseAdmin.rpc("increment_lead_webhook_count" as any, { webhook_id: webhook.id });
@@ -397,6 +411,11 @@ serve(async (req) => {
           tem_email: hasEmail,
           tem_celular: hasCelular,
           dedup: !!existingLeadId,
+          slug: slugClean,
+          utm_source: utmSourceClean,
+          utm_campaign: utmCampaignClean,
+          has_gclid: !!gclidClean,
+          has_fbclid: !!fbclidClean,
           ip,
         },
       });
