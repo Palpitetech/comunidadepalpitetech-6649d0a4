@@ -744,20 +744,24 @@ export default function AdminUsuarios() {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-24 pl-6 text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Nome</TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Email</TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Celular</TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Origem</TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Página</TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Tags</TableHead>
-                  <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Data</TableHead>
+                  {LEAD_COLUMNS.filter(c => isLeadColVisible(c.key)).map((col, idx) => (
+                    <TableHead
+                      key={col.key}
+                      className={cn(
+                        "text-xs font-medium uppercase tracking-wider text-muted-foreground",
+                        idx === 0 && "pl-6",
+                        col.key === "status" && "w-24",
+                      )}
+                    >
+                      {col.label}
+                    </TableHead>
+                  ))}
                   <TableHead className="w-8"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredLeads.map((lead) => {
-                  const origem = lead.webhook_name || lead.source || lead.utm_source || "—";
+                  const origem = lead.slug || lead.utm_source || lead.webhook_name || "—";
                   const statusClass =
                     lead.status === "convertido"
                       ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
@@ -766,65 +770,161 @@ export default function AdminUsuarios() {
                       : lead.status === "descartado"
                       ? "bg-muted text-muted-foreground border-border"
                       : "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30";
+
+                  const renderCell = (key: LeadColumnKey, isFirst: boolean) => {
+                    const baseCls = cn("py-2.5", isFirst && "pl-6");
+                    switch (key) {
+                      case "status":
+                        return (
+                          <TableCell key={key} className={baseCls}>
+                            <Badge variant="outline" className={cn("text-[10px] capitalize", statusClass)}>
+                              {lead.status}
+                            </Badge>
+                          </TableCell>
+                        );
+                      case "nome":
+                        return (
+                          <TableCell key={key} className={cn(baseCls, "text-sm font-medium truncate max-w-[180px]")}>
+                            {lead.nome || <span className="text-muted-foreground italic">sem nome</span>}
+                          </TableCell>
+                        );
+                      case "email":
+                        return (
+                          <TableCell key={key} className={cn(baseCls, "text-sm text-muted-foreground truncate max-w-[200px]")}>
+                            {lead.email || "—"}
+                          </TableCell>
+                        );
+                      case "celular":
+                        return (
+                          <TableCell key={key} className={cn(baseCls, "text-sm text-muted-foreground tabular-nums")}>
+                            {lead.celular || "—"}
+                          </TableCell>
+                        );
+                      case "origem":
+                        return (
+                          <TableCell key={key} className={baseCls}>
+                            <span className="inline-block px-2 py-0.5 rounded bg-muted text-[10px] text-foreground/80 truncate max-w-[140px]">
+                              {origem}
+                            </span>
+                          </TableCell>
+                        );
+                      case "campanha":
+                        return (
+                          <TableCell key={key} className={cn(baseCls, "text-xs text-muted-foreground truncate max-w-[140px]")}>
+                            {lead.utm_campaign || <span className="text-muted-foreground/40">—</span>}
+                          </TableCell>
+                        );
+                      case "medium":
+                        return (
+                          <TableCell key={key} className={cn(baseCls, "text-xs text-muted-foreground font-mono")}>
+                            {lead.utm_medium || <span className="text-muted-foreground/40">—</span>}
+                          </TableCell>
+                        );
+                      case "content":
+                        return (
+                          <TableCell key={key} className={cn(baseCls, "text-xs text-muted-foreground font-mono truncate max-w-[120px]")}>
+                            {lead.utm_content || <span className="text-muted-foreground/40">—</span>}
+                          </TableCell>
+                        );
+                      case "term":
+                        return (
+                          <TableCell key={key} className={cn(baseCls, "text-xs text-muted-foreground font-mono truncate max-w-[120px]")}>
+                            {lead.utm_term || <span className="text-muted-foreground/40">—</span>}
+                          </TableCell>
+                        );
+                      case "referrer":
+                        return (
+                          <TableCell key={key} className={cn(baseCls, "text-xs text-muted-foreground max-w-[160px]")}>
+                            {lead.referrer ? (
+                              <a
+                                href={lead.referrer}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-primary hover:underline truncate inline-block max-w-full"
+                                title={lead.referrer}
+                              >
+                                {lead.referrer.replace(/^https?:\/\//, "")}
+                              </a>
+                            ) : (
+                              <span className="text-muted-foreground/40">—</span>
+                            )}
+                          </TableCell>
+                        );
+                      case "click_ids":
+                        return (
+                          <TableCell key={key} className={baseCls}>
+                            <div className="flex gap-1">
+                              {lead.gclid && (
+                                <Badge variant="outline" className="bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30 text-[9px]">
+                                  Google
+                                </Badge>
+                              )}
+                              {lead.fbclid && (
+                                <Badge variant="outline" className="bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/30 text-[9px]">
+                                  Meta
+                                </Badge>
+                              )}
+                              {!lead.gclid && !lead.fbclid && (
+                                <span className="text-muted-foreground/40 text-xs">—</span>
+                              )}
+                            </div>
+                          </TableCell>
+                        );
+                      case "pagina":
+                        return (
+                          <TableCell key={key} className={cn(baseCls, "text-xs text-muted-foreground max-w-[200px]")}>
+                            {lead.pagina_origem ? (
+                              <a
+                                href={lead.pagina_origem}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 text-primary hover:underline truncate"
+                                title={lead.pagina_origem}
+                              >
+                                <Globe className="h-3 w-3 shrink-0" />
+                                <span className="truncate">{lead.pagina_origem.replace(/^https?:\/\//, "")}</span>
+                              </a>
+                            ) : (
+                              <span className="text-muted-foreground/40">—</span>
+                            )}
+                          </TableCell>
+                        );
+                      case "tags":
+                        return (
+                          <TableCell key={key} className={baseCls}>
+                            <div className="flex flex-wrap gap-1 max-w-[200px]">
+                              {lead.tags?.slice(0, 2).map((tag) => (
+                                <span key={tag} className="inline-block px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">
+                                  {tag}
+                                </span>
+                              ))}
+                              {lead.tags && lead.tags.length > 2 && (
+                                <span className="inline-block px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">
+                                  +{lead.tags.length - 2}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+                        );
+                      case "data":
+                        return (
+                          <TableCell key={key} className={cn(baseCls, "text-xs text-muted-foreground tabular-nums")}>
+                            {format(new Date(lead.created_at), "dd/MM HH:mm", { locale: ptBR })}
+                          </TableCell>
+                        );
+                    }
+                  };
+
+                  const visible = LEAD_COLUMNS.filter(c => isLeadColVisible(c.key));
                   return (
                     <TableRow
                       key={lead.id}
                       className="cursor-pointer group"
                       onClick={() => handleLeadClick(lead)}
                     >
-                      <TableCell className="pl-6 py-2.5">
-                        <Badge variant="outline" className={cn("text-[10px] capitalize", statusClass)}>
-                          {lead.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="py-2.5 text-sm font-medium truncate max-w-[180px]">
-                        {lead.nome || <span className="text-muted-foreground italic">sem nome</span>}
-                      </TableCell>
-                      <TableCell className="py-2.5 text-sm text-muted-foreground truncate max-w-[200px]">
-                        {lead.email || "—"}
-                      </TableCell>
-                      <TableCell className="py-2.5 text-sm text-muted-foreground tabular-nums">
-                        {lead.celular || "—"}
-                      </TableCell>
-                      <TableCell className="py-2.5">
-                        <span className="inline-block px-2 py-0.5 rounded bg-muted text-[10px] text-foreground/80 truncate max-w-[140px]">
-                          {origem}
-                        </span>
-                      </TableCell>
-                      <TableCell className="py-2.5 text-xs text-muted-foreground max-w-[200px]">
-                        {lead.pagina_origem ? (
-                          <a
-                            href={lead.pagina_origem}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 text-primary hover:underline truncate"
-                            title={lead.pagina_origem}
-                          >
-                            <Globe className="h-3 w-3 shrink-0" />
-                            <span className="truncate">{lead.pagina_origem.replace(/^https?:\/\//, "")}</span>
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground/60">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="py-2.5">
-                        <div className="flex flex-wrap gap-1 max-w-[200px]">
-                          {lead.tags?.slice(0, 2).map((tag) => (
-                            <span key={tag} className="inline-block px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">
-                              {tag}
-                            </span>
-                          ))}
-                          {lead.tags && lead.tags.length > 2 && (
-                            <span className="inline-block px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">
-                              +{lead.tags.length - 2}
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="py-2.5 text-xs text-muted-foreground tabular-nums">
-                        {format(new Date(lead.created_at), "dd/MM HH:mm", { locale: ptBR })}
-                      </TableCell>
+                      {visible.map((col, idx) => renderCell(col.key, idx === 0))}
                       <TableCell className="py-2.5 pr-4">
                         <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
                       </TableCell>
@@ -833,7 +933,7 @@ export default function AdminUsuarios() {
                 })}
                 {filteredLeads.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-16 text-sm text-muted-foreground">
+                    <TableCell colSpan={visibleLeadCols.size + 1} className="text-center py-16 text-sm text-muted-foreground">
                       <Inbox className="h-8 w-8 mx-auto mb-2 text-muted-foreground/40" />
                       {searchTerm ? "Nenhum lead encontrado" : "Nenhum lead capturado ainda"}
                     </TableCell>
