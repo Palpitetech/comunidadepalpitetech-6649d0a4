@@ -9,6 +9,8 @@ import { GruposTab } from "@/components/admin/whatsapp/GruposTab";
 import { DisparoManualTab } from "@/components/admin/whatsapp/DisparoManualTab";
 import { DisparoGrupoTab } from "@/components/admin/whatsapp/DisparoGrupoTab";
 import { SmartLinksTab } from "@/components/admin/whatsapp/SmartLinksTab";
+import { MensagensTab } from "@/components/admin/whatsapp/MensagensTab";
+import { RetargetingPanelTab } from "@/components/admin/whatsapp/RetargetingPanelTab";
 import { WhatsAppSubSidebar, whatsappTabs } from "@/components/admin/whatsapp/WhatsAppSubSidebar";
 import { cn } from "@/lib/utils";
 
@@ -16,8 +18,10 @@ const TAB_TITLES: Record<string, string> = {
   instancias: "Instâncias",
   templates: "Templates",
   fila: "Fila de Envio",
+  mensagens: "Mensagens",
   disparo: "Disparo Manual",
   logs: "Logs",
+  retargeting: "Retargeting de Leads",
   "disparo-grupo": "Disparo Grupo",
   aquecimento: "Aquecimento",
   grupos: "Grupos",
@@ -65,8 +69,10 @@ export default function AdminWhatsApp() {
               {activeTab === "instancias" && <InstanciasTab />}
               {activeTab === "templates" && <TemplatesTab />}
               {activeTab === "fila" && <FilaTab />}
+              {activeTab === "mensagens" && <MensagensTab />}
               {activeTab === "disparo" && <DisparoManualTab />}
               {activeTab === "logs" && <LogsTab />}
+              {activeTab === "retargeting" && <RetargetingPanelTab />}
               {activeTab === "disparo-grupo" && <DisparoGrupoTab />}
               {activeTab === "aquecimento" && <AquecimentoTab />}
               {activeTab === "grupos" && <GruposTab />}

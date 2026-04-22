@@ -1,12 +1,14 @@
-import { Smartphone, FileText, Send, ScrollText, Flame, Users, Megaphone, MessageSquare, Link2 } from "lucide-react";
+import { Smartphone, FileText, Send, ScrollText, Flame, Users, Megaphone, MessageSquare, Link2, Target, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { value: "instancias", label: "Instâncias", icon: Smartphone },
   { value: "templates", label: "Templates", icon: FileText },
   { value: "fila", label: "Fila", icon: Send },
+  { value: "mensagens", label: "Mensagens", icon: Inbox },
   { value: "disparo", label: "Disparo Manual", icon: Megaphone },
   { value: "logs", label: "Logs", icon: ScrollText },
+  { value: "retargeting", label: "Retargeting", icon: Target },
   { value: "disparo-grupo", label: "Disparo Grupo", icon: Send },
   { value: "aquecimento", label: "Aquecimento", icon: Flame },
   { value: "grupos", label: "Grupos", icon: Users },
