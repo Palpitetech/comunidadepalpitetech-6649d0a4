@@ -254,6 +254,8 @@ serve(async (req) => {
       tags: payloadTags,
       source,
       utm_source,
+      pagina_origem,
+      page_url,
     } = body as {
       nome?: string;
       email?: string;
@@ -261,11 +263,124 @@ serve(async (req) => {
       tags?: string[];
       source?: string;
       utm_source?: string;
+      pagina_origem?: string;
+      page_url?: string;
     };
 
-    // === VALIDAÇÕES ANTI-BOT ===
+    const hasNome = !!nome?.trim();
+    const hasEmail = !!email?.trim();
+    const hasCelular = !!celular?.trim();
+    const camposCompletos = hasNome && hasEmail && hasCelular;
 
-    // 1. Campos obrigatórios
+    // === NOVO FLUXO: leads parciais → leads_inbox (sem criar conta) ===
+    if (!camposCompletos) {
+      // Pelo menos 1 dado de contato é necessário
+      if (!hasEmail && !hasCelular && !hasNome) {
+        return json({ error: "Informe ao menos um dado de contato (nome, email ou celular)" }, 400);
+      }
+
+      let normalizedCelularLead: string | null = null;
+      if (hasCelular) {
+        const v = validateCelular(celular!);
+        if (v.ok) normalizedCelularLead = v.normalized!;
+      }
+
+      const emailLowerLead = hasEmail ? email!.trim().toLowerCase() : null;
+      const celularSave = normalizedCelularLead || (hasCelular ? celular!.replace(/\D/g, "") : null);
+      const paginaOrigemValor = pagina_origem || page_url || null;
+
+      // Deduplicação 24h por email/celular
+      let existingLeadId: string | null = null;
+      if (emailLowerLead) {
+        const { data: ex } = await supabaseAdmin
+          .from("leads_inbox")
+          .select("id, tags, raw_payload")
+          .eq("email", emailLowerLead)
+          .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (ex) existingLeadId = ex.id as string;
+      }
+      if (!existingLeadId && celularSave) {
+        const { data: ex2 } = await supabaseAdmin
+          .from("leads_inbox")
+          .select("id")
+          .eq("celular", celularSave)
+          .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (ex2) existingLeadId = ex2.id as string;
+      }
+
+      const tagsLead = Array.from(new Set([
+        "lead_inbox",
+        webhook.source_tag,
+        ...((payloadTags || []) as string[]),
+      ].filter(Boolean)));
+
+      if (existingLeadId) {
+        await supabaseAdmin
+          .from("leads_inbox")
+          .update({
+            nome: nome?.trim() || undefined,
+            email: emailLowerLead || undefined,
+            celular: celularSave || undefined,
+            source: source || undefined,
+            utm_source: utm_source || undefined,
+            pagina_origem: paginaOrigemValor || undefined,
+            tags: tagsLead,
+            raw_payload: body,
+            ip,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", existingLeadId);
+      } else {
+        await supabaseAdmin.from("leads_inbox").insert({
+          nome: nome?.trim() || null,
+          email: emailLowerLead,
+          celular: celularSave,
+          source: source || null,
+          utm_source: utm_source || null,
+          pagina_origem: paginaOrigemValor,
+          tags: tagsLead,
+          webhook_id: webhook.id,
+          webhook_name: webhook.name,
+          ip,
+          raw_payload: body,
+          status: "novo",
+        });
+      }
+
+      await supabaseAdmin.rpc("increment_lead_webhook_count" as any, { webhook_id: webhook.id });
+
+      await supabaseAdmin.from("system_events").insert({
+        event_type: "lead_inbox_capturado",
+        description: `Lead parcial capturado (campos incompletos)`,
+        source: "receive-lead",
+        status: "success",
+        metadata: {
+          webhook_name: webhook.name,
+          tem_nome: hasNome,
+          tem_email: hasEmail,
+          tem_celular: hasCelular,
+          dedup: !!existingLeadId,
+          ip,
+        },
+      });
+
+      return json({
+        success: true,
+        lead_inbox: true,
+        deduped: !!existingLeadId,
+        message: "Lead capturado (sem conta — dados incompletos)",
+      });
+    }
+
+    // === VALIDAÇÕES ANTI-BOT (fluxo completo de criação de conta) ===
+
+    // 1. Campos obrigatórios (já garantido acima, mas mantido para safety)
     if (!nome?.trim() || !email?.trim() || !celular?.trim()) {
       await logBloqueio(supabaseAdmin, "campos_obrigatorios", "Nome, email ou celular ausente", { nome, email, celular }, ip, webhook.name);
       return json({ error: "Nome, email e celular são obrigatórios" }, 400);
