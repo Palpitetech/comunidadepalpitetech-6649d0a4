@@ -7,9 +7,9 @@ const corsHeaders = {
 };
 
 // =============================================================================
-// CONSTANTES — autor único da comunidade
+// Persona/loteria são resolvidas dentro de generate-guide-post — este edge
+// só faz roteamento por horário/dia.
 // =============================================================================
-const AUGUSTO_PERFIL_ID = "41b58d48-2ef1-4bf7-a536-ed8a49607fa9";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
