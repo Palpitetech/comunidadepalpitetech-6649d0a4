@@ -1672,6 +1672,165 @@ function montarRecomendacaoCiclo(
 }
 
 // =============================================================================
+// MOTORES PÓS-15h: CENÁRIOS, FICAR DE OLHO, COMO CALCULAMOS
+// =============================================================================
+
+/**
+ * Calcula taxa real de repetição por faixa nos últimos N concursos.
+ * Retorna percentual de sorteios que caíram em cada faixa: ≤7, 8-9, 10+.
+ */
+function calcularDistribuicaoRepeticao(concursos: Concurso[]): {
+  pBaixa: number;  // ≤ 7 repetidas
+  pMedia: number;  // 8-9 repetidas
+  pAlta: number;   // 10+ repetidas
+  total: number;
+} {
+  let baixa = 0, media = 0, alta = 0, total = 0;
+  for (let i = 0; i < concursos.length - 1; i++) {
+    const atual = new Set(concursos[i].dezenas);
+    const ant = new Set(concursos[i + 1].dezenas);
+    const rep = [...atual].filter((d) => ant.has(d)).length;
+    if (rep <= 7) baixa++;
+    else if (rep <= 9) media++;
+    else alta++;
+    total++;
+  }
+  if (total === 0) return { pBaixa: 15, pMedia: 60, pAlta: 25, total: 0 };
+  return {
+    pBaixa: Math.round((baixa / total) * 100),
+    pMedia: Math.round((media / total) * 100),
+    pAlta: Math.round((alta / total) * 100),
+    total,
+  };
+}
+
+/**
+ * Monta 3 cenários de palpite (15 dezenas cada) determinísticos
+ * baseados nos dados do dia.
+ */
+function montarCenariosDoDia(concursos: Concurso[]): {
+  conservador: { repete: number[]; novas: number[] };
+  equilibrado: { repete: number[]; novas: number[] };
+  agressivo: { repete: number[]; novas: number[] };
+  distribuicao: { pBaixa: number; pMedia: number; pAlta: number };
+} {
+  const ultimo = concursos[0]?.dezenas ?? [];
+  const dist = calcularDistribuicaoRepeticao(concursos);
+
+  // Frequências globais
+  const freq = calcularFrequencias(concursos);
+  const ranking = Array.from(freq.entries())
+    .map(([d, f]) => ({ dezena: d, freq: f }))
+    .sort((a, b) => b.freq - a.freq || a.dezena - b.dezena);
+
+  // Top fiéis (que mais repetem) vindas do último sorteio
+  const repCount = new Map<number, number>();
+  for (let i = 0; i < concursos.length - 1; i++) {
+    const atual = new Set(concursos[i].dezenas);
+    const ant = new Set(concursos[i + 1].dezenas);
+    for (const d of [...atual].filter((x) => ant.has(x))) {
+      repCount.set(d, (repCount.get(d) || 0) + 1);
+    }
+  }
+  const fieisDoUltimo = ultimo
+    .map((d) => ({ dezena: d, rep: repCount.get(d) || 0, freq: freq.get(d) || 0 }))
+    .sort((a, b) => b.rep - a.rep || b.freq - a.freq || a.dezena - b.dezena);
+
+  // Função utilitária: monta cenário com N repetições + (15-N) novas
+  const montar = (qtdRepete: number): { repete: number[]; novas: number[] } => {
+    const repete = fieisDoUltimo.slice(0, qtdRepete).map((x) => x.dezena).sort((a, b) => a - b);
+    const usadas = new Set(repete);
+    const novas: number[] = [];
+    for (const r of ranking) {
+      if (novas.length >= 15 - qtdRepete) break;
+      if (!usadas.has(r.dezena)) {
+        novas.push(r.dezena);
+        usadas.add(r.dezena);
+      }
+    }
+    return { repete, novas: novas.sort((a, b) => a - b) };
+  };
+
+  return {
+    conservador: montar(9), // alta repetição
+    equilibrado: montar(8), // média
+    agressivo: montar(6),   // baixa
+    distribuicao: { pBaixa: dist.pBaixa, pMedia: dist.pMedia, pAlta: dist.pAlta },
+  };
+}
+
+/**
+ * Análise de aceleração/desaceleração: compara janela recente (5 mais novos)
+ * com janela anterior (5 seguintes). Retorna top 5 dezenas em queda.
+ */
+function analisarDesaceleracao(concursos: Concurso[]): {
+  topQuedas: { dezena: number; anterior: number; recente: number; delta: number; resumo: string }[];
+  efeitoRessaca: number; // % de sorteios em que uma desacelerada voltou
+} {
+  if (concursos.length < 10) {
+    return { topQuedas: [], efeitoRessaca: 0 };
+  }
+  const recente = concursos.slice(0, 5);
+  const anterior = concursos.slice(5, 10);
+
+  const freqRec = new Map<number, number>();
+  const freqAnt = new Map<number, number>();
+  for (let i = 1; i <= TOTAL_DEZENAS; i++) {
+    freqRec.set(i, 0);
+    freqAnt.set(i, 0);
+  }
+  for (const c of recente) for (const d of c.dezenas) freqRec.set(d, (freqRec.get(d) || 0) + 1);
+  for (const c of anterior) for (const d of c.dezenas) freqAnt.set(d, (freqAnt.get(d) || 0) + 1);
+
+  const deltas: { dezena: number; anterior: number; recente: number; delta: number }[] = [];
+  for (let d = 1; d <= TOTAL_DEZENAS; d++) {
+    const a = freqAnt.get(d) || 0;
+    const r = freqRec.get(d) || 0;
+    deltas.push({ dezena: d, anterior: a, recente: r, delta: r - a });
+  }
+
+  // Top 5 com maior queda (delta mais negativo, e que tenham aparecido na janela anterior)
+  const topQuedas = deltas
+    .filter((x) => x.delta < 0 && x.anterior >= 2)
+    .sort((a, b) => a.delta - b.delta || a.dezena - b.dezena)
+    .slice(0, 5)
+    .map((x) => {
+      let resumo = "";
+      if (x.delta <= -3) resumo = "queda forte, padrão quebrou.";
+      else if (x.recente === 0) resumo = "sumiu da janela recente.";
+      else if (x.recente === 1) resumo = "mantém presença mínima.";
+      else resumo = "perdeu ritmo, alerta médio.";
+      return { ...x, resumo };
+    });
+
+  // Efeito ressaca: para cada par consecutivo (i, i+1), verifica se alguma
+  // dezena que estava em queda nos 5 anteriores voltou em i.
+  let ressacaCount = 0;
+  let ressacaTotal = 0;
+  for (let i = 0; i < concursos.length - 6; i++) {
+    const janelaA = concursos.slice(i + 1, i + 6); // 5 anteriores
+    const janelaB = concursos.slice(i + 6, i + 11); // 5 ainda mais antigos
+    if (janelaB.length < 5) break;
+    const fa = new Map<number, number>();
+    const fb = new Map<number, number>();
+    for (const c of janelaA) for (const d of c.dezenas) fa.set(d, (fa.get(d) || 0) + 1);
+    for (const c of janelaB) for (const d of c.dezenas) fb.set(d, (fb.get(d) || 0) + 1);
+    const desaceleradas = new Set<number>();
+    for (let d = 1; d <= TOTAL_DEZENAS; d++) {
+      if ((fa.get(d) || 0) - (fb.get(d) || 0) <= -2) desaceleradas.add(d);
+    }
+    if (desaceleradas.size > 0) {
+      const proximo = new Set(concursos[i].dezenas);
+      const voltou = [...desaceleradas].some((d) => proximo.has(d));
+      if (voltou) ressacaCount++;
+      ressacaTotal++;
+    }
+  }
+  const efeitoRessaca = ressacaTotal > 0 ? Math.round((ressacaCount / ressacaTotal) * 100) : 70;
+  return { topQuedas, efeitoRessaca };
+}
+
+// =============================================================================
 // MONTAGEM DE FATOS POR TIPO (entregue à IA)
 // =============================================================================
 
