@@ -235,12 +235,162 @@ function dezenasFaltantesCiclo(concursos: Concurso[]): number[] {
 }
 
 // =============================================================================
+// CICLO: estatísticas históricas + recomendação
+// =============================================================================
+
+interface CicloHistorico {
+  ciclo_numero: number;
+  duracao: number;
+}
+
+interface EstatisticasCiclo {
+  totalCiclos: number;
+  distribuicao: Array<{ duracao: number; vezes: number; perc: number }>; // ordenado por duracao
+  topDuracoes: Array<{ duracao: number; vezes: number; perc: number }>; // top 2
+  somaPercTop2: number;
+  percentil25: number;
+  percentil75: number;
+  posicaoAtual: number; // qual concurso (1, 2, 3...) será o próximo no ciclo atual
+  cicloAtual: number | null;
+  concursosNoCicloAtual: number; // já jogados neste ciclo
+}
+
+// Agrupa por faixas legíveis: 2,3,4,5,6+
+function calcularEstatisticasCiclo(
+  historicoCiclos: CicloHistorico[],
+  cicloAtual: number | null,
+  concursosNoCicloAtual: number,
+): EstatisticasCiclo {
+  // Excluir o ciclo em andamento (não está fechado ainda)
+  const fechados = historicoCiclos.filter((c) => c.ciclo_numero !== cicloAtual);
+  const total = fechados.length;
+
+  // Distribuição agrupando 6+
+  const buckets = new Map<number, number>(); // chave: duracao (ou 6 para "6+")
+  for (const c of fechados) {
+    const key = c.duracao >= 6 ? 6 : c.duracao;
+    buckets.set(key, (buckets.get(key) || 0) + 1);
+  }
+  const distribuicao = Array.from(buckets.entries())
+    .map(([duracao, vezes]) => ({
+      duracao,
+      vezes,
+      perc: total > 0 ? Math.round((vezes / total) * 100) : 0,
+    }))
+    .sort((a, b) => a.duracao - b.duracao);
+
+  const topDuracoes = [...distribuicao]
+    .sort((a, b) => b.vezes - a.vezes || a.duracao - b.duracao)
+    .slice(0, 2);
+  const somaPercTop2 = topDuracoes.reduce((s, t) => s + t.perc, 0);
+
+  // Percentis sobre as durações reais (não agrupadas)
+  const duracoesOrdenadas = fechados.map((c) => c.duracao).sort((a, b) => a - b);
+  const percentil = (p: number): number => {
+    if (duracoesOrdenadas.length === 0) return 0;
+    const idx = Math.floor((p / 100) * (duracoesOrdenadas.length - 1));
+    return duracoesOrdenadas[idx];
+  };
+
+  return {
+    totalCiclos: total,
+    distribuicao,
+    topDuracoes,
+    somaPercTop2,
+    percentil25: percentil(25),
+    percentil75: percentil(75),
+    posicaoAtual: concursosNoCicloAtual + 1,
+    cicloAtual,
+    concursosNoCicloAtual,
+  };
+}
+
+function montarRecomendacaoCiclo(
+  est: EstatisticasCiclo,
+  faltantes: number[],
+  concursos: Concurso[],
+): {
+  recomendacaoTexto: string;
+  prioritarias: number[];
+  deixadasDeFora: number[];
+  justificativaPrioritarias: string;
+  justificativaDeixadas: string;
+  percChanceFecharAgora: number;
+} {
+  const pos = est.posicaoAtual;
+
+  // Chance de o ciclo fechar exatamente neste próximo concurso (na posição atual)
+  const bucketAtual = est.distribuicao.find((d) =>
+    d.duracao === 6 ? pos >= 6 : d.duracao === pos
+  );
+  const percChanceFecharAgora = bucketAtual?.perc ?? 0;
+
+  // Faltantes prioritárias = as MAIS quentes nos últimos 10 (saíram mais vezes recentemente)
+  const freq = calcularFrequencias(concursos);
+  const faltantesOrdenadas = [...faltantes].sort((a, b) => {
+    const fb = freq.get(b) || 0;
+    const fa = freq.get(a) || 0;
+    if (fb !== fa) return fb - fa;
+    return a - b;
+  });
+
+  let nPrioritarias: number;
+  let recomendacaoTexto: string;
+  let justificativaPrioritarias: string;
+  let justificativaDeixadas: string;
+
+  if (pos < est.percentil25 || pos < est.topDuracoes[0]?.duracao) {
+    // Ainda é cedo
+    nPrioritarias = Math.min(faltantes.length, 6);
+    recomendacaoTexto =
+      `Como ainda estamos cedo no ciclo (${pos}º concurso), a chance de fechamento agora é baixa ` +
+      `(somente ${percChanceFecharAgora}% dos ciclos fecharam nesta posição). ` +
+      `👉 Recomendação: NÃO aposte tudo nas faltantes ainda. Use ${nPrioritarias} dezenas faltantes prioritárias e complete com quentes.`;
+    justificativaPrioritarias = "escolhidas porque saíram mais vezes nos últimos 10 sorteios (estão em ritmo)";
+    justificativaDeixadas = "ainda há tempo no ciclo, dá pra incluí-las nos próximos concursos";
+  } else if (pos >= est.topDuracoes[0]?.duracao && pos <= (est.topDuracoes[1]?.duracao ?? est.topDuracoes[0]?.duracao)) {
+    // Estamos na faixa mais comum de fechamento
+    nPrioritarias = Math.min(faltantes.length, 10);
+    recomendacaoTexto =
+      `Estamos na faixa mais comum de fechamento (${est.somaPercTop2}% dos ciclos fecham até aqui). ` +
+      `👉 Recomendação: APOSTE no fechamento. Inclua ${nPrioritarias} das faltantes prioritárias.`;
+    justificativaPrioritarias = "alta probabilidade de o ciclo fechar agora — priorize as faltantes que estão mais aquecidas";
+    justificativaDeixadas = "se preferir reduzir custo, estas podem ficar de fora — ainda assim recomendamos cobrir o máximo possível";
+  } else {
+    // Ciclo demorando (acima do percentil 75)
+    nPrioritarias = Math.min(faltantes.length, 8);
+    recomendacaoTexto =
+      `O ciclo está demorando para fechar (${pos}º concurso, acima da média histórica). ` +
+      `👉 Recomendação: ainda dá pra entrar — use ${nPrioritarias} faltantes prioritárias.`;
+    justificativaPrioritarias = "escolhidas pelas mais quentes nos últimos 10 sorteios";
+    justificativaDeixadas = "menor frequência recente — risco maior de continuar fora";
+  }
+
+  const prioritarias = faltantesOrdenadas.slice(0, nPrioritarias);
+  const deixadasDeFora = faltantesOrdenadas.slice(nPrioritarias);
+
+  return {
+    recomendacaoTexto,
+    prioritarias,
+    deixadasDeFora,
+    justificativaPrioritarias,
+    justificativaDeixadas,
+    percChanceFecharAgora,
+  };
+}
+
+// =============================================================================
 // MONTAGEM DE FATOS POR TIPO (entregue à IA)
 // =============================================================================
 
-function montarFatos(tipoPost: string, concursos: Concurso[]): {
+function montarFatos(
+  tipoPost: string,
+  concursos: Concurso[],
+  historicoCiclos?: CicloHistorico[],
+): {
   resumo: string;
   recomendacaoDireta: string;
+  extras?: { totalCiclos?: number };
 } {
   if (!concursos || concursos.length === 0) {
     return { resumo: "Sem dados.", recomendacaoDireta: "Aguarde novos sorteios." };
@@ -252,14 +402,68 @@ function montarFatos(tipoPost: string, concursos: Concurso[]): {
     case "analise_ciclo": {
       const faltantes = dezenasFaltantesCiclo(concursos);
       const ciclo = ultimo.ciclo_numero;
-      const resumo = `Concurso ${ultimo.concurso_id} | Ciclo: ${ciclo ?? "n/d"} | ` +
-        (faltantes.length > 0
-          ? `${faltantes.length} dezena(s) faltam: [${faltantes.map(fmt).join(", ")}]`
-          : "Ciclo COMPLETO — novo ciclo iniciando.");
-      const recomendacaoDireta = faltantes.length > 0
-        ? `Para o concurso ${proxConcurso}: inclua estas ${Math.min(faltantes.length, 5)} dezenas faltantes prioritárias: [${faltantes.slice(0, 5).map(fmt).join(", ")}].`
-        : `Para o concurso ${proxConcurso}: o ciclo zerou. Use as dezenas mais quentes da última janela.`;
-      return { resumo, recomendacaoDireta };
+
+      // Concursos já jogados no ciclo atual = quantos concursos no histórico têm o mesmo ciclo_numero
+      // historicoCiclos vem agrupado: { ciclo_numero, duracao }. duracao do ciclo atual = concursos já jogados.
+      const cicloAtualEntry = historicoCiclos?.find((h) => h.ciclo_numero === ciclo);
+      const concursosNoCicloAtual = cicloAtualEntry?.duracao ?? 0;
+
+      if (!historicoCiclos || historicoCiclos.length === 0 || faltantes.length === 0) {
+        const resumo = `Concurso ${ultimo.concurso_id} | Ciclo: ${ciclo ?? "n/d"} | ` +
+          (faltantes.length > 0
+            ? `${faltantes.length} dezena(s) faltam: [${faltantes.map(fmt).join(", ")}]`
+            : "Ciclo COMPLETO — novo ciclo iniciando.");
+        const recomendacaoDireta = faltantes.length > 0
+          ? `Para o concurso ${proxConcurso}: inclua estas ${Math.min(faltantes.length, 5)} dezenas faltantes prioritárias: [${faltantes.slice(0, 5).map(fmt).join(", ")}].`
+          : `Para o concurso ${proxConcurso}: o ciclo zerou. Use as dezenas mais quentes da última janela.`;
+        return { resumo, recomendacaoDireta };
+      }
+
+      const est = calcularEstatisticasCiclo(historicoCiclos, ciclo, concursosNoCicloAtual);
+      const rec = montarRecomendacaoCiclo(est, faltantes, concursos);
+
+      // Listar concursos já jogados neste ciclo (dos últimos 10)
+      const concursosDoCiclo = concursos
+        .filter((c) => c.ciclo_numero === ciclo)
+        .map((c) => c.concurso_id)
+        .sort((a, b) => a - b);
+
+      const blocoStatus = `📊 Onde estamos\n` +
+        `Estamos no Ciclo ${ciclo}, atualmente com ${concursosNoCicloAtual} concurso(s) jogado(s)` +
+        (concursosDoCiclo.length > 0 ? ` (${concursosDoCiclo.join(", ")})` : "") + `.\n` +
+        `O próximo sorteio (${proxConcurso}) será o ${est.posicaoAtual}º concurso deste ciclo.\n` +
+        `Faltam ${faltantes.length} dezena(s) para fechar: ${faltantes.map(fmt).join(", ")}.`;
+
+      const linhasDist = est.distribuicao.map((d) => {
+        const label = d.duracao === 6 ? "6+ concursos" : `${d.duracao} concursos`;
+        return `• ${label}: ${d.vezes} vez${d.vezes === 1 ? "" : "es"} (${d.perc}%)`;
+      }).join("\n");
+
+      const labelTop = est.topDuracoes
+        .map((t) => (t.duracao === 6 ? "6+" : `${t.duracao}`))
+        .join(" ou ");
+
+      const blocoHistorico = `📈 Histórico (${est.totalCiclos} ciclos fechados)\n` +
+        linhasDist + `\n` +
+        `Mais comum: ciclo fecha em ${labelTop} concursos (${est.somaPercTop2}% dos casos).`;
+
+      const blocoRecomendacao = `💡 Como montar seu palpite para o ${proxConcurso}\n` + rec.recomendacaoTexto;
+
+      const blocoPrioritarias = `🎯 Faltantes prioritárias (${rec.prioritarias.length}): ${rec.prioritarias.map(fmt).join(", ")}\n` +
+        `   → ${rec.justificativaPrioritarias}`;
+
+      const blocoDeixadas = rec.deixadasDeFora.length > 0
+        ? `❌ Deixadas de fora desta rodada: ${rec.deixadasDeFora.map(fmt).join(", ")}\n` +
+          `   → ${rec.justificativaDeixadas}`
+        : "";
+
+      const resumo = [blocoStatus, blocoHistorico, blocoRecomendacao, blocoPrioritarias, blocoDeixadas]
+        .filter(Boolean).join("\n\n");
+
+      const recomendacaoDireta = `Para o concurso ${proxConcurso}: use ${rec.prioritarias.length} faltantes prioritárias [${rec.prioritarias.map(fmt).join(", ")}]` +
+        (rec.deixadasDeFora.length > 0 ? `; deixe de fora [${rec.deixadasDeFora.map(fmt).join(", ")}]` : "") + `.`;
+
+      return { resumo, recomendacaoDireta, extras: { totalCiclos: est.totalCiclos } };
     }
 
     case "analise_movimentacao": {
@@ -368,10 +572,10 @@ ${fatos.resumo}
 RECOMENDAÇÃO DIRETA QUE VOCÊ DEVE INCLUIR LITERALMENTE NO TEXTO:
 ${fatos.recomendacaoDireta}
 
-ESTRUTURA OBRIGATÓRIA do conteúdo:
+${tipoPost === "analise_ciclo" ? `IMPORTANTE — TIPO CICLO: REPRODUZA LITERALMENTE os blocos "📊 Onde estamos", "📈 Histórico", "💡 Como montar seu palpite", "🎯 Faltantes prioritárias" e "❌ Deixadas de fora" exatamente como aparecem em DADOS REAIS, sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}ESTRUTURA OBRIGATÓRIA do conteúdo:
 1) Abertura curta (1 linha) com gancho diferente a cada vez.
-2) Bloco "📊 O que aconteceu nos últimos 10" — para os tipos "Análise por Linhas" e "Análise por Colunas", REPRODUZA LITERALMENTE o bloco detalhado de "DADOS REAIS" (linha por linha ou coluna por coluna), sem resumir nem omitir nenhuma linha/coluna. Para os outros tipos, resuma os dados em 2-3 linhas.
-3) Bloco "💡 Como montar seu palpite" — escreva a RECOMENDAÇÃO DIRETA acima, em destaque.
+2) Bloco principal — para "Análise por Linhas", "Análise por Colunas" e "Análise de Ciclo", REPRODUZA LITERALMENTE o conteúdo de "DADOS REAIS", sem resumir nem omitir nenhum item. Para os outros tipos, resuma os dados em 2-3 linhas sob o título "📊 O que aconteceu nos últimos 10".
+3) Bloco "💡 Como montar seu palpite" — escreva a RECOMENDAÇÃO DIRETA acima, em destaque (pular se já estiver no bloco literal acima).
 4) Disclaimer curto: "Loteria envolve sorte. Use como guia, não como certeza."
 
 REGRAS CRÍTICAS:
@@ -379,7 +583,7 @@ REGRAS CRÍTICAS:
 - Se citar o concurso, use exatamente ${proxConcurso}.
 - Tom humano, acolhedor, em primeira pessoa. Varie a abertura.
 - Use **negrito** nas dezenas e na recomendação.
-- Máximo 1200 caracteres no conteúdo.
+- Máximo ${tipoPost === "analise_ciclo" ? "1800" : "1500"} caracteres no conteúdo.
 - Apenas dezenas de 01 a 25.
 - NUNCA mencione IA, bot, modelo, GPT ou Gemini.
 
@@ -390,7 +594,11 @@ Responda APENAS o CONTEÚDO em texto puro (sem título, sem JSON, sem aspas).`;
 // VALIDADOR ANTI-ALUCINAÇÃO
 // =============================================================================
 
-function extrairNumerosPermitidos(concursos: Concurso[], proxConcurso: number): Set<number> {
+function extrairNumerosPermitidos(
+  concursos: Concurso[],
+  proxConcurso: number,
+  extras?: { totalCiclos?: number },
+): Set<number> {
   const permitidos = new Set<number>();
   permitidos.add(proxConcurso);
   for (const c of concursos) {
@@ -402,8 +610,9 @@ function extrairNumerosPermitidos(concursos: Concurso[], proxConcurso: number): 
     permitidos.add(c.qtd_primos);
     permitidos.add(c.qtd_repetidas);
   }
-  // Pequenos números livres (contagens, frequências, ocorrências por linha/coluna)
-  for (let i = 0; i <= 80; i++) permitidos.add(i);
+  if (extras?.totalCiclos) permitidos.add(extras.totalCiclos);
+  // Pequenos números livres (contagens, frequências, ocorrências por linha/coluna, percentuais)
+  for (let i = 0; i <= 100; i++) permitidos.add(i);
   return permitidos;
 }
 
@@ -431,11 +640,10 @@ function sanitizar(texto: string): string {
 }
 
 function fallbackConteudo(fatos: { resumo: string; recomendacaoDireta: string }): string {
-  const conteudo = `Olá pessoal! Trago um resumo direto do tema.\n\n` +
-    `📊 O que aconteceu nos últimos 10\n${fatos.resumo}\n\n` +
-    `💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\n` +
+  const conteudo = `Olá pessoal! Trago um resumo direto do tema.\n\n${fatos.resumo}\n\n` +
+    (fatos.resumo.includes("Como montar") ? "" : `💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\n`) +
     `Loteria envolve sorte. Use como guia, não como certeza.`;
-  return conteudo.substring(0, 1500);
+  return conteudo.substring(0, 2000);
 }
 
 async function chamarIAComRetry(systemPrompt: string, userPrompt: string, apiKey: string): Promise<{ ok: boolean; status: number; content?: string; usage?: any; errorBody?: string }> {
@@ -534,14 +742,24 @@ serve(async (req) => {
       );
     }
 
-    // 2. Buscar últimos 10 concursos
-    const { data: resultados, error: resErr } = await supabaseAdmin
-      .from("resultados_loterias")
-      .select("concurso_id:concurso, dezenas, data_sorteio, ciclo_numero, dezenas_faltantes_ciclo, qtd_pares, qtd_impares, qtd_repetidas, qtd_primos, qtd_moldura")
-      .eq("loteria", "lotofacil")
-      .order("concurso", { ascending: false })
-      .limit(PERIODO_ANALISE);
+    // 2. Buscar últimos 10 concursos + (em paralelo) histórico completo de ciclos quando for analise_ciclo
+    const [resResp, ciclosResp] = await Promise.all([
+      supabaseAdmin
+        .from("resultados_loterias")
+        .select("concurso_id:concurso, dezenas, data_sorteio, ciclo_numero, dezenas_faltantes_ciclo, qtd_pares, qtd_impares, qtd_repetidas, qtd_primos, qtd_moldura")
+        .eq("loteria", "lotofacil")
+        .order("concurso", { ascending: false })
+        .limit(PERIODO_ANALISE),
+      tipoPost === "analise_ciclo"
+        ? supabaseAdmin
+            .from("resultados_loterias")
+            .select("ciclo_numero")
+            .eq("loteria", "lotofacil")
+            .not("ciclo_numero", "is", null)
+        : Promise.resolve({ data: null, error: null }),
+    ]);
 
+    const { data: resultados, error: resErr } = resResp;
     if (resErr || !resultados || resultados.length === 0) {
       throw new Error(`Erro ao buscar resultados: ${resErr?.message || "vazio"}`);
     }
@@ -549,8 +767,23 @@ serve(async (req) => {
     const concursos = resultados as Concurso[];
     const ultimoConcurso = concursos[0].concurso_id;
 
+    // Agrupa histórico de ciclos { ciclo_numero -> duracao }
+    let historicoCiclos: CicloHistorico[] | undefined;
+    if (tipoPost === "analise_ciclo" && ciclosResp.data) {
+      const cnt = new Map<number, number>();
+      for (const row of ciclosResp.data as Array<{ ciclo_numero: number | null }>) {
+        if (row.ciclo_numero == null) continue;
+        cnt.set(row.ciclo_numero, (cnt.get(row.ciclo_numero) || 0) + 1);
+      }
+      historicoCiclos = Array.from(cnt.entries()).map(([ciclo_numero, duracao]) => ({
+        ciclo_numero,
+        duracao,
+      }));
+      console.log(`[generate-guide-post] ciclos carregados: ${historicoCiclos.length}`);
+    }
+
     // 3. Calcular fatos determinísticos
-    const fatos = montarFatos(tipoPost, concursos);
+    const fatos = montarFatos(tipoPost, concursos, historicoCiclos);
 
     // 4. Chamar IA com retry
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
@@ -567,7 +800,7 @@ serve(async (req) => {
     let viaFallback = false;
     let motivoFallback = "";
 
-    const numerosPermitidos = extrairNumerosPermitidos(concursos, proxConcurso);
+    const numerosPermitidos = extrairNumerosPermitidos(concursos, proxConcurso, fatos.extras);
     const ia = await chamarIAComRetry(SYSTEM_PROMPT_BASE, userPrompt, apiKey);
 
     if (!ia.ok) {
@@ -576,7 +809,8 @@ serve(async (req) => {
       console.warn(`[generate-guide-post] ⚠️ ${motivoFallback}`);
       conteudo = fallbackConteudo(fatos);
     } else {
-      const conteudoIA = sanitizar(ia.content || "").substring(0, 1500);
+      const limiteConteudo = tipoPost === "analise_ciclo" ? 2000 : 1500;
+      const conteudoIA = sanitizar(ia.content || "").substring(0, limiteConteudo);
       const validacao = validarConteudoNumerico(conteudoIA, numerosPermitidos);
 
       if (!validacao.ok || conteudoIA.length < 50) {
@@ -588,7 +822,7 @@ serve(async (req) => {
         conteudo = conteudoIA;
         // Guardrail: garante que a recomendação direta apareça
         if (!conteudo.includes("Como montar") && !conteudo.includes("montar seu palpite")) {
-          conteudo = (conteudo + `\n\n💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\nLoteria envolve sorte.`).substring(0, 1500);
+          conteudo = (conteudo + `\n\n💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\nLoteria envolve sorte.`).substring(0, limiteConteudo);
         }
       }
 
