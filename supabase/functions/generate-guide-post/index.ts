@@ -13,8 +13,6 @@ const corsHeaders = {
 
 // =============================================================================
 // Cache em memória do próximo concurso por loteria.
-// Vive enquanto o isolate Deno estiver quente (geralmente minutos a poucas horas).
-// TTL curto garante que sync horário (sync-proximos-concursos) seja respeitado.
 // =============================================================================
 type ProxConcursoCache = {
   numero_concurso: string | null;
@@ -22,7 +20,7 @@ type ProxConcursoCache = {
   premio_estimado: number | null;
   cachedAt: number;
 };
-const PROX_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutos
+const PROX_CACHE_TTL_MS = 10 * 60 * 1000;
 const proxConcursoCache = new Map<string, ProxConcursoCache>();
 
 async function getProximoConcursoCached(
@@ -31,11 +29,7 @@ async function getProximoConcursoCached(
 ): Promise<ProxConcursoCache | null> {
   const now = Date.now();
   const hit = proxConcursoCache.get(loteria);
-  if (hit && now - hit.cachedAt < PROX_CACHE_TTL_MS) {
-    console.log(`[generate-guide-post] cache HIT proximo_concurso/${loteria}`);
-    return hit;
-  }
-  console.log(`[generate-guide-post] cache MISS proximo_concurso/${loteria}`);
+  if (hit && now - hit.cachedAt < PROX_CACHE_TTL_MS) return hit;
   const { data, error } = await supabaseAdmin
     .from("proximos_concursos")
     .select("numero_concurso, data_sorteio, premio_estimado")
@@ -69,9 +63,13 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     tipoPost = body.tipo_post || "geral";
     loteria = body.loteria || "lotofacil";
-    console.log(`[generate-guide-post] tipo=${tipoPost} loteria=${loteria}`);
+    // Pré-geração: status='rascunho' + publicar_em
+    const statusPedido: "rascunho" | "publicado" = body.status === "rascunho" ? "rascunho" : "publicado";
+    const publicarEm: string | null = body.publicar_em || null;
+    const force: boolean = !!body.force;
 
-    // Resolver engine + persona + config (lança erro se loteria desconhecida)
+    console.log(`[generate-guide-post] tipo=${tipoPost} loteria=${loteria} status=${statusPedido}`);
+
     const config = getConfig(loteria);
     const persona = getPersona(loteria);
     const engine = getEngine(loteria);
@@ -86,33 +84,35 @@ serve(async (req) => {
       );
     }
 
-    // 1. Lock de duplicação por (persona, tipo, dia BRT)
-    const agora = new Date();
-    const inicioDiaBRT = new Date(agora);
-    inicioDiaBRT.setUTCHours(3, 0, 0, 0); // 00h BRT = 03h UTC
-    if (agora.getTime() < inicioDiaBRT.getTime()) {
-      inicioDiaBRT.setUTCDate(inicioDiaBRT.getUTCDate() - 1);
+    // 1. Lock idempotente: bloqueia se já existe RASCUNHO ou PUBLICADO do mesmo dia BRT
+    if (!force) {
+      const agora = new Date();
+      const inicioDiaBRT = new Date(agora);
+      inicioDiaBRT.setUTCHours(3, 0, 0, 0);
+      if (agora.getTime() < inicioDiaBRT.getTime()) {
+        inicioDiaBRT.setUTCDate(inicioDiaBRT.getUTCDate() - 1);
+      }
+
+      const { data: jaPostou } = await supabaseAdmin
+        .from("postagens")
+        .select("id, status")
+        .eq("user_id", persona.perfil_id)
+        .eq("tipo", tipoPost)
+        .eq("loteria_tag", config.loteria_tag)
+        .gte("created_at", inicioDiaBRT.toISOString())
+        .limit(1)
+        .maybeSingle();
+
+      if (jaPostou) {
+        console.log(`[generate-guide-post] ⏭️ Já existe (status=${jaPostou.status}) tipo=${tipoPost} loteria=${loteria}`);
+        return new Response(
+          JSON.stringify({ skipped: true, reason: "duplicate_today", postId: jaPostou.id, status: jaPostou.status }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
     }
 
-    const { data: jaPostou } = await supabaseAdmin
-      .from("postagens")
-      .select("id, created_at")
-      .eq("user_id", persona.perfil_id)
-      .eq("tipo", tipoPost)
-      .eq("loteria_tag", config.loteria_tag)
-      .gte("created_at", inicioDiaBRT.toISOString())
-      .limit(1)
-      .maybeSingle();
-
-    if (jaPostou) {
-      console.log(`[generate-guide-post] ⏭️ Já postou tipo=${tipoPost} loteria=${loteria} hoje (post ${jaPostou.id})`);
-      return new Response(
-        JSON.stringify({ skipped: true, reason: "duplicate_today", postId: jaPostou.id }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    // 2. Buscar últimos N concursos + (paralelo) histórico completo de ciclos quando for analise_ciclo
+    // 2. Buscar concursos + ciclos
     const [resResp, ciclosResp] = await Promise.all([
       supabaseAdmin
         .from("resultados_loterias")
@@ -137,7 +137,6 @@ serve(async (req) => {
     const concursos = resultados as unknown as Concurso[];
     const ultimoConcurso = concursos[0].concurso_id;
 
-    // Agrupa histórico de ciclos { ciclo_numero -> duracao }
     let historicoCiclos: CicloHistorico[] | undefined;
     if (tipoPost === "analise_ciclo" && ciclosResp.data) {
       const cnt = new Map<number, number>();
@@ -149,23 +148,19 @@ serve(async (req) => {
         ciclo_numero,
         duracao,
       }));
-      console.log(`[generate-guide-post] ciclos carregados: ${historicoCiclos.length}`);
     }
 
-    // 3. Calcular fatos determinísticos via engine
+    // 3. Fatos determinísticos
     const fatos = engine.montarFatos(tipoPost, concursos, historicoCiclos);
 
-    // 4. Chamar IA com retry
+    // 4. IA
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY não configurada");
 
     const userPrompt = engine.montarPrompt(tipoPost, fatos, ultimoConcurso);
     const proxConcurso = ultimoConcurso + 1;
-
-    // ===== TÍTULO 100% DETERMINÍSTICO =====
     const titulo = engine.montarTituloDeterministico(tipoPost, proxConcurso);
 
-    // ===== CONTEÚDO: IA + validação anti-alucinação + fallback =====
     let conteudo = "";
     let viaFallback = false;
     let motivoFallback = "";
@@ -176,7 +171,6 @@ serve(async (req) => {
     if (!ia.ok) {
       viaFallback = true;
       motivoFallback = `IA falhou: ${ia.status}`;
-      console.warn(`[generate-guide-post] ⚠️ ${motivoFallback}`);
       conteudo = engine.fallbackConteudo(fatos);
     } else {
       const limiteConteudo = engine.limiteConteudo(tipoPost);
@@ -186,17 +180,14 @@ serve(async (req) => {
       if (!validacao.ok || conteudoIA.length < 50) {
         viaFallback = true;
         motivoFallback = validacao.motivo || "conteúdo curto";
-        console.warn(`[generate-guide-post] ⚠️ Fallback: ${motivoFallback}`);
         conteudo = engine.fallbackConteudo(fatos);
       } else {
         conteudo = conteudoIA;
-        // Guardrail: garante que a recomendação direta apareça
         if (!conteudo.includes("Como montar") && !conteudo.includes("montar seu palpite")) {
           conteudo = (conteudo + `\n\n💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\nLoteria envolve sorte.`).substring(0, limiteConteudo);
         }
       }
 
-      // Log de uso de IA
       if (ia.usage) {
         const pt = ia.usage.prompt_tokens || 0;
         const ct = ia.usage.completion_tokens || 0;
@@ -210,12 +201,12 @@ serve(async (req) => {
           total_tokens: ia.usage.total_tokens || pt + ct,
           model: "google/gemini-3-flash-preview",
           cost_usd: cost,
-          metadata: { tipo_post: tipoPost, loteria, viaFallback, motivoFallback },
+          metadata: { tipo_post: tipoPost, loteria, viaFallback, motivoFallback, status: statusPedido },
         }).then(() => {}).catch(() => {});
       }
     }
 
-    // 4.5. Rodapé universal: dados do próximo concurso (todas as loterias)
+    // Rodapé universal
     try {
       const prox = await getProximoConcursoCached(supabaseAdmin, loteria);
       if (prox) {
@@ -225,16 +216,26 @@ serve(async (req) => {
           prox.data_sorteio,
           prox.premio_estimado,
         );
-        // Anexa sem cortar (limite por engine já foi aplicado; rodapé é informacional)
         if (rodape) conteudo = conteudo + rodape;
-      } else {
-        console.log(`[generate-guide-post] sem registro em proximos_concursos para ${loteria}`);
       }
     } catch (e) {
-      console.warn(`[generate-guide-post] falha ao montar rodapé proximo_concurso:`, e);
+      console.warn(`[generate-guide-post] falha rodapé:`, e);
     }
 
-    // 5. Inserir post (autor = persona da loteria)
+    // Snapshot serializável dos fatos (chave para gerador-from-estudo)
+    const fatosSnapshot = {
+      loteria,
+      loteria_tag: config.loteria_tag,
+      tipo_post: tipoPost,
+      ultimo_concurso: ultimoConcurso,
+      proximo_concurso: proxConcurso,
+      resumo: fatos.resumo,
+      recomendacao_direta: fatos.recomendacaoDireta,
+      extras: fatos.extras || {},
+      numeros_permitidos: Array.from(numerosPermitidos),
+    };
+
+    // 5. Inserir post
     const { data: novoPost, error: postError } = await supabaseAdmin
       .from("postagens")
       .insert({
@@ -243,18 +244,23 @@ serve(async (req) => {
         conteudo,
         loteria_tag: config.loteria_tag,
         tipo: tipoPost,
+        tema_estudo: tipoPost,
+        status: statusPedido,
+        publicar_em: publicarEm,
+        fatos_snapshot: fatosSnapshot,
       })
       .select("id")
       .single();
 
     if (postError) throw new Error(`Erro ao inserir post: ${postError.message}`);
 
-    console.log(`[generate-guide-post] ✅ Post ${novoPost.id} tipo=${tipoPost} loteria=${loteria} fallback=${viaFallback}`);
+    console.log(`[generate-guide-post] ✅ Post ${novoPost.id} status=${statusPedido} tipo=${tipoPost}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         postId: novoPost.id,
+        status: statusPedido,
         autor: persona.nome,
         loteria,
         tipo_post: tipoPost,

@@ -263,6 +263,18 @@ Deno.serve(async (req) => {
         .catch(err => console.error('[sync-megasena] Erro ao atualizar proximos:', err));
     }
 
+    // Fire and forget: pré-gerar rascunhos do dia
+    if (resultadosParaInserir.length > 0) {
+      fetch(`${supabaseUrl}/functions/v1/precompute-daily-posts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+        },
+        body: JSON.stringify({ loteria: 'megasena' }),
+      }).catch(err => console.error('[sync-megasena] Erro ao pré-gerar posts:', err));
+    }
+
     return new Response(
       JSON.stringify({ message: "Sincronização concluída", api: "apiloterias.com.br", inseridos: resultadosParaInserir.length, ultimo_concurso: ultimoConcursoInserido }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

@@ -2013,14 +2013,18 @@ export type Database = {
           curtidas: number | null
           external_link_text: string | null
           external_link_url: string | null
+          fatos_snapshot: Json | null
           id: string
           loteria_tag: string | null
           media_type: string | null
           media_url: string | null
           metadata: Json | null
           parent_id: string | null
+          publicar_em: string | null
           respostas_count: number | null
           slug: string | null
+          status: string
+          tema_estudo: string | null
           tipo: string | null
           titulo: string | null
           tool_snapshot: boolean | null
@@ -2039,14 +2043,18 @@ export type Database = {
           curtidas?: number | null
           external_link_text?: string | null
           external_link_url?: string | null
+          fatos_snapshot?: Json | null
           id?: string
           loteria_tag?: string | null
           media_type?: string | null
           media_url?: string | null
           metadata?: Json | null
           parent_id?: string | null
+          publicar_em?: string | null
           respostas_count?: number | null
           slug?: string | null
+          status?: string
+          tema_estudo?: string | null
           tipo?: string | null
           titulo?: string | null
           tool_snapshot?: boolean | null
@@ -2065,14 +2073,18 @@ export type Database = {
           curtidas?: number | null
           external_link_text?: string | null
           external_link_url?: string | null
+          fatos_snapshot?: Json | null
           id?: string
           loteria_tag?: string | null
           media_type?: string | null
           media_url?: string | null
           metadata?: Json | null
           parent_id?: string | null
+          publicar_em?: string | null
           respostas_count?: number | null
           slug?: string | null
+          status?: string
+          tema_estudo?: string | null
           tipo?: string | null
           titulo?: string | null
           tool_snapshot?: boolean | null
