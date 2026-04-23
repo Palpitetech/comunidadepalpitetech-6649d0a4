@@ -176,11 +176,16 @@ async function handleSend(
 
   if (logsErr) throw logsErr;
   if (!logs || logs.length === 0) {
+    console.log(`[group-blast-send] handleSend boot: 0 pendentes`);
     return jsonResponse({ sent: 0, failed: 0, message: "Nenhum pendente" });
   }
 
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? "";
   const BASE_URL = Deno.env.get("COMMUNITY_BASE_URL") ?? "";
+
+  console.log(
+    `[group-blast-send] handleSend boot: ${logs.length} pendente(s) — ids=${logs.map((l: any) => l.id).join(",")} slots=${logs.map((l: any) => l.slot_id).join(",")}`
+  );
 
   let sent = 0;
   let failed = 0;
