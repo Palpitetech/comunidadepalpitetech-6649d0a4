@@ -383,9 +383,14 @@ function montarRecomendacaoCiclo(
 // MONTAGEM DE FATOS POR TIPO (entregue à IA)
 // =============================================================================
 
-function montarFatos(tipoPost: string, concursos: Concurso[]): {
+function montarFatos(
+  tipoPost: string,
+  concursos: Concurso[],
+  historicoCiclos?: CicloHistorico[],
+): {
   resumo: string;
   recomendacaoDireta: string;
+  extras?: { totalCiclos?: number };
 } {
   if (!concursos || concursos.length === 0) {
     return { resumo: "Sem dados.", recomendacaoDireta: "Aguarde novos sorteios." };
@@ -397,14 +402,68 @@ function montarFatos(tipoPost: string, concursos: Concurso[]): {
     case "analise_ciclo": {
       const faltantes = dezenasFaltantesCiclo(concursos);
       const ciclo = ultimo.ciclo_numero;
-      const resumo = `Concurso ${ultimo.concurso_id} | Ciclo: ${ciclo ?? "n/d"} | ` +
-        (faltantes.length > 0
-          ? `${faltantes.length} dezena(s) faltam: [${faltantes.map(fmt).join(", ")}]`
-          : "Ciclo COMPLETO — novo ciclo iniciando.");
-      const recomendacaoDireta = faltantes.length > 0
-        ? `Para o concurso ${proxConcurso}: inclua estas ${Math.min(faltantes.length, 5)} dezenas faltantes prioritárias: [${faltantes.slice(0, 5).map(fmt).join(", ")}].`
-        : `Para o concurso ${proxConcurso}: o ciclo zerou. Use as dezenas mais quentes da última janela.`;
-      return { resumo, recomendacaoDireta };
+
+      // Concursos já jogados no ciclo atual = quantos concursos no histórico têm o mesmo ciclo_numero
+      // historicoCiclos vem agrupado: { ciclo_numero, duracao }. duracao do ciclo atual = concursos já jogados.
+      const cicloAtualEntry = historicoCiclos?.find((h) => h.ciclo_numero === ciclo);
+      const concursosNoCicloAtual = cicloAtualEntry?.duracao ?? 0;
+
+      if (!historicoCiclos || historicoCiclos.length === 0 || faltantes.length === 0) {
+        const resumo = `Concurso ${ultimo.concurso_id} | Ciclo: ${ciclo ?? "n/d"} | ` +
+          (faltantes.length > 0
+            ? `${faltantes.length} dezena(s) faltam: [${faltantes.map(fmt).join(", ")}]`
+            : "Ciclo COMPLETO — novo ciclo iniciando.");
+        const recomendacaoDireta = faltantes.length > 0
+          ? `Para o concurso ${proxConcurso}: inclua estas ${Math.min(faltantes.length, 5)} dezenas faltantes prioritárias: [${faltantes.slice(0, 5).map(fmt).join(", ")}].`
+          : `Para o concurso ${proxConcurso}: o ciclo zerou. Use as dezenas mais quentes da última janela.`;
+        return { resumo, recomendacaoDireta };
+      }
+
+      const est = calcularEstatisticasCiclo(historicoCiclos, ciclo, concursosNoCicloAtual);
+      const rec = montarRecomendacaoCiclo(est, faltantes, concursos);
+
+      // Listar concursos já jogados neste ciclo (dos últimos 10)
+      const concursosDoCiclo = concursos
+        .filter((c) => c.ciclo_numero === ciclo)
+        .map((c) => c.concurso_id)
+        .sort((a, b) => a - b);
+
+      const blocoStatus = `📊 Onde estamos\n` +
+        `Estamos no Ciclo ${ciclo}, atualmente com ${concursosNoCicloAtual} concurso(s) jogado(s)` +
+        (concursosDoCiclo.length > 0 ? ` (${concursosDoCiclo.join(", ")})` : "") + `.\n` +
+        `O próximo sorteio (${proxConcurso}) será o ${est.posicaoAtual}º concurso deste ciclo.\n` +
+        `Faltam ${faltantes.length} dezena(s) para fechar: ${faltantes.map(fmt).join(", ")}.`;
+
+      const linhasDist = est.distribuicao.map((d) => {
+        const label = d.duracao === 6 ? "6+ concursos" : `${d.duracao} concursos`;
+        return `• ${label}: ${d.vezes} vez${d.vezes === 1 ? "" : "es"} (${d.perc}%)`;
+      }).join("\n");
+
+      const labelTop = est.topDuracoes
+        .map((t) => (t.duracao === 6 ? "6+" : `${t.duracao}`))
+        .join(" ou ");
+
+      const blocoHistorico = `📈 Histórico (${est.totalCiclos} ciclos fechados)\n` +
+        linhasDist + `\n` +
+        `Mais comum: ciclo fecha em ${labelTop} concursos (${est.somaPercTop2}% dos casos).`;
+
+      const blocoRecomendacao = `💡 Como montar seu palpite para o ${proxConcurso}\n` + rec.recomendacaoTexto;
+
+      const blocoPrioritarias = `🎯 Faltantes prioritárias (${rec.prioritarias.length}): ${rec.prioritarias.map(fmt).join(", ")}\n` +
+        `   → ${rec.justificativaPrioritarias}`;
+
+      const blocoDeixadas = rec.deixadasDeFora.length > 0
+        ? `❌ Deixadas de fora desta rodada: ${rec.deixadasDeFora.map(fmt).join(", ")}\n` +
+          `   → ${rec.justificativaDeixadas}`
+        : "";
+
+      const resumo = [blocoStatus, blocoHistorico, blocoRecomendacao, blocoPrioritarias, blocoDeixadas]
+        .filter(Boolean).join("\n\n");
+
+      const recomendacaoDireta = `Para o concurso ${proxConcurso}: use ${rec.prioritarias.length} faltantes prioritárias [${rec.prioritarias.map(fmt).join(", ")}]` +
+        (rec.deixadasDeFora.length > 0 ? `; deixe de fora [${rec.deixadasDeFora.map(fmt).join(", ")}]` : "") + `.`;
+
+      return { resumo, recomendacaoDireta, extras: { totalCiclos: est.totalCiclos } };
     }
 
     case "analise_movimentacao": {
