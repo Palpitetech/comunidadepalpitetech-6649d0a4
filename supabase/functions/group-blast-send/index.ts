@@ -120,6 +120,8 @@ async function handlePrepare(supabase: any, opts: any) {
 
         if ((count ?? 0) > 0) continue;
 
+        // IMPORTANTE: instance_id e evolution_instance_id NUNCA devem ser pré-vinculados aqui.
+        // A instância é resolvida no ato do envio em handleSend() (com fallback ao vivo entre candidatas).
         const { error: insertErr } = await supabase
           .from("group_blast_logs")
           .insert({
@@ -129,6 +131,8 @@ async function handlePrepare(supabase: any, opts: any) {
             message_content: "",
             scheduled_for: scheduled.toISOString(),
             status: "pending",
+            instance_id: null,
+            evolution_instance_id: null,
           });
 
         if (insertErr) {
@@ -194,64 +198,30 @@ async function handleSend(
   for (let i = 0; i < logs.length; i++) {
     const log = logs[i];
 
-    let instance: any = null;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      const { data: bestInstance, error: biErr } = await supabase.rpc("select_best_instance");
-      if (!biErr && bestInstance && bestInstance.length > 0) {
-        instance = bestInstance[0];
-        break;
-      }
-      if (attempt < 3) {
-        console.warn(`[group-blast-send] Aguardando instância (tentativa ${attempt}/3) para log ${log.id}...`);
-        await new Promise((r) => setTimeout(r, 60_000));
-      }
-    }
+    // 1) Monta a mensagem UMA vez (independente de instância)
+    const { data: configData } = await supabase
+      .from("group_blast_configs")
+      .select("slots, include_palpites, vip_group_link")
+      .eq("id", log.config_id)
+      .maybeSingle();
 
-    if (!instance) {
-      console.warn(`[group-blast-send] Nenhuma instância disponível para log ${log.id}, permanece pending`);
-      skippedCooldown++;
-      continue;
-    }
+    const slots: Slot[] = configData?.slots ?? [];
+    const slot = slots.find((s: Slot) => s.id === log.slot_id);
 
-    try {
-      const { data: configData } = await supabase
-        .from("group_blast_configs")
-        .select("slots, include_palpites, vip_group_link")
-        .eq("id", log.config_id)
-        .maybeSingle();
+    let messageContent: string | null = null;
+    let generationSource = "unknown";
 
-      const slots: Slot[] = configData?.slots ?? [];
-      const slot = slots.find((s: Slot) => s.id === log.slot_id);
+    if (slot?.message_type === "manual" && slot?.message_content?.trim()) {
+      messageContent = slot.message_content.trim();
+      generationSource = "manual";
+    } else if (slot?.message_type === "palpite") {
+      const includePalpites = configData?.include_palpites ?? true;
+      const vipGroupLink = configData?.vip_group_link || null;
+      messageContent = await generatePalpiteMessage(supabase, LOVABLE_API_KEY, BASE_URL, includePalpites, vipGroupLink);
+      generationSource = "palpite";
 
-      let messageContent: string | null = null;
-      let generationSource = "unknown";
-
-      if (slot?.message_type === "manual" && slot?.message_content?.trim()) {
-        messageContent = slot.message_content.trim();
-        generationSource = "manual";
-      } else if (slot?.message_type === "palpite") {
-        const includePalpites = configData?.include_palpites ?? true;
-        const vipGroupLink = configData?.vip_group_link || null;
-        messageContent = await generatePalpiteMessage(supabase, LOVABLE_API_KEY, BASE_URL, includePalpites, vipGroupLink);
-        generationSource = "palpite";
-
-        // Fallback: se a geração de palpite falhou, tenta o caminho do tipo "ai" (último post)
-        if (!messageContent || messageContent.trim().length === 0) {
-          console.warn(`[group-blast-send] Palpite gen falhou para log ${log.id}, tentando fallback de último post`);
-          const { data: latestPost } = await supabase
-            .from("postagens")
-            .select("id, slug, titulo, conteudo, tipo")
-            .neq("tipo", "comentario")
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-          if (latestPost) {
-            messageContent = await generateAIMessage(supabase, LOVABLE_API_KEY, BASE_URL, latestPost);
-            generationSource = "palpite→ai_fallback";
-          }
-        }
-      } else {
+      if (!messageContent || messageContent.trim().length === 0) {
+        console.warn(`[group-blast-send] Palpite gen falhou para log ${log.id}, tentando fallback de último post`);
         const { data: latestPost } = await supabase
           .from("postagens")
           .select("id, slug, titulo, conteudo, tipo")
@@ -262,72 +232,150 @@ async function handleSend(
 
         if (latestPost) {
           messageContent = await generateAIMessage(supabase, LOVABLE_API_KEY, BASE_URL, latestPost);
-          generationSource = "ai";
+          generationSource = "palpite→ai_fallback";
         }
       }
+    } else {
+      const { data: latestPost } = await supabase
+        .from("postagens")
+        .select("id, slug, titulo, conteudo, tipo")
+        .neq("tipo", "comentario")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      // Guarda dura: nunca enviar mensagem vazia para Evolution
-      if (!messageContent || messageContent.trim().length === 0) {
-        const reason = `Mensagem vazia (slot.message_type=${slot?.message_type ?? "n/a"}, source=${generationSource}, value=${messageContent === null ? "null" : "empty"})`;
-        console.error(`[group-blast-send] ${reason} — log ${log.id}`);
+      if (latestPost) {
+        messageContent = await generateAIMessage(supabase, LOVABLE_API_KEY, BASE_URL, latestPost);
+        generationSource = "ai";
+      }
+    }
+
+    // Guarda dura: nunca enviar mensagem vazia para Evolution
+    if (!messageContent || messageContent.trim().length === 0) {
+      const reason = `Mensagem vazia (slot.message_type=${slot?.message_type ?? "n/a"}, source=${generationSource}, value=${messageContent === null ? "null" : "empty"})`;
+      console.error(`[group-blast-send] ${reason} — log ${log.id}`);
+      await supabase
+        .from("group_blast_logs")
+        .update({ status: "failed", error_message: reason })
+        .eq("id", log.id);
+      failed++;
+      continue;
+    }
+
+    // 2) Resolve lista de candidatas NO ATO do envio
+    const { data: candidates, error: candErr } = await supabase.rpc("select_best_instances", { p_limit: 5 });
+
+    if (candErr || !candidates || candidates.length === 0) {
+      console.warn(`[group-blast-send] Sem candidatas disponíveis para log ${log.id} (cooldown), permanece pending. err=${candErr?.message ?? "none"}`);
+      skippedCooldown++;
+      continue;
+    }
+
+    // 3) Loop de fallback ao vivo
+    const tried: string[] = [];
+    let delivered = false;
+    let lastError = "";
+
+    for (let c = 0; c < candidates.length; c++) {
+      const instance = candidates[c];
+      const evoName = instance.evolution_instance_id;
+
+      // Sanity-check rápido do connectionState
+      try {
+        const stateRes = await fetch(
+          `${evolutionUrl}/instance/connectionState/${evoName}`,
+          { method: "GET", headers: { apikey: evolutionKey } }
+        );
+        if (stateRes.ok) {
+          const stateJson = await stateRes.json().catch(() => null);
+          const state = stateJson?.instance?.state || stateJson?.state;
+          if (state && state !== "open") {
+            console.warn(`[group-blast-send] log=${log.id} attempt=${c + 1} instance=${evoName} skipped (state=${state})`);
+            tried.push(`${evoName}→state:${state}`);
+            // Marca offline na tabela
+            await supabase
+              .from("whatsapp_instances")
+              .update({ status: "offline" })
+              .eq("id", instance.instance_id);
+            continue;
+          }
+        }
+      } catch (stateErr: any) {
+        console.warn(`[group-blast-send] log=${log.id} state-check falhou para ${evoName}: ${stateErr.message}`);
+        // Não bloqueia; segue para o sendText
+      }
+
+      try {
+        const res = await fetch(
+          `${evolutionUrl}/message/sendText/${evoName}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", apikey: evolutionKey },
+            body: JSON.stringify({
+              number: log.group_jid,
+              text: messageContent,
+              linkPreview: false,
+            }),
+          }
+        );
+
+        if (!res.ok) {
+          const bodyText = await res.text().catch(() => "");
+          const errMsg = `HTTP ${res.status} resp=${bodyText.slice(0, 200)}`;
+          console.warn(`[group-blast-send] log=${log.id} attempt=${c + 1} instance=${evoName} → ${errMsg}`);
+          tried.push(`${evoName}→${res.status}`);
+          lastError = errMsg;
+
+          // Cooldown imediato para essa instância (evita reuso na próxima invocação)
+          await supabase
+            .from("whatsapp_instances")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("id", instance.instance_id);
+
+          continue;
+        }
+
+        await res.text();
+
+        console.log(`[group-blast-send] log=${log.id} attempt=${c + 1} instance=${evoName} → sent ok`);
+        tried.push(`${evoName}→ok`);
+
         await supabase
           .from("group_blast_logs")
           .update({
-            status: "failed",
-            error_message: reason,
+            status: "sent",
+            sent_at: new Date().toISOString(),
+            message_content: messageContent,
+            instance_id: instance.instance_id,
+            evolution_instance_id: evoName,
+            error_message: tried.length > 1 ? `tried: [${tried.join(", ")}]` : null,
           })
           .eq("id", log.id);
-        failed++;
-        continue;
+
+        await supabase.rpc("register_instance_usage", { p_instance_id: instance.instance_id });
+
+        sent++;
+        delivered = true;
+        break;
+      } catch (sendErr: any) {
+        const errMsg = sendErr?.message ?? String(sendErr);
+        console.warn(`[group-blast-send] log=${log.id} attempt=${c + 1} instance=${evoName} → exception: ${errMsg}`);
+        tried.push(`${evoName}→exc`);
+        lastError = errMsg;
+
+        await supabase
+          .from("whatsapp_instances")
+          .update({ last_message_at: new Date().toISOString() })
+          .eq("id", instance.instance_id);
       }
+    }
 
-      const res = await fetch(
-        `${evolutionUrl}/message/sendText/${instance.evolution_instance_id}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: evolutionKey,
-          },
-          body: JSON.stringify({
-            number: log.group_jid,
-            text: messageContent,
-            linkPreview: false,
-          }),
-        }
-      );
-
-      if (!res.ok) {
-        const bodyText = await res.text().catch(() => "");
-        throw new Error(
-          `HTTP ${res.status} | instance=${instance.evolution_instance_id} | bodyLen=${messageContent.length} | resp=${bodyText.slice(0, 300)}`
-        );
-      }
-
-      await res.text();
-
+    if (!delivered) {
+      const finalReason = `Todas as ${candidates.length} instâncias falharam. tried: [${tried.join(", ")}] | lastError=${lastError}`;
+      console.error(`[group-blast-send] log=${log.id} ${finalReason}`);
       await supabase
         .from("group_blast_logs")
-        .update({
-          status: "sent",
-          sent_at: new Date().toISOString(),
-          message_content: messageContent,
-          instance_id: instance.instance_id,
-          evolution_instance_id: instance.evolution_instance_id,
-        })
-        .eq("id", log.id);
-
-      await supabase.rpc("register_instance_usage", { p_instance_id: instance.instance_id });
-
-      sent++;
-    } catch (err: any) {
-      console.error(`[group-blast-send] Failed log ${log.id}:`, err.message);
-      await supabase
-        .from("group_blast_logs")
-        .update({
-          status: "failed",
-          error_message: err.message,
-        })
+        .update({ status: "failed", error_message: finalReason })
         .eq("id", log.id);
       failed++;
     }

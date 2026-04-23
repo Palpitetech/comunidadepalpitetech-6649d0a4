@@ -15,6 +15,10 @@ interface Slot {
 }
 
 Deno.serve(async (req) => {
+  // ⚠️ DEPRECATED: Esta edge function foi substituída por `group-blast-send`.
+  // Mantida temporariamente para detectar consumidores ocultos. Não usar em novos fluxos.
+  console.warn("[group-blast] DEPRECATED — use group-blast-send em vez disso. Caller path:", req.url);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
