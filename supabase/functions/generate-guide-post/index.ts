@@ -435,7 +435,7 @@ function fallbackConteudo(fatos: { resumo: string; recomendacaoDireta: string })
     `📊 O que aconteceu nos últimos 10\n${fatos.resumo}\n\n` +
     `💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\n` +
     `Loteria envolve sorte. Use como guia, não como certeza.`;
-  return conteudo.substring(0, 1000);
+  return conteudo.substring(0, 1500);
 }
 
 async function chamarIAComRetry(systemPrompt: string, userPrompt: string, apiKey: string): Promise<{ ok: boolean; status: number; content?: string; usage?: any; errorBody?: string }> {
