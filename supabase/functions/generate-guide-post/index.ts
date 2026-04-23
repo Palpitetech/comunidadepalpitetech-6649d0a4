@@ -588,7 +588,7 @@ serve(async (req) => {
         conteudo = conteudoIA;
         // Guardrail: garante que a recomendação direta apareça
         if (!conteudo.includes("Como montar") && !conteudo.includes("montar seu palpite")) {
-          conteudo = (conteudo + `\n\n💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\nLoteria envolve sorte.`).substring(0, 1000);
+          conteudo = (conteudo + `\n\n💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\nLoteria envolve sorte.`).substring(0, 1500);
         }
       }
 
