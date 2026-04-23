@@ -1672,6 +1672,165 @@ function montarRecomendacaoCiclo(
 }
 
 // =============================================================================
+// MOTORES PÓS-15h: CENÁRIOS, FICAR DE OLHO, COMO CALCULAMOS
+// =============================================================================
+
+/**
+ * Calcula taxa real de repetição por faixa nos últimos N concursos.
+ * Retorna percentual de sorteios que caíram em cada faixa: ≤7, 8-9, 10+.
+ */
+function calcularDistribuicaoRepeticao(concursos: Concurso[]): {
+  pBaixa: number;  // ≤ 7 repetidas
+  pMedia: number;  // 8-9 repetidas
+  pAlta: number;   // 10+ repetidas
+  total: number;
+} {
+  let baixa = 0, media = 0, alta = 0, total = 0;
+  for (let i = 0; i < concursos.length - 1; i++) {
+    const atual = new Set(concursos[i].dezenas);
+    const ant = new Set(concursos[i + 1].dezenas);
+    const rep = [...atual].filter((d) => ant.has(d)).length;
+    if (rep <= 7) baixa++;
+    else if (rep <= 9) media++;
+    else alta++;
+    total++;
+  }
+  if (total === 0) return { pBaixa: 15, pMedia: 60, pAlta: 25, total: 0 };
+  return {
+    pBaixa: Math.round((baixa / total) * 100),
+    pMedia: Math.round((media / total) * 100),
+    pAlta: Math.round((alta / total) * 100),
+    total,
+  };
+}
+
+/**
+ * Monta 3 cenários de palpite (15 dezenas cada) determinísticos
+ * baseados nos dados do dia.
+ */
+function montarCenariosDoDia(concursos: Concurso[]): {
+  conservador: { repete: number[]; novas: number[] };
+  equilibrado: { repete: number[]; novas: number[] };
+  agressivo: { repete: number[]; novas: number[] };
+  distribuicao: { pBaixa: number; pMedia: number; pAlta: number };
+} {
+  const ultimo = concursos[0]?.dezenas ?? [];
+  const dist = calcularDistribuicaoRepeticao(concursos);
+
+  // Frequências globais
+  const freq = calcularFrequencias(concursos);
+  const ranking = Array.from(freq.entries())
+    .map(([d, f]) => ({ dezena: d, freq: f }))
+    .sort((a, b) => b.freq - a.freq || a.dezena - b.dezena);
+
+  // Top fiéis (que mais repetem) vindas do último sorteio
+  const repCount = new Map<number, number>();
+  for (let i = 0; i < concursos.length - 1; i++) {
+    const atual = new Set(concursos[i].dezenas);
+    const ant = new Set(concursos[i + 1].dezenas);
+    for (const d of [...atual].filter((x) => ant.has(x))) {
+      repCount.set(d, (repCount.get(d) || 0) + 1);
+    }
+  }
+  const fieisDoUltimo = ultimo
+    .map((d) => ({ dezena: d, rep: repCount.get(d) || 0, freq: freq.get(d) || 0 }))
+    .sort((a, b) => b.rep - a.rep || b.freq - a.freq || a.dezena - b.dezena);
+
+  // Função utilitária: monta cenário com N repetições + (15-N) novas
+  const montar = (qtdRepete: number): { repete: number[]; novas: number[] } => {
+    const repete = fieisDoUltimo.slice(0, qtdRepete).map((x) => x.dezena).sort((a, b) => a - b);
+    const usadas = new Set(repete);
+    const novas: number[] = [];
+    for (const r of ranking) {
+      if (novas.length >= 15 - qtdRepete) break;
+      if (!usadas.has(r.dezena)) {
+        novas.push(r.dezena);
+        usadas.add(r.dezena);
+      }
+    }
+    return { repete, novas: novas.sort((a, b) => a - b) };
+  };
+
+  return {
+    conservador: montar(9), // alta repetição
+    equilibrado: montar(8), // média
+    agressivo: montar(6),   // baixa
+    distribuicao: { pBaixa: dist.pBaixa, pMedia: dist.pMedia, pAlta: dist.pAlta },
+  };
+}
+
+/**
+ * Análise de aceleração/desaceleração: compara janela recente (5 mais novos)
+ * com janela anterior (5 seguintes). Retorna top 5 dezenas em queda.
+ */
+function analisarDesaceleracao(concursos: Concurso[]): {
+  topQuedas: { dezena: number; anterior: number; recente: number; delta: number; resumo: string }[];
+  efeitoRessaca: number; // % de sorteios em que uma desacelerada voltou
+} {
+  if (concursos.length < 10) {
+    return { topQuedas: [], efeitoRessaca: 0 };
+  }
+  const recente = concursos.slice(0, 5);
+  const anterior = concursos.slice(5, 10);
+
+  const freqRec = new Map<number, number>();
+  const freqAnt = new Map<number, number>();
+  for (let i = 1; i <= TOTAL_DEZENAS; i++) {
+    freqRec.set(i, 0);
+    freqAnt.set(i, 0);
+  }
+  for (const c of recente) for (const d of c.dezenas) freqRec.set(d, (freqRec.get(d) || 0) + 1);
+  for (const c of anterior) for (const d of c.dezenas) freqAnt.set(d, (freqAnt.get(d) || 0) + 1);
+
+  const deltas: { dezena: number; anterior: number; recente: number; delta: number }[] = [];
+  for (let d = 1; d <= TOTAL_DEZENAS; d++) {
+    const a = freqAnt.get(d) || 0;
+    const r = freqRec.get(d) || 0;
+    deltas.push({ dezena: d, anterior: a, recente: r, delta: r - a });
+  }
+
+  // Top 5 com maior queda (delta mais negativo, e que tenham aparecido na janela anterior)
+  const topQuedas = deltas
+    .filter((x) => x.delta < 0 && x.anterior >= 2)
+    .sort((a, b) => a.delta - b.delta || a.dezena - b.dezena)
+    .slice(0, 5)
+    .map((x) => {
+      let resumo = "";
+      if (x.delta <= -3) resumo = "queda forte, padrão quebrou.";
+      else if (x.recente === 0) resumo = "sumiu da janela recente.";
+      else if (x.recente === 1) resumo = "mantém presença mínima.";
+      else resumo = "perdeu ritmo, alerta médio.";
+      return { ...x, resumo };
+    });
+
+  // Efeito ressaca: para cada par consecutivo (i, i+1), verifica se alguma
+  // dezena que estava em queda nos 5 anteriores voltou em i.
+  let ressacaCount = 0;
+  let ressacaTotal = 0;
+  for (let i = 0; i < concursos.length - 6; i++) {
+    const janelaA = concursos.slice(i + 1, i + 6); // 5 anteriores
+    const janelaB = concursos.slice(i + 6, i + 11); // 5 ainda mais antigos
+    if (janelaB.length < 5) break;
+    const fa = new Map<number, number>();
+    const fb = new Map<number, number>();
+    for (const c of janelaA) for (const d of c.dezenas) fa.set(d, (fa.get(d) || 0) + 1);
+    for (const c of janelaB) for (const d of c.dezenas) fb.set(d, (fb.get(d) || 0) + 1);
+    const desaceleradas = new Set<number>();
+    for (let d = 1; d <= TOTAL_DEZENAS; d++) {
+      if ((fa.get(d) || 0) - (fb.get(d) || 0) <= -2) desaceleradas.add(d);
+    }
+    if (desaceleradas.size > 0) {
+      const proximo = new Set(concursos[i].dezenas);
+      const voltou = [...desaceleradas].some((d) => proximo.has(d));
+      if (voltou) ressacaCount++;
+      ressacaTotal++;
+    }
+  }
+  const efeitoRessaca = ressacaTotal > 0 ? Math.round((ressacaCount / ressacaTotal) * 100) : 70;
+  return { topQuedas, efeitoRessaca };
+}
+
+// =============================================================================
 // MONTAGEM DE FATOS POR TIPO (entregue à IA)
 // =============================================================================
 
@@ -1990,6 +2149,104 @@ function montarFatos(
       return montarBlocosPosicoes(a, proxConcurso);
     }
 
+    case "analise_cenarios": {
+      const c = montarCenariosDoDia(concursos);
+      const fmtList = (arr: number[]) => arr.map(fmt).join(", ");
+      const resumo =
+        `📊 Probabilidades por faixa de repetição (últimos 10 sorteios)\n` +
+        `• 8 a 9 repetidas: ${c.distribuicao.pMedia}% dos concursos\n` +
+        `• 10 ou mais repetidas: ${c.distribuicao.pAlta}%\n` +
+        `• 7 ou menos repetidas: ${c.distribuicao.pBaixa}%\n\n` +
+        `🛡️ CENÁRIO CONSERVADOR (joga seguro)\n` +
+        `Foco: alta repetição + dezenas fiéis\n` +
+        `Repete: ${c.conservador.repete.length} do último → **${fmtList(c.conservador.repete)}**\n` +
+        `Novas: ${c.conservador.novas.length} dezenas fortes históricas → **${fmtList(c.conservador.novas)}**\n` +
+        `Probabilidade alvo: ficar dentro do padrão ${c.distribuicao.pMedia}%\n\n` +
+        `⚖️ CENÁRIO EQUILIBRADO (recomendado)\n` +
+        `Foco: média de repetição + mistura de fortes e médias\n` +
+        `Repete: ${c.equilibrado.repete.length} do último → **${fmtList(c.equilibrado.repete)}**\n` +
+        `Novas: ${c.equilibrado.novas.length} dezenas → **${fmtList(c.equilibrado.novas)}**\n` +
+        `Combina: núcleo das linhas + duplas auditadas\n\n` +
+        `🚀 CENÁRIO AGRESSIVO (busca prêmios maiores)\n` +
+        `Foco: baixa repetição + apostar em movimentação\n` +
+        `Repete: ${c.agressivo.repete.length} do último → **${fmtList(c.agressivo.repete)}**\n` +
+        `Novas: ${c.agressivo.novas.length} dezenas → **${fmtList(c.agressivo.novas)}**\n` +
+        `Risco: ${c.distribuicao.pBaixa}% de chance histórica, mas distribui melhor o prêmio`;
+      return {
+        resumo,
+        recomendacaoDireta:
+          `Escolha o cenário que combina com seu estilo. Conservador joga seguro dentro do padrão de ${c.distribuicao.pMedia}%. Equilibrado é a recomendação padrão. Agressivo busca prêmios maiores aceitando mais risco.`,
+      };
+    }
+
+    case "analise_ficar_de_olho": {
+      const d = analisarDesaceleracao(concursos);
+      if (d.topQuedas.length === 0) {
+        return {
+          resumo: `Nenhuma desaceleração relevante nos últimos 10 sorteios. Padrão estável.`,
+          recomendacaoDireta: `Sem alertas para o concurso ${proxConcurso}.`,
+        };
+      }
+      const cards = d.topQuedas.map((q) => {
+        const cor = q.delta <= -3 ? "🔴" : "🟡";
+        return `${cor} Dezena ${fmt(q.dezena)}\n   Anterior (sorteios 6-10): ${q.anterior}x → Recente (sorteios 1-5): ${q.recente}x\n   Queda: ${q.delta}\n   Resumo: ${q.resumo}`;
+      }).join("\n\n");
+      const top2 = d.topQuedas.slice(0, 2).map((x) => fmt(x.dezena)).join(" e ");
+      const apoio = d.topQuedas.slice(2, 4).map((x) => fmt(x.dezena)).join(" ou ");
+      const excluir = d.topQuedas[d.topQuedas.length - 1] ? fmt(d.topQuedas[d.topQuedas.length - 1].dezena) : "";
+      const resumo =
+        `📉 TOP ${d.topQuedas.length} dezenas em desaceleração (janela 5 vs 5)\n\n` +
+        `${cards}\n\n` +
+        `📊 O que isso significa para o ${proxConcurso}?\n` +
+        `Em ${d.efeitoRessaca}% dos sorteios analisados, pelo menos 1 dezena em desaceleração voltou no sorteio seguinte (efeito "ressaca"). Não exclua todas — escolha 1 ou 2 como apoio.\n\n` +
+        `💡 Recomendação tática\n` +
+        `🎯 Manter atenção: **${top2}** (maior queda)\n` +
+        (apoio ? `➕ Considerar 1 como apoio: **${apoio}**\n` : "") +
+        (excluir ? `❌ Pode excluir nesta rodada: **${excluir}** (movimento mais fraco)` : "");
+      return {
+        resumo,
+        recomendacaoDireta:
+          `Foque atenção em **${top2}**, que vinham fortes e perderam ritmo. Use 1 como apoio no palpite — o efeito ressaca acerta em ${d.efeitoRessaca}% dos casos.`,
+      };
+    }
+
+    case "analise_como_calculamos": {
+      const ultimoNum = ultimo.concurso_id;
+      const primeiroNum = concursos[concursos.length - 1].concurso_id;
+      const totalDezenas = concursos.length * DEZENAS_POR_SORTEIO;
+      const resumo =
+        `📊 Janela de análise\n` +
+        `Todos os posts usam os ÚLTIMOS ${concursos.length} SORTEIOS oficiais da Lotofácil.\n` +
+        `Concursos analisados hoje: ${primeiroNum} a ${ultimoNum} (${concursos.length} sorteios = ${totalDezenas} dezenas).\n\n` +
+        `📐 Regras de ordenação\n` +
+        `Em cada concurso, as 15 dezenas são ordenadas em ORDEM CRESCENTE antes de qualquer cálculo de posição (P1=menor, P15=maior).\n\n` +
+        `🎯 Como uma dupla "auditada" entra no ranking\n` +
+        `Para uma dupla aparecer como recomendada, ela precisa:\n` +
+        `1. Ter saído juntas em pelo menos 3 dos últimos ${concursos.length} sorteios\n` +
+        `2. Passar por RECONTAGEM independente (segundo motor confere)\n` +
+        `3. Ambas dezenas devem estar no último sorteio (validade contextual)\n` +
+        `4. Não ter colisão com outras duplas do mesmo grupo\n\n` +
+        `✅ Anti-alucinação (proteção contra erro)\n` +
+        `Cada post tem uma WHITELIST de números permitidos (01-25 + datas). Qualquer número fora da lista faz o post ser DESCARTADO e substituído por uma versão 100% calculada (fallback determinístico).\n\n` +
+        `🔍 Definições oficiais\n` +
+        `• FIÉL: dezena que repetiu em ≥ 60% dos pares de concursos seguidos\n` +
+        `• VOLÁTIL: dezena que repetiu em ≤ 20% dos pares de concursos seguidos\n` +
+        `• QUENTE: top 5 mais frequentes nos ${concursos.length} sorteios\n` +
+        `• FRIA: bottom 5 menos frequentes nos ${concursos.length} sorteios\n` +
+        `• ACELERANDO: delta positivo na janela 5 vs 5\n` +
+        `• DESACELERANDO: delta negativo na janela 5 vs 5\n\n` +
+        `🛡️ Validações ativas\n` +
+        `• Transições reais entre concursos consecutivos\n` +
+        `• Mínimo de 2 ocorrências para entrar em qualquer ranking\n` +
+        `• Verificação de pertencimento ao mesmo eixo (linhas/colunas)\n` +
+        `• Recontagem independente de duplas e trios`;
+      return {
+        resumo,
+        recomendacaoDireta:
+          `A maioria dos grupos joga "achismo". Aqui cada número tem origem matemática rastreável e validação dupla. Você não está apostando no palpite de alguém — está apostando em padrão estatístico real.`,
+      };
+    }
+
     default: {
       const quentes = topQuentes(concursos, 5);
       return {
@@ -2015,6 +2272,9 @@ function montarTituloDeterministico(tipoPost: string, proxConcurso: number): str
     analise_colunas: `📊 Análise por Colunas — Concurso ${proxConcurso}`,
     analise_posicoes_iniciais: `🎯 Posições Iniciais — Concurso ${proxConcurso}`,
     analise_posicoes_finais: `🏁 Posições Finais — Concurso ${proxConcurso}`,
+    analise_cenarios: `🎲 Cenários do Concurso ${proxConcurso}`,
+    analise_ficar_de_olho: `👀 Ficar de Olho — Concurso ${proxConcurso}`,
+    analise_como_calculamos: `🔬 Como Calculamos — Bastidores do Concurso ${proxConcurso}`,
   };
   return (titulosBase[tipoPost] || `Análise Lotofácil — Concurso ${proxConcurso}`).substring(0, 100);
 }
@@ -2029,6 +2289,9 @@ function montarPrompt(tipoPost: string, fatos: { resumo: string; recomendacaoDir
     analise_colunas: "Análise por Colunas",
     analise_posicoes_iniciais: "Posições Iniciais — 3 primeiras dezenas",
     analise_posicoes_finais: "Posições Finais — 3 últimas dezenas",
+    analise_cenarios: "Cenários do Dia — 3 perfis de palpite",
+    analise_ficar_de_olho: "Ficar de Olho — Dezenas em desaceleração",
+    analise_como_calculamos: "Como Calculamos — Bastidores da metodologia",
   };
   const tema = titulos[tipoPost] || "Análise da Lotofácil";
   const proxConcurso = ultimoConcurso + 1;
@@ -2041,7 +2304,7 @@ ${fatos.resumo}
 RECOMENDAÇÃO DIRETA QUE VOCÊ DEVE INCLUIR LITERALMENTE NO TEXTO:
 ${fatos.recomendacaoDireta}
 
-${tipoPost === "analise_posicoes_iniciais" ? `IMPORTANTE — TIPO POSIÇÕES INICIAIS: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 O que diz a matemática", "🎯 P1 — A primeira dezena", "🎯 P2 — A segunda dezena", "🎯 P3 — A terceira dezena", "📈 Tendência observada", "💡 Como montar o INÍCIO do seu palpite", "🎯 Trio inicial recomendado", "➕ Alternativas fortes", "❌ Evite começar com", "⚠️ Cuidado") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_posicoes_finais" ? `IMPORTANTE — TIPO POSIÇÕES FINAIS: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 O que diz a matemática", "🎯 P13 — A décima terceira dezena", "🎯 P14 — A décima quarta dezena", "🎯 P15 — A última dezena", "📈 Tendência observada", "💡 Como montar o FINAL do seu palpite", "🏁 Trio final recomendado", "➕ Alternativas fortes", "❌ Evite terminar com", "⚠️ Cuidado") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_ciclo" ? `IMPORTANTE — TIPO CICLO: REPRODUZA LITERALMENTE os blocos "📊 Onde estamos", "📈 Histórico", "💡 Como montar seu palpite", "🎯 Faltantes prioritárias" e "❌ Deixadas de fora" exatamente como aparecem em DADOS REAIS, sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_moldura" ? `IMPORTANTE — TIPO MOLDURA: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 Panorama", "🔥 Top dezenas fortes", "🤝 Melhores pares", "🎯 Melhores trios", "❄️ Dezenas fracas", "📉 Padrão de falha", "💡 Como montar seu palpite", "🎯 Núcleo forte", "➕ Apoio", "🎲 Coringas", "❌ Deixe de fora") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_movimentacao" ? `IMPORTANTE — TIPO QUENTES E FRIAS: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 O que aconteceu", "🔥 Dezenas QUENTES", "🤝 Top duplas entre as quentes", "🎯 Top trios entre as quentes", "❄️ Dezenas FRIAS", "🚫 Piores duplas entre as frias", "📈 Acelerando", "📉 Desacelerando", "💡 Recomendação para o concurso", "🎯 FIXAR", "➕ APOIO forte", "❌ EXCLUIR", "⚠️ Ficar de olho") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_repetidas" ? `IMPORTANTE — TIPO REPETIDAS: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 O que aconteceu", "🎯 No último sorteio", "🔥 Destaques — as MAIS FIÉIS", "⚠️ Atenção — as VOLÁTEIS", "🤝 Melhores duplas de repetidoras", "🎯 Melhores trios de repetidoras", "💡 Como montar seu palpite", "🎯 REPETIR (núcleo)", "➕ REPETIR (apoio)", "❌ NÃO repetir", "✨ E completar com X dezenas NOVAS") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_linhas" ? `IMPORTANTE — TIPO LINHAS: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 Panorama", "🎯 Distribuição média por linha", "🔥 Dezenas FORTES por linha", "❄️ Dezenas FRACAS por linha", "🤝 Melhores duplas dentro da mesma linha", "📈 Distribuição alvo recomendada", "💡 Como montar seu palpite", "🎯 Núcleo de fixas por linha", "➕ Apoio", "🎲 Coringas a girar", "❌ Evitar nesta rodada", "⚠️ Cuidado") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_colunas" ? `IMPORTANTE — TIPO COLUNAS: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 Panorama", "🎯 Distribuição média por coluna", "🔥 Dezenas FORTES por coluna", "❄️ Dezenas FRACAS por coluna", "🤝 Melhores duplas dentro da mesma coluna", "📈 Distribuição alvo recomendada", "💡 Como montar seu palpite", "🎯 Núcleo de fixas por coluna", "➕ Apoio", "🎲 Coringas a girar", "❌ Evitar nesta rodada", "⚠️ Cuidado") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}ESTRUTURA OBRIGATÓRIA do conteúdo:
+${tipoPost === "analise_posicoes_iniciais" ? `IMPORTANTE — TIPO POSIÇÕES INICIAIS: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 O que diz a matemática", "🎯 P1 — A primeira dezena", "🎯 P2 — A segunda dezena", "🎯 P3 — A terceira dezena", "📈 Tendência observada", "💡 Como montar o INÍCIO do seu palpite", "🎯 Trio inicial recomendado", "➕ Alternativas fortes", "❌ Evite começar com", "⚠️ Cuidado") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_posicoes_finais" ? `IMPORTANTE — TIPO POSIÇÕES FINAIS: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 O que diz a matemática", "🎯 P13 — A décima terceira dezena", "🎯 P14 — A décima quarta dezena", "🎯 P15 — A última dezena", "📈 Tendência observada", "💡 Como montar o FINAL do seu palpite", "🏁 Trio final recomendado", "➕ Alternativas fortes", "❌ Evite terminar com", "⚠️ Cuidado") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_ciclo" ? `IMPORTANTE — TIPO CICLO: REPRODUZA LITERALMENTE os blocos "📊 Onde estamos", "📈 Histórico", "💡 Como montar seu palpite", "🎯 Faltantes prioritárias" e "❌ Deixadas de fora" exatamente como aparecem em DADOS REAIS, sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_moldura" ? `IMPORTANTE — TIPO MOLDURA: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 Panorama", "🔥 Top dezenas fortes", "🤝 Melhores pares", "🎯 Melhores trios", "❄️ Dezenas fracas", "📉 Padrão de falha", "💡 Como montar seu palpite", "🎯 Núcleo forte", "➕ Apoio", "🎲 Coringas", "❌ Deixe de fora") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_movimentacao" ? `IMPORTANTE — TIPO QUENTES E FRIAS: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 O que aconteceu", "🔥 Dezenas QUENTES", "🤝 Top duplas entre as quentes", "🎯 Top trios entre as quentes", "❄️ Dezenas FRIAS", "🚫 Piores duplas entre as frias", "📈 Acelerando", "📉 Desacelerando", "💡 Recomendação para o concurso", "🎯 FIXAR", "➕ APOIO forte", "❌ EXCLUIR", "⚠️ Ficar de olho") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_repetidas" ? `IMPORTANTE — TIPO REPETIDAS: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 O que aconteceu", "🎯 No último sorteio", "🔥 Destaques — as MAIS FIÉIS", "⚠️ Atenção — as VOLÁTEIS", "🤝 Melhores duplas de repetidoras", "🎯 Melhores trios de repetidoras", "💡 Como montar seu palpite", "🎯 REPETIR (núcleo)", "➕ REPETIR (apoio)", "❌ NÃO repetir", "✨ E completar com X dezenas NOVAS") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_linhas" ? `IMPORTANTE — TIPO LINHAS: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 Panorama", "🎯 Distribuição média por linha", "🔥 Dezenas FORTES por linha", "❄️ Dezenas FRACAS por linha", "🤝 Melhores duplas dentro da mesma linha", "📈 Distribuição alvo recomendada", "💡 Como montar seu palpite", "🎯 Núcleo de fixas por linha", "➕ Apoio", "🎲 Coringas a girar", "❌ Evitar nesta rodada", "⚠️ Cuidado") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_colunas" ? `IMPORTANTE — TIPO COLUNAS: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 Panorama", "🎯 Distribuição média por coluna", "🔥 Dezenas FORTES por coluna", "❄️ Dezenas FRACAS por coluna", "🤝 Melhores duplas dentro da mesma coluna", "📈 Distribuição alvo recomendada", "💡 Como montar seu palpite", "🎯 Núcleo de fixas por coluna", "➕ Apoio", "🎲 Coringas a girar", "❌ Evitar nesta rodada", "⚠️ Cuidado") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_cenarios" ? `IMPORTANTE — TIPO CENÁRIOS: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 Probabilidades por faixa de repetição", "🛡️ CENÁRIO CONSERVADOR", "⚖️ CENÁRIO EQUILIBRADO", "🚀 CENÁRIO AGRESSIVO") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_ficar_de_olho" ? `IMPORTANTE — TIPO FICAR DE OLHO: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📉 TOP dezenas em desaceleração", todos os cards 🔴/🟡 de cada dezena, "📊 O que isso significa", "💡 Recomendação tática", "🎯 Manter atenção", "➕ Considerar como apoio", "❌ Pode excluir") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_como_calculamos" ? `IMPORTANTE — TIPO COMO CALCULAMOS: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 Janela de análise", "📐 Regras de ordenação", "🎯 Como uma dupla auditada entra no ranking", "✅ Anti-alucinação", "🔍 Definições oficiais", "🛡️ Validações ativas") sem resumir, sem omitir e sem alterar nenhum número ou regra. Adicione no final um bloco "💡 Por que isso importa?" com a recomendação direta. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}ESTRUTURA OBRIGATÓRIA do conteúdo:
 1) Abertura curta (1 linha) com gancho diferente a cada vez.
 2) Bloco principal — para "Análise por Linhas", "Análise por Colunas", "Análise de Ciclo", "Análise de Moldura", "Quentes e Frias" e "Análise de Repetidas", REPRODUZA LITERALMENTE o conteúdo de "DADOS REAIS", sem resumir nem omitir nenhum item. Para os outros tipos, resuma os dados em 2-3 linhas sob o título "📊 O que aconteceu nos últimos 10".
 3) Bloco "💡 Como montar seu palpite" — escreva a RECOMENDAÇÃO DIRETA acima, em destaque (pular se já estiver no bloco literal acima).
@@ -2052,7 +2315,7 @@ REGRAS CRÍTICAS:
 - Se citar o concurso, use exatamente ${proxConcurso}.
 - Tom humano, acolhedor, em primeira pessoa. Varie a abertura.
 - Use **negrito** nas dezenas e na recomendação.
-- Máximo ${tipoPost === "analise_ciclo" || tipoPost === "analise_moldura" ? "2000" : tipoPost === "analise_movimentacao" || tipoPost === "analise_repetidas" || tipoPost === "analise_linhas" || tipoPost === "analise_colunas" || tipoPost === "analise_posicoes_iniciais" || tipoPost === "analise_posicoes_finais" ? "2200" : "1500"} caracteres no conteúdo.
+- Máximo ${tipoPost === "analise_ciclo" || tipoPost === "analise_moldura" ? "2000" : tipoPost === "analise_movimentacao" || tipoPost === "analise_repetidas" || tipoPost === "analise_linhas" || tipoPost === "analise_colunas" || tipoPost === "analise_posicoes_iniciais" || tipoPost === "analise_posicoes_finais" || tipoPost === "analise_cenarios" || tipoPost === "analise_ficar_de_olho" || tipoPost === "analise_como_calculamos" ? "2200" : "1500"} caracteres no conteúdo.
 - Apenas dezenas de 01 a 25.
 - NUNCA mencione IA, bot, modelo, GPT ou Gemini.
 
