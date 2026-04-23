@@ -42,6 +42,7 @@ export interface PostDetails {
   tool_snapshot: boolean | null;
   external_link_url: string | null;
   external_link_text: string | null;
+  tipo: string | null;
   perfis: {
     nome: string | null;
     avatar_url: string | null;
@@ -68,7 +69,7 @@ export function usePostDetails(slugOrId: string) {
           .from("postagens")
           .select(
             `id, slug, titulo, conteudo, loteria_tag, media_url, media_type, curtidas,
-             respostas_count, created_at, user_id, tool_snapshot,
+             respostas_count, created_at, user_id, tool_snapshot, tipo,
              external_link_url, external_link_text`
           )
           .eq("slug", slugOrId)
@@ -81,7 +82,7 @@ export function usePostDetails(slugOrId: string) {
           .from("postagens")
           .select(
             `id, slug, titulo, conteudo, loteria_tag, media_url, media_type, curtidas,
-             respostas_count, created_at, user_id, tool_snapshot,
+             respostas_count, created_at, user_id, tool_snapshot, tipo,
              external_link_url, external_link_text`
           )
           .eq("id", isUuid ? slugOrId : slugOrId)
