@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { QuantidadeSelector } from "@/components/gerador/QuantidadeSelector";
 import { DezenasSelector } from "@/components/gerador/DezenasSelector";
 import { ResultadosSheet } from "@/components/gerador/ResultadosSheet";
+import { ResultadosSheetMegaSena } from "@/components/megasena/ResultadosSheetMegaSena";
 import { EstudoSelector } from "@/components/gerador-estudo/EstudoSelector";
 import { EstudoInfoCard } from "@/components/gerador-estudo/EstudoInfoCard";
 import { useEstudosDisponiveis } from "@/hooks/useEstudosDisponiveis";
@@ -15,6 +16,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUpsell } from "@/contexts/UpsellContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Dices, Loader2, AlertCircle, BookOpen } from "lucide-react";
+
+const DEZENAS_OPTIONS_BY_LOTERIA: Record<"lotofacil" | "megasena", number[]> = {
+  lotofacil: [15, 16, 17, 18, 19, 20],
+  megasena: [6, 7, 8, 9, 10, 11, 12],
+};
+
+const DEFAULT_QTD_BY_LOTERIA: Record<"lotofacil" | "megasena", number> = {
+  lotofacil: 15,
+  megasena: 6,
+};
 
 interface Props {
   loteria?: "lotofacil" | "megasena";
