@@ -38,19 +38,16 @@ function OfferCard({ href, external, cor, titulo, subtitulo, destaque, badgeFree
       href={href}
       target={external ? "_blank" : undefined}
       rel={external ? "noopener noreferrer" : undefined}
-      className="block w-full p-6 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all bg-white border-l-4"
+      className="block w-full px-4 py-3 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all bg-white border-l-4"
       style={{ ...borderStyle, ...bgStyle }}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h2 className="text-xl font-black leading-tight text-slate-900">
-            {titulo}
+          <h2 className="text-sm font-black leading-tight text-slate-900">
+            {titulo} <span className="font-semibold text-slate-700">· {subtitulo}</span>
           </h2>
-          <p className="text-base font-semibold text-slate-700 mt-1">
-            {subtitulo}
-          </p>
           <p
-            className="text-sm font-bold mt-2"
+            className="text-xs font-bold mt-0.5"
             style={{ color: textColor }}
           >
             {destaque}
@@ -58,7 +55,7 @@ function OfferCard({ href, external, cor, titulo, subtitulo, destaque, badgeFree
         </div>
         {badgeFree && (
           <span
-            className="text-[10px] font-black px-2 py-1 rounded-full text-white whitespace-nowrap"
+            className="text-[10px] font-black px-2 py-0.5 rounded-full text-white whitespace-nowrap"
             style={{ backgroundColor: textColor }}
           >
             GRÁTIS
@@ -87,30 +84,32 @@ export default function PalpitesEstudos() {
           className="block w-full bg-gradient-to-r from-red-600 to-red-700 hover:brightness-110 transition-all shadow-[0_20px_40px_-10px_rgba(220,38,38,0.45)]"
         >
           <div className="flex items-center justify-center gap-3 py-4 px-4">
-            <Play className="h-6 w-6 text-white fill-white" />
-            <span className="text-white font-bold text-base sm:text-lg text-center">
-              Vídeos novos todos os Dias no YouTube
-            </span>
+            <Play className="h-6 w-6 text-white fill-white shrink-0" />
+            <div className="text-center">
+              <p className="text-white font-bold text-base sm:text-lg leading-tight">
+                Vídeos novos todos os Dias no YouTube
+              </p>
+              <p className="text-white/90 font-semibold text-xs sm:text-sm mt-0.5">
+                Clique aqui e assista nossos estudos diários
+              </p>
+            </div>
           </div>
         </a>
 
-        {/* Logo + handle */}
-        <div className="w-[80%] max-w-md mx-auto pt-10 pb-6 text-center">
+        {/* Logo */}
+        <div className="w-[80%] max-w-md mx-auto pt-6 pb-4 text-center">
           <img
             src="/logo-palpite-tech.png"
             alt="Palpite Tech"
-            className="h-20 mx-auto object-contain"
+            className="h-16 mx-auto object-contain"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).style.display = "none";
             }}
           />
-          <p className="mt-3 text-sm font-semibold text-slate-500">
-            @palpitetech
-          </p>
         </div>
 
         {/* Cards */}
-        <div className="w-[80%] max-w-md mx-auto space-y-4 pb-10">
+        <div className="w-[80%] max-w-md mx-auto space-y-2 pb-6">
           <OfferCard
             href={LINKS.geradorInteligente}
             cor="primary"
