@@ -7,27 +7,38 @@ const corsHeaders = {
 };
 
 // =============================================================================
-// Gerador de palpites baseado em um post de estudo da comunidade.
+// Gerador de Palpites baseado em Estudo da Comunidade.
 //
-// Lê fatos_snapshot do post e produz N jogos alinhados ao tema:
-//   • analise_moldura  → força ≥X dezenas da moldura
-//   • analise_repetidas → força N repetidas do último concurso
-//   • analise_movimentacao / analise_quentes → puxa quentes do snapshot
-//   • analise_ciclo → prioriza dezenas faltantes do ciclo
-//   • outros → distribuição balanceada usando dezenas_chave do snapshot
-//
-// Determinístico (sem IA). Reusa o gating premium do gerador clássico.
+// Pipeline:
+//   1. Carrega o post + fatos_snapshot.
+//   2. Verifica gating premium e quota separada (gerador_estudo_daily_usage).
+//   3. Gera N jogos determinísticos puxando preferências do tema do estudo.
+//    4. Monta EstrategiaData (mesmo shape do gerador clássico) por tema.
+//    5. Tenta humanizar `conclusao` via Lovable AI Gemini Flash (timeout 4s).
+//       Se falhar, mantém a conclusão template.
+//   6. Retorna payload no MESMO shape do /generate-palpites:
+//       { jogos: [{dezenas:[]}], estrategia, baseado_em, remaining_today, max_per_day }
 // =============================================================================
 
-const TOTAL_BY_LOTERIA: Record<string, { total: number; sorteadas: number; moldura: number[] }> = {
+const TOTAL_BY_LOTERIA: Record<string, {
+  total: number;
+  sorteadasMin: number;
+  sorteadasMax: number;
+  defaultDezenas: number;
+  moldura: number[];
+}> = {
   lotofacil: {
     total: 25,
-    sorteadas: 15,
+    sorteadasMin: 15,
+    sorteadasMax: 20,
+    defaultDezenas: 15,
     moldura: [1, 2, 3, 4, 5, 6, 10, 11, 15, 16, 20, 21, 22, 23, 24, 25],
   },
   megasena: {
     total: 60,
-    sorteadas: 6,
+    sorteadasMin: 6,
+    sorteadasMax: 10,
+    defaultDezenas: 6,
     moldura: [
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
       11, 21, 31, 41,
@@ -49,6 +60,16 @@ interface FatosSnapshot {
   numeros_permitidos: number[];
 }
 
+interface DezenaInfo { dezenas: number[]; motivo: string; }
+interface FiltroInfo { filtro: string; valor_alvo?: string; motivo: string; }
+interface EstrategiaData {
+  ferramentas: string[];
+  dezenas_fixas?: DezenaInfo[];
+  dezenas_evitadas?: DezenaInfo[];
+  filtros_aplicados: FiltroInfo[];
+  conclusao: string;
+}
+
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -67,68 +88,193 @@ function gerarJogo(
 ): number[] {
   const universo = Array.from({ length: total }, (_, i) => i + 1).filter((n) => !excluidas.has(n));
   const prefDisponivel = preferenciais.filter((n) => !excluidas.has(n));
-
   const escolhidas = new Set<number>();
-  // 1) garantir mínimo de preferenciais
-  const prefShuf = shuffle(prefDisponivel);
-  for (const n of prefShuf) {
+  for (const n of shuffle(prefDisponivel)) {
     if (escolhidas.size >= Math.min(minPreferenciais, sorteadas)) break;
     escolhidas.add(n);
   }
-  // 2) completar com universo geral
-  const restoShuf = shuffle(universo);
-  for (const n of restoShuf) {
+  for (const n of shuffle(universo)) {
     if (escolhidas.size >= sorteadas) break;
     escolhidas.add(n);
   }
   return Array.from(escolhidas).sort((a, b) => a - b);
 }
 
-function preferenciasDoTema(tema: string, snapshot: FatosSnapshot, loteriaCfg: { moldura: number[]; sorteadas: number }) {
-  const ext = snapshot.extras || {};
-  // Heurística: extras pode trazer arrays como "moldura", "quentes", "frias", "repetidas", "faltantes_ciclo"
-  const arr = (k: string): number[] => Array.isArray((ext as any)[k]) ? ((ext as any)[k] as number[]) : [];
+function arrFromExtras(ext: Record<string, unknown>, k: string): number[] {
+  return Array.isArray((ext as any)[k]) ? ((ext as any)[k] as number[]) : [];
+}
 
+function preferenciasDoTema(
+  tema: string,
+  snapshot: FatosSnapshot,
+  cfg: { moldura: number[]; defaultDezenas: number },
+  qtdDezenas: number,
+) {
+  const ext = snapshot.extras || {};
   switch (tema) {
     case "analise_moldura":
+    case "analise_moldura_megasena":
       return {
-        preferenciais: arr("moldura").length ? arr("moldura") : loteriaCfg.moldura,
-        minPreferenciais: Math.ceil(loteriaCfg.sorteadas * 0.55),
+        preferenciais: arrFromExtras(ext, "moldura").length ? arrFromExtras(ext, "moldura") : cfg.moldura,
+        minPreferenciais: Math.ceil(qtdDezenas * 0.6),
       };
     case "analise_repetidas":
       return {
-        preferenciais: arr("repetidas_recomendadas").length ? arr("repetidas_recomendadas") : arr("ultimo_concurso_dezenas"),
-        minPreferenciais: Math.min(arr("repetidas_recomendadas").length || 6, loteriaCfg.sorteadas - 1),
+        preferenciais: arrFromExtras(ext, "repetidas_recomendadas").length
+          ? arrFromExtras(ext, "repetidas_recomendadas")
+          : arrFromExtras(ext, "ultimo_concurso_dezenas"),
+        minPreferenciais: Math.min(arrFromExtras(ext, "repetidas_recomendadas").length || 6, qtdDezenas - 1),
       };
     case "analise_movimentacao":
     case "analise_quentes":
       return {
-        preferenciais: arr("quentes"),
-        minPreferenciais: Math.ceil(loteriaCfg.sorteadas * 0.5),
+        preferenciais: arrFromExtras(ext, "quentes"),
+        minPreferenciais: Math.ceil(qtdDezenas * 0.5),
       };
     case "analise_frias":
       return {
-        preferenciais: arr("frias"),
-        minPreferenciais: Math.ceil(loteriaCfg.sorteadas * 0.4),
+        preferenciais: arrFromExtras(ext, "frias"),
+        minPreferenciais: Math.ceil(qtdDezenas * 0.4),
       };
     case "analise_ciclo":
       return {
-        preferenciais: arr("dezenas_faltantes"),
-        minPreferenciais: Math.min(arr("dezenas_faltantes").length, Math.ceil(loteriaCfg.sorteadas * 0.5)),
-      };
-    case "analise_moldura_megasena":
-      return {
-        preferenciais: arr("moldura").length ? arr("moldura") : loteriaCfg.moldura,
-        minPreferenciais: Math.ceil(loteriaCfg.sorteadas * 0.6),
+        preferenciais: arrFromExtras(ext, "dezenas_faltantes"),
+        minPreferenciais: Math.min(arrFromExtras(ext, "dezenas_faltantes").length, Math.ceil(qtdDezenas * 0.5)),
       };
     default:
-      // Fallback: usa numeros_permitidos do snapshot como pool ranqueado
       return {
-        preferenciais: snapshot.numeros_permitidos.slice(0, Math.ceil(loteriaCfg.sorteadas * 1.5)),
-        minPreferenciais: Math.ceil(loteriaCfg.sorteadas * 0.4),
+        preferenciais: snapshot.numeros_permitidos.slice(0, Math.ceil(qtdDezenas * 1.5)),
+        minPreferenciais: Math.ceil(qtdDezenas * 0.4),
       };
   }
 }
+
+function rotuloTema(tema: string): string {
+  const map: Record<string, string> = {
+    analise_moldura: "Análise da Moldura",
+    analise_moldura_megasena: "Análise da Moldura",
+    analise_repetidas: "Repetidas do Concurso Anterior",
+    analise_movimentacao: "Movimentação das Dezenas",
+    analise_quentes: "Dezenas Quentes",
+    analise_frias: "Dezenas Frias",
+    analise_ciclo: "Ciclo de Dezenas",
+  };
+  return map[tema] || "Análise Estatística";
+}
+
+function montarEstrategia(
+  tema: string,
+  snapshot: FatosSnapshot,
+  preferenciais: number[],
+  minPreferenciais: number,
+  qtdDezenas: number,
+  quantidade: number,
+): EstrategiaData {
+  const labelTema = rotuloTema(tema);
+  const ext = snapshot.extras || {};
+  const ferramentas = [labelTema, "Snapshot do estudo", `Concurso ${snapshot.proximo_concurso}`];
+
+  const dezenas_fixas: DezenaInfo[] = [];
+  if (preferenciais.length > 0) {
+    dezenas_fixas.push({
+      dezenas: preferenciais.slice(0, 16),
+      motivo: `Dezenas-chave do estudo "${labelTema}", priorizadas em todos os jogos.`,
+    });
+  }
+
+  const filtros_aplicados: FiltroInfo[] = [
+    {
+      filtro: "Mínimo de dezenas-chave",
+      valor_alvo: `${minPreferenciais}+ por jogo`,
+      motivo: `Cada jogo carrega pelo menos ${minPreferenciais} dezenas alinhadas ao estudo do concurso ${snapshot.proximo_concurso}.`,
+    },
+    {
+      filtro: "Tema do estudo",
+      valor_alvo: labelTema,
+      motivo: snapshot.recomendacao_direta || "Estratégia recomendada pelo estudo da comunidade.",
+    },
+  ];
+
+  if (Array.isArray((ext as any).dezenas_evitadas) && ((ext as any).dezenas_evitadas as number[]).length > 0) {
+    return {
+      ferramentas,
+      dezenas_fixas,
+      dezenas_evitadas: [{
+        dezenas: (ext as any).dezenas_evitadas as number[],
+        motivo: "Dezenas marcadas como evitadas no estudo.",
+      }],
+      filtros_aplicados,
+      conclusao: conclusaoTemplate(tema, snapshot, qtdDezenas, quantidade),
+    };
+  }
+
+  return {
+    ferramentas,
+    dezenas_fixas,
+    filtros_aplicados,
+    conclusao: conclusaoTemplate(tema, snapshot, qtdDezenas, quantidade),
+  };
+}
+
+function conclusaoTemplate(tema: string, snapshot: FatosSnapshot, qtdDezenas: number, quantidade: number): string {
+  const labelTema = rotuloTema(tema);
+  return `Geramos ${quantidade} jogo(s) de ${qtdDezenas} dezenas seguindo o estudo "${labelTema}" do concurso ${snapshot.proximo_concurso}. ${snapshot.recomendacao_direta || "Estratégia baseada nos padrões identificados pelo estudo."}`;
+}
+
+async function humanizarConclusao(
+  base: EstrategiaData,
+  snapshot: FatosSnapshot,
+  tema: string,
+  quantidade: number,
+  qtdDezenas: number,
+): Promise<string> {
+  const apiKey = Deno.env.get("LOVABLE_API_KEY");
+  if (!apiKey) return base.conclusao;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 4000);
+
+  try {
+    const prompt = `Você é um analista de loteria. Reescreva esta conclusão em 2-3 frases naturais, persuasivas e diretas (máx 280 caracteres). Mantenha os números e o tema.
+
+Tema: ${rotuloTema(tema)}
+Concurso: ${snapshot.proximo_concurso}
+Quantidade: ${quantidade} jogos de ${qtdDezenas} dezenas
+Recomendação do estudo: ${snapshot.recomendacao_direta || snapshot.resumo || "—"}
+Conclusão atual: ${base.conclusao}
+
+Responda APENAS o texto reescrito, sem aspas, sem markdown.`;
+
+    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 200,
+      }),
+    });
+    clearTimeout(timeout);
+
+    if (!resp.ok) {
+      console.warn("[humanizar] AI gateway falhou", resp.status);
+      return base.conclusao;
+    }
+    const data = await resp.json();
+    const texto = data?.choices?.[0]?.message?.content?.trim();
+    return texto && texto.length > 10 ? texto : base.conclusao;
+  } catch (e) {
+    clearTimeout(timeout);
+    console.warn("[humanizar] timeout ou erro:", e instanceof Error ? e.message : e);
+    return base.conclusao;
+  }
+}
+
+const PREMIUM_MAX = 30;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -160,10 +306,10 @@ serve(async (req) => {
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
     const body = await req.json().catch(() => ({}));
+
     const postId: string | undefined = body.post_id;
-    const quantidade = Math.min(Math.max(body.quantidade || 5, 1), 20);
+    const quantidade = Math.min(Math.max(Number(body.quantidade) || 5, 1), 12);
 
     if (!postId) {
       return new Response(JSON.stringify({ error: "post_id é obrigatório" }), {
@@ -172,7 +318,6 @@ serve(async (req) => {
       });
     }
 
-    // Carrega o post
     const { data: post, error: postErr } = await supabaseAdmin
       .from("postagens")
       .select("id, titulo, loteria_tag, tema_estudo, fatos_snapshot, status")
@@ -189,7 +334,7 @@ serve(async (req) => {
     const snapshot = post.fatos_snapshot as FatosSnapshot | null;
     if (!snapshot || !snapshot.loteria) {
       return new Response(JSON.stringify({
-        error: "Este estudo não possui dados de geração disponíveis. Tente um post mais recente.",
+        error: "Este estudo não possui dados de geração disponíveis. Tente um estudo mais recente.",
       }), {
         status: 422,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -206,7 +351,11 @@ serve(async (req) => {
       });
     }
 
-    // Gating premium reusando o mesmo padrão do gerador clássico
+    // qtd_dezenas com clamp pela loteria
+    const qtdDezenasReq = Number(body.qtd_dezenas) || cfg.defaultDezenas;
+    const qtdDezenas = Math.min(Math.max(qtdDezenasReq, cfg.sorteadasMin), cfg.sorteadasMax);
+
+    // Gating + quota
     const { data: userRole } = await supabaseAdmin
       .from("user_roles")
       .select("role")
@@ -215,7 +364,13 @@ serve(async (req) => {
       .maybeSingle();
     const isAdmin = !!userRole;
 
-    if (!isAdmin) {
+    let maxPerDay = 0;
+    let remainingToday = 0;
+
+    if (isAdmin) {
+      maxPerDay = -1; // ∞
+      remainingToday = 999;
+    } else {
       const { data: perfil } = await supabaseAdmin
         .from("perfis")
         .select("status_assinatura, validade_assinatura")
@@ -223,6 +378,7 @@ serve(async (req) => {
         .maybeSingle();
       const ativo = perfil?.status_assinatura === "ativa" &&
         (!perfil.validade_assinatura || new Date(perfil.validade_assinatura) > new Date());
+
       if (!ativo) {
         return new Response(JSON.stringify({
           error: "Recurso premium. Ative seu plano para gerar palpites baseados em estudos.",
@@ -232,43 +388,75 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      maxPerDay = PREMIUM_MAX;
+
+      // Incrementa quota
+      const { data: rest, error: quotaErr } = await supabaseAdmin
+        .rpc("incrementar_uso_gerador_estudo", { p_user_id: user.id, p_max: PREMIUM_MAX });
+
+      if (quotaErr) {
+        const msg = (quotaErr as any)?.message || "";
+        if (msg.includes("LIMIT_REACHED")) {
+          return new Response(JSON.stringify({
+            error: `Limite diário de ${PREMIUM_MAX} gerações de estudo atingido. Tente novamente amanhã.`,
+            remaining_today: 0,
+            max_per_day: PREMIUM_MAX,
+          }), {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        console.error("[quota] erro:", quotaErr);
+        return new Response(JSON.stringify({ error: "Erro ao validar quota" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      remainingToday = typeof rest === "number" ? rest : 0;
     }
 
-    // Gera os jogos
+    // Geração determinística
     const tema = post.tema_estudo || snapshot.tipo_post || "geral";
-    const { preferenciais, minPreferenciais } = preferenciasDoTema(tema, snapshot, cfg);
+    const { preferenciais, minPreferenciais } = preferenciasDoTema(tema, snapshot, cfg, qtdDezenas);
     const excluidas = new Set<number>();
 
-    const jogos: number[][] = [];
+    const jogosArr: number[][] = [];
     const seen = new Set<string>();
     let tentativas = 0;
-    while (jogos.length < quantidade && tentativas < quantidade * 10) {
+    while (jogosArr.length < quantidade && tentativas < quantidade * 20) {
       tentativas++;
-      const j = gerarJogo(cfg.total, cfg.sorteadas, preferenciais, excluidas, minPreferenciais);
+      const j = gerarJogo(cfg.total, qtdDezenas, preferenciais, excluidas, minPreferenciais);
+      if (j.length !== qtdDezenas) continue;
       const key = j.join("-");
       if (seen.has(key)) continue;
       seen.add(key);
-      jogos.push(j);
+      jogosArr.push(j);
     }
 
+    // Estratégia + humanização
+    const estrategiaBase = montarEstrategia(tema, snapshot, preferenciais, minPreferenciais, qtdDezenas, quantidade);
+    const conclusaoFinal = await humanizarConclusao(estrategiaBase, snapshot, tema, quantidade, qtdDezenas);
+    const estrategia: EstrategiaData = { ...estrategiaBase, conclusao: conclusaoFinal };
+
+    // Payload no MESMO shape do /generate-palpites
     return new Response(
       JSON.stringify({
         success: true,
-        jogos,
+        jogos: jogosArr.map((dezenas) => ({ dezenas })),
+        estrategia,
         baseado_em: {
           post_id: post.id,
           titulo: post.titulo,
           loteria: snapshot.loteria,
           loteria_tag: snapshot.loteria_tag,
           tema,
+          tema_label: rotuloTema(tema),
           ultimo_concurso: snapshot.ultimo_concurso,
           proximo_concurso: snapshot.proximo_concurso,
         },
-        estrategia: {
-          tipo: "estudo",
-          preferenciais_usadas: preferenciais.slice(0, 20),
-          min_preferenciais_por_jogo: minPreferenciais,
-        },
+        remaining_today: remainingToday,
+        max_per_day: maxPerDay,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
