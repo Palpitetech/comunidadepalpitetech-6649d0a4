@@ -4,6 +4,7 @@
 // Anti-abuso: rate limit por IP em memória (8 req / 60s).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { normalizeBR, variants } from "../_shared/br-phone.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -92,35 +93,6 @@ async function verifyChallenge(token: string, answer: number): Promise<boolean> 
   } catch {
     return false;
   }
-}
-
-// ─── Normalização BR ──────────────────────────────────────────────
-function normalizeBR(raw: string): string | null {
-  const digits = raw.replace(/\D/g, "");
-  let n = digits;
-  if (n.startsWith("55") && (n.length === 12 || n.length === 13)) {
-    n = n.substring(2);
-  }
-  if (n.length !== 10 && n.length !== 11) return null;
-  const ddd = parseInt(n.substring(0, 2), 10);
-  if (isNaN(ddd) || ddd < 11 || ddd > 99) return null;
-  return n;
-}
-
-function variants(n: string): string[] {
-  const set = new Set<string>();
-  set.add(n);
-  set.add(`55${n}`);
-  if (n.length === 11 && n[2] === "9") {
-    const sem9 = n.substring(0, 2) + n.substring(3);
-    set.add(sem9);
-    set.add(`55${sem9}`);
-  } else if (n.length === 10) {
-    const com9 = n.substring(0, 2) + "9" + n.substring(2);
-    set.add(com9);
-    set.add(`55${com9}`);
-  }
-  return Array.from(set);
 }
 
 const json = (body: unknown, status = 200) =>
