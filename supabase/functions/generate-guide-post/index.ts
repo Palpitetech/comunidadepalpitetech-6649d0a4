@@ -640,11 +640,10 @@ function sanitizar(texto: string): string {
 }
 
 function fallbackConteudo(fatos: { resumo: string; recomendacaoDireta: string }): string {
-  const conteudo = `Olá pessoal! Trago um resumo direto do tema.\n\n` +
-    `📊 O que aconteceu nos últimos 10\n${fatos.resumo}\n\n` +
-    `💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\n` +
+  const conteudo = `Olá pessoal! Trago um resumo direto do tema.\n\n${fatos.resumo}\n\n` +
+    (fatos.resumo.includes("Como montar") ? "" : `💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\n`) +
     `Loteria envolve sorte. Use como guia, não como certeza.`;
-  return conteudo.substring(0, 1500);
+  return conteudo.substring(0, 2000);
 }
 
 async function chamarIAComRetry(systemPrompt: string, userPrompt: string, apiKey: string): Promise<{ ok: boolean; status: number; content?: string; usage?: any; errorBody?: string }> {
