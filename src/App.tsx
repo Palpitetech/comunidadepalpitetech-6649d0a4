@@ -17,7 +17,6 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 // RecuperarSenha removido
 import Comunidade from "./pages/Comunidade";
-import Chat from "./pages/Chat";
 import Notificacoes from "./pages/Notificacoes";
 import Resultados from "./pages/Resultados";
 import Tendencias from "./pages/Tendencias";
@@ -37,7 +36,6 @@ import Planos from "./pages/Planos";
 import AdminIndex from "./pages/admin/AdminIndex";
 import AdminPlanos from "./pages/admin/AdminPlanos";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
-import AdminBots from "./pages/admin/AdminBots";
 import AdminCustos from "./pages/admin/AdminCustos";
 import AdminAssinaturasOperacionais from "./pages/admin/AdminAssinaturasOperacionais";
 import AdminChipCelulares from "./pages/admin/AdminChipCelulares";
@@ -175,7 +173,7 @@ const App = () => (
                 <Route path="/gerar-jogos" element={<ProtectedRoute><GerarJogos /></ProtectedRoute>} />
                 <Route path="/home" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
                 <Route path="/comunidade" element={<Navigate to="/home" replace />} />
-                <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+                <Route path="/chat" element={<Navigate to="/home" replace />} />
                 <Route path="/notificacoes" element={<ProtectedRoute><Notificacoes /></ProtectedRoute>} />
                 <Route path="/lotofacil" element={<ProtectedRoute><HubLotofacil /></ProtectedRoute>} />
                 <Route path="/resultados" element={<ProtectedRoute><Resultados /></ProtectedRoute>} />
@@ -255,7 +253,6 @@ const App = () => (
                 <Route path="/admin" element={<AdminRoute><AdminIndex /></AdminRoute>} />
                 <Route path="/admin/planos" element={<AdminRoute><AdminPlanos /></AdminRoute>} />
                 <Route path="/admin/usuarios" element={<AdminRoute><AdminUsuarios /></AdminRoute>} />
-                <Route path="/admin/bots" element={<AdminRoute><AdminBots /></AdminRoute>} />
                 <Route path="/admin/custos" element={<AdminRoute><AdminCustos /></AdminRoute>} />
                 <Route path="/admin/assinaturas-operacionais" element={<AdminRoute><AdminAssinaturasOperacionais /></AdminRoute>} />
                 <Route path="/admin/chip-celulares" element={<AdminRoute><AdminChipCelulares /></AdminRoute>} />

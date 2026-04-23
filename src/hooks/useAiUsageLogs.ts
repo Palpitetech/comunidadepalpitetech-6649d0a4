@@ -137,17 +137,10 @@ export function useAiUsageLogs(filters?: {
         }
       }
 
-      if (botIds.length > 0) {
-        const { data: bots } = await supabase
-          .from("guide_personas")
-          .select("id, cargo, perfis(nome)")
-          .in("id", botIds);
-        for (const b of (bots || []) as any[]) {
-          botMap.set(b.id, {
-            nome: b.perfis?.nome || null,
-            cargo: b.cargo || null,
-          });
-        }
+      // Bots foram removidos do sistema. bot_persona_id em logs antigos
+      // é apenas histórico — exibimos como "Sistema" sem lookup.
+      for (const id of botIds) {
+        botMap.set(id, { nome: "Sistema", cargo: null });
       }
 
       // Enrich
