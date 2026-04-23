@@ -888,13 +888,80 @@ function montarFatos(
     }
 
     case "analise_movimentacao": {
-      const quentes = topQuentes(concursos, 5);
-      const frias = topFrias(concursos, 5);
-      const resumo = `Quentes (10 sorteios): ${quentes.map((q) => `${fmt(q.dezena)} (${q.freq}x)`).join(", ")}\n` +
-        `Frias: ${frias.map((f) => `${fmt(f.dezena)} (${f.freq}x)`).join(", ")}`;
-      const fixar = quentes.slice(0, 5).map((q) => fmt(q.dezena)).join(", ");
-      const excluir = frias.slice(0, 3).map((f) => fmt(f.dezena)).join(", ");
-      const recomendacaoDireta = `Para o concurso ${proxConcurso}: FIXAR [${fixar}] e EXCLUIR [${excluir}].`;
+      const a = analisarQuentesFriasDetalhado(concursos);
+
+      const blocoPanorama = `📊 O que aconteceu nos últimos ${a.totalConcursos} concursos\n` +
+        `Sorteamos ${a.totalDezenasSorteadas} dezenas no total (${DEZENAS_POR_SORTEIO} por concurso).\n` +
+        `Em cima disso, identificamos um padrão claro de força e fraqueza.`;
+
+      const blocoQuentes = `🔥 Dezenas QUENTES (presença alta nos últimos ${a.totalConcursos})\n` +
+        a.quentes.map((q) => {
+          const tag = q.perc === 100 ? "  → força total" : "";
+          return `• ${fmt(q.dezena)} — saiu em ${q.vezes} dos ${a.totalConcursos} concursos (${q.perc}%)${tag}`;
+        }).join("\n");
+
+      const blocoParesQ = a.topParesQuentes.length > 0
+        ? `🤝 Top duplas entre as quentes (saíram juntas)\n` +
+          a.topParesQuentes.map((p) => {
+            const obs = p.vezes === a.totalConcursos ? " (sempre que uma saiu, a outra também)" : "";
+            return `• ${fmt(p.a)} + ${fmt(p.b)} — juntas ${p.vezes}x${obs}`;
+          }).join("\n")
+        : "";
+
+      const blocoTriosQ = a.topTriosQuentes.length > 0
+        ? `🎯 Top trios entre as quentes\n` +
+          a.topTriosQuentes.map((t) => `• ${fmt(t.a)} + ${fmt(t.b)} + ${fmt(t.c)} — juntos ${t.vezes}x`).join("\n")
+        : "";
+
+      const blocoFrias = `❄️ Dezenas FRIAS (presença baixa nos últimos ${a.totalConcursos})\n` +
+        a.frias.map((f) => `• ${fmt(f.dezena)} — saiu em ${f.vezes} dos ${a.totalConcursos} concursos (${f.perc}%)`).join("\n");
+
+      const blocoPioresParesF = a.pioresParesFrias.length > 0
+        ? `🚫 Piores duplas entre as frias (quase nunca juntas)\n` +
+          a.pioresParesFrias.map((p) =>
+            `• ${fmt(p.a)} + ${fmt(p.b)} — saíram juntas ${p.vezes}x em ${a.totalConcursos}`
+          ).join("\n")
+        : "";
+
+      const blocoAcel = a.acelerando.length > 0
+        ? `📈 Acelerando (esquentando nos últimos sorteios)\n` +
+          a.acelerando.map((t) =>
+            `• ${fmt(t.dezena)} — saiu ${t.recente}x recente (era ${t.anterior}x antes) ↑`
+          ).join("\n")
+        : "";
+
+      const blocoDesacel = a.desacelerando.length > 0
+        ? `📉 Desacelerando (esfriando nos últimos sorteios)\n` +
+          a.desacelerando.map((t) =>
+            `• ${fmt(t.dezena)} — saiu ${t.recente}x recente (era ${t.anterior}x antes) ↓`
+          ).join("\n")
+        : "";
+
+      const r = a.recomendacao;
+      const blocoRecomendacao = `💡 Recomendação para o concurso ${proxConcurso}`;
+
+      const linhaFixar = r.fixar.length > 0
+        ? `🎯 FIXAR (${r.fixar.length} dezenas com força máxima): ${r.fixar.map(fmt).join(", ")}\n   → ${r.justFixar}`
+        : "";
+      const linhaApoio = r.apoio.length > 0
+        ? `➕ APOIO forte (${r.apoio.length} dezenas): ${r.apoio.map(fmt).join(", ")}\n   → ${r.justApoio}`
+        : "";
+      const linhaExcluir = r.excluir.length > 0
+        ? `❌ EXCLUIR desta rodada: ${r.excluir.map(fmt).join(", ")}\n   → ${r.justExcluir}`
+        : "";
+      const linhaOlho = r.ficarDeOlho.length > 0
+        ? `⚠️ Ficar de olho: ${r.ficarDeOlho.map(fmt).join(", ")} — ${r.justFicarDeOlho}.`
+        : "";
+
+      const resumo = [
+        blocoPanorama, blocoQuentes, blocoParesQ, blocoTriosQ,
+        blocoFrias, blocoPioresParesF, blocoAcel, blocoDesacel,
+        blocoRecomendacao, linhaFixar, linhaApoio, linhaExcluir, linhaOlho,
+      ].filter(Boolean).join("\n\n");
+
+      const recomendacaoDireta = `Para o concurso ${proxConcurso}: FIXAR [${r.fixar.map(fmt).join(", ")}], APOIO [${r.apoio.map(fmt).join(", ")}], EXCLUIR [${r.excluir.map(fmt).join(", ")}]` +
+        (r.ficarDeOlho.length > 0 ? `; ficar de olho em [${r.ficarDeOlho.map(fmt).join(", ")}]` : "") + ".";
+
       return { resumo, recomendacaoDireta };
     }
 
