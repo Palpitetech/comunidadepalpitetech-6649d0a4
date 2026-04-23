@@ -274,6 +274,26 @@ export default function VerificarWhatsApp() {
             </Card>
           )}
 
+          {status === "captcha_invalid" && (
+            <Card className="border-warning/40 bg-warning/5">
+              <CardContent className="pt-6 text-center space-y-2">
+                <p className="text-sm font-medium">Resposta incorreta</p>
+                <p className="text-xs text-muted-foreground">Geramos uma nova pergunta. Tente novamente.</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {status === "rate_limited" && (
+            <Card className="border-2 border-destructive/60 bg-destructive/5">
+              <CardContent className="pt-6 text-center space-y-2">
+                <p className="text-sm font-bold text-destructive">Muitas tentativas</p>
+                <p className="text-xs text-muted-foreground">
+                  Por segurança, espere 1 minuto antes de verificar de novo.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           {status === "error" && (
             <Card className="border-destructive/40 bg-destructive/5">
               <CardContent className="pt-6 text-center space-y-3">
