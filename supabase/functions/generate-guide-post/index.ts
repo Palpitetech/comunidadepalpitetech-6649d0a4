@@ -851,9 +851,9 @@ ${fatos.resumo}
 RECOMENDAÇÃO DIRETA QUE VOCÊ DEVE INCLUIR LITERALMENTE NO TEXTO:
 ${fatos.recomendacaoDireta}
 
-${tipoPost === "analise_ciclo" ? `IMPORTANTE — TIPO CICLO: REPRODUZA LITERALMENTE os blocos "📊 Onde estamos", "📈 Histórico", "💡 Como montar seu palpite", "🎯 Faltantes prioritárias" e "❌ Deixadas de fora" exatamente como aparecem em DADOS REAIS, sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}ESTRUTURA OBRIGATÓRIA do conteúdo:
+${tipoPost === "analise_ciclo" ? `IMPORTANTE — TIPO CICLO: REPRODUZA LITERALMENTE os blocos "📊 Onde estamos", "📈 Histórico", "💡 Como montar seu palpite", "🎯 Faltantes prioritárias" e "❌ Deixadas de fora" exatamente como aparecem em DADOS REAIS, sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_moldura" ? `IMPORTANTE — TIPO MOLDURA: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 Panorama", "🔥 Top dezenas fortes", "🤝 Melhores pares", "🎯 Melhores trios", "❄️ Dezenas fracas", "📉 Padrão de falha", "💡 Como montar seu palpite", "🎯 Núcleo forte", "➕ Apoio", "🎲 Coringas", "❌ Deixe de fora") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}ESTRUTURA OBRIGATÓRIA do conteúdo:
 1) Abertura curta (1 linha) com gancho diferente a cada vez.
-2) Bloco principal — para "Análise por Linhas", "Análise por Colunas" e "Análise de Ciclo", REPRODUZA LITERALMENTE o conteúdo de "DADOS REAIS", sem resumir nem omitir nenhum item. Para os outros tipos, resuma os dados em 2-3 linhas sob o título "📊 O que aconteceu nos últimos 10".
+2) Bloco principal — para "Análise por Linhas", "Análise por Colunas", "Análise de Ciclo" e "Análise de Moldura", REPRODUZA LITERALMENTE o conteúdo de "DADOS REAIS", sem resumir nem omitir nenhum item. Para os outros tipos, resuma os dados em 2-3 linhas sob o título "📊 O que aconteceu nos últimos 10".
 3) Bloco "💡 Como montar seu palpite" — escreva a RECOMENDAÇÃO DIRETA acima, em destaque (pular se já estiver no bloco literal acima).
 4) Disclaimer curto: "Loteria envolve sorte. Use como guia, não como certeza."
 
@@ -862,7 +862,7 @@ REGRAS CRÍTICAS:
 - Se citar o concurso, use exatamente ${proxConcurso}.
 - Tom humano, acolhedor, em primeira pessoa. Varie a abertura.
 - Use **negrito** nas dezenas e na recomendação.
-- Máximo ${tipoPost === "analise_ciclo" ? "1800" : "1500"} caracteres no conteúdo.
+- Máximo ${tipoPost === "analise_ciclo" || tipoPost === "analise_moldura" ? "2000" : "1500"} caracteres no conteúdo.
 - Apenas dezenas de 01 a 25.
 - NUNCA mencione IA, bot, modelo, GPT ou Gemini.
 
