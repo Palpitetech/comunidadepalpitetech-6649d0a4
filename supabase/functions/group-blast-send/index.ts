@@ -120,6 +120,8 @@ async function handlePrepare(supabase: any, opts: any) {
 
         if ((count ?? 0) > 0) continue;
 
+        // IMPORTANTE: instance_id e evolution_instance_id NUNCA devem ser pré-vinculados aqui.
+        // A instância é resolvida no ato do envio em handleSend() (com fallback ao vivo entre candidatas).
         const { error: insertErr } = await supabase
           .from("group_blast_logs")
           .insert({
@@ -129,6 +131,8 @@ async function handlePrepare(supabase: any, opts: any) {
             message_content: "",
             scheduled_for: scheduled.toISOString(),
             status: "pending",
+            instance_id: null,
+            evolution_instance_id: null,
           });
 
         if (insertErr) {
