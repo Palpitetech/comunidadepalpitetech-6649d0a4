@@ -223,6 +223,15 @@ serve(async (req) => {
     }
 
     // Snapshot serializável dos fatos (chave para gerador-from-estudo)
+    let baseGeracao = null as ReturnType<NonNullable<typeof engine.extrairBaseGeracao>> | null;
+    try {
+      if (typeof engine.extrairBaseGeracao === "function") {
+        baseGeracao = engine.extrairBaseGeracao(tipoPost, concursos, historicoCiclos);
+      }
+    } catch (e) {
+      console.warn(`[generate-guide-post] falha extrairBaseGeracao:`, e);
+    }
+
     const fatosSnapshot = {
       loteria,
       loteria_tag: config.loteria_tag,
@@ -233,6 +242,7 @@ serve(async (req) => {
       recomendacao_direta: fatos.recomendacaoDireta,
       extras: fatos.extras || {},
       numeros_permitidos: Array.from(numerosPermitidos),
+      base_geracao: baseGeracao,
     };
 
     // 5. Inserir post
