@@ -150,6 +150,60 @@ function calcularDistribuicaoColunas(concursos: Concurso[]): {
   return { medias, recomendacao: ajustarPara15(medias) };
 }
 
+// Detalhamento por linha/coluna nos últimos N sorteios:
+// Para cada índice 0..4, calcula:
+//   - total: total de ocorrências (soma das dezenas daquele eixo nos N sorteios)
+//   - distribuicao: Map quantidade(0..5) -> quantos sorteios tiveram aquela quantidade
+//   - top2: as 2 quantidades mais frequentes [{ qtd, vezes }, ...]
+function detalharLinhasColunas(
+  concursos: Concurso[],
+  eixo: "linha" | "coluna",
+): Array<{
+  indice: number; // 1..5
+  faixa: string; // "01-05" ou "01,06,11,16,21"
+  total: number;
+  top2: Array<{ qtd: number; vezes: number }>;
+}> {
+  const resultado: Array<{
+    indice: number;
+    faixa: string;
+    total: number;
+    top2: Array<{ qtd: number; vezes: number }>;
+  }> = [];
+
+  for (let i = 0; i < 5; i++) {
+    let total = 0;
+    const dist = new Map<number, number>(); // qtd -> sorteios com aquela qtd
+    for (const c of concursos) {
+      let qtdNoSorteio = 0;
+      for (const d of c.dezenas) {
+        const grupo = eixo === "linha" ? Math.ceil(d / 5) - 1 : ((d - 1) % 5);
+        if (grupo === i) qtdNoSorteio++;
+      }
+      total += qtdNoSorteio;
+      dist.set(qtdNoSorteio, (dist.get(qtdNoSorteio) || 0) + 1);
+    }
+    const top2 = Array.from(dist.entries())
+      .sort((a, b) => b[1] - a[1] || b[0] - a[0])
+      .slice(0, 2)
+      .map(([qtd, vezes]) => ({ qtd, vezes }));
+
+    let faixa: string;
+    if (eixo === "linha") {
+      const ini = i * 5 + 1;
+      const fim = ini + 4;
+      faixa = `${fmt(ini)}-${fmt(fim)}`;
+    } else {
+      const dezenas: number[] = [];
+      for (let l = 0; l < 5; l++) dezenas.push(l * 5 + i + 1);
+      faixa = dezenas.map(fmt).join(",");
+    }
+
+    resultado.push({ indice: i + 1, faixa, total, top2 });
+  }
+  return resultado;
+}
+
 // Arredonda um vetor de médias e ajusta para somar exatamente 15
 function ajustarPara15(medias: number[]): number[] {
   const arred = medias.map((m) => Math.round(m));
@@ -243,16 +297,26 @@ function montarFatos(tipoPost: string, concursos: Concurso[]): {
 
     case "analise_linhas": {
       const l = calcularDistribuicaoLinhas(concursos);
-      const resumo = `Média por linha (10 sorteios): ` +
-        l.medias.map((m, i) => `L${i + 1}=${m.toFixed(1)}`).join(", ");
+      const det = detalharLinhasColunas(concursos, "linha");
+      const blocoDetalhe = det.map((d) => {
+        const top = d.top2.map((t) => `${t.qtd} dezena${t.qtd === 1 ? "" : "s"} (${t.vezes}x)`).join(" e ");
+        return `Linha ${d.indice} (${d.faixa}): ${d.total} ocorrências — mais comum: ${top}`;
+      }).join("\n");
+      const resumo = `📐 Análise por Linhas (últimos ${concursos.length} sorteios)\n\n${blocoDetalhe}\n\n` +
+        `Média por linha: ` + l.medias.map((m, i) => `L${i + 1}=${m.toFixed(1)}`).join(", ");
       const recomendacaoDireta = `Para o concurso ${proxConcurso}: distribua ${l.recomendacao.map((v, i) => `${v} na L${i + 1}`).join(", ")}.`;
       return { resumo, recomendacaoDireta };
     }
 
     case "analise_colunas": {
       const c = calcularDistribuicaoColunas(concursos);
-      const resumo = `Média por coluna (10 sorteios): ` +
-        c.medias.map((m, i) => `C${i + 1}=${m.toFixed(1)}`).join(", ");
+      const det = detalharLinhasColunas(concursos, "coluna");
+      const blocoDetalhe = det.map((d) => {
+        const top = d.top2.map((t) => `${t.qtd} dezena${t.qtd === 1 ? "" : "s"} (${t.vezes}x)`).join(" e ");
+        return `Coluna ${d.indice} (${d.faixa}): ${d.total} ocorrências — mais comum: ${top}`;
+      }).join("\n");
+      const resumo = `📊 Análise por Colunas (últimos ${concursos.length} sorteios)\n\n${blocoDetalhe}\n\n` +
+        `Média por coluna: ` + c.medias.map((m, i) => `C${i + 1}=${m.toFixed(1)}`).join(", ");
       const recomendacaoDireta = `Para o concurso ${proxConcurso}: distribua ${c.recomendacao.map((v, i) => `${v} na C${i + 1}`).join(", ")}.`;
       return { resumo, recomendacaoDireta };
     }
@@ -306,7 +370,7 @@ ${fatos.recomendacaoDireta}
 
 ESTRUTURA OBRIGATÓRIA do conteúdo:
 1) Abertura curta (1 linha) com gancho diferente a cada vez.
-2) Bloco "📊 O que aconteceu nos últimos 10" — resuma os dados acima em 2-3 linhas.
+2) Bloco "📊 O que aconteceu nos últimos 10" — para os tipos "Análise por Linhas" e "Análise por Colunas", REPRODUZA LITERALMENTE o bloco detalhado de "DADOS REAIS" (linha por linha ou coluna por coluna), sem resumir nem omitir nenhuma linha/coluna. Para os outros tipos, resuma os dados em 2-3 linhas.
 3) Bloco "💡 Como montar seu palpite" — escreva a RECOMENDAÇÃO DIRETA acima, em destaque.
 4) Disclaimer curto: "Loteria envolve sorte. Use como guia, não como certeza."
 
@@ -315,7 +379,7 @@ REGRAS CRÍTICAS:
 - Se citar o concurso, use exatamente ${proxConcurso}.
 - Tom humano, acolhedor, em primeira pessoa. Varie a abertura.
 - Use **negrito** nas dezenas e na recomendação.
-- Máximo 800 caracteres no conteúdo.
+- Máximo 1200 caracteres no conteúdo.
 - Apenas dezenas de 01 a 25.
 - NUNCA mencione IA, bot, modelo, GPT ou Gemini.
 
@@ -338,8 +402,8 @@ function extrairNumerosPermitidos(concursos: Concurso[], proxConcurso: number): 
     permitidos.add(c.qtd_primos);
     permitidos.add(c.qtd_repetidas);
   }
-  // Pequenos números livres (contagens, frequências)
-  for (let i = 0; i <= 50; i++) permitidos.add(i);
+  // Pequenos números livres (contagens, frequências, ocorrências por linha/coluna)
+  for (let i = 0; i <= 80; i++) permitidos.add(i);
   return permitidos;
 }
 
@@ -371,7 +435,7 @@ function fallbackConteudo(fatos: { resumo: string; recomendacaoDireta: string })
     `📊 O que aconteceu nos últimos 10\n${fatos.resumo}\n\n` +
     `💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\n` +
     `Loteria envolve sorte. Use como guia, não como certeza.`;
-  return conteudo.substring(0, 1000);
+  return conteudo.substring(0, 1500);
 }
 
 async function chamarIAComRetry(systemPrompt: string, userPrompt: string, apiKey: string): Promise<{ ok: boolean; status: number; content?: string; usage?: any; errorBody?: string }> {
@@ -512,7 +576,7 @@ serve(async (req) => {
       console.warn(`[generate-guide-post] ⚠️ ${motivoFallback}`);
       conteudo = fallbackConteudo(fatos);
     } else {
-      const conteudoIA = sanitizar(ia.content || "").substring(0, 1000);
+      const conteudoIA = sanitizar(ia.content || "").substring(0, 1500);
       const validacao = validarConteudoNumerico(conteudoIA, numerosPermitidos);
 
       if (!validacao.ok || conteudoIA.length < 50) {
@@ -524,7 +588,7 @@ serve(async (req) => {
         conteudo = conteudoIA;
         // Guardrail: garante que a recomendação direta apareça
         if (!conteudo.includes("Como montar") && !conteudo.includes("montar seu palpite")) {
-          conteudo = (conteudo + `\n\n💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\nLoteria envolve sorte.`).substring(0, 1000);
+          conteudo = (conteudo + `\n\n💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\nLoteria envolve sorte.`).substring(0, 1500);
         }
       }
 
