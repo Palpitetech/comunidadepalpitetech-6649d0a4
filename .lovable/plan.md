@@ -1,134 +1,236 @@
 
 
-## Dois novos posts: Posições Iniciais e Posições Finais
+## Posts pós-15h: foco em "Como Fazemos" (transparência metodológica)
 
-Encaixar **2 novos posts de análise** focados em **posicionamento das dezenas** dentro do volante ordenado, fechando a sequência diária às 15h.
+Até as 15h o usuário recebe **8 posts de análise** com recomendações diretas. Após as 15h, a estratégia vira **educação e bastidores**: explicar a matemática, mostrar o método, aumentar confiança e diferenciar a Palpite Tech de qualquer outro grupo de palpites.
 
-### Nova agenda da manhã/tarde
+Das 12 sugestões que você levantou, **6 são posts** (encaixam pós-15h) e **6 são telas/painéis interativos** (não são posts — viram features na app, fora do escopo desta entrega). Vou tratar só dos posts e propor uma agenda fechada.
 
-| Horário | Post |
-|---|---|
-| 08:00 | analise_ciclo |
-| 09:00 | analise_movimentacao (Quentes e Frias) |
-| 10:00 | analise_moldura |
-| 11:00 | analise_repetidas |
-| 12:00 | analise_linhas |
-| 13:00 | analise_colunas |
-| **14:00** | **🆕 analise_posicoes_iniciais** (foco nas 3 primeiras dezenas) |
-| **15:00** | **🆕 analise_posicoes_finais** (foco nas 3 últimas dezenas) |
+### Nova agenda completa
 
-## Conceito dos posts
+| Horário | Post | Foco |
+|---|---|---|
+| 08:00–15:00 | 8 posts de análise | Recomendação direta (já implementado) |
+| **16:00** | 🆕 **analise_cenarios** | 3 cenários do dia (conservador/equilibrado/agressivo) |
+| **17:00** | 🆕 **analise_ficar_de_olho** | Dezenas desacelerando + alerta de queda |
+| **18:00** | 🆕 **analise_como_calculamos** | Bastidores: regras, validações, anti-alucinação |
+| Evento | resultado_oficial | Disparado pela sync após sorteio |
 
-Quando ordenamos as 15 dezenas sorteadas em ordem crescente, temos **posições fixas** (P1 a P15). Estatisticamente:
-- **P1, P2, P3** quase sempre vêm da faixa baixa (01-08) — são o "início" do palpite
-- **P13, P14, P15** quase sempre vêm da faixa alta (18-25) — são o "fim" do palpite
+Três posts novos, sequenciais, encerrando o dia às 18h — antes do sorteio das 20h.
 
-Os posts vão dar **direcionamento matemático** sobre quais dezenas tendem a ocupar cada uma dessas 6 posições no próximo concurso.
+---
 
-## Como vai ficar (exemplo Posições Iniciais)
+## Post 1 — `analise_cenarios` (16:00)
+
+**Conceito:** consolida todas as 8 análises do dia em **3 perfis prontos** com probabilidades reais por faixa de repetição.
 
 ```text
-🎯 Posições Iniciais — Concurso 3668
+🎲 Cenários do Concurso 3668
 
 Olá pessoal!
 
-📊 O que diz a matemática (últimos 10 sorteios)
-Quando ordenamos as 15 dezenas em ordem crescente, as 3 primeiras (P1, P2, P3)
-quase nunca passam da dezena 10. Isso é tendência forte.
+Hoje publicamos 8 análises. Agora vamos juntar tudo em 3 perfis de palpite,
+para você escolher o que combina com seu estilo.
 
-🎯 P1 — A primeira dezena (a menor do palpite)
-Faixa real: entre 01 e 05 em 9 dos 10 sorteios (90%)
-Top 3 candidatas: **01** (saiu 5x como P1), **02** (3x), **03** (2x)
-Recomendação: começar o palpite em 01 ou 02.
+📊 Probabilidades por faixa de repetição (últimos 10 sorteios)
+• 8 a 9 repetidas: 60% dos concursos
+• 10 repetidas: 25%
+• 7 ou menos: 15%
 
-🎯 P2 — A segunda dezena
-Faixa real: entre 02 e 07 em 10 dos 10 sorteios (100%)
-Top 3 candidatas: **03** (4x), **04** (3x), **05** (2x)
-Recomendação: usar 03 ou 04 logo após a P1.
+🛡️ CENÁRIO CONSERVADOR (joga seguro)
+Foco: alta repetição + dezenas fiéis
+Repete: 9 do último → 03, 05, 11, 13, 17, 20, 21, 23, 25
+Novas: 6 dezenas das fortes históricas → 01, 07, 09, 15, 18, 22
+Probabilidade alvo: ficar dentro do padrão 60%
 
-🎯 P3 — A terceira dezena
-Faixa real: entre 04 e 09 em 9 dos 10 sorteios (90%)
-Top 3 candidatas: **05** (3x), **06** (3x), **07** (2x)
-Recomendação: a 3ª dezena costuma fechar a faixa baixa.
+⚖️ CENÁRIO EQUILIBRADO (recomendado)
+Foco: média de repetição + mistura de fortes e médias
+Repete: 8 do último → 03, 05, 11, 13, 17, 20, 23, 25
+Novas: 7 dezenas → 02, 06, 09, 14, 18, 21, 24
+Combina: núcleo das linhas + duplas auditadas
 
-📈 Tendência observada
-• Soma das 3 primeiras: média 9.4 (faixa 7 a 13)
-• Distância P1→P3: média 5.2 dezenas
-• Em 8 de 10 sorteios, pelo menos 1 das 3 primeiras saiu também no concurso anterior
+🚀 CENÁRIO AGRESSIVO (busca prêmios maiores)
+Foco: baixa repetição + apostar em movimentação
+Repete: 6 do último → 03, 11, 17, 20, 23, 25
+Novas: 9 dezenas → 02, 06, 08, 09, 14, 16, 19, 22, 24
+Risco: 15% de chance histórica, mas distribui melhor o prêmio
 
-💡 Como montar o INÍCIO do seu palpite para o 3668
+⚠️ Lembre-se: probabilidade não é garantia. Use como guia.
+```
 
-🎯 Trio inicial recomendado: **01, 03, 06**
-   → cada uma é a top candidata da sua posição
+**Motor:** nova função `montarCenariosDoDia(concursos)` que cruza dados das 8 análises já calculadas e gera 3 jogos de 15 dezenas distintos. Determinístico, sem IA inventando dezenas.
 
-➕ Alternativas fortes: **02, 04, 07**
-   → 2ª opção de cada posição se quiser variar
+---
 
-❌ Evite começar com: **08, 09, 10**
-   → raramente aparecem entre as 3 primeiras (≤ 20%)
+## Post 2 — `analise_ficar_de_olho` (17:00)
 
-⚠️ Cuidado: começar com soma > 13 nas 3 primeiras quebra o padrão histórico (só ocorreu 1x em 10).
+**Conceito:** alerta sobre dezenas em **desaceleração** (saíam muito, agora caíram) — o lado oposto das "quentes que continuam quentes".
+
+```text
+👀 Ficar de Olho — Concurso 3668
+
+Olá pessoal!
+
+Algumas dezenas estão perdendo força nos últimos sorteios.
+Não significa que não vão sair — significa que o padrão delas mudou
+e merece atenção antes de você fixar.
+
+📉 TOP 5 dezenas em desaceleração (janela 5 vs 5)
+
+🔴 Dezena 12
+   Janela anterior (sorteios 6-10): 5 vezes
+   Janela recente (sorteios 1-5): 1 vez
+   Queda: -4 (delta forte)
+   Resumo: estava entre as quentes, virou borderline.
+
+🔴 Dezena 19
+   Anterior: 4 → Recente: 1   Queda: -3
+   Resumo: 3 sorteios consecutivos sem sair.
+
+🔴 Dezena 06
+   Anterior: 4 → Recente: 1   Queda: -3
+   Resumo: caiu para a faixa fria.
+
+🟡 Dezena 24
+   Anterior: 3 → Recente: 1   Queda: -2
+   Resumo: alerta médio, ainda pode reagir.
+
+🟡 Dezena 08
+   Anterior: 3 → Recente: 1   Queda: -2
+   Resumo: vinha estável, perdeu ritmo.
+
+📊 O que isso significa para o 3668?
+Em 7 dos últimos 10 sorteios, pelo menos 1 dezena em desaceleração
+voltou a sair no concurso seguinte (efeito "ressaca"). Ou seja:
+não exclua todas — escolha 1 ou 2 como apoio.
+
+💡 Recomendação tática
+🎯 Manter atenção: 12 e 19 (maior queda)
+➕ Considerar 1 como apoio: 06 ou 24
+❌ Pode excluir nesta rodada: 08 (movimento mais fraco)
 
 Loteria envolve sorte. Use como guia, não como certeza.
 ```
 
-O post de **Posições Finais** segue o mesmo formato, mas para P13, P14, P15 (faixa alta 18-25), com soma das 3 últimas, distância P13→P15, e trio final recomendado.
+**Motor:** usa o cálculo de aceleração/desaceleração já planejado (janelas 5 vs 5) — mesmo cálculo que vai alimentar o post de Quentes/Frias quando ele for enriquecido. Aqui é o foco principal.
 
-## Arquivos afetados
+---
 
-### 1. `supabase/functions/generate-guide-post/index.ts`
+## Post 3 — `analise_como_calculamos` (18:00)
 
-**Novo motor `analisarPosicoesDetalhado(concursos, modo)`** onde `modo = "inicial" | "final"`:
+**Conceito:** post educacional fixo (varia pouco dia a dia) que mostra **a metodologia da Palpite Tech**. Aumenta confiança, diferencia da concorrência, ensina o usuário.
 
-- Para cada concurso, ordenar as 15 dezenas crescente.
-- Se `modo = "inicial"`: pegar índices [0, 1, 2] → P1, P2, P3.
-- Se `modo = "final"`: pegar índices [12, 13, 14] → P13, P14, P15.
+```text
+🔬 Como Calculamos — Bastidores do Concurso 3668
 
-Retorna:
-- **`posicoes`** — 3 objetos `{ rotulo: "P1"|"P2"|"P3" (ou P13/P14/P15), faixaMin, faixaMax, percFaixa, top3: [{ dezena, vezes, perc }] }`
-- **`somaMedia`**, **`somaMin`**, **`somaMax`** — estatísticas da soma do trio
-- **`distanciaMedia`** — média de (P3 − P1) ou (P15 − P13)
-- **`coocorrenciaUltimo`** — em quantos sorteios pelo menos 1 das 3 posições repetiu do anterior
-- **`recomendacao`** — `{ trioRecomendado: [d1,d2,d3], alternativas: [d1,d2,d3], evitar: number[], alerta: string }`
-  - **trioRecomendado**: top 1 de cada posição (com auditoria de não repetir dezena entre P1/P2/P3)
-  - **alternativas**: 2ª opção de cada posição
-  - **evitar**: top 3 dezenas que raramente aparecem nessas posições (perc ≤ 20%) na faixa relevante (1-10 ou 16-25)
-  - **alerta**: regra de soma observada nos últimos 10
+Olá pessoal!
 
-**Novos cases em `montarFatos()`**: `analise_posicoes_iniciais` e `analise_posicoes_finais` que chamam o motor com o modo certo e montam o resumo literal de 5 blocos (panorama, 3 cards de posição, tendência, recomendação).
+Você já recebeu 8 análises hoje. Agora a transparência total: como
+chegamos em cada número.
 
-**Atualizar `montarTituloDeterministico()`**:
-- `analise_posicoes_iniciais`: `🎯 Posições Iniciais — Concurso N`
-- `analise_posicoes_finais`: `🏁 Posições Finais — Concurso N`
+📊 Janela de análise
+Todos os posts usam os ÚLTIMOS 10 SORTEIOS oficiais da Lotofácil.
+Concursos analisados hoje: 3658 a 3667 (10 sorteios = 150 dezenas).
 
-**Atualizar `montarPrompt()`**:
-- Adicionar entradas em `titulos`.
-- Adicionar instrução de **reprodução literal** dos blocos para os 2 novos tipos.
-- Limite de caracteres: **2200**.
+📐 Regras de ordenação
+Em cada concurso, as 15 dezenas são ordenadas em ORDEM CRESCENTE
+antes de qualquer cálculo de posição (P1=menor, P15=maior).
 
-**Validador**: já cobre 0–100 (faixas, percentuais e dezenas 01-25). Sem mudança.
+🎯 Como uma dupla "auditada" entra no ranking
+Para uma dupla aparecer como recomendada, ela precisa:
+1. Ter saído juntas em pelo menos 3 dos últimos 10 sorteios
+2. Passar por RECONTAGEM independente (segundo motor confere)
+3. Ambas dezenas devem estar no último sorteio (validade contextual)
+4. Não ter colisão com outras duplas do mesmo grupo
 
-### 2. Migration SQL
+✅ Anti-alucinação (proteção contra erro de IA)
+Cada post tem uma WHITELIST de números permitidos (01-25 + datas).
+Qualquer número fora da lista faz o post ser DESCARTADO e
+substituído por uma versão 100% calculada (fallback determinístico).
 
-Inserir 2 novos schedules ativos para todos os dias:
+🔍 Definições oficiais
+• FIÉL: dezena que repetiu em ≥ 60% dos pares de concursos seguidos
+• VOLÁTIL: dezena que repetiu em ≤ 20% dos pares de concursos seguidos
+• QUENTE: top 5 mais frequentes nos 10 sorteios
+• FRIA: bottom 5 menos frequentes nos 10 sorteios
+• ACELERANDO: delta positivo na janela 5 vs 5
+• DESACELERANDO: delta negativo na janela 5 vs 5
 
-```sql
-INSERT INTO public.post_schedules (tipo_post, horario, dias, ativo, loteria) VALUES
-  ('analise_posicoes_iniciais', '14:00', '{0,1,2,3,4,5,6}', true, 'lotofacil'),
-  ('analise_posicoes_finais',   '15:00', '{0,1,2,3,4,5,6}', true, 'lotofacil');
+🛡️ Validações ativas em todos os posts
+• Transições reais entre concursos consecutivos
+• Mínimo de 2 ocorrências para entrar em qualquer ranking
+• Verificação de pertencimento ao mesmo eixo (linhas/colunas)
+• Recontagem independente de duplas e trios
+
+💡 Por que isso importa?
+A maioria dos grupos joga "achismo". Aqui cada número tem origem
+matemática rastreável e validação dupla. Você não está apostando
+no palpite de alguém — está apostando em padrão estatístico real.
+
+Loteria envolve sorte. Mas com método, a sorte trabalha melhor.
 ```
 
-### 3. Disparo manual de teste
+**Motor:** post com **conteúdo majoritariamente fixo** (a metodologia não muda) + variáveis dinâmicas (faixa de concursos do dia, número total). Texto humanizado pela IA na abertura/fechamento, corpo literal.
 
-Após deploy, chamar `generate-guide-post` para cada um dos 2 novos tipos para gerar a 1ª versão imediatamente e validar.
+---
+
+## Arquivo afetado
+
+**Apenas:** `supabase/functions/generate-guide-post/index.ts`
+
+### 1. Novo motor `montarCenariosDoDia(concursos)`
+- Calcula taxa real de repetição por faixa (8-9, 10, ≤7).
+- Monta 3 jogos distintos (conservador/equilibrado/agressivo) cruzando: top fortes históricas, núcleo das linhas, padrão de repetição.
+- Garante 15 dezenas válidas e distintas em cada cenário.
+
+### 2. Novo motor `analisarDesaceleracao(concursos)`
+- Janela móvel 5 vs 5: compara `concursos[0..4]` (recente) com `concursos[5..9]` (anterior).
+- Retorna top 5 dezenas com maior delta negativo.
+- Calcula "efeito ressaca": % de sorteios em que uma desacelerada voltou.
+
+### 3. Novo motor `montarComoCalculamos(concursos)`
+- Conteúdo majoritariamente fixo + 2 variáveis: range de concursos analisados, número do próximo concurso.
+- Sem cálculos pesados — é educacional.
+
+### 4. Novos cases em `montarFatos()`, `montarTituloDeterministico()`, `montarPrompt()`
+- 3 novos tipos: `analise_cenarios`, `analise_ficar_de_olho`, `analise_como_calculamos`.
+- Limite: 2200 caracteres cada.
+- Reprodução literal dos blocos numéricos.
+
+### 5. Migrations SQL (2 arquivos)
+
+**Schema:** atualizar constraint `postagens_tipo_check` para aceitar os 3 novos tipos.
+
+**Dados (insert tool):** inserir 3 novos schedules ativos:
+```sql
+INSERT INTO public.post_schedules (tipo_post, horario, dias, ativo, loteria) VALUES
+  ('analise_cenarios',         '16:00', '{0,1,2,3,4,5,6}', true, 'lotofacil'),
+  ('analise_ficar_de_olho',    '17:00', '{0,1,2,3,4,5,6}', true, 'lotofacil'),
+  ('analise_como_calculamos',  '18:00', '{0,1,2,3,4,5,6}', true, 'lotofacil');
+```
+
+### 6. Disparo manual de teste
+Após deploy, chamar `generate-guide-post` para os 3 novos tipos para gerar a 1ª versão imediatamente.
+
+---
+
+## O que NÃO entra nesta entrega (são features de UI, não posts)
+
+As 6 sugestões abaixo são **telas interativas dentro da app**, não posts da comunidade. Quando quiser implementá-las, abrimos plano separado:
+
+- Tela "Recomendação do concurso" com botões Fixar/Apoio/Excluir
+- Ranking interativo clicável de duplas quentes/frias
+- Painel histórico de fiéis/voláteis nas últimas N análises
+- Painel "Como calculamos" embutido nas páginas de tendências
+- Justificativas inline em cada dezena dos rankings
+- Validações visíveis no UI dos rankings
 
 ## Garantias
 
-- **Posições reais**: ordenação crescente das dezenas em cada concurso — determinístico.
-- **Top candidatas por posição**: contagem absoluta nos últimos 10 sorteios.
-- **Trio recomendado sem colisão**: validação garante 3 dezenas distintas.
-- **Faixas de soma e distância**: calculadas direto dos dados, nunca inventadas.
-- **Texto humanizado**: IA só escreve abertura e disclaimer; números e dezenas vêm prontos do motor.
-- **Anti-alucinação**: validador descarta números fora da whitelist; fallback publica o estudo completo se a IA falhar.
-- **Encaixe na agenda**: 14h e 15h estão livres, 15h vira o último post de análise do dia.
+- **Cenários determinísticos**: 3 jogos calculados por regra fixa, nunca pela IA.
+- **Desaceleração real**: janela 5 vs 5 é matemática direta, sem inferência.
+- **Como Calculamos**: 90% texto fixo, sem espaço para alucinação.
+- **Anti-alucinação**: validador já existente cobre 01-25 e percentuais.
+- **Encaixe na agenda**: 16h, 17h e 18h livres; 18h vira o último post antes do sorteio das 20h.
+- **Estratégia editorial**: até 15h o usuário recebe **ferramenta**, depois das 16h recebe **transparência** — fideliza sem sobrecarregar com mais palpite.
 
