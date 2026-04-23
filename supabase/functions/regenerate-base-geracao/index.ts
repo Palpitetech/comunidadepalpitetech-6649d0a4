@@ -49,11 +49,12 @@ serve(async (req) => {
     }
 
     // Janela: últimas 48h, todos rascunhos/publicados de Lotofácil + Mega-Sena
+    // Obs: loteria_tag no banco usa rótulos com acento ("Lotofácil", "Mega-Sena").
     const since = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
     const { data: posts, error } = await supabaseAdmin
       .from("postagens")
       .select("id, fatos_snapshot, loteria_tag")
-      .in("loteria_tag", ["lotofacil", "megasena"])
+      .in("loteria_tag", ["Lotofácil", "Mega-Sena"])
       .in("status", ["rascunho", "publicado"])
       .gte("created_at", since);
 
