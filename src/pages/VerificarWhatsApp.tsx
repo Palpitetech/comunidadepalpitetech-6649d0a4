@@ -1,34 +1,92 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { ShieldCheck, ShieldAlert, Loader2, ArrowLeft, MessageCircle } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Loader2, ArrowLeft, MessageCircle, RefreshCw } from "lucide-react";
 import { formatCelularMask } from "@/lib/celular";
 
-type Status = "idle" | "checking" | "verified" | "not_verified" | "invalid" | "error";
+type Status = "idle" | "checking" | "verified" | "not_verified" | "invalid" | "error" | "rate_limited" | "captcha_invalid";
 
 const SUPPORT_NUMBER = "5551981854281"; // contato oficial (mem://support/contact-info)
 const REPORT_NUMBER = "5516997175392"; // canal de denúncia de golpes
+const FN_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/verify-whatsapp-number`;
 
 export default function VerificarWhatsApp() {
   const [numero, setNumero] = useState("");
   const [status, setStatus] = useState<Status>("idle");
+  const [captcha, setCaptcha] = useState<{ question: string; token: string } | null>(null);
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
+  const [loadingCaptcha, setLoadingCaptcha] = useState(false);
+
+  async function loadCaptcha() {
+    setLoadingCaptcha(true);
+    setCaptchaAnswer("");
+    try {
+      const res = await fetch(`${FN_URL}?action=challenge`, {
+        method: "GET",
+        headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+      });
+      const data = await res.json();
+      if (res.status === 429) {
+        setStatus("rate_limited");
+        setCaptcha(null);
+        return;
+      }
+      if (data?.ok) {
+        setCaptcha({ question: data.question, token: data.token });
+      } else {
+        setCaptcha(null);
+      }
+    } catch {
+      setCaptcha(null);
+    } finally {
+      setLoadingCaptcha(false);
+    }
+  }
+
+  useEffect(() => {
+    loadCaptcha();
+  }, []);
 
   async function handleCheck(e: React.FormEvent) {
     e.preventDefault();
     if (status === "checking") return;
+    if (!captcha) {
+      await loadCaptcha();
+      return;
+    }
     setStatus("checking");
     try {
       const { data, error } = await supabase.functions.invoke("verify-whatsapp-number", {
-        body: { numero },
+        body: {
+          numero,
+          captchaToken: captcha.token,
+          captchaAnswer: Number(captchaAnswer),
+        },
       });
       if (error) {
+        // Pode ser 429 ou 400 — tenta extrair contexto
+        const ctx = (error as { context?: Response }).context;
+        if (ctx?.status === 429) {
+          setStatus("rate_limited");
+          return;
+        }
         setStatus("error");
+        await loadCaptcha();
         return;
       }
       if (!data?.ok) {
+        if (data?.reason === "captcha_invalid" || data?.reason === "captcha_required") {
+          setStatus("captcha_invalid");
+          await loadCaptcha();
+          return;
+        }
+        if (data?.reason === "rate_limited") {
+          setStatus("rate_limited");
+          return;
+        }
         setStatus("error");
         return;
       }
@@ -37,6 +95,8 @@ export default function VerificarWhatsApp() {
         return;
       }
       setStatus(data.verified ? "verified" : "not_verified");
+      // Renova captcha para próxima verificação
+      await loadCaptcha();
     } catch {
       setStatus("error");
     }
@@ -44,7 +104,9 @@ export default function VerificarWhatsApp() {
 
   function reset() {
     setNumero("");
+    setCaptchaAnswer("");
     setStatus("idle");
+    if (!captcha) loadCaptcha();
   }
 
   return (
