@@ -1,125 +1,71 @@
 
 
-## Gerador de Estudo (`/lotofacil/gerador-estudo`)
+## Por que tudo está como rascunho
 
-### Resposta direta
+### Causa raiz
 
-- **Pré-geração de posts, campos novos em `postagens` e submenu Gravação Estudos:** já existem em produção (verificado nas rodadas anteriores). Esta rodada **não os recria**.
-- **Gerador de Estudo:** novo. É o foco real desta entrega.
+O `precompute-daily-posts` **gerou todos os 19 rascunhos hoje às 16:01 BRT** (`created_at = 19:01 UTC`). Os horários de publicação dos schedules da Lotofácil são **08:00, 09:00, 10:00, 11:00, 12:00, 13:00, 14:00, 15:00, 16:00, 17:00, 18:00 BRT**.
 
-### Arquitetura
+Como os rascunhos só foram criados às 16:01:
+- Slots de **08h a 15h** já tinham passado quando o rascunho nasceu → o cron `process-scheduled-posts` (que checa "hora atual ≈ horário do schedule ±1 min") **nunca mais vai bater nesses horários hoje**.
+- Slot de **16:00** publicou (`analise_cenarios` às 18:36 UTC = 15:36 BRT, com tolerância) → virou `publicado`.
+- Slot de **18:00** publicou (`analise_como_calculamos`)... espera, na verdade publicou foi `analise_cenarios` e `analise_movimentacao`. Os outros 9 ficaram "órfãos": rascunho existe, mas o gatilho de publicação (cron) só dispara quando a hora atual = horário do schedule.
 
-```text
-┌────────────────────────────────────────────────────────────┐
-│  PostDetalhes  ──[Gerar palpites com esse estudo]──┐       │
-│                                                    ▼       │
-│  HubLotofácil ──[Card "Gerador de Estudo"]──► /lotofacil/  │
-│                                                gerador-    │
-│                                                estudo      │
-│                                                ?postId=…   │
-│                                                            │
-│  GeradorEstudo (página)                                    │
-│   ├─ EstudoSelector (dropdown com último ▲ ✅)             │
-│   ├─ QuantidadeSelector + DezenasSelector (reuso)          │
-│   ├─ Card "Estratégia deste estudo" (preview)              │
-│   ├─ Botão Gerar                                           │
-│   └─ ResultadosSheet (reuso do gerador clássico)           │
-│        └─ EstrategiaCard (reuso) com texto humanizado IA   │
-└────────────────────────────────────────────────────────────┘
-```
+**Em resumo:** o `process-scheduled-posts` não tem lógica de "pegar atrasados". Ele só publica se a hora atual coincidir com o horário do schedule. Rascunhos cujos horários já passaram ficam parados para sempre.
 
-### Backend
+### O fix em 1 linha
 
-**Refatorar `generate-palpites-from-estudo`** (já existe, vira o motor único):
-- Aceitar `quantidade` (1-12) **e novo `qtd_dezenas`** (15-20 Lotofácil; 6-10 Mega).
-- Trocar gating premium para **nova quota separada**: tabela `gerador_estudo_daily_usage` (espelho de `gerador_daily_usage`) + função `incrementar_uso_gerador_estudo`. Limite: free 0 (premium-only), premium 30/dia, admin ∞.
-- Após gerar jogos determinísticos, montar `EstrategiaData` estruturado por tema (ferramentas, dezenas-chave, filtros) e chamar **Lovable AI Gemini Flash** apenas para reescrever `conclusao` em 2-3 frases persuasivas. Se IA falhar/timeout 4s, usa `conclusao` template determinística. Nunca atrasa a geração dos números.
-- Retornar payload no **mesmo shape** do `/generate-palpites` clássico para `ResultadosSheet` funcionar sem branch (`{ jogos: [{dezenas:[]}], estrategia: EstrategiaData, baseado_em: {...}, remaining_today, max_per_day }`).
+Adicionar no `process-scheduled-posts`, antes do loop dos schedules, uma **passagem de catch-up** que publica todo rascunho do dia BRT cujo `publicar_em <= now()` e ainda está como `rascunho`. Independente de schedule.
 
-**Nova edge function `list-estudos-disponiveis`** (GET):
-- Query: `loteria=lotofacil`, `limit=10`.
-- Retorna estudos do banco (status `publicado` OR `rascunho` para admin) com `fatos_snapshot` não-nulo, ordenados por `publicar_em DESC`. Cada item: `{id, titulo, tema_estudo, proximo_concurso, ultimo_concurso, publicar_em, status, eh_futuro}`.
-- Usado pelo `EstudoSelector` para mostrar dropdown com badge ✅ verde (próximo concurso) ou ❌ vermelho (concurso passado).
+### Plano
 
-### Frontend
+**Editar `supabase/functions/process-scheduled-posts/index.ts`:**
 
-**Componentes novos** (`src/components/gerador-estudo/`):
-- `EstudoSelector.tsx` — dropdown com lista; cada item mostra título curto, "Concurso N" e badge verde/vermelha. Esconde se vier `?postId=` na URL (estudo já travado).
-- `EstudoInfoCard.tsx` — card colapsável: título, tema, concurso-alvo, resumo do `fatos_snapshot` (recomendacao_direta), badges das dezenas-chave.
+1. Logo no início do `try`, adicionar bloco de catch-up:
+   ```ts
+   // CATCH-UP: publica rascunhos atrasados (publicar_em <= now)
+   const { data: atrasados } = await supabaseAdmin
+     .from("postagens")
+     .select("id, loteria_tag, tipo, publicar_em")
+     .eq("status", "rascunho")
+     .not("publicar_em", "is", null)
+     .lte("publicar_em", new Date().toISOString())
+     .order("publicar_em", { ascending: true })
+     .limit(50);
 
-**Componentes reusados** (sem duplicar):
-- `QuantidadeSelector`, `DezenasSelector` — reuso direto.
-- `ResultadosSheet` — reuso direto (já recebe `estrategia: EstrategiaData`).
-- `EstrategiaCard` — reuso direto, alimentado pelo backend.
-- `PalpiteCard`, `PalpitesToolbar`, `SelecionarSubpastaDialog`, `salvarPalpites` — todos reusados via `ResultadosSheet`.
+   for (const p of atrasados || []) {
+     await supabaseAdmin
+       .from("postagens")
+       .update({ status: "publicado", created_at: new Date().toISOString() })
+       .eq("id", p.id);
+     published.push(`catchup:${p.loteria_tag}/${p.tipo}: ${p.id}`);
+   }
+   ```
+2. Manter o loop atual de schedules como está (publica os que casam com a hora exata + fallback síncrono).
 
-**Hook novo** `src/hooks/useGeradorEstudo.ts`:
-- Espelha `useGerador` mas chama `generate-palpites-from-estudo`, recebe `postId`, `quantidade`, `qtdDezenas`.
-- Hook `useEstudosDisponiveis(loteria)` via React Query → chama `list-estudos-disponiveis`.
+**Resultado:** na próxima execução do cron (que roda a cada minuto), os 16 rascunhos atrasados de hoje viram `publicado` em <2s, sem chamar IA. Daqui pra frente, qualquer rascunho gerado depois do horário do slot é publicado no minuto seguinte.
 
-**Página nova** `src/pages/lotofacil/GeradorEstudo.tsx`:
-- Lê `?postId=` da URL com `useSearchParams`. Se presente → carrega esse estudo direto e esconde seletor.
-- Se ausente → mostra `EstudoSelector` com `defaultValue` = primeiro item (mais recente, normalmente verde).
-- Layout idêntico ao `Gerador.tsx` mas sem filtros avançados (tema do estudo já é o filtro).
-- Reusa `MainLayout`, `ResultadosSheet`, `EstrategiaCard`.
+### Por que isso não vai gerar duplicatas
 
-**Rota nova** em `src/App.tsx`:
-- `/lotofacil/gerador-estudo` → `<ProtectedRoute><GatedPage feature="gerador"><GeradorEstudo/></GatedPage></ProtectedRoute>`.
+- Catch-up só pega `status='rascunho'` — ignora publicados.
+- Loop normal pega rascunho do tipo e publica. Se catch-up já publicou, não acha mais.
+- A janela de dedup de 30min do fallback síncrono continua válida.
 
-**Hub Lotofácil** (`src/pages/lotofacil/HubLotofacil.tsx`):
-- Adicionar 1 card "Gerador de Estudo" com ícone `BookOpen`, ao lado do "Gerador IA". Link para `/lotofacil/gerador-estudo`.
+### Por que aconteceu hoje
 
-**Botão do post** (`src/components/comunidade/GerarPalpitesDoEstudoButton.tsx`):
-- Refatorar: remover diálogo inline, virar `Link` para `/lotofacil/gerador-estudo?postId=<id>` (ou `/megasena/gerador-estudo` quando expandir).
-- Mantém gate `supported = loteriaTag === "Lotofácil" || "Mega-Sena"`.
+O `precompute-daily-posts` deveria rodar **na noite anterior** (21:30/22:30/23:00 BRT, via os crons safety-net já criados). Mas hoje ele rodou só às 16:01 BRT — possivelmente porque foi disparado **manualmente** durante a verificação de idempotência da rodada anterior, e os crons da noite anterior (22/04 21:30→23:00) ou não rodaram, ou rodaram antes de você ter os schedules ativos.
 
-### Banco
-
-Migration única:
-- `gerador_estudo_daily_usage` (mesma estrutura de `gerador_daily_usage`).
-- RLS: SELECT próprio + service role gerencia.
-- Função `incrementar_uso_gerador_estudo(p_user_id, p_max)` retornando `remaining_today`.
-
-### Escalabilidade Mega-Sena (próxima rodada, fora desta)
-
-Quando ativar Mega:
-1. Criar `src/pages/megasena/GeradorEstudoMegaSena.tsx` (5 linhas: importa `GeradorEstudo` genérico passando `loteria="megasena"`).
-2. Card no `HubMegaSena`.
-3. Refatorar `GeradorEstudo.tsx` desde já p/ aceitar prop `loteria`, evitando duplicação.
-
-### Decisões confirmadas
-
-| Tópico | Escolha |
-|---|---|
-| Estratégia | Híbrido: jogos determinísticos + IA Gemini Flash apenas na conclusão (4s timeout, fallback template) |
-| Quota | Tabela separada `gerador_estudo_daily_usage` (premium 30/dia, admin ∞, free bloqueado) |
-| Navegação | Card no Hub Lotofácil + rota `/lotofacil/gerador-estudo` (preparada p/ Mega) |
+A partir de hoje à noite (21:30 BRT), os crons safety-net vão gerar os rascunhos de amanhã com `publicar_em` para os 11 horários do dia 24/04. Aí o `process-scheduled-posts` publica certinho hora a hora.
 
 ### Arquivos tocados
 
-**Migration (1):**
-- `supabase/migrations/<ts>_gerador_estudo_quota.sql`
-
-**Edge functions (2):**
-- `supabase/functions/generate-palpites-from-estudo/index.ts` (refatorar — `qtd_dezenas`, quota nova, IA na conclusão, payload compatível)
-- `supabase/functions/list-estudos-disponiveis/index.ts` (novo)
-
-**Frontend (8):**
-- `src/pages/lotofacil/GeradorEstudo.tsx` (novo)
-- `src/components/gerador-estudo/EstudoSelector.tsx` (novo)
-- `src/components/gerador-estudo/EstudoInfoCard.tsx` (novo)
-- `src/hooks/useGeradorEstudo.ts` (novo)
-- `src/hooks/useEstudosDisponiveis.ts` (novo)
-- `src/components/comunidade/GerarPalpitesDoEstudoButton.tsx` (refatora p/ Link)
-- `src/pages/lotofacil/HubLotofacil.tsx` (+1 card)
-- `src/App.tsx` (+1 rota)
+- `supabase/functions/process-scheduled-posts/index.ts` (adicionar bloco catch-up no início)
 
 ### Riscos
 
 | Risco | Mitigação |
 |---|---|
-| IA na conclusão atrasar UX | Timeout agressivo 4s + fallback determinístico imediato |
-| Estudo antigo (concurso passado) gerar palpite "fora de hora" | Badge vermelha no seletor + warning no `EstudoInfoCard` ("Este estudo é do concurso N — já realizado") |
-| `ResultadosSheet` esperar `lotofacil` hardcoded em algum ponto | Verificado: já usa `loteria` prop via `salvarPalpites`. Reuso seguro. |
-| Quota separada confundir usuário | Badge no botão "X/30 estudos hoje" ao lado do "X/Y palpites IA hoje" no Hub |
+| Catch-up publicar rascunho de dia anterior esquecido | Filtro `publicar_em <= now()` + limite 50/execução. Se houver lixo antigo, expurgo manual depois. |
+| Rascunho com `publicar_em = NULL` | `not("publicar_em","is",null)` exclui — fica para o loop normal por schedule. |
+| Race com cron simultâneo | Cron roda a cada 1 min e duração <2s. Improvável colidir. UPDATE é idempotente (`status='publicado'`). |
 
