@@ -2315,7 +2315,7 @@ REGRAS CRÍTICAS:
 - Se citar o concurso, use exatamente ${proxConcurso}.
 - Tom humano, acolhedor, em primeira pessoa. Varie a abertura.
 - Use **negrito** nas dezenas e na recomendação.
-- Máximo ${tipoPost === "analise_ciclo" || tipoPost === "analise_moldura" ? "2000" : tipoPost === "analise_movimentacao" || tipoPost === "analise_repetidas" || tipoPost === "analise_linhas" || tipoPost === "analise_colunas" || tipoPost === "analise_posicoes_iniciais" || tipoPost === "analise_posicoes_finais" ? "2200" : "1500"} caracteres no conteúdo.
+- Máximo ${tipoPost === "analise_ciclo" || tipoPost === "analise_moldura" ? "2000" : tipoPost === "analise_movimentacao" || tipoPost === "analise_repetidas" || tipoPost === "analise_linhas" || tipoPost === "analise_colunas" || tipoPost === "analise_posicoes_iniciais" || tipoPost === "analise_posicoes_finais" || tipoPost === "analise_cenarios" || tipoPost === "analise_ficar_de_olho" || tipoPost === "analise_como_calculamos" ? "2200" : "1500"} caracteres no conteúdo.
 - Apenas dezenas de 01 a 25.
 - NUNCA mencione IA, bot, modelo, GPT ou Gemini.
 
