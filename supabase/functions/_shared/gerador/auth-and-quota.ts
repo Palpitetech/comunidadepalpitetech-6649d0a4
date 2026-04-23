@@ -186,3 +186,28 @@ export async function incrementarQuotaLegacy(
       updated_at: new Date().toISOString(),
     }, { onConflict: "user_id,day" });
 }
+
+/**
+ * Incrementa quota atômica para o gerador tradicional via RPC.
+ * Retorna { remaining, limitReached }.
+ */
+export async function incrementarQuotaGerador(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  userId: string,
+  maxPerDay: number,
+): Promise<{ remaining: number; limitReached: boolean; error?: string }> {
+  if (maxPerDay <= 0) {
+    return { remaining: 999, limitReached: false }; // admin / sem limite
+  }
+  const { data, error } = await supabaseAdmin
+    .rpc("incrementar_uso_gerador", { p_user_id: userId, p_max: maxPerDay });
+
+  if (error) {
+    const msg = (error as any)?.message || "";
+    if (msg.includes("LIMIT_REACHED")) {
+      return { remaining: 0, limitReached: true };
+    }
+    return { remaining: 0, limitReached: false, error: msg };
+  }
+  return { remaining: typeof data === "number" ? data : 0, limitReached: false };
+}
