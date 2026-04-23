@@ -1,71 +1,149 @@
 
 
-## Por que tudo está como rascunho
+## Refatoração total do motor `/gerador-estudo` — consistência + transparência
 
-### Causa raiz
+### Diagnóstico
 
-O `precompute-daily-posts` **gerou todos os 19 rascunhos hoje às 16:01 BRT** (`created_at = 19:01 UTC`). Os horários de publicação dos schedules da Lotofácil são **08:00, 09:00, 10:00, 11:00, 12:00, 13:00, 14:00, 15:00, 16:00, 17:00, 18:00 BRT**.
+O motor atual está praticamente "cego": o `fatos_snapshot.extras` salvo pela engine de Lotofácil só contém `{ totalCiclos? }`. Os arrays que o gerador espera (`moldura`, `quentes`, `frias`, `repetidas_recomendadas`, `dezenas_faltantes`, `dezenas_evitadas`) **nunca foram populados**. Resultado: a maioria dos estudos cai no `default` que sorteia do universo 1-25, sem nenhum vínculo real com o conteúdo do estudo. Por isso "falta consistência".
 
-Como os rascunhos só foram criados às 16:01:
-- Slots de **08h a 15h** já tinham passado quando o rascunho nasceu → o cron `process-scheduled-posts` (que checa "hora atual ≈ horário do schedule ±1 min") **nunca mais vai bater nesses horários hoje**.
-- Slot de **16:00** publicou (`analise_cenarios` às 18:36 UTC = 15:36 BRT, com tolerância) → virou `publicado`.
-- Slot de **18:00** publicou (`analise_como_calculamos`)... espera, na verdade publicou foi `analise_cenarios` e `analise_movimentacao`. Os outros 9 ficaram "órfãos": rascunho existe, mas o gatilho de publicação (cron) só dispara quando a hora atual = horário do schedule.
+Além disso, o `EstrategiaCard` já suporta dezenas fixas/evitadas/filtros ricos, e o `ResultadosSheet` já aceita `dezenasFixes` para pintar de preto — mas o `GeradorEstudo.tsx` **não passa** essas dezenas fixas para o sheet.
 
-**Em resumo:** o `process-scheduled-posts` não tem lógica de "pegar atrasados". Ele só publica se a hora atual coincidir com o horário do schedule. Rascunhos cujos horários já passaram ficam parados para sempre.
+### Arquitetura nova
 
-### O fix em 1 linha
+```text
+┌──────────────────────────────────────────────────────────────┐
+│ generate-guide-post (já roda hoje)                           │
+│   ├─ engine.montarFatos() → recomendações ricas              │
+│   └─ NEW: engine.extrairBaseGeracao() → BaseGeracao salva    │
+│      em fatos_snapshot.base_geracao (estrutura canônica)     │
+└──────────────────────────────────────────────────────────────┘
+                              ↓
+┌──────────────────────────────────────────────────────────────┐
+│ generate-palpites-from-estudo (REFATORADO 100%)              │
+│   1. Lê post.fatos_snapshot.base_geracao                     │
+│   2. Aplica regras determinísticas POR TEMA:                 │
+│      ─ FIXAR (núcleo) → entra em TODOS os jogos              │
+│      ─ APOIO          → entra em ≥X jogos                    │
+│      ─ EXCLUIR        → fora de TODOS os jogos               │
+│      ─ COMPLETAR      → universo restante                    │
+│   3. Garante diversidade entre jogos (Hamming distance ≥3)   │
+│   4. Monta EstrategiaData detalhada (fixas/evitadas/filtros) │
+│   5. Humaniza só a `conclusao` via IA (timeout 4s)           │
+│                              ↓                                │
+│   GeradorEstudo.tsx passa `dezenasFixes` ao ResultadosSheet  │
+│   → PalpiteCard pinta as fixas em preto                      │
+└──────────────────────────────────────────────────────────────┘
+```
 
-Adicionar no `process-scheduled-posts`, antes do loop dos schedules, uma **passagem de catch-up** que publica todo rascunho do dia BRT cujo `publicar_em <= now()` e ainda está como `rascunho`. Independente de schedule.
+### Estrutura canônica `BaseGeracao` (salva em `fatos_snapshot.base_geracao`)
 
-### Plano
+```ts
+interface BaseGeracao {
+  tema: string;                    // analise_moldura, analise_repetidas, etc.
+  fixar: number[];                 // núcleo — entra em 100% dos jogos
+  apoio: number[];                 // entra em ≥60% dos jogos
+  excluir: number[];               // 0% dos jogos
+  ficar_de_olho?: number[];        // 1 ou 2 podem entrar como coringa
+  ultimo_sorteio?: number[];       // p/ regra de "repetidas mín/máx"
+  qtd_repetidas_alvo?: { min: number; max: number };
+  qtd_moldura_alvo?: { min: number; max: number };
+  observacao_principal: string;    // motivo humano da estratégia
+}
+```
 
-**Editar `supabase/functions/process-scheduled-posts/index.ts`:**
+### Mapeamento por tema (engine extrai dos `Recomendacao*` que já calcula)
 
-1. Logo no início do `try`, adicionar bloco de catch-up:
-   ```ts
-   // CATCH-UP: publica rascunhos atrasados (publicar_em <= now)
-   const { data: atrasados } = await supabaseAdmin
-     .from("postagens")
-     .select("id, loteria_tag, tipo, publicar_em")
-     .eq("status", "rascunho")
-     .not("publicar_em", "is", null)
-     .lte("publicar_em", new Date().toISOString())
-     .order("publicar_em", { ascending: true })
-     .limit(50);
+| Tema | fixar | apoio | excluir | Filtros adicionais |
+|---|---|---|---|---|
+| `analise_moldura` | `nucleoForte` | `apoio` | `deixarFora` | `qtd_moldura_alvo` |
+| `analise_movimentacao` | `fixar` (FIXAR) | `apoio` | `excluir` | `ficar_de_olho` como coringa |
+| `analise_repetidas` | `repetirNucleo` | `repetirApoio` | `naoRepetir` | `qtd_repetidas_alvo: {min: rep.qtdRecomendada, max: rep.qtdRecomendada+2}` |
+| `analise_ciclo` | `prioritarias` (faltantes) | — | `deixadasDeFora` | — |
+| `analise_cenarios` | `equilibrado.repete` ∩ `equilibrado.novas` | resto do equilibrado | — | — |
+| `analise_ficar_de_olho` | — | `topQuedas[0..1]` (manter atenção) | `topQuedas[última]` | — |
+| `analise_linhas`/`colunas` | `nucleoFixas` | `apoio` | `evitar` | distribuição linha/coluna |
+| `analise_posicoes_*` | trio recomendado | alternativas | evite | — |
+| `analise_como_calculamos` | (sem regras de geração — bloqueia botão com aviso) | | | |
 
-   for (const p of atrasados || []) {
-     await supabaseAdmin
-       .from("postagens")
-       .update({ status: "publicado", created_at: new Date().toISOString() })
-       .eq("id", p.id);
-     published.push(`catchup:${p.loteria_tag}/${p.tipo}: ${p.id}`);
-   }
-   ```
-2. Manter o loop atual de schedules como está (publica os que casam com a hora exata + fallback síncrono).
+### Algoritmo determinístico (por jogo)
 
-**Resultado:** na próxima execução do cron (que roda a cada minuto), os 16 rascunhos atrasados de hoje viram `publicado` em <2s, sem chamar IA. Daqui pra frente, qualquer rascunho gerado depois do horário do slot é publicado no minuto seguinte.
+```text
+Para cada jogo:
+  1. dezenas = [...fixar]                      // sempre presentes
+  2. excluir → marca proibido
+  3. Sortear apoio até atingir cota mínima
+     (cota = ceil((qtdDezenas - fixar.length) * 0.6))
+  4. Completar universo (não-fixar, não-excluir, não-apoio-já-usado)
+     até qtdDezenas
+  5. Validar:
+     - qtd_repetidas_alvo (se houver, conta ∩ ultimo_sorteio)
+     - qtd_moldura_alvo (se houver)
+     - se falhar, rerolar passo 4 até 50 tentativas
+  6. Garantir diversidade vs jogos já gerados (Hamming ≥3)
+```
 
-### Por que isso não vai gerar duplicatas
+### Transparência total na `EstrategiaData` retornada
 
-- Catch-up só pega `status='rascunho'` — ignora publicados.
-- Loop normal pega rascunho do tipo e publica. Se catch-up já publicou, não acha mais.
-- A janela de dedup de 30min do fallback síncrono continua válida.
+```ts
+{
+  ferramentas: [
+    "Análise da Moldura",
+    `Estudo do concurso ${proximo}`,
+    `Base ${ultimo} → ${proximo}`,
+    "Motor determinístico v2"
+  ],
+  dezenas_fixas: [{
+    dezenas: fixar,
+    motivo: `Núcleo do estudo "Moldura": ${nucleoForteMotivoOriginal}. Entram em TODOS os ${quantidade} jogos.`
+  }, {
+    dezenas: apoio,
+    motivo: `Apoio: cada jogo carrega pelo menos ${cotaApoio} destas.`
+  }],
+  dezenas_evitadas: [{
+    dezenas: excluir,
+    motivo: `Excluídas pelo estudo. NÃO aparecem em nenhum jogo.`
+  }],
+  filtros_aplicados: [
+    { filtro: "Núcleo obrigatório", valor_alvo: `${fixar.length} dezenas em 100% dos jogos`, motivo: ... },
+    { filtro: "Apoio mínimo", valor_alvo: `${cotaApoio}+ por jogo`, motivo: ... },
+    { filtro: "Repetidas alvo", valor_alvo: `${min}-${max} repetidas do ${ultimo}`, motivo: ... },
+    { filtro: "Diversidade entre jogos", valor_alvo: "Hamming ≥3", motivo: "Evita jogos quase iguais." }
+  ],
+  conclusao: humanizada(...)  // IA só polishe
+}
+```
 
-### Por que aconteceu hoje
+### UI — Pintar fixas em preto nos cards
 
-O `precompute-daily-posts` deveria rodar **na noite anterior** (21:30/22:30/23:00 BRT, via os crons safety-net já criados). Mas hoje ele rodou só às 16:01 BRT — possivelmente porque foi disparado **manualmente** durante a verificação de idempotência da rodada anterior, e os crons da noite anterior (22/04 21:30→23:00) ou não rodaram, ou rodaram antes de você ter os schedules ativos.
+`src/pages/lotofacil/GeradorEstudo.tsx` passará `dezenasFixes={result.estrategia.dezenas_fixas?.[0]?.dezenas}` para `<ResultadosSheet>`. Já existe a pintura via `palpite-fixa` no `PalpiteCard`.
 
-A partir de hoje à noite (21:30 BRT), os crons safety-net vão gerar os rascunhos de amanhã com `publicar_em` para os 11 horários do dia 24/04. Aí o `process-scheduled-posts` publica certinho hora a hora.
+### Migração de estudos antigos (sem `base_geracao`)
+
+Estudos antigos (gerados antes desta refatoração) **não terão** `base_geracao`. Para eles:
+- O motor faz **fallback inline** rodando `engine.extrairBaseGeracao(snapshot)` no momento da geração, reconstruindo a partir de `recomendacao_direta`/`resumo` por regex/parsing dos blocos.
+- Se nem isso der certo → erro 422 amigável: "Este estudo é da versão anterior. Selecione um estudo a partir de hoje."
 
 ### Arquivos tocados
 
-- `supabase/functions/process-scheduled-posts/index.ts` (adicionar bloco catch-up no início)
-
-### Riscos
-
-| Risco | Mitigação |
+| Arquivo | Ação |
 |---|---|
-| Catch-up publicar rascunho de dia anterior esquecido | Filtro `publicar_em <= now()` + limite 50/execução. Se houver lixo antigo, expurgo manual depois. |
-| Rascunho com `publicar_em = NULL` | `not("publicar_em","is",null)` exclui — fica para o loop normal por schedule. |
-| Race com cron simultâneo | Cron roda a cada 1 min e duração <2s. Improvável colidir. UPDATE é idempotente (`status='publicado'`). |
+| `supabase/functions/_shared/guide-post/types.ts` | Adicionar `BaseGeracao` + método `extrairBaseGeracao` opcional na interface `GuideEngine` |
+| `supabase/functions/_shared/guide-post/lotofacil/engine.ts` | Implementar `extrairBaseGeracao(tipoPost, recomendacoes)` (~150 linhas, casos por tema) |
+| `supabase/functions/generate-guide-post/index.ts` | Salvar `base_geracao` dentro de `fatos_snapshot` |
+| `supabase/functions/generate-palpites-from-estudo/index.ts` | **Reescrita 100%**: novo pipeline determinístico + EstrategiaData rica + fallback de parsing |
+| `src/pages/lotofacil/GeradorEstudo.tsx` | Passar `dezenasFixes` para `ResultadosSheet` |
+| `supabase/functions/regenerate-base-geracao/index.ts` | **NOVA** — endpoint admin one-shot que recalcula `base_geracao` em todos os rascunhos/publicados de hoje (para hidratar estudos já gerados) |
+
+### Garantias de consistência
+
+- **Mesma `fixar`** em todos os jogos da mesma chamada → consistência intra-execução.
+- **Mesma `BaseGeracao`** persistida no snapshot → consistência entre múltiplas chamadas do mesmo estudo.
+- **Pintura preta** das fixas → usuário enxerga visualmente o que foi imposto.
+- **Conclusão humanizada por IA** = só verniz; estratégia bruta é determinística e auditável.
+- **Filtros declarados explicitamente** no card (núcleo / apoio / excluir / repetidas alvo / diversidade) → 100% transparente.
+
+### Não-objetivos (fora do escopo)
+
+- Mega-Sena: mantém estrutura atual (default). Será replicada quando engine megasena ganhar `extrairBaseGeracao`.
+- Mudar UX do hub ou seletor.
 
