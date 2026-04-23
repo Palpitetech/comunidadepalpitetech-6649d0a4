@@ -104,13 +104,17 @@ export default function GeradorEstudo({ loteria = "lotofacil" }: Props) {
       : "30/dia";
 
   const tituloPagina = loteria === "megasena" ? "Gerador de Estudo · Mega-Sena" : "Gerador de Estudo · Lotofácil";
+  const subtitulo = loteria === "megasena"
+    ? "Palpites de Mega-Sena (6 a 12 dezenas) a partir de um estudo"
+    : "Palpites de Lotofácil (15 a 20 dezenas) a partir de um estudo";
+  const iconColorClass = loteria === "megasena" ? "text-[hsl(125,70%,40%)]" : "text-primary";
 
   return (
     <MainLayout pageTitle={tituloPagina}>
       <div className="container-senior py-6 space-y-4 max-w-md mx-auto">
         <div className="flex items-center gap-2 px-1">
-          <BookOpen className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-bold text-foreground">Palpites a partir de um estudo</h2>
+          <BookOpen className={`h-5 w-5 ${iconColorClass}`} />
+          <h2 className="text-lg font-bold text-foreground">{subtitulo}</h2>
         </div>
 
         <Card>
