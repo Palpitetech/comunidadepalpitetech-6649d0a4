@@ -92,10 +92,32 @@ serve(async (req) => {
       .maybeSingle();
     const ultimoConcursoOficial = ultimo?.concurso ?? 0;
 
+    // Coleta números de próximo_concurso para buscar datas em proximos_concursos
+    const numerosProximos = Array.from(
+      new Set(
+        (posts || [])
+          .map((p: any) => p.fatos_snapshot?.proximo_concurso)
+          .filter((n: any) => typeof n === "number"),
+      ),
+    ).map((n) => String(n));
+
+    const dataPorConcurso: Record<string, string | null> = {};
+    if (numerosProximos.length) {
+      const { data: prox } = await supabaseAdmin
+        .from("proximos_concursos")
+        .select("numero_concurso, data_sorteio")
+        .eq("loteria", loteria)
+        .in("numero_concurso", numerosProximos);
+      for (const r of prox || []) {
+        dataPorConcurso[r.numero_concurso] = r.data_sorteio;
+      }
+    }
+
     const estudos = (posts || []).map((p: any) => {
       const snap = p.fatos_snapshot || {};
       const proximo = snap.proximo_concurso ?? null;
       const ehFuturo = typeof proximo === "number" && proximo > ultimoConcursoOficial;
+      const dataSorteio = proximo != null ? dataPorConcurso[String(proximo)] ?? null : null;
       return {
         id: p.id,
         slug: p.slug,
@@ -108,6 +130,7 @@ serve(async (req) => {
         ultimo_concurso: snap.ultimo_concurso ?? null,
         recomendacao_direta: snap.recomendacao_direta ?? null,
         eh_futuro: ehFuturo,
+        data_sorteio: dataSorteio,
       };
     });
 
