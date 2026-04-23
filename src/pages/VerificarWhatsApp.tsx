@@ -1,34 +1,92 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { ShieldCheck, ShieldAlert, Loader2, ArrowLeft, MessageCircle } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Loader2, ArrowLeft, MessageCircle, RefreshCw } from "lucide-react";
 import { formatCelularMask } from "@/lib/celular";
 
-type Status = "idle" | "checking" | "verified" | "not_verified" | "invalid" | "error";
+type Status = "idle" | "checking" | "verified" | "not_verified" | "invalid" | "error" | "rate_limited" | "captcha_invalid";
 
 const SUPPORT_NUMBER = "5551981854281"; // contato oficial (mem://support/contact-info)
 const REPORT_NUMBER = "5516997175392"; // canal de denúncia de golpes
+const FN_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/verify-whatsapp-number`;
 
 export default function VerificarWhatsApp() {
   const [numero, setNumero] = useState("");
   const [status, setStatus] = useState<Status>("idle");
+  const [captcha, setCaptcha] = useState<{ question: string; token: string } | null>(null);
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
+  const [loadingCaptcha, setLoadingCaptcha] = useState(false);
+
+  async function loadCaptcha() {
+    setLoadingCaptcha(true);
+    setCaptchaAnswer("");
+    try {
+      const res = await fetch(`${FN_URL}?action=challenge`, {
+        method: "GET",
+        headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+      });
+      const data = await res.json();
+      if (res.status === 429) {
+        setStatus("rate_limited");
+        setCaptcha(null);
+        return;
+      }
+      if (data?.ok) {
+        setCaptcha({ question: data.question, token: data.token });
+      } else {
+        setCaptcha(null);
+      }
+    } catch {
+      setCaptcha(null);
+    } finally {
+      setLoadingCaptcha(false);
+    }
+  }
+
+  useEffect(() => {
+    loadCaptcha();
+  }, []);
 
   async function handleCheck(e: React.FormEvent) {
     e.preventDefault();
     if (status === "checking") return;
+    if (!captcha) {
+      await loadCaptcha();
+      return;
+    }
     setStatus("checking");
     try {
       const { data, error } = await supabase.functions.invoke("verify-whatsapp-number", {
-        body: { numero },
+        body: {
+          numero,
+          captchaToken: captcha.token,
+          captchaAnswer: Number(captchaAnswer),
+        },
       });
       if (error) {
+        // Pode ser 429 ou 400 — tenta extrair contexto
+        const ctx = (error as { context?: Response }).context;
+        if (ctx?.status === 429) {
+          setStatus("rate_limited");
+          return;
+        }
         setStatus("error");
+        await loadCaptcha();
         return;
       }
       if (!data?.ok) {
+        if (data?.reason === "captcha_invalid" || data?.reason === "captcha_required") {
+          setStatus("captcha_invalid");
+          await loadCaptcha();
+          return;
+        }
+        if (data?.reason === "rate_limited") {
+          setStatus("rate_limited");
+          return;
+        }
         setStatus("error");
         return;
       }
@@ -37,6 +95,8 @@ export default function VerificarWhatsApp() {
         return;
       }
       setStatus(data.verified ? "verified" : "not_verified");
+      // Renova captcha para próxima verificação
+      await loadCaptcha();
     } catch {
       setStatus("error");
     }
@@ -44,7 +104,9 @@ export default function VerificarWhatsApp() {
 
   function reset() {
     setNumero("");
+    setCaptchaAnswer("");
     setStatus("idle");
+    if (!captcha) loadCaptcha();
   }
 
   return (
@@ -100,10 +162,44 @@ export default function VerificarWhatsApp() {
                   </p>
                 </div>
 
+                {/* Captcha leve anti-robô */}
+                <div className="space-y-2">
+                  <label htmlFor="captcha" className="text-sm font-medium flex items-center justify-between">
+                    <span>Confirme que você é humano</span>
+                    <button
+                      type="button"
+                      onClick={loadCaptcha}
+                      className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                      disabled={loadingCaptcha}
+                      aria-label="Gerar nova pergunta"
+                    >
+                      <RefreshCw className={`h-3 w-3 ${loadingCaptcha ? "animate-spin" : ""}`} />
+                      Trocar
+                    </button>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-12 px-3 rounded-md border bg-muted/40 flex items-center text-base font-medium">
+                      {captcha?.question ?? (loadingCaptcha ? "Carregando..." : "Erro ao carregar")}
+                    </div>
+                    <Input
+                      id="captcha"
+                      type="number"
+                      inputMode="numeric"
+                      placeholder="?"
+                      value={captchaAnswer}
+                      onChange={(e) => setCaptchaAnswer(e.target.value)}
+                      disabled={status === "checking" || !captcha}
+                      className="w-20 h-12 text-base text-center"
+                      maxLength={3}
+                      aria-label="Resposta do captcha"
+                    />
+                  </div>
+                </div>
+
                 <Button
                   type="submit"
                   className="w-full h-12 text-base"
-                  disabled={!numero || status === "checking"}
+                  disabled={!numero || !captchaAnswer || !captcha || status === "checking"}
                 >
                   {status === "checking" ? (
                     <>
@@ -173,6 +269,26 @@ export default function VerificarWhatsApp() {
               <CardContent className="pt-6 text-center">
                 <p className="text-sm">
                   Número inválido. Confira se digitou DDD + número corretos.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {status === "captcha_invalid" && (
+            <Card className="border-warning/40 bg-warning/5">
+              <CardContent className="pt-6 text-center space-y-2">
+                <p className="text-sm font-medium">Resposta incorreta</p>
+                <p className="text-xs text-muted-foreground">Geramos uma nova pergunta. Tente novamente.</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {status === "rate_limited" && (
+            <Card className="border-2 border-destructive/60 bg-destructive/5">
+              <CardContent className="pt-6 text-center space-y-2">
+                <p className="text-sm font-bold text-destructive">Muitas tentativas</p>
+                <p className="text-xs text-muted-foreground">
+                  Por segurança, espere 1 minuto antes de verificar de novo.
                 </p>
               </CardContent>
             </Card>
