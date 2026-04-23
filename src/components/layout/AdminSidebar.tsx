@@ -129,11 +129,19 @@ const sections: NavSection[] = [
     ],
   },
   {
-    label: "Gravação",
+    label: "Gravação Resultado",
     icon: Video,
     items: [
-      { title: "Lotofácil", url: "/admin/gravacao/lotofacil", icon: BarChart3 },
-      { title: "Quina", url: "/admin/gravacao/quina", icon: BarChart3 },
+      { title: "Lotofácil", url: "/admin/gravacao/resultado/lotofacil", icon: BarChart3 },
+      { title: "Quina", url: "/admin/gravacao/resultado/quina", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Gravação Estudos",
+    icon: Video,
+    items: [
+      { title: "Lotofácil", url: "/admin/gravacao/estudos/lotofacil", icon: BarChart3 },
+      { title: "Mega-Sena", url: "/admin/gravacao/estudos/megasena", icon: BarChart3 },
     ],
   },
   {
