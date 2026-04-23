@@ -1,105 +1,92 @@
 
 
-# Fluxo simplificado: Nova Instância → QR → Conectado (auto)
+# Force-update imediato para todos os usuários (PWA + Web)
 
-## Problema
-
-Hoje, criar uma instância exige preencher 4 campos (Apelido, Nome de amigo, Telefone, ID Evolution) **antes** do QR. O ID da Evolution é digitado manualmente, e o telefone também — o que é frágil e desalinha com o que existe na Evolution v2.
-
-## Novo fluxo desejado
+## Como vai funcionar
 
 ```text
-[Botão "Nova Instância"]
-        ↓
-[Dialog: 1 campo "Apelido"]    ← só nome
-        ↓ Criar
-[Backend: cria instância na Evolution v2 + reserva proxy + aplica proxy]
-        ↓
-[Dialog: QR Code aparece automaticamente]
-        ↓ usuário escaneia
-[Polling de status a cada 2s — visual: "Aguardando leitura..." → "Conectado!"]
-        ↓ status = "open" detectado
-[Backend: pega owner/phone da Evolution e salva no banco]
-        ↓
-[Card aparece online no grid, com telefone preenchido]
-
-→ Limite diário, fila de descanso, nome de amigo: editáveis pelo botão "Editar" depois.
+[Você faz deploy] 
+       ↓
+[Admin abre /admin → clica "Forçar atualização global"]
+       ↓
+[Backend grava nova versão em app_config.current_version = timestamp]
+       ↓
+[Todo cliente conectado consulta app_config a cada 30s]
+       ↓
+[Detecta versão > versão local → window.location.reload(true)]
+       ↓
+[Service Worker novo assume + cache antigo limpo + página recarrega]
+       ↓
+[Usuário vê nova versão em <60s, sem precisar fechar a aba]
 ```
 
 ## Mudanças
 
-### 1. Edge Function `evolution-proxy` — nova action `createAndConnect`
+### 1. Banco — tabela `app_config` (singleton)
 
-Recebe `{ apelido }` e executa atomicamente:
+Tabela com 1 linha só, guardando a versão "obrigatória mínima":
 
-1. **Slugifica** o apelido para gerar `evolution_instance_id` único (ex.: `"Tablet Final"` → `tablet-final-7k2p`, com sufixo aleatório de 4 chars para evitar colisão).
-2. **Insere** no banco `whatsapp_instances` com `name = friendly_name = apelido`, `evolution_instance_id = slug`, `phone_number = ""`, `status = "offline"`, `daily_limit = 100`, `cooldown_queue = [3]`.
-3. **Cria na Evolution**: `POST /instance/create` com `{ instanceName: slug, integration: "WHATSAPP-BAILEYS", qrcode: true }`. Captura `qrcode.base64` da resposta.
-4. **Reserva proxy** via `claim_proxy_for_instance` + **aplica proxy** + **restart** (mesma lógica do `connect`).
-5. Rollback completo se qualquer passo falhar (deleta da Evolution, deleta do banco, libera proxy).
-6. Retorna `{ success, instanceId, qrCode (base64), evolutionInstanceId }`.
-
-### 2. Edge Function `evolution-proxy` — nova action `syncInstancePhone`
-
-Recebe `{ instanceId }`. Chama `connectionState` na Evolution; se `state === "open"`, busca via `fetchInstances` o `ownerJid` da instância e atualiza no banco:
-- `phone_number = ownerJid.replace("@s.whatsapp.net", "")`
-- `status = "online"`
-
-Retorna `{ status, phone }` para o front saber se já conectou.
-
-### 3. `InstanciasTab.tsx` — refatorar criação
-
-**Dialog "Nova Instância"** (modo create) reduz a 1 campo:
-
-```text
-┌─────────────────────────────────┐
-│  Nova Instância                 │
-│                                 │
-│  Apelido *                      │
-│  [ex: Tablet Sala            ]  │
-│  Este será o nome interno e o   │
-│  identificador na Evolution.    │
-│                                 │
-│  [ Criar e gerar QR Code     ]  │
-└─────────────────────────────────┘
+```sql
+create table public.app_config (
+  id int primary key default 1 check (id = 1),
+  current_version bigint not null default extract(epoch from now())::bigint,
+  force_reload_at timestamptz not null default now(),
+  updated_by uuid references auth.users(id),
+  updated_at timestamptz not null default now()
+);
 ```
 
-Ao clicar "Criar e gerar QR Code":
-1. `invoke("evolution-proxy", { action: "createAndConnect", apelido })`
-2. Fecha dialog de criação, abre **dialog de QR** com o `qrCode` retornado.
-3. Inicia **polling** a cada 2s chamando `syncInstancePhone`:
-   - Se `status !== "online"` → continua polling, mostra "Aguardando leitura do QR Code..."
-   - Se `status === "online"` → para polling, mostra checkmark verde "Conectado! Telefone: +55 11 9...", aguarda 1.5s, fecha dialog, refetch da lista.
-   - Timeout de 90s → mostra "QR Code expirou. Tente novamente." com botão "Gerar novo QR".
-4. Tratamento de `code: "no_proxy_available"` / `proxy_invalid` igual hoje (toast com link para Proxies).
+- RLS: `SELECT` público (todos precisam ler para checar), `UPDATE` só admin (`has_role(auth.uid(), 'admin')`).
+- Realtime habilitado (`ALTER PUBLICATION supabase_realtime ADD TABLE app_config`) para push instantâneo.
+- 1 linha inicial via `INSERT ... ON CONFLICT DO NOTHING`.
 
-**Dialog "Editar Instância"** (modo edit) mantém os 4 campos atuais (apelido, friendly_name, phone, daily_limit, cooldown_queue) para ajustes posteriores. Apenas remove o campo `evolution_instance_id` (passa a ser readonly informativo, gerado pelo backend).
+### 2. Hook `useForceUpdate` (novo, em `src/hooks/useForceUpdate.ts`)
 
-### 4. Fallbacks visuais no dialog de QR
+- Lê `app_config.current_version` no mount, guarda em `localStorage("app_version")`.
+- Subscribe via Supabase Realtime no canal `app_config` — quando mudar, compara com versão local.
+- Fallback: polling a cada 30s (caso realtime caia).
+- Quando `serverVersion > localVersion`:
+  1. Atualiza `localStorage("app_version") = serverVersion` (evita loop).
+  2. Desregistra todos os service workers + limpa todos os caches (`caches.keys()` → `caches.delete()`).
+  3. `window.location.reload()` (hard reload).
+- Montado uma vez no `App.tsx`, abaixo dos providers.
 
-- **Estado loading inicial** (criando na Evolution): spinner + texto "Criando instância e reservando proxy..."
-- **Estado QR disponível**: imagem + texto "Escaneie com o WhatsApp" + indicador animado "Aguardando leitura..." (dot pulsando).
-- **Estado conectado**: checkmark verde grande + "Conectado! Telefone +55 XX XXXXX-XXXX" → fecha automático em 1.5s.
-- **Estado erro/timeout**: ícone de alerta + mensagem clara + botão "Tentar novamente" (re-chama createAndConnect com o mesmo apelido) ou "Cancelar" (deleta a instância criada).
-- **Estado sem proxy**: ícone de alerta amarelo + "Sem proxy disponível. Adicione proxies em WhatsApp → Proxies." + botão para a aba Proxies.
+### 3. Botão admin — `ForceUpdateButton` em `/admin/whatsapp` ou `/admin` (a definir)
 
-### 5. Limpeza
+Componente em `src/components/admin/ForceUpdateButton.tsx`:
+- Botão "Forçar atualização global" com confirmação (`AlertDialog`).
+- Onclick: `UPDATE app_config SET current_version = extract(epoch from now())::bigint, force_reload_at = now(), updated_by = auth.uid() WHERE id = 1`.
+- Toast: "Atualização disparada. Todos os usuários ativos serão recarregados em até 60 segundos."
+- Mostra também `force_reload_at` mais recente ("Último force-update: há 5 min").
 
-Remover do form de criação os campos `friendly_name`, `phone_number`, `evolution_instance_id`, `daily_limit`, `cooldown_queue` — eles continuam existindo no Editar.
+Sugestão: colocar dentro de `/admin` em uma seção "Sistema" ou no topo de `/admin/whatsapp` (você decide — me avisa onde prefere).
+
+### 4. Service Worker — garantir cache busting agressivo
+
+`vite.config.ts` já tem `skipWaiting: true` e `clientsClaim: true` (ok). Adicionar:
+- No hook, antes do reload: `await navigator.serviceWorker.getRegistrations().then(rs => Promise.all(rs.map(r => r.update())))` para forçar checagem do SW novo antes de recarregar.
+
+### 5. Coexistência com banner de update existente
+
+- `PWAUpdateHandler` e `PWAUpdateBanner` continuam para o caso "usuário só abriu agora e tem build novo no SW" (fluxo passivo).
+- `useForceUpdate` é o caminho ativo (admin aperta botão → todo mundo recarrega).
+- Não conflitam: o force-update sempre vence porque faz reload direto, sem perguntar.
 
 ## Resultado esperado
 
-- Admin clica em "Nova Instância" → digita só "Tablet Sala" → vê QR em ~3s → escaneia → vê "Conectado!" automaticamente → card aparece online com telefone preenchido.
-- Sincronização total entre nome local e ID Evolution (são o mesmo slug derivado do apelido).
-- Telefone vem direto da Evolution após conexão, sem digitação.
-- Configurações avançadas (limite, cooldown, friendly_name) ficam para o "Editar" — não atrapalham o onboarding.
+- Você faz deploy → entra no admin → clica "Forçar atualização global" → confirma.
+- Em até 30s (realtime) ou 60s (fallback polling), **todo navegador aberto** (PWA instalado, aba aberta no Chrome, qualquer coisa) detecta e recarrega sozinho.
+- Usuário vê um flash de reload e já está na versão nova, com SW novo, cache limpo.
+- Se o usuário estava digitando: perde o que digitava (trade-off aceito conforme escolha "Forçar reload sem perguntar").
 
 ## Detalhes técnicos
 
-- Slug: `apelido.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) + "-" + 4charsRandom`.
-- Polling no front via `setInterval(2000)`, limpo em `useEffect` cleanup e em todos os branches de saída.
-- `POST /instance/create` da Evolution v2 retorna `{ instance, hash, qrcode: { base64, code, count } }`. Usar `qrcode.base64`.
-- Webhook `GROUP_PARTICIPANTS_UPDATE` continua sendo configurado em `ensureWebhookConfigured` quando o status vira `open` (já existente).
-- Sem mudanças em RLS, schema ou RPC.
-- Arquivos tocados: `supabase/functions/evolution-proxy/index.ts` (+ ~120 linhas), `src/components/admin/whatsapp/InstanciasTab.tsx` (refatorar dialog de criação + lógica de polling).
+- `current_version` é `bigint` (epoch em segundos) — compara numericamente, sem parse de string.
+- Primeiro acesso de um cliente novo: salva versão atual em `localStorage` sem recarregar (evita reload infinito).
+- Realtime preferencial; polling 30s só como rede de segurança.
+- Reload usa `window.location.reload()` — moderno e suficiente; `reload(true)` foi descontinuado mas o limpa-caches manual cobre o gap.
+- Sem mudanças em RLS de outras tabelas.
+- Arquivos novos: `src/hooks/useForceUpdate.ts`, `src/components/admin/ForceUpdateButton.tsx`.
+- Arquivos editados: `src/App.tsx` (montar hook), 1 página admin (montar botão).
+- Migração SQL: criar tabela + RLS + realtime + seed de 1 linha.
 
