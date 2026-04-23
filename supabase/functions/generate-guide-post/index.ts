@@ -1763,6 +1763,16 @@ function montarFatos(
       return montarBlocosEixo(a, proxConcurso);
     }
 
+    case "analise_posicoes_iniciais": {
+      const a = analisarPosicoesDetalhado(concursos, "inicial");
+      return montarBlocosPosicoes(a, proxConcurso);
+    }
+
+    case "analise_posicoes_finais": {
+      const a = analisarPosicoesDetalhado(concursos, "final");
+      return montarBlocosPosicoes(a, proxConcurso);
+    }
+
     default: {
       const quentes = topQuentes(concursos, 5);
       return {
