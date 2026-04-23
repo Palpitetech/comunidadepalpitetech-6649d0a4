@@ -169,6 +169,207 @@ interface MolduraAnalise {
   recomendacao: MolduraRecomendacao;
 }
 
+// =============================================================================
+// QUENTES E FRIAS: análise detalhada (frequência + coocorrências + tendência)
+// =============================================================================
+
+interface QFItem { dezena: number; vezes: number; perc: number }
+interface QFPar { a: number; b: number; vezes: number }
+interface QFTrio { a: number; b: number; c: number; vezes: number }
+interface QFTendencia { dezena: number; recente: number; anterior: number; delta: number }
+interface QFRecomendacao {
+  fixar: number[];
+  apoio: number[];
+  excluir: number[];
+  ficarDeOlho: number[];
+  justFixar: string;
+  justApoio: string;
+  justExcluir: string;
+  justFicarDeOlho: string;
+}
+interface QFAnalise {
+  totalConcursos: number;
+  totalDezenasSorteadas: number;
+  quentes: QFItem[];
+  frias: QFItem[];
+  topParesQuentes: QFPar[];
+  topTriosQuentes: QFTrio[];
+  pioresParesFrias: QFPar[];
+  acelerando: QFTendencia[];
+  desacelerando: QFTendencia[];
+  recomendacao: QFRecomendacao;
+}
+
+function analisarQuentesFriasDetalhado(concursos: Concurso[]): QFAnalise {
+  const N = concursos.length;
+  const totalDezenasSorteadas = N * DEZENAS_POR_SORTEIO;
+
+  // 1) Frequência absoluta de cada dezena (1..25)
+  const freq = new Map<number, number>();
+  for (let i = 1; i <= TOTAL_DEZENAS; i++) freq.set(i, 0);
+  for (const c of concursos) for (const d of c.dezenas) freq.set(d, (freq.get(d) || 0) + 1);
+
+  const ordenadasDesc = Array.from(freq.entries())
+    .sort((a, b) => b[1] - a[1] || a[0] - b[0]);
+
+  // 2) Quentes: ≥80% (mas garantir ao menos 5 itens) — top 8
+  const limiarQuente = N * 0.8;
+  let quentesBase = ordenadasDesc.filter(([, v]) => v >= limiarQuente);
+  if (quentesBase.length < 5) quentesBase = ordenadasDesc.slice(0, 6);
+  const quentes: QFItem[] = quentesBase.slice(0, 8).map(([dezena, vezes]) => ({
+    dezena, vezes, perc: Math.round((vezes / N) * 100),
+  }));
+  const quentesIds = new Set(quentes.map((q) => q.dezena));
+
+  // 3) Frias: ≤30% (garantir ao menos 3) — top 6 das menos frequentes
+  const limiarFria = N * 0.3;
+  let friasBase = ordenadasDesc.filter(([, v]) => v <= limiarFria).reverse(); // menores primeiro
+  if (friasBase.length < 3) friasBase = [...ordenadasDesc].reverse().slice(0, 4);
+  const frias: QFItem[] = friasBase.slice(0, 6).map(([dezena, vezes]) => ({
+    dezena, vezes, perc: Math.round((vezes / N) * 100),
+  }));
+  const friasIds = new Set(frias.map((f) => f.dezena));
+
+  // 4) Matriz de coocorrência restrita às QUENTES (pares e trios)
+  const coParQ = new Map<string, number>();
+  const coTrioQ = new Map<string, number>();
+  // Coocorrência das FRIAS (apenas pares)
+  const coParF = new Map<string, number>();
+  const keyPair = (a: number, b: number) => (a < b ? `${a}-${b}` : `${b}-${a}`);
+
+  for (const c of concursos) {
+    const ds = [...c.dezenas].sort((x, y) => x - y);
+    const dsQ = ds.filter((d) => quentesIds.has(d));
+    const dsF = ds.filter((d) => friasIds.has(d));
+    for (let i = 0; i < dsQ.length; i++) {
+      for (let j = i + 1; j < dsQ.length; j++) {
+        coParQ.set(keyPair(dsQ[i], dsQ[j]), (coParQ.get(keyPair(dsQ[i], dsQ[j])) || 0) + 1);
+        for (let l = j + 1; l < dsQ.length; l++) {
+          const tk = `${dsQ[i]}-${dsQ[j]}-${dsQ[l]}`;
+          coTrioQ.set(tk, (coTrioQ.get(tk) || 0) + 1);
+        }
+      }
+    }
+    for (let i = 0; i < dsF.length; i++) {
+      for (let j = i + 1; j < dsF.length; j++) {
+        coParF.set(keyPair(dsF[i], dsF[j]), (coParF.get(keyPair(dsF[i], dsF[j])) || 0) + 1);
+      }
+    }
+  }
+
+  const topParesQuentes: QFPar[] = Array.from(coParQ.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 3)
+    .map(([k, vezes]) => {
+      const [a, b] = k.split("-").map(Number);
+      return { a, b, vezes };
+    });
+
+  const topTriosQuentes: QFTrio[] = Array.from(coTrioQ.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 2)
+    .map(([k, vezes]) => {
+      const [a, b, c] = k.split("-").map(Number);
+      return { a, b, c, vezes };
+    });
+
+  // Piores pares entre frias: as menores coocorrências (incluindo 0)
+  // Gerar todos pares possíveis das frias e ordenar por menor vezes
+  const friasArr = frias.map((f) => f.dezena);
+  const todosParesFrias: { a: number; b: number; vezes: number }[] = [];
+  for (let i = 0; i < friasArr.length; i++) {
+    for (let j = i + 1; j < friasArr.length; j++) {
+      const k = keyPair(friasArr[i], friasArr[j]);
+      todosParesFrias.push({ a: Math.min(friasArr[i], friasArr[j]), b: Math.max(friasArr[i], friasArr[j]), vezes: coParF.get(k) || 0 });
+    }
+  }
+  const pioresParesFrias: QFPar[] = todosParesFrias
+    .sort((a, b) => a.vezes - b.vezes || a.a - b.a)
+    .slice(0, 2);
+
+  // 5) Aceleração / Desaceleração — janelas: recentes [0..4] vs anteriores [5..9]
+  const half = Math.min(5, Math.floor(N / 2));
+  const recentes = concursos.slice(0, half);
+  const anteriores = concursos.slice(half, half * 2);
+  const freqRec = new Map<number, number>();
+  const freqAnt = new Map<number, number>();
+  for (let i = 1; i <= TOTAL_DEZENAS; i++) { freqRec.set(i, 0); freqAnt.set(i, 0); }
+  for (const c of recentes) for (const d of c.dezenas) freqRec.set(d, (freqRec.get(d) || 0) + 1);
+  for (const c of anteriores) for (const d of c.dezenas) freqAnt.set(d, (freqAnt.get(d) || 0) + 1);
+
+  const tendencias: QFTendencia[] = [];
+  for (let d = 1; d <= TOTAL_DEZENAS; d++) {
+    const rec = freqRec.get(d) || 0;
+    const ant = freqAnt.get(d) || 0;
+    tendencias.push({ dezena: d, recente: rec, anterior: ant, delta: rec - ant });
+  }
+  const acelerando: QFTendencia[] = tendencias
+    .filter((t) => t.delta > 0)
+    .sort((a, b) => b.delta - a.delta || b.recente - a.recente || a.dezena - b.dezena)
+    .slice(0, 3);
+  const desacelerando: QFTendencia[] = tendencias
+    .filter((t) => t.delta < 0)
+    .sort((a, b) => a.delta - b.delta || a.recente - b.recente || a.dezena - b.dezena)
+    .slice(0, 2);
+
+  // 6) Recomendação
+  // FIXAR: top 5 quentes que aparecem nos top pares/trios (ou top 5 quentes se não houver)
+  const idsEmTopCo = new Set<number>();
+  topParesQuentes.forEach((p) => { idsEmTopCo.add(p.a); idsEmTopCo.add(p.b); });
+  topTriosQuentes.forEach((t) => { idsEmTopCo.add(t.a); idsEmTopCo.add(t.b); idsEmTopCo.add(t.c); });
+  const fixarPrior = quentes.filter((q) => idsEmTopCo.has(q.dezena)).map((q) => q.dezena);
+  const fixarFill = quentes.filter((q) => !fixarPrior.includes(q.dezena)).map((q) => q.dezena);
+  const fixar = [...fixarPrior, ...fixarFill].slice(0, 5);
+
+  // APOIO: 3 dezenas com perc≥60% que estejam acelerando, ou top frequência fora do fixar
+  const acelIds = new Set(acelerando.map((a) => a.dezena));
+  const apoioFromAcel = ordenadasDesc
+    .map(([d, v]) => ({ d, perc: Math.round((v / N) * 100) }))
+    .filter((x) => x.perc >= 60 && acelIds.has(x.d) && !fixar.includes(x.d))
+    .map((x) => x.d);
+  const apoioFill = ordenadasDesc
+    .map(([d]) => d)
+    .filter((d) => !fixar.includes(d) && !apoioFromAcel.includes(d) && !friasIds.has(d));
+  const apoio = [...apoioFromAcel, ...apoioFill].slice(0, 3);
+
+  // EXCLUIR: até 3 dezenas das frias com par fraco entre si (priorizar quem está nos pioresParesFrias)
+  const excluirIdsPrior = new Set<number>();
+  pioresParesFrias.forEach((p) => { excluirIdsPrior.add(p.a); excluirIdsPrior.add(p.b); });
+  const excluirPrior = frias.filter((f) => excluirIdsPrior.has(f.dezena)).map((f) => f.dezena);
+  const excluirFill = frias.filter((f) => !excluirPrior.includes(f.dezena)).map((f) => f.dezena);
+  const excluir = [...excluirPrior, ...excluirFill].slice(0, 3);
+
+  // FICAR DE OLHO: dezenas em desacelerando que ainda estão nas quentes (ou apenas em desacel se nenhuma)
+  const desacelNasQuentes = desacelerando.filter((d) => quentesIds.has(d.dezena)).map((d) => d.dezena);
+  const ficarDeOlho = desacelNasQuentes.length > 0
+    ? desacelNasQuentes.slice(0, 2)
+    : desacelerando.slice(0, 2).map((d) => d.dezena);
+
+  const recomendacao: QFRecomendacao = {
+    fixar,
+    apoio,
+    excluir,
+    ficarDeOlho,
+    justFixar: "todas com presença alta E formando os top pares/trios entre as quentes",
+    justApoio: "presença sólida e tendência de aceleração nos últimos sorteios",
+    justExcluir: "frequência baixa E quase não saem juntas (pares fracos comprovados)",
+    justFicarDeOlho: "ainda figuram entre as quentes, mas vêm caindo de ritmo",
+  };
+
+  return {
+    totalConcursos: N,
+    totalDezenasSorteadas,
+    quentes,
+    frias,
+    topParesQuentes,
+    topTriosQuentes,
+    pioresParesFrias,
+    acelerando,
+    desacelerando,
+    recomendacao,
+  };
+}
+
 function analisarMolduraDetalhado(concursos: Concurso[]): MolduraAnalise {
   const N = concursos.length;
   const moldSet = new Set(MOLDURA);
