@@ -99,6 +99,311 @@ function calcularRepetidasRecomendadas(concursos: Concurso[]): {
   };
 }
 
+// =============================================================================
+// REPETIDAS: análise detalhada (taxa por dezena + coocorrência de repetição)
+// =============================================================================
+
+interface RepetidasFiel {
+  dezena: number;
+  vezes: number;       // quantas vezes essa dezena se repetiu
+  transicoes: number;  // de quantas transições ela teve chance (estava no concurso anterior)
+  perc: number;        // vezes / transicoes
+}
+
+interface ParRepetido {
+  a: number;
+  b: number;
+  vezes: number;       // quantas vezes ambos repetiram juntos
+  transicoes: number;  // quantas vezes ambos estavam no concurso anterior (chance real)
+  perc: number;
+}
+
+interface TrioRepetido {
+  a: number;
+  b: number;
+  c: number;
+  vezes: number;
+  transicoes: number;
+  perc: number;
+}
+
+interface RepetidasDetalhado {
+  totalConcursos: number;
+  paresAnalisados: number;        // N - 1 transições
+  mediaRepetidas: number;
+  faixaMaisComum: { min: number; max: number; perc: number };
+  minRepetidas: number;
+  maxRepetidas: number;
+  ultimoSorteio: number[];
+  ultimoConcursoNum: number;
+  fieis: RepetidasFiel[];         // top 5, restritas ao último sorteio
+  volateis: RepetidasFiel[];      // top 3 do último sorteio com perc <= 35%
+  melhoresDuplasRep: ParRepetido[];   // top 3, restritas ao último sorteio
+  melhoresTriosRep: TrioRepetido[];   // top 2, restritas ao último sorteio
+  recomendacao: {
+    qtdRecomendada: number;
+    repetirNucleo: number[];
+    repetirApoio: number[];
+    naoRepetir: number[];
+    qtdNovas: number;
+    justNucleo: string;
+    justApoio: string;
+    justNaoRepetir: string;
+  };
+}
+
+/**
+ * concursos[0] = mais recente, concursos[N-1] = mais antigo.
+ * Uma "transição" é o par (concursos[i+1] -> concursos[i]):
+ *  o sorteio i+1 é o "anterior" e o sorteio i é o "seguinte".
+ *  Uma dezena d "repetiu" nessa transição se está em ambos.
+ *  Para a dezena d, "transicoes" = nº de vezes que d apareceu no anterior (i+1).
+ */
+function analisarRepetidasDetalhado(concursos: Concurso[]): RepetidasDetalhado {
+  const ultimoSorteio = concursos[0]?.dezenas ?? [];
+  const ultimoConcursoNum = concursos[0]?.concurso_id ?? 0;
+
+  if (concursos.length < 2) {
+    return {
+      totalConcursos: concursos.length,
+      paresAnalisados: 0,
+      mediaRepetidas: 9,
+      faixaMaisComum: { min: 9, max: 9, perc: 0 },
+      minRepetidas: 9,
+      maxRepetidas: 9,
+      ultimoSorteio,
+      ultimoConcursoNum,
+      fieis: [],
+      volateis: [],
+      melhoresDuplasRep: [],
+      melhoresTriosRep: [],
+      recomendacao: {
+        qtdRecomendada: 9,
+        repetirNucleo: [],
+        repetirApoio: [],
+        naoRepetir: [],
+        qtdNovas: 6,
+        justNucleo: "",
+        justApoio: "",
+        justNaoRepetir: "",
+      },
+    };
+  }
+
+  const transicoes = concursos.length - 1;
+  const qtdRepPorTransicao: number[] = [];
+
+  // Contagens por dezena (1..25)
+  const vezesRepetiu = new Map<number, number>(); // d -> nº de transições em que d repetiu
+  const vezesEstavaAnterior = new Map<number, number>(); // d -> nº de transições em que d estava no anterior
+
+  // Coocorrência: para pares e trios restritos ao último sorteio
+  const ultimoSet = new Set(ultimoSorteio);
+  const parRep = new Map<string, number>();   // "a-b" -> nº transições em que AMBOS repetiram
+  const parChance = new Map<string, number>(); // "a-b" -> nº transições em que AMBOS estavam no anterior
+  const trioRep = new Map<string, number>();
+  const trioChance = new Map<string, number>();
+
+  const keyPar = (a: number, b: number) => `${Math.min(a, b)}-${Math.max(a, b)}`;
+  const keyTrio = (a: number, b: number, c: number) => {
+    const s = [a, b, c].sort((x, y) => x - y);
+    return `${s[0]}-${s[1]}-${s[2]}`;
+  };
+
+  for (let i = 0; i < transicoes; i++) {
+    const seguinte = new Set(concursos[i].dezenas);
+    const anterior = concursos[i + 1].dezenas;
+    const anteriorSet = new Set(anterior);
+
+    const repetidasNaTrans = anterior.filter((d) => seguinte.has(d));
+    qtdRepPorTransicao.push(repetidasNaTrans.length);
+
+    // Contagem por dezena
+    for (const d of anterior) {
+      vezesEstavaAnterior.set(d, (vezesEstavaAnterior.get(d) || 0) + 1);
+    }
+    for (const d of repetidasNaTrans) {
+      vezesRepetiu.set(d, (vezesRepetiu.get(d) || 0) + 1);
+    }
+
+    // Pares e trios — restritos a dezenas do último sorteio
+    const candidatos = anterior.filter((d) => ultimoSet.has(d));
+    const repCandidatos = candidatos.filter((d) => seguinte.has(d));
+
+    // Pares de "chance" (ambos estavam no anterior) e "rep" (ambos repetiram)
+    for (let x = 0; x < candidatos.length; x++) {
+      for (let y = x + 1; y < candidatos.length; y++) {
+        const k = keyPar(candidatos[x], candidatos[y]);
+        parChance.set(k, (parChance.get(k) || 0) + 1);
+      }
+    }
+    for (let x = 0; x < repCandidatos.length; x++) {
+      for (let y = x + 1; y < repCandidatos.length; y++) {
+        const k = keyPar(repCandidatos[x], repCandidatos[y]);
+        parRep.set(k, (parRep.get(k) || 0) + 1);
+      }
+    }
+    // Trios análogos
+    for (let x = 0; x < candidatos.length; x++) {
+      for (let y = x + 1; y < candidatos.length; y++) {
+        for (let z = y + 1; z < candidatos.length; z++) {
+          const k = keyTrio(candidatos[x], candidatos[y], candidatos[z]);
+          trioChance.set(k, (trioChance.get(k) || 0) + 1);
+        }
+      }
+    }
+    for (let x = 0; x < repCandidatos.length; x++) {
+      for (let y = x + 1; y < repCandidatos.length; y++) {
+        for (let z = y + 1; z < repCandidatos.length; z++) {
+          const k = keyTrio(repCandidatos[x], repCandidatos[y], repCandidatos[z]);
+          trioRep.set(k, (trioRep.get(k) || 0) + 1);
+        }
+      }
+    }
+  }
+
+  const totalRep = qtdRepPorTransicao.reduce((a, b) => a + b, 0);
+  const mediaRepetidas = totalRep / transicoes;
+  const minRepetidas = Math.min(...qtdRepPorTransicao);
+  const maxRepetidas = Math.max(...qtdRepPorTransicao);
+
+  // Faixa mais comum: top 2 valores de qtd, agregados
+  const distFreq = new Map<number, number>();
+  for (const q of qtdRepPorTransicao) distFreq.set(q, (distFreq.get(q) || 0) + 1);
+  const top2Faixas = Array.from(distFreq.entries())
+    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+    .slice(0, 2)
+    .map(([q]) => q);
+  const minF = Math.min(...top2Faixas);
+  const maxF = Math.max(...top2Faixas);
+  const somaTop2 = top2Faixas.reduce((acc, q) => acc + (distFreq.get(q) || 0), 0);
+  const faixaMaisComum = { min: minF, max: maxF, perc: Math.round((somaTop2 / transicoes) * 100) };
+
+  // Fiéis e Voláteis — só dezenas do último sorteio (são as candidatas reais a repetir)
+  const taxaPorDezena: RepetidasFiel[] = [];
+  for (const d of ultimoSorteio) {
+    const t = vezesEstavaAnterior.get(d) || 0;
+    const v = vezesRepetiu.get(d) || 0;
+    if (t === 0) continue;
+    taxaPorDezena.push({
+      dezena: d,
+      vezes: v,
+      transicoes: t,
+      perc: Math.round((v / t) * 100),
+    });
+  }
+
+  const fieis = [...taxaPorDezena]
+    .sort((a, b) => b.perc - a.perc || b.vezes - a.vezes || a.dezena - b.dezena)
+    .slice(0, 5);
+
+  const volateis = [...taxaPorDezena]
+    .filter((x) => x.perc <= 35 && x.transicoes >= 2)
+    .sort((a, b) => a.perc - b.perc || a.vezes - b.vezes || a.dezena - b.dezena)
+    .slice(0, 3);
+
+  // Melhores duplas/trios restritos ao último sorteio, com transicoes >= 2
+  const melhoresDuplasRep: ParRepetido[] = Array.from(parRep.entries())
+    .map(([k, v]) => {
+      const [a, b] = k.split("-").map(Number);
+      const t = parChance.get(k) || 0;
+      return { a, b, vezes: v, transicoes: t, perc: t > 0 ? Math.round((v / t) * 100) : 0 };
+    })
+    .filter((p) => p.vezes >= 2 && p.transicoes >= 3)
+    .sort((x, y) => y.vezes - x.vezes || y.perc - x.perc || x.a - y.a)
+    .slice(0, 3);
+
+  const melhoresTriosRep: TrioRepetido[] = Array.from(trioRep.entries())
+    .map(([k, v]) => {
+      const [a, b, c] = k.split("-").map(Number);
+      const t = trioChance.get(k) || 0;
+      return { a, b, c, vezes: v, transicoes: t, perc: t > 0 ? Math.round((v / t) * 100) : 0 };
+    })
+    .filter((p) => p.vezes >= 2 && p.transicoes >= 3)
+    .sort((x, y) => y.vezes - x.vezes || y.perc - x.perc || x.a - y.a)
+    .slice(0, 2);
+
+  // Recomendação
+  const qtdRecomendada = Math.max(7, Math.min(11, Math.round(mediaRepetidas)));
+
+  // Núcleo: até 5 com perc>=60% que aparecem em algum top par/trio
+  const dezenasEmTops = new Set<number>();
+  for (const p of melhoresDuplasRep) {
+    dezenasEmTops.add(p.a);
+    dezenasEmTops.add(p.b);
+  }
+  for (const t of melhoresTriosRep) {
+    dezenasEmTops.add(t.a);
+    dezenasEmTops.add(t.b);
+    dezenasEmTops.add(t.c);
+  }
+
+  const nucleoCandidatos = fieis
+    .filter((f) => f.perc >= 60 && dezenasEmTops.has(f.dezena))
+    .map((f) => f.dezena);
+
+  // Se faltar, completa com top fiéis (mesmo sem estar nos pares/trios)
+  const repetirNucleo: number[] = [...nucleoCandidatos];
+  for (const f of fieis) {
+    if (repetirNucleo.length >= 5) break;
+    if (!repetirNucleo.includes(f.dezena)) repetirNucleo.push(f.dezena);
+  }
+  repetirNucleo.length = Math.min(repetirNucleo.length, 5);
+
+  // Apoio: completa até qtdRecomendada com dezenas perc 40-60% (não no núcleo, não nas voláteis)
+  const naoRepetirSet = new Set(volateis.map((v) => v.dezena));
+  const nucleoSet = new Set(repetirNucleo);
+  const apoioPool = taxaPorDezena
+    .filter((x) => !nucleoSet.has(x.dezena) && !naoRepetirSet.has(x.dezena) && x.perc >= 40 && x.perc < 60)
+    .sort((a, b) => b.perc - a.perc || b.vezes - a.vezes || a.dezena - b.dezena);
+
+  const repetirApoio: number[] = [];
+  const apoioAlvo = Math.max(0, qtdRecomendada - repetirNucleo.length);
+  for (const x of apoioPool) {
+    if (repetirApoio.length >= apoioAlvo) break;
+    repetirApoio.push(x.dezena);
+  }
+  // Se ainda faltar, completa com qualquer dezena do último (não-núcleo, não-volátil)
+  if (repetirApoio.length < apoioAlvo) {
+    const usadas = new Set([...repetirNucleo, ...repetirApoio, ...naoRepetirSet]);
+    const extras = taxaPorDezena
+      .filter((x) => !usadas.has(x.dezena))
+      .sort((a, b) => b.perc - a.perc || a.dezena - b.dezena);
+    for (const x of extras) {
+      if (repetirApoio.length >= apoioAlvo) break;
+      repetirApoio.push(x.dezena);
+    }
+  }
+
+  const naoRepetir = volateis.map((v) => v.dezena).slice(0, 3);
+  const qtdNovas = 15 - qtdRecomendada;
+
+  return {
+    totalConcursos: concursos.length,
+    paresAnalisados: transicoes,
+    mediaRepetidas,
+    faixaMaisComum,
+    minRepetidas,
+    maxRepetidas,
+    ultimoSorteio,
+    ultimoConcursoNum,
+    fieis,
+    volateis,
+    melhoresDuplasRep,
+    melhoresTriosRep,
+    recomendacao: {
+      qtdRecomendada,
+      repetirNucleo,
+      repetirApoio,
+      naoRepetir,
+      qtdNovas,
+      justNucleo: "as mais fiéis (60%+) e formam as top duplas/trios de repetição",
+      justApoio: "frequência de repetição média-alta, reforçam o núcleo",
+      justNaoRepetir: "voláteis, padrão histórico de sair fora no próximo sorteio",
+    },
+  };
+}
+
 function calcularMolduraRecomendada(concursos: Concurso[]): {
   mediaMoldura: number;
   qtdRecomendada: number;
