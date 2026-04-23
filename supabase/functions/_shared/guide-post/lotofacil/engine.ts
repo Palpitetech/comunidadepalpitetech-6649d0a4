@@ -6,6 +6,7 @@
 
 import type { Concurso, CicloHistorico, Fatos, GuideEngine } from "../types.ts";
 import { DEFINICAO_QUENTE_FRIA } from "../glossario.ts";
+import { extrairBaseGeracaoLotofacil } from "./base-geracao.ts";
 
 // =============================================================================
 // CONSTANTES
@@ -2412,4 +2413,6 @@ export const lotofacilEngine: GuideEngine = {
   validarConteudoNumerico,
   fallbackConteudo,
   sanitizar,
+  extrairBaseGeracao: (tipoPost, concursos, historicoCiclos) =>
+    extrairBaseGeracaoLotofacil(tipoPost, concursos, historicoCiclos),
 };
