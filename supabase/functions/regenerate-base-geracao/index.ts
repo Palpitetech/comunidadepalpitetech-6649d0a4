@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { extrairBaseGeracaoLotofacil } from "../_shared/guide-post/lotofacil/base-geracao.ts";
+import { extrairBaseGeracaoMegasena } from "../_shared/guide-post/megasena/base-geracao.ts";
 import type { Concurso } from "../_shared/guide-post/types.ts";
 
 const corsHeaders = {
@@ -17,42 +18,50 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user } } = await supabaseAuth.auth.getUser();
-    if (!user) {
-      return new Response(JSON.stringify({ error: "Não autenticado" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Caminho 1: header x-admin-token igual ao service role (uso interno/cron)
+    const adminToken = req.headers.get("x-admin-token");
+    let isAuthorized = adminToken === supabaseServiceKey;
+
+    // Caminho 2: usuário admin via JWT
+    if (!isAuthorized) {
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: "Não autorizado" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } },
       });
+      const { data: { user } } = await supabaseAuth.auth.getUser();
+      if (!user) {
+        return new Response(JSON.stringify({ error: "Não autenticado" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const supabaseAdminCheck = createClient(supabaseUrl, supabaseServiceKey);
+      const { data: roleRow } = await supabaseAdminCheck
+        .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
+      if (!roleRow) {
+        return new Response(JSON.stringify({ error: "Apenas admin" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-    const { data: roleRow } = await supabaseAdmin
-      .from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
-    if (!roleRow) {
-      return new Response(JSON.stringify({ error: "Apenas admin" }), {
-        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
-    // Janela: últimas 48h, todos rascunhos/publicados de Lotofácil
+    // Janela: últimas 48h, todos rascunhos/publicados de Lotofácil + Mega-Sena
+    // Obs: loteria_tag no banco usa rótulos com acento ("Lotofácil", "Mega-Sena").
     const since = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
     const { data: posts, error } = await supabaseAdmin
       .from("postagens")
-      .select("id, fatos_snapshot")
-      .eq("loteria_tag", "lotofacil")
+      .select("id, fatos_snapshot, loteria_tag")
+      .in("loteria_tag", ["Lotofácil", "Mega-Sena"])
       .in("status", ["rascunho", "publicado"])
       .gte("created_at", since);
 
@@ -68,6 +77,7 @@ serve(async (req) => {
         jaTinha++; continue;
       }
 
+      const limite = snap.loteria === "megasena" ? 20 : 10;
       // Rebusca os concursos para o tipo
       const { data: results } = await supabaseAdmin
         .from("resultados_loterias")
@@ -75,7 +85,7 @@ serve(async (req) => {
         .eq("loteria", snap.loteria)
         .lte("concurso", snap.ultimo_concurso)
         .order("concurso", { ascending: false })
-        .limit(10);
+        .limit(limite);
 
       if (!results || results.length === 0) { falhas++; continue; }
       const concursos: Concurso[] = (results as any[]).map((r) => ({
@@ -85,7 +95,9 @@ serve(async (req) => {
         qtd_primos: r.qtd_primos, qtd_moldura: r.qtd_moldura,
       }));
 
-      const base = extrairBaseGeracaoLotofacil(snap.tipo_post, concursos);
+      const base = snap.loteria === "megasena"
+        ? extrairBaseGeracaoMegasena(snap.tipo_post, concursos)
+        : extrairBaseGeracaoLotofacil(snap.tipo_post, concursos);
       if (!base) { falhas++; continue; }
 
       const novoSnap = { ...snap, base_geracao: base };

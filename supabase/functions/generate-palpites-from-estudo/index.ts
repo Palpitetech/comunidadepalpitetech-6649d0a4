@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { extrairBaseGeracaoLotofacil } from "../_shared/guide-post/lotofacil/base-geracao.ts";
+import { extrairBaseGeracaoMegasena } from "../_shared/guide-post/megasena/base-geracao.ts";
 import type { BaseGeracao, Concurso } from "../_shared/guide-post/types.ts";
 
 const corsHeaders = {
@@ -360,14 +361,14 @@ async function rehidratarBaseGeracao(
   supabaseAdmin: ReturnType<typeof createClient>,
   snapshot: FatosSnapshot,
 ): Promise<BaseGeracao | null> {
-  if (snapshot.loteria !== "lotofacil") return null;
+  if (snapshot.loteria !== "lotofacil" && snapshot.loteria !== "megasena") return null;
   const { data, error } = await supabaseAdmin
     .from("resultados_loterias")
     .select("concurso, dezenas, data_sorteio, ciclo_numero, dezenas_faltantes_ciclo, qtd_pares, qtd_impares, qtd_repetidas, qtd_primos, qtd_moldura")
     .eq("loteria", snapshot.loteria)
     .lte("concurso", snapshot.ultimo_concurso)
     .order("concurso", { ascending: false })
-    .limit(10);
+    .limit(snapshot.loteria === "megasena" ? 20 : 10);
   if (error || !data || data.length === 0) return null;
   const concursos: Concurso[] = (data as any[]).map((r) => ({
     concurso_id: r.concurso,
@@ -381,6 +382,9 @@ async function rehidratarBaseGeracao(
     qtd_primos: r.qtd_primos,
     qtd_moldura: r.qtd_moldura,
   }));
+  if (snapshot.loteria === "megasena") {
+    return extrairBaseGeracaoMegasena(snapshot.tipo_post, concursos);
+  }
   return extrairBaseGeracaoLotofacil(snapshot.tipo_post, concursos);
 }
 
