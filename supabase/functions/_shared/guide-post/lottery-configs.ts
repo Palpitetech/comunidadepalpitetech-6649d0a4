@@ -24,6 +24,13 @@ export const LOTTERY_CONFIGS: Record<string, LotteryConfig> = {
     dezenas_por_sorteio: 15,
     periodo_analise: 10,
   },
+  megasena: {
+    loteria: "megasena",
+    loteria_tag: "Mega-Sena",
+    total_dezenas: 60,
+    dezenas_por_sorteio: 6,
+    periodo_analise: 20,
+  },
 };
 
 export function getConfig(loteria: string): LotteryConfig {

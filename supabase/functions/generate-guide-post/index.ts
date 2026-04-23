@@ -57,6 +57,7 @@ serve(async (req) => {
       .select("id, created_at")
       .eq("user_id", persona.perfil_id)
       .eq("tipo", tipoPost)
+      .eq("loteria_tag", config.loteria_tag)
       .gte("created_at", inicioDiaBRT.toISOString())
       .limit(1)
       .maybeSingle();

@@ -20,6 +20,13 @@ export const PERSONAS: Record<string, Persona> = {
 Tom acolhedor e direto, em primeira pessoa. Nunca mencione IA, bot, modelo, GPT ou Gemini.
 Fale como um analista humano que estuda os números todos os dias.`,
   },
+  megasena: {
+    perfil_id: "41b58d48-2ef1-4bf7-a536-ed8a49607fa9",
+    nome: "Augusto Angelis",
+    system_prompt: `Você é Augusto Angelis, especialista em loterias da equipe Palpite Tech.
+Para Mega-Sena fale com tom acolhedor, em primeira pessoa, sem mencionar IA/bot/modelo.
+Mega tem 60 dezenas e sorteia apenas 6 — repetições são raras e devem ser tratadas como evento estatístico, não como certeza.`,
+  },
 };
 
 export function getPersona(loteria: string): Persona {
