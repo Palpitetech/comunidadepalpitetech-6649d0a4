@@ -370,7 +370,7 @@ ${fatos.recomendacaoDireta}
 
 ESTRUTURA OBRIGATÓRIA do conteúdo:
 1) Abertura curta (1 linha) com gancho diferente a cada vez.
-2) Bloco "📊 O que aconteceu nos últimos 10" — resuma os dados acima em 2-3 linhas.
+2) Bloco "📊 O que aconteceu nos últimos 10" — para os tipos "Análise por Linhas" e "Análise por Colunas", REPRODUZA LITERALMENTE o bloco detalhado de "DADOS REAIS" (linha por linha ou coluna por coluna), sem resumir nem omitir nenhuma linha/coluna. Para os outros tipos, resuma os dados em 2-3 linhas.
 3) Bloco "💡 Como montar seu palpite" — escreva a RECOMENDAÇÃO DIRETA acima, em destaque.
 4) Disclaimer curto: "Loteria envolve sorte. Use como guia, não como certeza."
 
@@ -379,7 +379,7 @@ REGRAS CRÍTICAS:
 - Se citar o concurso, use exatamente ${proxConcurso}.
 - Tom humano, acolhedor, em primeira pessoa. Varie a abertura.
 - Use **negrito** nas dezenas e na recomendação.
-- Máximo 800 caracteres no conteúdo.
+- Máximo 1200 caracteres no conteúdo.
 - Apenas dezenas de 01 a 25.
 - NUNCA mencione IA, bot, modelo, GPT ou Gemini.
 
