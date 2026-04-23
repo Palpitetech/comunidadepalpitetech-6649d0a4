@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -9,20 +9,32 @@ import { useCommunityPosts } from "@/hooks/useCommunityPosts";
 import { LatestResults } from "@/components/home/LatestResults";
 import { Pin, Sparkles, ChevronRight, MessageSquare, Lock, Crown } from "lucide-react";
 import { usePermissionContext } from "@/contexts/PermissionContext";
+import { cn } from "@/lib/utils";
+
+type LoteriaFiltro = "lotofacil" | "megasena";
+
+const LOTERIA_TAG_MAP: Record<LoteriaFiltro, string> = {
+  lotofacil: "Lotofácil",
+  megasena: "Mega-Sena",
+};
 
 export default function Comunidade() {
   const navigate = useNavigate();
   const { plan } = usePermissionContext();
   const isMobile = useIsMobile();
   const { data: posts, isLoading, error, prefetchPost } = useCommunityPosts();
+  const [loteriaFiltro, setLoteriaFiltro] = useState<LoteriaFiltro>("lotofacil");
 
   const { pinnedPost, otherPosts } = useMemo(() => {
     if (!posts || posts.length === 0) return { pinnedPost: null, otherPosts: [] };
-    const resultPost = posts.find((p) => p.tipo === "resultado_oficial");
-    if (!resultPost) return { pinnedPost: null, otherPosts: posts };
-    const others = posts.filter((p) => p.id !== resultPost.id);
+    const tag = LOTERIA_TAG_MAP[loteriaFiltro];
+    const filtered = posts.filter((p) => p.loteria_tag === tag);
+    if (filtered.length === 0) return { pinnedPost: null, otherPosts: [] };
+    const resultPost = filtered.find((p) => p.tipo === "resultado_oficial");
+    if (!resultPost) return { pinnedPost: null, otherPosts: filtered };
+    const others = filtered.filter((p) => p.id !== resultPost.id);
     return { pinnedPost: resultPost, otherPosts: others };
-  }, [posts]);
+  }, [posts, loteriaFiltro]);
 
   const handleClick = useCallback(
     (post: { id: string; slug: string | null }) => navigate(`/comunidade/post/${post.slug || post.id}`),
