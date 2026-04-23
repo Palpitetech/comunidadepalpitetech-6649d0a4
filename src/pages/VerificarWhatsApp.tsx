@@ -277,9 +277,12 @@ export default function VerificarWhatsApp() {
 
           {status === "invalid" && (
             <Card className="border-warning/40 bg-warning/5">
-              <CardContent className="pt-6 text-center">
-                <p className="text-sm">
-                  Número inválido. Confira se digitou DDD + número corretos.
+              <CardContent className="pt-6 text-center space-y-1">
+                <p className="text-sm font-medium">
+                  {invalidReason ?? "Número inválido"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Use o formato (DDD) 9XXXX-XXXX. Exemplo: (11) 99999-9999.
                 </p>
               </CardContent>
             </Card>
