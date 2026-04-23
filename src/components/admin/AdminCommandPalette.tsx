@@ -30,6 +30,7 @@ import {
   Trophy,
   Wallet,
   BarChart3,
+  Database,
   type LucideIcon,
 } from "lucide-react";
 
@@ -71,6 +72,7 @@ const ITEMS: CmdItem[] = [
 
   { label: "Métricas", url: "/admin/metricas", icon: BarChart2, group: "Sistema" },
   { label: "Integrações", url: "/admin/integracoes", icon: Plug, group: "Sistema" },
+  { label: "Backfill Resultados", url: "/admin/backfill", icon: Database, group: "Sistema", keywords: ["importar", "historico", "mega sena", "xlsx"] },
 ];
 
 interface AdminCommandPaletteProps {

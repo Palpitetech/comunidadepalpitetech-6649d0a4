@@ -92,3 +92,6 @@ verify_jwt = false
 
 [functions.verify-whatsapp-number]
 verify_jwt = false
+
+[functions.backfill-megasena-excel]
+verify_jwt = false

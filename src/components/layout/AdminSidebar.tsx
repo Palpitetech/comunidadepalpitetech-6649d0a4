@@ -142,6 +142,7 @@ const sections: NavSection[] = [
     items: [
       { title: "Métricas", url: "/admin/metricas", icon: BarChart2 },
       { title: "Integrações", url: "/admin/integracoes", icon: Plug },
+      { title: "Backfill Resultados", url: "/admin/backfill", icon: Database },
     ],
   },
 ];

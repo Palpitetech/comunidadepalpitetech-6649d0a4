@@ -153,8 +153,8 @@ export default function AdminBackfill() {
             )}
 
             {result && !result.error && (
-              <div className="rounded-lg border border-green-500/20 bg-green-500/5 p-4 space-y-2">
-                <div className="flex items-center gap-2 font-medium text-green-700 dark:text-green-400">
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
+                <div className="flex items-center gap-2 font-medium text-primary">
                   <CheckCircle2 className="h-4 w-4" />
                   {result.message}
                 </div>
