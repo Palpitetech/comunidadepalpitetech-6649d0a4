@@ -594,7 +594,11 @@ Responda APENAS o CONTEÚDO em texto puro (sem título, sem JSON, sem aspas).`;
 // VALIDADOR ANTI-ALUCINAÇÃO
 // =============================================================================
 
-function extrairNumerosPermitidos(concursos: Concurso[], proxConcurso: number): Set<number> {
+function extrairNumerosPermitidos(
+  concursos: Concurso[],
+  proxConcurso: number,
+  extras?: { totalCiclos?: number },
+): Set<number> {
   const permitidos = new Set<number>();
   permitidos.add(proxConcurso);
   for (const c of concursos) {
@@ -606,8 +610,9 @@ function extrairNumerosPermitidos(concursos: Concurso[], proxConcurso: number): 
     permitidos.add(c.qtd_primos);
     permitidos.add(c.qtd_repetidas);
   }
-  // Pequenos números livres (contagens, frequências, ocorrências por linha/coluna)
-  for (let i = 0; i <= 80; i++) permitidos.add(i);
+  if (extras?.totalCiclos) permitidos.add(extras.totalCiclos);
+  // Pequenos números livres (contagens, frequências, ocorrências por linha/coluna, percentuais)
+  for (let i = 0; i <= 100; i++) permitidos.add(i);
   return permitidos;
 }
 
