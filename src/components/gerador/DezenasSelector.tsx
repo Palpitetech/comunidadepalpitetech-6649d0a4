@@ -23,6 +23,8 @@ export function DezenasSelector({
   options,
 }: DezenasSelectorProps) {
   const DEZENAS_OPTIONS = options ?? DEFAULT_OPTIONS;
+  const minDez = Math.min(...DEZENAS_OPTIONS);
+  const maxDez = Math.max(...DEZENAS_OPTIONS);
   const handleSelectChange = (val: string) => {
     onChange(parseInt(val, 10));
   };
@@ -31,7 +33,7 @@ export function DezenasSelector({
     <div className="space-y-3">
       <div className="text-center">
         <p className="text-sm font-medium text-foreground mb-1">Dezenas por palpite</p>
-        <p className="text-xs text-muted-foreground">Quantas dezenas em cada jogo?</p>
+        <p className="text-xs text-muted-foreground">Quantas dezenas em cada jogo? ({minDez} a {maxDez})</p>
       </div>
 
       <div className="flex justify-center">
