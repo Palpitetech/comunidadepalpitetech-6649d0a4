@@ -576,7 +576,7 @@ serve(async (req) => {
       console.warn(`[generate-guide-post] ⚠️ ${motivoFallback}`);
       conteudo = fallbackConteudo(fatos);
     } else {
-      const conteudoIA = sanitizar(ia.content || "").substring(0, 1000);
+      const conteudoIA = sanitizar(ia.content || "").substring(0, 1500);
       const validacao = validarConteudoNumerico(conteudoIA, numerosPermitidos);
 
       if (!validacao.ok || conteudoIA.length < 50) {
