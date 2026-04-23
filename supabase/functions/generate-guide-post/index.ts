@@ -4,6 +4,7 @@ import { getEngine, type Concurso, type CicloHistorico } from "../_shared/guide-
 import { getPersona } from "../_shared/guide-post/personas.ts";
 import { getConfig } from "../_shared/guide-post/lottery-configs.ts";
 import { chamarIAComRetry } from "../_shared/guide-post/ai-runner.ts";
+import { montarRodapeProximoConcurso } from "../_shared/guide-post/glossario.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -171,6 +172,30 @@ serve(async (req) => {
           metadata: { tipo_post: tipoPost, loteria, viaFallback, motivoFallback },
         }).then(() => {}).catch(() => {});
       }
+    }
+
+    // 4.5. Rodapé universal: dados do próximo concurso (todas as loterias)
+    try {
+      const { data: prox } = await supabaseAdmin
+        .from("proximos_concursos")
+        .select("numero_concurso, data_sorteio, premio_estimado")
+        .eq("loteria", loteria)
+        .maybeSingle();
+
+      if (prox) {
+        const rodape = montarRodapeProximoConcurso(
+          config.loteria_tag,
+          prox.numero_concurso,
+          prox.data_sorteio,
+          prox.premio_estimado,
+        );
+        // Anexa sem cortar (limite por engine já foi aplicado; rodapé é informacional)
+        if (rodape) conteudo = conteudo + rodape;
+      } else {
+        console.log(`[generate-guide-post] sem registro em proximos_concursos para ${loteria}`);
+      }
+    } catch (e) {
+      console.warn(`[generate-guide-post] falha ao montar rodapé proximo_concurso:`, e);
     }
 
     // 5. Inserir post (autor = persona da loteria)
