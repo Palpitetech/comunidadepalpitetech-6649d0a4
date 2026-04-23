@@ -120,6 +120,226 @@ function calcularMolduraRecomendada(concursos: Concurso[]): {
   return { mediaMoldura: media, qtdRecomendada: Math.round(media), topMoldura: top };
 }
 
+// =============================================================================
+// MOLDURA: análise detalhada (frequência + coocorrências + fracas + recomendação)
+// =============================================================================
+
+interface MolduraDezenaForte {
+  dezena: number;
+  vezes: number;
+  perc: number;
+}
+interface MolduraDezenaFraca {
+  dezena: number;
+  vezes: number;
+  perc: number;
+  companheirasFrequentes: number[];
+}
+interface MolduraPar {
+  a: number;
+  b: number;
+  vezes: number;
+}
+interface MolduraTrio {
+  a: number;
+  b: number;
+  c: number;
+  vezes: number;
+}
+interface MolduraRecomendacao {
+  qtdRecomendada: number;
+  nucleoForte: number[];
+  apoio: number[];
+  coringas: number[];
+  deixarFora: number[];
+  justNucleo: string;
+  justApoio: string;
+  justCoringas: string;
+  justFora: string;
+}
+interface MolduraAnalise {
+  totalConcursos: number;
+  mediaMoldura: number;
+  faixaMaisComum: { qtd1: number; qtd2: number; perc: number };
+  fortes: MolduraDezenaForte[];
+  fracas: MolduraDezenaFraca[];
+  melhoresPares: MolduraPar[];
+  melhoresTrios: MolduraTrio[];
+  padraoFalha: { vezesFraca: number; ausentesTop: number[] };
+  recomendacao: MolduraRecomendacao;
+}
+
+function analisarMolduraDetalhado(concursos: Concurso[]): MolduraAnalise {
+  const N = concursos.length;
+  const moldSet = new Set(MOLDURA);
+
+  // 1) Frequência por dezena da moldura
+  const freq = new Map<number, number>();
+  for (const d of MOLDURA) freq.set(d, 0);
+  // Quantidade de moldura por sorteio
+  const qtdMoldPorSorteio: number[] = [];
+  for (const c of concursos) {
+    let qtd = 0;
+    for (const d of c.dezenas) {
+      if (moldSet.has(d)) {
+        freq.set(d, (freq.get(d) || 0) + 1);
+        qtd++;
+      }
+    }
+    qtdMoldPorSorteio.push(qtd);
+  }
+  const mediaMoldura = qtdMoldPorSorteio.reduce((a, b) => a + b, 0) / N;
+
+  // 2) Faixa mais comum (top 2 quantidades de moldura por sorteio)
+  const distQtd = new Map<number, number>();
+  for (const q of qtdMoldPorSorteio) distQtd.set(q, (distQtd.get(q) || 0) + 1);
+  const topFaixa = Array.from(distQtd.entries())
+    .sort((a, b) => b[1] - a[1] || b[0] - a[0])
+    .slice(0, 2);
+  const q1 = topFaixa[0]?.[0] ?? 0;
+  const q2 = topFaixa[1]?.[0] ?? q1;
+  const faixaMaisComum = {
+    qtd1: Math.min(q1, q2),
+    qtd2: Math.max(q1, q2),
+    perc: Math.round((((topFaixa[0]?.[1] ?? 0) + (q1 !== q2 ? topFaixa[1]?.[1] ?? 0 : 0)) / N) * 100),
+  };
+
+  // 3) Fortes (top 8)
+  const ordenadasDesc = Array.from(freq.entries())
+    .sort((a, b) => b[1] - a[1] || a[0] - b[0]);
+  const fortes: MolduraDezenaForte[] = ordenadasDesc.slice(0, 8).map(([dezena, vezes]) => ({
+    dezena,
+    vezes,
+    perc: Math.round((vezes / N) * 100),
+  }));
+
+  // 4) Matriz de coocorrência da moldura (apenas dezenas da moldura entre si)
+  const coOc = new Map<string, number>(); // "a-b" com a<b
+  const keyPair = (a: number, b: number) => (a < b ? `${a}-${b}` : `${b}-${a}`);
+  const coTrio = new Map<string, number>(); // "a-b-c" ordenado
+  for (const c of concursos) {
+    const dsMold = c.dezenas.filter((d) => moldSet.has(d)).sort((x, y) => x - y);
+    for (let i = 0; i < dsMold.length; i++) {
+      for (let j = i + 1; j < dsMold.length; j++) {
+        const k = keyPair(dsMold[i], dsMold[j]);
+        coOc.set(k, (coOc.get(k) || 0) + 1);
+        for (let l = j + 1; l < dsMold.length; l++) {
+          const tk = `${dsMold[i]}-${dsMold[j]}-${dsMold[l]}`;
+          coTrio.set(tk, (coTrio.get(tk) || 0) + 1);
+        }
+      }
+    }
+  }
+
+  // 5) Melhores pares e trios
+  const melhoresPares: MolduraPar[] = Array.from(coOc.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 3)
+    .map(([k, vezes]) => {
+      const [a, b] = k.split("-").map(Number);
+      return { a, b, vezes };
+    });
+
+  const melhoresTrios: MolduraTrio[] = Array.from(coTrio.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 2)
+    .map(([k, vezes]) => {
+      const [a, b, c] = k.split("-").map(Number);
+      return { a, b, c, vezes };
+    });
+
+  // 6) Fracas: ≤ 30% de presença
+  const limiteFraca = N * 0.3;
+  const fracasBase = ordenadasDesc.filter(([, v]) => v <= limiteFraca && v > 0).slice(-4);
+  // Se nenhuma com v>0 ≤30%, usa as menos frequentes (até 3)
+  const fracasFonte = fracasBase.length > 0 ? fracasBase : ordenadasDesc.slice(-3);
+  const fracas: MolduraDezenaFraca[] = fracasFonte.map(([dezena, vezes]) => {
+    // Companheiras = outras dezenas da moldura que mais saíram NOS sorteios em que essa fraca apareceu
+    const compFreq = new Map<number, number>();
+    for (const c of concursos) {
+      if (!c.dezenas.includes(dezena)) continue;
+      for (const d of c.dezenas) {
+        if (d === dezena || !moldSet.has(d)) continue;
+        compFreq.set(d, (compFreq.get(d) || 0) + 1);
+      }
+    }
+    const companheirasFrequentes = Array.from(compFreq.entries())
+      .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+      .slice(0, 3)
+      .map(([d]) => d);
+    return {
+      dezena,
+      vezes,
+      perc: Math.round((vezes / N) * 100),
+      companheirasFrequentes,
+    };
+  }).sort((a, b) => a.vezes - b.vezes || a.dezena - b.dezena).slice(0, 3);
+
+  // 7) Padrão de falha: sorteios com moldura ≤ (mediaMoldura - 1)
+  const limiarFalha = Math.floor(mediaMoldura - 1);
+  let vezesFraca = 0;
+  const ausentesContador = new Map<number, number>();
+  for (let i = 0; i < concursos.length; i++) {
+    if (qtdMoldPorSorteio[i] <= limiarFalha) {
+      vezesFraca++;
+      const presentes = new Set(concursos[i].dezenas);
+      for (const d of MOLDURA) {
+        if (!presentes.has(d)) ausentesContador.set(d, (ausentesContador.get(d) || 0) + 1);
+      }
+    }
+  }
+  const ausentesTop = Array.from(ausentesContador.entries())
+    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+    .slice(0, 4)
+    .map(([d]) => d);
+
+  // 8) Recomendação por classificação (núcleo / apoio / coringas / fora)
+  const qtdRecomendada = Math.max(7, Math.min(11, Math.round(mediaMoldura)));
+  const fortesPercSorted = fortes; // já ordenado desc por vezes
+  const nucleoForte = fortesPercSorted.filter((f) => f.perc >= 70).slice(0, 4).map((f) => f.dezena);
+  const apoio = fortesPercSorted
+    .filter((f) => f.perc >= 50 && f.perc < 70 && !nucleoForte.includes(f.dezena))
+    .slice(0, 3)
+    .map((f) => f.dezena);
+
+  // Coringas: dezenas da moldura com freq média-baixa (30-50%) e que NÃO estão fracas
+  const fracasIds = new Set(fracas.map((x) => x.dezena));
+  const coringas = ordenadasDesc
+    .map(([d, v]) => ({ d, perc: Math.round((v / N) * 100) }))
+    .filter((x) =>
+      x.perc >= 30 && x.perc < 50 &&
+      !nucleoForte.includes(x.d) && !apoio.includes(x.d) && !fracasIds.has(x.d)
+    )
+    .slice(0, 2)
+    .map((x) => x.d);
+
+  const deixarFora = fracas.map((f) => f.dezena);
+
+  const recomendacao: MolduraRecomendacao = {
+    qtdRecomendada,
+    nucleoForte,
+    apoio,
+    coringas,
+    deixarFora,
+    justNucleo: "top frequência (70%+) e formam pares/trios consistentes",
+    justApoio: "frequência média (50-70%), reforçam a estrutura",
+    justCoringas: "atrasadas no momento, com tendência de retorno",
+    justFora: "padrão fraco recente, baixa coocorrência com o núcleo",
+  };
+
+  return {
+    totalConcursos: N,
+    mediaMoldura,
+    faixaMaisComum,
+    fortes,
+    fracas,
+    melhoresPares,
+    melhoresTrios,
+    padraoFalha: { vezesFraca, ausentesTop },
+    recomendacao,
+  };
+}
+
 function calcularDistribuicaoLinhas(concursos: Concurso[]): {
   medias: number[]; // L1..L5
   recomendacao: number[]; // valores arredondados que somam 15
@@ -478,10 +698,69 @@ function montarFatos(
     }
 
     case "analise_moldura": {
-      const m = calcularMolduraRecomendada(concursos);
-      const resumo = `Média de moldura nos últimos ${concursos.length}: ${m.mediaMoldura.toFixed(1)} dezenas. ` +
-        `Top moldura: [${m.topMoldura.slice(0, 8).map(fmt).join(", ")}]`;
-      const recomendacaoDireta = `Para o concurso ${proxConcurso}: use ${m.qtdRecomendada} dezenas da moldura, priorizando [${m.topMoldura.slice(0, m.qtdRecomendada).map(fmt).join(", ")}].`;
+      const a = analisarMolduraDetalhado(concursos);
+
+      const blocoPanorama = `📊 Panorama da Moldura (últimos ${a.totalConcursos} sorteios)\n` +
+        `A moldura tem 16 dezenas (01-05, 06, 10, 11, 15, 16, 20, 21-25).\n` +
+        `Média de moldura por concurso: ${a.mediaMoldura.toFixed(1)} dezenas.\n` +
+        `Faixa mais comum: ${a.faixaMaisComum.qtd1}${a.faixaMaisComum.qtd1 !== a.faixaMaisComum.qtd2 ? ` a ${a.faixaMaisComum.qtd2}` : ""} dezenas (${a.faixaMaisComum.perc}% dos sorteios).`;
+
+      const blocoFortes = `🔥 Top dezenas fortes da moldura\n` +
+        a.fortes.slice(0, 6).map((f) =>
+          `• ${fmt(f.dezena)} — saiu em ${f.vezes} dos ${a.totalConcursos} concursos (${f.perc}%)`
+        ).join("\n");
+
+      const blocoPares = a.melhoresPares.length > 0
+        ? `🤝 Melhores pares (saíram juntos com mais frequência)\n` +
+          a.melhoresPares.map((p) => `• ${fmt(p.a)} + ${fmt(p.b)} — juntas ${p.vezes}x`).join("\n")
+        : "";
+
+      const blocoTrios = a.melhoresTrios.length > 0
+        ? `🎯 Melhores trios\n` +
+          a.melhoresTrios.map((t) => `• ${fmt(t.a)} + ${fmt(t.b)} + ${fmt(t.c)} — juntos ${t.vezes}x`).join("\n")
+        : "";
+
+      const blocoFracas = a.fracas.length > 0
+        ? `❄️ Dezenas fracas da moldura (atenção)\n` +
+          a.fracas.map((f) => {
+            const comp = f.companheirasFrequentes.length > 0
+              ? ` → quando saiu, veio com ${f.companheirasFrequentes.map(fmt).join(" e ")}`
+              : "";
+            return `• ${fmt(f.dezena)} — saiu apenas ${f.vezes}x (${f.perc}%)${comp}`;
+          }).join("\n")
+        : "";
+
+      const limiarFalha = Math.floor(a.mediaMoldura - 1);
+      const blocoFalha = a.padraoFalha.vezesFraca > 0
+        ? `📉 Padrão de falha\n` +
+          `Quando a moldura veio fraca (≤${limiarFalha} dezenas), aconteceu em ${a.padraoFalha.vezesFraca} dos ${a.totalConcursos} concursos.\n` +
+          `Nesses casos, as ausentes foram principalmente: ${a.padraoFalha.ausentesTop.map(fmt).join(", ")}.`
+        : "";
+
+      const r = a.recomendacao;
+      const blocoRecomendacao = `💡 Como montar seu palpite para o ${proxConcurso}\n` +
+        `Recomendamos usar ${r.qtdRecomendada} dezenas da moldura, distribuídas assim:`;
+
+      const linhaNucleo = r.nucleoForte.length > 0
+        ? `🎯 Núcleo forte (${r.nucleoForte.length} fixas): ${r.nucleoForte.map(fmt).join(", ")}\n   → ${r.justNucleo}`
+        : "";
+      const linhaApoio = r.apoio.length > 0
+        ? `➕ Apoio (${r.apoio.length} dezenas): ${r.apoio.map(fmt).join(", ")}\n   → ${r.justApoio}`
+        : "";
+      const linhaCoringas = r.coringas.length > 0
+        ? `🎲 Coringas (${r.coringas.length} a girar): ${r.coringas.map(fmt).join(", ")}\n   → ${r.justCoringas}`
+        : "";
+      const linhaFora = r.deixarFora.length > 0
+        ? `❌ Deixe de fora desta rodada: ${r.deixarFora.map(fmt).join(", ")}\n   → ${r.justFora}`
+        : "";
+
+      const resumo = [
+        blocoPanorama, blocoFortes, blocoPares, blocoTrios, blocoFracas, blocoFalha,
+        blocoRecomendacao, linhaNucleo, linhaApoio, linhaCoringas, linhaFora,
+      ].filter(Boolean).join("\n\n");
+
+      const recomendacaoDireta = `Para o concurso ${proxConcurso}: use ${r.qtdRecomendada} dezenas da moldura — núcleo [${r.nucleoForte.map(fmt).join(", ")}], apoio [${r.apoio.map(fmt).join(", ")}], coringas [${r.coringas.map(fmt).join(", ")}], fora [${r.deixarFora.map(fmt).join(", ")}].`;
+
       return { resumo, recomendacaoDireta };
     }
 
@@ -572,9 +851,9 @@ ${fatos.resumo}
 RECOMENDAÇÃO DIRETA QUE VOCÊ DEVE INCLUIR LITERALMENTE NO TEXTO:
 ${fatos.recomendacaoDireta}
 
-${tipoPost === "analise_ciclo" ? `IMPORTANTE — TIPO CICLO: REPRODUZA LITERALMENTE os blocos "📊 Onde estamos", "📈 Histórico", "💡 Como montar seu palpite", "🎯 Faltantes prioritárias" e "❌ Deixadas de fora" exatamente como aparecem em DADOS REAIS, sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}ESTRUTURA OBRIGATÓRIA do conteúdo:
+${tipoPost === "analise_ciclo" ? `IMPORTANTE — TIPO CICLO: REPRODUZA LITERALMENTE os blocos "📊 Onde estamos", "📈 Histórico", "💡 Como montar seu palpite", "🎯 Faltantes prioritárias" e "❌ Deixadas de fora" exatamente como aparecem em DADOS REAIS, sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_moldura" ? `IMPORTANTE — TIPO MOLDURA: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 Panorama", "🔥 Top dezenas fortes", "🤝 Melhores pares", "🎯 Melhores trios", "❄️ Dezenas fracas", "📉 Padrão de falha", "💡 Como montar seu palpite", "🎯 Núcleo forte", "➕ Apoio", "🎲 Coringas", "❌ Deixe de fora") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}ESTRUTURA OBRIGATÓRIA do conteúdo:
 1) Abertura curta (1 linha) com gancho diferente a cada vez.
-2) Bloco principal — para "Análise por Linhas", "Análise por Colunas" e "Análise de Ciclo", REPRODUZA LITERALMENTE o conteúdo de "DADOS REAIS", sem resumir nem omitir nenhum item. Para os outros tipos, resuma os dados em 2-3 linhas sob o título "📊 O que aconteceu nos últimos 10".
+2) Bloco principal — para "Análise por Linhas", "Análise por Colunas", "Análise de Ciclo" e "Análise de Moldura", REPRODUZA LITERALMENTE o conteúdo de "DADOS REAIS", sem resumir nem omitir nenhum item. Para os outros tipos, resuma os dados em 2-3 linhas sob o título "📊 O que aconteceu nos últimos 10".
 3) Bloco "💡 Como montar seu palpite" — escreva a RECOMENDAÇÃO DIRETA acima, em destaque (pular se já estiver no bloco literal acima).
 4) Disclaimer curto: "Loteria envolve sorte. Use como guia, não como certeza."
 
@@ -583,7 +862,7 @@ REGRAS CRÍTICAS:
 - Se citar o concurso, use exatamente ${proxConcurso}.
 - Tom humano, acolhedor, em primeira pessoa. Varie a abertura.
 - Use **negrito** nas dezenas e na recomendação.
-- Máximo ${tipoPost === "analise_ciclo" ? "1800" : "1500"} caracteres no conteúdo.
+- Máximo ${tipoPost === "analise_ciclo" || tipoPost === "analise_moldura" ? "2000" : "1500"} caracteres no conteúdo.
 - Apenas dezenas de 01 a 25.
 - NUNCA mencione IA, bot, modelo, GPT ou Gemini.
 
@@ -809,7 +1088,7 @@ serve(async (req) => {
       console.warn(`[generate-guide-post] ⚠️ ${motivoFallback}`);
       conteudo = fallbackConteudo(fatos);
     } else {
-      const limiteConteudo = tipoPost === "analise_ciclo" ? 2000 : 1500;
+      const limiteConteudo = tipoPost === "analise_ciclo" || tipoPost === "analise_moldura" ? 2000 : 1500;
       const conteudoIA = sanitizar(ia.content || "").substring(0, limiteConteudo);
       const validacao = validarConteudoNumerico(conteudoIA, numerosPermitidos);
 

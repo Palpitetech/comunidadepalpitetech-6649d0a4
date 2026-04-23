@@ -1,0 +1,1 @@
+DELETE FROM public.postagens WHERE id = 'a18bd0bd-b745-4eed-8da4-719a9e7a9cc6';
