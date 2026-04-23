@@ -2289,6 +2289,9 @@ function montarPrompt(tipoPost: string, fatos: { resumo: string; recomendacaoDir
     analise_colunas: "Análise por Colunas",
     analise_posicoes_iniciais: "Posições Iniciais — 3 primeiras dezenas",
     analise_posicoes_finais: "Posições Finais — 3 últimas dezenas",
+    analise_cenarios: "Cenários do Dia — 3 perfis de palpite",
+    analise_ficar_de_olho: "Ficar de Olho — Dezenas em desaceleração",
+    analise_como_calculamos: "Como Calculamos — Bastidores da metodologia",
   };
   const tema = titulos[tipoPost] || "Análise da Lotofácil";
   const proxConcurso = ultimoConcurso + 1;
