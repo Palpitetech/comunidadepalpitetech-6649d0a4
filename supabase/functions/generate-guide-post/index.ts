@@ -2047,7 +2047,7 @@ serve(async (req) => {
       console.warn(`[generate-guide-post] ⚠️ ${motivoFallback}`);
       conteudo = fallbackConteudo(fatos);
     } else {
-      const limiteConteudo = tipoPost === "analise_ciclo" || tipoPost === "analise_moldura" ? 2000 : tipoPost === "analise_movimentacao" || tipoPost === "analise_repetidas" ? 2200 : 1500;
+      const limiteConteudo = tipoPost === "analise_ciclo" || tipoPost === "analise_moldura" ? 2000 : tipoPost === "analise_movimentacao" || tipoPost === "analise_repetidas" || tipoPost === "analise_linhas" || tipoPost === "analise_colunas" ? 2200 : 1500;
       const conteudoIA = sanitizar(ia.content || "").substring(0, limiteConteudo);
       const validacao = validarConteudoNumerico(conteudoIA, numerosPermitidos);
 
