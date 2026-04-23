@@ -119,6 +119,7 @@ import PerfilSeguranca from "./pages/PerfilSeguranca";
 import GerarJogos from "./pages/GerarJogos";
 import Central from "./pages/Central";
 import VerificarWhatsApp from "./pages/VerificarWhatsApp";
+import PalpitesEstudos from "./pages/PalpitesEstudos";
 
 const queryClient = new QueryClient();
 
@@ -166,6 +167,7 @@ const App = () => (
                 <Route path="/privacidade" element={<Privacidade />} />
                 <Route path="/proximos-concursos" element={<ProximosConcursos />} />
                 <Route path="/verificar-whatsapp" element={<VerificarWhatsApp />} />
+                <Route path="/palpites-estudos" element={<PalpitesEstudos />} />
                 <Route path="/g/:slug" element={<SmartLinkRedirect />} />
                 <Route path="/gerar-novo-pix/:slug" element={<GerarNovoPix />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Index /></ProtectedRoute>} />
