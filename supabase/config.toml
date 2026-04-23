@@ -89,3 +89,6 @@ verify_jwt = false
 
 [functions.process-lead-retargeting]
 verify_jwt = false
+
+[functions.verify-whatsapp-number]
+verify_jwt = false
