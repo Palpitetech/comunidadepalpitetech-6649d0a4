@@ -1,100 +1,107 @@
 
 
-## Enriquecer o Post de Ciclo com dados históricos
+## Enriquecer o Post de Moldura com estudo profundo
 
-Trazer o **status real do ciclo atual** + a **distribuição histórica de duração** + **justificativa explícita** das dezenas escolhidas/excluídas.
+Transformar o post de moldura num **estudo real**: mostrar quantos concursos cada dezena top apareceu, quais formaram **pares e trios mais fortes**, quais foram as **dezenas fracas** da moldura (e com quem saíram), o **padrão de falha** e justificar **dezena por dezena** na recomendação.
 
 ## Como vai ficar o post
 
 ```text
-🔄 Ciclo da Lotofácil — Concurso 3668
+🖼️ Análise de Moldura — Concurso 3668
 
 Olá pessoal!
 
-📊 Onde estamos
-Estamos no Ciclo 45, atualmente com 2 concursos jogados (3666 e 3667).
-O próximo sorteio (3668) será o 3º concurso deste ciclo.
-Faltam 13 dezenas para fechar: 03, 06, 08, 09, 10, 12, 14, 16, 17, 19, 20, 22, 25.
+📊 Panorama da Moldura (últimos 10 sorteios)
+A moldura tem 16 dezenas (01-05, 06, 10, 11, 15, 16, 20, 21-25).
+Média de moldura por concurso: 9.4 dezenas.
+Faixa mais comum: 9 a 10 dezenas (70% dos sorteios).
 
-📈 Histórico (últimos 44 ciclos fechados)
-• 2 concursos: 4 vezes (9%)
-• 3 concursos: 14 vezes (32%)
-• 4 concursos: 11 vezes (25%)
-• 5 concursos: 6 vezes (14%)
-• 6+ concursos: 9 vezes (20%)
-Mais comum: ciclo fecha em 3 ou 4 concursos (57% dos casos).
+🔥 Top dezenas fortes da moldura
+• 25 — saiu em 9 dos 10 concursos (90%)
+• 21 — saiu em 8 dos 10 concursos (80%)
+• 03 — saiu em 8 dos 10 concursos (80%)
+• 11 — saiu em 7 dos 10 concursos (70%)
+• 16 — saiu em 7 dos 10 concursos (70%)
+• 05 — saiu em 6 dos 10 concursos (60%)
+
+🤝 Melhores pares (saíram juntos com mais frequência)
+• 25 + 21 — juntas 7x
+• 25 + 03 — juntas 7x
+• 21 + 11 — juntas 6x
+
+🎯 Melhores trios
+• 25 + 21 + 03 — juntos 6x
+• 25 + 11 + 16 — juntos 5x
+
+❄️ Dezenas fracas da moldura (atenção)
+• 06 — saiu apenas 2x (20%)  → quando saiu, veio com 25 e 11
+• 22 — saiu apenas 3x (30%)  → quando saiu, veio com 21 e 03
+• 10 — saiu apenas 3x (30%)  → quando saiu, veio com 16 e 05
+
+📉 Padrão de falha
+Quando a moldura veio fraca (≤8 dezenas), aconteceu em 2 dos 10 concursos.
+Nesses casos, as ausentes foram principalmente: 06, 22, 10, 20.
 
 💡 Como montar seu palpite para o 3668
-Como ainda estamos cedo no ciclo (3º concurso), a chance de fechamento agora é baixa
-(somente 9% dos ciclos fecharam tão rápido).
-👉 Recomendação: NÃO aposte tudo nas faltantes ainda. Use 6 a 8 dezenas faltantes
-prioritárias e complete com quentes.
+Recomendamos usar 9 dezenas da moldura, distribuídas assim:
 
-🎯 Faltantes prioritárias (6): 03, 09, 12, 17, 20, 25
-   → escolhidas porque saíram menos vezes nos últimos 10 sorteios
-❌ Deixadas de fora desta rodada: 06, 08, 10, 14, 16, 19, 22
-   → ainda há tempo no ciclo, dá pra incluí-las nos próximos concursos
+🎯 Núcleo forte (4 fixas): **25, 21, 03, 11**
+   → top frequência (70%+) e formam pares/trios consistentes
+
+➕ Apoio (3 dezenas): **16, 05, 23**
+   → frequência média (60-70%), reforçam a estrutura
+
+🎲 Coringas (2 dezenas a girar): **15, 20**
+   → atrasadas no momento, com tendência de retorno
+
+❌ Deixe de fora desta rodada: **06, 22, 10**
+   → padrão fraco recente, baixa coocorrência com o núcleo
 
 Loteria envolve sorte. Use como guia, não como certeza.
 ```
-
-Quando o ciclo estiver perto de fechar (ex.: 4º ou 5º concurso já dentro da faixa mais comum), a recomendação inverte automaticamente para **"aposte forte no fechamento"**.
 
 ## Arquivo afetado
 
 **Apenas:** `supabase/functions/generate-guide-post/index.ts`
 
-### 1. Buscar histórico completo de ciclos no handler
+### 1. Substituir `calcularMolduraRecomendada()` por motor expandido
 
-Hoje a função busca só os últimos 10 concursos. Vamos adicionar uma segunda query (paralela) que retorna a duração de **todos os ciclos já fechados**:
+Nova função `analisarMolduraDetalhado(concursos)` retorna:
+- **`mediaMoldura`** (já existe)
+- **`faixaMaisComum`** — distribuição de quantidade de dezenas da moldura por concurso (top 2 faixas + %)
+- **`fortes`** — array das dezenas da moldura com `{ dezena, vezes, perc }` ordenadas desc, top 8
+- **`fracas`** — dezenas da moldura com `{ dezena, vezes, perc, companheirasFrequentes: number[] }` (até 3 dezenas que mais saíram junto), filtradas com vezes ≤ 30% dos concursos
+- **`melhoresPares`** — top 3 pares de dezenas da moldura que mais coocorreram (calculado por matriz de coocorrência)
+- **`melhoresTrios`** — top 2 trios da moldura que mais coocorreram
+- **`padraoFalha`** — quantos concursos tiveram moldura ≤ (média - 1) e quais dezenas faltaram nesses concursos (top 4 ausentes)
+- **`recomendacao`** — objeto com `{ qtdRecomendada, nucleoForte: number[], apoio: number[], coringas: number[], deixarFora: number[] }` + justificativa textual por grupo
 
-```sql
-SELECT ciclo_numero, COUNT(*) AS duracao
-FROM resultados_loterias
-WHERE loteria='lotofacil' AND ciclo_numero IS NOT NULL
-GROUP BY ciclo_numero
-```
+### 2. Atualizar `case "analise_moldura"` em `montarFatos()`
 
-Esse array é passado para `montarFatos()` como parâmetro extra **só** para `analise_ciclo`.
+O `resumo` passa a montar **literalmente** os 6 blocos do post (panorama, fortes, pares, trios, fracas, padrão de falha). O `recomendacaoDireta` monta o bloco "Como montar seu palpite" com **núcleo forte / apoio / coringas / deixar de fora** já com justificativa por grupo.
 
-### 2. Novo motor determinístico
+### 3. Atualizar `montarPrompt()`
 
-Adicionar 2 funções:
+Adicionar `analise_moldura` à lista de tipos que exigem **reprodução literal** dos blocos numéricos. A IA só escreve a abertura (1 linha) e o disclaimer final.
 
-- **`calcularEstatisticasCiclo(historicoCiclos)`** — recebe todos os ciclos, exclui o ciclo atual (em andamento) e retorna:
-  - distribuição: `{2: 4, 3: 14, 4: 11, 5: 6, 6: 5, 7: 3, 8: 1, ...}`
-  - percentuais
-  - faixa mais comum (top 2 durações somadas)
-  - total de ciclos analisados
+### 4. Atualizar validador
 
-- **`montarRecomendacaoCiclo(posicaoNoCiclo, estatisticas, faltantes, quentes)`** — decide:
-  - Se posição atual ≤ percentil 25 das durações → "ainda é cedo, NÃO aposte fechamento"
-  - Se posição atual ∈ faixa mais comum → "alta chance de fechar agora, aposte fechamento"
-  - Se posição atual > percentil 75 → "ciclo demorando, ainda dá pra entrar"
-  - Escolhe N faltantes priorizando as **mais quentes na janela de 10 sorteios** (justificativa: "saíram mais vezes recentemente")
-  - Lista as faltantes deixadas de fora com justificativa ("ainda há tempo no ciclo")
+Whitelist já cobre 0–100. Liberar também os números das dezenas da moldura (já estão em `permitidos` via `c.dezenas`). Adicionar percentuais de coocorrência (já cobertos por 0–100). Sem mudanças extras.
 
-### 3. Atualizar `case "analise_ciclo"` em `montarFatos()`
+### 5. Limite de caracteres
 
-O `resumo` passa a incluir os 4 blocos: status atual, posição no próximo concurso, histórico de durações com %, e justificativa por dezena.
+Aumentar para `analise_moldura` o limite de 1500 → **2000 caracteres** (post mais rico).
 
-### 4. Atualizar `montarPrompt()`
+### 6. Fallback
 
-Instrução adicional para `analise_ciclo`: reproduzir os blocos "📈 Histórico", "🎯 Faltantes prioritárias" e "❌ Deixadas de fora" **literalmente**, sem resumir.
-
-### 5. Atualizar validador
-
-A whitelist já permite 0–80 (cobre contagens, percentuais e número de concursos). Adicionar `permitidos.add(totalCiclos)` para liberar o número total de ciclos analisados (ex.: 44).
-
-### 6. Atualizar `fallbackConteudo()`
-
-Como o fallback hoje é genérico (usa `fatos.resumo` direto), e o novo `resumo` já vem completo, o fallback já vai render correto sem mudança extra.
+Como o fallback usa `fatos.resumo + fatos.recomendacaoDireta` direto, ambos já vão vir completos com o novo formato. Sem mudança extra.
 
 ## Garantias
 
-- **Posição no ciclo**: calculada por `COUNT(concursos onde ciclo_numero = atual) + 1`. Determinística.
-- **Histórico de durações**: vem de `GROUP BY ciclo_numero` — sempre real.
-- **Justificativa das dezenas**: cruzamento entre `faltantes` e `topQuentes(10)` — explicação automática.
-- **Recomendação fechamento sim/não**: regra fixa em código baseada em percentis da distribuição histórica.
-- **Texto humanizado**: IA só escreve abertura e transições. Números e justificativas vêm prontos.
+- **Coocorrências (pares/trios)**: matriz determinística calculada em TypeScript — sempre real.
+- **Companheiras das dezenas fracas**: cruzamento de presença nos mesmos concursos onde a fraca apareceu.
+- **Padrão de falha**: filtro de concursos abaixo da média + contagem de ausentes.
+- **Justificativa por grupo (núcleo/apoio/coringas/fora)**: classificação automática por faixa de frequência.
+- **Texto humanizado**: IA só escreve abertura e disclaimer; números, dezenas e justificativas vêm prontos do motor.
+- **Anti-alucinação**: validador descarta qualquer número fora da whitelist; fallback publica o estudo completo se a IA falhar.
 
