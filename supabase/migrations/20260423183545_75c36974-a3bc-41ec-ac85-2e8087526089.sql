@@ -1,0 +1,1 @@
+DELETE FROM public.postagens WHERE user_id IN (SELECT id FROM public.perfis WHERE is_bot = true) AND created_at >= (CURRENT_DATE AT TIME ZONE 'America/Sao_Paulo')::timestamptz;
