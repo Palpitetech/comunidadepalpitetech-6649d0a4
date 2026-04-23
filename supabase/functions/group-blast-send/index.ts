@@ -176,11 +176,16 @@ async function handleSend(
 
   if (logsErr) throw logsErr;
   if (!logs || logs.length === 0) {
+    console.log(`[group-blast-send] handleSend boot: 0 pendentes`);
     return jsonResponse({ sent: 0, failed: 0, message: "Nenhum pendente" });
   }
 
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? "";
   const BASE_URL = Deno.env.get("COMMUNITY_BASE_URL") ?? "";
+
+  console.log(
+    `[group-blast-send] handleSend boot: ${logs.length} pendente(s) — ids=${logs.map((l: any) => l.id).join(",")} slots=${logs.map((l: any) => l.slot_id).join(",")}`
+  );
 
   let sent = 0;
   let failed = 0;
@@ -219,13 +224,33 @@ async function handleSend(
       const slot = slots.find((s: Slot) => s.id === log.slot_id);
 
       let messageContent: string | null = null;
+      let generationSource = "unknown";
 
       if (slot?.message_type === "manual" && slot?.message_content?.trim()) {
         messageContent = slot.message_content.trim();
+        generationSource = "manual";
       } else if (slot?.message_type === "palpite") {
         const includePalpites = configData?.include_palpites ?? true;
         const vipGroupLink = configData?.vip_group_link || null;
         messageContent = await generatePalpiteMessage(supabase, LOVABLE_API_KEY, BASE_URL, includePalpites, vipGroupLink);
+        generationSource = "palpite";
+
+        // Fallback: se a geração de palpite falhou, tenta o caminho do tipo "ai" (último post)
+        if (!messageContent || messageContent.trim().length === 0) {
+          console.warn(`[group-blast-send] Palpite gen falhou para log ${log.id}, tentando fallback de último post`);
+          const { data: latestPost } = await supabase
+            .from("postagens")
+            .select("id, slug, titulo, conteudo, tipo")
+            .neq("tipo", "comentario")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (latestPost) {
+            messageContent = await generateAIMessage(supabase, LOVABLE_API_KEY, BASE_URL, latestPost);
+            generationSource = "palpite→ai_fallback";
+          }
+        }
       } else {
         const { data: latestPost } = await supabase
           .from("postagens")
@@ -237,15 +262,24 @@ async function handleSend(
 
         if (latestPost) {
           messageContent = await generateAIMessage(supabase, LOVABLE_API_KEY, BASE_URL, latestPost);
-        }
-
-        if (!messageContent) {
-          console.warn(`[group-blast-send] Sem post ou IA falhou para log ${log.id}, skip`);
-          continue;
+          generationSource = "ai";
         }
       }
 
-      if (!messageContent) continue;
+      // Guarda dura: nunca enviar mensagem vazia para Evolution
+      if (!messageContent || messageContent.trim().length === 0) {
+        const reason = `Mensagem vazia (slot.message_type=${slot?.message_type ?? "n/a"}, source=${generationSource}, value=${messageContent === null ? "null" : "empty"})`;
+        console.error(`[group-blast-send] ${reason} — log ${log.id}`);
+        await supabase
+          .from("group_blast_logs")
+          .update({
+            status: "failed",
+            error_message: reason,
+          })
+          .eq("id", log.id);
+        failed++;
+        continue;
+      }
 
       const res = await fetch(
         `${evolutionUrl}/message/sendText/${instance.evolution_instance_id}`,
@@ -264,8 +298,10 @@ async function handleSend(
       );
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData?.message || errData?.error || `HTTP ${res.status}`);
+        const bodyText = await res.text().catch(() => "");
+        throw new Error(
+          `HTTP ${res.status} | instance=${instance.evolution_instance_id} | bodyLen=${messageContent.length} | resp=${bodyText.slice(0, 300)}`
+        );
       }
 
       await res.text();
