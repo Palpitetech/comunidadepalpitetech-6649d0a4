@@ -3351,6 +3351,14 @@ export type Database = {
           phone_number: string
         }[]
       }
+      select_best_instances: {
+        Args: { p_limit?: number }
+        Returns: {
+          evolution_instance_id: string
+          instance_id: string
+          phone_number: string
+        }[]
+      }
       should_send_template: {
         Args: { p_template_id: string; p_user_id: string }
         Returns: boolean
