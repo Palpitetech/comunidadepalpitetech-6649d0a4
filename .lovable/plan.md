@@ -1,92 +1,54 @@
 
 
-# Force-update imediato para todos os usuários (PWA + Web)
+## Análise do arquivo
 
-## Como vai funcionar
+Confirmei: o `Mega-Sena.xlsx` é o arquivo **oficial da Caixa Econômica Federal**, com as colunas:
 
-```text
-[Você faz deploy] 
-       ↓
-[Admin abre /admin → clica "Forçar atualização global"]
-       ↓
-[Backend grava nova versão em app_config.current_version = timestamp]
-       ↓
-[Todo cliente conectado consulta app_config a cada 30s]
-       ↓
-[Detecta versão > versão local → window.location.reload(true)]
-       ↓
-[Service Worker novo assume + cache antigo limpo + página recarrega]
-       ↓
-[Usuário vê nova versão em <60s, sem precisar fechar a aba]
-```
+`Concurso | Data do Sorteio | Bola1..Bola6 | Ganhadores 6/5/4 acertos | Cidade/UF | Rateios | Acumulado | Arrecadação | Estimativa | Mega da Virada | Observação`
 
-## Mudanças
+Isso é **superior** ao que temos hoje:
+- Hoje no banco: **278 concursos** registrados (com muitos buracos), do concurso 1 ao 2998
+- Excel oficial: **todos** os ~2998 concursos sem gaps, com dados de premiação completos
 
-### 1. Banco — tabela `app_config` (singleton)
+## O que o plano vai fazer
 
-Tabela com 1 linha só, guardando a versão "obrigatória mínima":
+Importar 100% do histórico da Mega Sena para a tabela `resultados_loterias`, preenchendo os ~2700 concursos faltantes e atualizando os existentes — com cálculo dos mesmos indicadores estatísticos (pares, primos, moldura, fibonacci, soma, sequências, repetidas) usados pela `sync-megasena`, garantindo consistência total com o sistema atual.
 
-```sql
-create table public.app_config (
-  id int primary key default 1 check (id = 1),
-  current_version bigint not null default extract(epoch from now())::bigint,
-  force_reload_at timestamptz not null default now(),
-  updated_by uuid references auth.users(id),
-  updated_at timestamptz not null default now()
-);
-```
+## Plano de implementação
 
-- RLS: `SELECT` público (todos precisam ler para checar), `UPDATE` só admin (`has_role(auth.uid(), 'admin')`).
-- Realtime habilitado (`ALTER PUBLICATION supabase_realtime ADD TABLE app_config`) para push instantâneo.
-- 1 linha inicial via `INSERT ... ON CONFLICT DO NOTHING`.
+**1. Edge Function `backfill-megasena-excel`** (admin-only)
+- Recebe o XLSX via upload (multipart) ou base64
+- Parseia com biblioteca `xlsx` (Deno)
+- Para cada linha:
+  - Monta `dezenas[]` ordenadas (Bola1..Bola6)
+  - Converte data BR → ISO
+  - Calcula indicadores (pares, ímpares, primos, moldura, fibonacci, soma, sequências) usando as mesmas constantes da `sync-megasena/index.ts`
+  - Calcula `qtd_repetidas` comparando com concurso anterior (no próprio arquivo, em ordem)
+  - Monta `premiacao_json` a partir das colunas de Rateio/Ganhadores (faixas 6, 5 e 4 acertos)
+  - Preenche `acumulou`, `valor_acumulado`, `valor_estimado_proximo`, `local_sorteio` (Cidade/UF)
+- Faz **upsert em batch de 500** em `resultados_loterias` com `onConflict: "loteria,concurso"`
+- Retorna resumo: `{ total_lidos, inseridos, atualizados, erros }`
 
-### 2. Hook `useForceUpdate` (novo, em `src/hooks/useForceUpdate.ts`)
+**2. UI admin: botão "Importar histórico Mega Sena"** em `/admin` (área já existente de ferramentas)
+- Input de arquivo XLSX
+- Barra de progresso
+- Confirmação antes de executar (operação grande, ~3000 upserts)
+- Exibe resumo ao final
 
-- Lê `app_config.current_version` no mount, guarda em `localStorage("app_version")`.
-- Subscribe via Supabase Realtime no canal `app_config` — quando mudar, compara com versão local.
-- Fallback: polling a cada 30s (caso realtime caia).
-- Quando `serverVersion > localVersion`:
-  1. Atualiza `localStorage("app_version") = serverVersion` (evita loop).
-  2. Desregistra todos os service workers + limpa todos os caches (`caches.keys()` → `caches.delete()`).
-  3. `window.location.reload()` (hard reload).
-- Montado uma vez no `App.tsx`, abaixo dos providers.
-
-### 3. Botão admin — `ForceUpdateButton` em `/admin/whatsapp` ou `/admin` (a definir)
-
-Componente em `src/components/admin/ForceUpdateButton.tsx`:
-- Botão "Forçar atualização global" com confirmação (`AlertDialog`).
-- Onclick: `UPDATE app_config SET current_version = extract(epoch from now())::bigint, force_reload_at = now(), updated_by = auth.uid() WHERE id = 1`.
-- Toast: "Atualização disparada. Todos os usuários ativos serão recarregados em até 60 segundos."
-- Mostra também `force_reload_at` mais recente ("Último force-update: há 5 min").
-
-Sugestão: colocar dentro de `/admin` em uma seção "Sistema" ou no topo de `/admin/whatsapp` (você decide — me avisa onde prefere).
-
-### 4. Service Worker — garantir cache busting agressivo
-
-`vite.config.ts` já tem `skipWaiting: true` e `clientsClaim: true` (ok). Adicionar:
-- No hook, antes do reload: `await navigator.serviceWorker.getRegistrations().then(rs => Promise.all(rs.map(r => r.update())))` para forçar checagem do SW novo antes de recarregar.
-
-### 5. Coexistência com banner de update existente
-
-- `PWAUpdateHandler` e `PWAUpdateBanner` continuam para o caso "usuário só abriu agora e tem build novo no SW" (fluxo passivo).
-- `useForceUpdate` é o caminho ativo (admin aperta botão → todo mundo recarrega).
-- Não conflitam: o force-update sempre vence porque faz reload direto, sem perguntar.
-
-## Resultado esperado
-
-- Você faz deploy → entra no admin → clica "Forçar atualização global" → confirma.
-- Em até 30s (realtime) ou 60s (fallback polling), **todo navegador aberto** (PWA instalado, aba aberta no Chrome, qualquer coisa) detecta e recarrega sozinho.
-- Usuário vê um flash de reload e já está na versão nova, com SW novo, cache limpo.
-- Se o usuário estava digitando: perde o que digitava (trade-off aceito conforme escolha "Forçar reload sem perguntar").
+**3. Sem mudança de schema** — a tabela `resultados_loterias` já tem todos os campos necessários (validei).
 
 ## Detalhes técnicos
 
-- `current_version` é `bigint` (epoch em segundos) — compara numericamente, sem parse de string.
-- Primeiro acesso de um cliente novo: salva versão atual em `localStorage` sem recarregar (evita reload infinito).
-- Realtime preferencial; polling 30s só como rede de segurança.
-- Reload usa `window.location.reload()` — moderno e suficiente; `reload(true)` foi descontinuado mas o limpa-caches manual cobre o gap.
-- Sem mudanças em RLS de outras tabelas.
-- Arquivos novos: `src/hooks/useForceUpdate.ts`, `src/components/admin/ForceUpdateButton.tsx`.
-- Arquivos editados: `src/App.tsx` (montar hook), 1 página admin (montar botão).
-- Migração SQL: criar tabela + RLS + realtime + seed de 1 linha.
+- **Idempotente**: rodar 2x não duplica (upsert por `loteria,concurso`)
+- **Não quebra a sync diária**: a `sync-megasena` continua funcionando normalmente; quando rodar e ver que já tem o último concurso, não faz nada
+- **Indicadores 100% consistentes**: reutiliza exatamente as constantes `PRIMOS_MEGASENA`, `MOLDURA_MEGASENA`, `FIBONACCI_MEGASENA` já definidas em `sync-megasena/index.ts`
+- **Performance**: ~3000 linhas em batches de 500 → ~6 upserts → < 30s
+- **Segurança**: função verifica `has_role(uid, 'admin')` antes de processar
+
+## O que NÃO faz
+
+- Não toca em outras loterias
+- Não altera schema do banco
+- Não substitui a sync diária via API (continua sendo a fonte para concursos novos)
+- Não importa dados de prêmios complexos que o Excel não traz (locais detalhados de ganhadores ficam vazios — só o que o XLSX fornece)
 
