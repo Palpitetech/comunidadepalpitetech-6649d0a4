@@ -1090,7 +1090,7 @@ function montarFatos(
 function montarTituloDeterministico(tipoPost: string, proxConcurso: number): string {
   const titulosBase: Record<string, string> = {
     analise_ciclo: `🔄 Ciclo da Lotofácil — Concurso ${proxConcurso}`,
-    analise_movimentacao: `🔥 Quentes e Frias — Concurso ${proxConcurso}`,
+    analise_movimentacao: `🔥❄️ Quentes e Frias da Lotofácil — Concurso ${proxConcurso}`,
     analise_moldura: `🖼️ Análise de Moldura — Concurso ${proxConcurso}`,
     analise_repetidas: `🔁 Análise de Repetidas — Concurso ${proxConcurso}`,
     analise_linhas: `📐 Análise por Linhas — Concurso ${proxConcurso}`,
@@ -1119,9 +1119,9 @@ ${fatos.resumo}
 RECOMENDAÇÃO DIRETA QUE VOCÊ DEVE INCLUIR LITERALMENTE NO TEXTO:
 ${fatos.recomendacaoDireta}
 
-${tipoPost === "analise_ciclo" ? `IMPORTANTE — TIPO CICLO: REPRODUZA LITERALMENTE os blocos "📊 Onde estamos", "📈 Histórico", "💡 Como montar seu palpite", "🎯 Faltantes prioritárias" e "❌ Deixadas de fora" exatamente como aparecem em DADOS REAIS, sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_moldura" ? `IMPORTANTE — TIPO MOLDURA: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 Panorama", "🔥 Top dezenas fortes", "🤝 Melhores pares", "🎯 Melhores trios", "❄️ Dezenas fracas", "📉 Padrão de falha", "💡 Como montar seu palpite", "🎯 Núcleo forte", "➕ Apoio", "🎲 Coringas", "❌ Deixe de fora") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}ESTRUTURA OBRIGATÓRIA do conteúdo:
+${tipoPost === "analise_ciclo" ? `IMPORTANTE — TIPO CICLO: REPRODUZA LITERALMENTE os blocos "📊 Onde estamos", "📈 Histórico", "💡 Como montar seu palpite", "🎯 Faltantes prioritárias" e "❌ Deixadas de fora" exatamente como aparecem em DADOS REAIS, sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_moldura" ? `IMPORTANTE — TIPO MOLDURA: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 Panorama", "🔥 Top dezenas fortes", "🤝 Melhores pares", "🎯 Melhores trios", "❄️ Dezenas fracas", "📉 Padrão de falha", "💡 Como montar seu palpite", "🎯 Núcleo forte", "➕ Apoio", "🎲 Coringas", "❌ Deixe de fora") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}${tipoPost === "analise_movimentacao" ? `IMPORTANTE — TIPO QUENTES E FRIAS: REPRODUZA LITERALMENTE todos os blocos de DADOS REAIS ("📊 O que aconteceu", "🔥 Dezenas QUENTES", "🤝 Top duplas entre as quentes", "🎯 Top trios entre as quentes", "❄️ Dezenas FRIAS", "🚫 Piores duplas entre as frias", "📈 Acelerando", "📉 Desacelerando", "💡 Recomendação para o concurso", "🎯 FIXAR", "➕ APOIO forte", "❌ EXCLUIR", "⚠️ Ficar de olho") sem resumir, sem omitir e sem alterar nenhum número, dezena ou percentual. Você só pode escrever a abertura (1 linha) e o disclaimer final.\n\n` : ""}ESTRUTURA OBRIGATÓRIA do conteúdo:
 1) Abertura curta (1 linha) com gancho diferente a cada vez.
-2) Bloco principal — para "Análise por Linhas", "Análise por Colunas", "Análise de Ciclo" e "Análise de Moldura", REPRODUZA LITERALMENTE o conteúdo de "DADOS REAIS", sem resumir nem omitir nenhum item. Para os outros tipos, resuma os dados em 2-3 linhas sob o título "📊 O que aconteceu nos últimos 10".
+2) Bloco principal — para "Análise por Linhas", "Análise por Colunas", "Análise de Ciclo", "Análise de Moldura" e "Quentes e Frias", REPRODUZA LITERALMENTE o conteúdo de "DADOS REAIS", sem resumir nem omitir nenhum item. Para os outros tipos, resuma os dados em 2-3 linhas sob o título "📊 O que aconteceu nos últimos 10".
 3) Bloco "💡 Como montar seu palpite" — escreva a RECOMENDAÇÃO DIRETA acima, em destaque (pular se já estiver no bloco literal acima).
 4) Disclaimer curto: "Loteria envolve sorte. Use como guia, não como certeza."
 
@@ -1130,7 +1130,7 @@ REGRAS CRÍTICAS:
 - Se citar o concurso, use exatamente ${proxConcurso}.
 - Tom humano, acolhedor, em primeira pessoa. Varie a abertura.
 - Use **negrito** nas dezenas e na recomendação.
-- Máximo ${tipoPost === "analise_ciclo" || tipoPost === "analise_moldura" ? "2000" : "1500"} caracteres no conteúdo.
+- Máximo ${tipoPost === "analise_ciclo" || tipoPost === "analise_moldura" ? "2000" : tipoPost === "analise_movimentacao" ? "2200" : "1500"} caracteres no conteúdo.
 - Apenas dezenas de 01 a 25.
 - NUNCA mencione IA, bot, modelo, GPT ou Gemini.
 
@@ -1356,7 +1356,7 @@ serve(async (req) => {
       console.warn(`[generate-guide-post] ⚠️ ${motivoFallback}`);
       conteudo = fallbackConteudo(fatos);
     } else {
-      const limiteConteudo = tipoPost === "analise_ciclo" || tipoPost === "analise_moldura" ? 2000 : 1500;
+      const limiteConteudo = tipoPost === "analise_ciclo" || tipoPost === "analise_moldura" ? 2000 : tipoPost === "analise_movimentacao" ? 2200 : 1500;
       const conteudoIA = sanitizar(ia.content || "").substring(0, limiteConteudo);
       const validacao = validarConteudoNumerico(conteudoIA, numerosPermitidos);
 
