@@ -1279,7 +1279,224 @@ function montarBlocosEixo(a: AnaliseEixoCompleta, proxConcurso: number): { resum
   return { resumo, recomendacaoDireta };
 }
 
-// Arredonda um vetor de médias e ajusta para somar exatamente 15
+// =============================================================================
+// POSIÇÕES (P1..P3 ou P13..P15) — análise determinística
+// =============================================================================
+
+interface PosicaoDetalhada {
+  rotulo: string;
+  faixaMin: number;
+  faixaMax: number;
+  percFaixa: number;
+  top3: Array<{ dezena: number; vezes: number; perc: number }>;
+}
+
+interface AnalisePosicoesCompleta {
+  modo: "inicial" | "final";
+  totalConcursos: number;
+  posicoes: PosicaoDetalhada[];
+  somaMedia: number;
+  somaMin: number;
+  somaMax: number;
+  distanciaMedia: number;
+  coocorrenciaUltimo: number;
+  recomendacao: {
+    trioRecomendado: number[];
+    alternativas: number[];
+    evitar: number[];
+    alerta: string;
+  };
+}
+
+function analisarPosicoesDetalhado(
+  concursos: Concurso[],
+  modo: "inicial" | "final",
+): AnalisePosicoesCompleta {
+  const N = concursos.length;
+  const indices = modo === "inicial" ? [0, 1, 2] : [12, 13, 14];
+  const rotulos = modo === "inicial" ? ["P1", "P2", "P3"] : ["P13", "P14", "P15"];
+
+  const trios: Array<[number, number, number]> = [];
+  for (const c of concursos) {
+    const ord = [...c.dezenas].sort((a, b) => a - b);
+    if (ord.length < 15) continue;
+    trios.push([ord[indices[0]], ord[indices[1]], ord[indices[2]]]);
+  }
+
+  const posicoes: PosicaoDetalhada[] = indices.map((_, slot) => {
+    const valoresPos = trios.map((t) => t[slot]);
+    const faixaMin = Math.min(...valoresPos);
+    const faixaMax = Math.max(...valoresPos);
+    const percFaixa = 100;
+    const freq = new Map<number, number>();
+    for (const v of valoresPos) freq.set(v, (freq.get(v) || 0) + 1);
+    const top3 = Array.from(freq.entries())
+      .map(([dezena, vezes]) => ({
+        dezena,
+        vezes,
+        perc: Math.round((vezes / N) * 100),
+      }))
+      .sort((a, b) => b.vezes - a.vezes || a.dezena - b.dezena)
+      .slice(0, 3);
+    return { rotulo: rotulos[slot], faixaMin, faixaMax, percFaixa, top3 };
+  });
+
+  const somas = trios.map(([a, b, c]) => a + b + c);
+  const somaMedia = somas.reduce((s, x) => s + x, 0) / somas.length;
+  const somaMin = Math.min(...somas);
+  const somaMax = Math.max(...somas);
+  const distancias = trios.map(([a, _b, c]) => c - a);
+  const distanciaMedia = distancias.reduce((s, x) => s + x, 0) / distancias.length;
+
+  let coocorrenciaUltimo = 0;
+  for (let i = 0; i < concursos.length - 1; i++) {
+    const trioAtual = new Set(trios[i] || []);
+    const dezenasAnt = new Set(concursos[i + 1].dezenas);
+    let bateu = false;
+    for (const d of trioAtual) {
+      if (dezenasAnt.has(d)) { bateu = true; break; }
+    }
+    if (bateu) coocorrenciaUltimo++;
+  }
+
+  // Trio recomendado: top 1 de cada posição, dezenas distintas
+  const trioRecomendado: number[] = [];
+  const usadas = new Set<number>();
+  for (const p of posicoes) {
+    let escolha: number | null = null;
+    for (const cand of p.top3) {
+      if (!usadas.has(cand.dezena)) { escolha = cand.dezena; break; }
+    }
+    if (escolha === null && p.top3[0]) escolha = p.top3[0].dezena;
+    if (escolha !== null) { trioRecomendado.push(escolha); usadas.add(escolha); }
+  }
+
+  // Alternativas
+  const alternativas: number[] = [];
+  const usadasAlt = new Set<number>(trioRecomendado);
+  for (const p of posicoes) {
+    let escolha: number | null = null;
+    for (const cand of [p.top3[1], p.top3[2], p.top3[0]]) {
+      if (cand && !usadasAlt.has(cand.dezena)) { escolha = cand.dezena; break; }
+    }
+    if (escolha !== null) { alternativas.push(escolha); usadasAlt.add(escolha); }
+  }
+
+  // Evitar: dezenas da faixa relevante com perc ≤ 20% nessas posições
+  const faixaRelevanteMin = modo === "inicial" ? 1 : 16;
+  const faixaRelevanteMax = modo === "inicial" ? 10 : 25;
+  const presencaPorDezena = new Map<number, number>();
+  for (let d = faixaRelevanteMin; d <= faixaRelevanteMax; d++) presencaPorDezena.set(d, 0);
+  for (const trio of trios) {
+    const set = new Set(trio);
+    for (let d = faixaRelevanteMin; d <= faixaRelevanteMax; d++) {
+      if (set.has(d)) presencaPorDezena.set(d, (presencaPorDezena.get(d) || 0) + 1);
+    }
+  }
+  const evitar = Array.from(presencaPorDezena.entries())
+    .map(([dezena, vezes]) => ({ dezena, vezes, perc: Math.round((vezes / N) * 100) }))
+    .filter((x) => x.perc <= 20)
+    .sort((a, b) => a.vezes - b.vezes || a.dezena - b.dezena)
+    .slice(0, 3)
+    .map((x) => x.dezena);
+
+  const palavraTrio = modo === "inicial" ? "3 primeiras" : "3 últimas";
+  const alerta = `nos últimos ${N} sorteios, a soma das ${palavraTrio} ficou entre ${somaMin} e ${somaMax} — fugir dessa faixa quebra o padrão histórico`;
+
+  return {
+    modo,
+    totalConcursos: N,
+    posicoes,
+    somaMedia,
+    somaMin,
+    somaMax,
+    distanciaMedia,
+    coocorrenciaUltimo,
+    recomendacao: { trioRecomendado, alternativas, evitar, alerta },
+  };
+}
+
+function montarBlocosPosicoes(
+  a: AnalisePosicoesCompleta,
+  proxConcurso: number,
+): { resumo: string; recomendacaoDireta: string } {
+  const ehInicial = a.modo === "inicial";
+  const palavraTrio = ehInicial ? "3 primeiras" : "3 últimas";
+  const tituloMomento = ehInicial ? "INÍCIO" : "FINAL";
+  const emojiTrio = ehInicial ? "🎯" : "🏁";
+  const direcaoTexto = ehInicial
+    ? `Quando ordenamos as 15 dezenas em ordem crescente, as 3 primeiras (${a.posicoes.map((p) => p.rotulo).join(", ")}) quase nunca passam da dezena 10. Tendência forte para faixa baixa.`
+    : `Quando ordenamos as 15 dezenas em ordem crescente, as 3 últimas (${a.posicoes.map((p) => p.rotulo).join(", ")}) quase sempre vêm de 18 em diante. Tendência forte para faixa alta.`;
+
+  const blocoPanorama = `📊 O que diz a matemática (últimos ${a.totalConcursos} sorteios)\n${direcaoTexto}`;
+
+  const cardsPos = a.posicoes.map((p, idx) => {
+    const ordinal = ehInicial
+      ? ["primeira", "segunda", "terceira"][idx]
+      : ["décima terceira", "décima quarta", "última"][idx];
+    const subtitulo = ehInicial && idx === 0
+      ? "(a menor do palpite)"
+      : !ehInicial && idx === 2
+      ? "(a maior do palpite)"
+      : "";
+    const top = p.top3
+      .map((t, i) => {
+        const sufixo = i === 0 ? ` como ${p.rotulo}` : "";
+        return `**${fmt(t.dezena)}** (${t.vezes}x${sufixo})`;
+      })
+      .join(", ");
+    const recPosicao = idx === 0
+      ? (ehInicial
+        ? `começar o palpite em ${fmt(p.top3[0]?.dezena ?? 0)}`
+        : `terminar o palpite em ${fmt(p.top3[0]?.dezena ?? 0)}`)
+      : (ehInicial
+        ? `usar ${fmt(p.top3[0]?.dezena ?? 0)} logo após a posição anterior`
+        : `usar ${fmt(p.top3[0]?.dezena ?? 0)} antes da última`);
+    return `🎯 ${p.rotulo} — A ${ordinal} dezena ${subtitulo}\n` +
+      `Faixa real: entre ${fmt(p.faixaMin)} e ${fmt(p.faixaMax)} em ${a.totalConcursos} dos ${a.totalConcursos} sorteios (${p.percFaixa}%)\n` +
+      `Top 3 candidatas: ${top}\n` +
+      `Recomendação: ${recPosicao}.`;
+  }).join("\n\n");
+
+  const distRotulo = `${a.posicoes[0].rotulo}→${a.posicoes[2].rotulo}`;
+  const blocoTendencia = `📈 Tendência observada\n` +
+    `• Soma das ${palavraTrio}: média ${a.somaMedia.toFixed(1)} (faixa ${a.somaMin} a ${a.somaMax})\n` +
+    `• Distância ${distRotulo}: média ${a.distanciaMedia.toFixed(1)} dezenas\n` +
+    `• Em ${a.coocorrenciaUltimo} de ${a.totalConcursos - 1} sorteios, pelo menos 1 das ${palavraTrio} saiu também no concurso anterior`;
+
+  const r = a.recomendacao;
+  const tituloRec = `💡 Como montar o ${tituloMomento} do seu palpite para o ${proxConcurso}`;
+
+  const linhaTrio = r.trioRecomendado.length === 3
+    ? `${emojiTrio} Trio ${ehInicial ? "inicial" : "final"} recomendado: **${r.trioRecomendado.map(fmt).join(", ")}**\n   → cada uma é a top candidata da sua posição`
+    : "";
+
+  const linhaAlt = r.alternativas.length > 0
+    ? `➕ Alternativas fortes: **${r.alternativas.map(fmt).join(", ")}**\n   → 2ª opção de cada posição se quiser variar`
+    : "";
+
+  const linhaEvitar = r.evitar.length > 0
+    ? `❌ Evite ${ehInicial ? "começar" : "terminar"} com: **${r.evitar.map(fmt).join(", ")}**\n   → raramente aparecem entre as ${palavraTrio} (≤ 20%)`
+    : "";
+
+  const linhaAlerta = `⚠️ Cuidado: ${r.alerta}.`;
+
+  const resumo = [
+    blocoPanorama,
+    cardsPos,
+    blocoTendencia,
+    tituloRec,
+    linhaTrio,
+    linhaAlt,
+    linhaEvitar,
+    linhaAlerta,
+  ].filter(Boolean).join("\n\n");
+
+  const recomendacaoDireta = `Para o concurso ${proxConcurso}: trio ${ehInicial ? "inicial" : "final"} **${r.trioRecomendado.map(fmt).join(", ")}**, alternativas [${r.alternativas.map(fmt).join(", ")}], evitar [${r.evitar.map(fmt).join(", ")}].`;
+
+  return { resumo, recomendacaoDireta };
+}
+
 function ajustarPara15(medias: number[]): number[] {
   const arred = medias.map((m) => Math.round(m));
   let soma = arred.reduce((a, b) => a + b, 0);
