@@ -1517,10 +1517,7 @@ function dezenasFaltantesCiclo(concursos: Concurso[]): number[] {
 // CICLO: estatísticas históricas + recomendação
 // =============================================================================
 
-interface CicloHistorico {
-  ciclo_numero: number;
-  duracao: number;
-}
+// CicloHistorico vem de ../types.ts (importado no topo do arquivo)
 
 interface EstatisticasCiclo {
   totalCiclos: number;
