@@ -398,6 +398,14 @@ async function chamarIAComRetry(systemPrompt: string, userPrompt: string, apiKey
 // HANDLER
 // =============================================================================
 
+// Autor único da comunidade
+const AUGUSTO_PERFIL_ID = "41b58d48-2ef1-4bf7-a536-ed8a49607fa9";
+const AUGUSTO_NOME = "Augusto Angelis";
+
+const SYSTEM_PROMPT_BASE = `Você é Augusto Angelis, especialista em Lotofácil da equipe Palpite Tech.
+Tom acolhedor e direto, em primeira pessoa. Nunca mencione IA, bot, modelo, GPT ou Gemini.
+Fale como um analista humano que estuda os números todos os dias.`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -408,51 +416,14 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  let guideId: string | null = null;
-  let guideName: string | null = null;
   let tipoPost = "geral";
 
   try {
     const body = await req.json().catch(() => ({}));
     tipoPost = body.tipo_post || "geral";
-    const requestedGuideId = body.guide_persona_id;
+    console.log(`[generate-guide-post] tipo=${tipoPost}`);
 
-    console.log(`[generate-guide-post] tipo=${tipoPost} guideId=${requestedGuideId || "auto"}`);
-
-    // 1. Buscar guia
-    let query = supabaseAdmin
-      .from("guide_personas")
-      .select("*, perfis(*)")
-      .eq("ativo", true)
-      .eq("can_create_posts", true);
-    if (requestedGuideId) {
-      query = query.eq("id", requestedGuideId);
-    } else {
-      query = query.order("ultimo_post_em", { ascending: true, nullsFirst: true }).limit(1);
-    }
-    const { data: guide, error: guideError } = await query.single();
-
-    if (guideError || !guide) {
-      console.log("[generate-guide-post] ❌ Nenhum guia ativo:", guideError?.message);
-      return new Response(JSON.stringify({ message: "Nenhum guia ativo" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    guideId = guide.id;
-    guideName = guide.perfis?.nome || null;
-
-    // Trava: só autor de resultados (Especialista Lotofácil) pode postar pelo motor
-    const PALPITE_TECH_ID = "2a827e7d-a3d1-416e-8552-e830dc7e633c";
-    if (guide.id !== PALPITE_TECH_ID && !guide.is_result_author) {
-      console.warn(`[generate-guide-post] 🚫 Bot não autorizado: ${guideName}`);
-      return new Response(JSON.stringify({ error: "Bot não autorizado" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // 2. Lock de duplicação por tipo+dia (BRT)
+    // 1. Lock de duplicação por tipo+dia (BRT) — Augusto não posta o mesmo tipo 2x no dia
     const agora = new Date();
     const inicioDiaBRT = new Date(agora);
     inicioDiaBRT.setUTCHours(3, 0, 0, 0); // 00h BRT = 03h UTC
@@ -461,7 +432,7 @@ serve(async (req) => {
     const { data: jaPostou } = await supabaseAdmin
       .from("postagens")
       .select("id, created_at")
-      .eq("user_id", guide.perfil_id)
+      .eq("user_id", AUGUSTO_PERFIL_ID)
       .eq("tipo", tipoPost)
       .gte("created_at", inicioDiaBRT.toISOString())
       .limit(1)
@@ -469,20 +440,13 @@ serve(async (req) => {
 
     if (jaPostou) {
       console.log(`[generate-guide-post] ⏭️ Já postou tipo=${tipoPost} hoje (post ${jaPostou.id})`);
-      await supabaseAdmin.from("bot_publishing_logs").insert({
-        guide_persona_id: guide.id,
-        bot_name: guideName,
-        event_type: "skipped",
-        reason: "duplicate_today",
-        details: { tipo_post: tipoPost, existing_post_id: jaPostou.id },
-      });
       return new Response(
         JSON.stringify({ skipped: true, reason: "duplicate_today", postId: jaPostou.id }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // 3. Buscar últimos 10 concursos
+    // 2. Buscar últimos 10 concursos
     const { data: resultados, error: resErr } = await supabaseAdmin
       .from("resultados_loterias")
       .select("concurso_id:concurso, dezenas, data_sorteio, ciclo_numero, dezenas_faltantes_ciclo, qtd_pares, qtd_impares, qtd_repetidas, qtd_primos, qtd_moldura")
@@ -497,58 +461,41 @@ serve(async (req) => {
     const concursos = resultados as Concurso[];
     const ultimoConcurso = concursos[0].concurso_id;
 
-    // 4. Calcular fatos determinísticos
+    // 3. Calcular fatos determinísticos
     const fatos = montarFatos(tipoPost, concursos);
 
-    // 5. Chamar IA com retry
+    // 4. Chamar IA com retry
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY não configurada");
 
-    const systemPrompt = guide.system_prompt || "Você é especialista em Lotofácil da equipe Palpite Tech.";
     const userPrompt = montarPrompt(tipoPost, fatos, ultimoConcurso);
 
     let titulo = "";
     let conteudo = "";
     let viaFallback = false;
 
-    const ia = await chamarIAComRetry(systemPrompt, userPrompt, apiKey);
+    const ia = await chamarIAComRetry(SYSTEM_PROMPT_BASE, userPrompt, apiKey);
 
     if (!ia.ok && (ia.status === 402 || ia.status === 429)) {
-      console.warn(`[generate-guide-post] IA indisponível (${ia.status}). Usando fallback determinístico.`);
+      console.warn(`[generate-guide-post] IA indisponível (${ia.status}). Fallback determinístico.`);
       const fb = fallbackPost(tipoPost, fatos, ultimoConcurso + 1);
       titulo = fb.titulo;
       conteudo = fb.conteudo;
       viaFallback = true;
-
-      await supabaseAdmin.from("bot_publishing_logs").insert({
-        guide_persona_id: guide.id,
-        bot_name: guideName,
-        event_type: "fallback",
-        reason: ia.status === 402 ? "payment_required" : "rate_limited",
-        details: { tipo_post: tipoPost, status: ia.status },
-      });
     } else if (!ia.ok) {
       console.error(`[generate-guide-post] IA falhou: ${ia.status} ${ia.errorBody}`);
       const fb = fallbackPost(tipoPost, fatos, ultimoConcurso + 1);
       titulo = fb.titulo;
       conteudo = fb.conteudo;
       viaFallback = true;
-
-      await supabaseAdmin.from("bot_publishing_logs").insert({
-        guide_persona_id: guide.id,
-        bot_name: guideName,
-        event_type: "fallback",
-        reason: "ai_error",
-        details: { tipo_post: tipoPost, status: ia.status, error: ia.errorBody?.substring(0, 500) },
-      });
     } else {
-      // Validar JSON da IA
+      // Validar JSON
       let parsed = extrairJSON(ia.content || "");
 
       if (!parsed) {
-        console.warn("[generate-guide-post] JSON inválido na 1ª tentativa, retentando...");
+        console.warn("[generate-guide-post] JSON inválido (1ª), retentando...");
         const ia2 = await chamarIAComRetry(
-          systemPrompt,
+          SYSTEM_PROMPT_BASE,
           userPrompt + "\n\nATENÇÃO: sua última resposta não era JSON puro. Devolva APENAS {\"titulo\":\"...\",\"conteudo\":\"...\"} sem texto adicional.",
           apiKey,
         );
@@ -556,37 +503,28 @@ serve(async (req) => {
       }
 
       if (!parsed) {
-        console.warn("[generate-guide-post] JSON inválido após retentativa. Usando fallback.");
+        console.warn("[generate-guide-post] JSON inválido após retry. Fallback.");
         const fb = fallbackPost(tipoPost, fatos, ultimoConcurso + 1);
         titulo = fb.titulo;
         conteudo = fb.conteudo;
         viaFallback = true;
-
-        await supabaseAdmin.from("bot_publishing_logs").insert({
-          guide_persona_id: guide.id,
-          bot_name: guideName,
-          event_type: "fallback",
-          reason: "invalid_json",
-          details: { tipo_post: tipoPost },
-        });
       } else {
         titulo = sanitizar(parsed.titulo).substring(0, 100);
         conteudo = sanitizar(parsed.conteudo).substring(0, 1000);
 
-        // Guardrail: se a IA esqueceu de incluir a recomendação, anexa o fallback bloco
+        // Guardrail
         if (!conteudo.includes("Como montar") && !conteudo.includes("montar seu palpite")) {
           conteudo = (conteudo + `\n\n💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\nLoteria envolve sorte.`).substring(0, 1000);
         }
       }
 
-      // Log de uso de IA (somente quando deu certo)
+      // Log de uso de IA
       if (ia.usage) {
         const pt = ia.usage.prompt_tokens || 0;
         const ct = ia.usage.completion_tokens || 0;
         const cost = (pt / 1e6) * 0.15 + (ct / 1e6) * 0.6;
         supabaseAdmin.from("ai_usage_logs").insert({
-          bot_persona_id: guide.id,
-          bot_name: guideName,
+          bot_name: AUGUSTO_NOME,
           edge_function: "generate-guide-post",
           action_type: "post_analitico_comunidade",
           prompt_tokens: pt,
@@ -599,11 +537,11 @@ serve(async (req) => {
       }
     }
 
-    // 6. Inserir post
+    // 5. Inserir post (autor sempre = Augusto)
     const { data: novoPost, error: postError } = await supabaseAdmin
       .from("postagens")
       .insert({
-        user_id: guide.perfil_id,
+        user_id: AUGUSTO_PERFIL_ID,
         titulo,
         conteudo,
         loteria_tag: "Lotofácil",
@@ -614,28 +552,13 @@ serve(async (req) => {
 
     if (postError) throw new Error(`Erro ao inserir post: ${postError.message}`);
 
-    // 7. Atualizar bot
-    await supabaseAdmin
-      .from("guide_personas")
-      .update({ ultimo_post_em: new Date().toISOString() })
-      .eq("id", guide.id);
-
-    // 8. Log de sucesso
-    await supabaseAdmin.from("bot_publishing_logs").insert({
-      guide_persona_id: guide.id,
-      bot_name: guideName,
-      event_type: "success",
-      reason: viaFallback ? "fallback_used" : "ai_generated",
-      details: { tipo_post: tipoPost, post_id: novoPost.id, ultimo_concurso: ultimoConcurso },
-    });
-
-    console.log(`[generate-guide-post] ✅ Post criado ${novoPost.id} tipo=${tipoPost} fallback=${viaFallback}`);
+    console.log(`[generate-guide-post] ✅ Post ${novoPost.id} tipo=${tipoPost} fallback=${viaFallback}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         postId: novoPost.id,
-        guide: guideName,
+        autor: AUGUSTO_NOME,
         tipo_post: tipoPost,
         titulo,
         viaFallback,
@@ -645,21 +568,8 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("[generate-guide-post] Erro:", error);
-    if (guideId) {
-      await supabaseAdmin
-        .from("bot_publishing_logs")
-        .insert({
-          guide_persona_id: guideId,
-          bot_name: guideName,
-          event_type: "error",
-          reason: error instanceof Error ? error.message : "unknown",
-          details: { tipo_post: tipoPost },
-        })
-        .then(() => {})
-        .catch(() => {});
-    }
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Erro desconhecido" }),
+      JSON.stringify({ error: error instanceof Error ? error.message : "Erro desconhecido", tipo_post: tipoPost }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
