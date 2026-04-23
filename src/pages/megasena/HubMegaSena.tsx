@@ -2,7 +2,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { HubLoteriaGrid, type HubTool } from "@/components/shared/HubLoteriaGrid";
 import {
   Target, BarChart3, TrendingUp, Flame, LayoutGrid,
-  Table2, Dices, Shuffle, Wrench,
+  Table2, Dices, Shuffle, Wrench, BookOpen,
 } from "lucide-react";
 
 const THEME_COLOR = "125, 70%, 40%"; // Verde Mega Sena
@@ -17,6 +17,7 @@ const tools: HubTool[] = [
   { title: "Linhas e Colunas", description: "Distribuição das dezenas por linhas e colunas do volante", icon: LayoutGrid, path: "/megasena/linhas-colunas" },
   { title: "Tabela de Movimentação", description: "Movimentação de entrada e saída das dezenas", icon: Table2, path: "/megasena/tabela-movimentacao" },
   { title: "Gerador de Palpites", description: "Gere palpites inteligentes com base em estatísticas", icon: Dices, path: "/megasena/gerador" },
+  { title: "Gerador de Estudo", description: "Palpites prontos a partir dos estudos da comunidade", icon: BookOpen, path: "/megasena/gerador-estudo" },
   { title: "Desdobramento", description: "Monte desdobramentos otimizados com filtros estatísticos", icon: Shuffle, path: "/megasena/desdobramento" },
   { title: "Gerador de Fechamento", description: "Fechamentos com garantia de acerto mínimo", icon: Wrench, path: "/megasena/fechamento" },
 ];

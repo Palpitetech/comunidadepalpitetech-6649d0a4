@@ -216,6 +216,7 @@ const App = () => (
                 <Route path="/megasena/tabela-movimentacao" element={<ProtectedRoute><GatedPage feature="tabela_movimentacao"><TabelaMovimentacaoMegaSena /></GatedPage></ProtectedRoute>} />
                 <Route path="/megasena/frequencia-dezenas" element={<ProtectedRoute><GatedPage feature="frequencia_dezenas"><FrequenciaDecenasMegaSena /></GatedPage></ProtectedRoute>} />
                 <Route path="/megasena/dezenas-por-posicao" element={<ProtectedRoute><GatedPage feature="dezenas_por_posicao"><DezenasporPosicaoMegaSena /></GatedPage></ProtectedRoute>} />
+                <Route path="/megasena/gerador-estudo" element={<ProtectedRoute><GatedPage feature="gerador"><GeradorEstudo loteria="megasena" /></GatedPage></ProtectedRoute>} />
                 
                 {/* Rotas Dupla Sena */}
                 <Route path="/duplasena" element={<ProtectedRoute><HubDuplaSena /></ProtectedRoute>} />

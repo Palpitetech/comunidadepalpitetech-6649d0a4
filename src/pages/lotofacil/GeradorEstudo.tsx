@@ -40,7 +40,7 @@ export default function GeradorEstudo({ loteria = "lotofacil" }: Props) {
 
   const [selectedEstudoId, setSelectedEstudoId] = useState<string | null>(null);
   const [quantidade, setQuantidade] = useState(3);
-  const [qtdDezenas, setQtdDezenas] = useState(15);
+  const [qtdDezenas, setQtdDezenas] = useState(DEFAULT_QTD_BY_LOTERIA[loteria]);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [ultimoConcursoDezenas, setUltimoConcursoDezenas] = useState<number[]>([]);
 
@@ -94,7 +94,7 @@ export default function GeradorEstudo({ loteria = "lotofacil" }: Props) {
   const handleClearAll = () => {
     reset();
     setQuantidade(3);
-    setQtdDezenas(15);
+    setQtdDezenas(DEFAULT_QTD_BY_LOTERIA[loteria]);
   };
 
   const usageBadgeText = isAdmin
@@ -138,6 +138,7 @@ export default function GeradorEstudo({ loteria = "lotofacil" }: Props) {
               value={qtdDezenas}
               onChange={setQtdDezenas}
               disabled={isLoading}
+              options={DEZENAS_OPTIONS_BY_LOTERIA[loteria]}
             />
 
             {error && (
@@ -185,7 +186,17 @@ export default function GeradorEstudo({ loteria = "lotofacil" }: Props) {
           </CardContent>
         </Card>
 
-        {result && (
+        {result && (loteria === "megasena" ? (
+          <ResultadosSheetMegaSena
+            open={sheetOpen}
+            onOpenChange={setSheetOpen}
+            jogos={result.jogos}
+            ultimoConcursoDezenas={ultimoConcursoDezenas}
+            onClearAll={handleClearAll}
+            estrategia={result.estrategia}
+            dezenasFixes={result.estrategia?.dezenas_fixas?.[0]?.dezenas ?? []}
+          />
+        ) : (
           <ResultadosSheet
             open={sheetOpen}
             onOpenChange={setSheetOpen}
@@ -195,7 +206,7 @@ export default function GeradorEstudo({ loteria = "lotofacil" }: Props) {
             estrategia={result.estrategia}
             dezenasFixes={result.estrategia?.dezenas_fixas?.[0]?.dezenas ?? []}
           />
-        )}
+        ))}
       </div>
     </MainLayout>
   );
