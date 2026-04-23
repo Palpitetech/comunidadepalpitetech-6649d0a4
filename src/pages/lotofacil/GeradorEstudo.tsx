@@ -10,6 +10,7 @@ import { ResultadosSheet } from "@/components/gerador/ResultadosSheet";
 import { ResultadosSheetMegaSena } from "@/components/megasena/ResultadosSheetMegaSena";
 import { EstudoSelector } from "@/components/gerador-estudo/EstudoSelector";
 import { EstudoInfoCard } from "@/components/gerador-estudo/EstudoInfoCard";
+import { GeradorTheme } from "@/components/gerador-estudo/GeradorTheme";
 import { useEstudosDisponiveis } from "@/hooks/useEstudosDisponiveis";
 import { useGeradorEstudo } from "@/hooks/useGeradorEstudo";
 import { supabase } from "@/integrations/supabase/client";
@@ -107,6 +108,7 @@ export default function GeradorEstudo({ loteria = "lotofacil" }: Props) {
 
   return (
     <MainLayout pageTitle={tituloPagina}>
+      <GeradorTheme loteria={loteria}>
       <div className="container-senior py-6 space-y-4 max-w-md mx-auto">
         <Card>
           <CardContent className="pt-6 space-y-5">
@@ -203,6 +205,7 @@ export default function GeradorEstudo({ loteria = "lotofacil" }: Props) {
           />
         ))}
       </div>
+      </GeradorTheme>
     </MainLayout>
   );
 }
