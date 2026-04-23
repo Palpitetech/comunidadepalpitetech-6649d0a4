@@ -182,6 +182,7 @@ export default function GeradorEstudo({ loteria = "lotofacil" }: Props) {
             ultimoConcursoDezenas={ultimoConcursoDezenas}
             onClearAll={handleClearAll}
             estrategia={result.estrategia}
+            dezenasFixes={result.estrategia?.dezenas_fixas?.[0]?.dezenas ?? []}
           />
         )}
       </div>
