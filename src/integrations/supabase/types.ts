@@ -210,6 +210,30 @@ export type Database = {
           },
         ]
       }
+      app_config: {
+        Row: {
+          current_version: number
+          force_reload_at: string
+          id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          current_version?: number
+          force_reload_at?: string
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          current_version?: number
+          force_reload_at?: string
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       assinaturas_operacionais: {
         Row: {
           created_at: string
