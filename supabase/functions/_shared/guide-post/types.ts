@@ -27,6 +27,34 @@ export interface Fatos {
 }
 
 /**
+ * Estrutura canônica usada pelo gerador de palpites a partir de estudo.
+ * Persistida em postagens.fatos_snapshot.base_geracao.
+ *
+ * Convenções:
+ *   - fixar: dezenas que entram em 100% dos jogos (núcleo)
+ *   - apoio: dezenas que entram em ≥60% dos jogos (cota mínima por jogo)
+ *   - excluir: dezenas que NÃO entram em nenhum jogo
+ *   - ficar_de_olho: 1 ou 2 podem entrar como coringa em alguns jogos
+ *   - ultimo_sorteio: para validar `qtd_repetidas_alvo`
+ *   - qtd_repetidas_alvo / qtd_moldura_alvo: filtros opcionais por jogo
+ */
+export interface BaseGeracao {
+  tema: string;
+  fixar: number[];
+  apoio: number[];
+  excluir: number[];
+  ficar_de_olho?: number[];
+  ultimo_sorteio?: number[];
+  qtd_repetidas_alvo?: { min: number; max: number };
+  qtd_moldura_alvo?: { min: number; max: number };
+  observacao_principal: string;
+  /** Texto curto descrevendo o motivo do núcleo (vai pro card). */
+  motivo_fixar?: string;
+  motivo_apoio?: string;
+  motivo_excluir?: string;
+}
+
+/**
  * Contrato que toda loteria precisa cumprir para gerar posts-guia.
  * A camada HTTP (generate-guide-post/index.ts) só conhece esta interface,
  * tornando trivial adicionar Mega-Sena/Quina/etc no futuro.
@@ -67,4 +95,14 @@ export interface GuideEngine {
   fallbackConteudo(fatos: Fatos): string;
   /** Sanitiza menções a IA, espaçamentos, etc. */
   sanitizar(texto: string): string;
+  /**
+   * Extrai a base canônica de geração de palpites a partir do histórico.
+   * Opcional — engines que não implementarem fazem o gerador cair no
+   * caminho default (universo livre).
+   */
+  extrairBaseGeracao?(
+    tipoPost: string,
+    concursos: Concurso[],
+    historicoCiclos?: CicloHistorico[],
+  ): BaseGeracao | null;
 }
