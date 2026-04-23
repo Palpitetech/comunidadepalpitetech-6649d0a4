@@ -86,6 +86,7 @@ function montarFatosMovimentacao(concursos: Concurso[]): Fatos {
   const resumo =
     `📊 O que aconteceu nos últimos ${concursos.length} sorteios\n` +
     `Último concurso: ${ultimo.concurso_id}. Em uma loteria de 60 dezenas com só 6 saindo por sorteio, a média esperada para cada dezena é ~${(DEZENAS_POR_SORTEIO / TOTAL_DEZENAS * 100).toFixed(0)}% (1 em cada 10 sorteios).\n\n` +
+    `${DEFINICAO_QUENTE_FRIA}\n\n` +
     `🔥 Dezenas QUENTES (acima da média)\n${linhasQuentes}\n\n` +
     `❄️ Dezenas FRIAS (abaixo da média)\n${linhasFrias}\n\n` +
     `💡 Como montar seu palpite\n` +
@@ -332,8 +333,7 @@ function montarFatosComoCalculamos(concursos: Concurso[]): Fatos {
     `Os posts de Mega-Sena usam os ÚLTIMOS ${concursos.length} SORTEIOS oficiais. Hoje: ${primeiroNum} a ${ultimoNum} (${concursos.length} sorteios = ${totalDezenas} dezenas).\n\n` +
     `📐 Regras do volante\n` +
     `Mega tem 60 dezenas, sortes 6 por concurso. Grid 6×10: linhas (1-10, 11-20, ..., 51-60) e 10 colunas (terminação 1, 2, ..., 0). Moldura = 30 dezenas das bordas.\n\n` +
-    `🎯 O que é "quente" e "fria" na Mega\n` +
-    `A média esperada para uma dezena qualquer é **${(DEZENAS_POR_SORTEIO / TOTAL_DEZENAS * 100).toFixed(0)}%** (1 em 10). Acima disso é quente; abaixo é fria.\n\n` +
+    `${DEFINICAO_QUENTE_FRIA}\n\n` +
     `✅ Anti-alucinação\n` +
     `Cada post tem WHITELIST: dezenas 01-60, contagens 0-100, e os números dos concursos da janela. Qualquer número fora da lista descarta o post e ativa o fallback determinístico.\n\n` +
     `🛡️ Validações ativas\n` +
