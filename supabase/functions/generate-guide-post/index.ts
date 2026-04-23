@@ -11,6 +11,47 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// =============================================================================
+// Cache em memória do próximo concurso por loteria.
+// Vive enquanto o isolate Deno estiver quente (geralmente minutos a poucas horas).
+// TTL curto garante que sync horário (sync-proximos-concursos) seja respeitado.
+// =============================================================================
+type ProxConcursoCache = {
+  numero_concurso: string | null;
+  data_sorteio: string | null;
+  premio_estimado: number | null;
+  cachedAt: number;
+};
+const PROX_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutos
+const proxConcursoCache = new Map<string, ProxConcursoCache>();
+
+async function getProximoConcursoCached(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  loteria: string,
+): Promise<ProxConcursoCache | null> {
+  const now = Date.now();
+  const hit = proxConcursoCache.get(loteria);
+  if (hit && now - hit.cachedAt < PROX_CACHE_TTL_MS) {
+    console.log(`[generate-guide-post] cache HIT proximo_concurso/${loteria}`);
+    return hit;
+  }
+  console.log(`[generate-guide-post] cache MISS proximo_concurso/${loteria}`);
+  const { data, error } = await supabaseAdmin
+    .from("proximos_concursos")
+    .select("numero_concurso, data_sorteio, premio_estimado")
+    .eq("loteria", loteria)
+    .maybeSingle();
+  if (error || !data) return null;
+  const entry: ProxConcursoCache = {
+    numero_concurso: data.numero_concurso ?? null,
+    data_sorteio: data.data_sorteio ?? null,
+    premio_estimado: data.premio_estimado ?? null,
+    cachedAt: now,
+  };
+  proxConcursoCache.set(loteria, entry);
+  return entry;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -176,12 +217,7 @@ serve(async (req) => {
 
     // 4.5. Rodapé universal: dados do próximo concurso (todas as loterias)
     try {
-      const { data: prox } = await supabaseAdmin
-        .from("proximos_concursos")
-        .select("numero_concurso, data_sorteio, premio_estimado")
-        .eq("loteria", loteria)
-        .maybeSingle();
-
+      const prox = await getProximoConcursoCached(supabaseAdmin, loteria);
       if (prox) {
         const rodape = montarRodapeProximoConcurso(
           config.loteria_tag,
