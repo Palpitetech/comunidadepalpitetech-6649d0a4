@@ -271,6 +271,19 @@ function montarFatos(tipoPost: string, concursos: Concurso[]): {
 // PROMPT POR TIPO
 // =============================================================================
 
+// Título 100% determinístico (impossível alucinar)
+function montarTituloDeterministico(tipoPost: string, proxConcurso: number): string {
+  const titulosBase: Record<string, string> = {
+    analise_ciclo: `🔄 Ciclo da Lotofácil — Concurso ${proxConcurso}`,
+    analise_movimentacao: `🔥 Quentes e Frias — Concurso ${proxConcurso}`,
+    analise_moldura: `🖼️ Análise de Moldura — Concurso ${proxConcurso}`,
+    analise_repetidas: `🔁 Análise de Repetidas — Concurso ${proxConcurso}`,
+    analise_linhas: `📐 Análise por Linhas — Concurso ${proxConcurso}`,
+    analise_colunas: `📊 Análise por Colunas — Concurso ${proxConcurso}`,
+  };
+  return (titulosBase[tipoPost] || `Análise Lotofácil — Concurso ${proxConcurso}`).substring(0, 100);
+}
+
 function montarPrompt(tipoPost: string, fatos: { resumo: string; recomendacaoDireta: string }, ultimoConcurso: number): string {
   const titulos: Record<string, string> = {
     analise_ciclo: "Análise de Ciclo",
@@ -281,10 +294,11 @@ function montarPrompt(tipoPost: string, fatos: { resumo: string; recomendacaoDir
     analise_colunas: "Análise por Colunas",
   };
   const tema = titulos[tipoPost] || "Análise da Lotofácil";
+  const proxConcurso = ultimoConcurso + 1;
 
-  return `Você é Augusto Angelis, especialista em Lotofácil da equipe Palpite Tech. Escreva um POST CURTO da comunidade com tema: "${tema}".
+  return `Você é Augusto Angelis, especialista em Lotofácil da equipe Palpite Tech. Escreva APENAS o CONTEÚDO de um post curto da comunidade com tema: "${tema}".
 
-DADOS REAIS (use exatamente estes números, sem inventar):
+DADOS REAIS (use exatamente estes números, sem inventar nem alterar dígitos):
 ${fatos.resumo}
 
 RECOMENDAÇÃO DIRETA QUE VOCÊ DEVE INCLUIR LITERALMENTE NO TEXTO:
@@ -296,20 +310,53 @@ ESTRUTURA OBRIGATÓRIA do conteúdo:
 3) Bloco "💡 Como montar seu palpite" — escreva a RECOMENDAÇÃO DIRETA acima, em destaque.
 4) Disclaimer curto: "Loteria envolve sorte. Use como guia, não como certeza."
 
-REGRAS:
+REGRAS CRÍTICAS:
+- Use SOMENTE os números fornecidos. NUNCA invente um número novo nem altere dígitos.
+- Se citar o concurso, use exatamente ${proxConcurso}.
 - Tom humano, acolhedor, em primeira pessoa. Varie a abertura.
 - Use **negrito** nas dezenas e na recomendação.
 - Máximo 800 caracteres no conteúdo.
-- Título com no máximo 60 caracteres, mencionando o tema e o concurso ${ultimoConcurso + 1}.
 - Apenas dezenas de 01 a 25.
 - NUNCA mencione IA, bot, modelo, GPT ou Gemini.
 
-Responda APENAS no formato JSON puro:
-{"titulo": "...", "conteudo": "..."}`;
+Responda APENAS o CONTEÚDO em texto puro (sem título, sem JSON, sem aspas).`;
 }
 
 // =============================================================================
-// SANITIZAÇÃO E VALIDAÇÃO
+// VALIDADOR ANTI-ALUCINAÇÃO
+// =============================================================================
+
+function extrairNumerosPermitidos(concursos: Concurso[], proxConcurso: number): Set<number> {
+  const permitidos = new Set<number>();
+  permitidos.add(proxConcurso);
+  for (const c of concursos) {
+    permitidos.add(c.concurso_id);
+    if (c.ciclo_numero) permitidos.add(c.ciclo_numero);
+    permitidos.add(c.qtd_pares);
+    permitidos.add(c.qtd_impares);
+    permitidos.add(c.qtd_moldura);
+    permitidos.add(c.qtd_primos);
+    permitidos.add(c.qtd_repetidas);
+  }
+  // Pequenos números livres (contagens, frequências)
+  for (let i = 0; i <= 50; i++) permitidos.add(i);
+  return permitidos;
+}
+
+function validarConteudoNumerico(texto: string, permitidos: Set<number>): { ok: boolean; motivo?: string } {
+  // Números de 3-5 dígitos (concursos): TODOS devem estar na whitelist
+  const matches = texto.match(/\b\d{3,5}\b/g) || [];
+  for (const m of matches) {
+    const n = parseInt(m, 10);
+    if (!permitidos.has(n)) {
+      return { ok: false, motivo: `Número não permitido: ${n}` };
+    }
+  }
+  return { ok: true };
+}
+
+// =============================================================================
+// SANITIZAÇÃO E FALLBACK
 // =============================================================================
 
 function sanitizar(texto: string): string {
@@ -319,35 +366,12 @@ function sanitizar(texto: string): string {
     .trim();
 }
 
-function extrairJSON(content: string): { titulo: string; conteudo: string } | null {
-  try {
-    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || content.match(/\{[\s\S]*\}/);
-    const jsonStr = jsonMatch ? (jsonMatch[1] || jsonMatch[0]).trim() : content.trim();
-    const parsed = JSON.parse(jsonStr);
-    if (typeof parsed?.titulo === "string" && typeof parsed?.conteudo === "string") {
-      return { titulo: parsed.titulo, conteudo: parsed.conteudo };
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-function fallbackPost(tipoPost: string, fatos: { resumo: string; recomendacaoDireta: string }, proxConcurso: number): { titulo: string; conteudo: string } {
-  const titulosBase: Record<string, string> = {
-    analise_ciclo: `🔄 Ciclo da Lotofácil — concurso ${proxConcurso}`,
-    analise_movimentacao: `🔥 Quentes e Frias — concurso ${proxConcurso}`,
-    analise_moldura: `🖼️ Moldura — concurso ${proxConcurso}`,
-    analise_repetidas: `🔁 Repetidas — concurso ${proxConcurso}`,
-    analise_linhas: `📐 Linhas — concurso ${proxConcurso}`,
-    analise_colunas: `📊 Colunas — concurso ${proxConcurso}`,
-  };
-  const titulo = (titulosBase[tipoPost] || `Análise Lotofácil — ${proxConcurso}`).substring(0, 60);
+function fallbackConteudo(fatos: { resumo: string; recomendacaoDireta: string }): string {
   const conteudo = `Olá pessoal! Trago um resumo direto do tema.\n\n` +
     `📊 O que aconteceu nos últimos 10\n${fatos.resumo}\n\n` +
     `💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\n` +
     `Loteria envolve sorte. Use como guia, não como certeza.`;
-  return { titulo, conteudo: conteudo.substring(0, 1000) };
+  return conteudo.substring(0, 1000);
 }
 
 async function chamarIAComRetry(systemPrompt: string, userPrompt: string, apiKey: string): Promise<{ ok: boolean; status: number; content?: string; usage?: any; errorBody?: string }> {
