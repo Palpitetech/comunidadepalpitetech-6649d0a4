@@ -1,81 +1,138 @@
 
 
-## Design System por Loteria no Gerador de Estudo
+## Nova página `/palpites-estudos` — Link na Bio
 
 ### Conceito
-Cada gerador de estudo passa a vestir as cores da sua loteria, criando identificação visual imediata. O azul-marinho `--primary` (genérico do app) é substituído por um **tema local** que injeta a cor da loteria nos elementos-chave da página.
+Página **standalone** (sem `MainLayout`, sem header, sem footer, sem bottom nav) — visual de "linktree" próprio da Palpite Tech, usando as cores das loterias por card, tipografia grande e direta, sem carnaval visual.
 
-### Tokens por loteria (já existem em `index.css`)
-| Loteria | HSL | Aplicado em |
+### Rota
+- Adicionar em `src/App.tsx`, na seção de **Rotas Públicas**:
+  ```tsx
+  <Route path="/palpites-estudos" element={<PalpitesEstudos />} />
+  ```
+- Sem `ProtectedRoute`, sem `MainLayout` — página totalmente isolada.
+
+### Arquivo novo: `src/pages/PalpitesEstudos.tsx`
+
+**Estrutura visual (top → bottom):**
+
+```text
+┌─────────────────────────────────────────────┐  ← 100% largura
+│  [▶ Vídeos novos todos os Dias no YouTube]  │  banner clicável
+│        (gradient vermelho YouTube)          │  + sombra forte abaixo
+└─────────────────────────────────────────────┘
+                 ↓ shadow drop ↓
+
+           ╭─────────────────────╮
+           │   [Logo Palpite     │   ← header centralizado 80%
+           │    Tech]            │
+           │                     │
+           │  @palpitetech       │
+           ╰─────────────────────╯
+
+      ╭───────────────────────────────╮
+      │  Gere palpites Exclusivos     │  ← Card 1 (cor neutra/primary)
+      │  com nosso gerador inteligente│
+      │  A partir de R$ 30,44/mês     │
+      ╰───────────────────────────────╯
+
+      ╭───────────────────────────────╮
+      │  Receba 15 palpites quentes   │  ← Card 2 (ROXO Lotofácil)
+      │  para Lotofácil               │
+      │  Apenas R$ 19,00 (único)      │
+      ╰───────────────────────────────╯
+
+      ╭───────────────────────────────╮
+      │  Receba 15 palpites quentes   │  ← Card 3 (VERDE Mega)
+      │  para Mega-Sena               │
+      │  Apenas R$ 19,00 (único)      │
+      ╰───────────────────────────────╯
+
+      ╭───────────────────────────────╮
+      │  Estudos diários              │  ← Card 4 (VERDE Mega, outline)
+      │  Mega-Sena                    │
+      │  100% de graça                │
+      ╰───────────────────────────────╯
+
+      ╭───────────────────────────────╮
+      │  Estudos diários              │  ← Card 5 (ROXO Lotofácil, outline)
+      │  Lotofácil                    │
+      │  100% de graça                │
+      ╰───────────────────────────────╯
+
+           Footer minimalista
+           © Palpite Tech · CNPJ
+```
+
+### Especificações de design
+
+**Container global:**
+- `min-h-screen bg-gradient-to-b from-slate-50 to-white`
+- Sem header/nav/footer da app
+
+**Banner YouTube (topo, 100% largura):**
+- `<a href="https://www.youtube.com/@palpitetech" target="_blank" rel="noopener">` (placeholder — **vou perguntar URL real após aprovação**)
+- Background: gradient `from-red-600 to-red-700`
+- Ícone Play (lucide `Play`) + texto branco bold "Vídeos novos todos os Dias no YouTube"
+- Altura: ~64px, `shadow-[0_20px_40px_-10px_rgba(220,38,38,0.4)]` para o efeito sombra abaixo
+- Hover: subtle scale + brightness
+
+**Bloco logo (centralizado, abaixo do banner):**
+- Largura 80% (`max-w-md mx-auto`), padding top
+- Espaço para logo: `<img src="/logo-palpite-tech.png" alt="Palpite Tech" className="h-20 mx-auto" />` — **placeholder até receber a logo**
+- Subtexto pequeno opcional
+
+**Cards de oferta (5 cards, max-w-md mx-auto, w-[80%]):**
+
+Cada card é um `<a target="_blank">` clicável com:
+- Padding generoso (`p-6`)
+- `rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all`
+- 3 linhas de texto: **título grande bold** / **subtítulo médio** / **preço/CTA pequeno bold**
+- Largura total do container, empilhados com `space-y-4`
+
+**Identidade por card (cor de borda esquerda 4px + fundo a 4% — padrão "floating box" do projeto):**
+
+| Card | Cor HSL | Estilo |
 |---|---|---|
-| Lotofácil | `270 60% 50%` (Roxo) | botão, badges, destaques, ícone do estudo |
-| Mega-Sena | `125 70% 40%` (Verde) | botão, badges, destaques, ícone do estudo |
+| 1 — Gerador Inteligente | `--primary` (azul app) | `border-l-4 border-primary bg-primary/5` |
+| 2 — 15 Palpites Lotofácil | `270 60% 50%` (roxo) | `border-l-4` + `bg-[hsl(270_60%_50%/0.05)]` — preço em roxo |
+| 3 — 15 Palpites Mega | `125 70% 40%` (verde) | `border-l-4` + `bg-[hsl(125_70%_40%/0.05)]` — preço em verde |
+| 4 — Estudos Mega Grátis | `125 70% 40%` (verde) | mesmo estilo, badge "GRÁTIS" verde |
+| 5 — Estudos Lotofácil Grátis | `270 60% 50%` (roxo) | mesmo estilo, badge "GRÁTIS" roxo |
 
-### Abordagem técnica: CSS variable scoping
+**Tipografia (letras grandes, direto ao ponto):**
+- Linha 1 (chamada): `text-xl font-black text-senior-dark`
+- Linha 2 (complemento): `text-base font-semibold text-foreground/80`
+- Linha 3 (preço): `text-sm font-bold` na cor da loteria
 
-Em vez de espalhar `if loteria === ...` em cada elemento, definimos um wrapper com tema local que sobrescreve `--primary` (e tokens auxiliares) **apenas dentro do gerador**.
+### Links de destino (configuráveis no topo do arquivo)
 
-**Novo arquivo:** `src/components/gerador-estudo/GeradorTheme.tsx`
+Como não foram passados os checkouts, deixarei constantes no topo para edição rápida:
 ```tsx
-type Loteria = "lotofacil" | "megasena";
-
-const THEMES: Record<Loteria, React.CSSProperties> = {
-  lotofacil: {
-    "--primary": "270 60% 50%",
-    "--primary-foreground": "0 0% 100%",
-    "--ring": "270 60% 50%",
-    "--accent": "270 60% 95%",
-    "--accent-foreground": "270 60% 30%",
-  } as React.CSSProperties,
-  megasena: {
-    "--primary": "125 70% 40%",
-    "--primary-foreground": "0 0% 100%",
-    "--ring": "125 70% 40%",
-    "--accent": "125 70% 95%",
-    "--accent-foreground": "125 70% 25%",
-  } as React.CSSProperties,
+const LINKS = {
+  youtube: "https://www.youtube.com/@palpitetech",
+  geradorInteligente: "/planos",          // placeholder
+  palpitesLotofacil: "#",                 // placeholder — pedir checkout
+  palpitesMega: "#",                      // placeholder — pedir checkout
+  estudosMega: "/login",                  // free → cadastro
+  estudosLotofacil: "/login",             // free → cadastro
 };
-
-export function GeradorTheme({ loteria, children }: { loteria: Loteria; children: React.ReactNode }) {
-  return <div style={THEMES[loteria]} className="contents-isolate">{children}</div>;
-}
 ```
+**Após aprovação do plano**, perguntarei os links reais de checkout dos 2 produtos pagos de R$ 19,00 e o canal do YouTube.
 
-> **Por quê?** Todos os componentes filhos (`Button`, `Badge variant=default`, `EstudoInfoCard` com `border-primary/20 bg-primary/5`, link "Ver estudo completo" etc.) já consomem `hsl(var(--primary))`. Trocando a variável **uma vez** no escopo do gerador, **tudo se ajusta automaticamente** — zero refator de classes nos componentes filhos.
+### SEO
+- `<Helmet>` com `<title>Palpite Tech · Links</title>` + `<meta name="robots" content="noindex" />` (página de bio não precisa indexar — evita canibalização da home)
 
-### Aplicação em `GeradorEstudo.tsx`
-Envolver o conteúdo da página com o tema:
-```tsx
-<MainLayout pageTitle={tituloPagina}>
-  <GeradorTheme loteria={loteria}>
-    <div className="container-senior py-6 space-y-4 max-w-md mx-auto">
-      {/* ... resto igual ... */}
-    </div>
-  </GeradorTheme>
-</MainLayout>
-```
-
-### Efeito visual resultante (sem tocar em nenhum filho)
-- **Botão "Gerar X Palpites"**: roxo (Lotofácil) / verde (Mega-Sena) — antes era azul-marinho
-- **EstudoInfoCard**: borda + fundo + ícone `BookOpen` + barra lateral da recomendação + link "Ver estudo completo" → todos coloridos com a cor da loteria
-- **Badges "Próximo / Já realizado" (variant=default)** no `EstudoSelector`: cor da loteria
-- **Ring de foco** dos selects: cor da loteria
-- **Ícone "✏️ Digitar valor..."** no `QuantidadeSelector` (`text-primary`): cor da loteria
-
-### Não-objetivos
-- **Não** mexer em `MainLayout` / header superior (continua neutro do app)
-- **Não** alterar `ResultadosSheet` / `ResultadosSheetMegaSena` (já têm sua própria identidade — bolinhas verdes Mega, etc.)
-- **Não** criar tokens novos em `index.css` — reaproveitar os já existentes (`--megasena-primary`, palette Lotofácil)
-- **Não** mexer no badge de uso "30/dia" (mantém neutro `bg-background border-border`)
-
-### Arquivos tocados
+### Detalhes técnicos
 | Ação | Arquivo |
 |---|---|
-| Criar | `src/components/gerador-estudo/GeradorTheme.tsx` (~25 LOC) |
-| Editar | `src/pages/lotofacil/GeradorEstudo.tsx` (envolver children com `<GeradorTheme loteria={loteria}>`) |
+| Criar | `src/pages/PalpitesEstudos.tsx` (~150 LOC, standalone) |
+| Editar | `src/App.tsx` (1 linha: import + 1 `<Route>`) |
 
 ### Garantias
-- **Pronto para Quina/Dupla**: basta adicionar a entrada no objeto `THEMES` quando essas loterias ganharem gerador-estudo
-- **Reversível e isolado**: o tema vive só no escopo do gerador; resto do app intacto
-- **Zero duplicação de código**: nenhum componente filho precisa saber qual loteria está ativa
+- **Desanexada de tudo**: zero `MainLayout`, zero auth, zero context dependencies além do necessário pra renderizar
+- **Cores das loterias** aplicadas com sobriedade (border-left 4px + fundo 4% — padrão já estabelecido no projeto)
+- **Mobile-first**: 80% de largura no mobile, max-w-md no desktop, centralizado
+- **Logo**: deixarei `<img src="/logo-palpite-tech.png" />` apontando para `public/` — você só precisa subir o arquivo da logo nesse caminho (ou me dizer onde está)
+- **Sem impacto** em rotas/páginas existentes
 
