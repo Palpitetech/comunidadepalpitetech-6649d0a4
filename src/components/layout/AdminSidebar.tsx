@@ -63,6 +63,7 @@ import {
   ArrowLeft,
   Settings,
   Radio,
+  Database,
   type LucideIcon,
 } from "lucide-react";
 
