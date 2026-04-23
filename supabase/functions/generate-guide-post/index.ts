@@ -120,6 +120,226 @@ function calcularMolduraRecomendada(concursos: Concurso[]): {
   return { mediaMoldura: media, qtdRecomendada: Math.round(media), topMoldura: top };
 }
 
+// =============================================================================
+// MOLDURA: análise detalhada (frequência + coocorrências + fracas + recomendação)
+// =============================================================================
+
+interface MolduraDezenaForte {
+  dezena: number;
+  vezes: number;
+  perc: number;
+}
+interface MolduraDezenaFraca {
+  dezena: number;
+  vezes: number;
+  perc: number;
+  companheirasFrequentes: number[];
+}
+interface MolduraPar {
+  a: number;
+  b: number;
+  vezes: number;
+}
+interface MolduraTrio {
+  a: number;
+  b: number;
+  c: number;
+  vezes: number;
+}
+interface MolduraRecomendacao {
+  qtdRecomendada: number;
+  nucleoForte: number[];
+  apoio: number[];
+  coringas: number[];
+  deixarFora: number[];
+  justNucleo: string;
+  justApoio: string;
+  justCoringas: string;
+  justFora: string;
+}
+interface MolduraAnalise {
+  totalConcursos: number;
+  mediaMoldura: number;
+  faixaMaisComum: { qtd1: number; qtd2: number; perc: number };
+  fortes: MolduraDezenaForte[];
+  fracas: MolduraDezenaFraca[];
+  melhoresPares: MolduraPar[];
+  melhoresTrios: MolduraTrio[];
+  padraoFalha: { vezesFraca: number; ausentesTop: number[] };
+  recomendacao: MolduraRecomendacao;
+}
+
+function analisarMolduraDetalhado(concursos: Concurso[]): MolduraAnalise {
+  const N = concursos.length;
+  const moldSet = new Set(MOLDURA);
+
+  // 1) Frequência por dezena da moldura
+  const freq = new Map<number, number>();
+  for (const d of MOLDURA) freq.set(d, 0);
+  // Quantidade de moldura por sorteio
+  const qtdMoldPorSorteio: number[] = [];
+  for (const c of concursos) {
+    let qtd = 0;
+    for (const d of c.dezenas) {
+      if (moldSet.has(d)) {
+        freq.set(d, (freq.get(d) || 0) + 1);
+        qtd++;
+      }
+    }
+    qtdMoldPorSorteio.push(qtd);
+  }
+  const mediaMoldura = qtdMoldPorSorteio.reduce((a, b) => a + b, 0) / N;
+
+  // 2) Faixa mais comum (top 2 quantidades de moldura por sorteio)
+  const distQtd = new Map<number, number>();
+  for (const q of qtdMoldPorSorteio) distQtd.set(q, (distQtd.get(q) || 0) + 1);
+  const topFaixa = Array.from(distQtd.entries())
+    .sort((a, b) => b[1] - a[1] || b[0] - a[0])
+    .slice(0, 2);
+  const q1 = topFaixa[0]?.[0] ?? 0;
+  const q2 = topFaixa[1]?.[0] ?? q1;
+  const faixaMaisComum = {
+    qtd1: Math.min(q1, q2),
+    qtd2: Math.max(q1, q2),
+    perc: Math.round((((topFaixa[0]?.[1] ?? 0) + (q1 !== q2 ? topFaixa[1]?.[1] ?? 0 : 0)) / N) * 100),
+  };
+
+  // 3) Fortes (top 8)
+  const ordenadasDesc = Array.from(freq.entries())
+    .sort((a, b) => b[1] - a[1] || a[0] - b[0]);
+  const fortes: MolduraDezenaForte[] = ordenadasDesc.slice(0, 8).map(([dezena, vezes]) => ({
+    dezena,
+    vezes,
+    perc: Math.round((vezes / N) * 100),
+  }));
+
+  // 4) Matriz de coocorrência da moldura (apenas dezenas da moldura entre si)
+  const coOc = new Map<string, number>(); // "a-b" com a<b
+  const keyPair = (a: number, b: number) => (a < b ? `${a}-${b}` : `${b}-${a}`);
+  const coTrio = new Map<string, number>(); // "a-b-c" ordenado
+  for (const c of concursos) {
+    const dsMold = c.dezenas.filter((d) => moldSet.has(d)).sort((x, y) => x - y);
+    for (let i = 0; i < dsMold.length; i++) {
+      for (let j = i + 1; j < dsMold.length; j++) {
+        const k = keyPair(dsMold[i], dsMold[j]);
+        coOc.set(k, (coOc.get(k) || 0) + 1);
+        for (let l = j + 1; l < dsMold.length; l++) {
+          const tk = `${dsMold[i]}-${dsMold[j]}-${dsMold[l]}`;
+          coTrio.set(tk, (coTrio.get(tk) || 0) + 1);
+        }
+      }
+    }
+  }
+
+  // 5) Melhores pares e trios
+  const melhoresPares: MolduraPar[] = Array.from(coOc.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 3)
+    .map(([k, vezes]) => {
+      const [a, b] = k.split("-").map(Number);
+      return { a, b, vezes };
+    });
+
+  const melhoresTrios: MolduraTrio[] = Array.from(coTrio.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 2)
+    .map(([k, vezes]) => {
+      const [a, b, c] = k.split("-").map(Number);
+      return { a, b, c, vezes };
+    });
+
+  // 6) Fracas: ≤ 30% de presença
+  const limiteFraca = N * 0.3;
+  const fracasBase = ordenadasDesc.filter(([, v]) => v <= limiteFraca && v > 0).slice(-4);
+  // Se nenhuma com v>0 ≤30%, usa as menos frequentes (até 3)
+  const fracasFonte = fracasBase.length > 0 ? fracasBase : ordenadasDesc.slice(-3);
+  const fracas: MolduraDezenaFraca[] = fracasFonte.map(([dezena, vezes]) => {
+    // Companheiras = outras dezenas da moldura que mais saíram NOS sorteios em que essa fraca apareceu
+    const compFreq = new Map<number, number>();
+    for (const c of concursos) {
+      if (!c.dezenas.includes(dezena)) continue;
+      for (const d of c.dezenas) {
+        if (d === dezena || !moldSet.has(d)) continue;
+        compFreq.set(d, (compFreq.get(d) || 0) + 1);
+      }
+    }
+    const companheirasFrequentes = Array.from(compFreq.entries())
+      .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+      .slice(0, 3)
+      .map(([d]) => d);
+    return {
+      dezena,
+      vezes,
+      perc: Math.round((vezes / N) * 100),
+      companheirasFrequentes,
+    };
+  }).sort((a, b) => a.vezes - b.vezes || a.dezena - b.dezena).slice(0, 3);
+
+  // 7) Padrão de falha: sorteios com moldura ≤ (mediaMoldura - 1)
+  const limiarFalha = Math.floor(mediaMoldura - 1);
+  let vezesFraca = 0;
+  const ausentesContador = new Map<number, number>();
+  for (let i = 0; i < concursos.length; i++) {
+    if (qtdMoldPorSorteio[i] <= limiarFalha) {
+      vezesFraca++;
+      const presentes = new Set(concursos[i].dezenas);
+      for (const d of MOLDURA) {
+        if (!presentes.has(d)) ausentesContador.set(d, (ausentesContador.get(d) || 0) + 1);
+      }
+    }
+  }
+  const ausentesTop = Array.from(ausentesContador.entries())
+    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+    .slice(0, 4)
+    .map(([d]) => d);
+
+  // 8) Recomendação por classificação (núcleo / apoio / coringas / fora)
+  const qtdRecomendada = Math.max(7, Math.min(11, Math.round(mediaMoldura)));
+  const fortesPercSorted = fortes; // já ordenado desc por vezes
+  const nucleoForte = fortesPercSorted.filter((f) => f.perc >= 70).slice(0, 4).map((f) => f.dezena);
+  const apoio = fortesPercSorted
+    .filter((f) => f.perc >= 50 && f.perc < 70 && !nucleoForte.includes(f.dezena))
+    .slice(0, 3)
+    .map((f) => f.dezena);
+
+  // Coringas: dezenas da moldura com freq média-baixa (30-50%) e que NÃO estão fracas
+  const fracasIds = new Set(fracas.map((x) => x.dezena));
+  const coringas = ordenadasDesc
+    .map(([d, v]) => ({ d, perc: Math.round((v / N) * 100) }))
+    .filter((x) =>
+      x.perc >= 30 && x.perc < 50 &&
+      !nucleoForte.includes(x.d) && !apoio.includes(x.d) && !fracasIds.has(x.d)
+    )
+    .slice(0, 2)
+    .map((x) => x.d);
+
+  const deixarFora = fracas.map((f) => f.dezena);
+
+  const recomendacao: MolduraRecomendacao = {
+    qtdRecomendada,
+    nucleoForte,
+    apoio,
+    coringas,
+    deixarFora,
+    justNucleo: "top frequência (70%+) e formam pares/trios consistentes",
+    justApoio: "frequência média (50-70%), reforçam a estrutura",
+    justCoringas: "atrasadas no momento, com tendência de retorno",
+    justFora: "padrão fraco recente, baixa coocorrência com o núcleo",
+  };
+
+  return {
+    totalConcursos: N,
+    mediaMoldura,
+    faixaMaisComum,
+    fortes,
+    fracas,
+    melhoresPares,
+    melhoresTrios,
+    padraoFalha: { vezesFraca, ausentesTop },
+    recomendacao,
+  };
+}
+
 function calcularDistribuicaoLinhas(concursos: Concurso[]): {
   medias: number[]; // L1..L5
   recomendacao: number[]; // valores arredondados que somam 15
