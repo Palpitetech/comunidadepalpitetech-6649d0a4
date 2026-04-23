@@ -6,11 +6,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface BotSchedule {
-  horarios: string[];
-  dias: number[];
-  tipo_por_horario?: Record<string, string>;
-}
+// =============================================================================
+// CONSTANTES — autor único da comunidade
+// =============================================================================
+const AUGUSTO_PERFIL_ID = "41b58d48-2ef1-4bf7-a536-ed8a49607fa9";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -20,257 +19,137 @@ serve(async (req) => {
   try {
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // Obter corpo da requisição para verificar overrides de teste
+    // Overrides de teste (testTime "HH:MM", testDay 0..6)
     const body = await req.json().catch(() => ({}));
-    const testTime = body.testTime; // Ex: "14:00"
-    const testDay = body.testDay !== undefined ? body.testDay : null; // Ex: 1 (Segunda)
+    const testTime: string | undefined = body.testTime;
+    const testDay: number | null = body.testDay !== undefined ? body.testDay : null;
 
-    // Horário atual no fuso de Brasília (UTC-3)
+    // Horário atual em Brasília (UTC-3)
     const now = new Date();
     const brasiliaOffset = -3 * 60;
     const utcOffset = now.getTimezoneOffset();
     const brasiliaTime = new Date(now.getTime() + (utcOffset + brasiliaOffset) * 60 * 1000);
-    
+
     const currentHour = brasiliaTime.getHours().toString().padStart(2, "0");
     const currentMinute = brasiliaTime.getMinutes().toString().padStart(2, "0");
-    
+
     let currentTime = `${currentHour}:${currentMinute}`;
-    let currentDay = brasiliaTime.getDay(); // 0=Dom, 1=Seg...
+    let currentDay = brasiliaTime.getDay(); // 0=Dom
 
     if (testTime) {
       currentTime = testTime;
-      console.log(`[process-scheduled-posts] 🧪 MODO TESTE: Simulando horário ${currentTime}`);
+      console.log(`[process-scheduled-posts] 🧪 TESTE: simulando horário ${currentTime}`);
     }
     if (testDay !== null) {
       currentDay = testDay;
-      console.log(`[process-scheduled-posts] 🧪 MODO TESTE: Simulando dia ${currentDay}`);
+      console.log(`[process-scheduled-posts] 🧪 TESTE: simulando dia ${currentDay}`);
     }
 
     const [simulatedHour, simulatedMinute] = currentTime.split(":");
+    const currentTotalMinutes = parseInt(simulatedHour) * 60 + parseInt(simulatedMinute);
 
+    console.log(`[process-scheduled-posts] Verificando ${currentTime} (dia ${currentDay})`);
 
-    // Janela de 14 horas para verificar se o Autor de Resultados postou
-    // Isso cobre: resultado às 23h → posts válidos até 13h do dia seguinte
-    const windowHours = 22;
-    const windowStart = new Date(brasiliaTime.getTime() - (windowHours * 60 * 60 * 1000));
-    const windowStartISO = new Date(windowStart.getTime() - (brasiliaOffset * 60 * 1000)).toISOString();
+    // Buscar agenda ativa que combina com horário+dia atuais
+    const { data: schedules, error: schedErr } = await supabaseAdmin
+      .from("post_schedules")
+      .select("id, tipo_post, horario, dias, loteria")
+      .eq("ativo", true);
 
-    console.log(`[process-scheduled-posts] Verificando: ${currentTime}, dia ${currentDay}`);
+    if (schedErr) throw schedErr;
 
-    // 1. Verificar se o Autor de Resultados já postou hoje
-    const { data: resultAuthor } = await supabaseAdmin
-      .from("guide_personas")
-      .select("perfil_id, perfis(nome)")
-      .eq("is_result_author", true)
-      .eq("ativo", true)
-      .single();
-
-    let resultAuthorPostedToday = false;
-    
-    if (resultAuthor) {
-      const { data: recentResultPost } = await supabaseAdmin
-        .from("postagens")
-        .select("id, created_at")
-        .eq("user_id", resultAuthor.perfil_id)
-        .gte("created_at", windowStartISO)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
-      
-      resultAuthorPostedToday = !!recentResultPost;
-      console.log(`[process-scheduled-posts] Autor de Resultados (${(resultAuthor.perfis as any)?.nome}) postou nas últimas ${windowHours}h: ${resultAuthorPostedToday}`);
-    } else {
-      // Se não há autor de resultados configurado, liberar todos
-      resultAuthorPostedToday = true;
-      console.log("[process-scheduled-posts] Nenhum Autor de Resultados configurado, liberando todos");
-    }
-
-    // 2. Buscar bots ativos que podem criar posts
-    const { data: guides, error: guidesError } = await supabaseAdmin
-      .from("guide_personas")
-      .select("*, perfis(nome)")
-      .eq("ativo", true)
-      .eq("can_create_posts", true);
-
-    if (guidesError) throw guidesError;
-
-    if (!guides?.length) {
-      console.log("[process-scheduled-posts] ❌ Nenhum bot encontrado com permissões");
+    if (!schedules?.length) {
       return new Response(
-        JSON.stringify({ success: true, processed: 0, message: "Nenhum bot ativo com permissão para criar posts" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: true, processed: 0, message: "Nenhum schedule ativo" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
-
-    console.log(`[process-scheduled-posts] ✅ ${guides.length} bot(s) com permissão encontrado(s)`);
 
     const processed: string[] = [];
     const skipped: string[] = [];
     const errors: string[] = [];
 
-    for (const guide of guides) {
+    for (const sched of schedules) {
       try {
-        // REGRA: Autor de Resultados também pode ter schedule (ex: análises diárias)
-        // O post de "resultado_oficial" é triggado pelo sync-lotofacil, 
-        // mas as análises agendadas (Ciclo, Moldura, etc.) devem ser processadas aqui.
-        if (guide.is_result_author) {
-          console.log(`[${guide.perfis?.nome}] É Autor de Resultados, verificando agenda para análises diárias`);
-        }
-
-        // REGRA: Autor de Vendas do Sistema ou Autor de Resultados NÃO dependem de outro post do autor
-        // Eles podem publicar em seus horários agendados normalmente.
-        if (guide.is_system_sales_author || guide.is_result_author) {
-          console.log(`[${guide.perfis?.nome}] Publica independente de outros posts do autor`);
-          // Continua para processar normalmente
-        } else if (!resultAuthorPostedToday) {
-          // Demais autores só postam se o Autor de Resultados já postou (ex: resultado oficial)
-          console.log(`[${guide.perfis?.nome}] Aguardando Autor de Resultados postar primeiro`);
-          console.log(`[${guide.perfis?.nome}] Aguardando Autor de Resultados postar primeiro`);
-          skipped.push(`${guide.perfis?.nome}: Aguardando resultado do dia`);
-          
-          // Log skip
-          await supabaseAdmin
-            .from("bot_publishing_logs")
-            .insert({
-              guide_persona_id: guide.id,
-              bot_name: guide.perfis?.nome,
-              event_type: "skipped",
-              reason: "Waiting for result author to post",
-              details: { resultAuthorPostedToday: false }
-            });
+        // Pular slot 23:00 do tipo resultado_oficial (disparado por sync-lotofacil)
+        if (sched.tipo_post === "resultado_oficial") {
           continue;
         }
 
-        const schedule = guide.post_schedule as BotSchedule | null;
-        
-        if (!schedule?.horarios?.length || !schedule?.dias?.length) {
-          console.log(`[${guide.perfis?.nome}] Sem agenda configurada, pulando`);
-          continue;
-        }
+        // Filtrar por dia
+        if (!sched.dias?.includes(currentDay)) continue;
 
-        // Verificar se hoje é um dia válido
-        if (!schedule.dias.includes(currentDay)) {
-          console.log(`[${guide.perfis?.nome}] Dia ${currentDay} não está na agenda`);
-          continue;
-        }
+        // Filtrar por horário (margem 1min em produção, exato em teste)
+        const [schedHour, schedMin] = sched.horario.split(":");
+        const schedTotalMinutes = parseInt(schedHour) * 60 + parseInt(schedMin);
+        const matches = testTime
+          ? sched.horario === currentTime
+          : Math.abs(schedTotalMinutes - currentTotalMinutes) <= 1;
 
-        // Verificar se algum horário bate (com margem de 1 minuto)
-        const matchingTime = schedule.horarios.find((h) => {
-          const [schedHour, schedMinute] = h.split(":");
-          const schedTotalMinutes = parseInt(schedHour) * 60 + parseInt(schedMinute);
-          const currentTotalMinutes = parseInt(simulatedHour) * 60 + parseInt(simulatedMinute);
-          
-          // Se for modo teste, buscamos o horário exato. Senão, margem de 1min.
-          if (testTime) {
-            return h === currentTime;
-          }
-          return Math.abs(schedTotalMinutes - currentTotalMinutes) <= 1;
-        });
+        if (!matches) continue;
 
-        if (!matchingTime) {
-          console.log(`[${guide.perfis?.nome}] Horário ${currentTime} não bate com agenda`);
-          continue;
-        }
-
-        // DEDUPLICAÇÃO: Verificar se já postou nos últimos 30 minutos
+        // Dedup 30 min — mesmo tipo, mesmo autor
         const thirtyMinAgo = new Date(now.getTime() - 30 * 60 * 1000).toISOString();
-        const { data: recentPost } = await supabaseAdmin
+        const { data: recent } = await supabaseAdmin
           .from("postagens")
-          .select("id, created_at")
-          .eq("user_id", guide.perfil_id)
+          .select("id")
+          .eq("user_id", AUGUSTO_PERFIL_ID)
+          .eq("tipo", sched.tipo_post)
           .gte("created_at", thirtyMinAgo)
           .limit(1)
-          .single();
+          .maybeSingle();
 
-        if (recentPost) {
-          console.log(`[${guide.perfis?.nome}] ⚠️ Já postou nos últimos 30min (${recentPost.id}), pulando duplicata`);
-          skipped.push(`${guide.perfis?.nome}: Já postou recentemente`);
+        if (recent) {
+          skipped.push(`${sched.tipo_post}: já postou recentemente`);
           continue;
         }
 
-        console.log(`[${guide.perfis?.nome}] ✅ Gerando post via generate-guide-post (horário: ${matchingTime})`);
+        console.log(`[process-scheduled-posts] ✅ Disparando ${sched.tipo_post} (${sched.horario})`);
 
-        // Determinar tipo de post pelo mapeamento de horário ou pelo papel do bot
-        let tipoPost = "geral";
-        if (schedule.tipo_por_horario && schedule.tipo_por_horario[matchingTime]) {
-          tipoPost = schedule.tipo_por_horario[matchingTime];
-        } else if (guide.is_strategy_author) {
-          tipoPost = "estrategia";
-        } else if (guide.is_sales_author) {
-          tipoPost = "vendas";
-        } else if (guide.is_system_sales_author) {
-          tipoPost = "vendas_sistema";
-        }
-
-        // Pular slot 23:00 com tipo "resultado_oficial" — disparado por sync-lotofacil
-        if (tipoPost === "resultado_oficial") {
-          console.log(`[${guide.perfis?.nome}] ⏭️ Pulando ${matchingTime} (resultado_oficial é disparado por sync-lotofacil)`);
-          skipped.push(`${guide.perfis?.nome}: resultado_oficial gerenciado por sync-lotofacil`);
-          continue;
-        }
-
-        // Chamar generate-guide-post internamente
         const generateUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-guide-post`;
-        const generateResponse = await fetch(generateUrl, {
+        const r = await fetch(generateUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
           },
-          body: JSON.stringify({ tipo_post: tipoPost, guide_persona_id: guide.id }),
+          body: JSON.stringify({ tipo_post: sched.tipo_post }),
         });
 
-        if (!generateResponse.ok) {
-          const errBody = await generateResponse.text();
-          throw new Error(`generate-guide-post retornou ${generateResponse.status}: ${errBody}`);
+        if (!r.ok) {
+          const errBody = await r.text();
+          throw new Error(`generate-guide-post ${r.status}: ${errBody}`);
         }
 
-        const generateData = await generateResponse.json();
-        const postId = generateData.postId || generateData.id || "unknown";
-
-        processed.push(`${guide.perfis?.nome}: post ${postId} (${tipoPost})`);
-        console.log(`[${guide.perfis?.nome}] Post criado via generate-guide-post: ${postId} tipo=${tipoPost}`);
-
+        const data = await r.json();
+        processed.push(`${sched.tipo_post}: ${data.postId || "ok"}`);
       } catch (err) {
-        const errorMsg = `${guide.perfis?.nome}: ${err instanceof Error ? err.message : "Erro"}`;
-        errors.push(errorMsg);
-        console.error(`[${guide.perfis?.nome}] Erro:`, err);
-        
-        // Log error
-        await supabaseAdmin
-          .from("bot_publishing_logs")
-          .insert({
-            guide_persona_id: guide.id,
-            bot_name: guide.perfis?.nome,
-            event_type: "error",
-            reason: err instanceof Error ? err.message : "Unknown error",
-            details: { error: String(err) }
-          });
+        const msg = `${sched.tipo_post}: ${err instanceof Error ? err.message : "erro"}`;
+        errors.push(msg);
+        console.error(`[process-scheduled-posts] ${msg}`);
       }
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         processed: processed.length,
         posts: processed,
         skipped: skipped.length ? skipped : undefined,
         errors: errors.length ? errors : undefined,
-        resultAuthorPostedToday,
         checkedAt: currentTime,
-        day: currentDay
+        day: currentDay,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-
   } catch (error) {
     console.error("[process-scheduled-posts] Erro geral:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Erro" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
