@@ -1,81 +1,83 @@
 
 
-## Anti-Alucinação Numérica nos Posts
+## Como funciona o "motor" dos posts hoje
 
-Travar todos os números importantes (concurso, dezenas, contagens) no código. A IA passa a escrever apenas o **texto criativo entre os números fixos** — nunca mais inventa valores.
+Cada tipo de post tem **3 camadas**:
 
-## Problema atual
+1. **Motor de fatos (TypeScript puro)** — calcula números reais (frequências, médias, distribuições). Nunca alucina.
+2. **Prompt da IA** — recebe os fatos prontos e escreve o texto humanizado em volta deles.
+3. **Validador + fallback** — se a IA inventar número, descarta e usa template fixo.
 
-No post de resultado do concurso 3667, a IA escreveu "3267" no título. Isso aconteceu porque:
-- O título é gerado **integralmente pela IA**, com o número do concurso embutido no prompt como texto.
-- Modelos generativos podem trocar dígitos (3667 → 3267, 3676, etc.) — é uma falha conhecida e inevitável quando números ficam "soltos" no texto.
-- Não havia validação após a resposta.
+Os 6 tipos de post diários estão em `supabase/functions/generate-guide-post/index.ts`, cada um numa função `montarFatos()` (case `analise_linhas`, `analise_colunas`, `analise_ciclo`, etc.).
 
-## Solução: Template fixo + Validação numérica
+## Como você dá ordens para melhorar cada post
 
-### 1. Título 100% determinístico (sem IA)
+Você me dá a ordem em **linguagem natural**, dizendo:
+- **Qual tipo de post** quer mexer (ex: "análise por linhas", "quentes e frias", "ciclo")
+- **O que quer adicionar/mudar no conteúdo** (ex: "quero que mostre X antes de Y")
+- **Se é texto novo ou substituir** algo existente
 
-O título deixa de ser gerado pela IA. Passa a ser montado em código:
+Eu traduzo isso em ajustes nos 2 lugares certos:
+- **`montarFatos()`** — adiciona o cálculo novo (números reais).
+- **`montarPrompt()`** — instrui a IA a usar esses números no texto.
+- **Validador** — libera os novos números na whitelist.
+- **Fallback** — atualiza o template fixo para também incluir o novo bloco.
 
-```text
-🚨 Resultado Lotofácil — Concurso 3667
-```
+## Sua ordem para Linhas e Colunas
 
-A IA só recebe a tarefa de gerar o **conteúdo** do post.
-
-### 2. Validador numérico no conteúdo
-
-Após a IA responder, rodar uma função `validarNumeros()` que:
-- Extrai todos os números de 3 a 5 dígitos do conteúdo gerado.
-- Confere se o **número do concurso esperado** aparece pelo menos uma vez.
-- Confere se nenhum número "estranho" próximo do real aparece (ex.: 3666, 3668, 3267) — usando lista permitida.
-- Confere se as 15 dezenas citadas no texto são exatamente as oficiais (regex `\b(0[1-9]|1[0-9]|2[0-5])\b` cruzada com o array real).
-- Se falhar: descarta o texto da IA e usa **fallback determinístico** (template pronto preenchido apenas com números reais).
-
-### 3. Fallback determinístico do conteúdo
-
-Já existe parcialmente em `generate-guide-post`. Replicar no `sync-lotofacil` para o post de resultado:
+Você pediu detalhamento por linha/coluna no formato:
 
 ```text
-🎯 Dezenas sorteadas
-**01 - 02 - 04 - ...**
-
-📊 Raio-X
-• Pares: 7 | Ímpares: 8
-• Moldura: 9 dezenas
-• Primos: 5
-• Repetidas: 9 do concurso anterior
-
-🔄 Ciclo {N}
-{X} dezenas faltam: [...]
-
-💬 E aí, acertou quantas?
+Linha 1: tivemos 32 ocorrências, com mais frequência de 3 dezenas (12x) e 4 dezenas (10x)
+Linha 2: ...
 ```
 
-A IA só entra para deixar a abertura mais humana. Se ela falhar ou alucinar, o fallback publica mesmo assim.
+Vou implementar exatamente isso, calculando para cada uma das 5 linhas (e 5 colunas) nos últimos 10 sorteios:
+- **Total de ocorrências** (soma de quantas dezenas daquela linha caíram nos 10 sorteios)
+- **Distribuição** (quantas vezes caíram 2, 3, 4, 5 dezenas daquela linha — destacando as 2 quantidades mais frequentes)
 
-### 4. Aplicar nos 6 posts diários também
+## O que vai ser alterado
 
-Em `generate-guide-post`, repetir o mesmo padrão:
-- Título montado em código com o `proxConcurso` (já calculado).
-- Conteúdo da IA passa pelo `validarNumeros()`.
-- Se houver número que não está na lista permitida (concurso, dezenas reais, indicadores) → fallback.
+**Arquivo único:** `supabase/functions/generate-guide-post/index.ts`
 
-### 5. Corrigir o post 3667 já publicado
+### 1. Novo cálculo determinístico (motor)
+Adicionar função `detalharLinhasColunas(concursos, eixo: 'linha' | 'coluna')` que retorna, para cada índice 1–5:
+- total de ocorrências nos 10 sorteios
+- distribuição por quantidade de dezenas (2, 3, 4, 5) com as 2 mais frequentes
 
-Atualizar o título do post existente na tabela `postagens` para o formato correto, via migration de `UPDATE`.
+### 2. Atualizar `montarFatos()` para `analise_linhas` e `analise_colunas`
+O `resumo` passa a incluir o detalhamento linha por linha (ou coluna por coluna), exemplo:
 
-## Arquivos afetados
+```text
+📐 Análise por Linhas (últimos 10 sorteios)
 
-1. `supabase/functions/sync-lotofacil/index.ts` — título fixo + validador + fallback de conteúdo do resultado.
-2. `supabase/functions/generate-guide-post/index.ts` — título fixo + validador aplicado ao conteúdo.
-3. 1 migration SQL — `UPDATE postagens SET titulo = '🚨 Resultado Lotofácil — Concurso 3667' WHERE concurso_referencia = 3667 AND tipo = 'resultado_oficial'`.
+Linha 1 (01-05): 28 ocorrências
+  → mais comum: 3 dezenas (5x) e 2 dezenas (3x)
+Linha 2 (06-10): 31 ocorrências
+  → mais comum: 3 dezenas (6x) e 4 dezenas (2x)
+...
+```
 
-## Garantias após o refator
+### 3. Atualizar `montarPrompt()`
+Instruir a IA a manter o bloco linha-por-linha **literal** no texto e só humanizar a abertura/fechamento.
 
-- Número do concurso no título: **impossível alucinar** (vem direto da variável).
-- Dezenas no conteúdo: validadas contra o array real antes de publicar.
-- Indicadores (pares, primos, etc.): validados contra os valores calculados.
-- Se a IA falhar de qualquer forma → fallback publica texto correto baseado em template.
-- Zero risco de publicar número errado, em qualquer post.
+### 4. Atualizar validador e fallback
+- Whitelist permite os novos números (ocorrências de 0–60, quantidades 0–5).
+- Fallback determinístico passa a renderizar o bloco detalhado direto, sem IA, caso ela falhe.
+
+## Garantias
+
+- Números 100% reais (vêm do motor TypeScript).
+- IA só humaniza a abertura e o fechamento.
+- Se a IA tentar inventar — fallback publica o detalhamento exato.
+- Aplicado tanto em **Análise por Linhas** quanto em **Análise por Colunas**.
+
+## Próximas ordens (formato sugerido)
+
+Para qualquer outro post, basta você dizer algo como:
+- "No post de **quentes e frias**, quero que mostre também **há quantos sorteios cada fria não sai**."
+- "No post de **ciclo**, quero que liste as dezenas faltantes **em ordem de atraso**, não numérica."
+- "No post de **moldura**, quero comparar a média de moldura dos últimos 10 com a média histórica."
+
+Eu transformo cada pedido numa alteração no motor + prompt + validador + fallback.
 
