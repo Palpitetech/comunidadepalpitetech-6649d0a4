@@ -6,12 +6,23 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Constantes para cálculos
+// =============================================================================
+// CONSTANTES
+// =============================================================================
 const TOTAL_DEZENAS = 25;
 const DEZENAS_POR_SORTEIO = 15;
-const PERIODO_ANALISE = 20;
-const LIMIAR_QUENTE = 0.71;
-const LIMIAR_FRIO = 0.39;
+const PERIODO_ANALISE = 10; // janela conforme escopo aprovado
+const LIMIAR_QUENTE = 0.6;  // ajustado para janela de 10
+const LIMIAR_FRIO = 0.4;
+
+// Moldura visual (16 dezenas — bordas)
+const MOLDURA: number[] = [
+  1, 2, 3, 4, 5,
+  6, 10,
+  11, 15,
+  16, 20,
+  21, 22, 23, 24, 25,
+];
 
 interface Concurso {
   concurso_id: number;
@@ -26,579 +37,630 @@ interface Concurso {
   qtd_moldura: number;
 }
 
-// Calcula a frequência de cada dezena nos últimos N concursos
-function calcularFrequencias(concursos: Concurso[]): Map<number, number> {
-  const frequencias = new Map<number, number>();
-  
-  for (let i = 1; i <= TOTAL_DEZENAS; i++) {
-    frequencias.set(i, 0);
-  }
-  
-  for (const concurso of concursos) {
-    for (const dezena of concurso.dezenas) {
-      frequencias.set(dezena, (frequencias.get(dezena) || 0) + 1);
-    }
-  }
-  
-  return frequencias;
-}
+// =============================================================================
+// HELPERS DETERMINÍSTICOS (cálculo puro, sem IA)
+// =============================================================================
 
-// Identifica dezenas quentes e frias
-function identificarTemperatura(frequencias: Map<number, number>, totalConcursos: number): {
-  quentes: { dezena: number; percentual: number }[];
-  frias: { dezena: number; percentual: number }[];
-} {
-  const quentes: { dezena: number; percentual: number }[] = [];
-  const frias: { dezena: number; percentual: number }[] = [];
-  
-  for (const [dezena, freq] of frequencias) {
-    const percentual = freq / totalConcursos;
-    
-    if (percentual >= LIMIAR_QUENTE) {
-      quentes.push({ dezena, percentual });
-    } else if (percentual <= LIMIAR_FRIO) {
-      frias.push({ dezena, percentual });
-    }
-  }
-  
-  quentes.sort((a, b) => b.percentual - a.percentual);
-  frias.sort((a, b) => a.percentual - b.percentual);
-  
-  return { quentes: quentes.slice(0, 5), frias: frias.slice(0, 5) };
-}
-
-// Calcula o atraso atual de cada dezena (quantos concursos sem aparecer)
-function calcularAtrasos(concursos: Concurso[]): Map<number, number> {
-  const atrasos = new Map<number, number>();
-  
-  for (let i = 1; i <= TOTAL_DEZENAS; i++) {
-    atrasos.set(i, 0);
-    
-    for (let j = 0; j < concursos.length; j++) {
-      if (concursos[j].dezenas.includes(i)) {
-        atrasos.set(i, j);
-        break;
-      }
-      if (j === concursos.length - 1) {
-        atrasos.set(i, concursos.length);
-      }
-    }
-  }
-  
-  return atrasos;
-}
-
-// Calcula as duplas mais frequentes
-function calcularTopDuplas(concursos: Concurso[], top: number = 3): { dupla: [number, number]; frequencia: number; percentual: number }[] {
-  const duplas = new Map<string, number>();
-  
-  for (const concurso of concursos) {
-    const dezenas = concurso.dezenas.sort((a, b) => a - b);
-    
-    for (let i = 0; i < dezenas.length; i++) {
-      for (let j = i + 1; j < dezenas.length; j++) {
-        const chave = `${dezenas[i]}-${dezenas[j]}`;
-        duplas.set(chave, (duplas.get(chave) || 0) + 1);
-      }
-    }
-  }
-  
-  const ordenadas = Array.from(duplas.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, top);
-  
-  return ordenadas.map(([chave, freq]) => {
-    const [d1, d2] = chave.split("-").map(Number);
-    return {
-      dupla: [d1, d2] as [number, number],
-      frequencia: freq,
-      percentual: freq / concursos.length
-    };
-  });
-}
-
-// Calcula o trio mais frequente
-function calcularTopTrio(concursos: Concurso[]): { trio: [number, number, number]; frequencia: number; percentual: number } | null {
-  const trios = new Map<string, number>();
-  
-  for (const concurso of concursos) {
-    const dezenas = concurso.dezenas.sort((a, b) => a - b);
-    
-    for (let i = 0; i < dezenas.length; i++) {
-      for (let j = i + 1; j < dezenas.length; j++) {
-        for (let k = j + 1; k < dezenas.length; k++) {
-          const chave = `${dezenas[i]}-${dezenas[j]}-${dezenas[k]}`;
-          trios.set(chave, (trios.get(chave) || 0) + 1);
-        }
-      }
-    }
-  }
-  
-  const ordenados = Array.from(trios.entries())
-    .sort((a, b) => b[1] - a[1]);
-  
-  if (ordenados.length === 0) return null;
-  
-  const [chave, freq] = ordenados[0];
-  const [d1, d2, d3] = chave.split("-").map(Number);
-  
-  return {
-    trio: [d1, d2, d3] as [number, number, number],
-    frequencia: freq,
-    percentual: freq / concursos.length
-  };
-}
-
-// Formata dezena com 2 dígitos
-function formatarDezena(d: number): string {
+function fmt(d: number): string {
   return d.toString().padStart(2, "0");
 }
 
-// Monta o contexto enriquecido para a IA
-function montarContextoEnriquecido(concursos: Concurso[]): string {
-  if (!concursos || concursos.length === 0) {
-    return "Sem dados disponíveis para análise.";
+function calcularFrequencias(concursos: Concurso[]): Map<number, number> {
+  const f = new Map<number, number>();
+  for (let i = 1; i <= TOTAL_DEZENAS; i++) f.set(i, 0);
+  for (const c of concursos) for (const d of c.dezenas) f.set(d, (f.get(d) || 0) + 1);
+  return f;
+}
+
+function topQuentes(concursos: Concurso[], n = 5): { dezena: number; freq: number; perc: number }[] {
+  const f = calcularFrequencias(concursos);
+  return Array.from(f.entries())
+    .map(([dezena, freq]) => ({ dezena, freq, perc: freq / concursos.length }))
+    .sort((a, b) => b.freq - a.freq || a.dezena - b.dezena)
+    .slice(0, n);
+}
+
+function topFrias(concursos: Concurso[], n = 5): { dezena: number; freq: number; perc: number }[] {
+  const f = calcularFrequencias(concursos);
+  return Array.from(f.entries())
+    .map(([dezena, freq]) => ({ dezena, freq, perc: freq / concursos.length }))
+    .sort((a, b) => a.freq - b.freq || a.dezena - b.dezena)
+    .slice(0, n);
+}
+
+function calcularRepetidasRecomendadas(concursos: Concurso[]): {
+  mediaRepetidas: number;
+  qtdRecomendada: number;
+  topRepetidoras: number[];
+  ultimoSorteio: number[];
+} {
+  if (concursos.length < 2) {
+    return { mediaRepetidas: 9, qtdRecomendada: 9, topRepetidoras: [], ultimoSorteio: [] };
   }
-
-  const ultimo = concursos[0];
-  const frequencias = calcularFrequencias(concursos);
-  const { quentes, frias } = identificarTemperatura(frequencias, concursos.length);
-  const atrasos = calcularAtrasos(concursos);
-  const topDuplas = calcularTopDuplas(concursos);
-  const topTrio = calcularTopTrio(concursos);
-
-  // Dezenas com maior atraso
-  const maioresAtrasos = Array.from(atrasos.entries())
-    .filter(([_, atraso]) => atraso >= 5)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3);
-
-  let contexto = `📊 ANÁLISE DOS ÚLTIMOS ${concursos.length} CONCURSOS:
-
-🎯 ÚLTIMO RESULTADO:
-Concurso ${ultimo.concurso_id} (${ultimo.data_sorteio})
-Dezenas: [${ultimo.dezenas.map(formatarDezena).join(", ")}]
-Indicadores: ${ultimo.qtd_pares} pares, ${ultimo.qtd_impares} ímpares, ${ultimo.qtd_moldura} moldura, ${ultimo.qtd_primos} primos, ${ultimo.qtd_repetidas} repetidas
-
-`;
-
-  // Dezenas quentes
-  if (quentes.length > 0) {
-    contexto += `🔥 DEZENAS QUENTES (aparecendo muito):\n`;
-    contexto += quentes.map(q => `${formatarDezena(q.dezena)} (${Math.round(q.percentual * 100)}%)`).join(", ");
-    contexto += "\n\n";
+  const repetidasPorDezena = new Map<number, number>();
+  let totalRep = 0;
+  for (let i = 0; i < concursos.length - 1; i++) {
+    const atual = new Set(concursos[i].dezenas);
+    const ant = new Set(concursos[i + 1].dezenas);
+    const inter = [...atual].filter((d) => ant.has(d));
+    totalRep += inter.length;
+    for (const d of inter) repetidasPorDezena.set(d, (repetidasPorDezena.get(d) || 0) + 1);
   }
+  const media = totalRep / (concursos.length - 1);
+  const top = Array.from(repetidasPorDezena.entries())
+    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+    .slice(0, 8)
+    .map(([d]) => d);
+  return {
+    mediaRepetidas: media,
+    qtdRecomendada: Math.round(media),
+    topRepetidoras: top,
+    ultimoSorteio: concursos[0].dezenas,
+  };
+}
 
-  // Dezenas frias
-  if (frias.length > 0) {
-    contexto += `❄️ DEZENAS FRIAS (aparecendo pouco):\n`;
-    contexto += frias.map(f => `${formatarDezena(f.dezena)} (${Math.round(f.percentual * 100)}%)`).join(", ");
-    contexto += "\n";
-  }
-
-  // Maiores atrasos
-  if (maioresAtrasos.length > 0) {
-    contexto += `⏳ MAIORES ATRASOS:\n`;
-    contexto += maioresAtrasos.map(([d, a]) => `${formatarDezena(d)} (ausente há ${a} sorteios)`).join(", ");
-    contexto += "\n\n";
-  }
-
-  // Status do ciclo
-  if (ultimo.ciclo_numero !== null) {
-    contexto += `🔄 STATUS DO CICLO:\n`;
-    contexto += `Ciclo atual: ${ultimo.ciclo_numero}\n`;
-    
-    if (ultimo.dezenas_faltantes_ciclo && ultimo.dezenas_faltantes_ciclo.length > 0) {
-      const faltantes = ultimo.dezenas_faltantes_ciclo.map(formatarDezena).join(", ");
-      contexto += `Dezenas faltantes: [${faltantes}] (${ultimo.dezenas_faltantes_ciclo.length} restante${ultimo.dezenas_faltantes_ciclo.length > 1 ? "s" : ""})\n`;
-      
-      if (ultimo.dezenas_faltantes_ciclo.length <= 3) {
-        contexto += `⚡ Ciclo quase completo!\n`;
-      }
-    } else {
-      contexto += `✅ Ciclo completo - iniciando novo ciclo\n`;
+function calcularMolduraRecomendada(concursos: Concurso[]): {
+  mediaMoldura: number;
+  qtdRecomendada: number;
+  topMoldura: number[];
+} {
+  const totalMoldura = concursos.reduce((acc, c) => acc + c.qtd_moldura, 0);
+  const media = totalMoldura / concursos.length;
+  const f = new Map<number, number>();
+  for (const d of MOLDURA) f.set(d, 0);
+  for (const c of concursos) {
+    for (const d of c.dezenas) {
+      if (MOLDURA.includes(d)) f.set(d, (f.get(d) || 0) + 1);
     }
-    contexto += "\n";
   }
-
-  // Duplas mais frequentes
-  if (topDuplas.length > 0) {
-    contexto += `🤝 DUPLAS MAIS FREQUENTES:\n`;
-    topDuplas.forEach((d, i) => {
-      contexto += `${i + 1}. ${formatarDezena(d.dupla[0])}-${formatarDezena(d.dupla[1])} → aparecem juntas em ${Math.round(d.percentual * 100)}% dos sorteios\n`;
-    });
-    contexto += "\n";
-  }
-
-  // Trio mais frequente
-  if (topTrio) {
-    contexto += `🎯 TRIO MAIS FREQUENTE:\n`;
-    contexto += `${formatarDezena(topTrio.trio[0])}-${formatarDezena(topTrio.trio[1])}-${formatarDezena(topTrio.trio[2])} → aparece junto em ${Math.round(topTrio.percentual * 100)}% dos sorteios\n`;
-  }
-
-  return contexto;
+  const top = Array.from(f.entries())
+    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+    .slice(0, 10)
+    .map(([d]) => d);
+  return { mediaMoldura: media, qtdRecomendada: Math.round(media), topMoldura: top };
 }
 
-// Monta instruções específicas baseadas no tipo de post
-function montarInstrucoesTipo(tipoPost: string): string {
-  const FORMATO_OBRIGATORIO = `
-FORMATO DE SAÍDA OBRIGATÓRIO:
-- Use emojis como marcadores de seção (🔥, ❄️, 🎯, 📊, 🔄, ⚡, 🤝, 💡)
-- Use **negrito** para destacar dezenas e números importantes
-- Separe seções com linha em branco
-- Use • para listas de tópicos
-- Máximo 800 caracteres no conteúdo
-- Estruture em 3-4 seções curtas e objetivas
-- Finalize com uma pergunta para engajar a comunidade`;
-
-  if (tipoPost === "analise_ciclo") {
-    return `
-CONTEXTO DO POST: Análise de CICLO da Lotofácil.
-FOCO PRINCIPAL:
-- Status atual do ciclo (número e progresso)
-- Dezenas que FALTAM para completar o ciclo (destaque em negrito)
-- Estimativa de quando o ciclo pode fechar baseado no ritmo atual
-- Histórico: quantos concursos os últimos ciclos levaram para fechar
-- Estratégia: vale apostar nas faltantes?
-
-SEÇÕES SUGERIDAS:
-🔄 Status do Ciclo → número do ciclo + progresso
-🎯 Dezenas Faltantes → listar com destaque
-💡 Estratégia → orientação sobre o ciclo
-${FORMATO_OBRIGATORIO}`;
+function calcularDistribuicaoLinhas(concursos: Concurso[]): {
+  medias: number[]; // L1..L5
+  recomendacao: number[]; // valores arredondados que somam 15
+} {
+  const sum = [0, 0, 0, 0, 0];
+  for (const c of concursos) {
+    for (const d of c.dezenas) {
+      const linha = Math.ceil(d / 5) - 1;
+      sum[linha]++;
+    }
   }
-
-  if (tipoPost === "analise_movimentacao") {
-    return `
-CONTEXTO DO POST: Análise de MOVIMENTAÇÃO (Quentes & Frias) da Lotofácil.
-FOCO PRINCIPAL:
-- Top 5 dezenas QUENTES (mais frequentes) com percentual
-- Top 5 dezenas FRIAS (menos frequentes) com percentual
-- Dezenas com MAIOR ATRASO (ausentes há mais sorteios)
-- Score de timing: dezenas que estão "no ponto" para sair
-- Duplas e trios que aparecem juntos com frequência
-
-SEÇÕES SUGERIDAS:
-🔥 Dezenas Quentes → top 5 com percentual
-❄️ Dezenas Frias → top 5 com percentual
-⏳ Maiores Atrasos → dezenas ausentes + quantos sorteios
-🤝 Duplas Frequentes → pares que saem juntos
-${FORMATO_OBRIGATORIO}`;
-  }
-
-  if (tipoPost === "analise_pares_impares") {
-    return `
-CONTEXTO DO POST: Análise de PARES e ÍMPARES da Lotofácil.
-FOCO PRINCIPAL:
-- Distribuição par/ímpar nos últimos concursos
-- Média histórica vs último resultado
-- Tendência: está pendendo para mais pares ou mais ímpares?
-- Faixas mais comuns (ex: 7P/8I, 8P/7I)
-- Relação com dezenas de moldura
-
-SEÇÕES SUGERIDAS:
-📊 Distribuição Atual → pares vs ímpares recentes
-🎯 Média Histórica → comparação
-💡 Tendência → para onde está indo
-${FORMATO_OBRIGATORIO}`;
-  }
-
-  if (tipoPost === "analise_repetidas") {
-    return `
-CONTEXTO DO POST: Análise de DEZENAS REPETIDAS entre concursos da Lotofácil.
-FOCO PRINCIPAL:
-- Quantas dezenas se repetiram do penúltimo para o último sorteio
-- Média de repetidas nos últimos 20 concursos
-- Dezenas que têm repetido com mais frequência
-- Padrão: em quantos concursos consecutivos uma dezena costuma aparecer
-- Estratégia: apostar em repetidas ou evitá-las?
-
-SEÇÕES SUGERIDAS:
-🔁 Repetidas Recentes → quais repetiram e quantas
-📊 Média Histórica → referência de repetição
-💡 Estratégia → orientação sobre repetidas
-${FORMATO_OBRIGATORIO}`;
-  }
-
-  if (tipoPost === "analise_moldura") {
-    return `
-CONTEXTO DO POST: Análise de MOLDURA da Lotofácil.
-FOCO PRINCIPAL:
-- Quantas dezenas da moldura saíram no último sorteio vs miolo
-- Dezenas da moldura: [01-06, 10, 11, 15, 16, 20-25] (16 dezenas)
-- Dezenas do miolo: [07, 08, 09, 12, 13, 14, 17, 18, 19] (9 dezenas)
-- Média histórica de moldura nos últimos concursos
-- Duplas frequentes dentro da moldura e dentro do miolo
-
-SEÇÕES SUGERIDAS:
-🖼️ Moldura vs Miolo → distribuição atual
-📊 Média Histórica → referência
-🎯 Destaques → duplas frequentes na moldura
-💡 Estratégia → equilíbrio moldura/miolo
-${FORMATO_OBRIGATORIO}`;
-  }
-
-  if (tipoPost === "estrategia") {
-    return `
-CONTEXTO DO POST: Análise de ESTRATÉGIA da Lotofácil.
-FOCO PRINCIPAL:
-- Síntese dos principais sinais (ciclo, quentes/frias, atrasos, duplas)
-- Sugestão de COMO MONTAR um jogo equilibrado para o próximo concurso
-- Equilíbrio par/ímpar e moldura/miolo recomendado
-- Dezenas que vale a pena considerar fixar
-- Reforçar que é orientação, não certeza
-
-SEÇÕES SUGERIDAS:
-🎯 Leitura do Momento → resumo dos sinais
-💡 Como Montar o Jogo → orientação prática
-⚖️ Equilíbrio Recomendado → par/ímpar + moldura
-🔥 Para Considerar → dezenas em destaque
-${FORMATO_OBRIGATORIO}`;
-  }
-
-  if (tipoPost === "pos_sorteio") {
-    return `
-CONTEXTO DO POST: Acabou de sair o resultado do concurso (sorteio das 20h). Este é um post de ANÁLISE PÓS-SORTEIO.
-- Comente sobre o que aconteceu no sorteio de hoje
-- Analise os indicadores do resultado (pares/ímpares, primos, repetidas, moldura)
-- Destaque se alguma tendência se confirmou
-- Convide a comunidade a discutir
-${FORMATO_OBRIGATORIO}`;
-  }
-
-  if (tipoPost === "pre_sorteio") {
-    return `
-CONTEXTO DO POST: O sorteio será hoje às 20h. Este é um post de ORIENTAÇÃO PRÉ-SORTEIO.
-- Compartilhe observações úteis para quem vai jogar hoje
-- Mencione tendências e dezenas em destaque
-- Comente sobre o status do ciclo
-- Deseje boa sorte à comunidade!
-${FORMATO_OBRIGATORIO}`;
-  }
-
-  return `
-CONTEXTO DO POST: Post geral de análise e orientação.
-- Compartilhe insights sobre os últimos resultados
-- Destaque padrões interessantes
-- Convide a comunidade para discutir
-${FORMATO_OBRIGATORIO}`;
+  const medias = sum.map((s) => s / concursos.length);
+  return { medias, recomendacao: ajustarPara15(medias) };
 }
+
+function calcularDistribuicaoColunas(concursos: Concurso[]): {
+  medias: number[]; // C1..C5
+  recomendacao: number[];
+} {
+  const sum = [0, 0, 0, 0, 0];
+  for (const c of concursos) {
+    for (const d of c.dezenas) {
+      const col = ((d - 1) % 5);
+      sum[col]++;
+    }
+  }
+  const medias = sum.map((s) => s / concursos.length);
+  return { medias, recomendacao: ajustarPara15(medias) };
+}
+
+// Arredonda um vetor de médias e ajusta para somar exatamente 15
+function ajustarPara15(medias: number[]): number[] {
+  const arred = medias.map((m) => Math.round(m));
+  let soma = arred.reduce((a, b) => a + b, 0);
+  // ajustar pelo maior resíduo
+  const residuos = medias.map((m, i) => ({ i, r: m - arred[i] }));
+  while (soma !== 15) {
+    if (soma < 15) {
+      residuos.sort((a, b) => b.r - a.r);
+      arred[residuos[0].i]++;
+      soma++;
+    } else {
+      residuos.sort((a, b) => a.r - b.r);
+      // não deixar zero virar negativo
+      const alvo = residuos.find((x) => arred[x.i] > 0)!;
+      arred[alvo.i]--;
+      soma--;
+    }
+  }
+  return arred;
+}
+
+function dezenasFaltantesCiclo(concursos: Concurso[]): number[] {
+  const ultimo = concursos[0];
+  if (ultimo?.dezenas_faltantes_ciclo && Array.isArray(ultimo.dezenas_faltantes_ciclo)) {
+    return [...ultimo.dezenas_faltantes_ciclo].sort((a, b) => a - b);
+  }
+  return [];
+}
+
+// =============================================================================
+// MONTAGEM DE FATOS POR TIPO (entregue à IA)
+// =============================================================================
+
+function montarFatos(tipoPost: string, concursos: Concurso[]): {
+  resumo: string;
+  recomendacaoDireta: string;
+} {
+  if (!concursos || concursos.length === 0) {
+    return { resumo: "Sem dados.", recomendacaoDireta: "Aguarde novos sorteios." };
+  }
+  const ultimo = concursos[0];
+  const proxConcurso = ultimo.concurso_id + 1;
+
+  switch (tipoPost) {
+    case "analise_ciclo": {
+      const faltantes = dezenasFaltantesCiclo(concursos);
+      const ciclo = ultimo.ciclo_numero;
+      const resumo = `Concurso ${ultimo.concurso_id} | Ciclo: ${ciclo ?? "n/d"} | ` +
+        (faltantes.length > 0
+          ? `${faltantes.length} dezena(s) faltam: [${faltantes.map(fmt).join(", ")}]`
+          : "Ciclo COMPLETO — novo ciclo iniciando.");
+      const recomendacaoDireta = faltantes.length > 0
+        ? `Para o concurso ${proxConcurso}: inclua estas ${Math.min(faltantes.length, 5)} dezenas faltantes prioritárias: [${faltantes.slice(0, 5).map(fmt).join(", ")}].`
+        : `Para o concurso ${proxConcurso}: o ciclo zerou. Use as dezenas mais quentes da última janela.`;
+      return { resumo, recomendacaoDireta };
+    }
+
+    case "analise_movimentacao": {
+      const quentes = topQuentes(concursos, 5);
+      const frias = topFrias(concursos, 5);
+      const resumo = `Quentes (10 sorteios): ${quentes.map((q) => `${fmt(q.dezena)} (${q.freq}x)`).join(", ")}\n` +
+        `Frias: ${frias.map((f) => `${fmt(f.dezena)} (${f.freq}x)`).join(", ")}`;
+      const fixar = quentes.slice(0, 5).map((q) => fmt(q.dezena)).join(", ");
+      const excluir = frias.slice(0, 3).map((f) => fmt(f.dezena)).join(", ");
+      const recomendacaoDireta = `Para o concurso ${proxConcurso}: FIXAR [${fixar}] e EXCLUIR [${excluir}].`;
+      return { resumo, recomendacaoDireta };
+    }
+
+    case "analise_moldura": {
+      const m = calcularMolduraRecomendada(concursos);
+      const resumo = `Média de moldura nos últimos ${concursos.length}: ${m.mediaMoldura.toFixed(1)} dezenas. ` +
+        `Top moldura: [${m.topMoldura.slice(0, 8).map(fmt).join(", ")}]`;
+      const recomendacaoDireta = `Para o concurso ${proxConcurso}: use ${m.qtdRecomendada} dezenas da moldura, priorizando [${m.topMoldura.slice(0, m.qtdRecomendada).map(fmt).join(", ")}].`;
+      return { resumo, recomendacaoDireta };
+    }
+
+    case "analise_repetidas": {
+      const r = calcularRepetidasRecomendadas(concursos);
+      const resumo = `Média de repetidas: ${r.mediaRepetidas.toFixed(1)}. ` +
+        `Último sorteio: [${r.ultimoSorteio.map(fmt).join(", ")}]. ` +
+        `Mais reincidentes: [${r.topRepetidoras.slice(0, 6).map(fmt).join(", ")}]`;
+      const candidatas = r.ultimoSorteio
+        .filter((d) => r.topRepetidoras.includes(d))
+        .slice(0, r.qtdRecomendada);
+      const fallback = r.ultimoSorteio.slice(0, r.qtdRecomendada);
+      const escolhidas = candidatas.length >= r.qtdRecomendada ? candidatas : fallback;
+      const recomendacaoDireta = `Para o concurso ${proxConcurso}: repita ${r.qtdRecomendada} dezenas do último sorteio, priorizando [${escolhidas.map(fmt).join(", ")}].`;
+      return { resumo, recomendacaoDireta };
+    }
+
+    case "analise_linhas": {
+      const l = calcularDistribuicaoLinhas(concursos);
+      const resumo = `Média por linha (10 sorteios): ` +
+        l.medias.map((m, i) => `L${i + 1}=${m.toFixed(1)}`).join(", ");
+      const recomendacaoDireta = `Para o concurso ${proxConcurso}: distribua ${l.recomendacao.map((v, i) => `${v} na L${i + 1}`).join(", ")}.`;
+      return { resumo, recomendacaoDireta };
+    }
+
+    case "analise_colunas": {
+      const c = calcularDistribuicaoColunas(concursos);
+      const resumo = `Média por coluna (10 sorteios): ` +
+        c.medias.map((m, i) => `C${i + 1}=${m.toFixed(1)}`).join(", ");
+      const recomendacaoDireta = `Para o concurso ${proxConcurso}: distribua ${c.recomendacao.map((v, i) => `${v} na C${i + 1}`).join(", ")}.`;
+      return { resumo, recomendacaoDireta };
+    }
+
+    default: {
+      const quentes = topQuentes(concursos, 5);
+      return {
+        resumo: `Concurso ${ultimo.concurso_id}. Quentes: [${quentes.map((q) => fmt(q.dezena)).join(", ")}]`,
+        recomendacaoDireta: `Acompanhe os próximos sorteios.`,
+      };
+    }
+  }
+}
+
+// =============================================================================
+// PROMPT POR TIPO
+// =============================================================================
+
+function montarPrompt(tipoPost: string, fatos: { resumo: string; recomendacaoDireta: string }, ultimoConcurso: number): string {
+  const titulos: Record<string, string> = {
+    analise_ciclo: "Análise de Ciclo",
+    analise_movimentacao: "Quentes e Frias — Fixas e Excluídas",
+    analise_moldura: "Análise de Moldura",
+    analise_repetidas: "Análise de Repetidas",
+    analise_linhas: "Análise por Linhas",
+    analise_colunas: "Análise por Colunas",
+  };
+  const tema = titulos[tipoPost] || "Análise da Lotofácil";
+
+  return `Você é Augusto Angelis, especialista em Lotofácil da equipe Palpite Tech. Escreva um POST CURTO da comunidade com tema: "${tema}".
+
+DADOS REAIS (use exatamente estes números, sem inventar):
+${fatos.resumo}
+
+RECOMENDAÇÃO DIRETA QUE VOCÊ DEVE INCLUIR LITERALMENTE NO TEXTO:
+${fatos.recomendacaoDireta}
+
+ESTRUTURA OBRIGATÓRIA do conteúdo:
+1) Abertura curta (1 linha) com gancho diferente a cada vez.
+2) Bloco "📊 O que aconteceu nos últimos 10" — resuma os dados acima em 2-3 linhas.
+3) Bloco "💡 Como montar seu palpite" — escreva a RECOMENDAÇÃO DIRETA acima, em destaque.
+4) Disclaimer curto: "Loteria envolve sorte. Use como guia, não como certeza."
+
+REGRAS:
+- Tom humano, acolhedor, em primeira pessoa. Varie a abertura.
+- Use **negrito** nas dezenas e na recomendação.
+- Máximo 800 caracteres no conteúdo.
+- Título com no máximo 60 caracteres, mencionando o tema e o concurso ${ultimoConcurso + 1}.
+- Apenas dezenas de 01 a 25.
+- NUNCA mencione IA, bot, modelo, GPT ou Gemini.
+
+Responda APENAS no formato JSON puro:
+{"titulo": "...", "conteudo": "..."}`;
+}
+
+// =============================================================================
+// SANITIZAÇÃO E VALIDAÇÃO
+// =============================================================================
+
+function sanitizar(texto: string): string {
+  return texto
+    .replace(/\b(IA|bot|robô|robot|modelo de linguagem|GPT[\w-]*|Gemini[\w-]*|ChatGPT|inteligência artificial)\b/gi, "análise")
+    .replace(/\s{3,}/g, "  ")
+    .trim();
+}
+
+function extrairJSON(content: string): { titulo: string; conteudo: string } | null {
+  try {
+    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || content.match(/\{[\s\S]*\}/);
+    const jsonStr = jsonMatch ? (jsonMatch[1] || jsonMatch[0]).trim() : content.trim();
+    const parsed = JSON.parse(jsonStr);
+    if (typeof parsed?.titulo === "string" && typeof parsed?.conteudo === "string") {
+      return { titulo: parsed.titulo, conteudo: parsed.conteudo };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function fallbackPost(tipoPost: string, fatos: { resumo: string; recomendacaoDireta: string }, proxConcurso: number): { titulo: string; conteudo: string } {
+  const titulosBase: Record<string, string> = {
+    analise_ciclo: `🔄 Ciclo da Lotofácil — concurso ${proxConcurso}`,
+    analise_movimentacao: `🔥 Quentes e Frias — concurso ${proxConcurso}`,
+    analise_moldura: `🖼️ Moldura — concurso ${proxConcurso}`,
+    analise_repetidas: `🔁 Repetidas — concurso ${proxConcurso}`,
+    analise_linhas: `📐 Linhas — concurso ${proxConcurso}`,
+    analise_colunas: `📊 Colunas — concurso ${proxConcurso}`,
+  };
+  const titulo = (titulosBase[tipoPost] || `Análise Lotofácil — ${proxConcurso}`).substring(0, 60);
+  const conteudo = `Olá pessoal! Trago um resumo direto do tema.\n\n` +
+    `📊 O que aconteceu nos últimos 10\n${fatos.resumo}\n\n` +
+    `💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\n` +
+    `Loteria envolve sorte. Use como guia, não como certeza.`;
+  return { titulo, conteudo: conteudo.substring(0, 1000) };
+}
+
+async function chamarIAComRetry(systemPrompt: string, userPrompt: string, apiKey: string): Promise<{ ok: boolean; status: number; content?: string; usage?: any; errorBody?: string }> {
+  const delays = [1000, 2000, 4000];
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          temperature: 0.8,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+        }),
+      });
+
+      // 402/429 → não retentar; sair limpo
+      if (resp.status === 402 || resp.status === 429) {
+        const errorBody = await resp.text();
+        return { ok: false, status: resp.status, errorBody };
+      }
+
+      if (resp.ok) {
+        const data = await resp.json();
+        return { ok: true, status: 200, content: data.choices?.[0]?.message?.content, usage: data.usage };
+      }
+
+      // 5xx → retry
+      if (resp.status >= 500 && attempt < 2) {
+        await new Promise((r) => setTimeout(r, delays[attempt]));
+        continue;
+      }
+
+      const errorBody = await resp.text();
+      return { ok: false, status: resp.status, errorBody };
+    } catch (err) {
+      console.error(`[IA] tentativa ${attempt + 1} falhou:`, err);
+      if (attempt < 2) await new Promise((r) => setTimeout(r, delays[attempt]));
+    }
+  }
+  return { ok: false, status: 0, errorBody: "Falha de rede após 3 tentativas" };
+}
+
+// =============================================================================
+// HANDLER
+// =============================================================================
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseAdmin = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
+
+  let guideId: string | null = null;
+  let guideName: string | null = null;
+  let tipoPost = "geral";
+
   try {
-    // Extrair tipo do corpo da requisição
     const body = await req.json().catch(() => ({}));
-    const tipoPost = body.tipo_post || "geral";
+    tipoPost = body.tipo_post || "geral";
     const requestedGuideId = body.guide_persona_id;
-    
-    console.log(`Gerando post do tipo: ${tipoPost}${requestedGuideId ? ` para o guia ${requestedGuideId}` : ""}`);
 
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    console.log(`[generate-guide-post] tipo=${tipoPost} guideId=${requestedGuideId || "auto"}`);
 
-    // 1. Buscar guia (se ID fornecido, busca ele; senão, o próximo da fila)
+    // 1. Buscar guia
     let query = supabaseAdmin
       .from("guide_personas")
       .select("*, perfis(*)")
       .eq("ativo", true)
       .eq("can_create_posts", true);
-    
     if (requestedGuideId) {
       query = query.eq("id", requestedGuideId);
     } else {
       query = query.order("ultimo_post_em", { ascending: true, nullsFirst: true }).limit(1);
     }
-
     const { data: guide, error: guideError } = await query.single();
 
     if (guideError || !guide) {
-      console.log("[generate-guide-post] ❌ Nenhum guia encontrado com permissão:", guideError?.message);
-      console.log("[generate-guide-post] Filtros: ativo=true, can_create_posts=true");
-      return new Response(
-        JSON.stringify({ message: "Nenhum guia ativo com permissão para criar posts" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      console.log("[generate-guide-post] ❌ Nenhum guia ativo:", guideError?.message);
+      return new Response(JSON.stringify({ message: "Nenhum guia ativo" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // 🔒 Trava de segurança: só Palpite Tech (autor de resultados) pode postar na comunidade
+    guideId = guide.id;
+    guideName = guide.perfis?.nome || null;
+
+    // Trava: só autor de resultados (Especialista Lotofácil) pode postar pelo motor
     const PALPITE_TECH_ID = "2a827e7d-a3d1-416e-8552-e830dc7e633c";
     if (guide.id !== PALPITE_TECH_ID && !guide.is_result_author) {
-      console.warn(`[generate-guide-post] 🚫 Bot não autorizado tentou postar: ${guide.perfis?.nome} (${guide.id})`);
+      console.warn(`[generate-guide-post] 🚫 Bot não autorizado: ${guideName}`);
+      return new Response(JSON.stringify({ error: "Bot não autorizado" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // 2. Lock de duplicação por tipo+dia (BRT)
+    const agora = new Date();
+    const inicioDiaBRT = new Date(agora);
+    inicioDiaBRT.setUTCHours(3, 0, 0, 0); // 00h BRT = 03h UTC
+    if (agora.getTime() < inicioDiaBRT.getTime()) inicioDiaBRT.setUTCDate(inicioDiaBRT.getUTCDate() - 1);
+
+    const { data: jaPostou } = await supabaseAdmin
+      .from("postagens")
+      .select("id, created_at")
+      .eq("user_id", guide.perfil_id)
+      .eq("tipo", tipoPost)
+      .gte("created_at", inicioDiaBRT.toISOString())
+      .limit(1)
+      .maybeSingle();
+
+    if (jaPostou) {
+      console.log(`[generate-guide-post] ⏭️ Já postou tipo=${tipoPost} hoje (post ${jaPostou.id})`);
+      await supabaseAdmin.from("bot_publishing_logs").insert({
+        guide_persona_id: guide.id,
+        bot_name: guideName,
+        event_type: "skipped",
+        reason: "duplicate_today",
+        details: { tipo_post: tipoPost, existing_post_id: jaPostou.id },
+      });
       return new Response(
-        JSON.stringify({ error: "Apenas o autor oficial pode criar postagens na comunidade" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ skipped: true, reason: "duplicate_today", postId: jaPostou.id }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // Log de aceitação
-    console.log(`[generate-guide-post] ✅ Bot selecionado: ${guide.perfis?.nome || guide.id}`);
-    console.log(`[generate-guide-post] Permissões: ativo=${guide.ativo}, can_create_posts=${guide.can_create_posts}`);
-
-    // 2. Buscar últimos resultados para análise enriquecida
-    const { data: resultados, error: resultadosError } = await supabaseAdmin
+    // 3. Buscar últimos 10 concursos
+    const { data: resultados, error: resErr } = await supabaseAdmin
       .from("resultados_loterias")
-        .select("concurso_id:concurso, dezenas, data_sorteio, ciclo_numero, dezenas_faltantes_ciclo, qtd_pares, qtd_impares, qtd_repetidas, qtd_primos, qtd_moldura")
-        .eq("loteria", "lotofacil")
+      .select("concurso_id:concurso, dezenas, data_sorteio, ciclo_numero, dezenas_faltantes_ciclo, qtd_pares, qtd_impares, qtd_repetidas, qtd_primos, qtd_moldura")
+      .eq("loteria", "lotofacil")
       .order("concurso", { ascending: false })
       .limit(PERIODO_ANALISE);
 
-    if (resultadosError) {
-      console.error("Erro ao buscar resultados:", resultadosError.message);
-      throw new Error("Erro ao buscar resultados");
+    if (resErr || !resultados || resultados.length === 0) {
+      throw new Error(`Erro ao buscar resultados: ${resErr?.message || "vazio"}`);
     }
 
-    // 3. Montar contexto enriquecido
-    const contextoEnriquecido = montarContextoEnriquecido(resultados as Concurso[]);
-    
-    // 4. Montar instruções específicas do tipo de post
-    const instrucoesTipo = montarInstrucoesTipo(tipoPost);
+    const concursos = resultados as Concurso[];
+    const ultimoConcurso = concursos[0].concurso_id;
 
-    // 5. Chamar Lovable AI com a personalidade do guia
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY não configurada");
+    // 4. Calcular fatos determinísticos
+    const fatos = montarFatos(tipoPost, concursos);
+
+    // 5. Chamar IA com retry
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!apiKey) throw new Error("LOVABLE_API_KEY não configurada");
+
+    const systemPrompt = guide.system_prompt || "Você é especialista em Lotofácil da equipe Palpite Tech.";
+    const userPrompt = montarPrompt(tipoPost, fatos, ultimoConcurso);
+
+    let titulo = "";
+    let conteudo = "";
+    let viaFallback = false;
+
+    const ia = await chamarIAComRetry(systemPrompt, userPrompt, apiKey);
+
+    if (!ia.ok && (ia.status === 402 || ia.status === 429)) {
+      console.warn(`[generate-guide-post] IA indisponível (${ia.status}). Usando fallback determinístico.`);
+      const fb = fallbackPost(tipoPost, fatos, ultimoConcurso + 1);
+      titulo = fb.titulo;
+      conteudo = fb.conteudo;
+      viaFallback = true;
+
+      await supabaseAdmin.from("bot_publishing_logs").insert({
+        guide_persona_id: guide.id,
+        bot_name: guideName,
+        event_type: "fallback",
+        reason: ia.status === 402 ? "payment_required" : "rate_limited",
+        details: { tipo_post: tipoPost, status: ia.status },
+      });
+    } else if (!ia.ok) {
+      console.error(`[generate-guide-post] IA falhou: ${ia.status} ${ia.errorBody}`);
+      const fb = fallbackPost(tipoPost, fatos, ultimoConcurso + 1);
+      titulo = fb.titulo;
+      conteudo = fb.conteudo;
+      viaFallback = true;
+
+      await supabaseAdmin.from("bot_publishing_logs").insert({
+        guide_persona_id: guide.id,
+        bot_name: guideName,
+        event_type: "fallback",
+        reason: "ai_error",
+        details: { tipo_post: tipoPost, status: ia.status, error: ia.errorBody?.substring(0, 500) },
+      });
+    } else {
+      // Validar JSON da IA
+      let parsed = extrairJSON(ia.content || "");
+
+      if (!parsed) {
+        console.warn("[generate-guide-post] JSON inválido na 1ª tentativa, retentando...");
+        const ia2 = await chamarIAComRetry(
+          systemPrompt,
+          userPrompt + "\n\nATENÇÃO: sua última resposta não era JSON puro. Devolva APENAS {\"titulo\":\"...\",\"conteudo\":\"...\"} sem texto adicional.",
+          apiKey,
+        );
+        if (ia2.ok) parsed = extrairJSON(ia2.content || "");
+      }
+
+      if (!parsed) {
+        console.warn("[generate-guide-post] JSON inválido após retentativa. Usando fallback.");
+        const fb = fallbackPost(tipoPost, fatos, ultimoConcurso + 1);
+        titulo = fb.titulo;
+        conteudo = fb.conteudo;
+        viaFallback = true;
+
+        await supabaseAdmin.from("bot_publishing_logs").insert({
+          guide_persona_id: guide.id,
+          bot_name: guideName,
+          event_type: "fallback",
+          reason: "invalid_json",
+          details: { tipo_post: tipoPost },
+        });
+      } else {
+        titulo = sanitizar(parsed.titulo).substring(0, 100);
+        conteudo = sanitizar(parsed.conteudo).substring(0, 1000);
+
+        // Guardrail: se a IA esqueceu de incluir a recomendação, anexa o fallback bloco
+        if (!conteudo.includes("Como montar") && !conteudo.includes("montar seu palpite")) {
+          conteudo = (conteudo + `\n\n💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\nLoteria envolve sorte.`).substring(0, 1000);
+        }
+      }
+
+      // Log de uso de IA (somente quando deu certo)
+      if (ia.usage) {
+        const pt = ia.usage.prompt_tokens || 0;
+        const ct = ia.usage.completion_tokens || 0;
+        const cost = (pt / 1e6) * 0.15 + (ct / 1e6) * 0.6;
+        supabaseAdmin.from("ai_usage_logs").insert({
+          bot_persona_id: guide.id,
+          bot_name: guideName,
+          edge_function: "generate-guide-post",
+          action_type: "post_analitico_comunidade",
+          prompt_tokens: pt,
+          completion_tokens: ct,
+          total_tokens: ia.usage.total_tokens || pt + ct,
+          model: "google/gemini-3-flash-preview",
+          cost_usd: cost,
+          metadata: { tipo_post: tipoPost },
+        }).then(() => {}).catch(() => {});
+      }
     }
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: guide.system_prompt },
-          { 
-            role: "user", 
-            content: `Crie um post para AJUDAR os usuários da comunidade Palpite Tech.
+    // 6. Inserir post
+    const { data: novoPost, error: postError } = await supabaseAdmin
+      .from("postagens")
+      .insert({
+        user_id: guide.perfil_id,
+        titulo,
+        conteudo,
+        loteria_tag: "Lotofácil",
+        tipo: tipoPost,
+      })
+      .select("id")
+      .single();
 
-${instrucoesTipo}
+    if (postError) throw new Error(`Erro ao inserir post: ${postError.message}`);
 
-CONTEXTO ESTATÍSTICO COMPLETO:
-${contextoEnriquecido}
-
-INSTRUÇÕES IMPORTANTES:
-- Seu papel é GUIAR e ORIENTAR, não dar certezas absolutas
-- Compartilhe observações úteis baseadas nos dados acima
-- Use frases como "tenho observado", "vale a pena notar", "uma possibilidade interessante..."
-- NUNCA prometa resultados ou dê certezas sobre o que vai sair
-- Reconheça que loteria envolve sorte: "claro que não há garantias, mas..."
-- Convide à discussão no final: "O que vocês acham?" ou "Alguém mais notou isso?"
-- Título: máximo 60 caracteres, chamativo mas não sensacionalista
-- Conteúdo: máximo 800 caracteres, bem estruturado com emojis e seções
-- Fale em primeira pessoa como membro da equipe Palpite Tech
-- NUNCA mencione que você é IA, bot ou modelo de linguagem
-- Seja prestativo e acolhedor, como um colega que divide o que descobriu
-
-Responda APENAS no formato JSON:
-{"titulo": "seu título aqui", "conteudo": "seu conteúdo aqui"}`
-          }
-        ]
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error("Erro na API de IA:", aiResponse.status, errorText);
-      throw new Error(`Erro na API de IA: ${aiResponse.status}`);
-    }
-
-    const aiData = await aiResponse.json();
-    const content = aiData.choices?.[0]?.message?.content;
-    const usage = aiData.usage;
-    const aiModel = "google/gemini-3-flash-preview";
-
-    // Log de uso de IA
-    if (usage) {
-      const promptTokens = usage.prompt_tokens || 0;
-      const completionTokens = usage.completion_tokens || 0;
-      const costUsd = (promptTokens / 1e6) * 0.15 + (completionTokens / 1e6) * 0.60;
-      supabaseAdmin.from("ai_usage_logs").insert({
-        bot_persona_id: guide.id,
-        bot_name: guide.perfis?.nome || null,
-        edge_function: "generate-guide-post",
-        action_type: "post_analitico_comunidade",
-        prompt_tokens: promptTokens,
-        completion_tokens: completionTokens,
-        total_tokens: usage.total_tokens || (promptTokens + completionTokens),
-        model: aiModel,
-        cost_usd: costUsd,
-        metadata: { tipo_post: tipoPost },
-      }).then(() => {}).catch((e: any) => console.error("Erro log IA:", e));
-    }
-
-    if (!content) {
-      throw new Error("Resposta da IA vazia");
-    }
-
-    // 5. Extrair JSON da resposta (pode vir com markdown)
-    let parsed;
-    try {
-      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || 
-                        content.match(/\{[\s\S]*\}/);
-      const jsonStr = jsonMatch ? (jsonMatch[1] || jsonMatch[0]).trim() : content.trim();
-      parsed = JSON.parse(jsonStr);
-    } catch (parseError) {
-      console.error("Erro ao parsear resposta da IA:", content);
-      throw new Error("Formato de resposta inválido da IA");
-    }
-
-    if (!parsed.titulo || !parsed.conteudo) {
-      throw new Error("Resposta da IA incompleta");
-    }
-
-    // 6. Criar post na comunidade
-    const { error: postError } = await supabaseAdmin.from("postagens").insert({
-      user_id: guide.perfil_id,
-      titulo: parsed.titulo.substring(0, 100),
-      conteudo: parsed.conteudo.substring(0, 1000),
-      loteria_tag: "Lotofácil",
-      tipo: tipoPost || "analise",
-    });
-
-    if (postError) {
-      console.error("Erro ao criar post:", postError.message);
-      throw new Error("Erro ao criar post");
-    }
-
-    // 7. Atualizar timestamp do último post do guia
+    // 7. Atualizar bot
     await supabaseAdmin
       .from("guide_personas")
       .update({ ultimo_post_em: new Date().toISOString() })
       .eq("id", guide.id);
 
-    console.log(`Post criado com sucesso pelo guia: ${guide.perfis?.nome} (tipo: ${tipoPost})`);
-    console.log(`Contexto utilizado:\n${contextoEnriquecido}`);
+    // 8. Log de sucesso
+    await supabaseAdmin.from("bot_publishing_logs").insert({
+      guide_persona_id: guide.id,
+      bot_name: guideName,
+      event_type: "success",
+      reason: viaFallback ? "fallback_used" : "ai_generated",
+      details: { tipo_post: tipoPost, post_id: novoPost.id, ultimo_concurso: ultimoConcurso },
+    });
+
+    console.log(`[generate-guide-post] ✅ Post criado ${novoPost.id} tipo=${tipoPost} fallback=${viaFallback}`);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        guide: guide.perfis?.nome,
+      JSON.stringify({
+        success: true,
+        postId: novoPost.id,
+        guide: guideName,
         tipo_post: tipoPost,
-        titulo: parsed.titulo,
-        contexto_resumo: {
-          concursos_analisados: resultados?.length || 0,
-          ultimo_concurso: resultados?.[0]?.concurso_id
-        }
+        titulo,
+        viaFallback,
+        ultimo_concurso: ultimoConcurso,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-
   } catch (error) {
-    console.error("Erro na função generate-guide-post:", error);
+    console.error("[generate-guide-post] Erro:", error);
+    if (guideId) {
+      await supabaseAdmin
+        .from("bot_publishing_logs")
+        .insert({
+          guide_persona_id: guideId,
+          bot_name: guideName,
+          event_type: "error",
+          reason: error instanceof Error ? error.message : "unknown",
+          details: { tipo_post: tipoPost },
+        })
+        .then(() => {})
+        .catch(() => {});
+    }
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Erro desconhecido" }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, "Content-Type": "application/json" } 
-      }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });

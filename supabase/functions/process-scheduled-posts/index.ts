@@ -205,6 +205,13 @@ serve(async (req) => {
           tipoPost = "vendas_sistema";
         }
 
+        // Pular slot 23:00 com tipo "resultado_oficial" — disparado por sync-lotofacil
+        if (tipoPost === "resultado_oficial") {
+          console.log(`[${guide.perfis?.nome}] ⏭️ Pulando ${matchingTime} (resultado_oficial é disparado por sync-lotofacil)`);
+          skipped.push(`${guide.perfis?.nome}: resultado_oficial gerenciado por sync-lotofacil`);
+          continue;
+        }
+
         // Chamar generate-guide-post internamente
         const generateUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-guide-post`;
         const generateResponse = await fetch(generateUrl, {
