@@ -26,24 +26,14 @@ export function useEstudosDisponiveis(loteria: "lotofacil" | "megasena") {
   return useQuery({
     queryKey: ["estudos-disponiveis", loteria],
     queryFn: async (): Promise<ListResponse> => {
-      const { data, error } = await supabase.functions.invoke("list-estudos-disponiveis", {
-        body: undefined,
-        method: "GET",
-        // @ts-expect-error - invoke aceita query via path
-        headers: {},
-      });
-      // Fallback manual para garantir query string
-      if (error || !data) {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData.session?.access_token;
-        const resp = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/list-estudos-disponiveis?loteria=${loteria}&limit=10`,
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
-        if (!resp.ok) throw new Error("Erro ao listar estudos");
-        return await resp.json();
-      }
-      return data as ListResponse;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/list-estudos-disponiveis?loteria=${loteria}&limit=10`,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+      );
+      if (!resp.ok) throw new Error("Erro ao listar estudos");
+      return await resp.json();
     },
     staleTime: 60_000,
   });

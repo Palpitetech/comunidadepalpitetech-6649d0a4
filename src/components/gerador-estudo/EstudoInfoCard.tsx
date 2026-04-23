@@ -39,12 +39,8 @@ export function EstudoInfoCard({ estudo }: Props) {
           <Badge variant="outline" className="text-[10px]">{estudo.loteria_tag}</Badge>
           {estudo.proximo_concurso !== null && (
             <Badge
-              variant="outline"
-              className={
-                estudo.eh_futuro
-                  ? "border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-400 text-[10px]"
-                  : "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400 text-[10px]"
-              }
+              variant={estudo.eh_futuro ? "default" : "destructive"}
+              className="text-[10px]"
             >
               Concurso {estudo.proximo_concurso}
             </Badge>
@@ -58,9 +54,9 @@ export function EstudoInfoCard({ estudo }: Props) {
         )}
 
         {!estudo.eh_futuro && (
-          <div className="flex items-start gap-2 rounded-md bg-amber-500/10 border border-amber-500/30 p-2">
-            <AlertTriangle className="h-3.5 w-3.5 text-amber-600 mt-0.5 shrink-0" />
-            <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">
+          <div className="flex items-start gap-2 rounded-md bg-destructive/10 border border-destructive/30 p-2">
+            <AlertTriangle className="h-3.5 w-3.5 text-destructive mt-0.5 shrink-0" />
+            <p className="text-[11px] text-destructive leading-relaxed">
               Este estudo é para um concurso já realizado. Os palpites gerados são apenas para fins de estudo e comparação.
             </p>
           </div>

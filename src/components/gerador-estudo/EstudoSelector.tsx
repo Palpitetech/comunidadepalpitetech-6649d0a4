@@ -42,12 +42,8 @@ export function EstudoSelector({ estudos, loading, value, onChange, disabled }: 
                 <span className="text-sm font-medium line-clamp-1">{selecionado.titulo || "Estudo"}</span>
                 <div className="flex items-center gap-1.5">
                   <Badge
-                    variant="outline"
-                    className={
-                      selecionado.eh_futuro
-                        ? "border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-400 text-[10px]"
-                        : "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400 text-[10px]"
-                    }
+                    variant={selecionado.eh_futuro ? "default" : "destructive"}
+                    className="text-[10px]"
                   >
                     {selecionado.eh_futuro ? (
                       <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -71,12 +67,12 @@ export function EstudoSelector({ estudos, loading, value, onChange, disabled }: 
                 <span className="text-sm font-medium line-clamp-1">{e.titulo || "Estudo"}</span>
                 <div className="flex items-center gap-1.5">
                   {e.eh_futuro ? (
-                    <Badge variant="outline" className="border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-400 text-[10px]">
+                    <Badge variant="default" className="text-[10px]">
                       <CheckCircle2 className="h-3 w-3 mr-1" />
                       Próximo · {e.proximo_concurso ?? "—"}
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400 text-[10px]">
+                    <Badge variant="destructive" className="text-[10px]">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       Já realizado · {e.proximo_concurso ?? "—"}
                     </Badge>

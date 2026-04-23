@@ -106,6 +106,7 @@ import HubDiaDeSorte from "./pages/diadesorte/HubDiaDeSorte";
 import ResultadosLotomania from "./pages/lotomania/ResultadosLotomania";
 import HubLotomania from "./pages/lotomania/HubLotomania";
 import HubLotofacil from "./pages/lotofacil/HubLotofacil";
+import GeradorEstudo from "./pages/lotofacil/GeradorEstudo";
 import GravacaoLotofacil from "./pages/admin/gravacao/GravacaoLotofacil";
 import GravacaoQuina from "./pages/admin/gravacao/GravacaoQuina";
 import GravacaoEstudos from "./pages/admin/gravacao/GravacaoEstudos";
@@ -177,6 +178,7 @@ const App = () => (
                 <Route path="/chat" element={<Navigate to="/home" replace />} />
                 <Route path="/notificacoes" element={<ProtectedRoute><Notificacoes /></ProtectedRoute>} />
                 <Route path="/lotofacil" element={<ProtectedRoute><HubLotofacil /></ProtectedRoute>} />
+                <Route path="/lotofacil/gerador-estudo" element={<ProtectedRoute><GatedPage feature="gerador"><GeradorEstudo loteria="lotofacil" /></GatedPage></ProtectedRoute>} />
                 <Route path="/resultados" element={<ProtectedRoute><Resultados /></ProtectedRoute>} />
                 <Route path="/tendencias" element={<ProtectedRoute><GatedPage feature="tendencias"><Tendencias /></GatedPage></ProtectedRoute>} />
                 <Route path="/linhas-colunas" element={<ProtectedRoute><GatedPage feature="linhas_colunas"><LinhasColunas /></GatedPage></ProtectedRoute>} />

@@ -3,7 +3,7 @@ import { HubLoteriaGrid, type HubTool } from "@/components/shared/HubLoteriaGrid
 import { Button } from "@/components/ui/button";
 import {
   Target, BarChart3, TrendingUp, Flame, LayoutGrid,
-  Table2, Dices, Shuffle, Wrench, MessageSquare
+  Table2, Dices, Shuffle, Wrench, MessageSquare, BookOpen
 } from "lucide-react";
 
 const THEME_COLOR = "270, 60%, 50%"; // Roxo Lotofácil
@@ -18,6 +18,7 @@ const tools: HubTool[] = [
   { title: "Linhas e Colunas", description: "Distribuição das dezenas por linhas e colunas do volante", icon: LayoutGrid, path: "/linhas-colunas" },
   { title: "Tabela de Movimentação", description: "Movimentação de entrada e saída das dezenas", icon: Table2, path: "/tabela-movimentacao" },
   { title: "Gerador de Palpites", description: "Gere palpites inteligentes com base em estatísticas", icon: Dices, path: "/smart-gerador" },
+  { title: "Gerador de Estudo", description: "Palpites prontos a partir dos estudos da comunidade", icon: BookOpen, path: "/lotofacil/gerador-estudo" },
   { title: "Desdobramento", description: "Monte desdobramentos otimizados com filtros estatísticos", icon: Shuffle, path: "/desdobramento" },
   { title: "Gerador de Fechamento", description: "Fechamentos com garantia de acerto mínimo", icon: Wrench, path: "/fechamento" },
 ];
