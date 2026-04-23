@@ -1,106 +1,125 @@
 
 
-## Cron de pré-geração 21:30 / 22:30 / 23:00 BRT (com cancelamento se já gerado)
+## Gerador de Estudo (`/lotofacil/gerador-estudo`)
 
-### Resposta à sua pergunta
+### Resposta direta
 
-**Sim** — `sync-lotofacil` / `sync-megasena` / `sync-quina` / `sync-duplasena` são as funções que consultam a APILoteria buscando novos concursos. Hoje, **só quando o sync encontra um resultado novo** é que ele dispara `precompute-daily-posts` em fire-and-forget.
+- **Pré-geração de posts, campos novos em `postagens` e submenu Gravação Estudos:** já existem em produção (verificado nas rodadas anteriores). Esta rodada **não os recria**.
+- **Gerador de Estudo:** novo. É o foco real desta entrega.
 
-**Problema:** se a API estiver lenta às 21:30, ou se o sorteio acumular sem entrada nova na API, o precompute do dia seguinte **não roda**. Resultado: amanhã o cron horário cai no fallback síncrono (gera com IA na hora) e voltamos ao modelo antigo.
-
-**Sua proposta resolve isso:** disparar o precompute em 3 janelas (21:30, 22:30, 23:00 BRT) e cancelar as tentativas seguintes se já tiver sucesso.
-
----
-
-### Arquitetura proposta
+### Arquitetura
 
 ```text
-21:30 BRT ─► sync-todos (Lotofácil + Mega + Quina + Dupla)
-            │
-            ├─► se sync encontrou novo resultado
-            │   └─► precompute-daily-posts (fire-and-forget, igual hoje)
-            │       └─► grava rascunhos do dia seguinte com fatos_snapshot
-            │
-            └─► precompute-daily-posts SEMPRE roda no fim
-                (idempotente: se já tem rascunho do dia → pula)
-
-22:30 BRT ─► mesma sequência
-            └─► se 21:30 já gerou tudo → todos os tipos viram "skipped"
-                                          (custo zero, sem IA)
-
-23:00 BRT ─► mesma sequência (última rede de segurança)
+┌────────────────────────────────────────────────────────────┐
+│  PostDetalhes  ──[Gerar palpites com esse estudo]──┐       │
+│                                                    ▼       │
+│  HubLotofácil ──[Card "Gerador de Estudo"]──► /lotofacil/  │
+│                                                gerador-    │
+│                                                estudo      │
+│                                                ?postId=…   │
+│                                                            │
+│  GeradorEstudo (página)                                    │
+│   ├─ EstudoSelector (dropdown com último ▲ ✅)             │
+│   ├─ QuantidadeSelector + DezenasSelector (reuso)          │
+│   ├─ Card "Estratégia deste estudo" (preview)              │
+│   ├─ Botão Gerar                                           │
+│   └─ ResultadosSheet (reuso do gerador clássico)           │
+│        └─ EstrategiaCard (reuso) com texto humanizado IA   │
+└────────────────────────────────────────────────────────────┘
 ```
 
-A **idempotência já existente** em `precompute-daily-posts` é o "cancelamento natural": ela verifica se há rascunho/publicado do par `(loteria, tipo)` no dia BRT e pula. Não precisamos adicionar lógica de cancelamento — o segundo e terceiro disparos vão simplesmente reportar "skipped" sem custo de IA.
+### Backend
 
-### Mudanças
+**Refatorar `generate-palpites-from-estudo`** (já existe, vira o motor único):
+- Aceitar `quantidade` (1-12) **e novo `qtd_dezenas`** (15-20 Lotofácil; 6-10 Mega).
+- Trocar gating premium para **nova quota separada**: tabela `gerador_estudo_daily_usage` (espelho de `gerador_daily_usage`) + função `incrementar_uso_gerador_estudo`. Limite: free 0 (premium-only), premium 30/dia, admin ∞.
+- Após gerar jogos determinísticos, montar `EstrategiaData` estruturado por tema (ferramentas, dezenas-chave, filtros) e chamar **Lovable AI Gemini Flash** apenas para reescrever `conclusao` em 2-3 frases persuasivas. Se IA falhar/timeout 4s, usa `conclusao` template determinística. Nunca atrasa a geração dos números.
+- Retornar payload no **mesmo shape** do `/generate-palpites` clássico para `ResultadosSheet` funcionar sem branch (`{ jogos: [{dezenas:[]}], estrategia: EstrategiaData, baseado_em: {...}, remaining_today, max_per_day }`).
 
-**1. Migration nova: 3 cron jobs (`pg_cron` + `pg_net`)**
+**Nova edge function `list-estudos-disponiveis`** (GET):
+- Query: `loteria=lotofacil`, `limit=10`.
+- Retorna estudos do banco (status `publicado` OR `rascunho` para admin) com `fatos_snapshot` não-nulo, ordenados por `publicar_em DESC`. Cada item: `{id, titulo, tema_estudo, proximo_concurso, ultimo_concurso, publicar_em, status, eh_futuro}`.
+- Usado pelo `EstudoSelector` para mostrar dropdown com badge ✅ verde (próximo concurso) ou ❌ vermelho (concurso passado).
 
-Cron 1 — `sync-todas-loterias-2130`
-- Schedule: `30 0 * * *` (00:30 UTC = 21:30 BRT)
-- Ação: `net.http_post` para `sync-lotofacil`, `sync-megasena`, `sync-quina`, `sync-duplasena` em sequência (1 SQL com 4 chamadas)
-- Cada sync, quando acha resultado, já dispara `precompute-daily-posts` sozinho
-- Em seguida, dispara `precompute-daily-posts` direto (sem filtro `loteria`) como **garantia** caso nenhum sync tenha novidade
+### Frontend
 
-Cron 2 — `sync-todas-loterias-2230`
-- Schedule: `30 1 * * *` (01:30 UTC = 22:30 BRT)
-- Mesma sequência. Se 21:30 já gerou, todos os tipos retornam "skipped".
+**Componentes novos** (`src/components/gerador-estudo/`):
+- `EstudoSelector.tsx` — dropdown com lista; cada item mostra título curto, "Concurso N" e badge verde/vermelha. Esconde se vier `?postId=` na URL (estudo já travado).
+- `EstudoInfoCard.tsx` — card colapsável: título, tema, concurso-alvo, resumo do `fatos_snapshot` (recomendacao_direta), badges das dezenas-chave.
 
-Cron 3 — `sync-todas-loterias-2300`
-- Schedule: `0 2 * * *` (02:00 UTC = 23:00 BRT)
-- Mesma sequência. Última rede de segurança.
+**Componentes reusados** (sem duplicar):
+- `QuantidadeSelector`, `DezenasSelector` — reuso direto.
+- `ResultadosSheet` — reuso direto (já recebe `estrategia: EstrategiaData`).
+- `EstrategiaCard` — reuso direto, alimentado pelo backend.
+- `PalpiteCard`, `PalpitesToolbar`, `SelecionarSubpastaDialog`, `salvarPalpites` — todos reusados via `ResultadosSheet`.
 
-Todos os 3 jobs chamam **as mesmas 4 funções de sync + precompute geral**, garantindo que:
-- Se o resultado oficial cair às 21:00 → 21:30 já pega.
-- Se a API atrasar → 22:30 ou 23:00 cobre.
-- Se o sorteio acumular sem dado novo → o precompute geral roda assim mesmo, usando o último resultado disponível como base do estudo.
+**Hook novo** `src/hooks/useGeradorEstudo.ts`:
+- Espelha `useGerador` mas chama `generate-palpites-from-estudo`, recebe `postId`, `quantidade`, `qtdDezenas`.
+- Hook `useEstudosDisponiveis(loteria)` via React Query → chama `list-estudos-disponiveis`.
 
-**2. Nada no código das edge functions muda**
+**Página nova** `src/pages/lotofacil/GeradorEstudo.tsx`:
+- Lê `?postId=` da URL com `useSearchParams`. Se presente → carrega esse estudo direto e esconde seletor.
+- Se ausente → mostra `EstudoSelector` com `defaultValue` = primeiro item (mais recente, normalmente verde).
+- Layout idêntico ao `Gerador.tsx` mas sem filtros avançados (tema do estudo já é o filtro).
+- Reusa `MainLayout`, `ResultadosSheet`, `EstrategiaCard`.
 
-- `sync-*` já dispara `precompute-daily-posts` quando acha resultado novo.
-- `precompute-daily-posts` já é idempotente — chamadas extras viram "skipped".
-- Zero mudança em TypeScript.
+**Rota nova** em `src/App.tsx`:
+- `/lotofacil/gerador-estudo` → `<ProtectedRoute><GatedPage feature="gerador"><GeradorEstudo/></GatedPage></ProtectedRoute>`.
 
-**3. Substituir cron antigo (se houver)**
+**Hub Lotofácil** (`src/pages/lotofacil/HubLotofacil.tsx`):
+- Adicionar 1 card "Gerador de Estudo" com ícone `BookOpen`, ao lado do "Gerador IA". Link para `/lotofacil/gerador-estudo`.
 
-Se já existirem crons separados para cada loteria às 21:30 etc., o migration faz `cron.unschedule(...)` antes de criar os 3 novos consolidados.
+**Botão do post** (`src/components/comunidade/GerarPalpitesDoEstudoButton.tsx`):
+- Refatorar: remover diálogo inline, virar `Link` para `/lotofacil/gerador-estudo?postId=<id>` (ou `/megasena/gerador-estudo` quando expandir).
+- Mantém gate `supported = loteriaTag === "Lotofácil" || "Mega-Sena"`.
 
-### Por que 21:30 / 22:30 / 23:00 (e não 23:30 como na memória antiga)
+### Banco
 
-- Sorteios oficiais: Lotofácil ~20h, Mega/Quina/Dupla ~20h, alguns ~21h.
-- 21:30 = primeira janela viável após todos os sorteios do dia.
-- 22:30 = retry se API demorou.
-- 23:00 = última chance antes de virar o dia BRT (00:00 = `precompute` valida janela do dia).
+Migration única:
+- `gerador_estudo_daily_usage` (mesma estrutura de `gerador_daily_usage`).
+- RLS: SELECT próprio + service role gerencia.
+- Função `incrementar_uso_gerador_estudo(p_user_id, p_max)` retornando `remaining_today`.
 
-Você pediu 23:00 (não 23:30). Atendido.
+### Escalabilidade Mega-Sena (próxima rodada, fora desta)
 
-### Comportamento esperado (exemplo de terça com Mega-Sena)
+Quando ativar Mega:
+1. Criar `src/pages/megasena/GeradorEstudoMegaSena.tsx` (5 linhas: importa `GeradorEstudo` genérico passando `loteria="megasena"`).
+2. Card no `HubMegaSena`.
+3. Refatorar `GeradorEstudo.tsx` desde já p/ aceitar prop `loteria`, evitando duplicação.
 
-| Horário | O que acontece |
+### Decisões confirmadas
+
+| Tópico | Escolha |
 |---|---|
-| 21:30 | Sync Lotofácil acha concurso 3669 → grava → dispara precompute. Sync Mega acha concurso 3000 → grava → dispara precompute. Cron também chama precompute geral (todos os tipos já marcados como "skipped"). |
-| 22:30 | Todos os syncs retornam "Já está atualizado". Precompute geral retorna 16 "skipped". Custo: ~4 GETs na API + 4 SELECTs no banco. |
-| 23:00 | Idem 22:30. |
+| Estratégia | Híbrido: jogos determinísticos + IA Gemini Flash apenas na conclusão (4s timeout, fallback template) |
+| Quota | Tabela separada `gerador_estudo_daily_usage` (premium 30/dia, admin ∞, free bloqueado) |
+| Navegação | Card no Hub Lotofácil + rota `/lotofacil/gerador-estudo` (preparada p/ Mega) |
 
-### Comportamento se a API falhar até 23:00
+### Arquivos tocados
 
-- Sync devolve erro nas 3 tentativas.
-- `precompute-daily-posts` roda assim mesmo (chamado direto pelos crons), usando o último resultado disponível no banco como base.
-- Rascunhos do dia seguinte ficam prontos com dados ligeiramente defasados (1 concurso atrás), mas o usuário não vê tela vazia.
-- Manhã seguinte, o sync horário pega o resultado faltante; rascunhos antigos seguem válidos (estatística não muda significativamente em 1 concurso).
+**Migration (1):**
+- `supabase/migrations/<ts>_gerador_estudo_quota.sql`
+
+**Edge functions (2):**
+- `supabase/functions/generate-palpites-from-estudo/index.ts` (refatorar — `qtd_dezenas`, quota nova, IA na conclusão, payload compatível)
+- `supabase/functions/list-estudos-disponiveis/index.ts` (novo)
+
+**Frontend (8):**
+- `src/pages/lotofacil/GeradorEstudo.tsx` (novo)
+- `src/components/gerador-estudo/EstudoSelector.tsx` (novo)
+- `src/components/gerador-estudo/EstudoInfoCard.tsx` (novo)
+- `src/hooks/useGeradorEstudo.ts` (novo)
+- `src/hooks/useEstudosDisponiveis.ts` (novo)
+- `src/components/comunidade/GerarPalpitesDoEstudoButton.tsx` (refatora p/ Link)
+- `src/pages/lotofacil/HubLotofacil.tsx` (+1 card)
+- `src/App.tsx` (+1 rota)
 
 ### Riscos
 
 | Risco | Mitigação |
 |---|---|
-| 3 crons disparando syncs em paralelo nos 3 horários | OK — são intervalados em 1h, sem sobreposição. |
-| Custo IA de gerar 16 posts × 3 tentativas | Idempotência impede. Só a 1ª roda IA; 2ª e 3ª são SELECTs. |
-| Sorteio especial cair tarde (Mega da Virada às 22h) | 22:30 e 23:00 cobrem. |
-| Quina sorteia às 20h em dias úteis (não cobre apenas 21:30?) | Já cobre — 21:30 é depois de 20h. |
-| Cron job duplicado se rodar migration 2x | Migration usa `cron.unschedule` antes de `cron.schedule` (idempotente). |
-
-### Arquivos tocados
-
-- `supabase/migrations/<timestamp>_cron_precompute_safety_net.sql` (única mudança)
+| IA na conclusão atrasar UX | Timeout agressivo 4s + fallback determinístico imediato |
+| Estudo antigo (concurso passado) gerar palpite "fora de hora" | Badge vermelha no seletor + warning no `EstudoInfoCard` ("Este estudo é do concurso N — já realizado") |
+| `ResultadosSheet` esperar `lotofacil` hardcoded em algum ponto | Verificado: já usa `loteria` prop via `salvarPalpites`. Reuso seguro. |
+| Quota separada confundir usuário | Badge no botão "X/30 estudos hoje" ao lado do "X/Y palpites IA hoje" no Hub |
 
