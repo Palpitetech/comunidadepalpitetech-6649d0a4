@@ -3335,6 +3335,10 @@ export type Database = {
         Args: { p_slug: string }
         Returns: undefined
       }
+      incrementar_uso_gerador: {
+        Args: { p_max: number; p_user_id: string }
+        Returns: number
+      }
       incrementar_uso_gerador_estudo: {
         Args: { p_max: number; p_user_id: string }
         Returns: number
