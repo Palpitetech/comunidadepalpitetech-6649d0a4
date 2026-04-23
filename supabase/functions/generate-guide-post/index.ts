@@ -235,6 +235,151 @@ function dezenasFaltantesCiclo(concursos: Concurso[]): number[] {
 }
 
 // =============================================================================
+// CICLO: estatísticas históricas + recomendação
+// =============================================================================
+
+interface CicloHistorico {
+  ciclo_numero: number;
+  duracao: number;
+}
+
+interface EstatisticasCiclo {
+  totalCiclos: number;
+  distribuicao: Array<{ duracao: number; vezes: number; perc: number }>; // ordenado por duracao
+  topDuracoes: Array<{ duracao: number; vezes: number; perc: number }>; // top 2
+  somaPercTop2: number;
+  percentil25: number;
+  percentil75: number;
+  posicaoAtual: number; // qual concurso (1, 2, 3...) será o próximo no ciclo atual
+  cicloAtual: number | null;
+  concursosNoCicloAtual: number; // já jogados neste ciclo
+}
+
+// Agrupa por faixas legíveis: 2,3,4,5,6+
+function calcularEstatisticasCiclo(
+  historicoCiclos: CicloHistorico[],
+  cicloAtual: number | null,
+  concursosNoCicloAtual: number,
+): EstatisticasCiclo {
+  // Excluir o ciclo em andamento (não está fechado ainda)
+  const fechados = historicoCiclos.filter((c) => c.ciclo_numero !== cicloAtual);
+  const total = fechados.length;
+
+  // Distribuição agrupando 6+
+  const buckets = new Map<number, number>(); // chave: duracao (ou 6 para "6+")
+  for (const c of fechados) {
+    const key = c.duracao >= 6 ? 6 : c.duracao;
+    buckets.set(key, (buckets.get(key) || 0) + 1);
+  }
+  const distribuicao = Array.from(buckets.entries())
+    .map(([duracao, vezes]) => ({
+      duracao,
+      vezes,
+      perc: total > 0 ? Math.round((vezes / total) * 100) : 0,
+    }))
+    .sort((a, b) => a.duracao - b.duracao);
+
+  const topDuracoes = [...distribuicao]
+    .sort((a, b) => b.vezes - a.vezes || a.duracao - b.duracao)
+    .slice(0, 2);
+  const somaPercTop2 = topDuracoes.reduce((s, t) => s + t.perc, 0);
+
+  // Percentis sobre as durações reais (não agrupadas)
+  const duracoesOrdenadas = fechados.map((c) => c.duracao).sort((a, b) => a - b);
+  const percentil = (p: number): number => {
+    if (duracoesOrdenadas.length === 0) return 0;
+    const idx = Math.floor((p / 100) * (duracoesOrdenadas.length - 1));
+    return duracoesOrdenadas[idx];
+  };
+
+  return {
+    totalCiclos: total,
+    distribuicao,
+    topDuracoes,
+    somaPercTop2,
+    percentil25: percentil(25),
+    percentil75: percentil(75),
+    posicaoAtual: concursosNoCicloAtual + 1,
+    cicloAtual,
+    concursosNoCicloAtual,
+  };
+}
+
+function montarRecomendacaoCiclo(
+  est: EstatisticasCiclo,
+  faltantes: number[],
+  concursos: Concurso[],
+): {
+  recomendacaoTexto: string;
+  prioritarias: number[];
+  deixadasDeFora: number[];
+  justificativaPrioritarias: string;
+  justificativaDeixadas: string;
+  percChanceFecharAgora: number;
+} {
+  const pos = est.posicaoAtual;
+
+  // Chance de o ciclo fechar exatamente neste próximo concurso (na posição atual)
+  const bucketAtual = est.distribuicao.find((d) =>
+    d.duracao === 6 ? pos >= 6 : d.duracao === pos
+  );
+  const percChanceFecharAgora = bucketAtual?.perc ?? 0;
+
+  // Faltantes prioritárias = as MAIS quentes nos últimos 10 (saíram mais vezes recentemente)
+  const freq = calcularFrequencias(concursos);
+  const faltantesOrdenadas = [...faltantes].sort((a, b) => {
+    const fb = freq.get(b) || 0;
+    const fa = freq.get(a) || 0;
+    if (fb !== fa) return fb - fa;
+    return a - b;
+  });
+
+  let nPrioritarias: number;
+  let recomendacaoTexto: string;
+  let justificativaPrioritarias: string;
+  let justificativaDeixadas: string;
+
+  if (pos < est.percentil25 || pos < est.topDuracoes[0]?.duracao) {
+    // Ainda é cedo
+    nPrioritarias = Math.min(faltantes.length, 6);
+    recomendacaoTexto =
+      `Como ainda estamos cedo no ciclo (${pos}º concurso), a chance de fechamento agora é baixa ` +
+      `(somente ${percChanceFecharAgora}% dos ciclos fecharam nesta posição). ` +
+      `👉 Recomendação: NÃO aposte tudo nas faltantes ainda. Use ${nPrioritarias} dezenas faltantes prioritárias e complete com quentes.`;
+    justificativaPrioritarias = "escolhidas porque saíram mais vezes nos últimos 10 sorteios (estão em ritmo)";
+    justificativaDeixadas = "ainda há tempo no ciclo, dá pra incluí-las nos próximos concursos";
+  } else if (pos >= est.topDuracoes[0]?.duracao && pos <= (est.topDuracoes[1]?.duracao ?? est.topDuracoes[0]?.duracao)) {
+    // Estamos na faixa mais comum de fechamento
+    nPrioritarias = Math.min(faltantes.length, 10);
+    recomendacaoTexto =
+      `Estamos na faixa mais comum de fechamento (${est.somaPercTop2}% dos ciclos fecham até aqui). ` +
+      `👉 Recomendação: APOSTE no fechamento. Inclua ${nPrioritarias} das faltantes prioritárias.`;
+    justificativaPrioritarias = "alta probabilidade de o ciclo fechar agora — priorize as faltantes que estão mais aquecidas";
+    justificativaDeixadas = "se preferir reduzir custo, estas podem ficar de fora — ainda assim recomendamos cobrir o máximo possível";
+  } else {
+    // Ciclo demorando (acima do percentil 75)
+    nPrioritarias = Math.min(faltantes.length, 8);
+    recomendacaoTexto =
+      `O ciclo está demorando para fechar (${pos}º concurso, acima da média histórica). ` +
+      `👉 Recomendação: ainda dá pra entrar — use ${nPrioritarias} faltantes prioritárias.`;
+    justificativaPrioritarias = "escolhidas pelas mais quentes nos últimos 10 sorteios";
+    justificativaDeixadas = "menor frequência recente — risco maior de continuar fora";
+  }
+
+  const prioritarias = faltantesOrdenadas.slice(0, nPrioritarias);
+  const deixadasDeFora = faltantesOrdenadas.slice(nPrioritarias);
+
+  return {
+    recomendacaoTexto,
+    prioritarias,
+    deixadasDeFora,
+    justificativaPrioritarias,
+    justificativaDeixadas,
+    percChanceFecharAgora,
+  };
+}
+
+// =============================================================================
 // MONTAGEM DE FATOS POR TIPO (entregue à IA)
 // =============================================================================
 
