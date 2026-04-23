@@ -977,6 +977,308 @@ function detalharLinhasColunas(
   return resultado;
 }
 
+// =============================================================================
+// MOTOR EXPANDIDO: Linhas e Colunas (estudo profundo por eixo)
+// =============================================================================
+
+interface EixoDetalhado {
+  indice: number; // 1..5
+  faixa: string; // "01-05" ou "01,06,11,16,21"
+  dezenasDoEixo: number[]; // 5 dezenas do eixo
+  mediaPorSorteio: number;
+  top2Distribuicao: Array<{ qtd: number; vezes: number; perc: number }>;
+  fortes: Array<{ dezena: number; vezes: number; perc: number }>;
+  fracas: Array<{ dezena: number; vezes: number; perc: number }>;
+  melhorDupla: { a: number; b: number; vezes: number } | null;
+  maxConcentracao: number; // máximo de dezenas que esse eixo já teve em 1 sorteio
+  vezesMaxConcentracao: number; // quantas vezes ocorreu o máximo
+}
+
+interface AnaliseEixoCompleta {
+  eixoTipo: "linha" | "coluna";
+  totalConcursos: number;
+  totalDezenasSorteadas: number;
+  eixos: EixoDetalhado[];
+  distribuicaoAlvo: number[]; // soma 15
+  recomendacao: {
+    nucleoFixas: number[];
+    apoio: number[];
+    coringas: number[];
+    evitar: number[];
+    alerta: string;
+  };
+}
+
+function dezenasDoEixo(indice0: number, eixo: "linha" | "coluna"): number[] {
+  const arr: number[] = [];
+  if (eixo === "linha") {
+    const ini = indice0 * 5 + 1;
+    for (let d = ini; d < ini + 5; d++) arr.push(d);
+  } else {
+    for (let l = 0; l < 5; l++) arr.push(l * 5 + indice0 + 1);
+  }
+  return arr;
+}
+
+function analisarEixoDetalhado(
+  concursos: Concurso[],
+  eixo: "linha" | "coluna",
+): AnaliseEixoCompleta {
+  const N = concursos.length;
+  const eixosOut: EixoDetalhado[] = [];
+
+  // Para auditoria global de duplas: garantir que todas voltaram pelo recount
+  for (let i = 0; i < 5; i++) {
+    const grupoDezenas = dezenasDoEixo(i, eixo);
+    const grupoSet = new Set(grupoDezenas);
+
+    // Distribuição (qtd por sorteio)
+    let totalOcorrencias = 0;
+    const dist = new Map<number, number>();
+    let maxConc = 0;
+    for (const c of concursos) {
+      let qtd = 0;
+      for (const d of c.dezenas) {
+        if (grupoSet.has(d)) qtd++;
+      }
+      totalOcorrencias += qtd;
+      dist.set(qtd, (dist.get(qtd) || 0) + 1);
+      if (qtd > maxConc) maxConc = qtd;
+    }
+    const top2Distribuicao = Array.from(dist.entries())
+      .sort((a, b) => b[1] - a[1] || b[0] - a[0])
+      .slice(0, 2)
+      .map(([qtd, vezes]) => ({
+        qtd,
+        vezes,
+        perc: Math.round((vezes / N) * 100),
+      }));
+
+    // Frequência de cada dezena do eixo
+    const freqPorDezena = new Map<number, number>();
+    for (const d of grupoDezenas) freqPorDezena.set(d, 0);
+    for (const c of concursos) {
+      for (const d of c.dezenas) {
+        if (grupoSet.has(d)) {
+          freqPorDezena.set(d, (freqPorDezena.get(d) || 0) + 1);
+        }
+      }
+    }
+    const ranked = grupoDezenas
+      .map((d) => ({
+        dezena: d,
+        vezes: freqPorDezena.get(d) || 0,
+        perc: Math.round(((freqPorDezena.get(d) || 0) / N) * 100),
+      }))
+      .sort((a, b) => b.vezes - a.vezes || a.dezena - b.dezena);
+
+    const fortes = ranked.slice(0, 2);
+    const fracas = ranked
+      .filter((r) => r.perc <= 40)
+      .sort((a, b) => a.vezes - b.vezes || a.dezena - b.dezena)
+      .slice(0, 2);
+
+    // Coocorrência intra-eixo: para cada par de dezenas do mesmo eixo, conta sorteios em que ambas saíram
+    let melhorDupla: { a: number; b: number; vezes: number } | null = null;
+    for (let x = 0; x < grupoDezenas.length; x++) {
+      for (let y = x + 1; y < grupoDezenas.length; y++) {
+        const a = grupoDezenas[x];
+        const b = grupoDezenas[y];
+        let vezes = 0;
+        for (const c of concursos) {
+          const set = new Set(c.dezenas);
+          if (set.has(a) && set.has(b)) vezes++;
+        }
+        // Auditoria independente: refazer a varredura
+        let auditVezes = 0;
+        for (const c of concursos) {
+          const has1 = c.dezenas.indexOf(a) !== -1;
+          const has2 = c.dezenas.indexOf(b) !== -1;
+          if (has1 && has2) auditVezes++;
+        }
+        // Só considera se passou na auditoria E ambas dezenas pertencem ao eixo
+        if (
+          auditVezes === vezes &&
+          vezes >= 3 &&
+          grupoSet.has(a) &&
+          grupoSet.has(b)
+        ) {
+          if (!melhorDupla || vezes > melhorDupla.vezes) {
+            melhorDupla = { a, b, vezes };
+          }
+        }
+      }
+    }
+
+    eixosOut.push({
+      indice: i + 1,
+      faixa: eixo === "linha"
+        ? `${fmt(i * 5 + 1)}-${fmt(i * 5 + 5)}`
+        : grupoDezenas.map(fmt).join(","),
+      dezenasDoEixo: grupoDezenas,
+      mediaPorSorteio: totalOcorrencias / N,
+      top2Distribuicao,
+      fortes,
+      fracas,
+      melhorDupla,
+      maxConcentracao: maxConc,
+      vezesMaxConcentracao: dist.get(maxConc) || 0,
+    });
+  }
+
+  // Distribuição alvo (soma 15)
+  const distribuicaoAlvo = ajustarPara15(eixosOut.map((e) => e.mediaPorSorteio));
+
+  // Recomendação
+  // 1) núcleo: top forte de cada eixo
+  const nucleoFixas = eixosOut.map((e) => e.fortes[0]?.dezena).filter((x): x is number => typeof x === "number");
+  // 2) apoio: 2ª melhor de cada eixo onde média ≥ 3.0
+  const apoio: number[] = [];
+  for (const e of eixosOut) {
+    if (e.mediaPorSorteio >= 3.0 && e.fortes[1]) {
+      apoio.push(e.fortes[1].dezena);
+    }
+  }
+  // 3) coringas: 2ª melhor dos eixos restantes (média < 3.0)
+  const coringas: number[] = [];
+  for (const e of eixosOut) {
+    if (e.mediaPorSorteio < 3.0 && e.fortes[1]) {
+      coringas.push(e.fortes[1].dezena);
+    }
+  }
+  // 4) evitar: top 3 dezenas mais fracas globalmente (perc ≤ 30%)
+  const todasFracas: Array<{ dezena: number; perc: number; vezes: number }> = [];
+  for (const e of eixosOut) {
+    for (const f of e.fracas) {
+      if (f.perc <= 30) todasFracas.push(f);
+    }
+  }
+  const evitar = todasFracas
+    .sort((a, b) => a.vezes - b.vezes || a.dezena - b.dezena)
+    .slice(0, 3)
+    .map((x) => x.dezena);
+
+  // Alerta de concentração: maior maxConc visto e quantas vezes
+  let maxGlobal = 0;
+  let vezesMaxGlobal = 0;
+  let eixoMax = 1;
+  for (const e of eixosOut) {
+    if (e.maxConcentracao > maxGlobal) {
+      maxGlobal = e.maxConcentracao;
+      vezesMaxGlobal = e.vezesMaxConcentracao;
+      eixoMax = e.indice;
+    }
+  }
+  const eixoNome = eixo === "linha" ? "linha" : "coluna";
+  const alerta = `nenhuma ${eixoNome} passou de ${maxGlobal} dezenas em mais que ${vezesMaxGlobal}x nos últimos ${N} sorteios (pico: ${eixo === "linha" ? "L" : "C"}${eixoMax})`;
+
+  return {
+    eixoTipo: eixo,
+    totalConcursos: N,
+    totalDezenasSorteadas: N * 15,
+    eixos: eixosOut,
+    distribuicaoAlvo,
+    recomendacao: {
+      nucleoFixas,
+      apoio,
+      coringas,
+      evitar,
+      alerta,
+    },
+  };
+}
+
+function montarBlocosEixo(a: AnaliseEixoCompleta, proxConcurso: number): { resumo: string; recomendacaoDireta: string } {
+  const eixoLabel = a.eixoTipo === "linha" ? "linha" : "coluna";
+  const eixoLabelMaiusc = a.eixoTipo === "linha" ? "Linhas" : "Colunas";
+  const prefix = a.eixoTipo === "linha" ? "L" : "C";
+
+  const blocoPanorama = `📊 Panorama (últimos ${a.totalConcursos} sorteios — ${a.totalDezenasSorteadas} dezenas)\n` +
+    `A Lotofácil usa grid 5x5, então cada ${eixoLabel} tem 5 dezenas (${a.eixos.map((e) => e.faixa).join(" | ")}).\n` +
+    `Em ${a.totalConcursos} sorteios, cada ${eixoLabel} contribui em média com 3 dezenas — mas o real varia.`;
+
+  const blocoMedia = `🎯 Distribuição média por ${eixoLabel}\n` +
+    a.eixos.map((e) => {
+      const top = e.top2Distribuicao
+        .map((t) => `${t.qtd} dezena${t.qtd === 1 ? "" : "s"} (${t.vezes}x)`)
+        .join(", ");
+      return `• ${prefix}${e.indice} (${e.faixa}): ${e.mediaPorSorteio.toFixed(1)} dezenas/sorteio  → padrão mais comum: ${top}`;
+    }).join("\n");
+
+  const blocoFortes = `🔥 Dezenas FORTES por ${eixoLabel} (top performer de cada eixo)\n` +
+    a.eixos.map((e) => {
+      const f1 = e.fortes[0];
+      const f2 = e.fortes[1];
+      if (!f1) return `• ${prefix}${e.indice}: sem destaque`;
+      const parte2 = f2 ? ` e ${fmt(f2.dezena)} (${f2.vezes}x)` : "";
+      return `• ${prefix}${e.indice}: dezena ${fmt(f1.dezena)} (saiu ${f1.vezes}x em ${a.totalConcursos})${parte2}`;
+    }).join("\n");
+
+  const eixosComFracas = a.eixos.filter((e) => e.fracas.length > 0);
+  const blocoFracas = eixosComFracas.length > 0
+    ? `❄️ Dezenas FRACAS por ${eixoLabel} (atenção)\n` +
+      eixosComFracas.map((e) => {
+        const partes = e.fracas.map((f) => `${fmt(f.dezena)} (${f.vezes}x)`).join(" e ");
+        return `• ${prefix}${e.indice}: ${partes}`;
+      }).join("\n")
+    : "";
+
+  // Top 3 melhores duplas globais ordenadas por vezes
+  const todasDuplas = a.eixos
+    .filter((e) => e.melhorDupla !== null)
+    .map((e) => ({ ...e.melhorDupla!, eixoIndice: e.indice }))
+    .sort((a, b) => b.vezes - a.vezes)
+    .slice(0, 3);
+
+  const blocoDuplas = todasDuplas.length > 0
+    ? `🤝 Melhores duplas dentro da mesma ${eixoLabel}\n` +
+      todasDuplas.map((d) => `• ${prefix}${d.eixoIndice}: ${fmt(d.a)} + ${fmt(d.b)} — juntas ${d.vezes}x`).join("\n")
+    : "";
+
+  const blocoAlvo = `📈 Distribuição alvo recomendada (soma 15)\n` +
+    a.distribuicaoAlvo.map((v, i) => `${prefix}${i + 1}=${v}`).join(", ");
+
+  const r = a.recomendacao;
+  const tituloRec = `💡 Como montar seu palpite para o ${proxConcurso}`;
+
+  const linhaNucleo = r.nucleoFixas.length > 0
+    ? `🎯 Núcleo de fixas por ${eixoLabel} (1 forte de cada): **${r.nucleoFixas.map(fmt).join(", ")}**\n   → top performer de cada eixo, garantem cobertura completa`
+    : "";
+
+  const linhaApoio = r.apoio.length > 0
+    ? `➕ Apoio (2ª de cada eixo onde a média sobe): **${r.apoio.map(fmt).join(", ")}**\n   → segundo melhor dos eixos com média ≥ 3.0`
+    : "";
+
+  const linhaCoringas = r.coringas.length > 0
+    ? `🎲 Coringas a girar: **${r.coringas.map(fmt).join(", ")}**\n   → reforço médio nos eixos com média < 3.0`
+    : "";
+
+  const linhaEvitar = r.evitar.length > 0
+    ? `❌ Evitar nesta rodada: **${r.evitar.map(fmt).join(", ")}**\n   → frequência ≤ 30% no eixo`
+    : "";
+
+  const linhaAlerta = `⚠️ Cuidado: ${r.alerta}.`;
+
+  const resumo = [
+    blocoPanorama,
+    blocoMedia,
+    blocoFortes,
+    blocoFracas,
+    blocoDuplas,
+    blocoAlvo,
+    tituloRec,
+    linhaNucleo,
+    linhaApoio,
+    linhaCoringas,
+    linhaEvitar,
+    linhaAlerta,
+  ].filter(Boolean).join("\n\n");
+
+  const recomendacaoDireta = `Para o concurso ${proxConcurso}: distribua ${a.distribuicaoAlvo.map((v, i) => `${v} na ${prefix}${i + 1}`).join(", ")} — núcleo [${r.nucleoFixas.map(fmt).join(", ")}], apoio [${r.apoio.map(fmt).join(", ")}], coringas [${r.coringas.map(fmt).join(", ")}], evitar [${r.evitar.map(fmt).join(", ")}].`;
+
+  return { resumo, recomendacaoDireta };
+}
+
 // Arredonda um vetor de médias e ajusta para somar exatamente 15
 function ajustarPara15(medias: number[]): number[] {
   const arred = medias.map((m) => Math.round(m));
