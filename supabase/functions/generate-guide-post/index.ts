@@ -1796,6 +1796,8 @@ function montarTituloDeterministico(tipoPost: string, proxConcurso: number): str
     analise_repetidas: `🔁 Análise de Repetidas — Concurso ${proxConcurso}`,
     analise_linhas: `📐 Análise por Linhas — Concurso ${proxConcurso}`,
     analise_colunas: `📊 Análise por Colunas — Concurso ${proxConcurso}`,
+    analise_posicoes_iniciais: `🎯 Posições Iniciais — Concurso ${proxConcurso}`,
+    analise_posicoes_finais: `🏁 Posições Finais — Concurso ${proxConcurso}`,
   };
   return (titulosBase[tipoPost] || `Análise Lotofácil — Concurso ${proxConcurso}`).substring(0, 100);
 }
