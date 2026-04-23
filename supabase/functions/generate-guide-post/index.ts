@@ -698,10 +698,69 @@ function montarFatos(
     }
 
     case "analise_moldura": {
-      const m = calcularMolduraRecomendada(concursos);
-      const resumo = `Média de moldura nos últimos ${concursos.length}: ${m.mediaMoldura.toFixed(1)} dezenas. ` +
-        `Top moldura: [${m.topMoldura.slice(0, 8).map(fmt).join(", ")}]`;
-      const recomendacaoDireta = `Para o concurso ${proxConcurso}: use ${m.qtdRecomendada} dezenas da moldura, priorizando [${m.topMoldura.slice(0, m.qtdRecomendada).map(fmt).join(", ")}].`;
+      const a = analisarMolduraDetalhado(concursos);
+
+      const blocoPanorama = `📊 Panorama da Moldura (últimos ${a.totalConcursos} sorteios)\n` +
+        `A moldura tem 16 dezenas (01-05, 06, 10, 11, 15, 16, 20, 21-25).\n` +
+        `Média de moldura por concurso: ${a.mediaMoldura.toFixed(1)} dezenas.\n` +
+        `Faixa mais comum: ${a.faixaMaisComum.qtd1}${a.faixaMaisComum.qtd1 !== a.faixaMaisComum.qtd2 ? ` a ${a.faixaMaisComum.qtd2}` : ""} dezenas (${a.faixaMaisComum.perc}% dos sorteios).`;
+
+      const blocoFortes = `🔥 Top dezenas fortes da moldura\n` +
+        a.fortes.slice(0, 6).map((f) =>
+          `• ${fmt(f.dezena)} — saiu em ${f.vezes} dos ${a.totalConcursos} concursos (${f.perc}%)`
+        ).join("\n");
+
+      const blocoPares = a.melhoresPares.length > 0
+        ? `🤝 Melhores pares (saíram juntos com mais frequência)\n` +
+          a.melhoresPares.map((p) => `• ${fmt(p.a)} + ${fmt(p.b)} — juntas ${p.vezes}x`).join("\n")
+        : "";
+
+      const blocoTrios = a.melhoresTrios.length > 0
+        ? `🎯 Melhores trios\n` +
+          a.melhoresTrios.map((t) => `• ${fmt(t.a)} + ${fmt(t.b)} + ${fmt(t.c)} — juntos ${t.vezes}x`).join("\n")
+        : "";
+
+      const blocoFracas = a.fracas.length > 0
+        ? `❄️ Dezenas fracas da moldura (atenção)\n` +
+          a.fracas.map((f) => {
+            const comp = f.companheirasFrequentes.length > 0
+              ? ` → quando saiu, veio com ${f.companheirasFrequentes.map(fmt).join(" e ")}`
+              : "";
+            return `• ${fmt(f.dezena)} — saiu apenas ${f.vezes}x (${f.perc}%)${comp}`;
+          }).join("\n")
+        : "";
+
+      const limiarFalha = Math.floor(a.mediaMoldura - 1);
+      const blocoFalha = a.padraoFalha.vezesFraca > 0
+        ? `📉 Padrão de falha\n` +
+          `Quando a moldura veio fraca (≤${limiarFalha} dezenas), aconteceu em ${a.padraoFalha.vezesFraca} dos ${a.totalConcursos} concursos.\n` +
+          `Nesses casos, as ausentes foram principalmente: ${a.padraoFalha.ausentesTop.map(fmt).join(", ")}.`
+        : "";
+
+      const r = a.recomendacao;
+      const blocoRecomendacao = `💡 Como montar seu palpite para o ${proxConcurso}\n` +
+        `Recomendamos usar ${r.qtdRecomendada} dezenas da moldura, distribuídas assim:`;
+
+      const linhaNucleo = r.nucleoForte.length > 0
+        ? `🎯 Núcleo forte (${r.nucleoForte.length} fixas): ${r.nucleoForte.map(fmt).join(", ")}\n   → ${r.justNucleo}`
+        : "";
+      const linhaApoio = r.apoio.length > 0
+        ? `➕ Apoio (${r.apoio.length} dezenas): ${r.apoio.map(fmt).join(", ")}\n   → ${r.justApoio}`
+        : "";
+      const linhaCoringas = r.coringas.length > 0
+        ? `🎲 Coringas (${r.coringas.length} a girar): ${r.coringas.map(fmt).join(", ")}\n   → ${r.justCoringas}`
+        : "";
+      const linhaFora = r.deixarFora.length > 0
+        ? `❌ Deixe de fora desta rodada: ${r.deixarFora.map(fmt).join(", ")}\n   → ${r.justFora}`
+        : "";
+
+      const resumo = [
+        blocoPanorama, blocoFortes, blocoPares, blocoTrios, blocoFracas, blocoFalha,
+        blocoRecomendacao, linhaNucleo, linhaApoio, linhaCoringas, linhaFora,
+      ].filter(Boolean).join("\n\n");
+
+      const recomendacaoDireta = `Para o concurso ${proxConcurso}: use ${r.qtdRecomendada} dezenas da moldura — núcleo [${r.nucleoForte.map(fmt).join(", ")}], apoio [${r.apoio.map(fmt).join(", ")}], coringas [${r.coringas.map(fmt).join(", ")}], fora [${r.deixarFora.map(fmt).join(", ")}].`;
+
       return { resumo, recomendacaoDireta };
     }
 
