@@ -33,6 +33,7 @@ async function fetchCommunityPosts(): Promise<CommunityPost[]> {
        respostas_count, created_at, user_id, tipo, tool_snapshot,
        external_link_url, external_link_text`
     )
+    .eq("status", "publicado")
     .order("created_at", { ascending: false })
     .limit(50);
 
