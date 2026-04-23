@@ -1338,16 +1338,69 @@ function montarFatos(
     }
 
     case "analise_repetidas": {
-      const r = calcularRepetidasRecomendadas(concursos);
-      const resumo = `Média de repetidas: ${r.mediaRepetidas.toFixed(1)}. ` +
-        `Último sorteio: [${r.ultimoSorteio.map(fmt).join(", ")}]. ` +
-        `Mais reincidentes: [${r.topRepetidoras.slice(0, 6).map(fmt).join(", ")}]`;
-      const candidatas = r.ultimoSorteio
-        .filter((d) => r.topRepetidoras.includes(d))
-        .slice(0, r.qtdRecomendada);
-      const fallback = r.ultimoSorteio.slice(0, r.qtdRecomendada);
-      const escolhidas = candidatas.length >= r.qtdRecomendada ? candidatas : fallback;
-      const recomendacaoDireta = `Para o concurso ${proxConcurso}: repita ${r.qtdRecomendada} dezenas do último sorteio, priorizando [${escolhidas.map(fmt).join(", ")}].`;
+      const a = analisarRepetidasDetalhado(concursos);
+
+      // Bloco panorama
+      const blocoPanorama = `📊 O que aconteceu nos últimos ${a.totalConcursos} concursos\n` +
+        `A cada sorteio, em média ${a.mediaRepetidas.toFixed(1)} dezenas se repetem do concurso anterior.\n` +
+        `Faixa mais comum: entre ${a.faixaMaisComum.min} e ${a.faixaMaisComum.max} repetidas (${a.faixaMaisComum.perc}% dos sorteios).\n` +
+        `Mínimo recente: ${a.minRepetidas} repetidas | Máximo recente: ${a.maxRepetidas} repetidas.`;
+
+      // Último sorteio
+      const blocoUltimo = `🎯 No último sorteio (${a.ultimoConcursoNum})\n` +
+        `Dezenas: ${a.ultimoSorteio.map(fmt).join(", ")}\n` +
+        `São essas que vão competir para se repetir no ${proxConcurso}.`;
+
+      // Fiéis
+      const blocoFieis = a.fieis.length > 0
+        ? `🔥 Destaques — as MAIS FIÉIS (mais se repetiram nos últimos ${a.paresAnalisados} ciclos)\n` +
+          a.fieis.map((f) => `• ${fmt(f.dezena)} — repetiu ${f.vezes} das ${f.transicoes} (${f.perc}%)`).join("\n")
+        : "";
+
+      // Voláteis
+      const blocoVolateis = a.volateis.length > 0
+        ? `⚠️ Atenção — as VOLÁTEIS do último sorteio (raramente repetem)\n` +
+          a.volateis.map((v) => `• ${fmt(v.dezena)} — repetiu só ${v.vezes} das ${v.transicoes} (${v.perc}%)  → tende a sair do próximo`).join("\n")
+        : "";
+
+      // Melhores duplas
+      const blocoDuplas = a.melhoresDuplasRep.length > 0
+        ? `🤝 Melhores duplas de repetidoras (quando uma repete, a outra também)\n` +
+          a.melhoresDuplasRep.map((p) => `• ${fmt(p.a)} + ${fmt(p.b)} — repetiram juntas ${p.vezes}x em ${p.transicoes}`).join("\n")
+        : "";
+
+      // Melhores trios
+      const blocoTrios = a.melhoresTriosRep.length > 0
+        ? `🎯 Melhores trios de repetidoras\n` +
+          a.melhoresTriosRep.map((t) => `• ${fmt(t.a)} + ${fmt(t.b)} + ${fmt(t.c)} — repetiram juntos ${t.vezes}x em ${t.transicoes}`).join("\n")
+        : "";
+
+      // Recomendação
+      const r = a.recomendacao;
+      const blocoRecomendacaoTitulo = `💡 Como montar seu palpite para o ${proxConcurso}\n` +
+        `Histórico aponta para usar ${r.qtdRecomendada} dezenas REPETIDAS do último sorteio:`;
+
+      const linhaNucleo = r.repetirNucleo.length > 0
+        ? `🎯 REPETIR (núcleo de ${r.repetirNucleo.length} fixas): **${r.repetirNucleo.map(fmt).join(", ")}**\n   → ${r.justNucleo}`
+        : "";
+
+      const linhaApoio = r.repetirApoio.length > 0
+        ? `➕ REPETIR (apoio de ${r.repetirApoio.length}): **${r.repetirApoio.map(fmt).join(", ")}**\n   → ${r.justApoio}`
+        : "";
+
+      const linhaNaoRepetir = r.naoRepetir.length > 0
+        ? `❌ NÃO repetir desta rodada: **${r.naoRepetir.map(fmt).join(", ")}**\n   → ${r.justNaoRepetir}`
+        : "";
+
+      const linhaNovas = `✨ E completar com ${r.qtdNovas} dezenas NOVAS (que não saíram no ${a.ultimoConcursoNum}).`;
+
+      const resumo = [
+        blocoPanorama, blocoUltimo, blocoFieis, blocoVolateis, blocoDuplas, blocoTrios,
+        blocoRecomendacaoTitulo, linhaNucleo, linhaApoio, linhaNaoRepetir, linhaNovas,
+      ].filter(Boolean).join("\n\n");
+
+      const recomendacaoDireta = `Para o concurso ${proxConcurso}: repita ${r.qtdRecomendada} dezenas — núcleo [${r.repetirNucleo.map(fmt).join(", ")}], apoio [${r.repetirApoio.map(fmt).join(", ")}], NÃO repetir [${r.naoRepetir.map(fmt).join(", ")}], e complete com ${r.qtdNovas} novas.`;
+
       return { resumo, recomendacaoDireta };
     }
 
