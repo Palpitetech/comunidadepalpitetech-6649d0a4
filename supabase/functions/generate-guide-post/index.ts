@@ -743,14 +743,24 @@ serve(async (req) => {
       );
     }
 
-    // 2. Buscar últimos 10 concursos
-    const { data: resultados, error: resErr } = await supabaseAdmin
-      .from("resultados_loterias")
-      .select("concurso_id:concurso, dezenas, data_sorteio, ciclo_numero, dezenas_faltantes_ciclo, qtd_pares, qtd_impares, qtd_repetidas, qtd_primos, qtd_moldura")
-      .eq("loteria", "lotofacil")
-      .order("concurso", { ascending: false })
-      .limit(PERIODO_ANALISE);
+    // 2. Buscar últimos 10 concursos + (em paralelo) histórico completo de ciclos quando for analise_ciclo
+    const [resResp, ciclosResp] = await Promise.all([
+      supabaseAdmin
+        .from("resultados_loterias")
+        .select("concurso_id:concurso, dezenas, data_sorteio, ciclo_numero, dezenas_faltantes_ciclo, qtd_pares, qtd_impares, qtd_repetidas, qtd_primos, qtd_moldura")
+        .eq("loteria", "lotofacil")
+        .order("concurso", { ascending: false })
+        .limit(PERIODO_ANALISE),
+      tipoPost === "analise_ciclo"
+        ? supabaseAdmin
+            .from("resultados_loterias")
+            .select("ciclo_numero")
+            .eq("loteria", "lotofacil")
+            .not("ciclo_numero", "is", null)
+        : Promise.resolve({ data: null, error: null }),
+    ]);
 
+    const { data: resultados, error: resErr } = resResp;
     if (resErr || !resultados || resultados.length === 0) {
       throw new Error(`Erro ao buscar resultados: ${resErr?.message || "vazio"}`);
     }
@@ -758,8 +768,23 @@ serve(async (req) => {
     const concursos = resultados as Concurso[];
     const ultimoConcurso = concursos[0].concurso_id;
 
+    // Agrupa histórico de ciclos { ciclo_numero -> duracao }
+    let historicoCiclos: CicloHistorico[] | undefined;
+    if (tipoPost === "analise_ciclo" && ciclosResp.data) {
+      const cnt = new Map<number, number>();
+      for (const row of ciclosResp.data as Array<{ ciclo_numero: number | null }>) {
+        if (row.ciclo_numero == null) continue;
+        cnt.set(row.ciclo_numero, (cnt.get(row.ciclo_numero) || 0) + 1);
+      }
+      historicoCiclos = Array.from(cnt.entries()).map(([ciclo_numero, duracao]) => ({
+        ciclo_numero,
+        duracao,
+      }));
+      console.log(`[generate-guide-post] ciclos carregados: ${historicoCiclos.length}`);
+    }
+
     // 3. Calcular fatos determinísticos
-    const fatos = montarFatos(tipoPost, concursos);
+    const fatos = montarFatos(tipoPost, concursos, historicoCiclos);
 
     // 4. Chamar IA com retry
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
@@ -776,7 +801,7 @@ serve(async (req) => {
     let viaFallback = false;
     let motivoFallback = "";
 
-    const numerosPermitidos = extrairNumerosPermitidos(concursos, proxConcurso);
+    const numerosPermitidos = extrairNumerosPermitidos(concursos, proxConcurso, fatos.extras);
     const ia = await chamarIAComRetry(SYSTEM_PROMPT_BASE, userPrompt, apiKey);
 
     if (!ia.ok) {
