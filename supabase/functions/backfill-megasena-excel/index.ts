@@ -190,6 +190,30 @@ Deno.serve(async (req) => {
 
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
+
+    // FIX: O XLSX da Caixa vem com !ref incorreto (só A1:T1). Recalcular o range
+    // a partir das chaves de células reais para que sheet_to_json leia tudo.
+    const cellKeys = Object.keys(sheet).filter((k) => /^[A-Z]+\d+$/.test(k));
+    if (cellKeys.length > 0) {
+      let maxRow = 0;
+      let maxCol = 0;
+      for (const k of cellKeys) {
+        const m = k.match(/^([A-Z]+)(\d+)$/);
+        if (!m) continue;
+        const col = m[1]
+          .split("")
+          .reduce((acc, ch) => acc * 26 + (ch.charCodeAt(0) - 64), 0) - 1;
+        const row = parseInt(m[2], 10) - 1;
+        if (row > maxRow) maxRow = row;
+        if (col > maxCol) maxCol = col;
+      }
+      sheet["!ref"] = XLSX.utils.encode_range({
+        s: { c: 0, r: 0 },
+        e: { c: maxCol, r: maxRow },
+      });
+      console.log(`[backfill-megasena] !ref recalculado: ${sheet["!ref"]}`);
+    }
+
     const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
       raw: false,
       defval: "",
