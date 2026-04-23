@@ -1,118 +1,127 @@
 
 
-## Enriquecer o Post de Repetidas com estudo profundo
+## Enriquecer os Posts de Linhas e Colunas com estudo profundo
 
-Transformar o post de repetidas num **estudo completo de movimentação dezena-a-dezena entre sorteios**: mostrar quantas dezenas se repetiram concurso a concurso, quais dezenas mais se repetiram (as "fiéis"), quais raramente se repetem (as "voláteis"), as **melhores duplas/trios de repetidoras** que tendem a vir juntas no próximo sorteio, e uma **recomendação direta** de quantas e quais repetidas usar no próximo palpite.
+Hoje os posts de Linhas e Colunas são apenas listas de médias por eixo (ex.: "Linha 3 (11-15): 28 ocorrências — mais comum: 3 dezenas (5x)"). Sem direção, sem padrão de jogo, sem dezenas específicas. Vamos transformar nos posts mais ricos da série, com **distribuição alvo, dezenas quentes/frias dentro de cada eixo, melhores duplas/trios por eixo e palpite estruturado**.
 
-## Como vai ficar o post
+## Como vai ficar (exemplo Linhas)
 
 ```text
-🔁 Análise de Repetidas — Concurso 3668
+📐 Análise por Linhas — Concurso 3668
 
 Olá pessoal!
 
-📊 O que aconteceu nos últimos 10 concursos
-A cada sorteio, em média 9.1 dezenas se repetem do concurso anterior.
-Faixa mais comum: entre 8 e 10 repetidas (70% dos sorteios).
-Mínimo recente: 7 repetidas | Máximo recente: 11 repetidas.
+📊 Panorama (últimos 10 sorteios — 150 dezenas)
+A Lotofácil usa grid 5x5, então cada linha tem 5 dezenas (01-05, 06-10, 11-15, 16-20, 21-25).
+Em 10 sorteios, cada linha contribui em média com 3 dezenas — mas o real varia bastante.
 
-🎯 No último sorteio (3667)
-Dezenas: 02, 03, 05, 06, 07, 09, 11, 14, 15, 18, 19, 20, 22, 23, 25
-São essas que vão competir para se repetir no 3668.
+🎯 Distribuição média por linha
+• L1 (01-05): 3.1 dezenas/sorteio  → padrão mais comum: 3 dezenas (6x), 4 dezenas (3x)
+• L2 (06-10): 2.8 dezenas/sorteio  → padrão mais comum: 3 dezenas (5x), 2 dezenas (4x)
+• L3 (11-15): 3.2 dezenas/sorteio  → padrão mais comum: 3 dezenas (5x), 4 dezenas (3x)
+• L4 (16-20): 2.9 dezenas/sorteio  → padrão mais comum: 3 dezenas (6x), 2 dezenas (3x)
+• L5 (21-25): 3.0 dezenas/sorteio  → padrão mais comum: 3 dezenas (7x)
 
-🔥 Destaques — as MAIS FIÉIS (mais se repetiram nos últimos 9 ciclos)
-• 23 — repetiu 8 das 9 vezes possíveis (89%)
-• 11 — repetiu 7 das 9 (78%)
-• 03 — repetiu 7 das 9 (78%)
-• 05 — repetiu 6 das 9 (67%)
-• 25 — repetiu 6 das 9 (67%)
+🔥 Dezenas FORTES por linha (top performer de cada eixo)
+• L1: dezena 03 (saiu 9x em 10) e 05 (saiu 8x)
+• L2: dezena 09 (8x) e 07 (7x)
+• L3: dezena 11 (10x) e 13 (8x)
+• L4: dezena 20 (8x) e 17 (7x)
+• L5: dezena 25 (9x) e 21 (8x)
 
-⚠️ Atenção — as VOLÁTEIS do último sorteio (raramente repetem)
-• 14 — repetiu só 2 das 9 (22%)  → tende a sair do próximo
-• 22 — repetiu só 3 das 9 (33%)
-• 18 — repetiu só 3 das 9 (33%)
+❄️ Dezenas FRACAS por linha (atenção)
+• L1: 04 (3x em 10) e 02 (4x)
+• L2: 06 (2x) — a mais fria do grid
+• L3: 12 (3x)
+• L4: 19 (3x) e 16 (4x)
+• L5: 24 (3x)
 
-🤝 Melhores duplas de repetidoras (quando uma repete, a outra também)
-• 23 + 11 — repetiram juntas 7x em 9
-• 23 + 03 — repetiram juntas 6x em 9
-• 11 + 25 — repetiram juntas 5x em 9
+🤝 Melhores duplas dentro da mesma linha
+• L3: 11 + 13 — juntas 8x
+• L1: 03 + 05 — juntas 7x
+• L5: 25 + 21 — juntas 7x
 
-🎯 Melhores trios de repetidoras
-• 23 + 11 + 03 — repetiram juntos 6x em 9
-• 23 + 11 + 25 — repetiram juntos 5x em 9
+📈 Distribuição alvo recomendada (soma 15)
+L1=3, L2=3, L3=3, L4=3, L5=3
 
 💡 Como montar seu palpite para o 3668
-Histórico aponta para usar 9 dezenas REPETIDAS do último sorteio:
 
-🎯 REPETIR (núcleo de 5 fixas): **23, 11, 03, 05, 25**
-   → as mais fiéis (67%+) e formam as top duplas/trios
+🎯 Núcleo de fixas por linha (1 forte de cada): **03, 09, 11, 20, 25**
+   → top performer de cada eixo, garantem cobertura horizontal
 
-➕ REPETIR (apoio de 4): **02, 06, 07, 09**
-   → frequência de repetição média-alta, reforçam o núcleo
+➕ Apoio (2 por linha onde a média sobe): **05, 13, 21**
+   → segundo melhor de L1, L3, L5 (linhas com média ≥ 3.0)
 
-❌ NÃO repetir desta rodada: **14, 22, 18**
-   → voláteis, padrão histórico de sair fora no próximo
+🎲 Coringas a girar: **07, 17**
+   → reforço médio em L2 e L4
 
-✨ E completar com 6 dezenas NOVAS (que não saíram no 3667).
+❌ Evitar nesta rodada: **06, 04, 19**
+   → frequência ≤ 30% nas suas respectivas linhas
+
+⚠️ Cuidado com a tentação de carregar uma única linha — em 10 sorteios, nenhuma linha passou de 4 dezenas em mais que 3 vezes.
 
 Loteria envolve sorte. Use como guia, não como certeza.
 ```
+
+O post de Colunas segue o mesmo formato, trocando "linha" por "coluna" e com faixas tipo C1=01,06,11,16,21.
 
 ## Arquivo afetado
 
 **Apenas:** `supabase/functions/generate-guide-post/index.ts`
 
-### 1. Substituir `calcularRepetidasRecomendadas()` por motor expandido
+### 1. Substituir `detalharLinhasColunas()` por motor expandido
 
-Nova função `analisarRepetidasDetalhado(concursos)` retorna:
+Nova função `analisarEixoDetalhado(concursos, eixo)` retorna:
 
-- **`totalConcursos`** — N
-- **`paresAnalisados`** — N-1 (transições entre concursos consecutivos)
-- **`mediaRepetidas`** — média de dezenas repetidas por transição
-- **`faixaMaisComum`** — `{ min, max, perc }` das 2 quantidades de repetição mais frequentes
-- **`minRepetidas`**, **`maxRepetidas`** — extremos observados
-- **`ultimoSorteio`** — array das 15 dezenas do concurso mais recente
-- **`fieis`** — top 5 dezenas que MAIS se repetiram entre concursos consecutivos: `{ dezena, vezes, transicoes, perc }` — restrito às que estão no último sorteio (são as candidatas reais a repetir)
-- **`volateis`** — dezenas do **último sorteio** com baixa taxa histórica de repetição: `{ dezena, vezes, transicoes, perc }`, top 3 com perc ≤ 35%
-- **`melhoresDuplasRep`** — top 3 pares de dezenas que MAIS se repetiram juntas entre concursos consecutivos (matriz de coocorrência de repetição), restritas ao último sorteio
-- **`melhoresTriosRep`** — top 2 trios análogos
-- **`recomendacao`** — `{ qtdRecomendada, repetirNucleo: number[], repetirApoio: number[], naoRepetir: number[], qtdNovas: number, justNucleo, justApoio, justNaoRepetir }`
-  - **qtdRecomendada** = `Math.round(mediaRepetidas)` (entre 7 e 11)
-  - **repetirNucleo**: 5 dezenas com perc≥60% que estão nos top duplas/trios
-  - **repetirApoio**: até 4 dezenas com perc 40-60% completando até `qtdRecomendada`
-  - **naoRepetir**: até 3 voláteis (perc ≤ 35%)
-  - **qtdNovas** = `15 - qtdRecomendada`
+- **`totalDezenasSorteadas`** = `concursos.length * 15`
+- **`eixos`** — array de 5 itens, cada um com:
+  - `indice` (1..5), `faixa` (string), `dezenasDoEixo` (5 dezenas)
+  - `mediaPorSorteio` — média de dezenas daquele eixo por sorteio
+  - `top2Distribuicao` — top 2 quantidades mais frequentes `{ qtd, vezes, perc }`
+  - `fortes` — top 2 dezenas do eixo `{ dezena, vezes, perc }` (saíram mais)
+  - `fracas` — top 2 dezenas do eixo com vezes ≤ 40% `{ dezena, vezes, perc }`
+  - `melhorDupla` — `{ a, b, vezes }` da dupla de dezenas do mesmo eixo que mais coocorreu
+- **`distribuicaoAlvo`** — vetor de 5 inteiros somando 15 (já existe via `ajustarPara15`)
+- **`recomendacao`** — `{ nucleoFixas: number[], apoio: number[], coringas: number[], evitar: number[], alerta: string }`:
+  - **nucleoFixas**: 1 dezena top de cada eixo (5 dezenas)
+  - **apoio**: 2ª melhor de cada eixo cuja média ≥ 3.0
+  - **coringas**: 2ª melhor dos eixos restantes
+  - **evitar**: top 3 dezenas mais fracas globalmente (perc ≤ 30%)
+  - **alerta**: texto sobre concentração máxima já vista (ex: "nenhuma linha passou de 4 dezenas em mais que 3x")
 
-### 2. Atualizar `case "analise_repetidas"` em `montarFatos()`
+### 2. Reescrever `case "analise_linhas"` e `case "analise_colunas"` em `montarFatos()`
 
-O `resumo` passa a montar **literalmente** os 7 blocos do post (panorama, último sorteio, fiéis, voláteis, melhores duplas, melhores trios, recomendação completa com núcleo/apoio/não-repetir + dezenas novas). O `recomendacaoDireta` resume a ação clara.
+O `resumo` passa a montar **literalmente** os 7 blocos: panorama, distribuição média, fortes por eixo, fracas por eixo, melhores duplas, distribuição alvo, recomendação completa com núcleo/apoio/coringas/evitar + alerta.
+
+O `recomendacaoDireta` resume em uma linha a ação clara.
 
 ### 3. Atualizar `montarPrompt()`
 
-Adicionar `analise_repetidas` à lista de tipos que exigem **reprodução literal** dos blocos numéricos. A IA só escreve a abertura (1 linha) e o disclaimer final.
+Adicionar `analise_linhas` e `analise_colunas` à lista de tipos que exigem **reprodução literal** dos blocos numéricos. A IA escreve apenas abertura (1 linha) e disclaimer.
 
-### 4. Atualizar limite de caracteres
+### 4. Limite de caracteres
 
-`analise_repetidas`: 1500 → **2200 caracteres** (post mais rico, com 7 blocos + recomendação detalhada).
+`analise_linhas` e `analise_colunas`: 1500 → **2200 caracteres**.
 
 ### 5. Validador
 
-Whitelist atual já cobre 0–100 (percentuais e contagens). As dezenas (1–25) já entram via `permitidos = new Set(c.dezenas)`. Sem mudanças extras.
+Já cobre 0–100 e dezenas via `c.dezenas`. Sem mudança.
 
-### 6. Fallback
+### 6. Auditoria de coocorrência (lição aprendida)
 
-Como o fallback usa `fatos.resumo + fatos.recomendacaoDireta` direto, ambos já vão vir completos com o novo formato. Sem mudança extra.
+Manter o padrão dos posts anteriores: para cada `melhorDupla` por eixo, recalcular por varredura independente e exigir match exato. Filtra duplas com vezes ≥ 3 e ambas dezenas do mesmo eixo.
 
-### 7. Regeneração do post atual
+### 7. Regeneração dos posts atuais
 
-Migration SQL para deletar o post de `analise_repetidas` mais recente, depois disparo da edge function `generate-guide-post` com `tipo_post: "analise_repetidas"` para regenerar com o novo formato.
+Migration SQL deletando os posts mais recentes de `analise_linhas` e `analise_colunas`, depois disparo de `generate-guide-post` para cada tipo.
 
 ## Garantias
 
-- **Taxa de repetição por dezena**: para cada par (concurso[i], concurso[i+1]), conta quantas dezenas repetiram. Determinístico.
-- **Fiéis e voláteis restritos ao último sorteio**: só faz sentido recomendar repetir o que está disponível para repetir.
-- **Top duplas/trios de repetição**: matriz de coocorrência de repetição entre concursos consecutivos — sempre real.
-- **Recomendação núcleo/apoio/não-repetir**: regra fixa em código que cruza taxa de repetição + coocorrência.
+- **Distribuição por eixo**: contagem absoluta nos últimos 10 sorteios. Determinística.
+- **Fortes/fracas por eixo**: cada dezena do eixo conta presença real em `c.dezenas`.
+- **Melhores duplas por eixo**: matriz de coocorrência restrita ao eixo + auditoria independente.
+- **Distribuição alvo soma 15**: já garantida por `ajustarPara15`.
+- **Recomendação núcleo/apoio/coringas/evitar**: regra fixa em código baseada em frequência por eixo.
 - **Texto humanizado**: IA só escreve abertura e disclaimer; números, dezenas e justificativas vêm prontos do motor.
 - **Anti-alucinação**: validador descarta qualquer número fora da whitelist; fallback publica o estudo completo se a IA falhar.
 
