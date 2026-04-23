@@ -602,6 +602,7 @@ Deno.serve(async (req) => {
     const concursoEspecifico = url.searchParams.get('concurso');
     const debug = url.searchParams.get('debug') === 'true';
     const forceUpdate = url.searchParams.get('force') === 'true';
+    const forcePost = url.searchParams.get('force_post') === 'true';
 
     let apiUrl: string;
     let modoOperacao: string;
