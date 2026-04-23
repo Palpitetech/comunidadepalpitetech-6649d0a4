@@ -1,83 +1,100 @@
 
 
-## Como funciona o "motor" dos posts hoje
+## Enriquecer o Post de Ciclo com dados históricos
 
-Cada tipo de post tem **3 camadas**:
+Trazer o **status real do ciclo atual** + a **distribuição histórica de duração** + **justificativa explícita** das dezenas escolhidas/excluídas.
 
-1. **Motor de fatos (TypeScript puro)** — calcula números reais (frequências, médias, distribuições). Nunca alucina.
-2. **Prompt da IA** — recebe os fatos prontos e escreve o texto humanizado em volta deles.
-3. **Validador + fallback** — se a IA inventar número, descarta e usa template fixo.
-
-Os 6 tipos de post diários estão em `supabase/functions/generate-guide-post/index.ts`, cada um numa função `montarFatos()` (case `analise_linhas`, `analise_colunas`, `analise_ciclo`, etc.).
-
-## Como você dá ordens para melhorar cada post
-
-Você me dá a ordem em **linguagem natural**, dizendo:
-- **Qual tipo de post** quer mexer (ex: "análise por linhas", "quentes e frias", "ciclo")
-- **O que quer adicionar/mudar no conteúdo** (ex: "quero que mostre X antes de Y")
-- **Se é texto novo ou substituir** algo existente
-
-Eu traduzo isso em ajustes nos 2 lugares certos:
-- **`montarFatos()`** — adiciona o cálculo novo (números reais).
-- **`montarPrompt()`** — instrui a IA a usar esses números no texto.
-- **Validador** — libera os novos números na whitelist.
-- **Fallback** — atualiza o template fixo para também incluir o novo bloco.
-
-## Sua ordem para Linhas e Colunas
-
-Você pediu detalhamento por linha/coluna no formato:
+## Como vai ficar o post
 
 ```text
-Linha 1: tivemos 32 ocorrências, com mais frequência de 3 dezenas (12x) e 4 dezenas (10x)
-Linha 2: ...
+🔄 Ciclo da Lotofácil — Concurso 3668
+
+Olá pessoal!
+
+📊 Onde estamos
+Estamos no Ciclo 45, atualmente com 2 concursos jogados (3666 e 3667).
+O próximo sorteio (3668) será o 3º concurso deste ciclo.
+Faltam 13 dezenas para fechar: 03, 06, 08, 09, 10, 12, 14, 16, 17, 19, 20, 22, 25.
+
+📈 Histórico (últimos 44 ciclos fechados)
+• 2 concursos: 4 vezes (9%)
+• 3 concursos: 14 vezes (32%)
+• 4 concursos: 11 vezes (25%)
+• 5 concursos: 6 vezes (14%)
+• 6+ concursos: 9 vezes (20%)
+Mais comum: ciclo fecha em 3 ou 4 concursos (57% dos casos).
+
+💡 Como montar seu palpite para o 3668
+Como ainda estamos cedo no ciclo (3º concurso), a chance de fechamento agora é baixa
+(somente 9% dos ciclos fecharam tão rápido).
+👉 Recomendação: NÃO aposte tudo nas faltantes ainda. Use 6 a 8 dezenas faltantes
+prioritárias e complete com quentes.
+
+🎯 Faltantes prioritárias (6): 03, 09, 12, 17, 20, 25
+   → escolhidas porque saíram menos vezes nos últimos 10 sorteios
+❌ Deixadas de fora desta rodada: 06, 08, 10, 14, 16, 19, 22
+   → ainda há tempo no ciclo, dá pra incluí-las nos próximos concursos
+
+Loteria envolve sorte. Use como guia, não como certeza.
 ```
 
-Vou implementar exatamente isso, calculando para cada uma das 5 linhas (e 5 colunas) nos últimos 10 sorteios:
-- **Total de ocorrências** (soma de quantas dezenas daquela linha caíram nos 10 sorteios)
-- **Distribuição** (quantas vezes caíram 2, 3, 4, 5 dezenas daquela linha — destacando as 2 quantidades mais frequentes)
+Quando o ciclo estiver perto de fechar (ex.: 4º ou 5º concurso já dentro da faixa mais comum), a recomendação inverte automaticamente para **"aposte forte no fechamento"**.
 
-## O que vai ser alterado
+## Arquivo afetado
 
-**Arquivo único:** `supabase/functions/generate-guide-post/index.ts`
+**Apenas:** `supabase/functions/generate-guide-post/index.ts`
 
-### 1. Novo cálculo determinístico (motor)
-Adicionar função `detalharLinhasColunas(concursos, eixo: 'linha' | 'coluna')` que retorna, para cada índice 1–5:
-- total de ocorrências nos 10 sorteios
-- distribuição por quantidade de dezenas (2, 3, 4, 5) com as 2 mais frequentes
+### 1. Buscar histórico completo de ciclos no handler
 
-### 2. Atualizar `montarFatos()` para `analise_linhas` e `analise_colunas`
-O `resumo` passa a incluir o detalhamento linha por linha (ou coluna por coluna), exemplo:
+Hoje a função busca só os últimos 10 concursos. Vamos adicionar uma segunda query (paralela) que retorna a duração de **todos os ciclos já fechados**:
 
-```text
-📐 Análise por Linhas (últimos 10 sorteios)
-
-Linha 1 (01-05): 28 ocorrências
-  → mais comum: 3 dezenas (5x) e 2 dezenas (3x)
-Linha 2 (06-10): 31 ocorrências
-  → mais comum: 3 dezenas (6x) e 4 dezenas (2x)
-...
+```sql
+SELECT ciclo_numero, COUNT(*) AS duracao
+FROM resultados_loterias
+WHERE loteria='lotofacil' AND ciclo_numero IS NOT NULL
+GROUP BY ciclo_numero
 ```
 
-### 3. Atualizar `montarPrompt()`
-Instruir a IA a manter o bloco linha-por-linha **literal** no texto e só humanizar a abertura/fechamento.
+Esse array é passado para `montarFatos()` como parâmetro extra **só** para `analise_ciclo`.
 
-### 4. Atualizar validador e fallback
-- Whitelist permite os novos números (ocorrências de 0–60, quantidades 0–5).
-- Fallback determinístico passa a renderizar o bloco detalhado direto, sem IA, caso ela falhe.
+### 2. Novo motor determinístico
+
+Adicionar 2 funções:
+
+- **`calcularEstatisticasCiclo(historicoCiclos)`** — recebe todos os ciclos, exclui o ciclo atual (em andamento) e retorna:
+  - distribuição: `{2: 4, 3: 14, 4: 11, 5: 6, 6: 5, 7: 3, 8: 1, ...}`
+  - percentuais
+  - faixa mais comum (top 2 durações somadas)
+  - total de ciclos analisados
+
+- **`montarRecomendacaoCiclo(posicaoNoCiclo, estatisticas, faltantes, quentes)`** — decide:
+  - Se posição atual ≤ percentil 25 das durações → "ainda é cedo, NÃO aposte fechamento"
+  - Se posição atual ∈ faixa mais comum → "alta chance de fechar agora, aposte fechamento"
+  - Se posição atual > percentil 75 → "ciclo demorando, ainda dá pra entrar"
+  - Escolhe N faltantes priorizando as **mais quentes na janela de 10 sorteios** (justificativa: "saíram mais vezes recentemente")
+  - Lista as faltantes deixadas de fora com justificativa ("ainda há tempo no ciclo")
+
+### 3. Atualizar `case "analise_ciclo"` em `montarFatos()`
+
+O `resumo` passa a incluir os 4 blocos: status atual, posição no próximo concurso, histórico de durações com %, e justificativa por dezena.
+
+### 4. Atualizar `montarPrompt()`
+
+Instrução adicional para `analise_ciclo`: reproduzir os blocos "📈 Histórico", "🎯 Faltantes prioritárias" e "❌ Deixadas de fora" **literalmente**, sem resumir.
+
+### 5. Atualizar validador
+
+A whitelist já permite 0–80 (cobre contagens, percentuais e número de concursos). Adicionar `permitidos.add(totalCiclos)` para liberar o número total de ciclos analisados (ex.: 44).
+
+### 6. Atualizar `fallbackConteudo()`
+
+Como o fallback hoje é genérico (usa `fatos.resumo` direto), e o novo `resumo` já vem completo, o fallback já vai render correto sem mudança extra.
 
 ## Garantias
 
-- Números 100% reais (vêm do motor TypeScript).
-- IA só humaniza a abertura e o fechamento.
-- Se a IA tentar inventar — fallback publica o detalhamento exato.
-- Aplicado tanto em **Análise por Linhas** quanto em **Análise por Colunas**.
-
-## Próximas ordens (formato sugerido)
-
-Para qualquer outro post, basta você dizer algo como:
-- "No post de **quentes e frias**, quero que mostre também **há quantos sorteios cada fria não sai**."
-- "No post de **ciclo**, quero que liste as dezenas faltantes **em ordem de atraso**, não numérica."
-- "No post de **moldura**, quero comparar a média de moldura dos últimos 10 com a média histórica."
-
-Eu transformo cada pedido numa alteração no motor + prompt + validador + fallback.
+- **Posição no ciclo**: calculada por `COUNT(concursos onde ciclo_numero = atual) + 1`. Determinística.
+- **Histórico de durações**: vem de `GROUP BY ciclo_numero` — sempre real.
+- **Justificativa das dezenas**: cruzamento entre `faltantes` e `topQuentes(10)` — explicação automática.
+- **Recomendação fechamento sim/não**: regra fixa em código baseada em percentis da distribuição histórica.
+- **Texto humanizado**: IA só escreve abertura e transições. Números e justificativas vêm prontos.
 
