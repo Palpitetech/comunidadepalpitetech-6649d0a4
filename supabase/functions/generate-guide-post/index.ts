@@ -1088,7 +1088,7 @@ serve(async (req) => {
       console.warn(`[generate-guide-post] ⚠️ ${motivoFallback}`);
       conteudo = fallbackConteudo(fatos);
     } else {
-      const limiteConteudo = tipoPost === "analise_ciclo" ? 2000 : 1500;
+      const limiteConteudo = tipoPost === "analise_ciclo" || tipoPost === "analise_moldura" ? 2000 : 1500;
       const conteudoIA = sanitizar(ia.content || "").substring(0, limiteConteudo);
       const validacao = validarConteudoNumerico(conteudoIA, numerosPermitidos);
 
