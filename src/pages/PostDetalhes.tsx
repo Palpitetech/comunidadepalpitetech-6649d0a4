@@ -12,6 +12,7 @@ import { FormattedContent } from "@/components/comunidade/FormattedContent";
 
 import { ActionBar } from "@/components/comunidade/ActionBar";
 import { CommentSection } from "@/components/comunidade/CommentSection";
+import { GerarPalpitesDoEstudoButton } from "@/components/comunidade/GerarPalpitesDoEstudoButton";
 // BotCta removido — chat e bots foram desativados
 import { LoginPromptModal } from "@/components/comunidade/LoginPromptModal";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -244,6 +245,17 @@ export default function PostDetalhes() {
         <div className="px-4 pt-3">
           <FormattedContent content={post.conteudo} />
         </div>
+
+        {/* Gerar palpites baseado no estudo (oculta se loteria não suportada ou tipo for resultado) */}
+        {post.tipo && post.tipo !== "resultado_oficial" && (
+          <div className="px-4 pt-4">
+            <GerarPalpitesDoEstudoButton
+              postId={post.id}
+              tema={post.tipo}
+              loteriaTag={post.loteria_tag}
+            />
+          </div>
+        )}
 
         {/* External link */}
         {post.external_link_url && (
