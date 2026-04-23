@@ -7,9 +7,19 @@ const corsHeaders = {
 };
 
 // =============================================================================
-// Persona/loteria são resolvidas dentro de generate-guide-post — este edge
-// só faz roteamento por horário/dia.
+// Cron horário. Para cada slot ativo:
+//  1) Se existe RASCUNHO pronto p/ a loteria/tipo, publica via UPDATE (sem IA)
+//  2) Senão, fallback: chama generate-guide-post síncrono como antes
 // =============================================================================
+
+const LOTERIA_TAG: Record<string, string> = {
+  lotofacil: "Lotofácil",
+  megasena: "Mega-Sena",
+  quina: "Quina",
+  duplasena: "Dupla Sena",
+  lotomania: "Lotomania",
+  diadesorte: "Dia de Sorte",
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -22,12 +32,10 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // Overrides de teste (testTime "HH:MM", testDay 0..6)
     const body = await req.json().catch(() => ({}));
     const testTime: string | undefined = body.testTime;
     const testDay: number | null = body.testDay !== undefined ? body.testDay : null;
 
-    // Horário atual em Brasília (UTC-3)
     const now = new Date();
     const brasiliaOffset = -3 * 60;
     const utcOffset = now.getTimezoneOffset();
@@ -37,23 +45,14 @@ serve(async (req) => {
     const currentMinute = brasiliaTime.getMinutes().toString().padStart(2, "0");
 
     let currentTime = `${currentHour}:${currentMinute}`;
-    let currentDay = brasiliaTime.getDay(); // 0=Dom
+    let currentDay = brasiliaTime.getDay();
 
-    if (testTime) {
-      currentTime = testTime;
-      console.log(`[process-scheduled-posts] 🧪 TESTE: simulando horário ${currentTime}`);
-    }
-    if (testDay !== null) {
-      currentDay = testDay;
-      console.log(`[process-scheduled-posts] 🧪 TESTE: simulando dia ${currentDay}`);
-    }
+    if (testTime) currentTime = testTime;
+    if (testDay !== null) currentDay = testDay;
 
-    const [simulatedHour, simulatedMinute] = currentTime.split(":");
-    const currentTotalMinutes = parseInt(simulatedHour) * 60 + parseInt(simulatedMinute);
+    const [simHour, simMin] = currentTime.split(":");
+    const currentTotalMinutes = parseInt(simHour) * 60 + parseInt(simMin);
 
-    console.log(`[process-scheduled-posts] Verificando ${currentTime} (dia ${currentDay})`);
-
-    // Buscar agenda ativa que combina com horário+dia atuais
     const { data: schedules, error: schedErr } = await supabaseAdmin
       .from("post_schedules")
       .select("id, tipo_post, horario, dias, loteria")
@@ -68,69 +67,75 @@ serve(async (req) => {
       );
     }
 
-    const processed: string[] = [];
+    const published: string[] = [];
+    const generated: string[] = [];
     const skipped: string[] = [];
     const errors: string[] = [];
 
     for (const sched of schedules) {
       try {
-        // Pular slot 23:00 do tipo resultado_oficial (disparado por sync-lotofacil)
-        if (sched.tipo_post === "resultado_oficial") {
+        if (sched.tipo_post === "resultado_oficial") continue;
+        if (!sched.dias?.includes(currentDay)) continue;
+
+        const [schedHour, schedMin] = sched.horario.split(":");
+        const schedTotal = parseInt(schedHour) * 60 + parseInt(schedMin);
+        const matches = testTime
+          ? sched.horario === currentTime
+          : Math.abs(schedTotal - currentTotalMinutes) <= 1;
+        if (!matches) continue;
+
+        const loteria = sched.loteria || "lotofacil";
+        const tag = LOTERIA_TAG[loteria] || loteria;
+
+        // 1) Tenta publicar rascunho pronto
+        const { data: rascunho } = await supabaseAdmin
+          .from("postagens")
+          .select("id")
+          .eq("status", "rascunho")
+          .eq("loteria_tag", tag)
+          .eq("tema_estudo", sched.tipo_post)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (rascunho) {
+          const { error: updErr } = await supabaseAdmin
+            .from("postagens")
+            .update({ status: "publicado", created_at: new Date().toISOString() })
+            .eq("id", rascunho.id);
+          if (updErr) throw updErr;
+          published.push(`${loteria}/${sched.tipo_post}: ${rascunho.id}`);
           continue;
         }
 
-        // Filtrar por dia
-        if (!sched.dias?.includes(currentDay)) continue;
-
-        // Filtrar por horário (margem 1min em produção, exato em teste)
-        const [schedHour, schedMin] = sched.horario.split(":");
-        const schedTotalMinutes = parseInt(schedHour) * 60 + parseInt(schedMin);
-        const matches = testTime
-          ? sched.horario === currentTime
-          : Math.abs(schedTotalMinutes - currentTotalMinutes) <= 1;
-
-        if (!matches) continue;
-
-        // Dedup 30 min — mesmo tipo, mesma persona-loteria
-        // Persona é por loteria → AUGUSTO_PERFIL_ID só serve para Lotofácil; futuras loterias
-        // têm sua própria persona. O dedup definitivo (BRT por persona) já roda dentro de
-        // generate-guide-post; aqui usamos um pré-filtro frouxo só para evitar disparos
-        // duplicados pelo cron quando o slot pega a mesma faixa de minutos.
-        const sloteria = sched.loteria || "lotofacil";
+        // 2) Dedup curto (mesma faixa de 30min) antes do fallback síncrono
         const thirtyMinAgo = new Date(now.getTime() - 30 * 60 * 1000).toISOString();
         const { data: recent } = await supabaseAdmin
           .from("postagens")
           .select("id")
-          .eq("loteria_tag", sloteria === "lotofacil" ? "Lotofácil" : sloteria)
+          .eq("loteria_tag", tag)
           .eq("tipo", sched.tipo_post)
+          .eq("status", "publicado")
           .gte("created_at", thirtyMinAgo)
           .limit(1)
           .maybeSingle();
-
         if (recent) {
-          skipped.push(`${sched.tipo_post} (${sloteria}): já postou recentemente`);
+          skipped.push(`${loteria}/${sched.tipo_post}: já publicou recentemente`);
           continue;
         }
 
-        console.log(`[process-scheduled-posts] ✅ Disparando ${sched.tipo_post} loteria=${sloteria} (${sched.horario})`);
-
-        const generateUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-guide-post`;
-        const r = await fetch(generateUrl, {
+        // 3) Fallback: gera ao vivo (legado)
+        const r = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-guide-post`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
           },
-          body: JSON.stringify({ tipo_post: sched.tipo_post, loteria: sloteria }),
+          body: JSON.stringify({ tipo_post: sched.tipo_post, loteria }),
         });
-
-        if (!r.ok) {
-          const errBody = await r.text();
-          throw new Error(`generate-guide-post ${r.status}: ${errBody}`);
-        }
-
+        if (!r.ok) throw new Error(`generate-guide-post ${r.status}: ${await r.text()}`);
         const data = await r.json();
-        processed.push(`${sched.tipo_post}: ${data.postId || "ok"}`);
+        generated.push(`${loteria}/${sched.tipo_post}: ${data.postId || "ok"}`);
       } catch (err) {
         const msg = `${sched.tipo_post}: ${err instanceof Error ? err.message : "erro"}`;
         errors.push(msg);
@@ -141,17 +146,18 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        processed: processed.length,
-        posts: processed,
-        skipped: skipped.length ? skipped : undefined,
+        published: published.length,
+        generated_live: generated.length,
+        skipped: skipped.length || undefined,
         errors: errors.length ? errors : undefined,
+        details: { published, generated, skipped },
         checkedAt: currentTime,
         day: currentDay,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {
-    console.error("[process-scheduled-posts] Erro geral:", error);
+    console.error("[process-scheduled-posts] erro:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Erro" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
