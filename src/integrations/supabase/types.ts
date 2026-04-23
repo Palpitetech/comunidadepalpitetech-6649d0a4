@@ -1004,6 +1004,33 @@ export type Database = {
         }
         Relationships: []
       }
+      gerador_estudo_daily_usage: {
+        Row: {
+          count: number
+          created_at: string
+          day: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          created_at?: string
+          day?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          created_at?: string
+          day?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       group_blast_configs: {
         Row: {
           created_at: string | null
@@ -3307,6 +3334,10 @@ export type Database = {
       increment_smart_link_clicks: {
         Args: { p_slug: string }
         Returns: undefined
+      }
+      incrementar_uso_gerador_estudo: {
+        Args: { p_max: number; p_user_id: string }
+        Returns: number
       }
       merge_user_attribution:
         | {
