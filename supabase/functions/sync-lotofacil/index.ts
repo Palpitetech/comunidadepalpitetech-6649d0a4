@@ -111,7 +111,13 @@ async function dispararNotificacaoResultadoNovo(params: {
   }
 }
 
-// Cria o post de resultado oficial (Palpite Tech como autor)
+// Cria o post de resultado oficial (Augusto Angelis como autor único)
+const AUGUSTO_PERFIL_ID = "41b58d48-2ef1-4bf7-a536-ed8a49607fa9";
+const AUGUSTO_NOME = "Augusto Angelis";
+const SYSTEM_PROMPT_RESULTADO = `Você é Augusto Angelis, especialista em Lotofácil da equipe Palpite Tech.
+Tom acolhedor e direto, em primeira pessoa. Nunca mencione IA, bot, modelo, GPT ou Gemini.
+Anuncie resultados oficiais com energia, didática e respeito ao jogador.`;
+
 async function criarPostResultadoOficial(params: {
   supabase: any;
   concurso: number;
@@ -125,21 +131,7 @@ async function criarPostResultadoOficial(params: {
   console.log(`[RESULT-POST] Criando post de resultado para concurso ${concurso}`);
 
   try {
-    // 1. Buscar perfil_id do autor de resultados (is_result_author = Palpite Tech)
-    const { data: author, error: authorError } = await supabase
-      .from("guide_personas")
-      .select("id, perfil_id, system_prompt, max_chars_post, ai_model, total_posts, perfis(nome)")
-      .eq("is_result_author", true)
-      .eq("ativo", true)
-      .eq("can_create_posts", true)
-      .single();
-
-    if (authorError || !author) {
-      console.error(`[RESULT-POST] ❌ Autor de resultados não encontrado ou inativo`);
-      return;
-    }
-
-    // 2. Montar contexto do resultado
+    // 1. Montar contexto do resultado
     const dezenasFormatadas = dezenas.map(d => d.toString().padStart(2, "0")).join(" - ");
     const faltantes = cicloInfo.dezenas_faltantes_ciclo.map(d => d.toString().padStart(2, "0")).join(", ");
 
@@ -151,7 +143,7 @@ Repetidas: ${indicadores.qtd_repetidas}
 Ciclo: ${cicloInfo.ciclo_numero} | Faltantes: [${faltantes}]${cicloInfo.dezenas_faltantes_ciclo.length <= 3 ? " ⚡ Quase fechando!" : ""}
 ${acumulou ? "💰 ACUMULOU!" : ""}`;
 
-    // 3. Gerar post via IA
+    // 2. Gerar post via IA
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       console.error("[RESULT-POST] ❌ LOVABLE_API_KEY não configurada");
@@ -165,9 +157,9 @@ ${acumulou ? "💰 ACUMULOU!" : ""}`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: author.ai_model || "google/gemini-3-flash-preview",
+        model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: author.system_prompt },
+          { role: "system", content: SYSTEM_PROMPT_RESULTADO },
           {
             role: "user",
             content: `Crie um post de PLANTÃO anunciando o resultado oficial da Lotofácil.
@@ -176,7 +168,7 @@ ${contextoResultado}
 
 INSTRUÇÕES:
 - Título chamativo com emoji 🚨 (máximo 60 caracteres)
-- Máximo ${author.max_chars_post || 800} caracteres no conteúdo
+- Máximo 800 caracteres no conteúdo
 
 FORMATO OBRIGATÓRIO DO CONTEÚDO:
 - Use emojis como marcadores de seção (🚨, 🎯, 📊, 🔄, 💡)
@@ -209,7 +201,7 @@ Responda APENAS no formato JSON:
     const aiData = await aiResponse.json();
     const content = aiData.choices?.[0]?.message?.content;
     const usage = aiData.usage;
-    const modelUsed = author.ai_model || "google/gemini-3-flash-preview";
+    const modelUsed = "google/gemini-3-flash-preview";
 
     // Log de uso de IA
     if (usage) {
@@ -217,8 +209,7 @@ Responda APENAS no formato JSON:
       const completionTokens = usage.completion_tokens || 0;
       const costUsd = (promptTokens / 1e6) * 0.15 + (completionTokens / 1e6) * 0.60;
       supabase.from("ai_usage_logs").insert({
-        bot_persona_id: author.id,
-        bot_name: author.perfis?.nome || "Palpite Tech",
+        bot_name: AUGUSTO_NOME,
         edge_function: "sync-lotofacil",
         action_type: "plantao_resultado_oficial",
         prompt_tokens: promptTokens,
@@ -239,22 +230,17 @@ Responda APENAS no formato JSON:
       return;
     }
 
-    // 4. Criar post na comunidade
+    // 3. Criar post na comunidade (autor único = Augusto)
     const { data: newPost, error: postError } = await supabase
       .from("postagens")
       .insert({
-        user_id: author.perfil_id,
+        user_id: AUGUSTO_PERFIL_ID,
         titulo: parsed.titulo?.substring(0, 100),
         conteudo: parsed.conteudo?.substring(0, 1000),
         loteria_tag: "Lotofácil",
         tipo: "resultado_oficial",
         concurso_referencia: concurso,
-        metadata: {
-          concurso,
-          indicadores,
-          ciclo: cicloInfo,
-          dezenas
-        }
+        metadata: { concurso, indicadores, ciclo: cicloInfo, dezenas }
       })
       .select("id")
       .single();
@@ -264,27 +250,7 @@ Responda APENAS no formato JSON:
       return;
     }
 
-    // 5. Atualizar estatísticas do autor
-    await supabase
-      .from("guide_personas")
-      .update({
-        ultimo_post_em: new Date().toISOString(),
-        total_posts: (author.total_posts || 0) + 1
-      })
-      .eq("id", author.id);
-
-    // 6. Log de sucesso
-    await supabase
-      .from("bot_publishing_logs")
-      .insert({
-        guide_persona_id: author.id,
-        bot_name: author.perfis?.nome || "Palpite Tech",
-        event_type: "success",
-        reason: "Result post created directly by sync",
-        details: { post_id: newPost.id, concurso }
-      });
-
-    console.log(`[RESULT-POST] ✅ Post criado com sucesso: ${newPost.id}`);
+    console.log(`[RESULT-POST] ✅ Post criado: ${newPost.id}`);
   } catch (err) {
     console.error(`[RESULT-POST] ❌ Erro geral:`, err);
   }

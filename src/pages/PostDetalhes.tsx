@@ -12,7 +12,7 @@ import { FormattedContent } from "@/components/comunidade/FormattedContent";
 
 import { ActionBar } from "@/components/comunidade/ActionBar";
 import { CommentSection } from "@/components/comunidade/CommentSection";
-import { BotCta } from "@/components/comunidade/BotCta";
+// BotCta removido — chat e bots foram desativados
 import { LoginPromptModal } from "@/components/comunidade/LoginPromptModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -259,12 +259,7 @@ export default function PostDetalhes() {
           </div>
         )}
 
-        {/* Bot CTA */}
-        {isFreePlan && post.perfis?.is_bot && post.cta_override_enabled && post.cta_override_buttons && post.cta_override_buttons.length > 0 && (
-          <div className="px-4 pt-3">
-            <BotCta text={post.cta_override_text} buttons={post.cta_override_buttons} />
-          </div>
-        )}
+        {/* Bot CTA removido */}
 
         {/* Action bar */}
         <div className="px-4 pt-3">

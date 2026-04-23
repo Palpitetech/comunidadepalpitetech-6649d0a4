@@ -32,7 +32,7 @@ const FUNCTION_LABELS: Record<string, string> = {
   "warming-manual": "Aquecimento de Chip Manual — admin dispara",
   "sync-lotofacil": "Plantão Lotofácil — IA cria post de resultado oficial no sync",
   // Disparadas por usuário
-  "chat-assistant": "Chat IA — conversa do usuário com bot no /chat",
+  "chat-assistant": "Chat IA — função descontinuada (mantido para histórico)",
   "generate-palpites": "Gerador Lotofácil — gera N jogos no /gerador",
   "generate-palpites-megasena": "Gerador Mega Sena — gera N jogos no /gerador-megasena",
   "generate-palpites-duplasena": "Gerador Dupla Sena — gera N jogos no /gerador-duplasena",

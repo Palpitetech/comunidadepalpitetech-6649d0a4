@@ -174,20 +174,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "ai_usage_logs_bot_persona_id_fkey"
-            columns: ["bot_persona_id"]
-            isOneToOne: false
-            referencedRelation: "guide_personas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_usage_logs_bot_persona_id_fkey"
-            columns: ["bot_persona_id"]
-            isOneToOne: false
-            referencedRelation: "guide_personas_publico"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "ai_usage_logs_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -535,123 +521,6 @@ export type Database = {
         }
         Relationships: []
       }
-      bot_post_interactions: {
-        Row: {
-          bot_perfil_id: string
-          comment_id: string | null
-          created_at: string
-          error: string | null
-          id: string
-          post_id: string
-          reason: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          bot_perfil_id: string
-          comment_id?: string | null
-          created_at?: string
-          error?: string | null
-          id?: string
-          post_id: string
-          reason?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          bot_perfil_id?: string
-          comment_id?: string | null
-          created_at?: string
-          error?: string | null
-          id?: string
-          post_id?: string
-          reason?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bot_post_interactions_bot_fk"
-            columns: ["bot_perfil_id"]
-            isOneToOne: false
-            referencedRelation: "perfis"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bot_post_interactions_bot_fk"
-            columns: ["bot_perfil_id"]
-            isOneToOne: false
-            referencedRelation: "perfis_publicos"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bot_post_interactions_bot_fk"
-            columns: ["bot_perfil_id"]
-            isOneToOne: false
-            referencedRelation: "usuarios_notificaveis_hoje"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bot_post_interactions_comment_fk"
-            columns: ["comment_id"]
-            isOneToOne: false
-            referencedRelation: "post_comments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bot_post_interactions_post_fk"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "postagens"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      bot_publishing_logs: {
-        Row: {
-          bot_name: string | null
-          created_at: string | null
-          details: Json | null
-          event_type: string
-          guide_persona_id: string
-          id: string
-          reason: string | null
-        }
-        Insert: {
-          bot_name?: string | null
-          created_at?: string | null
-          details?: Json | null
-          event_type: string
-          guide_persona_id: string
-          id?: string
-          reason?: string | null
-        }
-        Update: {
-          bot_name?: string | null
-          created_at?: string | null
-          details?: Json | null
-          event_type?: string
-          guide_persona_id?: string
-          id?: string
-          reason?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bot_publishing_logs_guide_persona_id_fkey"
-            columns: ["guide_persona_id"]
-            isOneToOne: false
-            referencedRelation: "guide_personas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bot_publishing_logs_guide_persona_id_fkey"
-            columns: ["guide_persona_id"]
-            isOneToOne: false
-            referencedRelation: "guide_personas_publico"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       carteira_movimentacoes: {
         Row: {
           bolao_id: string | null
@@ -710,115 +579,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "usuarios_notificaveis_hoje"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      chat_conversations: {
-        Row: {
-          created_at: string
-          id: string
-          topic: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          topic: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          topic?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      chat_daily_usage: {
-        Row: {
-          count: number
-          created_at: string
-          day: string
-          id: string
-          topic: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          count?: number
-          created_at?: string
-          day: string
-          id?: string
-          topic: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          count?: number
-          created_at?: string
-          day?: string
-          id?: string
-          topic?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      chat_messages: {
-        Row: {
-          actions: Json | null
-          bot_persona_id: string | null
-          content: string
-          conversation_id: string
-          created_at: string
-          id: string
-          role: string
-          user_id: string
-        }
-        Insert: {
-          actions?: Json | null
-          bot_persona_id?: string | null
-          content: string
-          conversation_id: string
-          created_at?: string
-          id?: string
-          role: string
-          user_id: string
-        }
-        Update: {
-          actions?: Json | null
-          bot_persona_id?: string | null
-          content?: string
-          conversation_id?: string
-          created_at?: string
-          id?: string
-          role?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "chat_messages_bot_persona_id_fkey"
-            columns: ["bot_persona_id"]
-            isOneToOne: false
-            referencedRelation: "guide_personas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chat_messages_bot_persona_id_fkey"
-            columns: ["bot_persona_id"]
-            isOneToOne: false
-            referencedRelation: "guide_personas_publico"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chat_messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "chat_conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -1339,163 +1099,6 @@ export type Database = {
             columns: ["instance_id"]
             isOneToOne: false
             referencedRelation: "whatsapp_instances"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      guide_personas: {
-        Row: {
-          ai_model: string | null
-          ativo: boolean | null
-          auto_reply_enabled: boolean | null
-          badge_emoji: string | null
-          can_comment_on_posts: boolean
-          can_create_posts: boolean | null
-          can_reply_own_post_comments: boolean
-          can_respond_to_bot_posts: boolean
-          cargo: string
-          chat_enabled: boolean
-          chat_priority: number
-          chat_tags: string[]
-          created_at: string | null
-          cta_override_buttons: Json
-          cta_override_enabled: boolean
-          cta_override_text: string | null
-          especialidade: string
-          estilo_escrita: string | null
-          frequencia_posts: number | null
-          id: string
-          is_result_author: boolean | null
-          is_sales_author: boolean
-          is_strategy_author: boolean
-          is_system_sales_author: boolean
-          max_chars_comment: number | null
-          max_chars_post: number | null
-          max_comments_per_post: number
-          perfil_id: string
-          post_schedule: Json | null
-          prompt_estrutura_post: string | null
-          prompt_modelos_mensagem: string | null
-          prompt_objetivo: string | null
-          safety_banned_topics: string[]
-          safety_banned_words: string[]
-          safety_block_pii: boolean
-          safety_enabled: boolean
-          safety_style: string
-          system_prompt: string
-          total_comments: number | null
-          total_posts: number | null
-          ultimo_post_em: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          ai_model?: string | null
-          ativo?: boolean | null
-          auto_reply_enabled?: boolean | null
-          badge_emoji?: string | null
-          can_comment_on_posts?: boolean
-          can_create_posts?: boolean | null
-          can_reply_own_post_comments?: boolean
-          can_respond_to_bot_posts?: boolean
-          cargo: string
-          chat_enabled?: boolean
-          chat_priority?: number
-          chat_tags?: string[]
-          created_at?: string | null
-          cta_override_buttons?: Json
-          cta_override_enabled?: boolean
-          cta_override_text?: string | null
-          especialidade: string
-          estilo_escrita?: string | null
-          frequencia_posts?: number | null
-          id?: string
-          is_result_author?: boolean | null
-          is_sales_author?: boolean
-          is_strategy_author?: boolean
-          is_system_sales_author?: boolean
-          max_chars_comment?: number | null
-          max_chars_post?: number | null
-          max_comments_per_post?: number
-          perfil_id: string
-          post_schedule?: Json | null
-          prompt_estrutura_post?: string | null
-          prompt_modelos_mensagem?: string | null
-          prompt_objetivo?: string | null
-          safety_banned_topics?: string[]
-          safety_banned_words?: string[]
-          safety_block_pii?: boolean
-          safety_enabled?: boolean
-          safety_style?: string
-          system_prompt: string
-          total_comments?: number | null
-          total_posts?: number | null
-          ultimo_post_em?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          ai_model?: string | null
-          ativo?: boolean | null
-          auto_reply_enabled?: boolean | null
-          badge_emoji?: string | null
-          can_comment_on_posts?: boolean
-          can_create_posts?: boolean | null
-          can_reply_own_post_comments?: boolean
-          can_respond_to_bot_posts?: boolean
-          cargo?: string
-          chat_enabled?: boolean
-          chat_priority?: number
-          chat_tags?: string[]
-          created_at?: string | null
-          cta_override_buttons?: Json
-          cta_override_enabled?: boolean
-          cta_override_text?: string | null
-          especialidade?: string
-          estilo_escrita?: string | null
-          frequencia_posts?: number | null
-          id?: string
-          is_result_author?: boolean | null
-          is_sales_author?: boolean
-          is_strategy_author?: boolean
-          is_system_sales_author?: boolean
-          max_chars_comment?: number | null
-          max_chars_post?: number | null
-          max_comments_per_post?: number
-          perfil_id?: string
-          post_schedule?: Json | null
-          prompt_estrutura_post?: string | null
-          prompt_modelos_mensagem?: string | null
-          prompt_objetivo?: string | null
-          safety_banned_topics?: string[]
-          safety_banned_words?: string[]
-          safety_block_pii?: boolean
-          safety_enabled?: boolean
-          safety_style?: string
-          system_prompt?: string
-          total_comments?: number | null
-          total_posts?: number | null
-          ultimo_post_em?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "guide_personas_perfil_id_fkey"
-            columns: ["perfil_id"]
-            isOneToOne: true
-            referencedRelation: "perfis"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "guide_personas_perfil_id_fkey"
-            columns: ["perfil_id"]
-            isOneToOne: true
-            referencedRelation: "perfis_publicos"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "guide_personas_perfil_id_fkey"
-            columns: ["perfil_id"]
-            isOneToOne: true
-            referencedRelation: "usuarios_notificaveis_hoje"
             referencedColumns: ["id"]
           },
         ]
@@ -2360,6 +1963,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      post_schedules: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          dias: number[]
+          horario: string
+          id: string
+          loteria: string
+          observacao: string | null
+          tipo_post: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          dias?: number[]
+          horario: string
+          id?: string
+          loteria?: string
+          observacao?: string | null
+          tipo_post: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          dias?: number[]
+          horario?: string
+          id?: string
+          loteria?: string
+          observacao?: string | null
+          tipo_post?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       postagens: {
         Row: {
@@ -3496,73 +3135,6 @@ export type Database = {
       }
     }
     Views: {
-      guide_personas_publico: {
-        Row: {
-          ativo: boolean | null
-          badge_emoji: string | null
-          cargo: string | null
-          chat_enabled: boolean | null
-          chat_priority: number | null
-          chat_tags: string[] | null
-          cta_override_buttons: Json | null
-          cta_override_enabled: boolean | null
-          cta_override_text: string | null
-          especialidade: string | null
-          id: string | null
-          perfil_id: string | null
-        }
-        Insert: {
-          ativo?: boolean | null
-          badge_emoji?: string | null
-          cargo?: string | null
-          chat_enabled?: boolean | null
-          chat_priority?: number | null
-          chat_tags?: string[] | null
-          cta_override_buttons?: Json | null
-          cta_override_enabled?: boolean | null
-          cta_override_text?: string | null
-          especialidade?: string | null
-          id?: string | null
-          perfil_id?: string | null
-        }
-        Update: {
-          ativo?: boolean | null
-          badge_emoji?: string | null
-          cargo?: string | null
-          chat_enabled?: boolean | null
-          chat_priority?: number | null
-          chat_tags?: string[] | null
-          cta_override_buttons?: Json | null
-          cta_override_enabled?: boolean | null
-          cta_override_text?: string | null
-          especialidade?: string | null
-          id?: string | null
-          perfil_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "guide_personas_perfil_id_fkey"
-            columns: ["perfil_id"]
-            isOneToOne: true
-            referencedRelation: "perfis"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "guide_personas_perfil_id_fkey"
-            columns: ["perfil_id"]
-            isOneToOne: true
-            referencedRelation: "perfis_publicos"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "guide_personas_perfil_id_fkey"
-            columns: ["perfil_id"]
-            isOneToOne: true
-            referencedRelation: "usuarios_notificaveis_hoje"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       kirvano_webhook_logs_masked: {
         Row: {
           authorized_method: string | null

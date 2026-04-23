@@ -92,7 +92,6 @@ const sections: NavSection[] = [
       { title: "Painel", url: "/admin", icon: LayoutDashboard, exact: true },
       { title: "Planos", url: "/admin/planos", icon: FileText },
       { title: "Usuários", url: "/admin/usuarios", icon: Users, badge: "usuarios", badgeTone: "info" },
-      { title: "Bots", url: "/admin/bots", icon: Bot },
     ],
   },
   {

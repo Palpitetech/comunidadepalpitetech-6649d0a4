@@ -46,7 +46,6 @@ const ITEMS: CmdItem[] = [
   { label: "Painel", url: "/admin", icon: LayoutDashboard, group: "Principal", keywords: ["dashboard", "home"] },
   { label: "Planos", url: "/admin/planos", icon: FileText, group: "Principal" },
   { label: "Usuários", url: "/admin/usuarios", icon: Users, group: "Principal" },
-  { label: "Bots", url: "/admin/bots", icon: Bot, group: "Principal" },
 
   { label: "WhatsApp", url: "/admin/whatsapp", icon: MessageCircle, group: "Comunicação" },
   { label: "Convites", url: "/admin/convites", icon: Gift, group: "Comunicação" },

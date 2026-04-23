@@ -91,33 +91,22 @@ export function usePostDetails(slugOrId: string) {
       }
 
       // Profile + CTA in parallel
-      const profilePromise = supabase
+      const profileResult = await supabase
         .from("perfis_publicos" as any)
         .select("id, nome, avatar_url, is_bot")
         .eq("id", postData.user_id)
         .maybeSingle();
 
-      const ctaPromise = supabase
-        .from("guide_personas_publico" as any)
-        .select("cta_override_enabled, cta_override_text, cta_override_buttons")
-        .eq("perfil_id", postData.user_id)
-        .eq("cta_override_enabled", true)
-        .maybeSingle();
-
-      const [profileResult, ctaResult] = await Promise.all([profilePromise, ctaPromise]);
-
       const perfis = profileResult.data
         ? { nome: (profileResult.data as any).nome, avatar_url: (profileResult.data as any).avatar_url, is_bot: (profileResult.data as any).is_bot }
         : null;
 
-      const ctaData = ctaResult.data as any;
-
       return {
         ...postData,
         perfis,
-        cta_override_enabled: ctaData?.cta_override_enabled || false,
-        cta_override_text: ctaData?.cta_override_text || null,
-        cta_override_buttons: (ctaData?.cta_override_buttons as CtaButton[]) || [],
+        cta_override_enabled: false,
+        cta_override_text: null,
+        cta_override_buttons: [] as CtaButton[],
       } as PostDetails;
     },
     enabled: !!slugOrId,
