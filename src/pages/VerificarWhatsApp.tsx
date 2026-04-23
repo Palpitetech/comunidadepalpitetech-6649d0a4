@@ -16,6 +16,7 @@ const FN_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/
 export default function VerificarWhatsApp() {
   const [numero, setNumero] = useState("");
   const [status, setStatus] = useState<Status>("idle");
+  const [invalidReason, setInvalidReason] = useState<string | null>(null);
   const [captcha, setCaptcha] = useState<{ question: string; token: string } | null>(null);
   const [captchaAnswer, setCaptchaAnswer] = useState("");
   const [loadingCaptcha, setLoadingCaptcha] = useState(false);
