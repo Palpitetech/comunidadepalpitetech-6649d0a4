@@ -150,6 +150,60 @@ function calcularDistribuicaoColunas(concursos: Concurso[]): {
   return { medias, recomendacao: ajustarPara15(medias) };
 }
 
+// Detalhamento por linha/coluna nos últimos N sorteios:
+// Para cada índice 0..4, calcula:
+//   - total: total de ocorrências (soma das dezenas daquele eixo nos N sorteios)
+//   - distribuicao: Map quantidade(0..5) -> quantos sorteios tiveram aquela quantidade
+//   - top2: as 2 quantidades mais frequentes [{ qtd, vezes }, ...]
+function detalharLinhasColunas(
+  concursos: Concurso[],
+  eixo: "linha" | "coluna",
+): Array<{
+  indice: number; // 1..5
+  faixa: string; // "01-05" ou "01,06,11,16,21"
+  total: number;
+  top2: Array<{ qtd: number; vezes: number }>;
+}> {
+  const resultado: Array<{
+    indice: number;
+    faixa: string;
+    total: number;
+    top2: Array<{ qtd: number; vezes: number }>;
+  }> = [];
+
+  for (let i = 0; i < 5; i++) {
+    let total = 0;
+    const dist = new Map<number, number>(); // qtd -> sorteios com aquela qtd
+    for (const c of concursos) {
+      let qtdNoSorteio = 0;
+      for (const d of c.dezenas) {
+        const grupo = eixo === "linha" ? Math.ceil(d / 5) - 1 : ((d - 1) % 5);
+        if (grupo === i) qtdNoSorteio++;
+      }
+      total += qtdNoSorteio;
+      dist.set(qtdNoSorteio, (dist.get(qtdNoSorteio) || 0) + 1);
+    }
+    const top2 = Array.from(dist.entries())
+      .sort((a, b) => b[1] - a[1] || b[0] - a[0])
+      .slice(0, 2)
+      .map(([qtd, vezes]) => ({ qtd, vezes }));
+
+    let faixa: string;
+    if (eixo === "linha") {
+      const ini = i * 5 + 1;
+      const fim = ini + 4;
+      faixa = `${fmt(ini)}-${fmt(fim)}`;
+    } else {
+      const dezenas: number[] = [];
+      for (let l = 0; l < 5; l++) dezenas.push(l * 5 + i + 1);
+      faixa = dezenas.map(fmt).join(",");
+    }
+
+    resultado.push({ indice: i + 1, faixa, total, top2 });
+  }
+  return resultado;
+}
+
 // Arredonda um vetor de médias e ajusta para somar exatamente 15
 function ajustarPara15(medias: number[]): number[] {
   const arred = medias.map((m) => Math.round(m));
