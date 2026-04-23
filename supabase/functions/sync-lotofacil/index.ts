@@ -748,7 +748,7 @@ Deno.serve(async (req) => {
           
           const { data: dadosExistente } = await supabase
             .from('resultados_loterias')
-              .select('dezenas, dezenas_faltantes_ciclo, ciclo_numero')
+              .select('dezenas, dezenas_faltantes_ciclo, ciclo_numero, qtd_pares, qtd_impares, qtd_moldura, qtd_primos, qtd_repetidas, acumulou')
               .eq('loteria', 'lotofacil')
             .eq('concurso', concurso.numero)
             .single();
@@ -757,6 +757,39 @@ Deno.serve(async (req) => {
             dezenasAnteriores = dadosExistente.dezenas;
             dezenasAnterioresFaltantes = dadosExistente.dezenas_faltantes_ciclo;
             cicloAtual = dadosExistente.ciclo_numero;
+
+            // force_post: criar post de resultado se ainda não existe
+            if (forcePost) {
+              const { data: existingPost } = await supabase
+                .from('postagens')
+                .select('id')
+                .eq('tipo', 'resultado_oficial')
+                .eq('concurso_referencia', concurso.numero)
+                .eq('loteria_tag', 'Lotofácil')
+                .maybeSingle();
+              if (!existingPost) {
+                console.log(`[FORCE-POST] Criando post para concurso ${concurso.numero}`);
+                await criarPostResultadoOficial({
+                  supabase,
+                  concurso: concurso.numero,
+                  dezenas: dadosExistente.dezenas,
+                  indicadores: {
+                    qtd_pares: dadosExistente.qtd_pares ?? 0,
+                    qtd_impares: dadosExistente.qtd_impares ?? 0,
+                    qtd_moldura: dadosExistente.qtd_moldura ?? 0,
+                    qtd_primos: dadosExistente.qtd_primos ?? 0,
+                    qtd_repetidas: dadosExistente.qtd_repetidas ?? 0,
+                  },
+                  cicloInfo: {
+                    ciclo_numero: dadosExistente.ciclo_numero ?? 0,
+                    dezenas_faltantes_ciclo: dadosExistente.dezenas_faltantes_ciclo ?? [],
+                  },
+                  acumulou: dadosExistente.acumulou ?? false,
+                });
+              } else {
+                console.log(`[FORCE-POST] Post já existe para concurso ${concurso.numero}`);
+              }
+            }
           }
           continue;
         }
