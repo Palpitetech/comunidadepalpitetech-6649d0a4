@@ -1,67 +1,143 @@
 
 
-## Filtro de loteria no dashboard Estudos
+## Posts da Mega-Sena com a estrutura modular
 
-### Onde
+### Decisão de escopo: 7 tipos (não 11)
 
-Página `src/pages/Comunidade.tsx` (rota `/comunidade`, título "Estudos"). O filtro fica logo **abaixo** dos dois botões verdes ("Gerar meus palpites" / "Sala Secreta") e **acima** do feed.
+A Lotofácil tem 11 tipos porque sorteia 15/25 (60% do volante). A Mega sorteia 6/60 (10%) — alguns tipos perdem sentido estatístico. **Vou implementar os 7 mais valiosos:**
 
-### Comportamento
+| Tipo | Mega? | Justificativa |
+|---|---|---|
+| `analise_movimentacao` (quentes/frias) | ✅ | Universal — só muda para 1-60. |
+| `analise_moldura` | ✅ | Moldura Mega = 30 dezenas (1-10, 11/21/31/41, 20/30/40/50, 51-60). |
+| `analise_repetidas` | ✅ | Adaptado: na Mega normalmente 0-1 repete; foco em coocorrência histórica e dezenas que mais repetem. |
+| `analise_linhas` | ✅ | Grid 6×10 → 6 linhas, distribuição diferente da Lotofácil. |
+| `analise_colunas` | ✅ | 10 colunas. |
+| `analise_posicoes_iniciais` | ✅ | P1, P2, P3 das 6 ordenadas. |
+| `analise_posicoes_finais` | ✅ | P4, P5, P6. |
+| `analise_como_calculamos` | ✅ | Versão Mega da metodologia (transparência). |
+| ~~`analise_ciclo`~~ | ❌ por ora | Mega não tem `ciclo_numero` populado no banco. Adicionar depois quando rodarmos backfill. |
+| ~~`analise_cenarios`~~ | ❌ | Faz sentido na Lotofácil porque a faixa de repetição é o eixo central; na Mega esse eixo é fraco. |
+| ~~`analise_ficar_de_olho`~~ | ❌ | Janela curta + 6 dezenas torna o sinal de "desaceleração" instável. |
 
-- **Estado local** `loteriaFiltro: 'lotofacil' | 'megasena'` (padrão `'lotofacil'`).
-- **Filtragem no cliente**: o feed atual já vem com `loteria_tag` em cada post. Filtra-se em memória por `post.loteria_tag === 'Lotofácil'` ou `'Mega-Sena'` antes do split `pinnedPost`/`otherPosts`. Sem mudar `useCommunityPosts` (mantém cache único e realtime único).
-- **Persona/regras automáticas**: nenhuma mudança extra é necessária — cada post já carrega seu autor (persona) via `perfis_publicos`. Quando a Fase 3 (Mega-Sena) entrar, os posts da Mega aparecerão automaticamente com o autor Mega-Sena ao trocar o filtro. Hoje (sem posts Mega), o filtro Mega exibirá estado vazio com mensagem amigável.
-- **Mega-Sena "quando disponível"**: o botão Mega fica **sempre visível e clicável**. Ao selecioná-lo, se não houver posts com `loteria_tag = 'Mega-Sena'`, mostra placeholder: *"Estudos de Mega-Sena em breve. Por enquanto, confira os estudos de Lotofácil."* com link para voltar ao filtro Lotofácil. (Decisão: deixar visível ensina o usuário sobre a expansão futura sem exigir gating.)
+Total: **8 tipos** ativos no lançamento. Os 3 restantes ficam fáceis de adicionar depois (mesmo padrão).
 
-### Visual dos botões (mobile-first, 44px tap target)
-
-Grid 2 colunas, gap 2, abaixo dos botões verdes:
+### Arquitetura — onde cada arquivo vive
 
 ```text
-[ Lotofácil  ]   [ Mega-Sena ]
-   roxo            verde
+supabase/functions/_shared/guide-post/
+├── lottery-configs.ts        ← adicionar entrada "megasena"
+├── personas.ts               ← adicionar entrada "megasena" (mesmo Augusto)
+├── index.ts                  ← registrar megasenaEngine no ENGINES{}
+└── megasena/                 (NOVO)
+    └── engine.ts             ← engine completo (~1500 linhas)
 ```
 
-- **Lotofácil ativo**: bg `hsl(270 60% 50%)` (Roxo), texto branco, ring sutil.
-- **Lotofácil inativo**: borda roxa, texto roxo, bg branco.
-- **Mega-Sena ativo**: bg `hsl(125 70% 40%)` (Verde Mega), texto branco, ring sutil.
-- **Mega-Sena inativo**: borda verde Mega, texto verde Mega, bg branco.
-- Label pequeno acima do par de botões: `Ver estudos:` (text-xs, muted).
+Engine Mega segue o **mesmo contrato `GuideEngine`** já usado pela Lotofácil — zero impacto no `generate-guide-post/index.ts` (router não muda).
 
-Cores HSL conforme memória `mem://design/lottery-branding-colors`.
+### Conteúdo do `megasena/engine.ts`
 
-### Mudanças técnicas
+Estrutura idêntica à Lotofácil, com substituições:
 
-**Arquivo único:** `src/pages/Comunidade.tsx`
+- **Constantes:** `TOTAL_DEZENAS=60`, `DEZENAS_POR_SORTEIO=6`, `PERIODO_ANALISE=20` (janela maior porque Mega é menos densa), `MOLDURA` com as 30 dezenas da Mega.
+- **Helpers determinísticos:** `calcularFrequencias`, `topQuentes`, `topFrias`, `analisarRepetidasDetalhado` (adaptado: fala em "quantas vezes a dezena X do último sorteio voltou em algum dos próximos 10 sorteios", não em "quantas repetem por concurso"), `analisarMolduraDetalhado` (30 dezenas, faixa típica 2-4 por sorteio), `analisarEixoDetalhado` (6 linhas / 10 colunas), `analisarPosicoes` (P1-P3 e P4-P6).
+- **Persona:** mesmo system prompt do Augusto (já vem do `personas.ts`).
+- **Títulos determinísticos:** `🔥❄️ Quentes e Frias da Mega-Sena — Concurso N`, `🖼️ Moldura da Mega-Sena — N`, etc.
+- **Whitelist anti-alucinação:** dezenas 1-60 + concursos da janela + percentuais 0-100.
+- **Limites de conteúdo:** mesmo esquema da Lotofácil (1500-2200 chars).
+- **Fallback determinístico:** mesma lógica.
 
-1. Adicionar `useState<'lotofacil' | 'megasena'>('lotofacil')`.
-2. Adicionar mapa local `LOTERIA_TAG_MAP = { lotofacil: 'Lotofácil', megasena: 'Mega-Sena' }`.
-3. No `useMemo` que calcula `pinnedPost`/`otherPosts`, filtrar `posts.filter(p => p.loteria_tag === LOTERIA_TAG_MAP[loteriaFiltro])` antes do split.
-4. Renderizar bloco do seletor entre os botões verdes (linha 65) e o `isLoading` (linha 67).
-5. Ajustar empty state para mensagem específica quando `loteriaFiltro === 'megasena'` e o filtro retorna vazio.
+### Atualizações nos arquivos compartilhados
 
-### O que NÃO muda
+**`personas.ts`** — adiciona Mega usando o mesmo Augusto:
+```ts
+megasena: {
+  perfil_id: "41b58d48-2ef1-4bf7-a536-ed8a49607fa9",
+  nome: "Augusto Angelis",
+  system_prompt: `Você é Augusto Angelis, especialista em loterias da equipe
+Palpite Tech. Para Mega-Sena fale com tom acolhedor, em primeira pessoa, sem
+mencionar IA/bot/modelo. Mega tem 60 dezenas e sorteia 6 — repetições são raras.`,
+}
+```
 
-- `useCommunityPosts.ts` — segue inalterado (1 query, 1 canal realtime, cache único).
-- Backend / RLS / engines — nada. Posts Mega-Sena já entrarão no feed quando a Fase 3 inserir registros com `loteria_tag = 'Mega-Sena'`.
-- Persona, prompts, regras — já são automáticos por loteria desde a Fase 1.
-- Botões verdes superiores — preservados.
-- Outras páginas (`/`, `/central`) — fora de escopo.
+> ⚠️ Atenção dedup: como Augusto é a mesma persona em duas loterias, o lock atual de "1 post por persona+tipo+dia" passa a ser "1 post por persona+tipo+**loteria**+dia". Isso evita que Mega bloqueie Lotofácil quando ambas têm `analise_movimentacao` no mesmo dia. **Plano:** em `generate-guide-post/index.ts`, incluir filtro adicional `loteria_tag = config.loteria_tag` na query de dedup. Mudança cirúrgica de 1 linha.
 
-### Riscos e mitigações
+**`lottery-configs.ts`** — adiciona Mega:
+```ts
+megasena: {
+  loteria: "megasena",
+  loteria_tag: "Mega-Sena",
+  total_dezenas: 60,
+  dezenas_por_sorteio: 6,
+  periodo_analise: 20,
+}
+```
+
+**`_shared/guide-post/index.ts`** — registra engine:
+```ts
+import { megasenaEngine } from "./megasena/engine.ts";
+export const ENGINES = { lotofacil: lotofacilEngine, megasena: megasenaEngine };
+```
+
+### Migration: atualizar trigger de validação
+
+A função `validate_post_schedule` precisa aceitar `megasena` + os 8 tipos novos:
+
+```sql
+loterias_validas text[] := ARRAY['lotofacil', 'megasena'];
+tipos_megasena   text[] := ARRAY[
+  'analise_movimentacao','analise_moldura','analise_repetidas',
+  'analise_linhas','analise_colunas','analise_posicoes_iniciais',
+  'analise_posicoes_finais','analise_como_calculamos'
+];
+-- + CASE WHEN 'megasena' THEN tipos_megasena ...
+```
+
+### Schedules da Mega-Sena (insert via tool)
+
+Mega sorteia **terça (2), quinta (4) e sábado (6)**, mas o conteúdo educacional pode rodar todos os dias para alimentar o filtro novo do dashboard "Estudos". Decisão recomendada: **rodar diariamente** (consistente com Lotofácil), porque o objetivo é estudo, não previsão de sorteio iminente.
+
+Horários propostos (não colidem com Lotofácil):
+
+| Tipo | Horário | Dias |
+|---|---|---|
+| `analise_movimentacao` | 09:30 | todos |
+| `analise_moldura` | 10:30 | todos |
+| `analise_repetidas` | 11:30 | todos |
+| `analise_linhas` | 12:30 | todos |
+| `analise_colunas` | 13:30 | todos |
+| `analise_posicoes_iniciais` | 14:30 | todos |
+| `analise_posicoes_finais` | 15:30 | todos |
+| `analise_como_calculamos` | 19:30 | todos |
+
+8 schedules × 1 post/dia = 8 posts/dia da Mega. Lotofácil continua com 11 posts/dia. Total: 19 posts/dia.
+
+### Verificação (após implementação)
+
+1. **Trigger:** tentar inserir schedule `loteria='megasena', tipo_post='analise_movimentacao'` → ✅ sucesso. Tentar `tipo_post='analise_ciclo'` → ❌ erro (esperado).
+2. **Edge function manual:** `curl_edge_functions` em `generate-guide-post` com `{ tipo_post: 'analise_movimentacao', loteria: 'megasena' }` → post criado com `loteria_tag='Mega-Sena'`, autor Augusto, dezenas 1-60.
+3. **Dedup cross-lottery:** chamar 2x seguidos a mesma loteria/tipo → 2º responde `skipped`. Chamar Mega + Lotofácil mesmo tipo → ambos passam.
+4. **Frontend filtro:** trocar para "Mega-Sena" no dashboard Estudos → posts aparecem.
+5. **Cron real:** esperar próximo horário cheio Mega (ex.: 09:30) → log mostra `loteria=megasena`, post inserido.
+6. **Anti-alucinação:** validar que conteúdo gerado pela IA não cita números fora de 1-60.
+7. **Whitelist números:** se IA inventar dezena 65 → fallback determinístico ativa.
+
+### Garantias de estabilidade
 
 | Risco | Mitigação |
 |---|---|
-| Posts antigos sem `loteria_tag` sumirem | Migração já garantiu `loteria_tag = 'Lotofácil'` nos posts atuais; novos vêm preenchidos pelo engine. |
-| Filtro Mega vazio confundir usuário | Empty state explícito com CTA pra voltar a Lotofácil. |
-| Trocar filtro perder scroll/posição | `useState` local não desmonta o feed; React Query mantém cache — troca instantânea. |
-| Mais loterias no futuro | Mapa `LOTERIA_TAG_MAP` cresce; pode virar `lottery-configs` compartilhado quando passar de 3 loterias. |
+| Engine Mega quebrar Lotofácil | Engines são módulos isolados; router só seleciona um por requisição. Nenhum import cruzado. |
+| Dedup misturar Lotofácil e Mega (mesmo Augusto) | Adicionar `loteria_tag` no filtro de dedup (1 linha em `generate-guide-post/index.ts`). |
+| Mega sem `ciclo_numero` quebrar engine | Tipo `analise_ciclo` não cadastrado em `tiposSuportados()` da Mega → trigger barra antes; edge retorna 400 se chamado direto. |
+| Schedule Mega disparar fora dos dias de sorteio | Por design escolhemos rodar diariamente (conteúdo educacional). Quem quiser restringir, basta editar `dias` no schedule. |
+| Custo de IA dobrar | Lotofácil 11 + Mega 8 = 19 posts/dia. Cada post ~$0.001 → custo total ~$0.02/dia. Negligível. |
+| Tipo `analise_repetidas` enganar usuário (Mega quase nunca repete) | Texto muda foco: "no histórico das últimas 20 rodadas, **X** foi a dezena que mais voltou de uma rodada para outra (Y vezes)" — sinaliza claramente que repetição na Mega é rara. |
 
-### Verificação
+### Não inclui (escopo separado, se quiser depois)
 
-1. Filtro Lotofácil ativo por padrão → feed idêntico ao atual.
-2. Clicar Mega-Sena → feed esvazia → mostra placeholder amigável.
-3. Inserir manualmente um post com `loteria_tag = 'Mega-Sena'` → aparece só no filtro Mega.
-4. Trocar entre filtros → instantâneo, sem requisições novas (cache).
-5. Mobile 390px → botões com tap target ≥44px, sem overflow.
+- Backfill de `ciclo_numero` da Mega (necessário para reativar `analise_ciclo`).
+- Tipos `analise_cenarios` e `analise_ficar_de_olho` para Mega (estatisticamente fracos com 6 dezenas).
+- Persona dedicada para Mega (Augusto cobre por enquanto, conforme você pediu).
+- Adaptação para outras loterias (Quina, Dupla Sena) — mesmo padrão, repetível.
+- Tipo `analise_primos` ou `analise_fibonacci` específicos da Mega (podem entrar como expansão futura).
 
