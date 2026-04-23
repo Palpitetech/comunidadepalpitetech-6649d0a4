@@ -1,149 +1,108 @@
 
 
-## Refatoração total do motor `/gerador-estudo` — consistência + transparência
+## Auditoria: motor `/gerador-estudo` vs `/gerador` + Plano de centralização
 
-### Diagnóstico
+### Veredito da varredura
 
-O motor atual está praticamente "cego": o `fatos_snapshot.extras` salvo pela engine de Lotofácil só contém `{ totalCiclos? }`. Os arrays que o gerador espera (`moldura`, `quentes`, `frias`, `repetidas_recomendadas`, `dezenas_faltantes`, `dezenas_evitadas`) **nunca foram populados**. Resultado: a maioria dos estudos cai no `default` que sorteia do universo 1-25, sem nenhum vínculo real com o conteúdo do estudo. Por isso "falta consistência".
+O motor **`/gerador-estudo` (V2 determinístico) ficou MELHOR que o `/gerador` tradicional** em quase todos os eixos críticos:
 
-Além disso, o `EstrategiaCard` já suporta dezenas fixas/evitadas/filtros ricos, e o `ResultadosSheet` já aceita `dezenasFixes` para pintar de preto — mas o `GeradorEstudo.tsx` **não passa** essas dezenas fixas para o sheet.
+| Eixo | /gerador (atual) | /gerador-estudo V2 | Vencedor |
+|---|---|---|---|
+| Reprodutibilidade | IA pode variar | 100% determinístico + IA só no verniz | **Estudo** |
+| Auditabilidade | Estratégia vinda da IA (campos opcionais) | `EstrategiaData` tipada e construída no código | **Estudo** |
+| Diversidade entre jogos | Só pede no prompt | Hamming ≥3 garantido por código | **Estudo** |
+| Validação de filtros (fixar/excluir) | Pós-processamento "completa o que faltar" | Validação atômica por jogo + retries | **Estudo** |
+| Custo por geração | 1 chamada IA cheia | 1 chamada IA curta (4s timeout, fallback) | **Estudo** |
+| Branding ("não falar de IA") | Prompt diz "Você é especialista" | Já neutro | **Estudo** |
+| Quota | `upsert` manual (race condition) | RPC atômica `incrementar_uso_gerador_estudo` | **Estudo** |
+| Logs `ai_usage_logs` | ✅ | ❌ falta | **/gerador** |
+| Filtros do usuário (fixas/excluir/pedido) | ✅ | ❌ só usa o do estudo | **/gerador** |
+| Multi-loteria | 4 arquivos quase idênticos (~1900 LOC) | 1 arquivo com `cfg` por loteria | **Estudo** |
 
-### Arquitetura nova
+### O que falta no /gerador-estudo (gaps frente ao /gerador)
 
-```text
-┌──────────────────────────────────────────────────────────────┐
-│ generate-guide-post (já roda hoje)                           │
-│   ├─ engine.montarFatos() → recomendações ricas              │
-│   └─ NEW: engine.extrairBaseGeracao() → BaseGeracao salva    │
-│      em fatos_snapshot.base_geracao (estrutura canônica)     │
-└──────────────────────────────────────────────────────────────┘
-                              ↓
-┌──────────────────────────────────────────────────────────────┐
-│ generate-palpites-from-estudo (REFATORADO 100%)              │
-│   1. Lê post.fatos_snapshot.base_geracao                     │
-│   2. Aplica regras determinísticas POR TEMA:                 │
-│      ─ FIXAR (núcleo) → entra em TODOS os jogos              │
-│      ─ APOIO          → entra em ≥X jogos                    │
-│      ─ EXCLUIR        → fora de TODOS os jogos               │
-│      ─ COMPLETAR      → universo restante                    │
-│   3. Garante diversidade entre jogos (Hamming distance ≥3)   │
-│   4. Monta EstrategiaData detalhada (fixas/evitadas/filtros) │
-│   5. Humaniza só a `conclusao` via IA (timeout 4s)           │
-│                              ↓                                │
-│   GeradorEstudo.tsx passa `dezenasFixes` ao ResultadosSheet  │
-│   → PalpiteCard pinta as fixas em preto                      │
-└──────────────────────────────────────────────────────────────┘
-```
+1. **Filtros do usuário** (`dezenasFiexas`, `dezenasExcluidas`, `pedidoEspecial`) — hoje o estudo não aceita.
+2. **Logs em `ai_usage_logs`** para a chamada de humanização.
+3. **Suporte a Quina e Dupla Sena** (hoje só lotofacil + megasena).
 
-### Estrutura canônica `BaseGeracao` (salva em `fatos_snapshot.base_geracao`)
+### O que está duplicado e precisa centralizar
 
-```ts
-interface BaseGeracao {
-  tema: string;                    // analise_moldura, analise_repetidas, etc.
-  fixar: number[];                 // núcleo — entra em 100% dos jogos
-  apoio: number[];                 // entra em ≥60% dos jogos
-  excluir: number[];               // 0% dos jogos
-  ficar_de_olho?: number[];        // 1 ou 2 podem entrar como coringa
-  ultimo_sorteio?: number[];       // p/ regra de "repetidas mín/máx"
-  qtd_repetidas_alvo?: { min: number; max: number };
-  qtd_moldura_alvo?: { min: number; max: number };
-  observacao_principal: string;    // motivo humano da estratégia
-}
-```
+Os 4 motores tradicionais (`generate-palpites`, `generate-palpites-megasena`, `generate-palpites-quina`, `generate-palpites-duplasena`) somam ~1900 linhas com ~80% de código repetido:
+- Auth + admin check + perfil + plano + quota
+- Estatísticas (frequências, médias, ciclo)
+- Tool-call + estratégia + validação
 
-### Mapeamento por tema (engine extrai dos `Recomendacao*` que já calcula)
-
-| Tema | fixar | apoio | excluir | Filtros adicionais |
-|---|---|---|---|---|
-| `analise_moldura` | `nucleoForte` | `apoio` | `deixarFora` | `qtd_moldura_alvo` |
-| `analise_movimentacao` | `fixar` (FIXAR) | `apoio` | `excluir` | `ficar_de_olho` como coringa |
-| `analise_repetidas` | `repetirNucleo` | `repetirApoio` | `naoRepetir` | `qtd_repetidas_alvo: {min: rep.qtdRecomendada, max: rep.qtdRecomendada+2}` |
-| `analise_ciclo` | `prioritarias` (faltantes) | — | `deixadasDeFora` | — |
-| `analise_cenarios` | `equilibrado.repete` ∩ `equilibrado.novas` | resto do equilibrado | — | — |
-| `analise_ficar_de_olho` | — | `topQuedas[0..1]` (manter atenção) | `topQuedas[última]` | — |
-| `analise_linhas`/`colunas` | `nucleoFixas` | `apoio` | `evitar` | distribuição linha/coluna |
-| `analise_posicoes_*` | trio recomendado | alternativas | evite | — |
-| `analise_como_calculamos` | (sem regras de geração — bloqueia botão com aviso) | | | |
-
-### Algoritmo determinístico (por jogo)
+### Arquitetura alvo
 
 ```text
-Para cada jogo:
-  1. dezenas = [...fixar]                      // sempre presentes
-  2. excluir → marca proibido
-  3. Sortear apoio até atingir cota mínima
-     (cota = ceil((qtdDezenas - fixar.length) * 0.6))
-  4. Completar universo (não-fixar, não-excluir, não-apoio-já-usado)
-     até qtdDezenas
-  5. Validar:
-     - qtd_repetidas_alvo (se houver, conta ∩ ultimo_sorteio)
-     - qtd_moldura_alvo (se houver)
-     - se falhar, rerolar passo 4 até 50 tentativas
-  6. Garantir diversidade vs jogos já gerados (Hamming ≥3)
+supabase/functions/_shared/gerador/
+├── lottery-config.ts        ← cfg por loteria (total, dezenas, moldura, primos, RPC quota)
+├── auth-and-quota.ts        ← extrai usuário + admin + plano + quota (1 chamada)
+├── stats.ts                 ← frequências, médias, ciclo, repetidas
+├── ai-call.ts               ← chamada IA + log ai_usage_logs + cost estimate
+├── validate-jogo.ts         ← gerarJogo determinístico (compartilhado entre /gerador e /estudo)
+├── strategy-builder.ts      ← montarEstrategia + humanizarConclusao (do V2)
+└── types.ts                 ← EstrategiaData, FiltrosUsuario, BaseGeracao (re-exporta)
+
+supabase/functions/_shared/guide-post/
+└── ... (já existe, intocado)
 ```
 
-### Transparência total na `EstrategiaData` retornada
+### Plano de execução em 3 fases
 
-```ts
-{
-  ferramentas: [
-    "Análise da Moldura",
-    `Estudo do concurso ${proximo}`,
-    `Base ${ultimo} → ${proximo}`,
-    "Motor determinístico v2"
-  ],
-  dezenas_fixas: [{
-    dezenas: fixar,
-    motivo: `Núcleo do estudo "Moldura": ${nucleoForteMotivoOriginal}. Entram em TODOS os ${quantidade} jogos.`
-  }, {
-    dezenas: apoio,
-    motivo: `Apoio: cada jogo carrega pelo menos ${cotaApoio} destas.`
-  }],
-  dezenas_evitadas: [{
-    dezenas: excluir,
-    motivo: `Excluídas pelo estudo. NÃO aparecem em nenhum jogo.`
-  }],
-  filtros_aplicados: [
-    { filtro: "Núcleo obrigatório", valor_alvo: `${fixar.length} dezenas em 100% dos jogos`, motivo: ... },
-    { filtro: "Apoio mínimo", valor_alvo: `${cotaApoio}+ por jogo`, motivo: ... },
-    { filtro: "Repetidas alvo", valor_alvo: `${min}-${max} repetidas do ${ultimo}`, motivo: ... },
-    { filtro: "Diversidade entre jogos", valor_alvo: "Hamming ≥3", motivo: "Evita jogos quase iguais." }
-  ],
-  conclusao: humanizada(...)  // IA só polishe
-}
-```
+**Fase 1 — Centralizar primitivas** (não muda comportamento)
+- Criar `_shared/gerador/lottery-config.ts` com `LOTTERY_CONFIG = { lotofacil, megasena, quina, duplasena }`.
+- Extrair `auth-and-quota.ts`, `stats.ts`, `ai-call.ts` (com `ai_usage_logs`).
+- Extrair `validate-jogo.ts` reutilizando o `gerarJogo` do estudo (já é o melhor).
 
-### UI — Pintar fixas em preto nos cards
+**Fase 2 — Refatorar /gerador-estudo para usar shared + adicionar gaps**
+- Substituir `TOTAL_BY_LOTERIA` local por import de `lottery-config.ts`.
+- Aceitar `dezenasFiexas`/`dezenasExcluidas`/`pedidoEspecial` (mesclar com `BaseGeracao` do estudo: usuário tem prioridade sobre apoio, mas não sobre fixar do estudo — mostrar conflito no card).
+- Adicionar log em `ai_usage_logs` na humanização.
 
-`src/pages/lotofacil/GeradorEstudo.tsx` passará `dezenasFixes={result.estrategia.dezenas_fixas?.[0]?.dezenas}` para `<ResultadosSheet>`. Já existe a pintura via `palpite-fixa` no `PalpiteCard`.
+**Fase 3 — Reescrever os 4 /gerador-* sobre o motor determinístico**
+- Converter cada motor tradicional para construir uma `BaseGeracao` "ad-hoc" a partir das estatísticas (frequências → quentes/frias, ciclo → faltantes, repetidas).
+- Pipeline final único: `montarBaseGeracaoEstatistica(stats, filtrosUsuario)` → `gerarJogo` (mesmo motor) → `montarEstrategia` (mesmo builder).
+- IA passa a ser opcional (só humanização da conclusão), reduzindo custo em ~70% e eliminando alucinação de campos.
+- Os 4 endpoints viram thin wrappers (~80 LOC cada) chamando o pipeline shared.
 
-### Migração de estudos antigos (sem `base_geracao`)
+### Garantias de consistência multi-loteria
 
-Estudos antigos (gerados antes desta refatoração) **não terão** `base_geracao`. Para eles:
-- O motor faz **fallback inline** rodando `engine.extrairBaseGeracao(snapshot)` no momento da geração, reconstruindo a partir de `recomendacao_direta`/`resumo` por regex/parsing dos blocos.
-- Se nem isso der certo → erro 422 amigável: "Este estudo é da versão anterior. Selecione um estudo a partir de hoje."
+- **Mesmo algoritmo** (`gerarJogo` com Hamming ≥3) em todas as loterias e em ambos os motores.
+- **Mesma `EstrategiaData`** rica e auditável em toda saída.
+- **Mesma quota atômica** (RPC) para todos os motores.
+- **Mesmo log** em `ai_usage_logs` quando IA for usada.
+- **Mesmo branding** (sem menções a IA no texto exibido).
 
-### Arquivos tocados
+### Não-objetivos (escopo separado)
 
-| Arquivo | Ação |
+- Mudar UI dos geradores — somente a estratégia exibida fica mais rica.
+- Tocar no engine de posts-guia (`_shared/guide-post`) — fica isolado.
+- Migrar bancos/RPCs existentes — `incrementar_uso_gerador_estudo` continua ativa; criamos análoga `incrementar_uso_gerador` se hoje não existir atômica para `/gerador`.
+
+### Arquivos a tocar
+
+| Ação | Arquivo |
 |---|---|
-| `supabase/functions/_shared/guide-post/types.ts` | Adicionar `BaseGeracao` + método `extrairBaseGeracao` opcional na interface `GuideEngine` |
-| `supabase/functions/_shared/guide-post/lotofacil/engine.ts` | Implementar `extrairBaseGeracao(tipoPost, recomendacoes)` (~150 linhas, casos por tema) |
-| `supabase/functions/generate-guide-post/index.ts` | Salvar `base_geracao` dentro de `fatos_snapshot` |
-| `supabase/functions/generate-palpites-from-estudo/index.ts` | **Reescrita 100%**: novo pipeline determinístico + EstrategiaData rica + fallback de parsing |
-| `src/pages/lotofacil/GeradorEstudo.tsx` | Passar `dezenasFixes` para `ResultadosSheet` |
-| `supabase/functions/regenerate-base-geracao/index.ts` | **NOVA** — endpoint admin one-shot que recalcula `base_geracao` em todos os rascunhos/publicados de hoje (para hidratar estudos já gerados) |
+| Criar | `_shared/gerador/lottery-config.ts` |
+| Criar | `_shared/gerador/auth-and-quota.ts` |
+| Criar | `_shared/gerador/stats.ts` |
+| Criar | `_shared/gerador/ai-call.ts` |
+| Criar | `_shared/gerador/validate-jogo.ts` (extraído do estudo V2) |
+| Criar | `_shared/gerador/strategy-builder.ts` (extraído do estudo V2) |
+| Editar | `generate-palpites-from-estudo/index.ts` (usar shared + filtros usuário + log IA) |
+| Reescrever | `generate-palpites/index.ts` (lotofacil → motor determinístico) |
+| Reescrever | `generate-palpites-megasena/index.ts` |
+| Reescrever | `generate-palpites-quina/index.ts` |
+| Reescrever | `generate-palpites-duplasena/index.ts` |
+| Migration (se preciso) | RPC `incrementar_uso_gerador` atômica para os 4 geradores tradicionais |
 
-### Garantias de consistência
+### Risco e mitigação
 
-- **Mesma `fixar`** em todos os jogos da mesma chamada → consistência intra-execução.
-- **Mesma `BaseGeracao`** persistida no snapshot → consistência entre múltiplas chamadas do mesmo estudo.
-- **Pintura preta** das fixas → usuário enxerga visualmente o que foi imposto.
-- **Conclusão humanizada por IA** = só verniz; estratégia bruta é determinística e auditável.
-- **Filtros declarados explicitamente** no card (núcleo / apoio / excluir / repetidas alvo / diversidade) → 100% transparente.
-
-### Não-objetivos (fora do escopo)
-
-- Mega-Sena: mantém estrutura atual (default). Será replicada quando engine megasena ganhar `extrairBaseGeracao`.
-- Mudar UX do hub ou seletor.
+| Risco | Mitigação |
+|---|---|
+| Quebrar UI de algum gerador (formato `EstrategiaData`) | `EstrategiaCard*` já lê o mesmo shape; testar Lotofácil/Mega/Quina/Dupla após cada migração |
+| Usuário sem plano cair em fluxo errado | Manter mesma resposta 403 / 429 que cada motor já retorna hoje |
+| Geração ficar pior sem IA | IA continua disponível (humanização) + algoritmo determinístico já carrega "quentes/frias/ciclo/repetidas" como núcleo |
+| Migração grande de uma vez | Fases 1 → 2 → 3 são independentes; cada uma é deploy isolado |
 
