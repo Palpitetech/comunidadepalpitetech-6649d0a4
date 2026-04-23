@@ -1,64 +1,79 @@
 
 
-## Criar Gerador de Estudo para Mega-Sena
+## Ajustar textos da página Gerador de Estudo para refletir contexto da Mega-Sena
 
-### O que já existe (reaproveitamento)
-- ✅ Página `src/pages/lotofacil/GeradorEstudo.tsx` já é multi-loteria via prop `loteria`
-- ✅ Backend `generate-palpites-from-estudo` já suporta Mega-Sena (`extrairBaseGeracaoMegasena`, pipeline shared)
-- ✅ Hook `useEstudosDisponiveis` já aceita `"megasena"`
-- ✅ Hook `useGeradorEstudo` é loteria-agnóstico
-- ✅ `EstudoSelector` e `EstudoInfoCard` são genéricos
-- ✅ `ResultadosSheetMegaSena` já aceita `dezenasFixes` e `estrategia`
-- ✅ Botão da comunidade já roteia para `/megasena/gerador-estudo` (`GerarPalpitesDoEstudoButton`)
+### Diagnóstico
+Após Fase 3, a página `GeradorEstudo` já é multi-loteria, mas alguns textos genéricos foram pensados originalmente para Lotofácil (15 fixas / 25 dezenas no universo). Para Mega-Sena (60 dezenas / 6–12 por jogo) precisamos refinar microcopy para o usuário não estranhar.
 
-### O que falta
-1. A página atual usa `ResultadosSheet` (genérico Lotofácil, 25 dezenas). Para Mega-Sena precisa usar `ResultadosSheetMegaSena` (60 dezenas + cores corretas).
-2. Registrar a rota `/megasena/gerador-estudo` no `App.tsx`.
-3. Adicionar o card "Gerador de Estudo" no `HubMegaSena`.
+### Pontos identificados
 
-### Implementação
+**1. `src/pages/lotofacil/GeradorEstudo.tsx`**
+- Subtítulo `"Palpites a partir de um estudo"` → ok, mas pode ganhar contexto da loteria.
+- Badge "estudos/dia" e fallback `"30/dia"` → texto certo, sem ajuste necessário.
+- Texto do botão `"Gerar X Palpite(s)"` → genérico, ok.
+- Loading: `"Aplicando o estudo aos seus palpites..."` → genérico, ok.
 
-**1. Refatorar `src/pages/lotofacil/GeradorEstudo.tsx`** (sem mover arquivo — continua sendo o componente compartilhado)
-- Selecionar dinamicamente o `ResultadosSheet` correto:
-  ```ts
-  const SheetComponent = loteria === "megasena" ? ResultadosSheetMegaSena : ResultadosSheet;
-  ```
-- Ajustar `qtdDezenas` default por loteria: 15 (Lotofácil) ou 6 (Mega-Sena)
-- Ajustar `max` do `DezenasSelector` (Mega aceita 6-12). Conferir se `DezenasSelector` aceita prop ou se precisamos do `DezenasSelectorMegaSena` (a investigar rapidamente — se existir, usar; se não, parametrizar `min`/`max`).
-- Ajustar título da página e cor do ícone
+**2. `src/components/gerador/QuantidadeSelector.tsx`**
+- `"Escolha ou digite até {max} jogos"` → já parametriza via `max`, funciona para ambos.
 
-**2. Registrar rota em `src/App.tsx`** (após linha 218):
+**3. `src/components/gerador/DezenasSelector.tsx`**
+- Título `"Dezenas por palpite"` e helper `"Quantas dezenas em cada jogo?"` → genéricos, ok.
+- Já aceita `options` (6-12 para Mega).
+
+**4. `src/components/gerador-estudo/EstudoInfoCard.tsx`**
+- `TEMA_LABEL` já mapeia `analise_moldura_megasena`. Ok.
+- Helper texts (`"Estudo selecionado"`, badge de tema, badge de loteria_tag) → genéricos, ok.
+
+### Ajustes propostos (mínimos e cirúrgicos)
+
+**`src/pages/lotofacil/GeradorEstudo.tsx`** — apenas o subtítulo do header da página:
+
+Atual:
 ```tsx
-<Route path="/megasena/gerador-estudo" element={
-  <ProtectedRoute>
-    <GatedPage feature="gerador">
-      <GeradorEstudo loteria="megasena" />
-    </GatedPage>
-  </ProtectedRoute>
-} />
+<h2 className="text-lg font-bold text-foreground">Palpites a partir de um estudo</h2>
 ```
 
-**3. Adicionar entrada no `HubMegaSena`** após "Gerador de Palpites":
-```ts
-{ title: "Gerador de Estudo", description: "Palpites prontos a partir dos estudos da comunidade", icon: BookOpen, path: "/megasena/gerador-estudo" }
+Novo (contextual por loteria):
+```tsx
+const subtitulo = loteria === "megasena"
+  ? "Palpites de Mega-Sena (6 a 12 dezenas) a partir de um estudo"
+  : "Palpites de Lotofácil (15 a 20 dezenas) a partir de um estudo";
 ```
+
+E ajustar a cor do ícone `BookOpen` para refletir a identidade visual:
+- Lotofácil: `text-primary` (roxo) — atual
+- Mega-Sena: `text-[hsl(125,70%,40%)]` (verde Mega) — usar variável de cor já existente ou classe utilitária
+
+**`src/components/gerador/DezenasSelector.tsx`** — refinar helper para deixar a faixa explícita:
+
+Atual:
+```tsx
+<p className="text-xs text-muted-foreground">Quantas dezenas em cada jogo?</p>
+```
+
+Novo (derivar da prop `options`):
+```tsx
+const min = Math.min(...DEZENAS_OPTIONS);
+const max = Math.max(...DEZENAS_OPTIONS);
+<p className="text-xs text-muted-foreground">Quantas dezenas em cada jogo? ({min} a {max})</p>
+```
+
+Isso vale automaticamente para Lotofácil ("15 a 20"), Mega-Sena ("6 a 12") e qualquer loteria futura — zero hardcode.
+
+### Não-objetivos
+- Não tocar `EstudoSelector`, `EstudoInfoCard`, `QuantidadeSelector` (já neutros/parametrizados).
+- Não mover `GeradorEstudo.tsx` da pasta `lotofacil/` (continua sendo o arquivo compartilhado).
+- Não mexer em backend/hook (já loteria-agnósticos).
 
 ### Arquivos tocados
 
 | Ação | Arquivo |
 |---|---|
-| Editar | `src/pages/lotofacil/GeradorEstudo.tsx` (sheet condicional + defaults por loteria) |
-| Editar | `src/App.tsx` (nova rota) |
-| Editar | `src/pages/megasena/HubMegaSena.tsx` (novo card) |
+| Editar | `src/pages/lotofacil/GeradorEstudo.tsx` (subtítulo contextual + cor do ícone por loteria) |
+| Editar | `src/components/gerador/DezenasSelector.tsx` (helper mostra faixa derivada das `options`) |
 
 ### Garantias
-- **Zero código duplicado** — mesma página, mesmo hook, mesmo backend
-- **UI nativa Mega-Sena** — bolinhas verdes 60 números via `ResultadosSheetMegaSena`/`JogoCardMegaSena`
-- **Quota e estratégia** já funcionam (backend testado nas fases anteriores)
-- **Botão da comunidade** já aponta para a rota correta (sem mudanças)
-
-### Não-objetivos
-- Mexer no backend (já suporta megasena)
-- Renomear/mover o arquivo `GeradorEstudo.tsx` (mantém em `lotofacil/` por simplicidade — é genérico)
-- Adicionar suporte a Quina/Dupla Sena (escopo separado quando engines de estudo existirem)
+- **Lotofácil**: continua exibindo "15 a 20 dezenas" no helper e ícone roxo.
+- **Mega-Sena**: passa a exibir "6 a 12 dezenas" no helper e ícone verde.
+- **Zero impacto** em Quina/Dupla quando ganharem o gerador de estudo — o helper se adapta sozinho.
 
