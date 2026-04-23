@@ -51,9 +51,6 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const tablesToClean = [
-      { table: "chat_messages", column: "user_id" },
-      { table: "chat_daily_usage", column: "user_id" },
-      { table: "chat_conversations", column: "user_id" },
       { table: "palpites_salvos", column: "user_id" },
       { table: "palpites_pastas", column: "user_id" },
       { table: "post_likes", column: "user_id" },
