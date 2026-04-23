@@ -15,7 +15,7 @@ import { useGeradorEstudo } from "@/hooks/useGeradorEstudo";
 import { supabase } from "@/integrations/supabase/client";
 import { useUpsell } from "@/contexts/UpsellContext";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Dices, Loader2, AlertCircle, BookOpen } from "lucide-react";
+import { Dices, Loader2, AlertCircle } from "lucide-react";
 
 const DEZENAS_OPTIONS_BY_LOTERIA: Record<"lotofacil" | "megasena", number[]> = {
   lotofacil: [15, 16, 17, 18, 19, 20],
@@ -104,19 +104,10 @@ export default function GeradorEstudo({ loteria = "lotofacil" }: Props) {
       : "30/dia";
 
   const tituloPagina = loteria === "megasena" ? "Gerador de Estudo · Mega-Sena" : "Gerador de Estudo · Lotofácil";
-  const subtitulo = loteria === "megasena"
-    ? "Palpites de Mega-Sena (6 a 12 dezenas) a partir de um estudo"
-    : "Palpites de Lotofácil (15 a 20 dezenas) a partir de um estudo";
-  const iconColorClass = loteria === "megasena" ? "text-[hsl(125,70%,40%)]" : "text-primary";
 
   return (
     <MainLayout pageTitle={tituloPagina}>
       <div className="container-senior py-6 space-y-4 max-w-md mx-auto">
-        <div className="flex items-center gap-2 px-1">
-          <BookOpen className={`h-5 w-5 ${iconColorClass}`} />
-          <h2 className="text-lg font-bold text-foreground">{subtitulo}</h2>
-        </div>
-
         <Card>
           <CardContent className="pt-6 space-y-5">
             {!lockedFromPost && (
