@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, AlertTriangle } from "lucide-react";
+import { BookOpen, AlertTriangle, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 import type { EstudoDisponivel } from "@/hooks/useEstudosDisponiveis";
 import { labelDataRelativa } from "@/lib/dateLabel";
 
@@ -62,6 +63,16 @@ export function EstudoInfoCard({ estudo }: Props) {
           <p className="text-xs text-muted-foreground leading-relaxed border-l-2 border-primary/30 pl-2">
             {estudo.recomendacao_direta}
           </p>
+        )}
+
+        {estudo.slug && (
+          <Link
+            to={`/comunidade/post/${estudo.slug}`}
+            className="inline-flex items-center gap-1 text-xs text-primary underline underline-offset-2 hover:text-primary/80 transition-colors"
+          >
+            Ver estudo completo
+            <ExternalLink className="h-3 w-3" />
+          </Link>
         )}
 
         {!estudo.eh_futuro && (
