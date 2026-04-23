@@ -5,6 +5,7 @@
 // =============================================================================
 
 import type { Concurso, CicloHistorico, Fatos, GuideEngine } from "../types.ts";
+import { DEFINICAO_QUENTE_FRIA } from "../glossario.ts";
 
 // =============================================================================
 // CONSTANTES
@@ -1908,6 +1909,8 @@ function montarFatos(
         `Sorteamos ${a.totalDezenasSorteadas} dezenas no total (${DEZENAS_POR_SORTEIO} por concurso).\n` +
         `Em cima disso, identificamos um padrão claro de força e fraqueza.`;
 
+      const blocoDefinicao = DEFINICAO_QUENTE_FRIA;
+
       const blocoQuentes = `🔥 Dezenas QUENTES (presença alta nos últimos ${a.totalConcursos})\n` +
         a.quentes.map((q) => {
           const tag = q.perc === 100 ? "  → força total" : "";
@@ -1968,7 +1971,7 @@ function montarFatos(
         : "";
 
       const resumo = [
-        blocoPanorama, blocoQuentes, blocoParesQ, blocoTriosQ,
+        blocoPanorama, blocoDefinicao, blocoQuentes, blocoParesQ, blocoTriosQ,
         blocoFrias, blocoPioresParesF, blocoAcel, blocoDesacel,
         blocoRecomendacao, linhaFixar, linhaApoio, linhaExcluir, linhaOlho,
       ].filter(Boolean).join("\n\n");
@@ -2212,11 +2215,10 @@ function montarFatos(
         `4. Não ter colisão com outras duplas do mesmo grupo\n\n` +
         `✅ Anti-alucinação (proteção contra erro)\n` +
         `Cada post tem uma WHITELIST de números permitidos (01-25 + datas). Qualquer número fora da lista faz o post ser DESCARTADO e substituído por uma versão 100% calculada (fallback determinístico).\n\n` +
-        `🔍 Definições oficiais\n` +
+        `${DEFINICAO_QUENTE_FRIA}\n\n` +
+        `🔍 Outras definições oficiais\n` +
         `• FIÉL: dezena que repetiu em ≥ 60% dos pares de concursos seguidos\n` +
         `• VOLÁTIL: dezena que repetiu em ≤ 20% dos pares de concursos seguidos\n` +
-        `• QUENTE: top 5 mais frequentes nos ${concursos.length} sorteios\n` +
-        `• FRIA: bottom 5 menos frequentes nos ${concursos.length} sorteios\n` +
         `• ACELERANDO: delta positivo na janela 5 vs 5\n` +
         `• DESACELERANDO: delta negativo na janela 5 vs 5\n\n` +
         `🛡️ Validações ativas\n` +
