@@ -162,10 +162,44 @@ export default function VerificarWhatsApp() {
                   </p>
                 </div>
 
+                {/* Captcha leve anti-robô */}
+                <div className="space-y-2">
+                  <label htmlFor="captcha" className="text-sm font-medium flex items-center justify-between">
+                    <span>Confirme que você é humano</span>
+                    <button
+                      type="button"
+                      onClick={loadCaptcha}
+                      className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                      disabled={loadingCaptcha}
+                      aria-label="Gerar nova pergunta"
+                    >
+                      <RefreshCw className={`h-3 w-3 ${loadingCaptcha ? "animate-spin" : ""}`} />
+                      Trocar
+                    </button>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-12 px-3 rounded-md border bg-muted/40 flex items-center text-base font-medium">
+                      {captcha?.question ?? (loadingCaptcha ? "Carregando..." : "Erro ao carregar")}
+                    </div>
+                    <Input
+                      id="captcha"
+                      type="number"
+                      inputMode="numeric"
+                      placeholder="?"
+                      value={captchaAnswer}
+                      onChange={(e) => setCaptchaAnswer(e.target.value)}
+                      disabled={status === "checking" || !captcha}
+                      className="w-20 h-12 text-base text-center"
+                      maxLength={3}
+                      aria-label="Resposta do captcha"
+                    />
+                  </div>
+                </div>
+
                 <Button
                   type="submit"
                   className="w-full h-12 text-base"
-                  disabled={!numero || status === "checking"}
+                  disabled={!numero || !captchaAnswer || !captcha || status === "checking"}
                 >
                   {status === "checking" ? (
                     <>
