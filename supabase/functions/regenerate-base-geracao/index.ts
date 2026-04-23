@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { extrairBaseGeracaoLotofacil } from "../_shared/guide-post/lotofacil/base-geracao.ts";
+import { extrairBaseGeracaoMegasena } from "../_shared/guide-post/megasena/base-geracao.ts";
 import type { Concurso } from "../_shared/guide-post/types.ts";
 
 const corsHeaders = {
@@ -47,12 +48,12 @@ serve(async (req) => {
       });
     }
 
-    // Janela: últimas 48h, todos rascunhos/publicados de Lotofácil
+    // Janela: últimas 48h, todos rascunhos/publicados de Lotofácil + Mega-Sena
     const since = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
     const { data: posts, error } = await supabaseAdmin
       .from("postagens")
-      .select("id, fatos_snapshot")
-      .eq("loteria_tag", "lotofacil")
+      .select("id, fatos_snapshot, loteria_tag")
+      .in("loteria_tag", ["lotofacil", "megasena"])
       .in("status", ["rascunho", "publicado"])
       .gte("created_at", since);
 
@@ -68,6 +69,7 @@ serve(async (req) => {
         jaTinha++; continue;
       }
 
+      const limite = snap.loteria === "megasena" ? 20 : 10;
       // Rebusca os concursos para o tipo
       const { data: results } = await supabaseAdmin
         .from("resultados_loterias")
@@ -75,7 +77,7 @@ serve(async (req) => {
         .eq("loteria", snap.loteria)
         .lte("concurso", snap.ultimo_concurso)
         .order("concurso", { ascending: false })
-        .limit(10);
+        .limit(limite);
 
       if (!results || results.length === 0) { falhas++; continue; }
       const concursos: Concurso[] = (results as any[]).map((r) => ({
@@ -85,7 +87,9 @@ serve(async (req) => {
         qtd_primos: r.qtd_primos, qtd_moldura: r.qtd_moldura,
       }));
 
-      const base = extrairBaseGeracaoLotofacil(snap.tipo_post, concursos);
+      const base = snap.loteria === "megasena"
+        ? extrairBaseGeracaoMegasena(snap.tipo_post, concursos)
+        : extrairBaseGeracaoLotofacil(snap.tipo_post, concursos);
       if (!base) { falhas++; continue; }
 
       const novoSnap = { ...snap, base_geracao: base };
