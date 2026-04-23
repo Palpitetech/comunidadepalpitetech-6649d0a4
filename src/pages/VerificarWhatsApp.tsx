@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { ShieldCheck, ShieldAlert, Loader2, ArrowLeft, MessageCircle, RefreshCw } from "lucide-react";
-import { formatCelularMask } from "@/lib/celular";
+import { formatCelularMask, validateCelularBR } from "@/lib/celular";
 
 type Status = "idle" | "checking" | "verified" | "not_verified" | "invalid" | "error" | "rate_limited" | "captcha_invalid";
 
