@@ -297,16 +297,26 @@ function montarFatos(tipoPost: string, concursos: Concurso[]): {
 
     case "analise_linhas": {
       const l = calcularDistribuicaoLinhas(concursos);
-      const resumo = `Média por linha (10 sorteios): ` +
-        l.medias.map((m, i) => `L${i + 1}=${m.toFixed(1)}`).join(", ");
+      const det = detalharLinhasColunas(concursos, "linha");
+      const blocoDetalhe = det.map((d) => {
+        const top = d.top2.map((t) => `${t.qtd} dezena${t.qtd === 1 ? "" : "s"} (${t.vezes}x)`).join(" e ");
+        return `Linha ${d.indice} (${d.faixa}): ${d.total} ocorrências — mais comum: ${top}`;
+      }).join("\n");
+      const resumo = `📐 Análise por Linhas (últimos ${concursos.length} sorteios)\n\n${blocoDetalhe}\n\n` +
+        `Média por linha: ` + l.medias.map((m, i) => `L${i + 1}=${m.toFixed(1)}`).join(", ");
       const recomendacaoDireta = `Para o concurso ${proxConcurso}: distribua ${l.recomendacao.map((v, i) => `${v} na L${i + 1}`).join(", ")}.`;
       return { resumo, recomendacaoDireta };
     }
 
     case "analise_colunas": {
       const c = calcularDistribuicaoColunas(concursos);
-      const resumo = `Média por coluna (10 sorteios): ` +
-        c.medias.map((m, i) => `C${i + 1}=${m.toFixed(1)}`).join(", ");
+      const det = detalharLinhasColunas(concursos, "coluna");
+      const blocoDetalhe = det.map((d) => {
+        const top = d.top2.map((t) => `${t.qtd} dezena${t.qtd === 1 ? "" : "s"} (${t.vezes}x)`).join(" e ");
+        return `Coluna ${d.indice} (${d.faixa}): ${d.total} ocorrências — mais comum: ${top}`;
+      }).join("\n");
+      const resumo = `📊 Análise por Colunas (últimos ${concursos.length} sorteios)\n\n${blocoDetalhe}\n\n` +
+        `Média por coluna: ` + c.medias.map((m, i) => `C${i + 1}=${m.toFixed(1)}`).join(", ");
       const recomendacaoDireta = `Para o concurso ${proxConcurso}: distribua ${c.recomendacao.map((v, i) => `${v} na C${i + 1}`).join(", ")}.`;
       return { resumo, recomendacaoDireta };
     }
