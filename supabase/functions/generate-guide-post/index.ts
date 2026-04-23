@@ -1810,6 +1810,8 @@ function montarPrompt(tipoPost: string, fatos: { resumo: string; recomendacaoDir
     analise_repetidas: "Análise de Repetidas",
     analise_linhas: "Análise por Linhas",
     analise_colunas: "Análise por Colunas",
+    analise_posicoes_iniciais: "Posições Iniciais — 3 primeiras dezenas",
+    analise_posicoes_finais: "Posições Finais — 3 últimas dezenas",
   };
   const tema = titulos[tipoPost] || "Análise da Lotofácil";
   const proxConcurso = ultimoConcurso + 1;
