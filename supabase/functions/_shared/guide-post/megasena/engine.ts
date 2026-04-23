@@ -5,6 +5,7 @@
 
 import type { Concurso, Fatos, GuideEngine } from "../types.ts";
 import { DEFINICAO_QUENTE_FRIA } from "../glossario.ts";
+import { extrairBaseGeracaoMegasena } from "./base-geracao.ts";
 
 // =============================================================================
 // CONSTANTES MEGA
@@ -527,4 +528,6 @@ export const megasenaEngine: GuideEngine = {
   validarConteudoNumerico,
   fallbackConteudo,
   sanitizar,
+  extrairBaseGeracao: (tipoPost, concursos) =>
+    extrairBaseGeracaoMegasena(tipoPost, concursos),
 };
