@@ -118,6 +118,81 @@ const SYSTEM_PROMPT_RESULTADO = `Você é Augusto Angelis, especialista em Lotof
 Tom acolhedor e direto, em primeira pessoa. Nunca mencione IA, bot, modelo, GPT ou Gemini.
 Anuncie resultados oficiais com energia, didática e respeito ao jogador.`;
 
+// Validador anti-alucinação: garante que o conteúdo da IA não inventou números.
+// Retorna true se o texto contém apenas números permitidos.
+function validarNumerosResultado(
+  texto: string,
+  permitido: { concurso: number; dezenas: number[]; indicadores: Record<string, number>; cicloNumero: number; faltantesCount: number }
+): { ok: boolean; motivo?: string } {
+  // Lista branca: concurso + ciclo + indicadores + faltantes count + dezenas (1-25, formato livre)
+  const numerosPermitidos = new Set<number>([
+    permitido.concurso,
+    permitido.cicloNumero,
+    permitido.faltantesCount,
+    ...Object.values(permitido.indicadores),
+  ]);
+
+  // Números de 3-5 dígitos (concurso/ciclo): TODOS devem estar na whitelist
+  const matches3plus = texto.match(/\b\d{3,5}\b/g) || [];
+  for (const m of matches3plus) {
+    const n = parseInt(m, 10);
+    if (!numerosPermitidos.has(n)) {
+      return { ok: false, motivo: `Número não permitido encontrado: ${n}` };
+    }
+  }
+
+  // Concurso DEVE aparecer pelo menos uma vez
+  if (!texto.includes(String(permitido.concurso))) {
+    return { ok: false, motivo: `Número do concurso ${permitido.concurso} ausente` };
+  }
+
+  // Dezenas de 1-2 dígitos: validar que toda dezena "01-25" citada esteja entre as oficiais
+  // (regex captura padrões tipo "01", "02"... evitando capturar "1" solto que pode ser contagem)
+  const dezenasOficiais = new Set(permitido.dezenas);
+  const dezenasMatches = texto.match(/\b(0[1-9]|1[0-9]|2[0-5])\b/g) || [];
+  for (const dStr of dezenasMatches) {
+    const d = parseInt(dStr, 10);
+    // Permite indicadores (que podem coincidir 01-25) — só rejeita se aparecer formatado como dezena (com zero à esquerda) e não estiver entre as oficiais E não for indicador
+    if (dStr.startsWith("0") && !dezenasOficiais.has(d)) {
+      return { ok: false, motivo: `Dezena ${dStr} citada não é oficial` };
+    }
+  }
+
+  return { ok: true };
+}
+
+// Fallback determinístico: monta o conteúdo do post sem IA
+function montarConteudoFallbackResultado(
+  concurso: number,
+  dezenas: number[],
+  indicadores: { qtd_pares: number; qtd_impares: number; qtd_moldura: number; qtd_primos: number; qtd_repetidas: number },
+  cicloInfo: { ciclo_numero: number; dezenas_faltantes_ciclo: number[] },
+  acumulou: boolean
+): string {
+  const dezenasFmt = dezenas.map(d => d.toString().padStart(2, "0")).join(" - ");
+  const faltantesFmt = cicloInfo.dezenas_faltantes_ciclo.map(d => d.toString().padStart(2, "0")).join(", ");
+  const cicloLinha = cicloInfo.dezenas_faltantes_ciclo.length === 0
+    ? `Ciclo **fechado**! Novo ciclo começa agora.`
+    : `Faltam **${cicloInfo.dezenas_faltantes_ciclo.length}** dezenas: [${faltantesFmt}]${cicloInfo.dezenas_faltantes_ciclo.length <= 3 ? " ⚡ Quase fechando!" : ""}`;
+  const acumLinha = acumulou ? `\n💰 **ACUMULOU!** Vamos juntos no próximo.\n` : "";
+
+  return `🚨 Saiu o resultado da Lotofácil!
+${acumLinha}
+🎯 Dezenas sorteadas
+**${dezenasFmt}**
+
+📊 Raio-X
+• Pares: **${indicadores.qtd_pares}** | Ímpares: **${indicadores.qtd_impares}**
+• Moldura: **${indicadores.qtd_moldura}** dezenas
+• Primos: **${indicadores.qtd_primos}**
+• Repetidas: **${indicadores.qtd_repetidas}** do concurso anterior
+
+🔄 Ciclo
+${cicloLinha}
+
+💬 E aí, acertou quantas? Conta pra gente nos comentários!`.substring(0, 1000);
+}
+
 async function criarPostResultadoOficial(params: {
   supabase: any;
   concurso: number;
@@ -130,8 +205,15 @@ async function criarPostResultadoOficial(params: {
 
   console.log(`[RESULT-POST] Criando post de resultado para concurso ${concurso}`);
 
+  // ===== TÍTULO 100% DETERMINÍSTICO (impossível alucinar) =====
+  const titulo = `🚨 Resultado Lotofácil — Concurso ${concurso}`;
+
+  // ===== CONTEÚDO: tenta IA, valida; se falhar usa fallback =====
+  let conteudo = "";
+  let viaFallback = false;
+  let motivoFallback = "";
+
   try {
-    // 1. Montar contexto do resultado
     const dezenasFormatadas = dezenas.map(d => d.toString().padStart(2, "0")).join(" - ");
     const faltantes = cicloInfo.dezenas_faltantes_ciclo.map(d => d.toString().padStart(2, "0")).join(", ");
 
@@ -143,11 +225,9 @@ Repetidas: ${indicadores.qtd_repetidas}
 Ciclo: ${cicloInfo.ciclo_numero} | Faltantes: [${faltantes}]${cicloInfo.dezenas_faltantes_ciclo.length <= 3 ? " ⚡ Quase fechando!" : ""}
 ${acumulou ? "💰 ACUMULOU!" : ""}`;
 
-    // 2. Gerar post via IA
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
-      console.error("[RESULT-POST] ❌ LOVABLE_API_KEY não configurada");
-      return;
+      throw new Error("LOVABLE_API_KEY ausente");
     }
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -162,85 +242,87 @@ ${acumulou ? "💰 ACUMULOU!" : ""}`;
           { role: "system", content: SYSTEM_PROMPT_RESULTADO },
           {
             role: "user",
-            content: `Crie um post de PLANTÃO anunciando o resultado oficial da Lotofácil.
+            content: `Crie APENAS o CONTEÚDO de um post anunciando o resultado da Lotofácil.
 
 ${contextoResultado}
 
-INSTRUÇÕES:
-- Título chamativo com emoji 🚨 (máximo 60 caracteres)
-- Máximo 800 caracteres no conteúdo
+REGRAS CRÍTICAS:
+- Use SOMENTE os números fornecidos acima. NÃO invente nem altere nenhum dígito.
+- Não escreva o número do concurso de forma errada (deve ser exatamente ${concurso}).
+- Use as 15 dezenas exatamente como listadas: ${dezenasFormatadas}
+- Máximo 800 caracteres.
 
-FORMATO OBRIGATÓRIO DO CONTEÚDO:
-- Use emojis como marcadores de seção (🚨, 🎯, 📊, 🔄, 💡)
-- Use **negrito** para destacar dezenas e números importantes
-- Separe seções com linha em branco
+ESTRUTURA OBRIGATÓRIA:
+🚨 Abertura curta com energia
+🎯 Dezenas sorteadas (em **negrito**)
+📊 Raio-X com bullets (Pares/Ímpares, Moldura, Primos, Repetidas)
+🔄 Ciclo (status atual)
+💬 Fechamento convidando à discussão
 
-ESTRUTURA DO POST:
-🚨 Abertura → Anuncie o resultado com energia
-🎯 Dezenas → Liste as 15 dezenas em **negrito**
-📊 Raio-X → Tópicos com • para cada indicador:
-• Pares/Ímpares
-• Moldura
-• Primos
-• Repetidas
-🔄 Ciclo → Status atual do ciclo
-💬 Fechamento → Convide à discussão
-
-Responda APENAS no formato JSON:
-{"titulo": "seu título", "conteudo": "seu conteúdo"}`
+Responda APENAS o conteúdo (sem título, sem JSON), texto puro com emojis e markdown.`
           }
         ]
       }),
     });
 
     if (!aiResponse.ok) {
-      console.error(`[RESULT-POST] ❌ Erro na IA: ${aiResponse.status}`);
-      return;
+      throw new Error(`IA status ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
-    const content = aiData.choices?.[0]?.message?.content;
+    const conteudoIA = (aiData.choices?.[0]?.message?.content || "").trim();
     const usage = aiData.usage;
-    const modelUsed = "google/gemini-3-flash-preview";
 
-    // Log de uso de IA
     if (usage) {
-      const promptTokens = usage.prompt_tokens || 0;
-      const completionTokens = usage.completion_tokens || 0;
-      const costUsd = (promptTokens / 1e6) * 0.15 + (completionTokens / 1e6) * 0.60;
+      const pt = usage.prompt_tokens || 0;
+      const ct = usage.completion_tokens || 0;
+      const cost = (pt / 1e6) * 0.15 + (ct / 1e6) * 0.60;
       supabase.from("ai_usage_logs").insert({
         bot_name: AUGUSTO_NOME,
         edge_function: "sync-lotofacil",
         action_type: "plantao_resultado_oficial",
-        prompt_tokens: promptTokens,
-        completion_tokens: completionTokens,
-        total_tokens: usage.total_tokens || (promptTokens + completionTokens),
-        model: modelUsed,
-        cost_usd: costUsd,
+        prompt_tokens: pt,
+        completion_tokens: ct,
+        total_tokens: usage.total_tokens || (pt + ct),
+        model: "google/gemini-3-flash-preview",
+        cost_usd: cost,
         metadata: { concurso },
       }).then(() => {}).catch((e: any) => console.error("[RESULT-POST] Erro log IA:", e));
     }
 
-    let parsed;
-    try {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      parsed = JSON.parse(jsonMatch?.[0] || content);
-    } catch {
-      console.error("[RESULT-POST] ❌ Formato de resposta inválido da IA");
-      return;
+    // Validação anti-alucinação
+    const validacao = validarNumerosResultado(conteudoIA, {
+      concurso,
+      dezenas,
+      indicadores: indicadores as unknown as Record<string, number>,
+      cicloNumero: cicloInfo.ciclo_numero,
+      faltantesCount: cicloInfo.dezenas_faltantes_ciclo.length,
+    });
+
+    if (!validacao.ok || conteudoIA.length < 50) {
+      throw new Error(`Validação falhou: ${validacao.motivo || "conteúdo muito curto"}`);
     }
 
-    // 3. Criar post na comunidade (autor único = Augusto)
+    conteudo = conteudoIA.substring(0, 1000);
+  } catch (err) {
+    viaFallback = true;
+    motivoFallback = err instanceof Error ? err.message : String(err);
+    console.warn(`[RESULT-POST] ⚠️ Usando fallback determinístico: ${motivoFallback}`);
+    conteudo = montarConteudoFallbackResultado(concurso, dezenas, indicadores, cicloInfo, acumulou);
+  }
+
+  // Criar post na comunidade (autor único = Augusto)
+  try {
     const { data: newPost, error: postError } = await supabase
       .from("postagens")
       .insert({
         user_id: AUGUSTO_PERFIL_ID,
-        titulo: parsed.titulo?.substring(0, 100),
-        conteudo: parsed.conteudo?.substring(0, 1000),
+        titulo: titulo.substring(0, 100),
+        conteudo: conteudo.substring(0, 1000),
         loteria_tag: "Lotofácil",
         tipo: "resultado_oficial",
         concurso_referencia: concurso,
-        metadata: { concurso, indicadores, ciclo: cicloInfo, dezenas }
+        metadata: { concurso, indicadores, ciclo: cicloInfo, dezenas, viaFallback, motivoFallback }
       })
       .select("id")
       .single();
@@ -250,9 +332,9 @@ Responda APENAS no formato JSON:
       return;
     }
 
-    console.log(`[RESULT-POST] ✅ Post criado: ${newPost.id}`);
+    console.log(`[RESULT-POST] ✅ Post ${newPost.id} criado (fallback=${viaFallback})`);
   } catch (err) {
-    console.error(`[RESULT-POST] ❌ Erro geral:`, err);
+    console.error(`[RESULT-POST] ❌ Erro ao inserir:`, err);
   }
 }
 
