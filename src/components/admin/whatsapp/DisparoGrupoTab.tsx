@@ -300,7 +300,7 @@ export function DisparoGrupoTab() {
     if (!confirm(`Enviar ${config.slots.length} mensagem(ns) de teste agora?`)) return;
 
     try {
-      const { data, error } = await supabase.functions.invoke("group-blast", {
+      const { data, error } = await supabase.functions.invoke("group-blast-send", {
         body: { action: "prepare", force: true, config_id: config.id },
       });
       if (error) throw error;
@@ -313,7 +313,7 @@ export function DisparoGrupoTab() {
 
   async function handleSendNow(configId: string, slotId: string) {
     try {
-      const { data, error } = await supabase.functions.invoke("group-blast", {
+      const { data, error } = await supabase.functions.invoke("group-blast-send", {
         body: { action: "send_now", config_id: configId, slot_id: slotId },
       });
       if (error) throw error;
