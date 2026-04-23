@@ -13,6 +13,7 @@ import { SmartLinksTab } from "@/components/admin/whatsapp/SmartLinksTab";
 import { MensagensTab } from "@/components/admin/whatsapp/MensagensTab";
 import { RetargetingPanelTab } from "@/components/admin/whatsapp/RetargetingPanelTab";
 import { WhatsAppSubSidebar, whatsappTabs } from "@/components/admin/whatsapp/WhatsAppSubSidebar";
+import { ForceUpdateButton } from "@/components/admin/ForceUpdateButton";
 import { cn } from "@/lib/utils";
 
 const TAB_TITLES: Record<string, string> = {
@@ -67,7 +68,8 @@ export default function AdminWhatsApp() {
           </div>
 
           <div className="p-4 md:px-5 md:pb-6 lg:px-6">
-            <div className="max-w-5xl">
+            <div className="max-w-5xl space-y-4">
+              <ForceUpdateButton />
               {activeTab === "instancias" && <InstanciasTab />}
               {activeTab === "proxies" && <ProxiesTab />}
               {activeTab === "templates" && <TemplatesTab />}
