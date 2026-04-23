@@ -493,50 +493,36 @@ serve(async (req) => {
     if (!apiKey) throw new Error("LOVABLE_API_KEY não configurada");
 
     const userPrompt = montarPrompt(tipoPost, fatos, ultimoConcurso);
+    const proxConcurso = ultimoConcurso + 1;
 
-    let titulo = "";
+    // ===== TÍTULO 100% DETERMINÍSTICO =====
+    const titulo = montarTituloDeterministico(tipoPost, proxConcurso);
+
+    // ===== CONTEÚDO: IA + validação anti-alucinação + fallback =====
     let conteudo = "";
     let viaFallback = false;
+    let motivoFallback = "";
 
+    const numerosPermitidos = extrairNumerosPermitidos(concursos, proxConcurso);
     const ia = await chamarIAComRetry(SYSTEM_PROMPT_BASE, userPrompt, apiKey);
 
-    if (!ia.ok && (ia.status === 402 || ia.status === 429)) {
-      console.warn(`[generate-guide-post] IA indisponível (${ia.status}). Fallback determinístico.`);
-      const fb = fallbackPost(tipoPost, fatos, ultimoConcurso + 1);
-      titulo = fb.titulo;
-      conteudo = fb.conteudo;
+    if (!ia.ok) {
       viaFallback = true;
-    } else if (!ia.ok) {
-      console.error(`[generate-guide-post] IA falhou: ${ia.status} ${ia.errorBody}`);
-      const fb = fallbackPost(tipoPost, fatos, ultimoConcurso + 1);
-      titulo = fb.titulo;
-      conteudo = fb.conteudo;
-      viaFallback = true;
+      motivoFallback = `IA falhou: ${ia.status}`;
+      console.warn(`[generate-guide-post] ⚠️ ${motivoFallback}`);
+      conteudo = fallbackConteudo(fatos);
     } else {
-      // Validar JSON
-      let parsed = extrairJSON(ia.content || "");
+      const conteudoIA = sanitizar(ia.content || "").substring(0, 1000);
+      const validacao = validarConteudoNumerico(conteudoIA, numerosPermitidos);
 
-      if (!parsed) {
-        console.warn("[generate-guide-post] JSON inválido (1ª), retentando...");
-        const ia2 = await chamarIAComRetry(
-          SYSTEM_PROMPT_BASE,
-          userPrompt + "\n\nATENÇÃO: sua última resposta não era JSON puro. Devolva APENAS {\"titulo\":\"...\",\"conteudo\":\"...\"} sem texto adicional.",
-          apiKey,
-        );
-        if (ia2.ok) parsed = extrairJSON(ia2.content || "");
-      }
-
-      if (!parsed) {
-        console.warn("[generate-guide-post] JSON inválido após retry. Fallback.");
-        const fb = fallbackPost(tipoPost, fatos, ultimoConcurso + 1);
-        titulo = fb.titulo;
-        conteudo = fb.conteudo;
+      if (!validacao.ok || conteudoIA.length < 50) {
         viaFallback = true;
+        motivoFallback = validacao.motivo || "conteúdo curto";
+        console.warn(`[generate-guide-post] ⚠️ Fallback: ${motivoFallback}`);
+        conteudo = fallbackConteudo(fatos);
       } else {
-        titulo = sanitizar(parsed.titulo).substring(0, 100);
-        conteudo = sanitizar(parsed.conteudo).substring(0, 1000);
-
-        // Guardrail
+        conteudo = conteudoIA;
+        // Guardrail: garante que a recomendação direta apareça
         if (!conteudo.includes("Como montar") && !conteudo.includes("montar seu palpite")) {
           conteudo = (conteudo + `\n\n💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\nLoteria envolve sorte.`).substring(0, 1000);
         }
@@ -556,7 +542,7 @@ serve(async (req) => {
           total_tokens: ia.usage.total_tokens || pt + ct,
           model: "google/gemini-3-flash-preview",
           cost_usd: cost,
-          metadata: { tipo_post: tipoPost },
+          metadata: { tipo_post: tipoPost, viaFallback, motivoFallback },
         }).then(() => {}).catch(() => {});
       }
     }
