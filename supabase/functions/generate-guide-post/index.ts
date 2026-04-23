@@ -402,8 +402,8 @@ function extrairNumerosPermitidos(concursos: Concurso[], proxConcurso: number): 
     permitidos.add(c.qtd_primos);
     permitidos.add(c.qtd_repetidas);
   }
-  // Pequenos números livres (contagens, frequências)
-  for (let i = 0; i <= 50; i++) permitidos.add(i);
+  // Pequenos números livres (contagens, frequências, ocorrências por linha/coluna)
+  for (let i = 0; i <= 80; i++) permitidos.add(i);
   return permitidos;
 }
 
