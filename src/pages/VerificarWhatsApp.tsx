@@ -10,6 +10,7 @@ import { formatCelularMask } from "@/lib/celular";
 type Status = "idle" | "checking" | "verified" | "not_verified" | "invalid" | "error";
 
 const SUPPORT_NUMBER = "5551981854281"; // contato oficial (mem://support/contact-info)
+const REPORT_NUMBER = "5516997175392"; // canal de denúncia de golpes
 
 export default function VerificarWhatsApp() {
   const [numero, setNumero] = useState("");
@@ -150,15 +151,15 @@ export default function VerificarWhatsApp() {
                   </p>
                 </div>
                 <a
-                  href={`https://wa.me/${SUPPORT_NUMBER}?text=${encodeURIComponent(
-                    "Olá! Recebi mensagem de um número e quero confirmar se é golpe.",
+                  href={`https://wa.me/${REPORT_NUMBER}?text=${encodeURIComponent(
+                    `Olá! Quero reportar um número suspeito que se passou pela Palpite Tech: ${numero}`,
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 w-full h-11 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition"
+                  className="inline-flex items-center justify-center gap-2 w-full h-11 rounded-md bg-destructive text-destructive-foreground text-sm font-medium hover:opacity-90 transition"
                 >
                   <MessageCircle className="h-4 w-4" />
-                  Falar com suporte oficial
+                  Reportar para equipe
                 </a>
                 <Button variant="outline" onClick={reset} className="w-full">
                   Verificar outro número
