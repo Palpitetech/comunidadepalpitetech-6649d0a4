@@ -120,13 +120,13 @@ export default function VerificarWhatsApp() {
 
           {/* Resultado */}
           {status === "verified" && (
-            <Card className="border-2 border-success bg-success/5">
+            <Card className="border-2 border-[hsl(142_72%_38%)] bg-[hsl(142_72%_38%/0.08)]">
               <CardContent className="pt-6 text-center space-y-3">
-                <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-success/15">
-                  <ShieldCheck className="h-9 w-9 text-success" />
+                <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-[hsl(142_72%_38%/0.18)]">
+                  <ShieldCheck className="h-9 w-9 text-[hsl(142_72%_38%)]" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-success">Número OFICIAL ✓</h3>
+                  <h3 className="text-lg font-bold text-[hsl(142_72%_30%)]">Número OFICIAL ✓</h3>
                   <p className="text-sm text-muted-foreground mt-1">
                     Pode confiar — esse número pertence à Palpite Tech.
                   </p>
