@@ -13,6 +13,7 @@ export interface EstudoDisponivel {
   ultimo_concurso: number | null;
   recomendacao_direta: string | null;
   eh_futuro: boolean;
+  data_sorteio: string | null;
 }
 
 interface ListResponse {
