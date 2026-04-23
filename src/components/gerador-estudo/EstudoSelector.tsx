@@ -2,6 +2,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import type { EstudoDisponivel } from "@/hooks/useEstudosDisponiveis";
+import { labelDataRelativa } from "@/lib/dateLabel";
 
 interface Props {
   estudos: EstudoDisponivel[];
@@ -9,6 +10,15 @@ interface Props {
   value: string | null;
   onChange: (estudoId: string) => void;
   disabled?: boolean;
+}
+
+function montarLinhaResumo(e: EstudoDisponivel): string {
+  const partes: string[] = [];
+  partes.push(e.eh_futuro ? "Próximo" : "Já realizado");
+  if (e.proximo_concurso != null) partes.push(String(e.proximo_concurso));
+  const dataLabel = labelDataRelativa(e.data_sorteio);
+  if (dataLabel) partes.push(dataLabel);
+  return partes.join(" · ");
 }
 
 export function EstudoSelector({ estudos, loading, value, onChange, disabled }: Props) {
@@ -40,7 +50,7 @@ export function EstudoSelector({ estudos, loading, value, onChange, disabled }: 
             {selecionado && (
               <div className="flex flex-col items-start gap-1 text-left">
                 <span className="text-sm font-medium line-clamp-1">{selecionado.titulo || "Estudo"}</span>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <Badge
                     variant={selecionado.eh_futuro ? "default" : "destructive"}
                     className="text-[10px]"
@@ -50,7 +60,7 @@ export function EstudoSelector({ estudos, loading, value, onChange, disabled }: 
                     ) : (
                       <AlertCircle className="h-3 w-3 mr-1" />
                     )}
-                    Concurso {selecionado.proximo_concurso ?? "—"}
+                    {montarLinhaResumo(selecionado)}
                   </Badge>
                   {selecionado.status === "rascunho" && (
                     <Badge variant="secondary" className="text-[10px]">Rascunho</Badge>
@@ -65,18 +75,18 @@ export function EstudoSelector({ estudos, loading, value, onChange, disabled }: 
             <SelectItem key={e.id} value={e.id} className="py-2">
               <div className="flex flex-col gap-1">
                 <span className="text-sm font-medium line-clamp-1">{e.titulo || "Estudo"}</span>
-                <div className="flex items-center gap-1.5">
-                  {e.eh_futuro ? (
-                    <Badge variant="default" className="text-[10px]">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <Badge
+                    variant={e.eh_futuro ? "default" : "destructive"}
+                    className="text-[10px]"
+                  >
+                    {e.eh_futuro ? (
                       <CheckCircle2 className="h-3 w-3 mr-1" />
-                      Próximo · {e.proximo_concurso ?? "—"}
-                    </Badge>
-                  ) : (
-                    <Badge variant="destructive" className="text-[10px]">
+                    ) : (
                       <AlertCircle className="h-3 w-3 mr-1" />
-                      Já realizado · {e.proximo_concurso ?? "—"}
-                    </Badge>
-                  )}
+                    )}
+                    {montarLinhaResumo(e)}
+                  </Badge>
                   {e.status === "rascunho" && (
                     <Badge variant="secondary" className="text-[10px]">Rascunho</Badge>
                   )}
