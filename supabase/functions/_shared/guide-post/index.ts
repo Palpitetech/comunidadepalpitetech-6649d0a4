@@ -5,9 +5,11 @@
 
 import type { GuideEngine } from "./types.ts";
 import { lotofacilEngine } from "./lotofacil/engine.ts";
+import { megasenaEngine } from "./megasena/engine.ts";
 
 export const ENGINES: Record<string, GuideEngine> = {
   lotofacil: lotofacilEngine,
+  megasena: megasenaEngine,
 };
 
 export function getEngine(loteria: string): GuideEngine {
