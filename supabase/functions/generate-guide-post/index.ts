@@ -2272,6 +2272,9 @@ function montarTituloDeterministico(tipoPost: string, proxConcurso: number): str
     analise_colunas: `📊 Análise por Colunas — Concurso ${proxConcurso}`,
     analise_posicoes_iniciais: `🎯 Posições Iniciais — Concurso ${proxConcurso}`,
     analise_posicoes_finais: `🏁 Posições Finais — Concurso ${proxConcurso}`,
+    analise_cenarios: `🎲 Cenários do Concurso ${proxConcurso}`,
+    analise_ficar_de_olho: `👀 Ficar de Olho — Concurso ${proxConcurso}`,
+    analise_como_calculamos: `🔬 Como Calculamos — Bastidores do Concurso ${proxConcurso}`,
   };
   return (titulosBase[tipoPost] || `Análise Lotofácil — Concurso ${proxConcurso}`).substring(0, 100);
 }
