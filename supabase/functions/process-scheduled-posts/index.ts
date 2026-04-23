@@ -72,6 +72,35 @@ serve(async (req) => {
     const skipped: string[] = [];
     const errors: string[] = [];
 
+    // CATCH-UP: publica rascunhos atrasados (publicar_em <= now) independente de schedule
+    try {
+      const { data: atrasados } = await supabaseAdmin
+        .from("postagens")
+        .select("id, loteria_tag, tipo, publicar_em")
+        .eq("status", "rascunho")
+        .not("publicar_em", "is", null)
+        .lte("publicar_em", new Date().toISOString())
+        .order("publicar_em", { ascending: true })
+        .limit(50);
+
+      for (const p of atrasados || []) {
+        const { error: updErr } = await supabaseAdmin
+          .from("postagens")
+          .update({ status: "publicado", created_at: new Date().toISOString() })
+          .eq("id", p.id)
+          .eq("status", "rascunho"); // guarda contra race
+        if (updErr) {
+          errors.push(`catchup ${p.id}: ${updErr.message}`);
+        } else {
+          published.push(`catchup:${p.loteria_tag}/${p.tipo}: ${p.id}`);
+        }
+      }
+    } catch (err) {
+      const msg = `catch-up: ${err instanceof Error ? err.message : "erro"}`;
+      errors.push(msg);
+      console.error(`[process-scheduled-posts] ${msg}`);
+    }
+
     for (const sched of schedules) {
       try {
         if (sched.tipo_post === "resultado_oficial") continue;
