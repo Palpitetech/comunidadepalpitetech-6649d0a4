@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { ShieldCheck, ShieldAlert, Loader2, ArrowLeft, MessageCircle, RefreshCw } from "lucide-react";
-import { formatCelularMask } from "@/lib/celular";
+import { formatCelularMask, validateCelularBR } from "@/lib/celular";
 
 type Status = "idle" | "checking" | "verified" | "not_verified" | "invalid" | "error" | "rate_limited" | "captcha_invalid";
 
@@ -16,6 +16,7 @@ const FN_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/
 export default function VerificarWhatsApp() {
   const [numero, setNumero] = useState("");
   const [status, setStatus] = useState<Status>("idle");
+  const [invalidReason, setInvalidReason] = useState<string | null>(null);
   const [captcha, setCaptcha] = useState<{ question: string; token: string } | null>(null);
   const [captchaAnswer, setCaptchaAnswer] = useState("");
   const [loadingCaptcha, setLoadingCaptcha] = useState(false);
@@ -53,6 +54,16 @@ export default function VerificarWhatsApp() {
   async function handleCheck(e: React.FormEvent) {
     e.preventDefault();
     if (status === "checking") return;
+
+    // Validação + normalização no cliente (mesma regra do banco)
+    const v = validateCelularBR(numero);
+    if (!v.ok || !v.normalized) {
+      setInvalidReason(v.reason ?? "Número inválido");
+      setStatus("invalid");
+      return;
+    }
+    setInvalidReason(null);
+
     if (!captcha) {
       await loadCaptcha();
       return;
@@ -61,13 +72,12 @@ export default function VerificarWhatsApp() {
     try {
       const { data, error } = await supabase.functions.invoke("verify-whatsapp-number", {
         body: {
-          numero,
+          numero: v.normalized, // já normalizado: 55 + DDD + número
           captchaToken: captcha.token,
           captchaAnswer: Number(captchaAnswer),
         },
       });
       if (error) {
-        // Pode ser 429 ou 400 — tenta extrair contexto
         const ctx = (error as { context?: Response }).context;
         if (ctx?.status === 429) {
           setStatus("rate_limited");
@@ -91,11 +101,11 @@ export default function VerificarWhatsApp() {
         return;
       }
       if (data.reason === "invalid_format") {
+        setInvalidReason("Número não reconhecido pelo servidor");
         setStatus("invalid");
         return;
       }
       setStatus(data.verified ? "verified" : "not_verified");
-      // Renova captcha para próxima verificação
       await loadCaptcha();
     } catch {
       setStatus("error");
@@ -105,6 +115,7 @@ export default function VerificarWhatsApp() {
   function reset() {
     setNumero("");
     setCaptchaAnswer("");
+    setInvalidReason(null);
     setStatus("idle");
     if (!captcha) loadCaptcha();
   }
@@ -266,9 +277,12 @@ export default function VerificarWhatsApp() {
 
           {status === "invalid" && (
             <Card className="border-warning/40 bg-warning/5">
-              <CardContent className="pt-6 text-center">
-                <p className="text-sm">
-                  Número inválido. Confira se digitou DDD + número corretos.
+              <CardContent className="pt-6 text-center space-y-1">
+                <p className="text-sm font-medium">
+                  {invalidReason ?? "Número inválido"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Use o formato (DDD) 9XXXX-XXXX. Exemplo: (11) 99999-9999.
                 </p>
               </CardContent>
             </Card>
