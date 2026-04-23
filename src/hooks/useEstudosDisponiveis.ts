@@ -100,11 +100,30 @@ async function buscarEstudos(loteria: "lotofacil" | "megasena"): Promise<ListRes
     }
   }
 
+  // Hora atual em BRT (UTC-3) como "YYYY-MM-DD" e hora numérica
+  const agora = new Date();
+  const brtAgora = new Date(agora.getTime() - 3 * 60 * 60 * 1000);
+  const hojeBrtYmd = brtAgora.toISOString().slice(0, 10);
+  const horaBrt = brtAgora.getUTCHours();
+
   const estudos: EstudoDisponivel[] = (posts || []).map((p: any) => {
     const snap = p.fatos_snapshot || {};
     const proximo = snap.proximo_concurso ?? null;
-    const ehFuturo = typeof proximo === "number" && proximo > ultimoConcursoOficial;
     const dataSorteio = proximo != null ? dataPorConcurso[String(proximo)] ?? null : null;
+
+    // Regra "eh_futuro":
+    // 1. Concurso precisa ser maior que o último oficial (ainda não sorteado).
+    // 2. Se data do sorteio for HOJE e já passou das 19h BRT, considera "passado"
+    //    (não há mais janela útil para registrar palpites).
+    let ehFuturo = typeof proximo === "number" && proximo > ultimoConcursoOficial;
+    if (ehFuturo && dataSorteio) {
+      const ymdSorteio = /^\d{4}-\d{2}-\d{2}$/.test(dataSorteio)
+        ? dataSorteio
+        : new Date(dataSorteio).toISOString().slice(0, 10);
+      if (ymdSorteio === hojeBrtYmd && horaBrt >= 19) {
+        ehFuturo = false;
+      }
+    }
     return {
       id: p.id,
       slug: p.slug,
