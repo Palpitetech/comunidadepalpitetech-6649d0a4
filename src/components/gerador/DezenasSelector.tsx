@@ -11,15 +11,18 @@ interface DezenasSelectorProps {
   value: number;
   onChange: (value: number) => void;
   disabled?: boolean;
+  options?: number[];
 }
 
-const DEZENAS_OPTIONS = [15, 16, 17, 18, 19, 20];
+const DEFAULT_OPTIONS = [15, 16, 17, 18, 19, 20];
 
 export function DezenasSelector({
   value,
   onChange,
   disabled = false,
+  options,
 }: DezenasSelectorProps) {
+  const DEZENAS_OPTIONS = options ?? DEFAULT_OPTIONS;
   const handleSelectChange = (val: string) => {
     onChange(parseInt(val, 10));
   };
