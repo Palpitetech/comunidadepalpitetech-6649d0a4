@@ -12,6 +12,7 @@ import { UpsellProvider } from "@/contexts/UpsellContext";
 import { CodeProtection } from "@/components/shared/CodeProtection";
 import { PWAUpdateHandler } from "@/components/pwa/PWAUpdateHandler";
 import { useUTM } from "@/hooks/useUTM";
+import { useForceUpdate } from "@/hooks/useForceUpdate";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 // RecuperarSenha removido
@@ -124,6 +125,11 @@ function UTMCapture() {
   return null;
 }
 
+function ForceUpdateWatcher() {
+  useForceUpdate();
+  return null;
+}
+
 /** Normaliza paths com letras maiúsculas para minúsculas (ex: /Admin → /admin) */
 function LowercaseRedirect() {
   const location = useLocation();
@@ -142,6 +148,7 @@ const App = () => (
           <TooltipProvider>
             <UpsellProvider>
               <UTMCapture />
+              <ForceUpdateWatcher />
               <CodeProtection />
               <PWAUpdateHandler />
               <Toaster />
