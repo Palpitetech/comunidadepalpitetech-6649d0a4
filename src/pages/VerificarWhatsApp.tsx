@@ -54,6 +54,16 @@ export default function VerificarWhatsApp() {
   async function handleCheck(e: React.FormEvent) {
     e.preventDefault();
     if (status === "checking") return;
+
+    // Validação + normalização no cliente (mesma regra do banco)
+    const v = validateCelularBR(numero);
+    if (!v.ok || !v.normalized) {
+      setInvalidReason(v.reason ?? "Número inválido");
+      setStatus("invalid");
+      return;
+    }
+    setInvalidReason(null);
+
     if (!captcha) {
       await loadCaptcha();
       return;
@@ -62,13 +72,12 @@ export default function VerificarWhatsApp() {
     try {
       const { data, error } = await supabase.functions.invoke("verify-whatsapp-number", {
         body: {
-          numero,
+          numero: v.normalized, // já normalizado: 55 + DDD + número
           captchaToken: captcha.token,
           captchaAnswer: Number(captchaAnswer),
         },
       });
       if (error) {
-        // Pode ser 429 ou 400 — tenta extrair contexto
         const ctx = (error as { context?: Response }).context;
         if (ctx?.status === 429) {
           setStatus("rate_limited");
@@ -92,11 +101,11 @@ export default function VerificarWhatsApp() {
         return;
       }
       if (data.reason === "invalid_format") {
+        setInvalidReason("Número não reconhecido pelo servidor");
         setStatus("invalid");
         return;
       }
       setStatus(data.verified ? "verified" : "not_verified");
-      // Renova captcha para próxima verificação
       await loadCaptcha();
     } catch {
       setStatus("error");
@@ -106,6 +115,7 @@ export default function VerificarWhatsApp() {
   function reset() {
     setNumero("");
     setCaptchaAnswer("");
+    setInvalidReason(null);
     setStatus("idle");
     if (!captcha) loadCaptcha();
   }
