@@ -4,6 +4,7 @@
 // =============================================================================
 
 import type { Concurso, Fatos, GuideEngine } from "../types.ts";
+import { DEFINICAO_QUENTE_FRIA } from "../glossario.ts";
 
 // =============================================================================
 // CONSTANTES MEGA

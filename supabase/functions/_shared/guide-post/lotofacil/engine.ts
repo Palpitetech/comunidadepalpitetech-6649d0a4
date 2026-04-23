@@ -5,6 +5,7 @@
 // =============================================================================
 
 import type { Concurso, CicloHistorico, Fatos, GuideEngine } from "../types.ts";
+import { DEFINICAO_QUENTE_FRIA } from "../glossario.ts";
 
 // =============================================================================
 // CONSTANTES
@@ -1907,6 +1908,8 @@ function montarFatos(
       const blocoPanorama = `📊 O que aconteceu nos últimos ${a.totalConcursos} concursos\n` +
         `Sorteamos ${a.totalDezenasSorteadas} dezenas no total (${DEZENAS_POR_SORTEIO} por concurso).\n` +
         `Em cima disso, identificamos um padrão claro de força e fraqueza.`;
+
+      const blocoDefinicao = DEFINICAO_QUENTE_FRIA;
 
       const blocoQuentes = `🔥 Dezenas QUENTES (presença alta nos últimos ${a.totalConcursos})\n` +
         a.quentes.map((q) => {
