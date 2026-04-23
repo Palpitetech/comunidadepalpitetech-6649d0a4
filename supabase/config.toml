@@ -92,3 +92,9 @@ verify_jwt = false
 
 [functions.backfill-megasena-excel]
 verify_jwt = false
+
+[functions.precompute-daily-posts]
+verify_jwt = false
+
+[functions.generate-palpites-from-estudo]
+verify_jwt = false
