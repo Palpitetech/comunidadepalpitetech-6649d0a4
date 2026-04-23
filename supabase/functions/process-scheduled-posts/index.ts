@@ -91,23 +91,28 @@ serve(async (req) => {
 
         if (!matches) continue;
 
-        // Dedup 30 min — mesmo tipo, mesmo autor
+        // Dedup 30 min — mesmo tipo, mesma persona-loteria
+        // Persona é por loteria → AUGUSTO_PERFIL_ID só serve para Lotofácil; futuras loterias
+        // têm sua própria persona. O dedup definitivo (BRT por persona) já roda dentro de
+        // generate-guide-post; aqui usamos um pré-filtro frouxo só para evitar disparos
+        // duplicados pelo cron quando o slot pega a mesma faixa de minutos.
+        const sloteria = sched.loteria || "lotofacil";
         const thirtyMinAgo = new Date(now.getTime() - 30 * 60 * 1000).toISOString();
         const { data: recent } = await supabaseAdmin
           .from("postagens")
           .select("id")
-          .eq("user_id", AUGUSTO_PERFIL_ID)
+          .eq("loteria_tag", sloteria === "lotofacil" ? "Lotofácil" : sloteria)
           .eq("tipo", sched.tipo_post)
           .gte("created_at", thirtyMinAgo)
           .limit(1)
           .maybeSingle();
 
         if (recent) {
-          skipped.push(`${sched.tipo_post}: já postou recentemente`);
+          skipped.push(`${sched.tipo_post} (${sloteria}): já postou recentemente`);
           continue;
         }
 
-        console.log(`[process-scheduled-posts] ✅ Disparando ${sched.tipo_post} (${sched.horario})`);
+        console.log(`[process-scheduled-posts] ✅ Disparando ${sched.tipo_post} loteria=${sloteria} (${sched.horario})`);
 
         const generateUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-guide-post`;
         const r = await fetch(generateUrl, {
@@ -116,7 +121,7 @@ serve(async (req) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
           },
-          body: JSON.stringify({ tipo_post: sched.tipo_post }),
+          body: JSON.stringify({ tipo_post: sched.tipo_post, loteria: sloteria }),
         });
 
         if (!r.ok) {
