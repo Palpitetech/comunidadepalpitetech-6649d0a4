@@ -302,14 +302,56 @@ function analisarRepetidasDetalhado(concursos: Concurso[]): RepetidasDetalhado {
     .sort((a, b) => a.perc - b.perc || a.vezes - b.vezes || a.dezena - b.dezena)
     .slice(0, 3);
 
-  // Melhores duplas/trios restritos ao último sorteio, com transicoes >= 2
+  // Auditoria: recontagem independente de duplas/trios percorrendo APENAS
+  // transições reais entre concursos consecutivos (i, i+1). Se a recontagem
+  // não bater com a contagem acumulada acima, descarta a entrada — garantia
+  // anti-alucinação de que nenhum par/trio "fantasma" seja publicado.
+  const auditarPar = (a: number, b: number): { vezes: number; transicoes: number } => {
+    let vezes = 0;
+    let chances = 0;
+    for (let i = 0; i < transicoes; i++) {
+      const anteriorSet = new Set(concursos[i + 1].dezenas);
+      const seguinteSet = new Set(concursos[i].dezenas);
+      const aNoAnterior = anteriorSet.has(a);
+      const bNoAnterior = anteriorSet.has(b);
+      if (aNoAnterior && bNoAnterior) {
+        chances++;
+        if (seguinteSet.has(a) && seguinteSet.has(b)) vezes++;
+      }
+    }
+    return { vezes, transicoes: chances };
+  };
+
+  const auditarTrio = (a: number, b: number, c: number): { vezes: number; transicoes: number } => {
+    let vezes = 0;
+    let chances = 0;
+    for (let i = 0; i < transicoes; i++) {
+      const anteriorSet = new Set(concursos[i + 1].dezenas);
+      const seguinteSet = new Set(concursos[i].dezenas);
+      if (anteriorSet.has(a) && anteriorSet.has(b) && anteriorSet.has(c)) {
+        chances++;
+        if (seguinteSet.has(a) && seguinteSet.has(b) && seguinteSet.has(c)) vezes++;
+      }
+    }
+    return { vezes, transicoes: chances };
+  };
+
+  // Melhores duplas restritas ao último sorteio, com transicoes >= 3 e vezes >= 2,
+  // validadas pela recontagem independente.
   const melhoresDuplasRep: ParRepetido[] = Array.from(parRep.entries())
     .map(([k, v]) => {
       const [a, b] = k.split("-").map(Number);
       const t = parChance.get(k) || 0;
       return { a, b, vezes: v, transicoes: t, perc: t > 0 ? Math.round((v / t) * 100) : 0 };
     })
-    .filter((p) => p.vezes >= 2 && p.transicoes >= 3)
+    .filter((p) => {
+      if (p.vezes < 2 || p.transicoes < 3) return false;
+      // Só aceita pares onde AMBAS as dezenas estão no último sorteio
+      if (!ultimoSet.has(p.a) || !ultimoSet.has(p.b)) return false;
+      // Validação independente: recontagem por transição real
+      const audit = auditarPar(p.a, p.b);
+      return audit.vezes === p.vezes && audit.transicoes === p.transicoes;
+    })
     .sort((x, y) => y.vezes - x.vezes || y.perc - x.perc || x.a - y.a)
     .slice(0, 3);
 
@@ -319,7 +361,12 @@ function analisarRepetidasDetalhado(concursos: Concurso[]): RepetidasDetalhado {
       const t = trioChance.get(k) || 0;
       return { a, b, c, vezes: v, transicoes: t, perc: t > 0 ? Math.round((v / t) * 100) : 0 };
     })
-    .filter((p) => p.vezes >= 2 && p.transicoes >= 3)
+    .filter((p) => {
+      if (p.vezes < 2 || p.transicoes < 3) return false;
+      if (!ultimoSet.has(p.a) || !ultimoSet.has(p.b) || !ultimoSet.has(p.c)) return false;
+      const audit = auditarTrio(p.a, p.b, p.c);
+      return audit.vezes === p.vezes && audit.transicoes === p.transicoes;
+    })
     .sort((x, y) => y.vezes - x.vezes || y.perc - x.perc || x.a - y.a)
     .slice(0, 2);
 
