@@ -810,7 +810,8 @@ serve(async (req) => {
       console.warn(`[generate-guide-post] ⚠️ ${motivoFallback}`);
       conteudo = fallbackConteudo(fatos);
     } else {
-      const conteudoIA = sanitizar(ia.content || "").substring(0, 1500);
+      const limiteConteudo = tipoPost === "analise_ciclo" ? 2000 : 1500;
+      const conteudoIA = sanitizar(ia.content || "").substring(0, limiteConteudo);
       const validacao = validarConteudoNumerico(conteudoIA, numerosPermitidos);
 
       if (!validacao.ok || conteudoIA.length < 50) {
@@ -822,7 +823,7 @@ serve(async (req) => {
         conteudo = conteudoIA;
         // Guardrail: garante que a recomendação direta apareça
         if (!conteudo.includes("Como montar") && !conteudo.includes("montar seu palpite")) {
-          conteudo = (conteudo + `\n\n💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\nLoteria envolve sorte.`).substring(0, 1500);
+          conteudo = (conteudo + `\n\n💡 Como montar seu palpite\n${fatos.recomendacaoDireta}\n\nLoteria envolve sorte.`).substring(0, limiteConteudo);
         }
       }
 
