@@ -76,6 +76,39 @@ export default function Comunidade() {
           })()}
         </div>
 
+        {/* Seletor de loteria */}
+        <div className="mb-4">
+          <p className="text-xs text-muted-foreground mb-2 font-medium">Ver estudos:</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setLoteriaFiltro("lotofacil")}
+              aria-pressed={loteriaFiltro === "lotofacil"}
+              className={cn(
+                "min-h-[44px] px-3 py-2 rounded-xl text-sm font-bold border-2 transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+                loteriaFiltro === "lotofacil"
+                  ? "bg-[hsl(270_60%_50%)] text-white border-[hsl(270_60%_50%)] shadow-md ring-1 ring-[hsl(270_60%_50%)]/30 focus-visible:ring-[hsl(270_60%_50%)]"
+                  : "bg-background text-[hsl(270_60%_50%)] border-[hsl(270_60%_50%)] hover:bg-[hsl(270_60%_50%)]/5 focus-visible:ring-[hsl(270_60%_50%)]"
+              )}
+            >
+              Lotofácil
+            </button>
+            <button
+              type="button"
+              onClick={() => setLoteriaFiltro("megasena")}
+              aria-pressed={loteriaFiltro === "megasena"}
+              className={cn(
+                "min-h-[44px] px-3 py-2 rounded-xl text-sm font-bold border-2 transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+                loteriaFiltro === "megasena"
+                  ? "bg-[hsl(125_70%_40%)] text-white border-[hsl(125_70%_40%)] shadow-md ring-1 ring-[hsl(125_70%_40%)]/30 focus-visible:ring-[hsl(125_70%_40%)]"
+                  : "bg-background text-[hsl(125_70%_40%)] border-[hsl(125_70%_40%)] hover:bg-[hsl(125_70%_40%)]/5 focus-visible:ring-[hsl(125_70%_40%)]"
+              )}
+            >
+              Mega-Sena
+            </button>
+          </div>
+        </div>
+
         {isLoading && <PostCardSkeleton count={5} />}
 
         {error && (
@@ -84,11 +117,26 @@ export default function Comunidade() {
           </div>
         )}
 
-        {!isLoading && posts && posts.length === 0 && (
+        {!isLoading && posts && (pinnedPost === null && otherPosts.length === 0) && (
           <div className="bg-muted/50 rounded-lg p-8 text-center">
-            <p className="text-muted-foreground">
-              Nenhum post ainda. Seja o primeiro a compartilhar!
-            </p>
+            {loteriaFiltro === "megasena" ? (
+              <div className="space-y-3">
+                <p className="text-muted-foreground">
+                  Estudos de Mega-Sena em breve. Por enquanto, confira os estudos de Lotofácil.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setLoteriaFiltro("lotofacil")}
+                  className="text-sm font-semibold text-[hsl(270_60%_50%)] hover:underline"
+                >
+                  Ver estudos de Lotofácil →
+                </button>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">
+                Nenhum post ainda. Seja o primeiro a compartilhar!
+              </p>
+            )}
           </div>
         )}
 
