@@ -33,6 +33,7 @@ import PostDetalhes from "./pages/PostDetalhes";
 import Bloqueado from "./pages/Bloqueado";
 import Convites from "./pages/Convites";
 import Planos from "./pages/Planos";
+import PlanosPublico from "./pages/PlanosPublico";
 import AdminIndex from "./pages/admin/AdminIndex";
 import AdminPlanos from "./pages/admin/AdminPlanos";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
