@@ -33,6 +33,7 @@ import PostDetalhes from "./pages/PostDetalhes";
 import Bloqueado from "./pages/Bloqueado";
 import Convites from "./pages/Convites";
 import Planos from "./pages/Planos";
+import PlanosPublico from "./pages/PlanosPublico";
 import AdminIndex from "./pages/admin/AdminIndex";
 import AdminPlanos from "./pages/admin/AdminPlanos";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
@@ -204,6 +205,7 @@ const App = () => (
                 <Route path="/convites" element={<ProtectedRoute><GatedPage feature="comunidade_full"><Convites /></GatedPage></ProtectedRoute>} />
                 <Route path="/bloqueado" element={<Bloqueado />} />
                 <Route path="/planos" element={<Planos />} />
+                <Route path="/planos-publico" element={<PlanosPublico />} />
                 
                 {/* Rotas Mega Sena */}
                 <Route path="/megasena" element={<ProtectedRoute><HubMegaSena /></ProtectedRoute>} />
