@@ -205,6 +205,7 @@ const App = () => (
                 <Route path="/convites" element={<ProtectedRoute><GatedPage feature="comunidade_full"><Convites /></GatedPage></ProtectedRoute>} />
                 <Route path="/bloqueado" element={<Bloqueado />} />
                 <Route path="/planos" element={<Planos />} />
+                <Route path="/planos-publico" element={<PlanosPublico />} />
                 
                 {/* Rotas Mega Sena */}
                 <Route path="/megasena" element={<ProtectedRoute><HubMegaSena /></ProtectedRoute>} />
