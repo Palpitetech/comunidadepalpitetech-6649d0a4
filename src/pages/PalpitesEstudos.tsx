@@ -3,7 +3,7 @@ import { Play } from "lucide-react";
 
 const LINKS = {
   youtube: "https://www.youtube.com/@palpitetech",
-  geradorInteligente: "/planos",
+  geradorInteligente: "/planos-publico",
   palpitesLotofacil: "#",
   palpitesMega: "#",
   estudosMega: "/login",
