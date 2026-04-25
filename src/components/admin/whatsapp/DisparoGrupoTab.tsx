@@ -14,6 +14,7 @@ import { Plus, Pencil, Pause, Play, TestTube, X, Clock, Send, Trash2, Sparkles, 
 import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageStatusBadge } from "./shared/MessageStatusBadge";
+import { GroupBlastScheduleCard } from "./GroupBlastScheduleCard";
 
 interface Slot {
   id: string;
@@ -370,6 +371,9 @@ export function DisparoGrupoTab() {
           Nova Configuração
         </Button>
       </div>
+
+      {/* Status do agendamento automático */}
+      <GroupBlastScheduleCard onAfterReschedule={fetchAll} />
 
       {/* Config Cards */}
       {configs.length === 0 ? (
