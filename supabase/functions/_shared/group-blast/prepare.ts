@@ -2,12 +2,17 @@ import { jsonResponse } from "../whatsapp-utils.ts";
 import type { PreparePayload, Slot } from "./types.ts";
 
 /**
- * Converte um horário BRT (hh:mm) em um Date UTC do dia atual.
+ * Converte um horário BRT (hh:mm) em um Date UTC.
  * BRT = UTC-3, então a hora UTC = hora BRT + 3.
+ *
+ * IMPORTANTE: Se o horário calculado para hoje já está no passado
+ * (ex.: prepare roda 04:00 BRT e o nextTime é 23:30 BRT do dia anterior),
+ * agenda automaticamente para o próximo dia. Isso evita logs com
+ * `scheduled_for` retroativo que disparariam imediatamente.
  */
-function brTimeToUtcToday(hh: string, mm: string): Date {
+function brTimeToScheduledUtc(hh: string, mm: string): Date {
   const now = new Date();
-  return new Date(
+  let scheduled = new Date(
     Date.UTC(
       now.getUTCFullYear(),
       now.getUTCMonth(),
@@ -18,6 +23,11 @@ function brTimeToUtcToday(hh: string, mm: string): Date {
       0,
     ),
   );
+  // Se já passou, agenda para o dia seguinte
+  if (scheduled.getTime() <= now.getTime()) {
+    scheduled = new Date(scheduled.getTime() + 24 * 60 * 60 * 1000);
+  }
+  return scheduled;
 }
 
 /**
@@ -47,6 +57,12 @@ export async function handlePrepare(
   if (cfgErr) throw cfgErr;
 
   let prepared = 0;
+  let skippedDedup = 0;
+  const errors: string[] = [];
+
+  console.log(
+    `[prepare] start: configs=${configs?.length ?? 0} force=${!!opts.force}`,
+  );
 
   for (const config of configs || []) {
     const slots: Slot[] = config.slots ?? [];
@@ -70,7 +86,7 @@ export async function handlePrepare(
       for (const groupJid of groupJids) {
         const scheduled = opts.force
           ? new Date(Date.now() + 30_000 * (slotIdx + 1))
-          : brTimeToUtcToday(hh, mm);
+          : brTimeToScheduledUtc(hh, mm);
 
         // Dedup: pula se já existe agendamento recente (não aplicável em modo force)
         if (!opts.force) {
@@ -87,7 +103,13 @@ export async function handlePrepare(
             .gte("created_at", twentyHoursAgo)
             .neq("status", "failed");
 
-          if ((count ?? 0) > 0) continue;
+          if ((count ?? 0) > 0) {
+            skippedDedup++;
+            console.log(
+              `[prepare] dedup skip config=${config.name} slot=${slot.id} group=${groupJid}`,
+            );
+            continue;
+          }
         }
 
         // instance_id e evolution_instance_id NUNCA pré-vinculados aqui.
@@ -105,14 +127,16 @@ export async function handlePrepare(
           });
 
         if (insertErr) {
-          console.error(
-            `[prepare] Erro insert log config=${config.id} slot=${slot.id} group=${groupJid}:`,
-            insertErr,
-          );
+          const msg = `config=${config.name} slot=${slot.id} group=${groupJid}: ${insertErr.message}`;
+          errors.push(msg);
+          console.error(`[prepare] insert error ${msg}`);
           continue;
         }
 
         prepared++;
+        console.log(
+          `[prepare] inserted config=${config.name} slot=${slot.id} group=${groupJid} scheduled=${scheduled.toISOString()}`,
+        );
       }
 
       updatedSlots = updatedSlots.map((s) =>
@@ -129,6 +153,8 @@ export async function handlePrepare(
       .eq("id", config.id);
   }
 
-  console.log(`[prepare] Prepared ${prepared} log(s) (force=${!!opts.force})`);
-  return jsonResponse({ prepared });
+  console.log(
+    `[prepare] done: prepared=${prepared} skippedDedup=${skippedDedup} errors=${errors.length} force=${!!opts.force}`,
+  );
+  return jsonResponse({ prepared, skipped_dedup: skippedDedup, errors });
 }
