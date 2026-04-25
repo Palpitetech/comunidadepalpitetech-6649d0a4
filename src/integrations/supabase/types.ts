@@ -3307,6 +3307,17 @@ export type Database = {
       }
       generate_referral_code: { Args: never; Returns: string }
       generate_slug: { Args: { title: string }; Returns: string }
+      get_group_blast_schedule: {
+        Args: never
+        Returns: {
+          active: boolean
+          jobid: number
+          jobname: string
+          last_ran_at: string
+          next_run_at: string
+          schedule: string
+        }[]
+      }
       get_lead_retargeting_schedule: {
         Args: never
         Returns: {
