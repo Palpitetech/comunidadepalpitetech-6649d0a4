@@ -273,7 +273,7 @@ async function isAdminFromBearer(authHeader: string | null) {
   const client = createClient(supabaseUrl, anonKey, {
     auth: { persistSession: false },
     global: { headers: { Authorization: authHeader } },
-  });
+  }) as any;
 
   const token = authHeader.replace("Bearer ", "");
   const { data: userData, error: userError } = await client.auth.getUser(token);
@@ -315,7 +315,7 @@ serve(async (req) => {
   // Always fetch DB token; accept either env or DB token
   let dbWebhookToken = "";
   try {
-    const sbAdmin = createClient(supabaseUrl, serviceRoleKey);
+    const sbAdmin = createClient(supabaseUrl, serviceRoleKey) as any;
     const { data } = await sbAdmin
       .from("admin_settings")
       .select("kirvano_webhook_token")
@@ -417,7 +417,7 @@ serve(async (req) => {
     action,
   });
 
-  const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+  const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } }) as any;
 
   // Descobre método de autorização para auditoria
   const authMethod = (() => {
@@ -931,7 +931,7 @@ serve(async (req) => {
       if (insertError) logStep("Failed to insert premium role", { message: insertError.message });
     }
 
-    await insertEvent(targetPerfilId, "sale_confirmed", {
+    await insertEvent(targetPerfilId!, "sale_confirmed", {
       plan_id: offerMap.plan_id,
       days_valid: daysValid,
       offer_id: offerId,
@@ -1103,7 +1103,7 @@ serve(async (req) => {
     </div>
     <div style="background:#fefce8;border:1px solid #fbbf24;border-radius:12px;padding:24px;margin-bottom:24px;">
       <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 16px;">
-        Olá, <strong>${customerName || perfil.nome || "Jogador"}</strong>! 👋
+        Olá, <strong>${customerName || (perfil as any).nome || "Jogador"}</strong>! 👋
       </p>
       <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 16px;">
         Identificamos que o pagamento da sua assinatura na <strong>Palpite Tech</strong> está pendente.
