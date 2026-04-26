@@ -1,123 +1,196 @@
-## Causa raiz — por que 24/04 (e 25/04) não tiveram disparos
+## Plano revisado — sem UI de mapeamento, com triggers automáticas
 
-Investiguei `cron.job`, `cron.job_run_details`, `group_blast_logs` e `group_blast_configs`. **A hipótese inicial estava errada**: o cron `group-blast-prepare` (`0 7 * * *`) está ativo e executou normalmente todos os dias, inclusive em **24/04 07:00 UTC** e **25/04 07:00 UTC** (status `succeeded`). O `group-blast-send-cron` também roda a cada minuto sem falhas.
-
-O problema está na **lógica de `prepare.ts`**, especificamente no avanço de `last_scheduled_index` combinado com horários todos concentrados à noite.
-
-### O que está acontecendo
-
-Olhando as 3 configs ativas:
-
-| Config | Slot | `schedule_times` | `last_scheduled_index` |
-|---|---|---|---|
-| Envio Palpites Lotofácil | slot_1 | 23:01, 23:05, 23:09, 23:11, 23:17, 23:22, 23:25, 23:28, 23:29, 23:59 | **3** |
-| Post Grupo Whatsapp | slot_1 | 06:08, 08:29, 09:33, 10:19, 10:34, 12:08, 12:54, 13:33, 15:09, 16:59 | **2** |
-| Post Grupo Whatsapp | slot_2 | 22:09, 23:00, 23:03, 23:12, 23:18, 23:20, 23:29, 23:38, 23:50, 23:59 | **2** |
-| Envio Palpites GRUPO FREE | slot_1 | 23:30, 23:32, 23:33, 23:40, 23:43, 23:47, 23:48, 23:53, 23:54, 23:58 | **9** |
-
-O `prepare` roda **07:00 UTC = 04:00 BRT** e executa esta lógica:
-
-```ts
-const nextIndex = ((slot.last_scheduled_index ?? -1) + 1) % times.length;
-const nextTime = times[nextIndex];
-// ... brTimeToUtcToday converte para UTC do dia atual
-```
-
-**Avança apenas 1 índice por slot por dia.** Resultado:
-
-- **GRUPO FREE / slot_1**: `last_index=9` → próximo = `(9+1)%10 = 0` → agenda **23:30 BRT = 02:30 UTC**. Como o prepare rodou às 07:00 UTC, esse horário é **no passado** (já passou de 02:30 UTC). O `handleSend` busca pendings com `scheduled_for <= now()`, então ele PEGA esses logs — mas eles ficam tentando enviar imediatamente. **Olhando os logs da tabela, não há nenhum insert para 24/04 nem 25/04** — ou seja, nem o INSERT está acontecendo.
-
-Investigando mais: os 3 últimos horários em que dados foram inseridos (23/04 07:00:01, 07:00:02) usaram `scheduled_for = 24/04 02:03/02:11 UTC` (= 23:03/23:11 BRT do dia anterior). Esses são os do dia 23. **Em 24/04 07:00 UTC, o prepare rodou mas não inseriu nada**.
-
-### A causa real do bloqueio
-
-O dedup do `prepare.ts`:
-```ts
-const twentyHoursAgo = new Date(Date.now() - 20*60*60*1000).toISOString();
-const { count } = await supabase
-  .from("group_blast_logs")
-  .select("id", { count: "exact", head: true })
-  .eq("config_id", config.id)
-  .eq("slot_id", slot.id)
-  .eq("group_jid", groupJid)
-  .gte("created_at", twentyHoursAgo)   // ← compara com created_at, não scheduled_for
-  .neq("status", "failed");
-```
-
-Em **24/04 07:00 UTC**, "20h atrás" = **23/04 11:00 UTC**. Existem logs criados em 23/04 13:53 (test manual) e 23/04 07:00 (o prepare anterior) — todos com `status = 'sent'`, **dentro da janela de 20h**. Para cada `(config, slot, group)` o dedup encontra ≥1 log → **pula a inserção**.
-
-Em **25/04 07:00 UTC**, "20h atrás" = 24/04 11:00 UTC. Os logs do dia 23 estão fora da janela, MAS aqueles agendados para `2026-04-24 02:03/02:11` (que efetivamente foram enviados) têm `created_at` em 23/04 07:00, também fora da janela. Aí entra outro problema: o prepare **só agenda para o dia atual** (`brTimeToUtcToday`). Em 25/04 04:00 BRT, ele pega `nextIndex=0` da config FREE (`23:30 BRT`), monta `2026-04-25 02:30 UTC` — esse horário **JÁ PASSOU** (são 04:00 BRT = 07:00 UTC). O log seria inserido com `scheduled_for` no passado e o `send` o despacharia imediatamente. Mas... olhando o resultado da query: **nenhum log inserido em 24 nem 25**.
-
-A explicação consistente: em **25/04**, o dedup também bloqueia, porque alguns logs do dia 23 com `created_at` posterior a 24/04 11:00 UTC ainda estão na janela (ex.: o test manual de 23/04 13:53 está fora; mas o `2026-04-23 07:00:02.45` insert também está fora). Preciso revisar — vou rodar uma query no momento da execução para confirmar, mas o sintoma é claríssimo: **`last_scheduled_index` nunca avança porque o INSERT é pulado pelo dedup, e o dedup é pulado porque o `last_scheduled_index` aponta para um horário do passado que não foi inserido**. É um deadlock lógico após o primeiro dia em que algo falhou (22/04 teve `dns error` em vários logs, mas com `status=failed` o dedup ignora — então 23/04 rodou ok; 24/04 começou a degradar).
-
-Na verdade, re-lendo o código: o `last_scheduled_index` é **atualizado mesmo se o insert for pulado pelo dedup** (o `updatedSlots.map` está fora do `if (count > 0) continue`). Então o índice avança normalmente. O verdadeiro problema é outro:
-
-### Verdadeira causa raiz (confirmada)
-
-`brTimeToUtcToday(hh, mm)` converte horário BRT em UTC do **dia UTC atual**. Quando o prepare roda às **07:00 UTC** (04:00 BRT) e o `nextTime` é `23:xx BRT`, isso vira `02:xx UTC` — mas do **mesmo dia UTC**, ou seja, **5 horas no passado**. O log é inserido com `scheduled_for` no passado → o `send-cron` o pega no minuto seguinte e tenta enviar. Isso até funciona.
-
-**MAS** quando o `nextTime` é manhã (ex.: `06:08 BRT = 09:08 UTC`), agenda corretamente para o dia.
-
-Olhando os dados: em 23/04, slot_1 do "Post Grupo Whatsapp" tinha `last_index=1` → próximo = 2 → time `09:33 BRT = 12:33 UTC` ✓ enviado às 12:33. Slot_2 tinha `last_index=1` → próximo = 2 → time `23:03 BRT = 02:03 UTC do dia 24` ✓ — espera, `brTimeToUtcToday` faz `parseInt(23) + 3 = 26` horas → JS normaliza para **dia seguinte 02:00**. ✓ Por isso 24/04 02:03 funcionou.
-
-Em **24/04 07:00 UTC**, prepare avança índices: slot_1 vai de 2→3 (`10:19 BRT = 13:19 UTC` ✓ futuro), slot_2 vai de 2→3 (`23:12 BRT → 02:12 UTC do dia 25` ✓ futuro). **Esses logs DEVERIAM ter sido inseridos**.
-
-A query confirma que **nenhum log foi criado em 24/04 nem 25/04**. Então o INSERT está falhando silenciosamente. O código:
-
-```ts
-if (insertErr) {
-  console.error(...);
-  continue;
-}
-```
-
-Mas o cron retornou `succeeded` — porque o `prepare` retorna 200 mesmo com erros internos. **Preciso ver os logs da Edge Function** para 24/04 e 25/04 às 07:00 UTC.
+Mantém os fixes dos arquivos `.ts` do plano anterior, mas substitui a UI manual por **triggers Postgres** que populam `whatsapp_instance_groups` sozinhas.
 
 ---
 
-## Plano de ação
+### BUG 1 — `send_now` retornando 500 (Edge Function)
 
-### 1. Ler logs da Edge Function `group-blast-send` filtrando pelas execuções de prepare em 24/04 e 25/04 (07:00 UTC)
-Para confirmar exatamente qual erro está bloqueando o INSERT (RLS? constraint? trigger?). Se o erro for trivial (ex.: faltou coluna após migration), corrigir direto.
-
-### 2. Corrigir bug de "horário no passado"
-Em `supabase/functions/_shared/group-blast/prepare.ts`, ajustar `brTimeToUtcToday` para retornar `tomorrow` quando o horário calculado já passou:
+**`supabase/functions/group-blast-send/index.ts`**
+- Envolver `validateAdmin(req)` em try/catch próprio dentro do handler, retornando 401 explícito quando o JWT lançar exceção (em vez de cair no `catch` genérico que vira 500):
 
 ```ts
-function brTimeToScheduledUtc(hh: string, mm: string): Date {
-  const now = new Date();
-  let scheduled = new Date(Date.UTC(
-    now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),
-    parseInt(hh) + 3, parseInt(mm), 0, 0
-  ));
-  // Se o horário calculado já passou, agenda para o próximo dia
-  if (scheduled.getTime() <= now.getTime()) {
-    scheduled = new Date(scheduled.getTime() + 24*60*60*1000);
+if (action !== "send") {
+  try {
+    const authErr = await validateAdmin(req);
+    if (authErr) return authErr;
+  } catch (e: any) {
+    return jsonResponse({ error: "Falha na autenticação: " + e.message }, 401);
   }
-  return scheduled;
 }
 ```
 
-### 3. Adicionar telemetria mínima
-Aumentar logging dentro do loop de `prepare.ts` para que próximas falhas fiquem visíveis sem precisar abrir o banco:
-- `console.log` antes/depois do INSERT com `config.id`, `slot.id`, `groupJid`, `scheduled.toISOString()`, e o resultado.
-- Retornar no JSON final um array `errors[]` com inserts que falharam.
+**`supabase/functions/_shared/group-blast/send-now.ts`**
+- Após o loop de inserts, se `insertedLogs.length === 0` e havia `group_jids` para inserir, retornar 500 explícito com mensagem clara em vez de 200 silencioso:
 
-### 4. Catch-up manual do dia 25
-Após corrigir o bug, chamar `group-blast-send` com `{action:"prepare", force:true}` uma vez para reagendar imediatamente os slots de hoje (modo `force` ignora o dedup e agenda em `now + 30s*(slotIdx+1)`).
+```ts
+if (insertedLogs.length === 0 && groupJids.length > 0) {
+  return jsonResponse({ 
+    error: "Nenhum log inserido — verifique RLS ou conexão com Postgres" 
+  }, 500);
+}
+```
 
-### 5. Card de status no admin (`DisparoGrupoTab`)
-Adicionar um `ScheduleStatusCard` no topo da aba (espelhando o já existente em `RetargetingPanelTab`) mostrando:
-- Última execução do `group-blast-prepare` (status, timestamp).
-- Última execução do `group-blast-send-cron`.
-- Botão **"Reagendar agora"** que dispara `prepare` com `force:true` para o usuário fazer catch-up manual no futuro.
+---
 
-Para isso será criada a RPC `get_group_blast_schedule()` (security definer, admin-only) que lê `cron.job` + `cron.job_run_details`.
+### BUG 2a — `select_best_instances` não filtra por pertencimento ao grupo
 
-### Arquivos a editar
-- `supabase/functions/_shared/group-blast/prepare.ts` (fix de fuso + logs)
-- `src/components/admin/whatsapp/DisparoGrupoTab.tsx` (card de status + botão)
-- Migration: criar RPC `get_group_blast_schedule()`
+**Migração SQL (uma migração só com tudo):**
 
-### Arquivos a investigar antes (passo 1)
-- Logs da Edge Function `group-blast-send` em 24/04 e 25/04 entre 07:00–07:05 UTC, para confirmar a causa do INSERT silenciosamente bloqueado (caso seja diferente do bug do fuso, ajusto a correção antes de aplicar).
+1. **Criar tabela `whatsapp_instance_groups`** com FK para `whatsapp_instances` (ON DELETE CASCADE), constraint UNIQUE(instance_id, group_jid), RLS admin-only + service-role full access.
+
+2. **Atualizar RPC `select_best_instances`** adicionando `p_group_jid text DEFAULT NULL`. Quando informado, filtra apenas instâncias que tenham linha em `whatsapp_instance_groups` para aquele JID:
+
+```sql
+CREATE OR REPLACE FUNCTION public.select_best_instances(
+  p_limit integer DEFAULT 5,
+  p_group_jid text DEFAULT NULL
+)
+RETURNS TABLE(instance_id uuid, evolution_instance_id text, phone_number text)
+LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public'
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT wi.id, wi.evolution_instance_id, wi.phone_number
+  FROM public.whatsapp_instances wi
+  WHERE wi.status = 'online'
+    AND COALESCE(wi.messages_sent_today, 0) < COALESCE(wi.daily_limit, 100)
+    AND (
+      wi.last_message_at IS NULL
+      OR wi.last_message_at <= now() - (
+        COALESCE(
+          (wi.cooldown_queue -> (COALESCE(wi.cooldown_queue_index, 0) % NULLIF(jsonb_array_length(wi.cooldown_queue), 0)))::int,
+          1
+        ) || ' minutes'
+      )::interval
+    )
+    AND (
+      p_group_jid IS NULL
+      OR EXISTS (
+        SELECT 1 FROM public.whatsapp_instance_groups wig
+        WHERE wig.instance_id = wi.id AND wig.group_jid = p_group_jid
+      )
+    )
+  ORDER BY wi.last_message_at ASC NULLS FIRST
+  LIMIT p_limit;
+END;
+$$;
+```
+
+3. **Trigger 1 — auto-mapear nova instância para todos os grupos ativos:**
+
+```sql
+CREATE OR REPLACE FUNCTION public.auto_map_instance_to_all_groups()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER 
+SET search_path = public AS $$
+BEGIN
+  INSERT INTO public.whatsapp_instance_groups (instance_id, group_jid)
+  SELECT NEW.id, g.group_jid
+  FROM (
+    SELECT DISTINCT unnest(group_jids) AS group_jid
+    FROM public.group_blast_configs
+    WHERE is_active = true
+  ) g
+  ON CONFLICT (instance_id, group_jid) DO NOTHING;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_auto_map_instance_to_groups
+AFTER INSERT ON public.whatsapp_instances
+FOR EACH ROW EXECUTE FUNCTION public.auto_map_instance_to_all_groups();
+```
+
+> Nota: `group_jids` é `text[]` (não jsonb) — uso `unnest()` em vez de `jsonb_array_elements_text()`. Também uso `is_active` (nome real da coluna).
+
+4. **Trigger 2 — auto-mapear todas instâncias para grupos novos da config:**
+
+```sql
+CREATE OR REPLACE FUNCTION public.auto_map_all_instances_to_new_group()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER 
+SET search_path = public AS $$
+BEGIN
+  INSERT INTO public.whatsapp_instance_groups (instance_id, group_jid)
+  SELECT wi.id, ng.group_jid
+  FROM public.whatsapp_instances wi
+  CROSS JOIN (SELECT DISTINCT unnest(NEW.group_jids) AS group_jid) ng
+  ON CONFLICT (instance_id, group_jid) DO NOTHING;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_auto_map_groups_to_instances
+AFTER INSERT OR UPDATE OF group_jids ON public.group_blast_configs
+FOR EACH ROW EXECUTE FUNCTION public.auto_map_all_instances_to_new_group();
+```
+
+5. **Backfill histórico (one-time, na mesma migração):**
+
+```sql
+INSERT INTO public.whatsapp_instance_groups (instance_id, group_jid)
+SELECT wi.id, g.group_jid
+FROM public.whatsapp_instances wi
+CROSS JOIN (
+  SELECT DISTINCT unnest(group_jids) AS group_jid
+  FROM public.group_blast_configs
+) g
+ON CONFLICT (instance_id, group_jid) DO NOTHING;
+```
+
+**`supabase/functions/_shared/group-blast/send.ts`**
+- Passar `log.group_jid` ao chamar `select_best_instances`:
+  ```ts
+  const { data: candidates, error: candErr } = await supabase.rpc(
+    "select_best_instances",
+    { p_limit: 5, p_group_jid: log.group_jid },
+  );
+  ```
+- Quando `candidates` vier vazio, marcar log como `failed` com `error_message = "Nenhuma instância disponível para este grupo"` (em vez do `skippedCooldown++` silencioso).
+
+---
+
+### BUG 2b — Validação real do body da Evolution API
+
+**`supabase/functions/_shared/group-blast/send.ts`** — `attemptSendThroughInstance`:
+
+Substituir o `await res.text()` descartado por validação do JSON real da Evolution. A Evolution API retorna `{ key: { id, remoteJid, fromMe }, status, message: {...} }` em sucesso. Se faltar `key.id`, é falha lógica mesmo com HTTP 200:
+
+```ts
+const body = await res.json().catch(() => null);
+
+if (!res.ok || !body?.key?.id) {
+  const reason = body?.message ?? body?.error ?? `HTTP ${res.status}`;
+  await supabase
+    .from("whatsapp_instances")
+    .update({ last_message_at: new Date().toISOString() })
+    .eq("id", instance.instance_id);
+  return { ok: false, status: res.status, error: reason };
+}
+
+return { ok: true };
+```
+
+---
+
+### O que NÃO será feito (vs plano anterior rejeitado)
+
+- ❌ Não criar `InstanceGroupMappingCard.tsx`
+- ❌ Não modificar `DisparoGrupoTab.tsx` para adicionar UI de mapeamento manual
+- ✅ Triggers automáticas cobrem 100% dos casos: nova instância → mapeada em todos os grupos; novo grupo na config → mapeado em todas instâncias
+
+---
+
+### Arquivos afetados
+
+| Arquivo | Ação |
+|---|---|
+| `supabase/functions/group-blast-send/index.ts` | try/catch no validateAdmin |
+| `supabase/functions/_shared/group-blast/send-now.ts` | 500 explícito quando 0 inserts |
+| `supabase/functions/_shared/group-blast/send.ts` | passar `p_group_jid`; tratar candidates vazio como `failed`; validar body Evolution |
+| Nova migração SQL | tabela `whatsapp_instance_groups` + RLS + RPC atualizada + 2 triggers + backfill |
+
+### Premissas confirmadas no schema atual
+
+- `group_blast_configs.group_jids` é `text[]` (não jsonb) → uso `unnest()`
+- Coluna de ativação é `is_active` (não `active`)
+- `whatsapp_instances.id` é UUID PK existente
