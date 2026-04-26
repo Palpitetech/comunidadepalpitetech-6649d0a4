@@ -233,7 +233,7 @@ serve(async (req) => {
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    ) as any;
 
     const { data: webhook, error: webhookError } = await supabaseAdmin
       .from("lead_webhooks")
