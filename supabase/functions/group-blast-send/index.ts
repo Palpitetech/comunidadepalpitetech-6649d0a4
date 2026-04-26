@@ -8,6 +8,7 @@ import {
 import { handlePrepare } from "../_shared/group-blast/prepare.ts";
 import { handleSend } from "../_shared/group-blast/send.ts";
 import { handleSendNow } from "../_shared/group-blast/send-now.ts";
+import { handleRetry } from "../_shared/group-blast/retry.ts";
 
 /**
  * Roteador HTTP do disparo de grupo.
