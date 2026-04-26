@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageStatusBadge } from "./shared/MessageStatusBadge";
 import { GroupBlastScheduleCard } from "./GroupBlastScheduleCard";
+import { GroupBlastLogsCard } from "./GroupBlastLogsCard";
 
 interface Slot {
   id: string;
