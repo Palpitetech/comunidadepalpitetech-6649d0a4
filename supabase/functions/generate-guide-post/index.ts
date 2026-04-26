@@ -24,7 +24,7 @@ const PROX_CACHE_TTL_MS = 10 * 60 * 1000;
 const proxConcursoCache = new Map<string, ProxConcursoCache>();
 
 async function getProximoConcursoCached(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: any,
   loteria: string,
 ): Promise<ProxConcursoCache | null> {
   const now = Date.now();
@@ -192,17 +192,19 @@ serve(async (req) => {
         const pt = ia.usage.prompt_tokens || 0;
         const ct = ia.usage.completion_tokens || 0;
         const cost = (pt / 1e6) * 0.15 + (ct / 1e6) * 0.6;
-        supabaseAdmin.from("ai_usage_logs").insert({
-          bot_name: persona.nome,
-          edge_function: "generate-guide-post",
-          action_type: "post_analitico_comunidade",
-          prompt_tokens: pt,
-          completion_tokens: ct,
-          total_tokens: ia.usage.total_tokens || pt + ct,
-          model: "google/gemini-3-flash-preview",
-          cost_usd: cost,
-          metadata: { tipo_post: tipoPost, loteria, viaFallback, motivoFallback, status: statusPedido },
-        }).then(() => {}).catch(() => {});
+        Promise.resolve(
+          supabaseAdmin.from("ai_usage_logs").insert({
+            bot_name: persona.nome,
+            edge_function: "generate-guide-post",
+            action_type: "post_analitico_comunidade",
+            prompt_tokens: pt,
+            completion_tokens: ct,
+            total_tokens: ia.usage.total_tokens || pt + ct,
+            model: "google/gemini-3-flash-preview",
+            cost_usd: cost,
+            metadata: { tipo_post: tipoPost, loteria, viaFallback, motivoFallback, status: statusPedido },
+          })
+        ).catch(() => {});
       }
     }
 

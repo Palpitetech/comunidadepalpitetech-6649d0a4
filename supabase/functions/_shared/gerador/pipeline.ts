@@ -38,7 +38,7 @@ export interface PipelineInput {
   /** Próximo concurso (opcional, melhora a conclusão). */
   proximoConcurso?: number;
   /** Cliente admin já criado pelo wrapper. */
-  supabaseAdmin: ReturnType<typeof createClient>;
+  supabaseAdmin: any;
   /** Nome da edge function chamando (para ai_usage_logs). */
   edgeFunction: string;
 }
@@ -54,7 +54,7 @@ export interface PipelineOutput {
 
 /** Busca os últimos N concursos da loteria. */
 async function fetchUltimosResultados(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: any,
   loteriaDb: string,
   periodoAnalise: number,
 ): Promise<ResultadoRow[]> {

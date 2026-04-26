@@ -168,7 +168,7 @@ export interface HumanizarParams {
   qtdDezenas: number;
   proximoConcurso?: number;
   /** Para logar uso. */
-  supabaseAdmin?: ReturnType<typeof createClient>;
+  supabaseAdmin?: any;
   userId?: string | null;
   edgeFunction?: string;
 }
