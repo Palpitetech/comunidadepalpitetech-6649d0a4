@@ -161,7 +161,7 @@ Formato JSON: [{"sender":"A","text":"..."},{"sender":"B","text":"..."}]`,
 /* ── runWarmingPair ───────────────────────────────────── */
 
 async function runWarmingPair(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   instanceA: any,
   instanceB: any,
   windowName: string,
