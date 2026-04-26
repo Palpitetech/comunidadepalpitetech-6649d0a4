@@ -24,7 +24,7 @@ const PROX_CACHE_TTL_MS = 10 * 60 * 1000;
 const proxConcursoCache = new Map<string, ProxConcursoCache>();
 
 async function getProximoConcursoCached(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: any,
   loteria: string,
 ): Promise<ProxConcursoCache | null> {
   const now = Date.now();
