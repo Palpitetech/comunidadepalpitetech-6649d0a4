@@ -232,19 +232,22 @@ export async function handleSend(
       continue;
     }
 
-    // 2) Resolver candidatas no ato
+    // 2) Resolver candidatas no ato (filtradas por pertencimento ao grupo)
     const { data: candidates, error: candErr } = await supabase.rpc(
       "select_best_instances",
-      { p_limit: 5 },
+      { p_limit: 5, p_group_jid: log.group_jid },
     );
 
     if (candErr || !candidates || candidates.length === 0) {
-      console.warn(
-        `[send] Sem candidatas para log ${log.id} (cooldown). err=${
-          candErr?.message ?? "none"
-        }`,
-      );
-      skippedCooldown++;
+      const reason = candErr
+        ? `Erro ao buscar instâncias: ${candErr.message}`
+        : "Nenhuma instância disponível para este grupo";
+      console.error(`[send] log=${log.id} ${reason}`);
+      await supabase
+        .from("group_blast_logs")
+        .update({ status: "failed", error_message: reason })
+        .eq("id", log.id);
+      failed++;
       continue;
     }
 
