@@ -177,7 +177,7 @@ function validateCelular(celular: string): { ok: boolean; normalized?: string; r
 }
 
 async function logBloqueio(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: any,
   motivo: string,
   detalhe: string,
   payload: { nome?: string; email?: string; celular?: string },
@@ -233,7 +233,7 @@ serve(async (req) => {
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    ) as any;
 
     const { data: webhook, error: webhookError } = await supabaseAdmin
       .from("lead_webhooks")

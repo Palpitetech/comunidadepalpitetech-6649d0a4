@@ -14,7 +14,7 @@ function getSupabase() {
   return createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
+  ) as any;
 }
 
 function randomInt(min: number, max: number): number {
@@ -32,7 +32,7 @@ function pairKey(a: any, b: any): string {
 /* ── getNextPair ─────────────────────────────────────── */
 
 async function getNextPair(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   windowName: string
 ) {
   const { data: instances } = await supabase
@@ -161,7 +161,7 @@ Formato JSON: [{"sender":"A","text":"..."},{"sender":"B","text":"..."}]`,
 /* ── runWarmingPair ───────────────────────────────────── */
 
 async function runWarmingPair(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   instanceA: any,
   instanceB: any,
   windowName: string,
