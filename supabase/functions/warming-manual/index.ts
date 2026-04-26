@@ -32,7 +32,7 @@ function pairKey(a: any, b: any): string {
 /* ── getNextPair ─────────────────────────────────────── */
 
 async function getNextPair(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   windowName: string
 ) {
   const { data: instances } = await supabase
