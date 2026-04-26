@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) as any;
 
     // Try by slug first, then by id
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
@@ -102,7 +102,8 @@ Deno.serve(async (req) => {
     });
   } catch (err: any) {
     console.error("og-post error:", err);
-    return Response.redirect(redirectUrl, 302);
+    const fallback = `${(COMMUNITY_BASE_URL || "https://comunidadepalpitetech.lovable.app").replace(/\/+$/, "")}/comunidade/post/${slugOrId ?? ""}`;
+    return Response.redirect(fallback, 302);
   }
 });
 
