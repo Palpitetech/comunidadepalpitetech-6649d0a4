@@ -22,7 +22,7 @@ export interface ParsePedidoParams {
   texto: string;
   totalDezenas: number;
   loteriaLabel: string;
-  supabaseAdmin?: ReturnType<typeof createClient>;
+  supabaseAdmin?: any;
   userId?: string | null;
   edgeFunction?: string;
 }

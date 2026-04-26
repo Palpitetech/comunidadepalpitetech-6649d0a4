@@ -12,7 +12,7 @@ export interface AuthAndQuotaResult {
   maxPerDay: number;        // -1 = infinito (admin)
   remainingToday: number;
   currentUsage: number;     // só usado em /gerador (não-atômico legacy)
-  supabaseAdmin: ReturnType<typeof createClient>;
+  supabaseAdmin: any;
 }
 
 export interface AuthAndQuotaError {
@@ -172,7 +172,7 @@ export async function checkAuthAndQuota(
  * Mantido para compat com motores legacy enquanto não há RPC atômica.
  */
 export async function incrementarQuotaLegacy(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: any,
   userId: string,
   currentUsage: number,
 ): Promise<void> {
@@ -192,7 +192,7 @@ export async function incrementarQuotaLegacy(
  * Retorna { remaining, limitReached }.
  */
 export async function incrementarQuotaGerador(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: any,
   userId: string,
   maxPerDay: number,
 ): Promise<{ remaining: number; limitReached: boolean; error?: string }> {

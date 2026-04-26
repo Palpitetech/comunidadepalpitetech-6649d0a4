@@ -30,7 +30,7 @@ export function estimateCost(
 }
 
 export interface LogIaParams {
-  supabaseAdmin: ReturnType<typeof createClient>;
+  supabaseAdmin: any;
   userId: string | null;
   edgeFunction: string;
   actionType: string;
