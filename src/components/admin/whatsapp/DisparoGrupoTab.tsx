@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageStatusBadge } from "./shared/MessageStatusBadge";
 import { GroupBlastScheduleCard } from "./GroupBlastScheduleCard";
+import { GroupBlastLogsCard } from "./GroupBlastLogsCard";
 
 interface Slot {
   id: string;
@@ -500,85 +501,7 @@ export function DisparoGrupoTab() {
       )}
 
       {/* Logs Section */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold flex items-center gap-2">
-          <Send className="h-4 w-4" />
-          Histórico de Envios
-        </h3>
-
-        <div className="flex gap-2 flex-wrap">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px] h-8 text-xs">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="sent">Enviados</SelectItem>
-              <SelectItem value="pending">Pendentes</SelectItem>
-              <SelectItem value="failed">Falhou</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={configFilter} onValueChange={setConfigFilter}>
-            <SelectTrigger className="w-[180px] h-8 text-xs">
-              <SelectValue placeholder="Config" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas configs</SelectItem>
-              {configs.map((c) => (
-                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="rounded-md border overflow-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs">Config</TableHead>
-                <TableHead className="text-xs">Slot</TableHead>
-                <TableHead className="text-xs">Instância</TableHead>
-                <TableHead className="text-xs">Agendado</TableHead>
-                <TableHead className="text-xs">Enviado</TableHead>
-                <TableHead className="text-xs">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredLogs.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground text-xs py-6">
-                    Nenhum registro encontrado
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredLogs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell className="text-xs font-medium">
-                      {getConfigName(log.config_id)}
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {log.slot_id?.replace("_", " ") || "—"}
-                    </TableCell>
-                    <TableCell className="text-xs font-mono">
-                      {log.evolution_instance_id
-                        ? log.evolution_instance_id.substring(0, 12) + "…"
-                        : "—"}
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {format(new Date(log.scheduled_for), "dd/MM HH:mm")}
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {log.sent_at ? format(new Date(log.sent_at), "dd/MM HH:mm") : "—"}
-                    </TableCell>
-                    <TableCell>{statusBadge(log.status)}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+      <GroupBlastLogsCard configs={configs.map((c) => ({ id: c.id, name: c.name }))} />
 
       {/* Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

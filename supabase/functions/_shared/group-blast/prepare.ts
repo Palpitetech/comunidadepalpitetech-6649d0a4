@@ -72,6 +72,9 @@ export async function handlePrepare(
     if (groupJids.length === 0) continue;
 
     let updatedSlots = [...slots];
+    let preparedForConfig = 0;
+    let skippedDedupForConfig = 0;
+    const errorsForConfig: string[] = [];
 
     for (let slotIdx = 0; slotIdx < slots.length; slotIdx++) {
       const slot = slots[slotIdx];
@@ -105,6 +108,7 @@ export async function handlePrepare(
 
           if ((count ?? 0) > 0) {
             skippedDedup++;
+            skippedDedupForConfig++;
             console.log(
               `[prepare] dedup skip config=${config.name} slot=${slot.id} group=${groupJid}`,
             );
@@ -129,11 +133,13 @@ export async function handlePrepare(
         if (insertErr) {
           const msg = `config=${config.name} slot=${slot.id} group=${groupJid}: ${insertErr.message}`;
           errors.push(msg);
+          errorsForConfig.push(msg);
           console.error(`[prepare] insert error ${msg}`);
           continue;
         }
 
         prepared++;
+        preparedForConfig++;
         console.log(
           `[prepare] inserted config=${config.name} slot=${slot.id} group=${groupJid} scheduled=${scheduled.toISOString()}`,
         );
@@ -151,6 +157,22 @@ export async function handlePrepare(
         updated_at: new Date().toISOString(),
       })
       .eq("id", config.id);
+
+    // Audit: registra o resultado do prepare desta config
+    try {
+      await supabase.from("group_blast_prepare_runs").insert({
+        config_id: config.id,
+        slots_scheduled: preparedForConfig,
+        skipped_dedup: skippedDedupForConfig,
+        error_message: errorsForConfig.length > 0
+          ? errorsForConfig.join(" | ").slice(0, 1000)
+          : null,
+      });
+    } catch (auditErr: any) {
+      console.warn(
+        `[prepare] audit insert falhou config=${config.name}: ${auditErr?.message ?? auditErr}`,
+      );
+    }
   }
 
   console.log(

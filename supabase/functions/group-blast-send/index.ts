@@ -8,6 +8,7 @@ import {
 import { handlePrepare } from "../_shared/group-blast/prepare.ts";
 import { handleSend } from "../_shared/group-blast/send.ts";
 import { handleSendNow } from "../_shared/group-blast/send-now.ts";
+import { handleRetry } from "../_shared/group-blast/retry.ts";
 
 /**
  * Roteador HTTP do disparo de grupo.
@@ -56,6 +57,10 @@ Deno.serve(async (req) => {
 
     if (action === "send_now") {
       return await handleSendNow(supabase, body.config_id, body.slot_id);
+    }
+
+    if (action === "retry") {
+      return await handleRetry(supabase, evo.url, evo.key, body.log_id);
     }
 
     return await handleSend(supabase, evo.url, evo.key);

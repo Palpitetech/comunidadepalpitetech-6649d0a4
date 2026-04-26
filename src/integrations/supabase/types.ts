@@ -1079,7 +1079,9 @@ export type Database = {
           group_jid: string
           id: string
           instance_id: string | null
+          last_error_at: string | null
           message_content: string
+          retry_count: number
           scheduled_for: string
           sent_at: string | null
           slot_id: string | null
@@ -1093,7 +1095,9 @@ export type Database = {
           group_jid: string
           id?: string
           instance_id?: string | null
+          last_error_at?: string | null
           message_content: string
+          retry_count?: number
           scheduled_for: string
           sent_at?: string | null
           slot_id?: string | null
@@ -1107,7 +1111,9 @@ export type Database = {
           group_jid?: string
           id?: string
           instance_id?: string | null
+          last_error_at?: string | null
           message_content?: string
+          retry_count?: number
           scheduled_for?: string
           sent_at?: string | null
           slot_id?: string | null
@@ -1126,6 +1132,41 @@ export type Database = {
             columns: ["instance_id"]
             isOneToOne: false
             referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_blast_prepare_runs: {
+        Row: {
+          config_id: string | null
+          error_message: string | null
+          id: string
+          ran_at: string
+          skipped_dedup: number
+          slots_scheduled: number
+        }
+        Insert: {
+          config_id?: string | null
+          error_message?: string | null
+          id?: string
+          ran_at?: string
+          skipped_dedup?: number
+          slots_scheduled?: number
+        }
+        Update: {
+          config_id?: string | null
+          error_message?: string | null
+          id?: string
+          ran_at?: string
+          skipped_dedup?: number
+          slots_scheduled?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_blast_prepare_runs_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "group_blast_configs"
             referencedColumns: ["id"]
           },
         ]
