@@ -44,21 +44,21 @@ export function logUsoIa(params: LogIaParams): void {
   const { supabaseAdmin, userId, edgeFunction, actionType, model, usage, metadata } = params;
   if (!usage) return;
 
-  supabaseAdmin
-    .from("ai_usage_logs")
-    .insert({
-      user_id: userId,
-      edge_function: edgeFunction,
-      action_type: actionType,
-      prompt_tokens: usage.prompt_tokens || 0,
-      completion_tokens: usage.completion_tokens || 0,
-      total_tokens: usage.total_tokens || 0,
-      model,
-      cost_usd: estimateCost(usage, model),
-      metadata: metadata || {},
-    })
-    .then(() => {})
-    .catch((e: unknown) => console.error("[ai-call] erro ao logar uso:", e));
+  Promise.resolve(
+    supabaseAdmin
+      .from("ai_usage_logs")
+      .insert({
+        user_id: userId,
+        edge_function: edgeFunction,
+        action_type: actionType,
+        prompt_tokens: usage.prompt_tokens || 0,
+        completion_tokens: usage.completion_tokens || 0,
+        total_tokens: usage.total_tokens || 0,
+        model,
+        cost_usd: estimateCost(usage, model),
+        metadata: metadata || {},
+      })
+  ).catch((e: unknown) => console.error("[ai-call] erro ao logar uso:", e));
 }
 
 export interface CallAiOptions {
