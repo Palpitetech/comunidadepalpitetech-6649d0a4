@@ -72,6 +72,9 @@ export async function handlePrepare(
     if (groupJids.length === 0) continue;
 
     let updatedSlots = [...slots];
+    let preparedForConfig = 0;
+    let skippedDedupForConfig = 0;
+    const errorsForConfig: string[] = [];
 
     for (let slotIdx = 0; slotIdx < slots.length; slotIdx++) {
       const slot = slots[slotIdx];
