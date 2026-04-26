@@ -58,7 +58,7 @@ export async function checkAuthAndQuota(
     return { ok: false, status: 401, body: { error: "Usuário não autenticado" } };
   }
 
-  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey) as any;
 
   // Admin?
   const { data: userRole } = await supabaseAdmin
