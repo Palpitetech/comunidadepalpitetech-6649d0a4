@@ -35,8 +35,16 @@ Deno.serve(async (req) => {
 
     // Apenas o cron pode chamar "send" sem JWT admin
     if (action !== "send") {
-      const authErr = await validateAdmin(req);
-      if (authErr) return authErr;
+      try {
+        const authErr = await validateAdmin(req);
+        if (authErr) return authErr;
+      } catch (e: any) {
+        console.error("[group-blast-send] validateAdmin threw:", e);
+        return jsonResponse(
+          { error: "Falha na autenticação: " + (e?.message ?? String(e)) },
+          401,
+        );
+      }
     }
 
     if (action === "prepare") {
