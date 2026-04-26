@@ -132,8 +132,12 @@ async function attemptSendThroughInstance(
       },
     );
 
-    if (!res.ok) {
-      const bodyText = await res.text().catch(() => "");
+    const body = await res.json().catch(() => null);
+
+    // Sucesso real exige HTTP 2xx + body com key.id (messageId da Evolution)
+    if (!res.ok || !body?.key?.id) {
+      const reason =
+        body?.message ?? body?.error ?? `HTTP ${res.status}`;
       await supabase
         .from("whatsapp_instances")
         .update({ last_message_at: new Date().toISOString() })
@@ -141,11 +145,10 @@ async function attemptSendThroughInstance(
       return {
         ok: false,
         status: res.status,
-        error: `HTTP ${res.status} resp=${bodyText.slice(0, 200)}`,
+        error: String(reason).slice(0, 200),
       };
     }
 
-    await res.text();
     return { ok: true };
   } catch (sendErr: any) {
     const errMsg = sendErr?.message ?? String(sendErr);
