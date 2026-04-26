@@ -177,7 +177,7 @@ function validateCelular(celular: string): { ok: boolean; normalized?: string; r
 }
 
 async function logBloqueio(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: any,
   motivo: string,
   detalhe: string,
   payload: { nome?: string; email?: string; celular?: string },
