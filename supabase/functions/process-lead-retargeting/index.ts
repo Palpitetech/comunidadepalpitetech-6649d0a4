@@ -13,7 +13,7 @@ function getSupabase() {
   return createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
+  ) as any;
 }
 
 /**
@@ -86,7 +86,7 @@ function emptyMetrics(): TemplateMetrics {
 }
 
 async function processOneTemplate(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   template: TemplateRow
 ): Promise<TemplateMetrics> {
   const metrics = emptyMetrics();

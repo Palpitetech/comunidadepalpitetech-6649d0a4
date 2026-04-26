@@ -44,7 +44,7 @@ interface FatosSnapshot {
 // =============================================================================
 
 async function rehidratarBaseGeracao(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: any,
   snapshot: FatosSnapshot,
 ): Promise<BaseGeracao | null> {
   if (snapshot.loteria !== "lotofacil" && snapshot.loteria !== "megasena") return null;

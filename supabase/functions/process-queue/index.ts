@@ -13,10 +13,10 @@ function getSupabase() {
   return createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
+  ) as any;
 }
 
-async function selectInstance(supabase: ReturnType<typeof createClient>) {
+async function selectInstance(supabase: any) {
   const { data, error } = await supabase.rpc("select_best_instance");
   if (error || !data || data.length === 0) return null;
   // Return in the shape the rest of the code expects
@@ -47,7 +47,7 @@ function resolveTemplate(
  * Em todos os casos, aplica `resolveTemplate` para substituir variáveis.
  */
 async function resolveMessageText(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   item: any
 ): Promise<string> {
   // 1) Variante (prioridade)
@@ -88,7 +88,7 @@ async function resolveMessageText(
 }
 
 async function sendMessage(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   item: any
 ): Promise<{ success: boolean; error?: string }> {
   // Mark as sending

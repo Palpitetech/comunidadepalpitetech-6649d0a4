@@ -268,10 +268,10 @@ Explique brevemente a estratégia geral utilizada, citando dados específicos do
 
     const jogosValidos: string[] = [];
     for (const jogo of palpitesData.jogos || []) {
-      const dezenas = (jogo.dezenas || [])
+      const dezenas: number[] = (jogo.dezenas || [])
         .map((d: number) => Math.round(d))
         .filter((d: number) => d >= 1 && d <= 25);
-      const unique = [...new Set(dezenas)];
+      const unique: number[] = [...new Set(dezenas)];
       if (unique.length >= 15) {
         jogosValidos.push(
           unique
