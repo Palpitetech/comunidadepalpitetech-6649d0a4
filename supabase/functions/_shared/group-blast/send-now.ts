@@ -62,6 +62,15 @@ export async function handleSendNow(
     insertedLogs.push(log.id);
   }
 
+  if (insertedLogs.length === 0 && groupJids.length > 0) {
+    return jsonResponse(
+      {
+        error: "Nenhum log inserido — verifique RLS ou conexão com Postgres",
+      },
+      500,
+    );
+  }
+
   return jsonResponse({
     success: true,
     log_ids: insertedLogs,

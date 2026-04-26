@@ -132,8 +132,12 @@ async function attemptSendThroughInstance(
       },
     );
 
-    if (!res.ok) {
-      const bodyText = await res.text().catch(() => "");
+    const body = await res.json().catch(() => null);
+
+    // Sucesso real exige HTTP 2xx + body com key.id (messageId da Evolution)
+    if (!res.ok || !body?.key?.id) {
+      const reason =
+        body?.message ?? body?.error ?? `HTTP ${res.status}`;
       await supabase
         .from("whatsapp_instances")
         .update({ last_message_at: new Date().toISOString() })
@@ -141,11 +145,10 @@ async function attemptSendThroughInstance(
       return {
         ok: false,
         status: res.status,
-        error: `HTTP ${res.status} resp=${bodyText.slice(0, 200)}`,
+        error: String(reason).slice(0, 200),
       };
     }
 
-    await res.text();
     return { ok: true };
   } catch (sendErr: any) {
     const errMsg = sendErr?.message ?? String(sendErr);
@@ -229,19 +232,22 @@ export async function handleSend(
       continue;
     }
 
-    // 2) Resolver candidatas no ato
+    // 2) Resolver candidatas no ato (filtradas por pertencimento ao grupo)
     const { data: candidates, error: candErr } = await supabase.rpc(
       "select_best_instances",
-      { p_limit: 5 },
+      { p_limit: 5, p_group_jid: log.group_jid },
     );
 
     if (candErr || !candidates || candidates.length === 0) {
-      console.warn(
-        `[send] Sem candidatas para log ${log.id} (cooldown). err=${
-          candErr?.message ?? "none"
-        }`,
-      );
-      skippedCooldown++;
+      const reason = candErr
+        ? `Erro ao buscar instâncias: ${candErr.message}`
+        : "Nenhuma instância disponível para este grupo";
+      console.error(`[send] log=${log.id} ${reason}`);
+      await supabase
+        .from("group_blast_logs")
+        .update({ status: "failed", error_message: reason })
+        .eq("id", log.id);
+      failed++;
       continue;
     }
 

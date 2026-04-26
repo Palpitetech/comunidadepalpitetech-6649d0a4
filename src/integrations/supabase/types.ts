@@ -3001,6 +3001,35 @@ export type Database = {
           },
         ]
       }
+      whatsapp_instance_groups: {
+        Row: {
+          created_at: string
+          group_jid: string
+          id: string
+          instance_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_jid: string
+          id?: string
+          instance_id: string
+        }
+        Update: {
+          created_at?: string
+          group_jid?: string
+          id?: string
+          instance_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_instance_groups_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_instances: {
         Row: {
           cooldown_queue: Json
@@ -3409,14 +3438,23 @@ export type Database = {
           phone_number: string
         }[]
       }
-      select_best_instances: {
-        Args: { p_limit?: number }
-        Returns: {
-          evolution_instance_id: string
-          instance_id: string
-          phone_number: string
-        }[]
-      }
+      select_best_instances:
+        | {
+            Args: { p_limit?: number }
+            Returns: {
+              evolution_instance_id: string
+              instance_id: string
+              phone_number: string
+            }[]
+          }
+        | {
+            Args: { p_group_jid?: string; p_limit?: number }
+            Returns: {
+              evolution_instance_id: string
+              instance_id: string
+              phone_number: string
+            }[]
+          }
       should_send_template: {
         Args: { p_template_id: string; p_user_id: string }
         Returns: boolean
