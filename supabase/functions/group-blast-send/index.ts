@@ -59,6 +59,10 @@ Deno.serve(async (req) => {
       return await handleSendNow(supabase, body.config_id, body.slot_id);
     }
 
+    if (action === "retry") {
+      return await handleRetry(supabase, evo.url, evo.key, body.log_id);
+    }
+
     return await handleSend(supabase, evo.url, evo.key);
   } catch (err: any) {
     console.error("[group-blast-send] error:", err);
