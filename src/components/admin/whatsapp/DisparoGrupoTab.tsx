@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { MessageStatusBadge } from "./shared/MessageStatusBadge";
 import { GroupBlastScheduleCard } from "./GroupBlastScheduleCard";
 import { GroupBlastLogsCard } from "./GroupBlastLogsCard";
+import { GroupAdminsCard } from "./GroupAdminsCard";
 
 interface Slot {
   id: string;
@@ -457,6 +458,11 @@ export function DisparoGrupoTab() {
                     })}
                   </div>
 
+
+                  {/* Admins do grupo */}
+                  {config.group_jids.length > 0 && (
+                    <GroupAdminsCard groupJids={config.group_jids} />
+                  )}
 
                   {/* Last send */}
                   {lastLog && (
