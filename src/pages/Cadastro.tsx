@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatCelularMask, validateCelularBR } from "@/lib/celular";
 import { getStoredAttribution } from "@/hooks/useUTM";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { mapErroCodigo } from "@/lib/cadastroErros";
 
 type Etapa = "email" | "codigo-email" | "whatsapp" | "codigo-whatsapp" | "nome-senha";
 const ETAPAS: Etapa[] = ["email", "codigo-email", "whatsapp", "codigo-whatsapp", "nome-senha"];
