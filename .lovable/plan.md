@@ -1,59 +1,55 @@
 ## Objetivo
 
-Permitir trocar a foto de perfil do WhatsApp de **todas as instâncias cadastradas** (online), usando a Evolution API. Hoje o módulo `/admin/whatsapp` → aba **Instâncias** gerencia conexão, proxy, QR code, mas **não tem ação de foto de perfil**.
+Criar templates automáticos para a campanha **Maratona Mega Especial 30 Anos** + **Aula Ao Vivo Mega Especial**, usando os dois webhooks de lead já existentes e segmentando por tags de compra.
 
-## Como vai funcionar
+## Contexto identificado
 
-Na aba **Instâncias** será adicionado um novo card no topo: **"Foto de perfil das instâncias"**.
+**Webhooks ativos** (geram tag automática no perfil/lead via `source_tag`):
+- `Aula-Ao-Vivo-Mega-Especial` → tag `aula_ao_vivo_mega_especial`
+- `Lead - Maratona Mega Especial 30 Anos` → tag `maratona_mega_especial`
 
-1. Você faz upload de uma imagem (JPG/PNG, máx. 2 MB) ou cola uma URL pública.
-2. Pré-visualização da foto.
-3. Botão **"Aplicar em todas as instâncias online"** (com confirmação).
-4. Opcional: botão **"Aplicar só nesta"** dentro de cada card de instância individual (via menu de ações).
-5. Resultado mostrado em toast: `X de Y instâncias atualizadas`, com lista de erros se houver.
+**Smart Links já criados:**
+- `ms-sala-secreta` → grupo gratuito (para leads que NÃO compraram)
+- `ms-sala-vip` → grupo pago (para quem comprou a Sala Vip)
 
-A imagem enviada é guardada no bucket de storage `whatsapp-assets` (criado se não existir) e a URL pública é enviada para a Evolution API.
+**Plano pago identificado:** `aula-ao-vivo-mega-especial` (R$ 27). Hoje, ao comprar, o trigger `sync_perfil_tags` NÃO cria uma tag específica de "comprou Mega VIP" — esse plano cai no `else` e marca apenas `gratis`. Precisamos diferenciar quem comprou.
 
-## Como fica tecnicamente
+## Plano
 
-### 1. Bucket de storage
-- Criar bucket público `whatsapp-assets` (somente admins podem fazer upload; leitura pública).
-- Política: `INSERT/UPDATE/DELETE` apenas para `has_role(auth.uid(),'admin')`.
+### 1. Adicionar tag `pago_aula_mega_especial` ao trigger `sync_perfil_tags`
 
-### 2. Edge Function `evolution-proxy` — nova action
-Adicionar em `supabase/functions/evolution-proxy/index.ts`:
+Migração para incluir o slug `aula-ao-vivo-mega-especial` no bloco de planos pagos, gerando a tag `pago_aula_mega_especial` quando `status_assinatura = 'ativa'` e validade futura. Adicionar essa tag ao array `v_managed`.
 
-```ts
-case "updateProfilePicture": {
-  // PUT /chat/updateProfilePicture/{instanceName}  body: { picture: <url> }
-  return await callEvolution(`/chat/updateProfilePicture/${instanceName}`, "PUT", { picture });
-}
-```
+### 2. Criar Template 1 — Lead Maratona/Aula (sem compra)
 
-Aceita `{ action: "updateProfilePicture", instanceName, picture }`.
+- **Nome:** `Lead Maratona Mega 30 Anos — Sala Secreta`
+- **Evento:** `lead_pre_checkout_abandono` (mesmo motor já rodando para Lotofácil)
+- **include_tags:** `maratona_mega_especial`, `aula_ao_vivo_mega_especial` (match `any`)
+- **exclude_tags:** `pago_aula_mega_especial`, `pago_grupovip_lotofacil`, `pago_mensal`, `pago_anual`, `pago_anualvip` (não envia para quem já comprou)
+- **delay:** 60 min após captura
+- **Conteúdo:** convite para a **Sala Secreta Mega** (`https://www.palpitetech.com.br/g/ms-sala-secreta` com UTMs `whatsapp / lead_retarget / maratona_mega_30anos`)
 
-### 3. Novo componente `ProfilePictureCard.tsx`
-Em `src/components/admin/whatsapp/`:
-- Input file + preview + input URL alternativo.
-- Faz upload para `whatsapp-assets/profile-pictures/{timestamp}.jpg`, pega `getPublicUrl`.
-- Lista instâncias com `status = 'online'` da tabela `whatsapp_instances`.
-- Loop sequencial chamando `evolution-proxy` com `updateProfilePicture` por instância (delay de ~1.5s entre chamadas para evitar rate limit).
-- Acumula sucessos/falhas e mostra resumo.
+### 3. Criar Template 2 — Comprou Sala VIP
 
-### 4. Integração na `InstanciasTab.tsx`
-- Importar e renderizar `<ProfilePictureCard />` no topo (acima do botão "Adicionar instância").
-- Adicionar item "Trocar foto" no menu de ações de cada instância (chama mesma lógica para 1 só).
+- **Nome:** `Compra aprovada — Aula Mega Especial VIP`
+- **Evento:** `sale_confirmed`
+- **include_tags:** `pago_aula_mega_especial`
+- **exclude_tags:** vazio
+- **Conteúdo:** boas-vindas + link da **Sala Vip Mega** (`https://www.palpitetech.com.br/g/ms-sala-vip`) + instruções da maratona
 
-## Observações importantes
+### 4. Backfill (opcional, recomendado)
 
-- **Apenas instâncias com status `online`** (conectadas) aceitam troca de foto. Instâncias offline são puladas automaticamente com mensagem clara.
-- A foto pode demorar alguns segundos para refletir no app WhatsApp do celular (cache do dispositivo).
-- A Evolution API aceita URL pública **ou** base64 — vou usar URL pública (mais leve para o request).
-- Não armazena a foto na tabela de instâncias (a "foto atual" fica só no WhatsApp).
+Tocar perfis já existentes com plano `aula-ao-vivo-mega-especial` ativo (`UPDATE perfis SET updated_at = now() WHERE plan_id = ...`) para o trigger reaplicar as tags.
 
-## Arquivos alterados
+## Detalhes técnicos
 
-- `supabase/functions/evolution-proxy/index.ts` — nova action `updateProfilePicture`
-- `src/components/admin/whatsapp/ProfilePictureCard.tsx` — **novo**
-- `src/components/admin/whatsapp/InstanciasTab.tsx` — render do card + item de menu por instância
-- Migração SQL — bucket `whatsapp-assets` + policies
+- O motor `process-lead-retargeting` já busca templates com event_trigger `lead_pre_checkout_abandono` e usa `overlaps(tags, include_tags)` em `leads_inbox` — o Template 1 entra automaticamente no scheduler.
+- O Template 2 é disparado pela função existente que processa eventos `sale_confirmed` no webhook Kirvano (mesmo padrão do template "Compra aprovada (Grupo VIP Lotofácil)").
+- Variáveis usadas: `{{nome}}`, `{{link_sala_secreta_mega}}`, `{{link_sala_vip_mega}}` — adicionarei resolvers nas funções `process-lead-retargeting` e `process-sale-event` para injetar os links com UTMs.
+- Conteúdos seguirão o tom já existente (sem emoji excessivo, sem mencionar "IA"), e cada template terá variantes A/B para rotação (mín. 2 variantes em `message_template_variants`).
+
+## Pergunta antes de implementar
+
+Confirma que:
+1. O link da **Sala Secreta Mega** vai para os leads de **AMBOS** webhooks (Aula + Maratona)?
+2. O link da **Sala Vip Mega** entra apenas para quem comprou o plano `aula-ao-vivo-mega-especial` (R$ 27)? Há outro produto pago dessa campanha que devo mapear?

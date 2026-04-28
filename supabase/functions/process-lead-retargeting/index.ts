@@ -8,6 +8,24 @@ const corsHeaders = {
 };
 
 const SALA_SECRETA_BASE = "https://www.palpitetech.com.br/g/entrar-sala-secreta";
+const SALA_SECRETA_MEGA_BASE = "https://www.palpitetech.com.br/g/ms-sala-secreta";
+const SALA_VIP_MEGA_BASE = "https://www.palpitetech.com.br/g/ms-sala-vip";
+
+function buildSalaSecretaMegaLink(): string {
+  const url = new URL(SALA_SECRETA_MEGA_BASE);
+  url.searchParams.set("utm_source", "whatsapp");
+  url.searchParams.set("utm_medium", "lead_retarget");
+  url.searchParams.set("utm_campaign", "maratona_mega_30anos");
+  return url.toString();
+}
+
+function buildSalaVipMegaLink(): string {
+  const url = new URL(SALA_VIP_MEGA_BASE);
+  url.searchParams.set("utm_source", "whatsapp");
+  url.searchParams.set("utm_medium", "lead_retarget");
+  url.searchParams.set("utm_campaign", "aula_mega_especial_vip");
+  return url.toString();
+}
 
 function getSupabase() {
   return createClient(
@@ -200,6 +218,8 @@ async function processOneTemplate(
         nome: lead.nome ?? "",
         telefone: phone,
         link_sala_secreta: linkSalaSecreta,
+        link_sala_secreta_mega: buildSalaSecretaMegaLink(),
+        link_sala_vip_mega: buildSalaVipMegaLink(),
       };
 
       const { error: insErr } = await supabase.from("message_queue").insert({
