@@ -8,7 +8,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { ChevronDown, RefreshCw, ShieldCheck, ShieldPlus, UserCheck, UserX } from "lucide-react";
+import { ChevronDown, RefreshCw, ShieldCheck, ShieldPlus, UserCheck, UserPlus, UserX } from "lucide-react";
 
 type ParticipantStatus = "admin" | "superadmin" | "member" | "not_in_group";
 
