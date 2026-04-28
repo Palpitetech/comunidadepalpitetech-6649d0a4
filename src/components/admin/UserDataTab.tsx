@@ -220,31 +220,24 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
             {user.email && <CopyableField label="Email" value={user.email} />}
           </div>
 
+          {/* Celular = WhatsApp (campo único — sincronizado por trigger no banco) */}
           <div className="space-y-1.5">
-            <Label htmlFor="whatsapp" className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <MessageCircle className="h-3 w-3" /> WhatsApp
+            <Label htmlFor="celular" className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <MessageCircle className="h-3 w-3" /> Celular / WhatsApp
             </Label>
             <Input
-              id="whatsapp"
-              value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
+              id="celular"
+              value={celular}
+              onChange={(e) => setCelular(e.target.value)}
               placeholder="(11) 99999-9999"
               className="h-9"
             />
-            {user.whatsapp && <CopyableField label="WhatsApp" value={user.whatsapp} />}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <Phone className="h-3 w-3" /> Celular (somente leitura)
-            </Label>
-            <Input value={user.celular || ""} disabled className="bg-muted h-9" />
             {user.celular && <CopyableField label="Celular" value={user.celular} />}
           </div>
 
           {/* WhatsApp direct link */}
           {(() => {
-            const phone = user.whatsapp || user.celular;
+            const phone = user.celular;
             if (!phone) return null;
             const digits = phone.replace(/\D/g, "");
             const waNumber = digits.startsWith("55") ? digits : `55${digits}`;
