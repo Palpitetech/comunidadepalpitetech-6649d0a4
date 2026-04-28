@@ -136,6 +136,30 @@ ${acumLinha}
 💬 E aí, acertou quantas? Conta pra gente nos comentários!`.substring(0, 1000);
 }
 
+function montarFooterProximoConcurso(p: {
+  numero?: string | number | null;
+  data?: string | null;
+  valor?: number | string | null;
+}): string {
+  const partes: string[] = [];
+  if (p.numero) partes.push(`Concurso ${p.numero}`);
+  if (p.data) {
+    try {
+      const [y, m, d] = String(p.data).split("-");
+      if (y && m && d) partes.push(`📅 ${d}/${m}/${y}`);
+    } catch { /* ignore */ }
+  }
+  if (p.valor) {
+    const num = typeof p.valor === "string" ? Number(p.valor) : p.valor;
+    if (num && !Number.isNaN(num) && num > 0) {
+      const formatado = num.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+      partes.push(`💰 Prêmio estimado: **${formatado}**`);
+    }
+  }
+  if (partes.length === 0) return "";
+  return `---\n🎯 **Próximo concurso** — ${partes.join(" • ")}`;
+}
+
 async function criarPostResultadoOficialMega(params: {
   supabase: any;
   concurso: number;
