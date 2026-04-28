@@ -29,7 +29,8 @@ export function RequireCelularModal() {
     setLoading(true);
     setError("");
     try {
-      await updateProfile({ celular: validation.normalized!, whatsapp: validation.normalized! });
+      // whatsapp é sincronizado automaticamente via trigger sync_whatsapp_with_celular
+      await updateProfile({ celular: validation.normalized! });
 
       // Trigger tag sync in background
       supabase.functions.invoke("sync-group-members", {
