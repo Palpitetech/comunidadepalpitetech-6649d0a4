@@ -87,10 +87,12 @@ export function DisparoGrupoTab() {
   const [formGroupJids, setFormGroupJids] = useState<string[]>([""]);
   const [formSlots, setFormSlots] = useState<Slot[]>([]);
   const [formActive, setFormActive] = useState(true);
-  const [formIncludePalpites, setFormIncludePalpites] = useState(true);
-  const [formVipGroupLink, setFormVipGroupLink] = useState("");
   const [formMemberTag, setFormMemberTag] = useState("");
   const [formTimeInputs, setFormTimeInputs] = useState<Record<string, string>>({});
+  const [formPalpiteSettings, setFormPalpiteSettings] = useState<PalpiteSettingsByLoteria>({
+    lotofacil: { include_palpites: true, vip_group_link: null },
+    megasena: { include_palpites: true, vip_group_link: null },
+  });
   const [saving, setSaving] = useState(false);
 
   // Last log per config
