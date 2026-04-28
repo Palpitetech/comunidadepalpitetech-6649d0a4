@@ -70,7 +70,7 @@ async function fetchGroupParticipants(
   evoKey: string,
   instanceName: string,
   groupJid: string
-): Promise<Array<{ phone: string; admin: string | null }>> {
+): Promise<Array<{ phone: string; admin: string | null; raw?: any }>> {
   const url = `${evoUrl}/group/participants/${instanceName}?groupJid=${encodeURIComponent(groupJid)}`;
   const res = await fetch(url, {
     headers: { "Content-Type": "application/json", apikey: evoKey },
@@ -80,11 +80,25 @@ async function fetchGroupParticipants(
   }
   const data = await res.json();
   const raw = data.participants || data || [];
-  return (Array.isArray(raw) ? raw : []).map((p: any) => {
-    const id = typeof p === "string" ? p : p.id || p.jid || p.number || "";
-    const admin = typeof p === "string" ? null : (p.admin ?? null);
-    return { phone: normalizePhone(id), admin };
+  const list = (Array.isArray(raw) ? raw : []).map((p: any) => {
+    if (typeof p === "string") {
+      return { phone: normalizePhone(p), admin: null, raw: p };
+    }
+    // Modern WhatsApp returns `id` as LID (e.g. "12345@lid"). Real phone may live in
+    // jid / phoneNumber / number / pn / participant fields depending on Evolution version.
+    const phoneSource =
+      p.jid || p.phoneNumber || p.phone || p.number || p.pn || p.participant || "";
+    const idSource = p.id || "";
+    // If id looks like a real phone (ends with @s.whatsapp.net or is plain digits >= 10),
+    // use it as phone too. LIDs end with @lid and are short numeric.
+    const isIdPhone =
+      typeof idSource === "string" &&
+      (idSource.endsWith("@s.whatsapp.net") ||
+        (!idSource.includes("@") && normalizePhone(idSource).length >= 10));
+    const phone = normalizePhone(phoneSource) || (isIdPhone ? normalizePhone(idSource) : "");
+    return { phone, admin: p.admin ?? null, raw: p };
   });
+  return list;
 }
 
 async function listForGroup(
