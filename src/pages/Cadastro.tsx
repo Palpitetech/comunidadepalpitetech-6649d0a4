@@ -467,8 +467,9 @@ export default function Cadastro() {
                   disabled={reenvioWhats > 0 || loading}
                   className="w-full"
                 >
-                  {reenvioWhats > 0 ? `Reenviar código em ${reenvioWhats}s` : "Reenviar código"}
+                  {reenvioWhats > 0 ? `Reenviar código em ${reenvioWhats}s` : "Reenviar código pelo WhatsApp"}
                 </Button>
+                <CadastroAjudaDialog etapa="codigo-whatsapp" />
               </form>
             )}
 
