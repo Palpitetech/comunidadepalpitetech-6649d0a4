@@ -272,21 +272,26 @@ export function DisparoGrupoTab() {
     setSaving(true);
 
     // Format times with seconds for DB
-    const slotsPayload = formSlots.map(s => ({
+    const slotsPayload = formSlots.map((s) => ({
       id: s.id,
-      schedule_times: s.schedule_times.map(t => t.length === 5 ? `${t}:00` : t),
+      schedule_times: s.schedule_times.map((t) => (t.length === 5 ? `${t}:00` : t)),
       last_scheduled_index: s.last_scheduled_index ?? -1,
       message_type: s.message_type,
       message_content: s.message_type === "manual" ? s.message_content : "",
+      loteria: s.message_type === "manual" ? "lotofacil" : s.loteria,
     }));
+
+    // Compat: espelha settings da Lotofácil nos campos legacy
+    const lotofacilSettings = formPalpiteSettings.lotofacil ?? { include_palpites: true, vip_group_link: null };
 
     const payload: any = {
       name: formName.trim(),
       group_jids: cleanJids,
       slots: slotsPayload,
       is_active: formActive,
-      include_palpites: formIncludePalpites,
-      vip_group_link: formVipGroupLink.trim() || null,
+      include_palpites: lotofacilSettings.include_palpites,
+      vip_group_link: lotofacilSettings.vip_group_link || null,
+      palpite_settings: formPalpiteSettings,
       member_tag: formMemberTag.trim() || null,
       updated_at: new Date().toISOString(),
     };
