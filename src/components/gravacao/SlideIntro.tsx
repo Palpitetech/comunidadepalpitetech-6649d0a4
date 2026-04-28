@@ -1,13 +1,14 @@
-import type { FaixaPremiacao } from "@/hooks/useGravacaoData";
+import type { FaixaPremiacao, ProximoConcursoInfo } from "@/hooks/useGravacaoData";
 
 interface SlideIntroProps {
   concurso: number;
   data: string;
   premiacao: string;
   faixasPremiacao: FaixaPremiacao[];
+  proximoConcurso?: ProximoConcursoInfo;
 }
 
-export default function SlideIntro({ concurso, data, premiacao, faixasPremiacao }: SlideIntroProps) {
+export default function SlideIntro({ concurso, data, premiacao, faixasPremiacao, proximoConcurso }: SlideIntroProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-6 text-center w-full h-full">
       <p className="text-purple-400 text-lg tracking-[0.3em] uppercase font-medium">
