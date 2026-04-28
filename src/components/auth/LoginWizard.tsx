@@ -374,6 +374,14 @@ export function LoginWizard() {
                   {isLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
                   Localizar Cadastro
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate("/cadastro")}
+                  className="w-full h-11 md:h-14 text-base md:text-lg font-semibold rounded-xl"
+                >
+                  Criar nova conta
+                </Button>
                 <a
                   href={supportWhatsApp}
                   target="_blank"
