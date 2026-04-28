@@ -311,6 +311,38 @@ Responda APENAS o conteúdo (sem título, sem JSON), texto puro com emojis e mar
     conteudo = montarConteudoFallbackResultado(concurso, dezenas, indicadores, cicloInfo, acumulou);
   }
 
+  // ===== Footer determinístico: próximo concurso (data + prêmio estimado) =====
+  try {
+    const { data: prox } = await supabase
+      .from("proximos_concursos")
+      .select("numero_concurso, data_sorteio, premio_estimado")
+      .eq("loteria", "lotofacil")
+      .maybeSingle();
+    if (prox && (prox.data_sorteio || prox.premio_estimado)) {
+      const partes: string[] = [];
+      if (prox.numero_concurso) partes.push(`Concurso ${prox.numero_concurso}`);
+      if (prox.data_sorteio) {
+        const [y, m, d] = String(prox.data_sorteio).split("-");
+        if (y && m && d) partes.push(`📅 ${d}/${m}/${y}`);
+      }
+      if (prox.premio_estimado) {
+        const num = Number(prox.premio_estimado);
+        if (num && !Number.isNaN(num) && num > 0) {
+          const formatado = num.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+          partes.push(`💰 Prêmio estimado: **${formatado}**`);
+        }
+      }
+      if (partes.length > 0) {
+        const footer = `---\n🎯 **Próximo concurso** — ${partes.join(" • ")}`;
+        if ((conteudo.length + footer.length + 2) <= 1000) {
+          conteudo = `${conteudo}\n\n${footer}`;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[RESULT-POST] Erro ao buscar próximo concurso:", e);
+  }
+
   // Criar post na comunidade (autor único = Augusto)
   try {
     const { data: newPost, error: postError } = await supabase

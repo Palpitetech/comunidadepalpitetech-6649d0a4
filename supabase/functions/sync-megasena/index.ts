@@ -136,6 +136,30 @@ ${acumLinha}
 💬 E aí, acertou quantas? Conta pra gente nos comentários!`.substring(0, 1000);
 }
 
+function montarFooterProximoConcurso(p: {
+  numero?: string | number | null;
+  data?: string | null;
+  valor?: number | string | null;
+}): string {
+  const partes: string[] = [];
+  if (p.numero) partes.push(`Concurso ${p.numero}`);
+  if (p.data) {
+    try {
+      const [y, m, d] = String(p.data).split("-");
+      if (y && m && d) partes.push(`📅 ${d}/${m}/${y}`);
+    } catch { /* ignore */ }
+  }
+  if (p.valor) {
+    const num = typeof p.valor === "string" ? Number(p.valor) : p.valor;
+    if (num && !Number.isNaN(num) && num > 0) {
+      const formatado = num.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+      partes.push(`💰 Prêmio estimado: **${formatado}**`);
+    }
+  }
+  if (partes.length === 0) return "";
+  return `---\n🎯 **Próximo concurso** — ${partes.join(" • ")}`;
+}
+
 async function criarPostResultadoOficialMega(params: {
   supabase: any;
   concurso: number;
@@ -257,6 +281,27 @@ Responda APENAS o conteúdo (sem título, sem JSON), texto puro com emojis e mar
     motivoFallback = err instanceof Error ? err.message : String(err);
     console.warn(`[MEGA-RESULT-POST] ⚠️ Usando fallback determinístico: ${motivoFallback}`);
     conteudo = montarConteudoFallbackResultadoMega(concurso, dezenas, indicadores, acumulou);
+  }
+
+  // ===== Footer determinístico: próximo concurso (data + prêmio estimado) =====
+  try {
+    const { data: prox } = await supabase
+      .from("proximos_concursos")
+      .select("numero_concurso, data_sorteio, premio_estimado")
+      .eq("loteria", "megasena")
+      .maybeSingle();
+    if (prox && (prox.data_sorteio || prox.premio_estimado)) {
+      const footer = montarFooterProximoConcurso({
+        numero: prox.numero_concurso,
+        data: prox.data_sorteio,
+        valor: prox.premio_estimado,
+      });
+      if (footer && (conteudo.length + footer.length) <= 1000) {
+        conteudo = `${conteudo}\n\n${footer}`;
+      }
+    }
+  } catch (e) {
+    console.warn("[MEGA-RESULT-POST] Erro ao buscar próximo concurso:", e);
   }
 
   try {
