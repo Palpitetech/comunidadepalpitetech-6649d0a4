@@ -82,6 +82,17 @@ export function useUTM() {
         if (legacyUtm) captured.utm_source = legacyUtm;
       }
 
+      // Origem "grupo": qualquer link disparado no grupo de WhatsApp usa
+      // utm_medium=group ou utm_campaign=blast_*. Sobrescrevemos o utm_source
+      // para "grupo" (em vez de "whatsapp") para que a atribuição final reflita
+      // a origem real — o grupo, não o canal.
+      const isGroupLink =
+        captured.utm_medium === "group" ||
+        (captured.utm_campaign?.startsWith("blast_") ?? false);
+      if (isGroupLink) {
+        captured.utm_source = "grupo";
+      }
+
       // Referrer + landing page (only persist if cross-origin or has any UTM)
       const referrer = document.referrer || "";
       const sameOrigin = referrer.startsWith(window.location.origin);
