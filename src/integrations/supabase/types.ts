@@ -1040,6 +1040,7 @@ export type Database = {
           is_active: boolean | null
           member_tag: string | null
           name: string
+          palpite_settings: Json
           slots: Json | null
           updated_at: string | null
           vip_group_link: string | null
@@ -1052,6 +1053,7 @@ export type Database = {
           is_active?: boolean | null
           member_tag?: string | null
           name: string
+          palpite_settings?: Json
           slots?: Json | null
           updated_at?: string | null
           vip_group_link?: string | null
@@ -1064,6 +1066,7 @@ export type Database = {
           is_active?: boolean | null
           member_tag?: string | null
           name?: string
+          palpite_settings?: Json
           slots?: Json | null
           updated_at?: string | null
           vip_group_link?: string | null

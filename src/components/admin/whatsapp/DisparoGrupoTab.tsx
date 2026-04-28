@@ -18,12 +18,30 @@ import { GroupBlastScheduleCard } from "./GroupBlastScheduleCard";
 import { GroupBlastLogsCard } from "./GroupBlastLogsCard";
 import { GroupAdminsCard } from "./GroupAdminsCard";
 
+type BlastLoteria = "lotofacil" | "megasena";
+
+const LOTERIA_LABELS: Record<BlastLoteria, string> = {
+  lotofacil: "Lotofácil",
+  megasena: "Mega-Sena",
+};
+
+const LOTERIA_EMOJI: Record<BlastLoteria, string> = {
+  lotofacil: "🍀",
+  megasena: "💚",
+};
+
+interface PalpiteSettingsByLoteria {
+  lotofacil?: { include_palpites: boolean; vip_group_link: string | null };
+  megasena?: { include_palpites: boolean; vip_group_link: string | null };
+}
+
 interface Slot {
   id: string;
   schedule_times: string[];
   last_scheduled_index: number;
   message_type: "ai" | "manual" | "palpite";
   message_content: string;
+  loteria: BlastLoteria;
 }
 
 interface BlastConfig {
@@ -35,6 +53,7 @@ interface BlastConfig {
   include_palpites: boolean;
   vip_group_link: string | null;
   member_tag: string | null;
+  palpite_settings: PalpiteSettingsByLoteria;
   created_at: string;
   updated_at: string;
 }
@@ -68,10 +87,12 @@ export function DisparoGrupoTab() {
   const [formGroupJids, setFormGroupJids] = useState<string[]>([""]);
   const [formSlots, setFormSlots] = useState<Slot[]>([]);
   const [formActive, setFormActive] = useState(true);
-  const [formIncludePalpites, setFormIncludePalpites] = useState(true);
-  const [formVipGroupLink, setFormVipGroupLink] = useState("");
   const [formMemberTag, setFormMemberTag] = useState("");
   const [formTimeInputs, setFormTimeInputs] = useState<Record<string, string>>({});
+  const [formPalpiteSettings, setFormPalpiteSettings] = useState<PalpiteSettingsByLoteria>({
+    lotofacil: { include_palpites: true, vip_group_link: null },
+    megasena: { include_palpites: true, vip_group_link: null },
+  });
   const [saving, setSaving] = useState(false);
 
   // Last log per config
@@ -134,7 +155,7 @@ export function DisparoGrupoTab() {
   }
 
   function createEmptySlot(index: number): Slot {
-    return { id: `slot_${index}`, schedule_times: [], last_scheduled_index: -1, message_type: "ai", message_content: "" };
+    return { id: `slot_${index}`, schedule_times: [], last_scheduled_index: -1, message_type: "ai", message_content: "", loteria: "lotofacil" };
   }
 
   function openNewDialog() {
@@ -143,8 +164,10 @@ export function DisparoGrupoTab() {
     setFormGroupJids([""]);
     setFormSlots([createEmptySlot(1)]);
     setFormActive(true);
-    setFormIncludePalpites(true);
-    setFormVipGroupLink("");
+    setFormPalpiteSettings({
+      lotofacil: { include_palpites: true, vip_group_link: null },
+      megasena: { include_palpites: true, vip_group_link: null },
+    });
     setFormMemberTag("");
     setFormTimeInputs({ slot_1: "12:00" });
     setDialogOpen(true);
@@ -154,21 +177,30 @@ export function DisparoGrupoTab() {
     setEditingConfig(config);
     setFormName(config.name);
     setFormGroupJids(config.group_jids.length > 0 ? config.group_jids : [""]);
-    const slots = config.slots.length > 0
-      ? config.slots.map(s => ({
-          ...s,
-          schedule_times: (s.schedule_times || []).map(t => t.substring(0, 5)).sort(),
-          message_type: (s as any).message_type || "ai",
+    const slots: Slot[] = config.slots.length > 0
+      ? config.slots.map((s) => ({
+          id: s.id,
+          schedule_times: (s.schedule_times || []).map((t) => t.substring(0, 5)).sort(),
+          last_scheduled_index: s.last_scheduled_index ?? -1,
+          message_type: ((s as any).message_type as Slot["message_type"]) || "ai",
           message_content: (s as any).message_content || "",
+          loteria: ((s as any).loteria as BlastLoteria) || "lotofacil",
         }))
       : [createEmptySlot(1)];
     setFormSlots(slots);
     setFormActive(config.is_active);
-    setFormIncludePalpites(config.include_palpites ?? true);
-    setFormVipGroupLink(config.vip_group_link || "");
+    // Carrega palpite_settings — fallback para legacy include_palpites/vip_group_link na Lotofácil
+    const ps = (config as any).palpite_settings || {};
+    setFormPalpiteSettings({
+      lotofacil: ps.lotofacil ?? {
+        include_palpites: config.include_palpites ?? true,
+        vip_group_link: config.vip_group_link || null,
+      },
+      megasena: ps.megasena ?? { include_palpites: true, vip_group_link: null },
+    });
     setFormMemberTag((config as any).member_tag || "");
     const inputs: Record<string, string> = {};
-    slots.forEach(s => { inputs[s.id] = "12:00"; });
+    slots.forEach((s) => { inputs[s.id] = "12:00"; });
     setFormTimeInputs(inputs);
     setDialogOpen(true);
   }
@@ -240,21 +272,26 @@ export function DisparoGrupoTab() {
     setSaving(true);
 
     // Format times with seconds for DB
-    const slotsPayload = formSlots.map(s => ({
+    const slotsPayload = formSlots.map((s) => ({
       id: s.id,
-      schedule_times: s.schedule_times.map(t => t.length === 5 ? `${t}:00` : t),
+      schedule_times: s.schedule_times.map((t) => (t.length === 5 ? `${t}:00` : t)),
       last_scheduled_index: s.last_scheduled_index ?? -1,
       message_type: s.message_type,
       message_content: s.message_type === "manual" ? s.message_content : "",
+      loteria: s.message_type === "manual" ? "lotofacil" : s.loteria,
     }));
+
+    // Compat: espelha settings da Lotofácil nos campos legacy
+    const lotofacilSettings = formPalpiteSettings.lotofacil ?? { include_palpites: true, vip_group_link: null };
 
     const payload: any = {
       name: formName.trim(),
       group_jids: cleanJids,
       slots: slotsPayload,
       is_active: formActive,
-      include_palpites: formIncludePalpites,
-      vip_group_link: formVipGroupLink.trim() || null,
+      include_palpites: lotofacilSettings.include_palpites,
+      vip_group_link: lotofacilSettings.vip_group_link || null,
+      palpite_settings: formPalpiteSettings,
       member_tag: formMemberTag.trim() || null,
       updated_at: new Date().toISOString(),
     };
@@ -430,7 +467,7 @@ export function DisparoGrupoTab() {
                           <div className="flex items-center justify-between">
                             <p className="text-muted-foreground flex items-center gap-1">
                             {(slot as any).message_type === "manual" ? <PenLine className="h-3 w-3" /> : (slot as any).message_type === "palpite" ? <Dices className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
-                              {(slot as any).message_type === "manual" ? "✏️ Manual" : (slot as any).message_type === "palpite" ? "🎰 Palpite" : "🤖 IA"} — Próximo: {times[nextIdx] || "—"} ({times.length} horário{times.length !== 1 ? "s" : ""})
+                              {(slot as any).message_type === "manual" ? "✏️ Manual" : (slot as any).message_type === "palpite" ? `🎰 Palpite · ${LOTERIA_LABELS[((slot as any).loteria as BlastLoteria) || "lotofacil"]}` : `🤖 IA · ${LOTERIA_LABELS[((slot as any).loteria as BlastLoteria) || "lotofacil"]}`} — Próximo: {times[nextIdx] || "—"} ({times.length} horário{times.length !== 1 ? "s" : ""})
                             </p>
                             <Button
                               variant="ghost"
@@ -683,19 +720,40 @@ export function DisparoGrupoTab() {
                           ))}
                         >
                           <Dices className="h-3 w-3 mr-1" />
-                          🎰 Palpite Lotofácil
+                          🎰 Palpite
                         </Button>
                       </div>
+
+                      {/* Lottery selector — só relevante para AI e Palpite */}
+                      {slot.message_type !== "manual" && (
+                        <div className="flex items-center gap-2 pt-1">
+                          <Label className="text-[10px] text-muted-foreground shrink-0">Loteria:</Label>
+                          <Select
+                            value={slot.loteria}
+                            onValueChange={(v) => setFormSlots(formSlots.map(s =>
+                              s.id === slot.id ? { ...s, loteria: v as BlastLoteria } : s
+                            ))}
+                          >
+                            <SelectTrigger className="h-7 text-[10px] w-[140px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="lotofacil">🍀 Lotofácil</SelectItem>
+                              <SelectItem value="megasena">💚 Mega-Sena</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
 
                       {slot.message_type === "ai" ? (
                         <p className="text-[10px] text-muted-foreground flex items-center gap-1">
                           <Sparkles className="h-3 w-3" />
-                          A IA gera um convite baseado no post mais recente no momento do envio.
+                          A IA gera um convite baseado no post mais recente da {LOTERIA_LABELS[slot.loteria]}.
                         </p>
                       ) : slot.message_type === "palpite" ? (
                         <p className="text-[10px] text-muted-foreground flex items-center gap-1">
                           <Dices className="h-3 w-3" />
-                          Gera 15 palpites com estratégia baseada nos 5 últimos concursos da Lotofácil.
+                          Gera palpites com estratégia baseada nos últimos concursos da {LOTERIA_LABELS[slot.loteria]}.
                         </p>
                       ) : (
                         <div className="space-y-1">
@@ -720,52 +778,64 @@ export function DisparoGrupoTab() {
               ))}
             </div>
 
-            {/* Palpite mode toggle */}
-            {formSlots.some(s => s.message_type === "palpite") && (
-              <div className="space-y-3 rounded-lg border border-dashed p-3">
-                <Label className="text-xs font-semibold">Modo Palpite Lotofácil</Label>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={formIncludePalpites ? "default" : "outline"}
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => setFormIncludePalpites(true)}
-                  >
-                    🎰 Com Palpites
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={!formIncludePalpites ? "default" : "outline"}
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => setFormIncludePalpites(false)}
-                  >
-                    📊 Só Estratégia + CTA
-                  </Button>
-                </div>
-                <p className="text-[10px] text-muted-foreground">
-                  {formIncludePalpites
-                    ? "Envia a estratégia completa + os 15 jogos gerados."
-                    : "Envia apenas a estratégia e um CTA para entrar no Grupo VIP."}
-                </p>
-
-                {!formIncludePalpites && (
-                  <div className="space-y-1">
-                    <Label className="text-[10px]">Link do Grupo VIP</Label>
-                    <Input
-                      value={formVipGroupLink}
-                      onChange={(e) => setFormVipGroupLink(e.target.value)}
-                      placeholder="https://chat.whatsapp.com/..."
-                      className="text-xs"
-                    />
+            {/* Palpite mode toggle — uma seção por loteria usada nos slots palpite */}
+            {(["lotofacil", "megasena"] as BlastLoteria[])
+              .filter((lot) => formSlots.some((s) => s.message_type === "palpite" && s.loteria === lot))
+              .map((lot) => {
+                const settings = formPalpiteSettings[lot] ?? { include_palpites: true, vip_group_link: null };
+                const updateLot = (patch: Partial<{ include_palpites: boolean; vip_group_link: string | null }>) =>
+                  setFormPalpiteSettings((prev) => ({
+                    ...prev,
+                    [lot]: { ...(prev[lot] ?? { include_palpites: true, vip_group_link: null }), ...patch },
+                  }));
+                return (
+                  <div key={lot} className="space-y-3 rounded-lg border border-dashed p-3">
+                    <Label className="text-xs font-semibold">
+                      {LOTERIA_EMOJI[lot]} Modo Palpite — {LOTERIA_LABELS[lot]}
+                    </Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant={settings.include_palpites ? "default" : "outline"}
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => updateLot({ include_palpites: true })}
+                      >
+                        🎰 Com Palpites
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={!settings.include_palpites ? "default" : "outline"}
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => updateLot({ include_palpites: false })}
+                      >
+                        📊 Só Estratégia + CTA
+                      </Button>
+                    </div>
                     <p className="text-[10px] text-muted-foreground">
-                      Link que aparecerá no CTA para entrar no grupo VIP.
+                      {settings.include_palpites
+                        ? "Envia a estratégia completa + os jogos gerados."
+                        : "Envia apenas a estratégia e um CTA para entrar no Grupo VIP."}
                     </p>
+
+                    {!settings.include_palpites && (
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Link do Grupo VIP — {LOTERIA_LABELS[lot]}</Label>
+                        <Input
+                          value={settings.vip_group_link ?? ""}
+                          onChange={(e) => updateLot({ vip_group_link: e.target.value || null })}
+                          placeholder="https://chat.whatsapp.com/..."
+                          className="text-xs"
+                        />
+                        <p className="text-[10px] text-muted-foreground">
+                          Link que aparecerá no CTA para o Grupo VIP de {LOTERIA_LABELS[lot]}.
+                        </p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            )}
+                );
+              })}
 
             <div className="flex items-center gap-2">
               <Switch checked={formActive} onCheckedChange={setFormActive} />

@@ -57,7 +57,7 @@ export async function handleRetry(
   if (!messageContent) {
     const { data: configData } = await supabase
       .from("group_blast_configs")
-      .select("slots, include_palpites, vip_group_link")
+      .select("slots, include_palpites, vip_group_link, palpite_settings")
       .eq("id", log.config_id)
       .maybeSingle();
 

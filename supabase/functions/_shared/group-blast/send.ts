@@ -1,12 +1,20 @@
 import { jsonResponse } from "../whatsapp-utils.ts";
 import { generateAIMessage } from "./ai-message.ts";
 import { generatePalpiteMessage } from "./palpite-message.ts";
-import type { Slot } from "./types.ts";
+import {
+  getBlastLotteryConfig,
+  type BlastLoteria,
+} from "./lottery-config.ts";
+import type { PalpiteSettingsByLoteria, Slot } from "./types.ts";
 
 interface ConfigData {
   slots: Slot[];
+  /** Legacy — usado como fallback Lotofácil */
   include_palpites: boolean;
+  /** Legacy — usado como fallback Lotofácil */
   vip_group_link: string | null;
+  /** Novo: configuração por loteria */
+  palpite_settings?: PalpiteSettingsByLoteria | null;
 }
 
 interface ResolvedMessage {
@@ -14,9 +22,31 @@ interface ResolvedMessage {
   source: string;
 }
 
+function resolvePalpiteSettings(
+  configData: ConfigData | null,
+  loteria: BlastLoteria,
+): { include_palpites: boolean; vip_group_link: string | null } {
+  const perLot = configData?.palpite_settings?.[loteria];
+  if (perLot && typeof perLot.include_palpites === "boolean") {
+    return {
+      include_palpites: perLot.include_palpites,
+      vip_group_link: perLot.vip_group_link ?? null,
+    };
+  }
+  // Fallback legacy: aplica somente para Lotofácil (configs antigas)
+  if (loteria === "lotofacil") {
+    return {
+      include_palpites: configData?.include_palpites ?? true,
+      vip_group_link: configData?.vip_group_link ?? null,
+    };
+  }
+  // Sem config para esta loteria → defaults seguros
+  return { include_palpites: true, vip_group_link: null };
+}
+
 /**
  * Decide qual mensagem enviar para um log com base no slot/config.
- * Para slot tipo "palpite" e a geração falhar, faz fallback para IA.
+ * Para slot tipo "palpite" e a geração falhar, faz fallback para IA da mesma loteria.
  */
 export async function resolveMessageContent(
   supabase: any,
@@ -30,46 +60,65 @@ export async function resolveMessageContent(
     return { content: slot.message_content.trim(), source: "manual" };
   }
 
+  const loteria: BlastLoteria = (slot?.loteria as BlastLoteria) ?? "lotofacil";
+  const lotCfg = getBlastLotteryConfig(loteria);
+
   if (slot?.message_type === "palpite") {
-    const includePalpites = configData?.include_palpites ?? true;
-    const vipGroupLink = configData?.vip_group_link || null;
+    const { include_palpites, vip_group_link } = resolvePalpiteSettings(
+      configData,
+      loteria,
+    );
     const content = await generatePalpiteMessage(
       supabase,
       apiKey,
       baseUrl,
-      includePalpites,
-      vipGroupLink,
+      { loteria, includePalpites: include_palpites, vipGroupLink: vip_group_link },
     );
     if (content && content.trim()) {
-      return { content, source: "palpite" };
+      return { content, source: `palpite:${loteria}` };
     }
 
     console.warn(
-      `[send] Palpite falhou para log ${log.id}, fallback para IA do último post`,
+      `[send] Palpite (${loteria}) falhou para log ${log.id}, fallback para IA do último post`,
     );
-    const latestPost = await fetchLatestPost(supabase);
-    if (!latestPost) return { content: null, source: "palpite→no_post" };
-    const aiContent = await generateAIMessage(supabase, apiKey, baseUrl, latestPost);
-    return { content: aiContent, source: "palpite→ai_fallback" };
+    const latestPost = await fetchLatestPost(supabase, lotCfg.loteriaTag);
+    if (!latestPost) return { content: null, source: `palpite:${loteria}→no_post` };
+    const aiContent = await generateAIMessage(
+      supabase,
+      apiKey,
+      baseUrl,
+      latestPost,
+      loteria,
+    );
+    return { content: aiContent, source: `palpite:${loteria}→ai_fallback` };
   }
 
-  // Default: IA do último post
-  const latestPost = await fetchLatestPost(supabase);
-  if (!latestPost) return { content: null, source: "ai→no_post" };
-  const content = await generateAIMessage(supabase, apiKey, baseUrl, latestPost);
-  return { content, source: "ai" };
+  // Default: IA do último post da loteria
+  const latestPost = await fetchLatestPost(supabase, lotCfg.loteriaTag);
+  if (!latestPost) return { content: null, source: `ai:${loteria}→no_post` };
+  const content = await generateAIMessage(
+    supabase,
+    apiKey,
+    baseUrl,
+    latestPost,
+    loteria,
+  );
+  return { content, source: `ai:${loteria}` };
 }
 
-async function fetchLatestPost(supabase: any) {
-  const { data } = await supabase
+async function fetchLatestPost(supabase: any, loteriaTag?: string) {
+  let query = supabase
     .from("postagens")
     .select("id, slug, titulo, conteudo, tipo")
     .neq("tipo", "comentario")
+    .eq("status", "publicado")
     .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(1);
+  if (loteriaTag) query = query.eq("loteria_tag", loteriaTag);
+  const { data } = await query.maybeSingle();
   return data;
 }
+
 
 interface SendAttempt {
   ok: boolean;
@@ -259,7 +308,7 @@ export async function handleSend(
     // 1) Resolver mensagem (1x por log)
     const { data: configData } = await supabase
       .from("group_blast_configs")
-      .select("slots, include_palpites, vip_group_link")
+      .select("slots, include_palpites, vip_group_link, palpite_settings")
       .eq("id", log.config_id)
       .maybeSingle();
 
