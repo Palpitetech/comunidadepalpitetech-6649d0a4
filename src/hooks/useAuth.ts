@@ -167,8 +167,6 @@ export function useAuth() {
     isAuthenticated: !!authState.user,
     signUp,
     signIn,
-    signInWithOtp,
-    verifyOtp,
     signOut,
     updateProfile,
     updatePassword,
