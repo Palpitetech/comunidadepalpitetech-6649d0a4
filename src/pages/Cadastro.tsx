@@ -383,8 +383,9 @@ export default function Cadastro() {
                   disabled={reenvioEmail > 0 || loading}
                   className="w-full"
                 >
-                  {reenvioEmail > 0 ? `Reenviar código em ${reenvioEmail}s` : "Reenviar código"}
+                  {reenvioEmail > 0 ? `Reenviar código em ${reenvioEmail}s` : "Reenviar código por e-mail"}
                 </Button>
+                <CadastroAjudaDialog etapa="codigo-email" />
               </form>
             )}
 
