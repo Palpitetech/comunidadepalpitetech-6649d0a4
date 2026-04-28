@@ -210,10 +210,27 @@ export function GroupAdminsCard({ groupJids }: Props) {
                                     </Button>
                                   </>
                                 ) : (
-                                  <Badge variant="secondary" className="text-[10px] h-5 gap-1">
-                                    <UserX className="h-3 w-3" />
-                                    Fora do grupo
-                                  </Badge>
+                                  <>
+                                    <Badge variant="secondary" className="text-[10px] h-5 gap-1">
+                                      <UserX className="h-3 w-3" />
+                                      Fora do grupo
+                                    </Badge>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-6 px-2 text-[10px]"
+                                      disabled={busy || !r.has_admin_instance}
+                                      onClick={() => handleAddAndPromote(jid, inst.id)}
+                                      title={
+                                        !r.has_admin_instance
+                                          ? "Nenhuma instância admin disponível para adicionar"
+                                          : "Adicionar ao grupo e promover a admin"
+                                      }
+                                    >
+                                      <UserPlus className={`h-3 w-3 mr-1 ${busy ? "animate-spin" : ""}`} />
+                                      Adicionar + Admin
+                                    </Button>
+                                  </>
                                 )}
                               </div>
                             </div>
