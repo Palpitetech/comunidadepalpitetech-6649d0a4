@@ -129,11 +129,7 @@ export default function Cadastro() {
         body: { cadastro_id: cadastroId, codigo: c },
       });
       if (error || !data?.sucesso) {
-        const erro = data?.erro;
-        if (erro === "EXPIRADO") setMsg({ tipo: "erro", texto: "Código expirado. Solicite um novo." });
-        else if (erro === "BLOQUEADO") setMsg({ tipo: "erro", texto: "Muitas tentativas. Solicite um novo código." });
-        else if (erro === "INCORRETO") setMsg({ tipo: "erro", texto: data?.mensagem || "Código incorreto." });
-        else setMsg({ tipo: "erro", texto: data?.mensagem || "Código inválido." });
+        setMsg({ tipo: "erro", texto: mapErroCodigo(data?.erro, data?.mensagem) });
         return;
       }
       setMsg({ tipo: "sucesso", texto: "E-mail confirmado!" });
