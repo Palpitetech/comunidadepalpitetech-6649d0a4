@@ -87,11 +87,19 @@ export interface ConcursoHistorico {
   dezenas: number[];
 }
 
+export interface ProximoConcursoInfo {
+  numero: string | null;
+  data: string | null;
+  premioEstimadoFormatado: string | null;
+  acumulado: boolean;
+}
+
 export interface GravacaoData {
   concurso: number;
   data: string;
   premiacao: string;
   faixasPremiacao: FaixaPremiacao[];
+  proximoConcurso?: ProximoConcursoInfo;
   dezenas: number[];
   dezenasFormatadas: string[];
   estatisticas: EstatisticaItem[];
