@@ -102,11 +102,13 @@ export function useAuth() {
     return data;
   }, []);
 
+  // signUp e signIn EXIGEM senha. Sem fallback OTP — o cadastro por código de
+  // 6 dígitos vive no RegisterWizard dedicado (Plano 3) e usa signInWithOtp
+  // diretamente, nunca via signIn/signUp.
   const signUp = useCallback(
-    async (email: string, password?: string, nome?: string, celular?: string, referralCode?: string) => {
-      // Se não houver senha, usamos signInWithOtp
+    async (email: string, password: string, nome?: string, celular?: string, referralCode?: string) => {
       if (!password) {
-        return signInWithOtp(email);
+        throw new Error("Senha é obrigatória para criar conta.");
       }
 
       const { data, error } = await supabase.auth.signUp({
@@ -125,13 +127,12 @@ export function useAuth() {
       if (error) throw error;
       return data;
     },
-    [signInWithOtp]
+    []
   );
 
-  const signIn = useCallback(async (email: string, password?: string) => {
-    // Se não houver senha, usamos signInWithOtp
+  const signIn = useCallback(async (email: string, password: string) => {
     if (!password) {
-      return signInWithOtp(email);
+      throw new Error("Informe sua senha para entrar.");
     }
 
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -141,7 +142,7 @@ export function useAuth() {
 
     if (error) throw error;
     return data;
-  }, [signInWithOtp]);
+  }, []);
 
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
