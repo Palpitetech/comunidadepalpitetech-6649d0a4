@@ -351,7 +351,10 @@ export default function Cadastro() {
                   </div>
                   <h1 className="text-xl font-bold">Confirme seu e-mail</h1>
                   <p className="text-sm text-muted-foreground">
-                    Digite o código enviado para <strong>{emailMascarado}</strong>
+                    Enviamos um código <strong>por e-mail</strong> para <strong>{emailMascarado}</strong>
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Não chegou? Verifique <strong>Spam</strong> e <strong>Promoções</strong>. Pode levar até 1 minuto.
                   </p>
                 </div>
                 <div className="flex justify-center">
