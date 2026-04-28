@@ -153,10 +153,10 @@ export default function Cadastro() {
         body: { cadastro_id: cadastroId, celular: v.normalized },
       });
       if (error || !data?.sucesso) {
-        const erro = data?.erro;
-        if (erro === "CELULAR_EM_USO") setMsg({ tipo: "erro", texto: "Esse WhatsApp já tem conta cadastrada." });
-        else if (erro === "AGUARDE") setMsg({ tipo: "erro", texto: data?.mensagem || "Aguarde para reenviar." });
-        else setMsg({ tipo: "erro", texto: data?.mensagem || "Não foi possível enviar o código." });
+        setMsg({
+          tipo: "erro",
+          texto: mapErroCodigo(data?.erro, data?.mensagem, "Não foi possível enviar o código."),
+        });
         return;
       }
       setCelularMascarado(data.destino_mascarado || celular);
