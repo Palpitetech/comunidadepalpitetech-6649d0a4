@@ -118,13 +118,19 @@ async function listForGroup(
   let probeError: string | null = null;
   try {
     participants = await fetchGroupParticipants(evoUrl, evoKey, probe.evolution_instance_id, groupJid);
+    if (participants.length > 0) {
+      console.log(
+        `[group-promote-admin] sample participants (group ${groupJid}):`,
+        participants.slice(0, 3).map((p) => p.phone).join(", "),
+        `total=${participants.length}`
+      );
+    }
   } catch (e: any) {
     probeError = e?.message || String(e);
   }
 
   const enriched: InstanceState[] = (instances || []).map((i: any) => {
-    const myPhone = normalizePhone(i.phone_number);
-    const found = participants.find((p) => p.phone === myPhone || p.phone.endsWith(myPhone));
+    const found = participants.find((p) => phonesMatch(p.phone, i.phone_number));
     let group_status: ParticipantStatus = "not_in_group";
     if (found) {
       if (found.admin === "superadmin") group_status = "superadmin";
