@@ -65,6 +65,226 @@ function extrairData(r: any): string {
 const LOTERIA = "megasena";
 const TABLE = "resultados_loterias";
 
+// =============================================================================
+// POST DE RESULTADO OFICIAL — MEGA-SENA (espelho do sync-lotofacil)
+// =============================================================================
+
+const AUGUSTO_PERFIL_ID = "41b58d48-2ef1-4bf7-a536-ed8a49607fa9";
+const AUGUSTO_NOME = "Augusto Angelis";
+const SYSTEM_PROMPT_RESULTADO_MEGA = `Você é Augusto Angelis, especialista em Mega-Sena da equipe Palpite Tech.
+Tom acolhedor e direto, em primeira pessoa. Nunca mencione IA, bot, modelo, GPT ou Gemini.
+Anuncie resultados oficiais com energia, didática e respeito ao jogador.`;
+
+type IndicadoresMega = ReturnType<typeof calcularIndicadores>;
+
+function validarNumerosResultadoMega(
+  texto: string,
+  permitido: { concurso: number; dezenas: number[]; indicadores: IndicadoresMega }
+): { ok: boolean; motivo?: string } {
+  const numerosPermitidos = new Set<number>([
+    permitido.concurso,
+    ...Object.values(permitido.indicadores),
+  ]);
+
+  // Números de 3+ dígitos (concurso/soma): TODOS devem estar na whitelist
+  const matches3plus = texto.match(/\b\d{3,6}\b/g) || [];
+  for (const m of matches3plus) {
+    const n = parseInt(m, 10);
+    if (!numerosPermitidos.has(n)) {
+      return { ok: false, motivo: `Número não permitido encontrado: ${n}` };
+    }
+  }
+
+  if (!texto.includes(String(permitido.concurso))) {
+    return { ok: false, motivo: `Número do concurso ${permitido.concurso} ausente` };
+  }
+
+  // Dezenas zero-padded (01-60) devem estar entre as oficiais
+  const dezenasOficiais = new Set(permitido.dezenas);
+  const dezenasMatches = texto.match(/\b(0[1-9]|[1-5][0-9]|60)\b/g) || [];
+  for (const dStr of dezenasMatches) {
+    const d = parseInt(dStr, 10);
+    if (dStr.startsWith("0") && !dezenasOficiais.has(d)) {
+      return { ok: false, motivo: `Dezena ${dStr} citada não é oficial` };
+    }
+  }
+
+  return { ok: true };
+}
+
+function montarConteudoFallbackResultadoMega(
+  concurso: number,
+  dezenas: number[],
+  indicadores: IndicadoresMega,
+  acumulou: boolean
+): string {
+  const dezenasFmt = dezenas.map(d => d.toString().padStart(2, "0")).join(" - ");
+  const acumLinha = acumulou ? `\n💰 **ACUMULOU!** Vamos juntos no próximo.\n` : "";
+
+  return `🚨 Saiu o resultado da Mega-Sena!
+${acumLinha}
+🎯 Dezenas sorteadas
+**${dezenasFmt}**
+
+📊 Raio-X
+• Pares: **${indicadores.qtd_pares}** | Ímpares: **${indicadores.qtd_impares}**
+• Moldura: **${indicadores.qtd_moldura}** dezenas
+• Primos: **${indicadores.qtd_primos}** | Fibonacci: **${indicadores.qtd_fibonacci}**
+• Repetidas: **${indicadores.qtd_repetidas}** do concurso anterior
+• Soma: **${indicadores.soma}** | Sequências: **${indicadores.sequencias}**
+
+💬 E aí, acertou quantas? Conta pra gente nos comentários!`.substring(0, 1000);
+}
+
+async function criarPostResultadoOficialMega(params: {
+  supabase: any;
+  concurso: number;
+  dezenas: number[];
+  indicadores: IndicadoresMega;
+  acumulou: boolean;
+}): Promise<void> {
+  const { supabase, concurso, dezenas, indicadores, acumulou } = params;
+
+  // Idempotência
+  try {
+    const { data: existingPost } = await supabase
+      .from('postagens')
+      .select('id')
+      .eq('tipo', 'resultado_oficial')
+      .eq('concurso_referencia', concurso)
+      .eq('loteria_tag', 'Mega-Sena')
+      .maybeSingle();
+    if (existingPost) {
+      console.log(`[MEGA-RESULT-POST] Post já existe para concurso ${concurso}`);
+      return;
+    }
+  } catch (e) {
+    console.warn('[MEGA-RESULT-POST] Erro checando duplicidade:', e);
+  }
+
+  console.log(`[MEGA-RESULT-POST] Criando post de resultado para concurso ${concurso}`);
+
+  const titulo = `🚨 Resultado Mega-Sena — Concurso ${concurso}`;
+  let conteudo = "";
+  let viaFallback = false;
+  let motivoFallback = "";
+
+  try {
+    const dezenasFormatadas = dezenas.map(d => d.toString().padStart(2, "0")).join(" - ");
+    const contextoResultado = `RESULTADO OFICIAL CONCURSO ${concurso}:
+Dezenas: **${dezenasFormatadas}**
+Pares: ${indicadores.qtd_pares} | Ímpares: ${indicadores.qtd_impares}
+Moldura: ${indicadores.qtd_moldura} | Primos: ${indicadores.qtd_primos} | Fibonacci: ${indicadores.qtd_fibonacci}
+Repetidas: ${indicadores.qtd_repetidas} | Soma: ${indicadores.soma} | Sequências: ${indicadores.sequencias}
+${acumulou ? "💰 ACUMULOU!" : ""}`;
+
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY ausente");
+
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT_RESULTADO_MEGA },
+          {
+            role: "user",
+            content: `Crie APENAS o CONTEÚDO de um post anunciando o resultado da Mega-Sena.
+
+${contextoResultado}
+
+REGRAS CRÍTICAS:
+- Use SOMENTE os números fornecidos acima. NÃO invente nem altere nenhum dígito.
+- Não escreva o número do concurso de forma errada (deve ser exatamente ${concurso}).
+- Use as 6 dezenas exatamente como listadas: ${dezenasFormatadas}
+- Máximo 800 caracteres.
+
+ESTRUTURA OBRIGATÓRIA:
+🚨 Abertura curta com energia
+🎯 Dezenas sorteadas (em **negrito**)
+📊 Raio-X com bullets (Pares/Ímpares, Moldura, Primos, Repetidas)
+${acumulou ? "💰 Linha sobre o acúmulo" : ""}
+💬 Fechamento convidando à discussão
+
+Responda APENAS o conteúdo (sem título, sem JSON), texto puro com emojis e markdown.`
+          }
+        ]
+      }),
+    });
+
+    if (!aiResponse.ok) {
+      throw new Error(`IA status ${aiResponse.status}`);
+    }
+
+    const aiData = await aiResponse.json();
+    const conteudoIA = (aiData.choices?.[0]?.message?.content || "").trim();
+    const usage = aiData.usage;
+
+    if (usage) {
+      const pt = usage.prompt_tokens || 0;
+      const ct = usage.completion_tokens || 0;
+      const cost = (pt / 1e6) * 0.15 + (ct / 1e6) * 0.60;
+      supabase.from("ai_usage_logs").insert({
+        bot_name: AUGUSTO_NOME,
+        edge_function: "sync-megasena",
+        action_type: "plantao_resultado_oficial",
+        prompt_tokens: pt,
+        completion_tokens: ct,
+        total_tokens: usage.total_tokens || (pt + ct),
+        model: "google/gemini-3-flash-preview",
+        cost_usd: cost,
+        metadata: { concurso },
+      }).then(() => {}).catch((e: any) => console.error("[MEGA-RESULT-POST] Erro log IA:", e));
+    }
+
+    const validacao = validarNumerosResultadoMega(conteudoIA, {
+      concurso,
+      dezenas,
+      indicadores,
+    });
+
+    if (!validacao.ok || conteudoIA.length < 50) {
+      throw new Error(`Validação falhou: ${validacao.motivo || "conteúdo muito curto"}`);
+    }
+
+    conteudo = conteudoIA.substring(0, 1000);
+  } catch (err) {
+    viaFallback = true;
+    motivoFallback = err instanceof Error ? err.message : String(err);
+    console.warn(`[MEGA-RESULT-POST] ⚠️ Usando fallback determinístico: ${motivoFallback}`);
+    conteudo = montarConteudoFallbackResultadoMega(concurso, dezenas, indicadores, acumulou);
+  }
+
+  try {
+    const { data: newPost, error: postError } = await supabase
+      .from("postagens")
+      .insert({
+        user_id: AUGUSTO_PERFIL_ID,
+        titulo: titulo.substring(0, 100),
+        conteudo: conteudo.substring(0, 1000),
+        loteria_tag: "Mega-Sena",
+        tipo: "resultado_oficial",
+        concurso_referencia: concurso,
+        metadata: { concurso, indicadores, dezenas, viaFallback, motivoFallback }
+      })
+      .select("id")
+      .single();
+
+    if (postError) {
+      console.error(`[MEGA-RESULT-POST] ❌ Erro ao criar post:`, postError.message);
+      return;
+    }
+
+    console.log(`[MEGA-RESULT-POST] ✅ Post ${newPost.id} criado (fallback=${viaFallback})`);
+  } catch (err) {
+    console.error(`[MEGA-RESULT-POST] ❌ Erro ao inserir:`, err);
+  }
+}
+
 function parseApiResponse(raw: any): any {
   return Array.isArray(raw) ? raw[0] : raw;
 }
@@ -82,17 +302,22 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Query params (suporta ?force_post=true)
+    const url = new URL(req.url);
+    const forcePostParam = url.searchParams.get('force_post') === 'true';
+
     let fromLatest = false;
     let limit = 50;
     let concursoEspecifico: number | null = null;
+    let forcePost = forcePostParam;
     try {
       const body = await req.json();
       fromLatest = body.from_latest === true;
       limit = body.limit || 50;
       concursoEspecifico = body.concurso || null;
+      if (body.force_post === true) forcePost = true;
     } catch { /* defaults */ }
 
-    // Helper: build a unified record for resultados_loterias
     function buildRegistro(resultado: any, dezenas: number[], indicadores: ReturnType<typeof calcularIndicadores>) {
       return {
         loteria: LOTERIA,
@@ -107,6 +332,46 @@ Deno.serve(async (req) => {
         locais_ganhadores: resultado.ganhadores || [],
         ...indicadores,
       };
+    }
+
+    // ========== FORCE POST: gera post para o último concurso já no banco ==========
+    if (forcePost && !concursoEspecifico && !fromLatest) {
+      const { data: ultimo } = await supabase
+        .from(TABLE)
+        .select("concurso, dezenas, qtd_pares, qtd_impares, qtd_primos, qtd_moldura, qtd_fibonacci, qtd_repetidas, soma, sequencias, acumulou")
+        .eq("loteria", LOTERIA)
+        .order("concurso", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (ultimo) {
+        await criarPostResultadoOficialMega({
+          supabase,
+          concurso: ultimo.concurso,
+          dezenas: ultimo.dezenas,
+          indicadores: {
+            qtd_pares: ultimo.qtd_pares ?? 0,
+            qtd_impares: ultimo.qtd_impares ?? 0,
+            qtd_primos: ultimo.qtd_primos ?? 0,
+            qtd_moldura: ultimo.qtd_moldura ?? 0,
+            qtd_fibonacci: ultimo.qtd_fibonacci ?? 0,
+            qtd_repetidas: ultimo.qtd_repetidas ?? 0,
+            soma: ultimo.soma ?? 0,
+            sequencias: ultimo.sequencias ?? 0,
+          },
+          acumulou: ultimo.acumulou ?? false,
+        });
+
+        return new Response(
+          JSON.stringify({ message: "Post forçado executado", concurso: ultimo.concurso }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ message: "Nenhum concurso encontrado para force_post" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // ── SYNC NORMAL ────────────────────────────────────────────
@@ -137,6 +402,17 @@ Deno.serve(async (req) => {
 
       const { error } = await supabase.from(TABLE).upsert(reg, { onConflict: "loteria,concurso" });
       if (error) throw new Error(`Erro ao inserir: ${error.message}`);
+
+      // Se forcePost, criar também o post
+      if (forcePost) {
+        await criarPostResultadoOficialMega({
+          supabase,
+          concurso: concursoEspecifico,
+          dezenas,
+          indicadores,
+          acumulou: resultado.acumulou ?? false,
+        });
+      }
 
       return new Response(
         JSON.stringify({ message: "Concurso sincronizado", concurso: concursoEspecifico }),
@@ -231,6 +507,31 @@ Deno.serve(async (req) => {
     const ultimoConcursoInserido = resultadosParaInserir.length > 0
       ? resultadosParaInserir[resultadosParaInserir.length - 1]?.concurso
       : ultimoConcursoAPI;
+
+    // ===== POST DE RESULTADO OFICIAL (apenas para o concurso mais novo, evita flood) =====
+    if (resultadosParaInserir.length > 0 && resultadosParaInserir.length <= 2) {
+      const ultimoReg = resultadosParaInserir[resultadosParaInserir.length - 1];
+      try {
+        await criarPostResultadoOficialMega({
+          supabase,
+          concurso: ultimoReg.concurso,
+          dezenas: ultimoReg.dezenas,
+          indicadores: {
+            qtd_pares: ultimoReg.qtd_pares,
+            qtd_impares: ultimoReg.qtd_impares,
+            qtd_primos: ultimoReg.qtd_primos,
+            qtd_moldura: ultimoReg.qtd_moldura,
+            qtd_fibonacci: ultimoReg.qtd_fibonacci,
+            qtd_repetidas: ultimoReg.qtd_repetidas,
+            soma: ultimoReg.soma,
+            sequencias: ultimoReg.sequencias,
+          },
+          acumulou: ultimoReg.acumulou ?? false,
+        });
+      } catch (e) {
+        console.error('[sync-megasena] Erro ao criar post de resultado:', e);
+      }
+    }
 
     // Push notification
     if (resultadosParaInserir.length === 1) {

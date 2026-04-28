@@ -1,55 +1,39 @@
 ## Objetivo
 
-Criar templates automáticos para a campanha **Maratona Mega Especial 30 Anos** + **Aula Ao Vivo Mega Especial**, usando os dois webhooks de lead já existentes e segmentando por tags de compra.
+Quando o sorteio da Mega-Sena entra no banco via `sync-megasena`, gerar automaticamente um post `tipo = 'resultado_oficial'` com `loteria_tag = 'Mega-Sena'`. A página `/home` (Comunidade) já tem a lógica de fixar o post `resultado_oficial` no topo — então o pin será automático para Mega-Sena assim que esses posts existirem.
 
-## Contexto identificado
+## O que será feito
 
-**Webhooks ativos** (geram tag automática no perfil/lead via `source_tag`):
-- `Aula-Ao-Vivo-Mega-Especial` → tag `aula_ao_vivo_mega_especial`
-- `Lead - Maratona Mega Especial 30 Anos` → tag `maratona_mega_especial`
+### 1. Edge Function `sync-megasena/index.ts`
+Adicionar a função `criarPostResultadoOficialMega()` espelhando a da Lotofácil, adaptada para Mega-Sena:
 
-**Smart Links já criados:**
-- `ms-sala-secreta` → grupo gratuito (para leads que NÃO compraram)
-- `ms-sala-vip` → grupo pago (para quem comprou a Sala Vip)
+- **Autor**: mesmo `AUGUSTO_PERFIL_ID` (`41b58d48-2ef1-4bf7-a536-ed8a49607fa9`).
+- **Título determinístico** (sem IA): `🚨 Resultado Mega-Sena — Concurso {N}`.
+- **Conteúdo**: chama Lovable AI Gateway (`google/gemini-3-flash-preview`) com system prompt focado em Mega-Sena. Validador anti-alucinação adaptado para 6 dezenas (1–60).
+- **Fallback determinístico** se IA falhar ou validação rejeitar: monta texto com Pares/Ímpares, Moldura, Primos, Fibonacci, Repetidas, Soma, Sequências e flag de Acumulou.
+- **Insert**: `postagens` com `loteria_tag = 'Mega-Sena'`, `tipo = 'resultado_oficial'`, `concurso_referencia`, `metadata` com indicadores e dezenas.
+- **Idempotência**: antes de inserir, verifica se já existe post `resultado_oficial` para aquele concurso — se sim, pula.
 
-**Plano pago identificado:** `aula-ao-vivo-mega-especial` (R$ 27). Hoje, ao comprar, o trigger `sync_perfil_tags` NÃO cria uma tag específica de "comprou Mega VIP" — esse plano cai no `else` e marca apenas `gratis`. Precisamos diferenciar quem comprou.
+### 2. Pontos de invocação dentro do `sync-megasena`
+Hoje o arquivo só faz upsert e dispara push. Vamos chamar `criarPostResultadoOficialMega()`:
 
-## Plano
+- Logo após `upsert` bem-sucedido, **apenas para o último concurso novo inserido** (quando `resultadosParaInserir.length === 1` ou para o de maior número), evitando flood histórico.
+- Também aceitar query param `?force_post=true` que, mesmo sem novo concurso, gera o post para o concurso mais recente do banco caso ainda não exista (paridade com a Lotofácil).
 
-### 1. Adicionar tag `pago_aula_mega_especial` ao trigger `sync_perfil_tags`
+### 3. Comunidade (`src/pages/Comunidade.tsx`)
+**Nenhuma mudança necessária** — a lógica atual já fixa qualquer post com `tipo === 'resultado_oficial'` filtrado por `loteria_tag`. Quando o primeiro post de resultado da Mega-Sena for criado pela Edge Function, ele aparece fixado automaticamente.
 
-Migração para incluir o slug `aula-ao-vivo-mega-especial` no bloco de planos pagos, gerando a tag `pago_aula_mega_especial` quando `status_assinatura = 'ativa'` e validade futura. Adicionar essa tag ao array `v_managed`.
+Apenas remover (opcional) o estado vazio especial "Estudos de Mega-Sena em breve" se quiser, mas mantemos por enquanto como fallback de segurança caso o sync falhe.
 
-### 2. Criar Template 1 — Lead Maratona/Aula (sem compra)
+### 4. Backfill imediato (1 chamada)
+Após deploy da função atualizada, chamar `sync-megasena` com `?force_post=true` para gerar o post do concurso 3001 (já no banco), garantindo que a tela `/home` → Mega-Sena passe a ter o pin já no primeiro acesso.
 
-- **Nome:** `Lead Maratona Mega 30 Anos — Sala Secreta`
-- **Evento:** `lead_pre_checkout_abandono` (mesmo motor já rodando para Lotofácil)
-- **include_tags:** `maratona_mega_especial`, `aula_ao_vivo_mega_especial` (match `any`)
-- **exclude_tags:** `pago_aula_mega_especial`, `pago_grupovip_lotofacil`, `pago_mensal`, `pago_anual`, `pago_anualvip` (não envia para quem já comprou)
-- **delay:** 60 min após captura
-- **Conteúdo:** convite para a **Sala Secreta Mega** (`https://www.palpitetech.com.br/g/ms-sala-secreta` com UTMs `whatsapp / lead_retarget / maratona_mega_30anos`)
+## Arquivos afetados
 
-### 3. Criar Template 2 — Comprou Sala VIP
+- `supabase/functions/sync-megasena/index.ts` — adicionar gerador de post + invocação + suporte a `force_post`.
 
-- **Nome:** `Compra aprovada — Aula Mega Especial VIP`
-- **Evento:** `sale_confirmed`
-- **include_tags:** `pago_aula_mega_especial`
-- **exclude_tags:** vazio
-- **Conteúdo:** boas-vindas + link da **Sala Vip Mega** (`https://www.palpitetech.com.br/g/ms-sala-vip`) + instruções da maratona
+## Notas técnicas
 
-### 4. Backfill (opcional, recomendado)
-
-Tocar perfis já existentes com plano `aula-ao-vivo-mega-especial` ativo (`UPDATE perfis SET updated_at = now() WHERE plan_id = ...`) para o trigger reaplicar as tags.
-
-## Detalhes técnicos
-
-- O motor `process-lead-retargeting` já busca templates com event_trigger `lead_pre_checkout_abandono` e usa `overlaps(tags, include_tags)` em `leads_inbox` — o Template 1 entra automaticamente no scheduler.
-- O Template 2 é disparado pela função existente que processa eventos `sale_confirmed` no webhook Kirvano (mesmo padrão do template "Compra aprovada (Grupo VIP Lotofácil)").
-- Variáveis usadas: `{{nome}}`, `{{link_sala_secreta_mega}}`, `{{link_sala_vip_mega}}` — adicionarei resolvers nas funções `process-lead-retargeting` e `process-sale-event` para injetar os links com UTMs.
-- Conteúdos seguirão o tom já existente (sem emoji excessivo, sem mencionar "IA"), e cada template terá variantes A/B para rotação (mín. 2 variantes em `message_template_variants`).
-
-## Pergunta antes de implementar
-
-Confirma que:
-1. O link da **Sala Secreta Mega** vai para os leads de **AMBOS** webhooks (Aula + Maratona)?
-2. O link da **Sala Vip Mega** entra apenas para quem comprou o plano `aula-ao-vivo-mega-especial` (R$ 27)? Há outro produto pago dessa campanha que devo mapear?
+- Validador anti-alucinação: whitelist com `[concurso, ...indicadores, ...dezenas]`. Dezenas no padrão `01–60` (zero-padded) só podem aparecer se estiverem entre as 6 oficiais.
+- Custo IA: ~mesmas tokens da Lotofácil (~$0.0003 por post). Logado em `ai_usage_logs` com `edge_function: 'sync-megasena'`, `action_type: 'plantao_resultado_oficial'`.
+- Não altera schema. Não altera RLS (tabela `postagens` já aceita inserts via service role).
