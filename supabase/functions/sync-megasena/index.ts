@@ -647,11 +647,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fire and forget: sync próximos concursos
+    // Sync próximos concursos e ENTÃO atualizar footer do post fixo
     const syncProximosSecret = Deno.env.get('NOTIFICATIONS_WEBHOOK_SECRET');
     if (syncProximosSecret) {
       fetch(`${supabaseUrl}/functions/v1/sync-proximos-concursos?secret=${syncProximosSecret}`, { method: 'POST' })
+        .then(() => refreshFooterProximoConcursoMega(supabase))
         .catch(err => console.error('[sync-megasena] Erro ao atualizar proximos:', err));
+    } else {
+      // Sem secret, atualiza footer com o que já houver em proximos_concursos
+      refreshFooterProximoConcursoMega(supabase).catch(() => {});
     }
 
     // Fire and forget: pré-gerar rascunhos do dia
