@@ -130,7 +130,7 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
 
       toast.success("Senha redefinida para 123456" + (data.email_enviado ? " — email enviado" : ""));
 
-      const telefone = user.whatsapp || user.celular;
+      const telefone = user.celular;
       if (telefone) {
         try {
           const { data: instances } = await supabase
