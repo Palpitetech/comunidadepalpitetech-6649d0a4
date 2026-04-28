@@ -193,6 +193,59 @@ ${cicloLinha}
 💬 E aí, acertou quantas? Conta pra gente nos comentários!`.substring(0, 1000);
 }
 
+// Recalcula e atualiza o footer "Próximo concurso" no post 'resultado_oficial'
+// MAIS RECENTE da Lotofácil. Idempotente.
+async function refreshFooterProximoConcursoLoto(supabase: any): Promise<void> {
+  try {
+    const { data: prox } = await supabase
+      .from("proximos_concursos")
+      .select("numero_concurso, data_sorteio, premio_estimado")
+      .eq("loteria", "lotofacil")
+      .maybeSingle();
+    if (!prox) return;
+
+    const partes: string[] = [];
+    if (prox.numero_concurso) partes.push(`Concurso ${prox.numero_concurso}`);
+    if (prox.data_sorteio) {
+      const [y, m, d] = String(prox.data_sorteio).split("-");
+      if (y && m && d) partes.push(`📅 ${d}/${m}/${y}`);
+    }
+    if (prox.premio_estimado) {
+      const num = Number(prox.premio_estimado);
+      if (num && !Number.isNaN(num) && num > 0) {
+        const formatado = num.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+        partes.push(`💰 Prêmio estimado: **${formatado}**`);
+      }
+    }
+    if (partes.length === 0) return;
+    const footer = `---\n🎯 **Próximo concurso** — ${partes.join(" • ")}`;
+
+    const { data: post } = await supabase
+      .from("postagens")
+      .select("id, conteudo")
+      .eq("tipo", "resultado_oficial")
+      .eq("loteria_tag", "Lotofácil")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!post) return;
+
+    const FOOTER_RE = /\n*---\n🎯 \*\*Próximo concurso\*\*[\s\S]*$/;
+    const base = String(post.conteudo || "").replace(FOOTER_RE, "").trimEnd();
+    const novoConteudo = `${base}\n\n${footer}`.substring(0, 1000);
+    if (novoConteudo === post.conteudo) return;
+
+    const { error } = await supabase
+      .from("postagens")
+      .update({ conteudo: novoConteudo })
+      .eq("id", post.id);
+    if (error) console.warn("[LOTO-FOOTER-REFRESH] Erro update:", error.message);
+    else console.log(`[LOTO-FOOTER-REFRESH] ✅ Footer atualizado em post ${post.id}`);
+  } catch (e) {
+    console.warn("[LOTO-FOOTER-REFRESH] Erro:", e);
+  }
+}
+
 async function criarPostResultadoOficial(params: {
   supabase: any;
   concurso: number;
@@ -1081,13 +1134,17 @@ Deno.serve(async (req) => {
     console.log(`[SYNC] Novos: ${resultados.novos} | Existentes: ${resultados.existentes} | Erros: ${resultados.erros.length}`);
     console.log(`[SYNC] ========================================`);
 
-    // Fire and forget: atualizar próximos concursos
+    // Sync próximos concursos e ENTÃO atualizar footer do post fixo
     const syncProximosSecret = Deno.env.get('NOTIFICATIONS_WEBHOOK_SECRET');
     if (syncProximosSecret) {
       fetch(
         `${supabaseUrl}/functions/v1/sync-proximos-concursos?secret=${syncProximosSecret}`,
         { method: 'POST' }
-      ).catch(err => console.error('[sync-lotofacil] Erro ao atualizar proximos:', err));
+      )
+        .then(() => refreshFooterProximoConcursoLoto(supabase))
+        .catch(err => console.error('[sync-lotofacil] Erro ao atualizar proximos:', err));
+    } else {
+      refreshFooterProximoConcursoLoto(supabase).catch(() => {});
     }
 
     // Fire and forget: pré-gerar rascunhos do dia (assíncrono, sem await)

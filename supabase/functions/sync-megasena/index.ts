@@ -160,6 +160,51 @@ function montarFooterProximoConcurso(p: {
   return `---\n🎯 **Próximo concurso** — ${partes.join(" • ")}`;
 }
 
+// Recalcula e atualiza o footer "Próximo concurso" no post 'resultado_oficial'
+// MAIS RECENTE da Mega-Sena, removendo qualquer footer antigo. Idempotente.
+async function refreshFooterProximoConcursoMega(supabase: any): Promise<void> {
+  try {
+    const { data: prox } = await supabase
+      .from("proximos_concursos")
+      .select("numero_concurso, data_sorteio, premio_estimado")
+      .eq("loteria", "megasena")
+      .maybeSingle();
+    if (!prox) return;
+
+    const footer = montarFooterProximoConcurso({
+      numero: prox.numero_concurso,
+      data: prox.data_sorteio,
+      valor: prox.premio_estimado,
+    });
+    if (!footer) return;
+
+    const { data: post } = await supabase
+      .from("postagens")
+      .select("id, conteudo")
+      .eq("tipo", "resultado_oficial")
+      .eq("loteria_tag", "Mega-Sena")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!post) return;
+
+    const FOOTER_RE = /\n*---\n🎯 \*\*Próximo concurso\*\*[\s\S]*$/;
+    const base = String(post.conteudo || "").replace(FOOTER_RE, "").trimEnd();
+    const novoConteudo = `${base}\n\n${footer}`.substring(0, 1000);
+
+    if (novoConteudo === post.conteudo) return;
+
+    const { error } = await supabase
+      .from("postagens")
+      .update({ conteudo: novoConteudo })
+      .eq("id", post.id);
+    if (error) console.warn("[MEGA-FOOTER-REFRESH] Erro update:", error.message);
+    else console.log(`[MEGA-FOOTER-REFRESH] ✅ Footer atualizado em post ${post.id}`);
+  } catch (e) {
+    console.warn("[MEGA-FOOTER-REFRESH] Erro:", e);
+  }
+}
+
 async function criarPostResultadoOficialMega(params: {
   supabase: any;
   concurso: number;
@@ -602,11 +647,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fire and forget: sync próximos concursos
+    // Sync próximos concursos e ENTÃO atualizar footer do post fixo
     const syncProximosSecret = Deno.env.get('NOTIFICATIONS_WEBHOOK_SECRET');
     if (syncProximosSecret) {
       fetch(`${supabaseUrl}/functions/v1/sync-proximos-concursos?secret=${syncProximosSecret}`, { method: 'POST' })
+        .then(() => refreshFooterProximoConcursoMega(supabase))
         .catch(err => console.error('[sync-megasena] Erro ao atualizar proximos:', err));
+    } else {
+      // Sem secret, atualiza footer com o que já houver em proximos_concursos
+      refreshFooterProximoConcursoMega(supabase).catch(() => {});
     }
 
     // Fire and forget: pré-gerar rascunhos do dia
