@@ -398,7 +398,10 @@ export default function Cadastro() {
                   </div>
                   <h1 className="text-xl font-bold">Qual é o seu WhatsApp?</h1>
                   <p className="text-sm text-muted-foreground">
-                    Vamos enviar um código de 6 dígitos pelo WhatsApp.
+                    Vamos enviar um código de 6 dígitos <strong>pelo WhatsApp</strong> (não é SMS).
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Use um número com WhatsApp ativo neste aparelho ou em outro.
                   </p>
                 </div>
                 <div className="space-y-2">
