@@ -218,6 +218,8 @@ async function processOneTemplate(
         nome: lead.nome ?? "",
         telefone: phone,
         link_sala_secreta: linkSalaSecreta,
+        link_sala_secreta_mega: buildSalaSecretaMegaLink(),
+        link_sala_vip_mega: buildSalaVipMegaLink(),
       };
 
       const { error: insErr } = await supabase.from("message_queue").insert({
