@@ -145,7 +145,7 @@ export default function GravacaoShell({ children, concurso, data, loteria = "lot
           <div
             key={i}
             className={`w-2 h-2 rounded-full transition-all ${
-              i === slide ? "bg-purple-500 scale-125" : "bg-white/20"
+              i === slide ? `${cfg.dot} scale-125` : "bg-white/20"
             }`}
           />
         ))}
