@@ -19,7 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Loader2, AlertTriangle, Tag, X, Copy, KeyRound, User,
-  Mail, Phone, MessageCircle, Save, StickyNote, Check,
+  Mail, MessageCircle, Save, StickyNote, Check,
 } from "lucide-react";
 import type { ExtendedProfile, Plan } from "@/types/plans";
 
