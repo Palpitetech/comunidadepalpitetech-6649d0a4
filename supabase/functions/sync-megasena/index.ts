@@ -151,8 +151,8 @@ async function criarPostResultadoOficialMega(params: {
       .from('postagens')
       .select('id')
       .eq('tipo', 'resultado_oficial')
-      .eq('concurso_referencia', concurso)
       .eq('loteria_tag', 'Mega-Sena')
+      .eq('titulo', `🚨 Resultado Mega-Sena — Concurso ${concurso}`)
       .maybeSingle();
     if (existingPost) {
       console.log(`[MEGA-RESULT-POST] Post já existe para concurso ${concurso}`);
