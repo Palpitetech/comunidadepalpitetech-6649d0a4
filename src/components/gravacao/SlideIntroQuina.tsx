@@ -1,13 +1,14 @@
-import type { FaixaPremiacao } from "@/hooks/useGravacaoData";
+import type { FaixaPremiacao, ProximoConcursoInfo } from "@/hooks/useGravacaoData";
 
 interface SlideIntroQuinaProps {
   concurso: number;
   data: string;
   premiacao: string;
   faixasPremiacao: FaixaPremiacao[];
+  proximoConcurso?: ProximoConcursoInfo;
 }
 
-export default function SlideIntroQuina({ concurso, data, premiacao, faixasPremiacao }: SlideIntroQuinaProps) {
+export default function SlideIntroQuina({ concurso, data, premiacao, faixasPremiacao, proximoConcurso }: SlideIntroQuinaProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-6 text-center w-full h-full">
       <p className="text-purple-400 text-lg tracking-[0.3em] uppercase font-medium">
