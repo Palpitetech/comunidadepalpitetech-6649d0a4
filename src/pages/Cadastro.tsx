@@ -13,6 +13,7 @@ import { formatCelularMask, validateCelularBR } from "@/lib/celular";
 import { getStoredAttribution } from "@/hooks/useUTM";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { mapErroCodigo } from "@/lib/cadastroErros";
+import { CadastroAjudaDialog } from "@/components/auth/CadastroAjudaDialog";
 
 type Etapa = "email" | "codigo-email" | "whatsapp" | "codigo-whatsapp" | "nome-senha";
 const ETAPAS: Etapa[] = ["email", "codigo-email", "whatsapp", "codigo-whatsapp", "nome-senha"];
@@ -308,7 +309,10 @@ export default function Cadastro() {
                   </div>
                   <h1 className="text-xl font-bold">Qual é o seu e-mail?</h1>
                   <p className="text-sm text-muted-foreground">
-                    Vamos enviar um código de 6 dígitos para confirmar.
+                    Vamos enviar um código de 6 dígitos <strong>por e-mail</strong> para confirmar.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Depois pediremos seu WhatsApp em uma segunda etapa.
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -347,7 +351,10 @@ export default function Cadastro() {
                   </div>
                   <h1 className="text-xl font-bold">Confirme seu e-mail</h1>
                   <p className="text-sm text-muted-foreground">
-                    Digite o código enviado para <strong>{emailMascarado}</strong>
+                    Enviamos um código <strong>por e-mail</strong> para <strong>{emailMascarado}</strong>
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Não chegou? Verifique <strong>Spam</strong> e <strong>Promoções</strong>. Pode levar até 1 minuto.
                   </p>
                 </div>
                 <div className="flex justify-center">
@@ -376,8 +383,9 @@ export default function Cadastro() {
                   disabled={reenvioEmail > 0 || loading}
                   className="w-full"
                 >
-                  {reenvioEmail > 0 ? `Reenviar código em ${reenvioEmail}s` : "Reenviar código"}
+                  {reenvioEmail > 0 ? `Reenviar código em ${reenvioEmail}s` : "Reenviar código por e-mail"}
                 </Button>
+                <CadastroAjudaDialog etapa="codigo-email" />
               </form>
             )}
 
@@ -390,7 +398,10 @@ export default function Cadastro() {
                   </div>
                   <h1 className="text-xl font-bold">Qual é o seu WhatsApp?</h1>
                   <p className="text-sm text-muted-foreground">
-                    Vamos enviar um código de 6 dígitos pelo WhatsApp.
+                    Vamos enviar um código de 6 dígitos <strong>pelo WhatsApp</strong> (não é SMS).
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Use um número com WhatsApp ativo neste aparelho ou em outro.
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -411,6 +422,7 @@ export default function Cadastro() {
                 <Button type="submit" disabled={loading} className="w-full h-12 text-base">
                   {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Enviar código no WhatsApp"}
                 </Button>
+                <CadastroAjudaDialog etapa="whatsapp" />
               </form>
             )}
 
@@ -423,7 +435,10 @@ export default function Cadastro() {
                   </div>
                   <h1 className="text-xl font-bold">Confirme seu WhatsApp</h1>
                   <p className="text-sm text-muted-foreground">
-                    Digite o código enviado para <strong>{celularMascarado}</strong>
+                    Enviamos um código <strong>pelo WhatsApp</strong> para <strong>{celularMascarado}</strong>
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Abra o app do WhatsApp e veja a mensagem do <strong>Palpite Tech</strong>.
                   </p>
                 </div>
                 <div className="flex justify-center">
@@ -452,8 +467,9 @@ export default function Cadastro() {
                   disabled={reenvioWhats > 0 || loading}
                   className="w-full"
                 >
-                  {reenvioWhats > 0 ? `Reenviar código em ${reenvioWhats}s` : "Reenviar código"}
+                  {reenvioWhats > 0 ? `Reenviar código em ${reenvioWhats}s` : "Reenviar código pelo WhatsApp"}
                 </Button>
+                <CadastroAjudaDialog etapa="codigo-whatsapp" />
               </form>
             )}
 
