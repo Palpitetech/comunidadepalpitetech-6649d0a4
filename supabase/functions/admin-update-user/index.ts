@@ -64,7 +64,10 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { user_id, email, nome, whatsapp, is_blocked, admin_notes } = body;
+    // `whatsapp` mantido como alias retrocompat — ambos viram `celular`
+    // (o trigger sync_whatsapp_with_celular reflete em whatsapp automaticamente).
+    const { user_id, email, nome, celular, whatsapp, is_blocked, admin_notes } = body;
+    const celularFinal = celular ?? whatsapp;
 
     if (!user_id) {
       return new Response(
