@@ -375,6 +375,20 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "add_and_promote") {
+      const targetInstanceId: string = body.instance_id;
+      if (!targetInstanceId) {
+        return new Response(JSON.stringify({ error: "instance_id obrigatório" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const result = await addAndPromote(supabase, evoUrl, evoKey, groupJid, targetInstanceId);
+      return new Response(JSON.stringify({ ok: true, ...result }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "action inválida" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
