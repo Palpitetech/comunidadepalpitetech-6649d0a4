@@ -1,13 +1,14 @@
-import type { FaixaPremiacao } from "@/hooks/useGravacaoData";
+import type { FaixaPremiacao, ProximoConcursoInfo } from "@/hooks/useGravacaoData";
 
 interface SlideIntroMegasenaProps {
   concurso: number;
   data: string;
   premiacao: string;
   faixasPremiacao: FaixaPremiacao[];
+  proximoConcurso?: ProximoConcursoInfo;
 }
 
-export default function SlideIntroMegasena({ concurso, data, premiacao, faixasPremiacao }: SlideIntroMegasenaProps) {
+export default function SlideIntroMegasena({ concurso, data, premiacao, faixasPremiacao, proximoConcurso }: SlideIntroMegasenaProps) {
   return (
     <div className="flex flex-col items-center justify-center gap-6 text-center w-full h-full">
       <p className="text-emerald-400 text-lg tracking-[0.3em] uppercase font-medium">
