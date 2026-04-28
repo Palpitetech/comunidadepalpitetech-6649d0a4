@@ -180,8 +180,7 @@ async function promote(
   for (const inst of instances || []) {
     try {
       const parts = await fetchGroupParticipants(evoUrl, evoKey, inst.evolution_instance_id, groupJid);
-      const myPhone = normalizePhone(inst.phone_number);
-      const me = parts.find((p) => p.phone === myPhone || p.phone.endsWith(myPhone));
+      const me = parts.find((p) => phonesMatch(p.phone, inst.phone_number));
       if (me && (me.admin === "admin" || me.admin === "superadmin")) {
         adminInstance = inst;
         break;
