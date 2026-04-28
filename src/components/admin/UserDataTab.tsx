@@ -69,7 +69,7 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
   const [resettingPassword, setResettingPassword] = useState(false);
   const [nome, setNome] = useState(user.nome || "");
   const [email, setEmail] = useState(user.email || "");
-  const [whatsapp, setWhatsapp] = useState(user.whatsapp || "");
+  const [celular, setCelular] = useState(user.celular || "");
   const [isBlocked, setIsBlocked] = useState(user.is_blocked);
   const [adminNotes, setAdminNotes] = useState(user.admin_notes || "");
 
