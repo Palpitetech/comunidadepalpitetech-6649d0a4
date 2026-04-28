@@ -89,6 +89,27 @@ export function GroupAdminsCard({ groupJids }: Props) {
     }
   }
 
+  async function handleAddAndPromote(jid: string, instanceId: string) {
+    setPromoting(`${jid}:${instanceId}`);
+    try {
+      const { data, error } = await supabase.functions.invoke("group-promote-admin", {
+        body: { action: "add_and_promote", group_jid: jid, instance_id: instanceId },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "Falha");
+      if (data.promote_error) {
+        toast.warning(`${data.added_instance} adicionada, mas promoção falhou: ${data.promote_error}`);
+      } else {
+        toast.success(`${data.added_instance} adicionada ao grupo e promovida a admin`);
+      }
+      await loadAll();
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao adicionar/promover");
+    } finally {
+      setPromoting(null);
+    }
+  }
+
   return (
     <Collapsible open={open} onOpenChange={toggleOpen}>
       <div className="rounded-md border border-dashed">
