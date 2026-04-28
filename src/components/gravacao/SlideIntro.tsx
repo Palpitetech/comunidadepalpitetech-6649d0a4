@@ -76,6 +76,34 @@ export default function SlideIntro({ concurso, data, premiacao, faixasPremiacao,
           ))}
         </div>
       )}
+
+      {proximoConcurso?.premioEstimadoFormatado && (
+        <div
+          className="mt-3 rounded-2xl px-8 py-4 w-full max-w-lg text-center"
+          style={{
+            background: "linear-gradient(135deg, rgba(124, 58, 237, 0.18), rgba(167, 139, 250, 0.10))",
+            border: "1px solid rgba(167, 139, 250, 0.35)",
+          }}
+        >
+          <p className="text-purple-300 text-xs uppercase tracking-[0.2em] mb-1">
+            Próximo Concurso{proximoConcurso.numero ? ` ${proximoConcurso.numero}` : ""}
+            {proximoConcurso.acumulado ? " · Acumulado" : ""}
+          </p>
+          <p
+            className="text-2xl md:text-4xl font-extrabold"
+            style={{
+              background: "linear-gradient(135deg, #DDD6FE, #A78BFA)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
+            {proximoConcurso.premioEstimadoFormatado}
+          </p>
+          {proximoConcurso.data && (
+            <p className="text-white/50 text-xs capitalize mt-1">{proximoConcurso.data}</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
