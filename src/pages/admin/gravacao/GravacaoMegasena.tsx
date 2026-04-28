@@ -30,7 +30,7 @@ export default function GravacaoMegasena() {
 
   return (
     <GravacaoShell concurso={data.concurso} data={data.data} loteria="megasena">
-      <SlideIntroMegasena concurso={data.concurso} data={data.data} premiacao={data.premiacao} faixasPremiacao={data.faixasPremiacao} />
+      <SlideIntroMegasena concurso={data.concurso} data={data.data} premiacao={data.premiacao} faixasPremiacao={data.faixasPremiacao} proximoConcurso={data.proximoConcurso} />
       <SlideResultadoMegasena dezenas={data.dezenas} />
       <SlideHistoricoMegasena concursos={data.historicoConcursos} />
       <SlideEstatisticasMegasena dezenas={data.dezenas} estatisticas={data.estatisticas} tendencias={data.tendencias} />
