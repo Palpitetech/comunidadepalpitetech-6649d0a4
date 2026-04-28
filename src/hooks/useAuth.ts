@@ -78,33 +78,9 @@ export function useAuth() {
     };
   }, []);
 
-  const signInWithOtp = useCallback(async (email: string) => {
-    const { data, error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: true,
-        emailRedirectTo: window.location.origin + "/home",
-      },
-    });
-
-    if (error) throw error;
-    return data;
-  }, []);
-
-  const verifyOtp = useCallback(async (email: string, token: string) => {
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
-      token,
-      type: "email",
-    });
-
-    if (error) throw error;
-    return data;
-  }, []);
-
-  // signUp e signIn EXIGEM senha. Sem fallback OTP — o cadastro por código de
-  // 6 dígitos vive no RegisterWizard dedicado (Plano 3) e usa signInWithOtp
-  // diretamente, nunca via signIn/signUp.
+  // signUp e signIn EXIGEM senha. Não há fallback OTP via auth.signInWithOtp:
+  // o cadastro de 6 dígitos vive nas Edge Functions cadastro-iniciar-email,
+  // cadastro-iniciar-whatsapp e cadastro-finalizar (RegisterWizard /cadastro).
   const signUp = useCallback(
     async (email: string, password: string, nome?: string, celular?: string, referralCode?: string) => {
       if (!password) {
