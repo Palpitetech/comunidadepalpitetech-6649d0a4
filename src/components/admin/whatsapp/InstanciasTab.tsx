@@ -648,6 +648,10 @@ export function InstanciasTab() {
       {/* Banner de saúde da Evolution API */}
       <EvolutionHealthBanner />
 
+      {/* Foto de perfil em massa */}
+      <ProfilePictureCard />
+
+
       {/* Header - mobile-friendly stacked layout */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs sm:text-sm text-muted-foreground">{instances.length} instância(s)</p>
