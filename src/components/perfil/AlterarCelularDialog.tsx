@@ -137,7 +137,8 @@ export function AlterarCelularDialog({
       const normalized = validation.normalized!;
       const { error: updateError } = await supabase
         .from("perfis")
-        .update({ celular: normalized, whatsapp: normalized, celular_verificado: true })
+        // whatsapp é sincronizado automaticamente via trigger sync_whatsapp_with_celular
+        .update({ celular: normalized, celular_verificado: true })
         .eq("id", user?.id);
 
       if (updateError) throw updateError;
