@@ -1,3 +1,9 @@
+// =============================================================================
+// LEGADO — verifica códigos da tabela codigos_verificacao (exige user_id).
+// Usado APENAS para usuários existentes (LoginWizard / AlterarCelularDialog).
+// CADASTRO NOVO usa cadastro-verificar-email / cadastro-verificar-whatsapp
+// (tabela cadastros_pendentes).
+// =============================================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

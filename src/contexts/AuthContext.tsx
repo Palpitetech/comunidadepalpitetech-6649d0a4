@@ -11,8 +11,9 @@ interface AuthContextType {
   isAuthenticated: boolean;
   signUp: (email: string, password: string, nome?: string, celular?: string, referralCode?: string) => Promise<any>;
   signIn: (email: string, password: string) => Promise<any>;
-  signInWithOtp: (email: string) => Promise<any>;
-  verifyOtp: (email: string, token: string) => Promise<any>;
+  // OTP via auth.signInWithOtp foi removido — cadastro novo usa Edge Functions
+  // dedicadas (cadastro-iniciar-email/whatsapp). Confirmação de email de leads
+  // existentes (Kirvano) usa enviar-codigo-email + verificar-codigo direto.
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<any>;
   updatePassword: (password: string) => Promise<any>;

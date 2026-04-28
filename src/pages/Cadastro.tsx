@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatCelularMask, validateCelularBR } from "@/lib/celular";
 import { getStoredAttribution } from "@/hooks/useUTM";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { mapErroCodigo } from "@/lib/cadastroErros";
 
 type Etapa = "email" | "codigo-email" | "whatsapp" | "codigo-whatsapp" | "nome-senha";
 const ETAPAS: Etapa[] = ["email", "codigo-email", "whatsapp", "codigo-whatsapp", "nome-senha"];
@@ -89,12 +90,10 @@ export default function Cadastro() {
         body: { email: e, attribution: getStoredAttribution() ?? {} },
       });
       if (error || !data?.sucesso) {
-        const msgErr = data?.mensagem || data?.erro || error?.message || "Não foi possível enviar o código.";
-        if (data?.erro === "JA_CADASTRADO") {
-          setMsg({ tipo: "erro", texto: "Esse e-mail já tem conta. Use a tela de Entrar." });
-        } else {
-          setMsg({ tipo: "erro", texto: msgErr });
-        }
+        setMsg({
+          tipo: "erro",
+          texto: mapErroCodigo(data?.erro, data?.mensagem ?? error?.message, "Não foi possível enviar o código."),
+        });
         return;
       }
       setCadastroId(data.cadastro_id);
@@ -128,11 +127,7 @@ export default function Cadastro() {
         body: { cadastro_id: cadastroId, codigo: c },
       });
       if (error || !data?.sucesso) {
-        const erro = data?.erro;
-        if (erro === "EXPIRADO") setMsg({ tipo: "erro", texto: "Código expirado. Solicite um novo." });
-        else if (erro === "BLOQUEADO") setMsg({ tipo: "erro", texto: "Muitas tentativas. Solicite um novo código." });
-        else if (erro === "INCORRETO") setMsg({ tipo: "erro", texto: data?.mensagem || "Código incorreto." });
-        else setMsg({ tipo: "erro", texto: data?.mensagem || "Código inválido." });
+        setMsg({ tipo: "erro", texto: mapErroCodigo(data?.erro, data?.mensagem) });
         return;
       }
       setMsg({ tipo: "sucesso", texto: "E-mail confirmado!" });
@@ -158,10 +153,10 @@ export default function Cadastro() {
         body: { cadastro_id: cadastroId, celular: v.normalized },
       });
       if (error || !data?.sucesso) {
-        const erro = data?.erro;
-        if (erro === "CELULAR_EM_USO") setMsg({ tipo: "erro", texto: "Esse WhatsApp já tem conta cadastrada." });
-        else if (erro === "AGUARDE") setMsg({ tipo: "erro", texto: data?.mensagem || "Aguarde para reenviar." });
-        else setMsg({ tipo: "erro", texto: data?.mensagem || "Não foi possível enviar o código." });
+        setMsg({
+          tipo: "erro",
+          texto: mapErroCodigo(data?.erro, data?.mensagem, "Não foi possível enviar o código."),
+        });
         return;
       }
       setCelularMascarado(data.destino_mascarado || celular);
@@ -194,11 +189,7 @@ export default function Cadastro() {
         body: { cadastro_id: cadastroId, codigo: c },
       });
       if (error || !data?.sucesso) {
-        const erro = data?.erro;
-        if (erro === "EXPIRADO") setMsg({ tipo: "erro", texto: "Código expirado. Solicite um novo." });
-        else if (erro === "BLOQUEADO") setMsg({ tipo: "erro", texto: "Muitas tentativas. Solicite um novo código." });
-        else if (erro === "INCORRETO") setMsg({ tipo: "erro", texto: data?.mensagem || "Código incorreto." });
-        else setMsg({ tipo: "erro", texto: data?.mensagem || "Código inválido." });
+        setMsg({ tipo: "erro", texto: mapErroCodigo(data?.erro, data?.mensagem) });
         return;
       }
       setMsg({ tipo: "sucesso", texto: "WhatsApp confirmado!" });

@@ -19,7 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Loader2, AlertTriangle, Tag, X, Copy, KeyRound, User,
-  Mail, Phone, MessageCircle, Save, StickyNote, Check,
+  Mail, MessageCircle, Save, StickyNote, Check,
 } from "lucide-react";
 import type { ExtendedProfile, Plan } from "@/types/plans";
 
@@ -69,7 +69,7 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
   const [resettingPassword, setResettingPassword] = useState(false);
   const [nome, setNome] = useState(user.nome || "");
   const [email, setEmail] = useState(user.email || "");
-  const [whatsapp, setWhatsapp] = useState(user.whatsapp || "");
+  const [celular, setCelular] = useState(user.celular || "");
   const [isBlocked, setIsBlocked] = useState(user.is_blocked);
   const [adminNotes, setAdminNotes] = useState(user.admin_notes || "");
 
@@ -88,7 +88,7 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
           user_id: user.id,
           nome: nome.trim() || null,
           email: email.trim() || null,
-          whatsapp: whatsapp.trim() || null,
+          celular: celular.trim() || null,
           is_blocked: isBlocked,
           admin_notes: adminNotes.trim() || null,
         },
@@ -130,7 +130,7 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
 
       toast.success("Senha redefinida para 123456" + (data.email_enviado ? " — email enviado" : ""));
 
-      const telefone = user.whatsapp || user.celular;
+      const telefone = user.celular;
       if (telefone) {
         try {
           const { data: instances } = await supabase
@@ -220,31 +220,24 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
             {user.email && <CopyableField label="Email" value={user.email} />}
           </div>
 
+          {/* Celular = WhatsApp (campo único — sincronizado por trigger no banco) */}
           <div className="space-y-1.5">
-            <Label htmlFor="whatsapp" className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <MessageCircle className="h-3 w-3" /> WhatsApp
+            <Label htmlFor="celular" className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <MessageCircle className="h-3 w-3" /> Celular / WhatsApp
             </Label>
             <Input
-              id="whatsapp"
-              value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
+              id="celular"
+              value={celular}
+              onChange={(e) => setCelular(e.target.value)}
               placeholder="(11) 99999-9999"
               className="h-9"
             />
-            {user.whatsapp && <CopyableField label="WhatsApp" value={user.whatsapp} />}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <Phone className="h-3 w-3" /> Celular (somente leitura)
-            </Label>
-            <Input value={user.celular || ""} disabled className="bg-muted h-9" />
             {user.celular && <CopyableField label="Celular" value={user.celular} />}
           </div>
 
           {/* WhatsApp direct link */}
           {(() => {
-            const phone = user.whatsapp || user.celular;
+            const phone = user.celular;
             if (!phone) return null;
             const digits = phone.replace(/\D/g, "");
             const waNumber = digits.startsWith("55") ? digits : `55${digits}`;

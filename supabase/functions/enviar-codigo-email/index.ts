@@ -1,3 +1,10 @@
+// =============================================================================
+// LEGADO — usado APENAS para usuários que JÁ EXISTEM em auth.users:
+//   - Confirmação de email de leads importados (Kirvano) via LoginWizard
+//   - Confirmação de troca de celular via AlterarCelularDialog
+// Para CADASTRO NOVO, use a família cadastro-iniciar-email / cadastro-finalizar
+// (tabela cadastros_pendentes, sem necessidade de user_id).
+// =============================================================================
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
