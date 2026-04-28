@@ -26,8 +26,8 @@ const LOTERIA_LABELS: Record<BlastLoteria, string> = {
 };
 
 const LOTERIA_EMOJI: Record<BlastLoteria, string> = {
-  lotofacil: "🍀",
-  megasena: "💚",
+  lotofacil: "🟣",
+  megasena: "🟢",
 };
 
 interface PalpiteSettingsByLoteria {
