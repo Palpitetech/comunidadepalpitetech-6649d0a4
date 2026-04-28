@@ -64,9 +64,9 @@ export async function generateAIMessage(
   const lotCfg = getBlastLotteryConfig(loteria);
   const postPath = post.slug || post.id;
   const trackedLink =
-    `${baseUrl}${lotCfg.hubPath}/comunidade/post/${postPath}?utm_source=whatsapp&utm_medium=group&utm_campaign=blast_post&utm_content=${
+    `${baseUrl}/comunidade/post/${postPath}?utm_source=whatsapp&utm_medium=group&utm_campaign=blast_post&utm_content=${
       encodeURIComponent(postPath)
-    }`;
+    }&utm_term=${lotCfg.utmContent}`;
   const hookEmoji = pickHookEmoji(post.tipo);
   const conteudoPreview = (post.conteudo ?? "").slice(0, 1500);
   const numBullets = conteudoPreview.length >= 600 ? 3 : 2;
