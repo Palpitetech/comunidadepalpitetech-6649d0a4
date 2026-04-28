@@ -435,7 +435,10 @@ export default function Cadastro() {
                   </div>
                   <h1 className="text-xl font-bold">Confirme seu WhatsApp</h1>
                   <p className="text-sm text-muted-foreground">
-                    Digite o código enviado para <strong>{celularMascarado}</strong>
+                    Enviamos um código <strong>pelo WhatsApp</strong> para <strong>{celularMascarado}</strong>
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Abra o app do WhatsApp e veja a mensagem do <strong>Palpite Tech</strong>.
                   </p>
                 </div>
                 <div className="flex justify-center">
