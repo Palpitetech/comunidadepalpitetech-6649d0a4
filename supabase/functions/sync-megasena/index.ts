@@ -259,6 +259,27 @@ Responda APENAS o conteúdo (sem título, sem JSON), texto puro com emojis e mar
     conteudo = montarConteudoFallbackResultadoMega(concurso, dezenas, indicadores, acumulou);
   }
 
+  // ===== Footer determinístico: próximo concurso (data + prêmio estimado) =====
+  try {
+    const { data: prox } = await supabase
+      .from("proximos_concursos")
+      .select("numero_concurso, data_sorteio, premio_estimado")
+      .eq("loteria", "megasena")
+      .maybeSingle();
+    if (prox && (prox.data_sorteio || prox.premio_estimado)) {
+      const footer = montarFooterProximoConcurso({
+        numero: prox.numero_concurso,
+        data: prox.data_sorteio,
+        valor: prox.premio_estimado,
+      });
+      if (footer && (conteudo.length + footer.length) <= 1000) {
+        conteudo = `${conteudo}\n\n${footer}`;
+      }
+    }
+  } catch (e) {
+    console.warn("[MEGA-RESULT-POST] Erro ao buscar próximo concurso:", e);
+  }
+
   try {
     const { data: newPost, error: postError } = await supabase
       .from("postagens")
