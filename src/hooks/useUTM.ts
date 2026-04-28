@@ -26,6 +26,35 @@ const TRACKED_PARAMS = [
   "fbclid",
 ] as const;
 
+function readStored(): LeadAttribution | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as LeadAttribution;
+      if (parsed && typeof parsed === "object") return parsed;
+    }
+  } catch {
+    // corrupt JSON — ignore
+  }
+  // Legacy fallback: migrate single utm_source key if present
+  const legacy = localStorage.getItem(LEGACY_KEY);
+  if (legacy) {
+    return { utm_source: legacy, captured_at: new Date().toISOString() };
+  }
+  return null;
+}
+
+function writeStored(data: LeadAttribution) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    if (data.utm_source) {
+      localStorage.setItem(LEGACY_KEY, data.utm_source);
+    }
+  } catch {
+    // storage quota / disabled — ignore
+  }
+}
+
 /**
  * Normaliza valor de UTM:
  *  - trim
