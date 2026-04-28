@@ -422,6 +422,7 @@ export default function Cadastro() {
                 <Button type="submit" disabled={loading} className="w-full h-12 text-base">
                   {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Enviar código no WhatsApp"}
                 </Button>
+                <CadastroAjudaDialog etapa="whatsapp" />
               </form>
             )}
 
