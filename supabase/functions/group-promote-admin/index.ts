@@ -184,7 +184,7 @@ async function listForGroup(
 
   return {
     instances: enriched,
-    probe_used: probe.evolution_instance_id,
+    probe_used: probeUsed,
     next_in_queue: nextInQueue,
     has_admin_instance: hasAdmin,
     probe_error: probeError,
