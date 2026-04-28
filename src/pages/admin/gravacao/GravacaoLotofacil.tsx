@@ -30,7 +30,7 @@ export default function GravacaoLotofacil() {
 
   return (
     <GravacaoShell concurso={data.concurso} data={data.data}>
-      <SlideIntro concurso={data.concurso} data={data.data} premiacao={data.premiacao} faixasPremiacao={data.faixasPremiacao} />
+      <SlideIntro concurso={data.concurso} data={data.data} premiacao={data.premiacao} faixasPremiacao={data.faixasPremiacao} proximoConcurso={data.proximoConcurso} />
       <SlideResultado dezenas={data.dezenas} />
       <SlideHistorico concursos={data.historicoConcursos} />
       <SlideEstatisticas dezenas={data.dezenas} estatisticas={data.estatisticas} tendencias={data.tendencias} />

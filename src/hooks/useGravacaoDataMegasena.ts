@@ -330,6 +330,28 @@ export function useGravacaoDataMegasena() {
           ? currFmt.format(ultimo.valor_premio_principal)
           : "—";
 
+      // Fetch proximo concurso info
+      const { data: proximoData } = await (supabase as any)
+        .from("proximos_concursos")
+        .select("numero_concurso, data_sorteio, premio_estimado, acumulado")
+        .eq("loteria", "megasena")
+        .maybeSingle();
+
+      let proximoConcurso: any = undefined;
+      if (proximoData) {
+        let dataProx: string | null = null;
+        if (proximoData.data_sorteio) {
+          const dp = new Date(proximoData.data_sorteio + "T00:00:00");
+          dataProx = dp.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+        }
+        proximoConcurso = {
+          numero: proximoData.numero_concurso ?? null,
+          data: dataProx,
+          premioEstimadoFormatado: proximoData.premio_estimado ? currFmt.format(proximoData.premio_estimado) : null,
+          acumulado: !!proximoData.acumulado,
+        };
+      }
+
       const historicoConcursos: ConcursoHistorico[] = concursos.map(c => ({
         concurso: c.concurso,
         dezenas: [...c.dezenas].sort((a, b) => a - b),
@@ -340,6 +362,7 @@ export function useGravacaoDataMegasena() {
         data: dataFormatada,
         premiacao: premiacaoFormatada,
         faixasPremiacao,
+        proximoConcurso,
         dezenas,
         dezenasFormatadas: dezenas.map(formatarDezena),
         estatisticas,

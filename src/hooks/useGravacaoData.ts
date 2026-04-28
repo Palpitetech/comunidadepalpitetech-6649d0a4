@@ -87,11 +87,19 @@ export interface ConcursoHistorico {
   dezenas: number[];
 }
 
+export interface ProximoConcursoInfo {
+  numero: string | null;
+  data: string | null;
+  premioEstimadoFormatado: string | null;
+  acumulado: boolean;
+}
+
 export interface GravacaoData {
   concurso: number;
   data: string;
   premiacao: string;
   faixasPremiacao: FaixaPremiacao[];
+  proximoConcurso?: ProximoConcursoInfo;
   dezenas: number[];
   dezenasFormatadas: string[];
   estatisticas: EstatisticaItem[];
@@ -415,6 +423,28 @@ export function useGravacaoData() {
           ? currFmt.format(ultimo.valor_premio_principal)
           : "—";
 
+      // Fetch proximo concurso info
+      const { data: proximoData } = await (supabase as any)
+        .from("proximos_concursos")
+        .select("numero_concurso, data_sorteio, premio_estimado, acumulado")
+        .eq("loteria", "lotofacil")
+        .maybeSingle();
+
+      let proximoConcurso: ProximoConcursoInfo | undefined;
+      if (proximoData) {
+        let dataProx: string | null = null;
+        if (proximoData.data_sorteio) {
+          const dp = new Date(proximoData.data_sorteio + "T00:00:00");
+          dataProx = dp.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+        }
+        proximoConcurso = {
+          numero: proximoData.numero_concurso ?? null,
+          data: dataProx,
+          premioEstimadoFormatado: proximoData.premio_estimado ? currFmt.format(proximoData.premio_estimado) : null,
+          acumulado: !!proximoData.acumulado,
+        };
+      }
+
       // Build historico (all 12 concursos, sorted desc)
       const historicoConcursos: ConcursoHistorico[] = concursos.map(c => ({
         concurso: c.concurso,
@@ -426,6 +456,7 @@ export function useGravacaoData() {
         data: dataFormatada,
         premiacao: premiacaoFormatada,
         faixasPremiacao,
+        proximoConcurso,
         dezenas,
         dezenasFormatadas: dezenas.map(formatarDezena),
         estatisticas,

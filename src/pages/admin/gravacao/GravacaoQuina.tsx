@@ -30,7 +30,7 @@ export default function GravacaoQuina() {
 
   return (
     <GravacaoShell concurso={data.concurso} data={data.data} loteria="quina">
-      <SlideIntroQuina concurso={data.concurso} data={data.data} premiacao={data.premiacao} faixasPremiacao={data.faixasPremiacao} />
+      <SlideIntroQuina concurso={data.concurso} data={data.data} premiacao={data.premiacao} faixasPremiacao={data.faixasPremiacao} proximoConcurso={data.proximoConcurso} />
       <SlideResultadoQuina dezenas={data.dezenas} />
       <SlideHistoricoQuina concursos={data.historicoConcursos} />
       <SlideEstatisticasQuina dezenas={data.dezenas} estatisticas={data.estatisticas} tendencias={data.tendencias} />
