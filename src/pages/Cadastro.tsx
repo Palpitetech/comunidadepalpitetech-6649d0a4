@@ -90,12 +90,10 @@ export default function Cadastro() {
         body: { email: e, attribution: getStoredAttribution() ?? {} },
       });
       if (error || !data?.sucesso) {
-        const msgErr = data?.mensagem || data?.erro || error?.message || "Não foi possível enviar o código.";
-        if (data?.erro === "JA_CADASTRADO") {
-          setMsg({ tipo: "erro", texto: "Esse e-mail já tem conta. Use a tela de Entrar." });
-        } else {
-          setMsg({ tipo: "erro", texto: msgErr });
-        }
+        setMsg({
+          tipo: "erro",
+          texto: mapErroCodigo(data?.erro, data?.mensagem ?? error?.message, "Não foi possível enviar o código."),
+        });
         return;
       }
       setCadastroId(data.cadastro_id);
