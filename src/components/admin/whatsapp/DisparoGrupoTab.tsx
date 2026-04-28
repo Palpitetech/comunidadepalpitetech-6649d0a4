@@ -757,52 +757,64 @@ export function DisparoGrupoTab() {
               ))}
             </div>
 
-            {/* Palpite mode toggle */}
-            {formSlots.some(s => s.message_type === "palpite") && (
-              <div className="space-y-3 rounded-lg border border-dashed p-3">
-                <Label className="text-xs font-semibold">Modo Palpite Lotofácil</Label>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={formIncludePalpites ? "default" : "outline"}
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => setFormIncludePalpites(true)}
-                  >
-                    🎰 Com Palpites
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={!formIncludePalpites ? "default" : "outline"}
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => setFormIncludePalpites(false)}
-                  >
-                    📊 Só Estratégia + CTA
-                  </Button>
-                </div>
-                <p className="text-[10px] text-muted-foreground">
-                  {formIncludePalpites
-                    ? "Envia a estratégia completa + os 15 jogos gerados."
-                    : "Envia apenas a estratégia e um CTA para entrar no Grupo VIP."}
-                </p>
-
-                {!formIncludePalpites && (
-                  <div className="space-y-1">
-                    <Label className="text-[10px]">Link do Grupo VIP</Label>
-                    <Input
-                      value={formVipGroupLink}
-                      onChange={(e) => setFormVipGroupLink(e.target.value)}
-                      placeholder="https://chat.whatsapp.com/..."
-                      className="text-xs"
-                    />
+            {/* Palpite mode toggle — uma seção por loteria usada nos slots palpite */}
+            {(["lotofacil", "megasena"] as BlastLoteria[])
+              .filter((lot) => formSlots.some((s) => s.message_type === "palpite" && s.loteria === lot))
+              .map((lot) => {
+                const settings = formPalpiteSettings[lot] ?? { include_palpites: true, vip_group_link: null };
+                const updateLot = (patch: Partial<{ include_palpites: boolean; vip_group_link: string | null }>) =>
+                  setFormPalpiteSettings((prev) => ({
+                    ...prev,
+                    [lot]: { ...(prev[lot] ?? { include_palpites: true, vip_group_link: null }), ...patch },
+                  }));
+                return (
+                  <div key={lot} className="space-y-3 rounded-lg border border-dashed p-3">
+                    <Label className="text-xs font-semibold">
+                      {LOTERIA_EMOJI[lot]} Modo Palpite — {LOTERIA_LABELS[lot]}
+                    </Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant={settings.include_palpites ? "default" : "outline"}
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => updateLot({ include_palpites: true })}
+                      >
+                        🎰 Com Palpites
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={!settings.include_palpites ? "default" : "outline"}
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => updateLot({ include_palpites: false })}
+                      >
+                        📊 Só Estratégia + CTA
+                      </Button>
+                    </div>
                     <p className="text-[10px] text-muted-foreground">
-                      Link que aparecerá no CTA para entrar no grupo VIP.
+                      {settings.include_palpites
+                        ? "Envia a estratégia completa + os jogos gerados."
+                        : "Envia apenas a estratégia e um CTA para entrar no Grupo VIP."}
                     </p>
+
+                    {!settings.include_palpites && (
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Link do Grupo VIP — {LOTERIA_LABELS[lot]}</Label>
+                        <Input
+                          value={settings.vip_group_link ?? ""}
+                          onChange={(e) => updateLot({ vip_group_link: e.target.value || null })}
+                          placeholder="https://chat.whatsapp.com/..."
+                          className="text-xs"
+                        />
+                        <p className="text-[10px] text-muted-foreground">
+                          Link que aparecerá no CTA para o Grupo VIP de {LOTERIA_LABELS[lot]}.
+                        </p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            )}
+                );
+              })}
 
             <div className="flex items-center gap-2">
               <Switch checked={formActive} onCheckedChange={setFormActive} />
