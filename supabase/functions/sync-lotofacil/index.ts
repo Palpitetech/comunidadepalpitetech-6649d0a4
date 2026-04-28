@@ -1134,13 +1134,17 @@ Deno.serve(async (req) => {
     console.log(`[SYNC] Novos: ${resultados.novos} | Existentes: ${resultados.existentes} | Erros: ${resultados.erros.length}`);
     console.log(`[SYNC] ========================================`);
 
-    // Fire and forget: atualizar próximos concursos
+    // Sync próximos concursos e ENTÃO atualizar footer do post fixo
     const syncProximosSecret = Deno.env.get('NOTIFICATIONS_WEBHOOK_SECRET');
     if (syncProximosSecret) {
       fetch(
         `${supabaseUrl}/functions/v1/sync-proximos-concursos?secret=${syncProximosSecret}`,
         { method: 'POST' }
-      ).catch(err => console.error('[sync-lotofacil] Erro ao atualizar proximos:', err));
+      )
+        .then(() => refreshFooterProximoConcursoLoto(supabase))
+        .catch(err => console.error('[sync-lotofacil] Erro ao atualizar proximos:', err));
+    } else {
+      refreshFooterProximoConcursoLoto(supabase).catch(() => {});
     }
 
     // Fire and forget: pré-gerar rascunhos do dia (assíncrono, sem await)
