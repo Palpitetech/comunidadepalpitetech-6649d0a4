@@ -114,9 +114,10 @@ async function listForGroup(
 
   if (error) throw error;
 
-  // Pick first online instance as the probe to query the group
-  const probe = (instances || []).find((i: any) => i.status === "online");
-  if (!probe) {
+  // Try every online instance as probe until one succeeds (any instance NOT in
+  // the group will return 403/404 "forbidden", so we must try several).
+  const onlineInstances = (instances || []).filter((i: any) => i.status === "online");
+  if (onlineInstances.length === 0) {
     return {
       instances: (instances || []).map((i: any) => ({
         ...i,
@@ -130,21 +131,38 @@ async function listForGroup(
 
   let participants: Array<{ phone: string; admin: string | null }> = [];
   let probeError: string | null = null;
-  try {
-    participants = await fetchGroupParticipants(evoUrl, evoKey, probe.evolution_instance_id, groupJid);
-    if (participants.length > 0) {
-      console.log(
-        `[group-promote-admin] sample raw participant:`,
-        JSON.stringify((participants[0] as any).raw)
+  let probeUsed: string | null = null;
+  const probeAttempts: Array<{ instance: string; error: string }> = [];
+
+  for (const candidate of onlineInstances) {
+    try {
+      const parts = await fetchGroupParticipants(
+        evoUrl, evoKey, candidate.evolution_instance_id, groupJid
       );
-      console.log(
-        `[group-promote-admin] sample phones (group ${groupJid}):`,
-        participants.slice(0, 5).map((p) => p.phone).join(", "),
-        `total=${participants.length}`
-      );
+      if (parts.length > 0) {
+        participants = parts;
+        probeUsed = candidate.evolution_instance_id;
+        console.log(
+          `[group-promote-admin] probe ok via ${probeUsed}: total=${parts.length}`
+        );
+        console.log(
+          `[group-promote-admin] sample raw participant:`,
+          JSON.stringify((parts[0] as any).raw)
+        );
+        break;
+      }
+      probeAttempts.push({ instance: candidate.evolution_instance_id, error: "empty" });
+    } catch (e: any) {
+      const msg = e?.message || String(e);
+      probeAttempts.push({ instance: candidate.evolution_instance_id, error: msg });
+      console.log(`[group-promote-admin] probe failed ${candidate.evolution_instance_id}: ${msg}`);
     }
-  } catch (e: any) {
-    probeError = e?.message || String(e);
+  }
+
+  if (!probeUsed) {
+    probeError = `Nenhuma instância online conseguiu listar o grupo. Tentativas: ${probeAttempts
+      .map((a) => `${a.instance}(${a.error.slice(0, 60)})`)
+      .join("; ")}`;
   }
 
   const enriched: InstanceState[] = (instances || []).map((i: any) => {
@@ -166,7 +184,7 @@ async function listForGroup(
 
   return {
     instances: enriched,
-    probe_used: probe.evolution_instance_id,
+    probe_used: probeUsed,
     next_in_queue: nextInQueue,
     has_admin_instance: hasAdmin,
     probe_error: probeError,
