@@ -738,8 +738,8 @@ export function DisparoGrupoTab() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="lotofacil">🍀 Lotofácil</SelectItem>
-                              <SelectItem value="megasena">💚 Mega-Sena</SelectItem>
+                              <SelectItem value="lotofacil">🟣 Lotofácil</SelectItem>
+                              <SelectItem value="megasena">🟢 Mega-Sena</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
