@@ -720,19 +720,40 @@ export function DisparoGrupoTab() {
                           ))}
                         >
                           <Dices className="h-3 w-3 mr-1" />
-                          🎰 Palpite Lotofácil
+                          🎰 Palpite
                         </Button>
                       </div>
+
+                      {/* Lottery selector — só relevante para AI e Palpite */}
+                      {slot.message_type !== "manual" && (
+                        <div className="flex items-center gap-2 pt-1">
+                          <Label className="text-[10px] text-muted-foreground shrink-0">Loteria:</Label>
+                          <Select
+                            value={slot.loteria}
+                            onValueChange={(v) => setFormSlots(formSlots.map(s =>
+                              s.id === slot.id ? { ...s, loteria: v as BlastLoteria } : s
+                            ))}
+                          >
+                            <SelectTrigger className="h-7 text-[10px] w-[140px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="lotofacil">🍀 Lotofácil</SelectItem>
+                              <SelectItem value="megasena">💚 Mega-Sena</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
 
                       {slot.message_type === "ai" ? (
                         <p className="text-[10px] text-muted-foreground flex items-center gap-1">
                           <Sparkles className="h-3 w-3" />
-                          A IA gera um convite baseado no post mais recente no momento do envio.
+                          A IA gera um convite baseado no post mais recente da {LOTERIA_LABELS[slot.loteria]}.
                         </p>
                       ) : slot.message_type === "palpite" ? (
                         <p className="text-[10px] text-muted-foreground flex items-center gap-1">
                           <Dices className="h-3 w-3" />
-                          Gera 15 palpites com estratégia baseada nos 5 últimos concursos da Lotofácil.
+                          Gera palpites com estratégia baseada nos últimos concursos da {LOTERIA_LABELS[slot.loteria]}.
                         </p>
                       ) : (
                         <div className="space-y-1">
