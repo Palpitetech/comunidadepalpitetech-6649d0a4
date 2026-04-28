@@ -8,7 +8,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { ChevronDown, RefreshCw, ShieldCheck, ShieldPlus, UserCheck, UserX } from "lucide-react";
+import { ChevronDown, RefreshCw, ShieldCheck, ShieldPlus, UserCheck, UserPlus, UserX } from "lucide-react";
 
 type ParticipantStatus = "admin" | "superadmin" | "member" | "not_in_group";
 
@@ -84,6 +84,27 @@ export function GroupAdminsCard({ groupJids }: Props) {
       await loadAll();
     } catch (e: any) {
       toast.error(e?.message || "Erro ao promover");
+    } finally {
+      setPromoting(null);
+    }
+  }
+
+  async function handleAddAndPromote(jid: string, instanceId: string) {
+    setPromoting(`${jid}:${instanceId}`);
+    try {
+      const { data, error } = await supabase.functions.invoke("group-promote-admin", {
+        body: { action: "add_and_promote", group_jid: jid, instance_id: instanceId },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || "Falha");
+      if (data.promote_error) {
+        toast.warning(`${data.added_instance} adicionada, mas promoção falhou: ${data.promote_error}`);
+      } else {
+        toast.success(`${data.added_instance} adicionada ao grupo e promovida a admin`);
+      }
+      await loadAll();
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao adicionar/promover");
     } finally {
       setPromoting(null);
     }
@@ -189,10 +210,27 @@ export function GroupAdminsCard({ groupJids }: Props) {
                                     </Button>
                                   </>
                                 ) : (
-                                  <Badge variant="secondary" className="text-[10px] h-5 gap-1">
-                                    <UserX className="h-3 w-3" />
-                                    Fora do grupo
-                                  </Badge>
+                                  <>
+                                    <Badge variant="secondary" className="text-[10px] h-5 gap-1">
+                                      <UserX className="h-3 w-3" />
+                                      Fora do grupo
+                                    </Badge>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-6 px-2 text-[10px]"
+                                      disabled={busy || !r.has_admin_instance}
+                                      onClick={() => handleAddAndPromote(jid, inst.id)}
+                                      title={
+                                        !r.has_admin_instance
+                                          ? "Nenhuma instância admin disponível para adicionar"
+                                          : "Adicionar ao grupo e promover a admin"
+                                      }
+                                    >
+                                      <UserPlus className={`h-3 w-3 mr-1 ${busy ? "animate-spin" : ""}`} />
+                                      Adicionar + Admin
+                                    </Button>
+                                  </>
                                 )}
                               </div>
                             </div>

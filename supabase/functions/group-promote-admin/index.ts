@@ -173,6 +173,65 @@ async function listForGroup(
   };
 }
 
+// Round-robin counter (by group) to alternate which admin instance issues commands.
+const adminRotation: Map<string, number> = new Map();
+
+async function findAdminInstances(
+  supabase: ReturnType<typeof getSupabase>,
+  evoUrl: string,
+  evoKey: string,
+  groupJid: string
+) {
+  const { data: instances } = await supabase
+    .from("whatsapp_instances")
+    .select("id, evolution_instance_id, phone_number, status, created_at")
+    .eq("status", "online")
+    .order("created_at", { ascending: true });
+
+  const admins: any[] = [];
+  for (const inst of instances || []) {
+    try {
+      const parts = await fetchGroupParticipants(evoUrl, evoKey, inst.evolution_instance_id, groupJid);
+      const me = parts.find((p) => phonesMatch(p.phone, inst.phone_number));
+      if (me && (me.admin === "admin" || me.admin === "superadmin")) {
+        admins.push(inst);
+      }
+    } catch (_) {
+      continue;
+    }
+  }
+  return admins;
+}
+
+function pickRotatingAdmin(groupJid: string, admins: any[]): any | null {
+  if (admins.length === 0) return null;
+  const current = adminRotation.get(groupJid) ?? 0;
+  const pick = admins[current % admins.length];
+  adminRotation.set(groupJid, current + 1);
+  return pick;
+}
+
+async function callUpdateParticipant(
+  evoUrl: string,
+  evoKey: string,
+  adminInstanceName: string,
+  groupJid: string,
+  action: "add" | "promote" | "remove" | "demote",
+  targetJid: string
+) {
+  const url = `${evoUrl}/group/updateParticipant/${adminInstanceName}?groupJid=${encodeURIComponent(groupJid)}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: evoKey },
+    body: JSON.stringify({ groupJid, action, participants: [targetJid] }),
+  });
+  const txt = await res.text();
+  if (!res.ok) {
+    throw new Error(`${action} falhou (${res.status}): ${txt}`);
+  }
+  return txt;
+}
+
 async function promote(
   supabase: ReturnType<typeof getSupabase>,
   evoUrl: string,
@@ -187,27 +246,8 @@ async function promote(
     .single();
   if (tErr || !target) throw new Error("Instância alvo não encontrada");
 
-  // Find an admin instance to issue the promote command
-  const { data: instances } = await supabase
-    .from("whatsapp_instances")
-    .select("id, evolution_instance_id, phone_number, status, created_at")
-    .eq("status", "online")
-    .order("created_at", { ascending: true });
-
-  let adminInstance: any = null;
-  for (const inst of instances || []) {
-    try {
-      const parts = await fetchGroupParticipants(evoUrl, evoKey, inst.evolution_instance_id, groupJid);
-      const me = parts.find((p) => phonesMatch(p.phone, inst.phone_number));
-      if (me && (me.admin === "admin" || me.admin === "superadmin")) {
-        adminInstance = inst;
-        break;
-      }
-    } catch (_) {
-      continue;
-    }
-  }
-
+  const admins = await findAdminInstances(supabase, evoUrl, evoKey, groupJid);
+  const adminInstance = pickRotatingAdmin(groupJid, admins);
   if (!adminInstance) {
     throw new Error(
       "Nenhuma instância online é admin deste grupo. Promova manualmente a primeira instância pelo WhatsApp antes."
@@ -216,28 +256,76 @@ async function promote(
 
   const targetPhone = normalizePhone(target.phone_number);
   const targetJid = `${targetPhone}@s.whatsapp.net`;
-
-  const url = `${evoUrl}/group/updateParticipant/${adminInstance.evolution_instance_id}?groupJid=${encodeURIComponent(groupJid)}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", apikey: evoKey },
-    body: JSON.stringify({
-      groupJid,
-      action: "promote",
-      participants: [targetJid],
-    }),
-  });
-
-  const txt = await res.text();
-  if (!res.ok) {
-    throw new Error(`Promoção falhou (${res.status}): ${txt}`);
-  }
+  const txt = await callUpdateParticipant(
+    evoUrl, evoKey, adminInstance.evolution_instance_id, groupJid, "promote", targetJid
+  );
 
   return {
     promoted_phone: targetPhone,
     promoted_instance: target.name,
     via_instance: adminInstance.evolution_instance_id,
     response: txt,
+  };
+}
+
+async function addAndPromote(
+  supabase: ReturnType<typeof getSupabase>,
+  evoUrl: string,
+  evoKey: string,
+  groupJid: string,
+  targetInstanceId: string
+) {
+  const { data: target, error: tErr } = await supabase
+    .from("whatsapp_instances")
+    .select("id, name, phone_number")
+    .eq("id", targetInstanceId)
+    .single();
+  if (tErr || !target) throw new Error("Instância alvo não encontrada");
+
+  const admins = await findAdminInstances(supabase, evoUrl, evoKey, groupJid);
+  if (admins.length === 0) {
+    throw new Error(
+      "Nenhuma instância admin disponível para adicionar este contato. Promova manualmente uma instância primeiro."
+    );
+  }
+
+  const targetPhone = normalizePhone(target.phone_number);
+  const targetJid = `${targetPhone}@s.whatsapp.net`;
+
+  // 1) ADD via rotating admin
+  const addAdmin = pickRotatingAdmin(groupJid, admins);
+  let addResponse: string;
+  try {
+    addResponse = await callUpdateParticipant(
+      evoUrl, evoKey, addAdmin.evolution_instance_id, groupJid, "add", targetJid
+    );
+  } catch (e: any) {
+    throw new Error(`Falha ao adicionar ao grupo: ${e?.message || e}`);
+  }
+
+  // 2) Wait for WhatsApp to propagate the add event (~3s)
+  await new Promise((r) => setTimeout(r, 3000));
+
+  // 3) PROMOTE via rotating admin (different one when possible)
+  const promoteAdmin = pickRotatingAdmin(groupJid, admins);
+  let promoteResponse: string | null = null;
+  let promoteError: string | null = null;
+  try {
+    promoteResponse = await callUpdateParticipant(
+      evoUrl, evoKey, promoteAdmin.evolution_instance_id, groupJid, "promote", targetJid
+    );
+  } catch (e: any) {
+    promoteError = e?.message || String(e);
+  }
+
+  return {
+    added_phone: targetPhone,
+    added_instance: target.name,
+    via_add_instance: addAdmin.evolution_instance_id,
+    via_promote_instance: promoteAdmin.evolution_instance_id,
+    add_response: addResponse,
+    promote_response: promoteResponse,
+    promote_error: promoteError,
   };
 }
 
@@ -282,6 +370,20 @@ Deno.serve(async (req) => {
         });
       }
       const result = await promote(supabase, evoUrl, evoKey, groupJid, targetInstanceId);
+      return new Response(JSON.stringify({ ok: true, ...result }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "add_and_promote") {
+      const targetInstanceId: string = body.instance_id;
+      if (!targetInstanceId) {
+        return new Response(JSON.stringify({ error: "instance_id obrigatório" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const result = await addAndPromote(supabase, evoUrl, evoKey, groupJid, targetInstanceId);
       return new Response(JSON.stringify({ ok: true, ...result }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
