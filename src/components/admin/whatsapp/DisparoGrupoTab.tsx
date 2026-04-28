@@ -153,7 +153,7 @@ export function DisparoGrupoTab() {
   }
 
   function createEmptySlot(index: number): Slot {
-    return { id: `slot_${index}`, schedule_times: [], last_scheduled_index: -1, message_type: "ai", message_content: "" };
+    return { id: `slot_${index}`, schedule_times: [], last_scheduled_index: -1, message_type: "ai", message_content: "", loteria: "lotofacil" };
   }
 
   function openNewDialog() {
