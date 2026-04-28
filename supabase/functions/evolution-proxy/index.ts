@@ -807,6 +807,24 @@ Deno.serve(async (req) => {
         url = `${EVOLUTION_API_URL}/group/inviteCode/${instanceName}?groupJid=${encodeURIComponent(gjid)}`;
         break;
       }
+      case "updateProfilePicture": {
+        const picture = reqBody.picture;
+        if (!picture || typeof picture !== "string") {
+          return new Response(
+            JSON.stringify({ error: "Campo 'picture' (URL pública) é obrigatório" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        url = `${EVOLUTION_API_URL}/chat/updateProfilePicture/${instanceName}`;
+        method = "POST";
+        body = JSON.stringify({ picture });
+        break;
+      }
+      case "removeProfilePicture": {
+        url = `${EVOLUTION_API_URL}/chat/removeProfilePicture/${instanceName}`;
+        method = "DELETE";
+        break;
+      }
       default:
         return new Response(
           JSON.stringify({ error: `Ação desconhecida: ${action}` }),

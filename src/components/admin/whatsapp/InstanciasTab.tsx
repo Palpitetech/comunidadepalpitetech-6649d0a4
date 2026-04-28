@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { maskIp } from "./shared/mask-ip";
 import { EvolutionHealthBanner } from "./shared/EvolutionHealthBanner";
+import { ProfilePictureCard } from "./ProfilePictureCard";
 
 interface WhatsAppInstance {
   id: string;
@@ -646,6 +647,10 @@ export function InstanciasTab() {
     <div className="space-y-4">
       {/* Banner de saúde da Evolution API */}
       <EvolutionHealthBanner />
+
+      {/* Foto de perfil em massa */}
+      <ProfilePictureCard />
+
 
       {/* Header - mobile-friendly stacked layout */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
