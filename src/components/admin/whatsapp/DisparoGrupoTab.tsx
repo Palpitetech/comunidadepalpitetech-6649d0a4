@@ -18,12 +18,30 @@ import { GroupBlastScheduleCard } from "./GroupBlastScheduleCard";
 import { GroupBlastLogsCard } from "./GroupBlastLogsCard";
 import { GroupAdminsCard } from "./GroupAdminsCard";
 
+type BlastLoteria = "lotofacil" | "megasena";
+
+const LOTERIA_LABELS: Record<BlastLoteria, string> = {
+  lotofacil: "Lotofácil",
+  megasena: "Mega-Sena",
+};
+
+const LOTERIA_EMOJI: Record<BlastLoteria, string> = {
+  lotofacil: "🍀",
+  megasena: "💚",
+};
+
+interface PalpiteSettingsByLoteria {
+  lotofacil?: { include_palpites: boolean; vip_group_link: string | null };
+  megasena?: { include_palpites: boolean; vip_group_link: string | null };
+}
+
 interface Slot {
   id: string;
   schedule_times: string[];
   last_scheduled_index: number;
   message_type: "ai" | "manual" | "palpite";
   message_content: string;
+  loteria: BlastLoteria;
 }
 
 interface BlastConfig {
@@ -35,6 +53,7 @@ interface BlastConfig {
   include_palpites: boolean;
   vip_group_link: string | null;
   member_tag: string | null;
+  palpite_settings: PalpiteSettingsByLoteria;
   created_at: string;
   updated_at: string;
 }
