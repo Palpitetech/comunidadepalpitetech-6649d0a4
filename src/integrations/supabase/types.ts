@@ -521,6 +521,84 @@ export type Database = {
         }
         Relationships: []
       }
+      cadastros_pendentes: {
+        Row: {
+          attribution: Json
+          celular: string | null
+          celular_codigo: string | null
+          celular_codigo_enviado_em: string | null
+          celular_codigo_expira_em: string | null
+          celular_tentativas: number
+          celular_verificado: boolean
+          created_at: string
+          email: string
+          email_codigo: string | null
+          email_codigo_enviado_em: string | null
+          email_codigo_expira_em: string | null
+          email_tentativas: number
+          email_verificado: boolean
+          expires_at: string
+          finalizado: boolean
+          finalizado_em: string | null
+          id: string
+          ip: string | null
+          referral_code: string | null
+          updated_at: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attribution?: Json
+          celular?: string | null
+          celular_codigo?: string | null
+          celular_codigo_enviado_em?: string | null
+          celular_codigo_expira_em?: string | null
+          celular_tentativas?: number
+          celular_verificado?: boolean
+          created_at?: string
+          email: string
+          email_codigo?: string | null
+          email_codigo_enviado_em?: string | null
+          email_codigo_expira_em?: string | null
+          email_tentativas?: number
+          email_verificado?: boolean
+          expires_at?: string
+          finalizado?: boolean
+          finalizado_em?: string | null
+          id?: string
+          ip?: string | null
+          referral_code?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attribution?: Json
+          celular?: string | null
+          celular_codigo?: string | null
+          celular_codigo_enviado_em?: string | null
+          celular_codigo_expira_em?: string | null
+          celular_tentativas?: number
+          celular_verificado?: boolean
+          created_at?: string
+          email?: string
+          email_codigo?: string | null
+          email_codigo_enviado_em?: string | null
+          email_codigo_expira_em?: string | null
+          email_tentativas?: number
+          email_verificado?: boolean
+          expires_at?: string
+          finalizado?: boolean
+          finalizado_em?: string | null
+          id?: string
+          ip?: string | null
+          referral_code?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       carteira_movimentacoes: {
         Row: {
           bolao_id: string | null

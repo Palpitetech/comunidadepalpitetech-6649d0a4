@@ -15,6 +15,7 @@ import { useUTM } from "@/hooks/useUTM";
 import { useForceUpdate } from "@/hooks/useForceUpdate";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import Cadastro from "./pages/Cadastro";
 // RecuperarSenha removido
 import Comunidade from "./pages/Comunidade";
 import Notificacoes from "./pages/Notificacoes";
@@ -163,6 +164,7 @@ const App = () => (
                 {/* Rotas Públicas */}
                 <Route path="/" element={<Central />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/cadastro" element={<Cadastro />} />
                 {/* RecuperarSenha removido */}
 {/* AtivarConta e VerificarEmail removidos */}
                 <Route path="/termos" element={<Termos />} />
