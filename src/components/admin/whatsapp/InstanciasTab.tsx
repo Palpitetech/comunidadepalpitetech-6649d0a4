@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { maskIp } from "./shared/mask-ip";
 import { EvolutionHealthBanner } from "./shared/EvolutionHealthBanner";
+import { ProfilePictureCard } from "./ProfilePictureCard";
 
 interface WhatsAppInstance {
   id: string;
