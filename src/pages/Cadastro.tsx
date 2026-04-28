@@ -309,7 +309,10 @@ export default function Cadastro() {
                   </div>
                   <h1 className="text-xl font-bold">Qual é o seu e-mail?</h1>
                   <p className="text-sm text-muted-foreground">
-                    Vamos enviar um código de 6 dígitos para confirmar.
+                    Vamos enviar um código de 6 dígitos <strong>por e-mail</strong> para confirmar.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Depois pediremos seu WhatsApp em uma segunda etapa.
                   </p>
                 </div>
                 <div className="space-y-2">
