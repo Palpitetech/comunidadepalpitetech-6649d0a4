@@ -268,7 +268,7 @@ Responda APENAS o conteúdo (sem título, sem JSON), texto puro com emojis e mar
         conteudo: conteudo.substring(0, 1000),
         loteria_tag: "Mega-Sena",
         tipo: "resultado_oficial",
-        concurso_referencia: concurso,
+        // concurso_referencia omitido: FK aponta para 'resultados' (Lotofácil legacy)
         metadata: { concurso, indicadores, dezenas, viaFallback, motivoFallback }
       })
       .select("id")
