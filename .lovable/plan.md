@@ -1,39 +1,91 @@
-## Objetivo
+# Refatoração visual do menu lateral mobile
 
-Quando o sorteio da Mega-Sena entra no banco via `sync-megasena`, gerar automaticamente um post `tipo = 'resultado_oficial'` com `loteria_tag = 'Mega-Sena'`. A página `/home` (Comunidade) já tem a lógica de fixar o post `resultado_oficial` no topo — então o pin será automático para Mega-Sena assim que esses posts existirem.
+Refatorar **apenas o visual e a UX** do `src/components/layout/MobileMenuSheet.tsx`, deixando-o idêntico em comportamento e rotas, mas com layout limpo, padronizado e otimizado para +50, baseado na imagem de referência.
 
-## O que será feito
+## Escopo
 
-### 1. Edge Function `sync-megasena/index.ts`
-Adicionar a função `criarPostResultadoOficialMega()` espelhando a da Lotofácil, adaptada para Mega-Sena:
+- Arquivo único: `src/components/layout/MobileMenuSheet.tsx`
+- Não alterar `AppHeader.tsx`, rotas, `featureMap`, hubs ou qualquer outro arquivo.
+- Manter exports `LOTOFACIL_TOOLS`, `MEGASENA_TOOLS`, etc. intactos (continuam usados pelo header desktop).
 
-- **Autor**: mesmo `AUGUSTO_PERFIL_ID` (`41b58d48-2ef1-4bf7-a536-ed8a49607fa9`).
-- **Título determinístico** (sem IA): `🚨 Resultado Mega-Sena — Concurso {N}`.
-- **Conteúdo**: chama Lovable AI Gateway (`google/gemini-3-flash-preview`) com system prompt focado em Mega-Sena. Validador anti-alucinação adaptado para 6 dezenas (1–60).
-- **Fallback determinístico** se IA falhar ou validação rejeitar: monta texto com Pares/Ímpares, Moldura, Primos, Fibonacci, Repetidas, Soma, Sequências e flag de Acumulou.
-- **Insert**: `postagens` com `loteria_tag = 'Mega-Sena'`, `tipo = 'resultado_oficial'`, `concurso_referencia`, `metadata` com indicadores e dezenas.
-- **Idempotência**: antes de inserir, verifica se já existe post `resultado_oficial` para aquele concurso — se sim, pula.
+## Mudanças visuais
 
-### 2. Pontos de invocação dentro do `sync-megasena`
-Hoje o arquivo só faz upsert e dispara push. Vamos chamar `criarPostResultadoOficialMega()`:
+### 1. Topo do menu (header)
+Manter o `Voltar` à esquerda. Substituir o dropdown atual do usuário por um **card branco arredondado** (12px, sombra suave) contendo:
+- Avatar grande (56px) à esquerda
+- Nome do usuário (18px, bold)
+- Status do plano com bolinha colorida:
+  - `Premium` → bolinha verde
+  - `Plano expirado` → bolinha vermelha (quando `trial_used` e sem assinatura)
+  - `Plano Free` → bolinha cinza
+- Botão CTA logo abaixo, full-width dentro do card:
+  - Não-assinante → **"Renovar acesso"** (vermelho/destructive) ou **"Assinar agora"** (free), linkando para `/perfil/assinatura`
+  - Assinante ativo → ocultar o CTA
+- Ao tocar no card (fora do CTA) → abre o dropdown atual com Dados/Transações/Assinatura/Segurança/Convidar/Sair (mesmas opções de hoje, sem perder nada).
+- Não autenticado → card "Entrar" com mesmo estilo, linkando `/login`.
 
-- Logo após `upsert` bem-sucedido, **apenas para o último concurso novo inserido** (quando `resultadosParaInserir.length === 1` ou para o de maior número), evitando flood histórico.
-- Também aceitar query param `?force_post=true` que, mesmo sem novo concurso, gera o post para o concurso mais recente do banco caso ainda não exista (paridade com a Lotofácil).
+### 2. Seção LOTERIAS (lista única padronizada)
 
-### 3. Comunidade (`src/pages/Comunidade.tsx`)
-**Nenhuma mudança necessária** — a lógica atual já fixa qualquer post com `tipo === 'resultado_oficial'` filtrado por `loteria_tag`. Quando o primeiro post de resultado da Mega-Sena for criado pela Edge Function, ele aparece fixado automaticamente.
+**Remover:**
+- Os 4 accordions (`LotteryAccordion`) com sub-ferramentas.
+- A seção separada `SIMPLE_LOTTERIES` (Dia de Sorte / Lotomania) renderizada à parte.
+- O link "Início" superior (substituído pelo card do usuário + lista; usuário acessa Início pelo bottom nav existente). Se preferir, mantemos um item discreto "Início" acima do label LOTERIAS — confirmar se quiser.
 
-Apenas remover (opcional) o estado vazio especial "Estudos de Mega-Sena em breve" se quiser, mas mantemos por enquanto como fallback de segurança caso o sync falhe.
+**Adicionar:** rótulo `LOTERIAS` (uppercase, 12px, muted) e abaixo uma **lista única e contínua** com 6 cards padronizados, todos clicáveis, navegando direto para o **hub** de cada loteria:
 
-### 4. Backfill imediato (1 chamada)
-Após deploy da função atualizada, chamar `sync-megasena` com `?force_post=true` para gerar o post do concurso 3001 (já no banco), garantindo que a tela `/home` → Mega-Sena passe a ter o pin já no primeiro acesso.
+| Loteria | Rota | Cor (HSL) |
+|---|---|---|
+| Lotofácil | `/lotofacil` | `270 60% 50%` (roxo) |
+| Mega Sena | `/megasena` | `145 63% 42%` (verde) |
+| Dupla Sena | `/duplasena` | `0 75% 55%` (vermelho) |
+| Quina | `/quina` | `210 80% 45%` (azul) |
+| Dia de Sorte | `/diadesorte` | `45 95% 55%` (amarelo) |
+| Lotomania | `/lotomania` | `25 90% 55%` (laranja) |
 
-## Arquivos afetados
+**Padrão do card** (idêntico para todos):
+- Container: `bg-white`, `rounded-xl` (12px), `shadow-sm`, `border-l-4` na cor da loteria, fundo com tonalidade leve da cor (`hsl(var --cor) / 0.05`)
+- Padding interno: `p-4` (16px)
+- Espaçamento vertical entre cards: `gap-2.5` (~10px)
+- Conteúdo (flex row, items-center):
+  - Quadrado 44x44 `rounded-lg` com fundo na cor cheia da loteria + ícone branco padronizado **`Ticket`** (lucide) — mesmo ícone para todas, conforme pedido
+  - Nome da loteria: 17px, `font-semibold`, `text-foreground`
+  - À direita: `ChevronRight` na cor da loteria
+- Estados:
+  - `active:scale-[0.98]` + `transition-all duration-150`
+  - `hover:shadow-md` no desktop
+  - Tap target ≥44px (já garantido pelo padding)
 
-- `supabase/functions/sync-megasena/index.ts` — adicionar gerador de post + invocação + suporte a `force_post`.
+### 3. Seção BENEFÍCIOS (mesmo padrão de card)
+Rótulo `BENEFÍCIOS` (mesmo estilo do label LOTERIAS) e dois cards seguindo o mesmo molde dos cards de loteria:
+- **Ganhar Assinatura Grátis** → `/convites`, ícone `Gift`, cor primary (roxo)
+- **Suporte WhatsApp** → link `wa.me/...`, ícone `MessageCircle`, cor verde WhatsApp
 
-## Notas técnicas
+### 4. Rodapé
+Pequeno texto centralizado, muted, com ícone `Lock`: **"Seus dados estão protegidos"** (igual à imagem).
 
-- Validador anti-alucinação: whitelist com `[concurso, ...indicadores, ...dezenas]`. Dezenas no padrão `01–60` (zero-padded) só podem aparecer se estiverem entre as 6 oficiais.
-- Custo IA: ~mesmas tokens da Lotofácil (~$0.0003 por post). Logado em `ai_usage_logs` com `edge_function: 'sync-megasena'`, `action_type: 'plantao_resultado_oficial'`.
-- Não altera schema. Não altera RLS (tabela `postagens` já aceita inserts via service role).
+## Tipografia e espaçamento (resumo)
+
+- Nome do item: 17px / `font-semibold`
+- Labels de seção: 12px uppercase, `tracking-wider`, `text-muted-foreground`, `mb-3`
+- Padding do container do menu: `px-4 py-5`
+- Gap entre cards: 10px
+- Gap entre seções: 24px
+
+## Comportamento preservado
+
+- Sheet abre/fecha via `open` / `onOpenChange` (sem mudança de API)
+- Clique em qualquer card fecha o sheet (`closeAndNavigate`)
+- Lógica de gating/upgrade modal continua disponível, mas não é mais necessária na lista de loterias (os hubs já cuidam disso); mantemos `UpgradeModal` no return para não quebrar nada.
+- Imports `LOTOFACIL_TOOLS`, etc. removidos deste arquivo (não usados aqui), mas continuam exportados em `AppHeader.tsx` e usados pelo header desktop.
+
+## Detalhes técnicos
+
+- Cores aplicadas via style inline `{ borderLeftColor: hsl(...), backgroundColor: hsl(... / 0.05) }` para evitar criar tokens novos.
+- Componente único interno `LotteryCard({ name, color, to })` reaproveitado pelos 6 itens e pelos 2 cards de benefícios (variante `BenefitCard` com `icon` customizado).
+- Sem dependências novas; usa apenas ícones já no projeto (`Ticket`, `ChevronRight`, `Gift`, `MessageCircle`, `Lock`).
+
+## Fora de escopo
+
+- Header desktop (`AppHeader`)
+- Bottom nav
+- Rotas, gating, permissões, auth, dados de loteria
