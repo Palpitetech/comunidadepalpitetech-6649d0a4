@@ -17,6 +17,41 @@ function normalizePhone(raw: string): string {
   return (raw || "").replace(/@.*$/, "").replace(/\D/g, "");
 }
 
+// Generate equivalent BR phone variants (with/without country 55, with/without mobile "9").
+function phoneVariants(raw: string): Set<string> {
+  const digits = normalizePhone(raw);
+  const set = new Set<string>();
+  if (!digits) return set;
+  set.add(digits);
+
+  let local = digits;
+  if (local.startsWith("55") && (local.length === 12 || local.length === 13)) {
+    local = local.slice(2);
+  }
+  set.add(local);
+
+  if (local.length === 11 && local[2] === "9") {
+    const without9 = local.slice(0, 2) + local.slice(3);
+    set.add(without9);
+    set.add("55" + without9);
+  } else if (local.length === 10) {
+    const with9 = local.slice(0, 2) + "9" + local.slice(2);
+    set.add(with9);
+    set.add("55" + with9);
+  }
+
+  if (!digits.startsWith("55")) set.add("55" + digits);
+  return set;
+}
+
+function phonesMatch(a: string, b: string): boolean {
+  const av = phoneVariants(a);
+  for (const v of phoneVariants(b)) {
+    if (av.has(v)) return true;
+  }
+  return false;
+}
+
 // Admin = currently has admin/superadmin role on the WhatsApp group
 type ParticipantStatus = "admin" | "superadmin" | "member" | "not_in_group";
 
