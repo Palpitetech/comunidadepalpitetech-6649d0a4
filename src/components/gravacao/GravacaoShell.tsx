@@ -6,15 +6,34 @@ interface GravacaoShellProps {
   children: ReactNode[];
   concurso?: number;
   data?: string;
-  loteria?: "lotofacil" | "quina";
+  loteria?: "lotofacil" | "quina" | "megasena";
 }
 
+const LOTERIA_CONFIG: Record<NonNullable<GravacaoShellProps["loteria"]>, { label: string; gradient: string; accent: string; dot: string }> = {
+  lotofacil: {
+    label: "LOTOFÁCIL",
+    gradient: "linear-gradient(135deg, #A78BFA, #7C3AED)",
+    accent: "text-purple-300",
+    dot: "bg-purple-500",
+  },
+  quina: {
+    label: "QUINA",
+    gradient: "linear-gradient(135deg, #818CF8, #6366F1)",
+    accent: "text-indigo-300",
+    dot: "bg-indigo-500",
+  },
+  megasena: {
+    label: "MEGA-SENA",
+    gradient: "linear-gradient(135deg, #34D399, #10B981)",
+    accent: "text-emerald-300",
+    dot: "bg-emerald-500",
+  },
+};
+
 export default function GravacaoShell({ children, concurso, data, loteria = "lotofacil" }: GravacaoShellProps) {
-  const isQuina = loteria === "quina";
-  const loteriaLabel = isQuina ? "QUINA" : "LOTOFÁCIL";
-  const gradientStyle = isQuina
-    ? "linear-gradient(135deg, #818CF8, #6366F1)"
-    : "linear-gradient(135deg, #A78BFA, #7C3AED)";
+  const cfg = LOTERIA_CONFIG[loteria];
+  const loteriaLabel = cfg.label;
+  const gradientStyle = cfg.gradient;
   const [slide, setSlide] = useState(0);
   const total = children.length;
   const navigate = useNavigate();
@@ -126,7 +145,7 @@ export default function GravacaoShell({ children, concurso, data, loteria = "lot
           <div
             key={i}
             className={`w-2 h-2 rounded-full transition-all ${
-              i === slide ? "bg-purple-500 scale-125" : "bg-white/20"
+              i === slide ? `${cfg.dot} scale-125` : "bg-white/20"
             }`}
           />
         ))}

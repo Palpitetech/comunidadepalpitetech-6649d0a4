@@ -110,6 +110,7 @@ import HubLotofacil from "./pages/lotofacil/HubLotofacil";
 import GeradorEstudo from "./pages/lotofacil/GeradorEstudo";
 import GravacaoLotofacil from "./pages/admin/gravacao/GravacaoLotofacil";
 import GravacaoQuina from "./pages/admin/gravacao/GravacaoQuina";
+import GravacaoMegasena from "./pages/admin/gravacao/GravacaoMegasena";
 import GravacaoEstudos from "./pages/admin/gravacao/GravacaoEstudos";
 import SmartLinkRedirect from "./pages/SmartLinkRedirect";
 import GerarNovoPix from "./pages/GerarNovoPix";
@@ -283,8 +284,10 @@ const App = () => (
                 <Route path="/admin/carteira" element={<AdminRoute><Carteira /></AdminRoute>} />
                 <Route path="/admin/gravacao/lotofacil" element={<AdminRoute><GravacaoLotofacil /></AdminRoute>} />
                 <Route path="/admin/gravacao/quina" element={<AdminRoute><GravacaoQuina /></AdminRoute>} />
+                <Route path="/admin/gravacao/megasena" element={<AdminRoute><GravacaoMegasena /></AdminRoute>} />
                 <Route path="/admin/gravacao/resultado/lotofacil" element={<AdminRoute><GravacaoLotofacil /></AdminRoute>} />
                 <Route path="/admin/gravacao/resultado/quina" element={<AdminRoute><GravacaoQuina /></AdminRoute>} />
+                <Route path="/admin/gravacao/resultado/megasena" element={<AdminRoute><GravacaoMegasena /></AdminRoute>} />
                 <Route path="/admin/gravacao/estudos/:loteria" element={<AdminRoute><GravacaoEstudos /></AdminRoute>} />
 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

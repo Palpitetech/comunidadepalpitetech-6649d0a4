@@ -134,6 +134,7 @@ const sections: NavSection[] = [
     items: [
       { title: "Lotofácil", url: "/admin/gravacao/resultado/lotofacil", icon: BarChart3 },
       { title: "Quina", url: "/admin/gravacao/resultado/quina", icon: BarChart3 },
+      { title: "Mega-Sena", url: "/admin/gravacao/resultado/megasena", icon: BarChart3 },
     ],
   },
   {
