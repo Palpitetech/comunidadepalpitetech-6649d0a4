@@ -501,16 +501,64 @@ export function DisparoGrupoTab() {
                     <GroupAdminsCard groupJids={config.group_jids} />
                   )}
 
-                  {/* Last send */}
-                  {lastLog && (
-                    <p className="text-xs text-muted-foreground">
-                      Último envio:{" "}
-                      {lastLog.sent_at
-                        ? format(new Date(lastLog.sent_at), "dd/MM HH:mm")
-                        : "—"}{" "}
-                      {lastLog.status === "sent" ? "✅" : lastLog.status === "pending" ? "⏳" : "❌"}
-                    </p>
-                  )}
+                  {/* Last send + Next scheduled */}
+                  <div className="space-y-0.5">
+                    {lastLog && (
+                      <p className="text-xs text-muted-foreground">
+                        Último envio:{" "}
+                        {lastLog.sent_at
+                          ? format(new Date(lastLog.sent_at), "dd/MM HH:mm")
+                          : "—"}{" "}
+                        {lastLog.status === "sent" ? "✅" : lastLog.status === "pending" ? "⏳" : "❌"}
+                      </p>
+                    )}
+                    {(() => {
+                      if (!config.is_active) return null;
+                      const allTimes: string[] = [];
+                      for (const s of (config.slots || [])) {
+                        for (const t of (s.schedule_times || [])) {
+                          allTimes.push(t.substring(0, 5));
+                        }
+                      }
+                      if (allTimes.length === 0) return null;
+                      // Compute next datetime in BRT (UTC-3, no DST)
+                      const now = new Date();
+                      const brtNowMs = now.getTime() - 3 * 60 * 60 * 1000;
+                      const brtNow = new Date(brtNowMs);
+                      const todayY = brtNow.getUTCFullYear();
+                      const todayM = brtNow.getUTCMonth();
+                      const todayD = brtNow.getUTCDate();
+                      const nowMin = brtNow.getUTCHours() * 60 + brtNow.getUTCMinutes();
+                      const sortedMins = Array.from(new Set(allTimes.map(t => {
+                        const [h, m] = t.split(":").map(Number);
+                        return h * 60 + m;
+                      }))).sort((a, b) => a - b);
+                      const nextTodayMin = sortedMins.find(m => m > nowMin);
+                      let nextDate: Date;
+                      let isTomorrow = false;
+                      if (nextTodayMin !== undefined) {
+                        nextDate = new Date(Date.UTC(todayY, todayM, todayD, Math.floor(nextTodayMin / 60), nextTodayMin % 60));
+                      } else {
+                        const first = sortedMins[0];
+                        nextDate = new Date(Date.UTC(todayY, todayM, todayD + 1, Math.floor(first / 60), first % 60));
+                        isTomorrow = true;
+                      }
+                      const dd = String(nextDate.getUTCDate()).padStart(2, "0");
+                      const mm = String(nextDate.getUTCMonth() + 1).padStart(2, "0");
+                      const hh = String(nextDate.getUTCHours()).padStart(2, "0");
+                      const mi = String(nextDate.getUTCMinutes()).padStart(2, "0");
+                      const label = isTomorrow ? "amanhã" : "hoje";
+                      return (
+                        <p className="text-xs text-muted-foreground">
+                          Próximo envio:{" "}
+                          <span className="font-semibold text-foreground tabular-nums">
+                            {label} {dd}/{mm} às {hh}:{mi}
+                          </span>{" "}
+                          ⏰
+                        </p>
+                      );
+                    })()}
+                  </div>
 
                   {/* Actions */}
                   <div className="flex gap-2 pt-1">
