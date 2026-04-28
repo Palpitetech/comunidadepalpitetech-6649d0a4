@@ -88,7 +88,7 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
           user_id: user.id,
           nome: nome.trim() || null,
           email: email.trim() || null,
-          whatsapp: whatsapp.trim() || null,
+          celular: celular.trim() || null,
           is_blocked: isBlocked,
           admin_notes: adminNotes.trim() || null,
         },
