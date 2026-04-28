@@ -467,7 +467,7 @@ export function DisparoGrupoTab() {
                           <div className="flex items-center justify-between">
                             <p className="text-muted-foreground flex items-center gap-1">
                             {(slot as any).message_type === "manual" ? <PenLine className="h-3 w-3" /> : (slot as any).message_type === "palpite" ? <Dices className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
-                              {(slot as any).message_type === "manual" ? "✏️ Manual" : (slot as any).message_type === "palpite" ? `🎰 Palpite · ${LOTERIA_LABELS[((slot as any).loteria as BlastLoteria) || "lotofacil"]}` : `🤖 IA · ${LOTERIA_LABELS[((slot as any).loteria as BlastLoteria) || "lotofacil"]}`} — Próximo: {times[nextIdx] || "—"} ({times.length} horário{times.length !== 1 ? "s" : ""})
+                              {(slot as any).message_type === "manual" ? "Manual" : (slot as any).message_type === "palpite" ? `Palpite · ${LOTERIA_EMOJI[((slot as any).loteria as BlastLoteria) || "lotofacil"]} ${LOTERIA_LABELS[((slot as any).loteria as BlastLoteria) || "lotofacil"]}` : `IA · ${LOTERIA_EMOJI[((slot as any).loteria as BlastLoteria) || "lotofacil"]} ${LOTERIA_LABELS[((slot as any).loteria as BlastLoteria) || "lotofacil"]}`} — Próximo: {times[nextIdx] || "—"} ({times.length} horário{times.length !== 1 ? "s" : ""})
                             </p>
                             <Button
                               variant="ghost"
