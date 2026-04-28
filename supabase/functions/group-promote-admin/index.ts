@@ -134,8 +134,12 @@ async function listForGroup(
     participants = await fetchGroupParticipants(evoUrl, evoKey, probe.evolution_instance_id, groupJid);
     if (participants.length > 0) {
       console.log(
-        `[group-promote-admin] sample participants (group ${groupJid}):`,
-        participants.slice(0, 3).map((p) => p.phone).join(", "),
+        `[group-promote-admin] sample raw participant:`,
+        JSON.stringify((participants[0] as any).raw)
+      );
+      console.log(
+        `[group-promote-admin] sample phones (group ${groupJid}):`,
+        participants.slice(0, 5).map((p) => p.phone).join(", "),
         `total=${participants.length}`
       );
     }
