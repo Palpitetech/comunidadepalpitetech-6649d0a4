@@ -164,8 +164,10 @@ export function DisparoGrupoTab() {
     setFormGroupJids([""]);
     setFormSlots([createEmptySlot(1)]);
     setFormActive(true);
-    setFormIncludePalpites(true);
-    setFormVipGroupLink("");
+    setFormPalpiteSettings({
+      lotofacil: { include_palpites: true, vip_group_link: null },
+      megasena: { include_palpites: true, vip_group_link: null },
+    });
     setFormMemberTag("");
     setFormTimeInputs({ slot_1: "12:00" });
     setDialogOpen(true);
@@ -175,21 +177,30 @@ export function DisparoGrupoTab() {
     setEditingConfig(config);
     setFormName(config.name);
     setFormGroupJids(config.group_jids.length > 0 ? config.group_jids : [""]);
-    const slots = config.slots.length > 0
-      ? config.slots.map(s => ({
-          ...s,
-          schedule_times: (s.schedule_times || []).map(t => t.substring(0, 5)).sort(),
-          message_type: (s as any).message_type || "ai",
+    const slots: Slot[] = config.slots.length > 0
+      ? config.slots.map((s) => ({
+          id: s.id,
+          schedule_times: (s.schedule_times || []).map((t) => t.substring(0, 5)).sort(),
+          last_scheduled_index: s.last_scheduled_index ?? -1,
+          message_type: ((s as any).message_type as Slot["message_type"]) || "ai",
           message_content: (s as any).message_content || "",
+          loteria: ((s as any).loteria as BlastLoteria) || "lotofacil",
         }))
       : [createEmptySlot(1)];
     setFormSlots(slots);
     setFormActive(config.is_active);
-    setFormIncludePalpites(config.include_palpites ?? true);
-    setFormVipGroupLink(config.vip_group_link || "");
+    // Carrega palpite_settings — fallback para legacy include_palpites/vip_group_link na Lotofácil
+    const ps = (config as any).palpite_settings || {};
+    setFormPalpiteSettings({
+      lotofacil: ps.lotofacil ?? {
+        include_palpites: config.include_palpites ?? true,
+        vip_group_link: config.vip_group_link || null,
+      },
+      megasena: ps.megasena ?? { include_palpites: true, vip_group_link: null },
+    });
     setFormMemberTag((config as any).member_tag || "");
     const inputs: Record<string, string> = {};
-    slots.forEach(s => { inputs[s.id] = "12:00"; });
+    slots.forEach((s) => { inputs[s.id] = "12:00"; });
     setFormTimeInputs(inputs);
     setDialogOpen(true);
   }
