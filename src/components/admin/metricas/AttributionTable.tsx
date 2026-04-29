@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -18,6 +18,7 @@ interface Props {
   data: AttributionMetrics;
   dimension: AttributionDimension;
   onDimensionChange: (d: AttributionDimension) => void;
+  headerExtra?: ReactNode;
 }
 
 type SortCol = keyof Pick<
