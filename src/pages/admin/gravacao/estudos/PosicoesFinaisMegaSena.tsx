@@ -1,24 +1,51 @@
+import { useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useDezenasporPosicaoMegaSena } from "@/hooks/useDezenasporPosicaoMegaSena";
 import EstudoShell from "@/components/gravacao/estudos/EstudoShell";
+import SeletorConcurso from "@/components/gravacao/estudos/SeletorConcurso";
 import Slide1Intro from "@/components/gravacao/estudos/posicoes-finais/Slide1Intro";
 import Slide2Explicacao from "@/components/gravacao/estudos/posicoes-finais/Slide2Explicacao";
 import SlidePosicao from "@/components/gravacao/estudos/posicoes-finais/SlidePosicao";
 import Slide6Conclusao from "@/components/gravacao/estudos/posicoes-finais/Slide6Conclusao";
 
 export default function PosicoesFinaisMegaSena() {
-  const { data: posicoes, isLoading: loadPos } = useDezenasporPosicaoMegaSena(100);
+  const [params, setParams] = useSearchParams();
+  const concursoParam = params.get("concurso");
+  const concursoSelecionado = concursoParam ? parseInt(concursoParam, 10) : undefined;
 
-  const { data: contestInfo, isLoading: loadContest } = useQuery({
-    queryKey: ["estudo-posicoes-mega-contest"],
+  // Lista dos últimos 60 concursos para o seletor
+  const { data: concursosLista } = useQuery({
+    queryKey: ["estudo-mega-concursos-lista"],
     queryFn: async () => {
-      const { data: ultimo } = await (supabase as any)
+      const { data } = await (supabase as any)
         .from("resultados_loterias")
         .select("concurso, data_sorteio")
         .eq("loteria", "megasena")
         .order("concurso", { ascending: false })
-        .limit(1)
+        .limit(60);
+      return (data || []) as { concurso: number; data_sorteio: string | null }[];
+    },
+  });
+
+  // Concurso efetivo: o selecionado, ou o último disponível
+  const concursoEfetivo = useMemo(() => {
+    if (concursoSelecionado) return concursoSelecionado;
+    return concursosLista?.[0]?.concurso;
+  }, [concursoSelecionado, concursosLista]);
+
+  const { data: posicoes, isLoading: loadPos } = useDezenasporPosicaoMegaSena(100, concursoEfetivo);
+
+  const { data: contestInfo, isLoading: loadContest } = useQuery({
+    queryKey: ["estudo-posicoes-mega-contest", concursoEfetivo],
+    enabled: !!concursoEfetivo,
+    queryFn: async () => {
+      const { data: ref } = await (supabase as any)
+        .from("resultados_loterias")
+        .select("concurso, data_sorteio")
+        .eq("loteria", "megasena")
+        .eq("concurso", concursoEfetivo)
         .maybeSingle();
 
       const { data: proximo } = await (supabase as any)
@@ -34,8 +61,8 @@ export default function PosicoesFinaisMegaSena() {
       });
 
       let dataLabel: string | undefined;
-      if (ultimo?.data_sorteio) {
-        const d = new Date(ultimo.data_sorteio + "T00:00:00");
+      if (ref?.data_sorteio) {
+        const d = new Date(ref.data_sorteio + "T00:00:00");
         dataLabel = d.toLocaleDateString("pt-BR", {
           weekday: "long",
           day: "2-digit",
@@ -45,7 +72,7 @@ export default function PosicoesFinaisMegaSena() {
       }
 
       return {
-        concurso: ultimo?.concurso as number | undefined,
+        concurso: ref?.concurso as number | undefined,
         data: dataLabel,
         proximoConcurso: proximo?.numero_concurso as number | undefined,
         premioEstimado: proximo?.premio_estimado
@@ -55,7 +82,11 @@ export default function PosicoesFinaisMegaSena() {
     },
   });
 
-  const isLoading = loadPos || loadContest;
+  const handleChangeConcurso = (c: number) => {
+    setParams({ concurso: String(c) });
+  };
+
+  const isLoading = loadPos || loadContest || !concursosLista;
 
   if (isLoading) {
     return (
@@ -91,31 +122,38 @@ export default function PosicoesFinaisMegaSena() {
   const trio = [p4.top5[0].dezena, p5.top5[0].dezena, p6.top5[0].dezena];
 
   return (
-    <EstudoShell>
-      <Slide1Intro concurso={contestInfo?.concurso} data={contestInfo?.data} />
-      <Slide2Explicacao />
-      <SlidePosicao
-        posicao={4}
-        top={p4.top5}
-        descricao="A primeira das três decisivas — costuma cair entre 28 e 52."
+    <>
+      <SeletorConcurso
+        concursos={concursosLista || []}
+        selecionado={concursoEfetivo}
+        onChange={handleChangeConcurso}
       />
-      <SlidePosicao
-        posicao={5}
-        top={p5.top5}
-        descricao="Quase sempre acima de 38 — define a metade superior do jogo."
-      />
-      <SlidePosicao
-        posicao={6}
-        top={p6.top5}
-        destaque
-        badge="A mais decisiva"
-        descricao="A maior dezena do sorteio. Em 90% dos concursos é ≥ 45."
-      />
-      <Slide6Conclusao
-        trio={trio}
-        premioEstimado={contestInfo?.premioEstimado}
-        proximoConcurso={contestInfo?.proximoConcurso}
-      />
-    </EstudoShell>
+      <EstudoShell>
+        <Slide1Intro concurso={contestInfo?.concurso} data={contestInfo?.data} />
+        <Slide2Explicacao />
+        <SlidePosicao
+          posicao={4}
+          top={p4.top5}
+          descricao="A primeira das três decisivas — costuma cair entre 28 e 52."
+        />
+        <SlidePosicao
+          posicao={5}
+          top={p5.top5}
+          descricao="Quase sempre acima de 38 — define a metade superior do jogo."
+        />
+        <SlidePosicao
+          posicao={6}
+          top={p6.top5}
+          destaque
+          badge="A mais decisiva"
+          descricao="A maior dezena do sorteio. Em 90% dos concursos é ≥ 45."
+        />
+        <Slide6Conclusao
+          trio={trio}
+          premioEstimado={contestInfo?.premioEstimado}
+          proximoConcurso={contestInfo?.proximoConcurso}
+        />
+      </EstudoShell>
+    </>
   );
 }
