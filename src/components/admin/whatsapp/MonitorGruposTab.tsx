@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import PipelineHealthCard from "./monitor/PipelineHealthCard";
 
-const SECTIONS = [
-  "Pipeline Health",
+const PLACEHOLDERS = [
   "Auditoria do Prepare",
   "Instâncias × Grupos",
   "Histórico Detalhado",
@@ -17,7 +17,9 @@ export default function MonitorGruposTab() {
         </p>
       </div>
 
-      {SECTIONS.map((title) => (
+      <PipelineHealthCard />
+
+      {PLACEHOLDERS.map((title) => (
         <Card key={title}>
           <CardHeader>
             <CardTitle className="text-base">{title}</CardTitle>
