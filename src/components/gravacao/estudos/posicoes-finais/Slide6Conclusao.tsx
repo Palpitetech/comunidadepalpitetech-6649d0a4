@@ -6,11 +6,12 @@ interface Props {
   proximoConcurso?: number;
 }
 
-const CHECKLIST = [
+type ChecklistItem = { ok: boolean; text: string; icon?: "refresh" };
+const CHECKLIST: ChecklistItem[] = [
   { ok: true, text: "Use o trio como base do fechamento." },
   { ok: true, text: "Combine com dezenas intermediárias para equilibrar." },
   { ok: false, text: "Evite terminar com dezenas fora da faixa 30–60." },
-  { ok: true, text: "Reavalie diariamente — estatística muda sempre.", icon: "refresh" as const },
+  { ok: true, text: "Reavalie diariamente — estatística muda sempre.", icon: "refresh" },
 ];
 
 // V2 — Premium green-neon strategic conclusion
