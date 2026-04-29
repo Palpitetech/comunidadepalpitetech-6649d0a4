@@ -5,18 +5,21 @@ import {
   jsonResponse,
   validateAdmin,
 } from "../_shared/whatsapp-utils.ts";
-import { handlePrepare } from "../_shared/group-blast/prepare.ts";
-import { handleSend } from "../_shared/group-blast/send.ts";
-import { handleSendNow } from "../_shared/group-blast/send-now.ts";
-import { handleRetry } from "../_shared/group-blast/retry.ts";
+import { handlePrepare, handleSendNow } from "../_shared/group-blast/schedule.ts";
+import { handleRetry, handleSend } from "../_shared/group-blast/dispatch.ts";
 
 /**
- * Roteador HTTP do disparo de grupo.
+ * Roteador HTTP do disparo de grupo (refatorado).
  *
  * Actions aceitas:
- *  - "send"     → loop do cron (sem auth) — entrega logs pending
+ *  - "send"     → loop do cron (sem JWT) — entrega logs pending PRONTOS
  *  - "prepare"  → admin — agenda novos logs (suporta force=true)
  *  - "send_now" → admin — agenda 1 slot para envio em ~5s
+ *  - "retry"    → admin — reenvia 1 log failed
+ *
+ * O conteúdo da mensagem (palpite/IA/manual) é resolvido NO PREPARE
+ * e gravado direto em group_blast_logs.message_content. O dispatcher
+ * só pega logs já com mensagem válida — nada de IA falhando in-flight.
  */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -24,9 +27,7 @@ Deno.serve(async (req) => {
   }
 
   const evo = getEvolutionEnv();
-  if (!evo) {
-    return jsonResponse({ error: "Evolution API não configurada" }, 500);
-  }
+  if (!evo) return jsonResponse({ error: "Evolution API não configurada" }, 500);
 
   const supabase = getServiceRoleClient();
 
@@ -36,34 +37,24 @@ Deno.serve(async (req) => {
 
     // Apenas o cron pode chamar "send" sem JWT admin
     if (action !== "send") {
-      try {
-        const authErr = await validateAdmin(req);
-        if (authErr) return authErr;
-      } catch (e: any) {
-        console.error("[group-blast-send] validateAdmin threw:", e);
-        return jsonResponse(
-          { error: "Falha na autenticação: " + (e?.message ?? String(e)) },
-          401,
-        );
-      }
+      const authErr = await validateAdmin(req);
+      if (authErr) return authErr;
     }
 
-    if (action === "prepare") {
-      return await handlePrepare(supabase, {
-        config_id: body.config_id,
-        force: body.force,
-      });
+    switch (action) {
+      case "prepare":
+        return await handlePrepare(supabase, {
+          config_id: body.config_id,
+          force: body.force,
+        });
+      case "send_now":
+        return await handleSendNow(supabase, body.config_id, body.slot_id);
+      case "retry":
+        return await handleRetry(supabase, evo.url, evo.key, body.log_id);
+      case "send":
+      default:
+        return await handleSend(supabase, evo.url, evo.key);
     }
-
-    if (action === "send_now") {
-      return await handleSendNow(supabase, body.config_id, body.slot_id);
-    }
-
-    if (action === "retry") {
-      return await handleRetry(supabase, evo.url, evo.key, body.log_id);
-    }
-
-    return await handleSend(supabase, evo.url, evo.key);
   } catch (err: any) {
     console.error("[group-blast-send] error:", err);
     return jsonResponse({ error: err.message }, 500);
