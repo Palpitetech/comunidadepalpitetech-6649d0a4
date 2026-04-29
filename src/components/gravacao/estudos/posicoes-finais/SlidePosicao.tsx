@@ -2,7 +2,6 @@ import { Target, BarChart3 } from "lucide-react";
 
 interface DezenaFreq {
   dezena: number;
-  frequencia: number;
   quantidade: number;
 }
 
@@ -61,6 +60,11 @@ export default function SlidePosicao({ posicao, top, destaque, badge, descricao 
       </div>
 
       {/* Cards horizontal */}
+      {top.length === 0 && (
+        <p className="text-white/40 text-base">
+          Sem dados desta posição neste estudo.
+        </p>
+      )}
       <div className="flex items-end justify-center gap-4 md:gap-6 flex-wrap">
         {top.map((d, i) => {
           const isFirst = i === 0;
