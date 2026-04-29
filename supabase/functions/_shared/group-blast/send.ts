@@ -328,7 +328,28 @@ export async function handleSend(
       const reason = `Mensagem vazia (slot.message_type=${
         slot?.message_type ?? "n/a"
       }, source=${source}, value=${messageContent === null ? "null" : "empty"})`;
-      console.error(`[send] ${reason} — log ${log.id}`);
+
+      // Janela de tolerância: por até 15 min depois do scheduled_for, mantemos
+      // o log como `pending` para que o próximo ciclo do cron tente regenerar
+      // a mensagem (IA/palpite às vezes voltam null em uma chamada e ok na seguinte).
+      // Após 15 min, falha definitivo para não inflar a fila.
+      const ageMs = Date.now() - new Date(log.scheduled_for).getTime();
+      if (ageMs < 15 * 60 * 1000) {
+        await supabase
+          .from("group_blast_logs")
+          .update({
+            error_message: `${reason} (aguardando retry)`,
+            last_error_at: new Date().toISOString(),
+          })
+          .eq("id", log.id);
+        console.warn(
+          `[send] log=${log.id} ${reason} — mantém pending (idade=${Math.round(ageMs / 1000)}s)`,
+        );
+        skippedCooldown++;
+        continue;
+      }
+
+      console.error(`[send] ${reason} — log ${log.id} (expirou retry)`);
       await markLogFailed(supabase, log, reason);
       failed++;
       continue;

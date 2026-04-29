@@ -159,6 +159,8 @@ export async function handlePrepare(
       .eq("id", config.id);
 
     // Audit: registra o resultado do prepare desta config
+    // (coluna correta é `ran_at`, não `created_at` — corrigido para
+    // que a tabela group_blast_prepare_runs efetivamente registre histórico)
     try {
       await supabase.from("group_blast_prepare_runs").insert({
         config_id: config.id,
@@ -167,6 +169,7 @@ export async function handlePrepare(
         error_message: errorsForConfig.length > 0
           ? errorsForConfig.join(" | ").slice(0, 1000)
           : null,
+        ran_at: new Date().toISOString(),
       });
     } catch (auditErr: any) {
       console.warn(
