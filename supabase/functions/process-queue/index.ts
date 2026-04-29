@@ -40,6 +40,23 @@ function resolveTemplate(
 }
 
 /**
+ * Garante que qualquer texto enviado ao WhatsApp preserve a formatação visual.
+ * Cobre templates salvos com quebras reais, com "\\n" escapado ou com barras
+ * duplicadas vindas de JSON/webhooks/admin, sem destruir linhas em branco.
+ */
+function formatWhatsAppText(content: string): string {
+  return String(content ?? "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .replace(/\\\\n/g, "\n")
+    .replace(/\\n/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/\n{4,}/g, "\n\n\n")
+    .trim();
+}
+
+/**
  * Resolve o texto final da mensagem:
  * 1. Se há `variant_id` válido → usa o conteúdo da variante.
  * 2. Senão, se há `template_id` → usa o conteúdo do template.
@@ -109,7 +126,7 @@ async function sendMessage(
   }
 
   // Resolve template (com variante) ou mensagem livre
-  const messageText = await resolveMessageText(supabase, item);
+  const messageText = formatWhatsAppText(await resolveMessageText(supabase, item));
 
   if (!messageText) {
     await supabase
