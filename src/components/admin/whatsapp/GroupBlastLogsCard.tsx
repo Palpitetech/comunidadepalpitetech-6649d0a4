@@ -55,7 +55,9 @@ interface Props {
   configs: ConfigLite[];
 }
 
-const PAGE_SIZE = 100;
+
+
+const PAGE_SIZE_OPTIONS = [50, 100, 200, 500];
 
 export function GroupBlastLogsCard({ configs }: Props) {
   const [logs, setLogs] = useState<BlastLog[]>([]);
@@ -65,18 +67,29 @@ export function GroupBlastLogsCard({ configs }: Props) {
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [retrying, setRetrying] = useState<Record<string, boolean>>({});
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState<number>(100);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
+
+  // Reset pra página 0 quando filtros mudam
+  useEffect(() => {
+    setPage(0);
+  }, [statusFilter, configFilter, dateFrom, dateTo, pageSize]);
 
   useEffect(() => {
     fetchLogs();
-  }, [statusFilter, configFilter, dateFrom, dateTo]);
+  }, [statusFilter, configFilter, dateFrom, dateTo, page, pageSize]);
 
   async function fetchLogs() {
     setLoading(true);
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
     let q = supabase
       .from("group_blast_logs")
-      .select("*")
+      .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
-      .limit(PAGE_SIZE);
+      .range(from, to);
 
     if (statusFilter !== "all") q = q.eq("status", statusFilter);
     if (configFilter !== "all") q = q.eq("config_id", configFilter);
@@ -87,14 +100,14 @@ export function GroupBlastLogsCard({ configs }: Props) {
       q = q.lte("created_at", end.toISOString());
     }
 
-    const { data, error } = await q;
+    const { data, error, count } = await q;
     if (error) {
-      console.error(error);
       toast.error("Erro ao carregar logs");
       setLoading(false);
       return;
     }
     setLogs((data as any) || []);
+    setTotalCount(count ?? null);
     setLoading(false);
   }
 
@@ -233,11 +246,61 @@ export function GroupBlastLogsCard({ configs }: Props) {
             </Table>
           </div>
 
-          {logs.length === PAGE_SIZE && (
-            <p className="text-[10px] text-muted-foreground text-center">
-              Exibindo os {PAGE_SIZE} mais recentes. Use os filtros para refinar.
-            </p>
-          )}
+          {/* Paginação */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+              <span>Por página:</span>
+              <Select
+                value={String(pageSize)}
+                onValueChange={(v) => setPageSize(Number(v))}
+              >
+                <SelectTrigger className="w-[80px] h-7 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZE_OPTIONS.map((n) => (
+                    <SelectItem key={n} value={String(n)}>
+                      {n}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {totalCount !== null && (
+                <span>
+                  {totalCount === 0
+                    ? "0 registros"
+                    : `${page * pageSize + 1}–${Math.min(
+                        (page + 1) * pageSize,
+                        totalCount
+                      )} de ${totalCount}`}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-xs"
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0 || loading}
+              >
+                Anterior
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-xs"
+                onClick={() => setPage((p) => p + 1)}
+                disabled={
+                  loading ||
+                  totalCount === null ||
+                  (page + 1) * pageSize >= totalCount
+                }
+              >
+                Próxima
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
