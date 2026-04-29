@@ -77,13 +77,31 @@ export function useEstudosGravacaoLista({
       ).map((n) => String(n));
 
       if (slug && numeros.length) {
+        const mapa = new Map<string, string>();
+
+        // 1) Concursos já sorteados (passado): resultados_loterias
+        const numerosInt = numeros.map((n) => parseInt(n, 10)).filter((n) => !isNaN(n));
+        if (numerosInt.length) {
+          const { data: resultados } = await (supabase as any)
+            .from("resultados_loterias")
+            .select("concurso, data_sorteio")
+            .eq("loteria", slug)
+            .in("concurso", numerosInt);
+          for (const r of resultados || []) {
+            if (r.data_sorteio) mapa.set(String(r.concurso), r.data_sorteio);
+          }
+        }
+
+        // 2) Próximo concurso (futuro): proximos_concursos — tem prioridade
         const { data: prox } = await (supabase as any)
           .from("proximos_concursos")
           .select("numero_concurso, data_sorteio")
           .eq("loteria", slug)
           .in("numero_concurso", numeros);
-        const mapa = new Map<string, string>();
-        for (const r of prox || []) mapa.set(String(r.numero_concurso), r.data_sorteio);
+        for (const r of prox || []) {
+          if (r.data_sorteio) mapa.set(String(r.numero_concurso), r.data_sorteio);
+        }
+
         for (const e of base) {
           if (e.proximo_concurso != null) {
             e.data_proximo_sorteio = mapa.get(String(e.proximo_concurso)) ?? null;
