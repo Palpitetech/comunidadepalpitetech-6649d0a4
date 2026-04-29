@@ -125,8 +125,11 @@ export default function AdminVendas() {
     setLoading(true);
     try {
       await supabase.rpc("audit_webhook_access");
+      // Admin reads the base table directly (RLS já restringe a admin) para ter
+      // acesso a nome/email/telefone/raw_payload completos. A view _masked esconde
+      // campos PII e não serve para esta tela operacional.
       const { data, error } = await supabase
-        .from("kirvano_webhook_logs_masked")
+        .from("kirvano_webhook_logs")
         .select("*")
         .order("received_at", { ascending: false })
         .limit(500);
