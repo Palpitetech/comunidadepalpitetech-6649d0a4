@@ -56,7 +56,7 @@ function exportCsv(rows: BuyerRow[]) {
   URL.revokeObjectURL(url);
 }
 
-export function BuyersLTVTable({ data }: Props) {
+export function BuyersLTVTable({ data, headerExtra }: Props) {
   const [sortCol, setSortCol] = useState<SortCol>("firstPurchaseAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [diasFilter, setDiasFilter] = useState<DiasFilter>("all");
