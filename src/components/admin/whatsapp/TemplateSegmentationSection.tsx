@@ -1,10 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, X, ChevronsUpDown, Filter } from "lucide-react";
+import { Check, X, ChevronsUpDown, Filter, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
@@ -17,11 +18,15 @@ interface TemplateSegmentationSectionProps {
   allTags: string[];
   includeTags: string[];
   excludeTags: string[];
+  excludeTagsRecent: string[];
+  excludeRecentWindowHours: number;
   tagsMatchMode: "any" | "all";
   planIds: string[];
   plans: PlanOption[];
   onIncludeTagsChange: (tags: string[]) => void;
   onExcludeTagsChange: (tags: string[]) => void;
+  onExcludeTagsRecentChange: (tags: string[]) => void;
+  onExcludeRecentWindowHoursChange: (hours: number) => void;
   onTagsMatchModeChange: (mode: "any" | "all") => void;
   onPlanIdsChange: (ids: string[]) => void;
 }
@@ -30,16 +35,21 @@ export function TemplateSegmentationSection({
   allTags,
   includeTags,
   excludeTags,
+  excludeTagsRecent,
+  excludeRecentWindowHours,
   tagsMatchMode,
   planIds,
   plans,
   onIncludeTagsChange,
   onExcludeTagsChange,
+  onExcludeTagsRecentChange,
+  onExcludeRecentWindowHoursChange,
   onTagsMatchModeChange,
   onPlanIdsChange,
 }: TemplateSegmentationSectionProps) {
   const [includeOpen, setIncludeOpen] = useState(false);
   const [excludeOpen, setExcludeOpen] = useState(false);
+  const [excludeRecentOpen, setExcludeRecentOpen] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
 
   const toggleTag = (tag: string, list: string[], setList: (tags: string[]) => void) => {
