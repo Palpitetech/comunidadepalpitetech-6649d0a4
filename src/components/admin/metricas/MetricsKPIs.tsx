@@ -1,9 +1,11 @@
+import { ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, UserPlus, ShoppingCart, DollarSign, TrendingUp, Clock, Receipt, Target } from "lucide-react";
 import { AttributionMetrics, fmtBRL, fmtNum, fmtPct, fmtDays } from "@/hooks/admin/useAttributionMetrics";
 
 interface Props {
   data: AttributionMetrics;
+  headerExtra?: ReactNode;
 }
 
 const KPI = ({
