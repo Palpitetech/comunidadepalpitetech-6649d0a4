@@ -1152,7 +1152,8 @@ serve(async (req) => {
       logStep("Cancellation email error (non-fatal)", { message: e instanceof Error ? e.message : String(e) });
     }
 
-    await insertEvent(perfil.id, "assinatura_cancelada", {
+    // Evento já foi registrado cedo — apenas aplica tags
+    await applyKirvanoTags(perfil.id, "assinatura_cancelada", {
       validade: perfil.validade_assinatura,
     });
 
