@@ -57,6 +57,8 @@ interface Props {
 
 const PAGE_SIZE = 100;
 
+const PAGE_SIZE_OPTIONS = [50, 100, 200, 500];
+
 export function GroupBlastLogsCard({ configs }: Props) {
   const [logs, setLogs] = useState<BlastLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,18 +67,29 @@ export function GroupBlastLogsCard({ configs }: Props) {
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [retrying, setRetrying] = useState<Record<string, boolean>>({});
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState<number>(100);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
+
+  // Reset pra página 0 quando filtros mudam
+  useEffect(() => {
+    setPage(0);
+  }, [statusFilter, configFilter, dateFrom, dateTo, pageSize]);
 
   useEffect(() => {
     fetchLogs();
-  }, [statusFilter, configFilter, dateFrom, dateTo]);
+  }, [statusFilter, configFilter, dateFrom, dateTo, page, pageSize]);
 
   async function fetchLogs() {
     setLoading(true);
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
     let q = supabase
       .from("group_blast_logs")
-      .select("*")
+      .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
-      .limit(PAGE_SIZE);
+      .range(from, to);
 
     if (statusFilter !== "all") q = q.eq("status", statusFilter);
     if (configFilter !== "all") q = q.eq("config_id", configFilter);
@@ -87,14 +100,14 @@ export function GroupBlastLogsCard({ configs }: Props) {
       q = q.lte("created_at", end.toISOString());
     }
 
-    const { data, error } = await q;
+    const { data, error, count } = await q;
     if (error) {
-      console.error(error);
       toast.error("Erro ao carregar logs");
       setLoading(false);
       return;
     }
     setLogs((data as any) || []);
+    setTotalCount(count ?? null);
     setLoading(false);
   }
 
