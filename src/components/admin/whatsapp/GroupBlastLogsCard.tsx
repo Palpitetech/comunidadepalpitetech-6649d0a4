@@ -246,11 +246,61 @@ export function GroupBlastLogsCard({ configs }: Props) {
             </Table>
           </div>
 
-          {logs.length === PAGE_SIZE && (
-            <p className="text-[10px] text-muted-foreground text-center">
-              Exibindo os {PAGE_SIZE} mais recentes. Use os filtros para refinar.
-            </p>
-          )}
+          {/* Paginação */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+              <span>Por página:</span>
+              <Select
+                value={String(pageSize)}
+                onValueChange={(v) => setPageSize(Number(v))}
+              >
+                <SelectTrigger className="w-[80px] h-7 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZE_OPTIONS.map((n) => (
+                    <SelectItem key={n} value={String(n)}>
+                      {n}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {totalCount !== null && (
+                <span>
+                  {totalCount === 0
+                    ? "0 registros"
+                    : `${page * pageSize + 1}–${Math.min(
+                        (page + 1) * pageSize,
+                        totalCount
+                      )} de ${totalCount}`}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-xs"
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0 || loading}
+              >
+                Anterior
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-xs"
+                onClick={() => setPage((p) => p + 1)}
+                disabled={
+                  loading ||
+                  totalCount === null ||
+                  (page + 1) * pageSize >= totalCount
+                }
+              >
+                Próxima
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
