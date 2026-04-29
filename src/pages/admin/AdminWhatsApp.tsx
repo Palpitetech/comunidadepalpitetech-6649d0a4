@@ -9,6 +9,7 @@ import { AquecimentoTab } from "@/components/admin/whatsapp/AquecimentoTab";
 import { GruposTab } from "@/components/admin/whatsapp/GruposTab";
 import { DisparoManualTab } from "@/components/admin/whatsapp/DisparoManualTab";
 import { DisparoGrupoTab } from "@/components/admin/whatsapp/DisparoGrupoTab";
+import MonitorGruposTab from "@/components/admin/whatsapp/MonitorGruposTab";
 import { SmartLinksTab } from "@/components/admin/whatsapp/SmartLinksTab";
 import { MensagensTab } from "@/components/admin/whatsapp/MensagensTab";
 import { RetargetingPanelTab } from "@/components/admin/whatsapp/RetargetingPanelTab";
@@ -31,6 +32,7 @@ const TAB_TITLES: Record<string, string> = {
   logs: "Logs",
   retargeting: "Retargeting de Leads",
   "disparo-grupo": "Disparo Grupo",
+  "monitor-grupos": "Monitor Grupos",
   aquecimento: "Aquecimento",
   grupos: "Grupos",
   "smart-links": "Smart Links",
@@ -89,6 +91,7 @@ export default function AdminWhatsApp() {
               {activeTab === "logs" && <LogsTab />}
               {activeTab === "retargeting" && <RetargetingPanelTab />}
               {activeTab === "disparo-grupo" && <DisparoGrupoTab />}
+              {activeTab === "monitor-grupos" && <MonitorGruposTab />}
               {activeTab === "aquecimento" && <AquecimentoTab />}
               {activeTab === "grupos" && <GruposTab />}
               {activeTab === "smart-links" && <SmartLinksTab />}
