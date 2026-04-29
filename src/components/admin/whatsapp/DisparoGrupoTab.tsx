@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { Plus, Pencil, Pause, Play, TestTube, X, Clock, Send, Trash2, Sparkles, Bot, PenLine, Dices, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageStatusBadge } from "./shared/MessageStatusBadge";
+
 import { GroupBlastScheduleCard } from "./GroupBlastScheduleCard";
 import { GroupAdminsCard } from "./GroupAdminsCard";
 import { useGroupBlastConfigs } from "@/hooks/useGroupBlastConfigs";
@@ -356,9 +356,6 @@ export function DisparoGrupoTab() {
     }
   }
 
-  function getConfigName(configId: string) {
-    return configs.find((c) => c.id === configId)?.name || "—";
-  }
 
   if (loading) {
     return <div className="text-center py-8 text-muted-foreground">Carregando...</div>;
