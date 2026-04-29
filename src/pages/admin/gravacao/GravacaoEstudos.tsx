@@ -48,6 +48,9 @@ export default function GravacaoEstudos() {
   const { loteria = "lotofacil" } = useParams<{ loteria: string }>();
   const cfg = LOTERIA_TAG[loteria] || LOTERIA_TAG.lotofacil;
 
+  // Lista de estudos reais "Posições Finais" (Mega-Sena) — rascunho + publicado
+  const { data: estudosPosFinais } = useEstudosPosicoesFinaisLista(15);
+
   const { data: rascunhos, isLoading } = useQuery({
     queryKey: ["gravacao-estudos", loteria],
     queryFn: async () => {
@@ -105,7 +108,7 @@ export default function GravacaoEstudos() {
                       className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded"
                       style={{ background: `${ap.cor}20`, color: ap.cor }}
                     >
-                      Fullscreen · 6 slides
+                      Fullscreen · 6 slides · Mais recente
                     </span>
                     <div
                       className="rounded-full p-2 group-hover:scale-110 transition-transform"
@@ -119,6 +122,55 @@ export default function GravacaoEstudos() {
                 </Link>
               ))}
             </div>
+
+            {/* Estudos disponíveis para "Posições Finais" (sincronizados com a comunidade) */}
+            {loteria === "megasena" && estudosPosFinais && estudosPosFinais.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2 px-1">
+                  Posições Finais — escolha um estudo
+                </h3>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {estudosPosFinais.map((e) => {
+                    const isRascunho = e.status === "rascunho";
+                    return (
+                      <Link
+                        key={e.id}
+                        to={`/admin/gravacao-estudo/megasena/posicoes-finais?postagem=${e.id}`}
+                        className="group rounded-lg border p-3 hover:shadow-md hover:border-primary/40 transition-all flex items-center gap-3"
+                      >
+                        <div
+                          className="rounded-full p-2 flex-shrink-0"
+                          style={{
+                            background: isRascunho ? "rgba(245, 158, 11, 0.12)" : "rgba(57, 211, 83, 0.12)",
+                            color: isRascunho ? "#D97706" : "#15803D",
+                          }}
+                        >
+                          {isRascunho ? <FileText className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-bold">#{e.proximo_concurso ?? "?"}</span>
+                            <span
+                              className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded font-bold"
+                              style={{
+                                background: isRascunho ? "rgba(245, 158, 11, 0.15)" : "rgba(57, 211, 83, 0.15)",
+                                color: isRascunho ? "#D97706" : "#15803D",
+                              }}
+                            >
+                              {isRascunho ? "Rascunho" : "Publicado"}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground truncate">
+                            {e.titulo || "Sem título"}
+                          </p>
+                        </div>
+                        <Play className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary flex-shrink-0" />
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </section>
         )}
 
