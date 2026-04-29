@@ -41,6 +41,8 @@ interface MessageTemplate {
   delay_minutes?: number;
   include_tags?: string[];
   exclude_tags?: string[];
+  exclude_tags_recent?: string[];
+  exclude_recent_window_hours?: number;
   plan_ids?: string[];
   tags_match_mode?: string;
 }
@@ -58,6 +60,8 @@ interface FormData {
   delay_minutes: number;
   include_tags: string[];
   exclude_tags: string[];
+  exclude_tags_recent: string[];
+  exclude_recent_window_hours: number;
   plan_ids: string[];
   tags_match_mode: "any" | "all";
 }
@@ -65,7 +69,9 @@ interface FormData {
 const emptyForm: FormData = {
   name: "", content: "", event_trigger: "manual",
   delay_enabled: false, delay_minutes: 0,
-  include_tags: [], exclude_tags: [], plan_ids: [], tags_match_mode: "any",
+  include_tags: [], exclude_tags: [],
+  exclude_tags_recent: [], exclude_recent_window_hours: 24,
+  plan_ids: [], tags_match_mode: "any",
 };
 
 const DELAY_OPTIONS = [
@@ -204,6 +210,8 @@ export function TemplatesTab() {
       delay_minutes: t.delay_minutes ?? 0,
       include_tags: t.include_tags ?? [],
       exclude_tags: t.exclude_tags ?? [],
+      exclude_tags_recent: t.exclude_tags_recent ?? [],
+      exclude_recent_window_hours: t.exclude_recent_window_hours ?? 24,
       plan_ids: t.plan_ids ?? [],
       tags_match_mode: (t.tags_match_mode as "any" | "all") ?? "any",
     });
@@ -276,6 +284,8 @@ export function TemplatesTab() {
         delay_minutes: form.delay_enabled ? form.delay_minutes : 0,
         include_tags: form.include_tags,
         exclude_tags: form.exclude_tags,
+        exclude_tags_recent: form.exclude_tags_recent,
+        exclude_recent_window_hours: form.exclude_recent_window_hours,
         plan_ids: form.plan_ids,
         tags_match_mode: form.tags_match_mode,
       };
@@ -722,11 +732,15 @@ export function TemplatesTab() {
                 allTags={allTags}
                 includeTags={form.include_tags}
                 excludeTags={form.exclude_tags}
+                excludeTagsRecent={form.exclude_tags_recent}
+                excludeRecentWindowHours={form.exclude_recent_window_hours}
                 tagsMatchMode={form.tags_match_mode}
                 planIds={form.plan_ids}
                 plans={plans}
                 onIncludeTagsChange={(tags) => setForm((f) => ({ ...f, include_tags: tags }))}
                 onExcludeTagsChange={(tags) => setForm((f) => ({ ...f, exclude_tags: tags }))}
+                onExcludeTagsRecentChange={(tags) => setForm((f) => ({ ...f, exclude_tags_recent: tags }))}
+                onExcludeRecentWindowHoursChange={(hours) => setForm((f) => ({ ...f, exclude_recent_window_hours: hours }))}
                 onTagsMatchModeChange={(mode) => setForm((f) => ({ ...f, tags_match_mode: mode }))}
                 onPlanIdsChange={(ids) => setForm((f) => ({ ...f, plan_ids: ids }))}
               />
