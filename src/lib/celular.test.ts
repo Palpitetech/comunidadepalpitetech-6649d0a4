@@ -61,6 +61,18 @@ describe("validateCelularBR", () => {
       expect(r.ok).toBe(true);
       expect(r.normalized).toBe("5599987654321");
     });
+
+    it("celular antigo de 10 dígitos sem o 9 → insere automaticamente", () => {
+      const r = validateCelularBR("1187654321");
+      expect(r.ok).toBe(true);
+      expect(r.normalized).toBe("5511987654321");
+    });
+
+    it("aceita prefixo 0055 internacional", () => {
+      const r = validateCelularBR("005511987654321");
+      expect(r.ok).toBe(true);
+      expect(r.normalized).toBe("5511987654321");
+    });
   });
 
   describe("formatos inválidos", () => {
