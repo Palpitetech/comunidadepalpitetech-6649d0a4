@@ -1,6 +1,11 @@
 // Validação e formatação de celular brasileiro.
-// IMPORTANTE: a regra aqui é IDÊNTICA à `validateCelular` em
-// supabase/functions/receive-lead/index.ts. Mantenha as duas em sincronia.
+// IMPORTANTE: a regra aqui é IDÊNTICA a `normalizePhoneBR` em
+// supabase/functions/_shared/br-phone.ts. Mantenha as duas em sincronia.
+//
+// Comportamento:
+//   - Aceita máscara, +55, 0055, com/sem o 9 inicial.
+//   - Insere o 9 automaticamente em celulares de 10 dígitos (3º dígito 6-9).
+//   - Retorna `normalized` no formato "55" + canonical (E.164 sem o "+").
 
 export interface CelularValidation {
   ok: boolean;
@@ -11,37 +16,57 @@ export interface CelularValidation {
 }
 
 export function validateCelularBR(value: string): CelularValidation {
-  const digits = value.replace(/\D/g, "");
-  let normalized = digits;
-
-  // Remove prefixo 55 se já vier com ele
-  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
-    normalized = digits.substring(2);
+  if (!value) {
+    return { ok: false, reason: "Celular obrigatório" };
   }
 
-  if (normalized.length < 10 || normalized.length > 11) {
+  let n = value.replace(/\D/g, "");
+  if (!n) return { ok: false, reason: "Celular obrigatório" };
+
+  // "00" prefixo internacional
+  if (n.startsWith("00")) n = n.slice(2);
+
+  // Remove DDI 55 se vier com ele
+  if (n.startsWith("55") && (n.length === 12 || n.length === 13)) {
+    n = n.slice(2);
+  }
+
+  if (n.length > 11) {
+    return { ok: false, reason: "Celular inválido" };
+  }
+  if (n.length < 10) {
     return { ok: false, reason: "Celular precisa ter 10 ou 11 dígitos com DDD" };
   }
 
-  const ddd = parseInt(normalized.substring(0, 2), 10);
+  // Sequências óbvias
+  if (/^(\d)\1+$/.test(n)) {
+    return { ok: false, reason: "Celular inválido" };
+  }
+  if (n === "12345678901" || n === "1234567890") {
+    return { ok: false, reason: "Celular inválido" };
+  }
+
+  const ddd = parseInt(n.slice(0, 2), 10);
   if (isNaN(ddd) || ddd < 11 || ddd > 99) {
     return { ok: false, reason: "DDD inválido" };
   }
 
-  // 11 dígitos → terceiro tem que ser 9 (celular)
-  if (normalized.length === 11 && normalized[2] !== "9") {
+  const third = n.charAt(2);
+
+  if (n.length === 10) {
+    // Celular antigo sem o 9 → insere automaticamente.
+    if (third >= "6" && third <= "9") {
+      n = n.slice(0, 2) + "9" + n.slice(2);
+    } else if (third < "2" || third > "5") {
+      // Não é fixo válido nem celular reconhecível.
+      return { ok: false, reason: "Celular inválido" };
+    }
+    // Fixo (3º dígito 2-5) é aceito como está.
+  } else if (n.length === 11 && third !== "9") {
     return { ok: false, reason: "Celular deve começar com 9 após o DDD" };
   }
 
-  // Sequências óbvias (todos iguais ou 1234567890/12345678901)
-  if (/^(\d)\1+$/.test(normalized)) {
-    return { ok: false, reason: "Celular inválido" };
-  }
-  if (normalized === "12345678901" || normalized === "1234567890") {
-    return { ok: false, reason: "Celular inválido" };
-  }
-
-  return { ok: true, normalized: `55${normalized}` };
+  return { ok: true, normalized: `55${n}` };
 }
 
 /** Aplica máscara `(00) 00000-0000` enquanto o usuário digita. */
