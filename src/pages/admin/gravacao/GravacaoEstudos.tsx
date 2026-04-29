@@ -1,8 +1,9 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, FileText, Play, BarChart3 } from "lucide-react";
+import { ArrowLeft, FileText, Play, BarChart3, CheckCircle2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useEstudosPosicoesFinaisLista } from "@/hooks/useEstudoPosicoesFinais";
 
 interface EstudoApresentacao {
   slug: string;
@@ -10,6 +11,8 @@ interface EstudoApresentacao {
   descricao: string;
   rota: string;
   cor: string;
+  /** Tema_estudo associado — usado para listar versões reais (rascunhos/publicados) */
+  tema_estudo?: string;
 }
 
 const APRESENTACOES_POR_LOTERIA: Record<string, EstudoApresentacao[]> = {
@@ -17,9 +20,10 @@ const APRESENTACOES_POR_LOTERIA: Record<string, EstudoApresentacao[]> = {
     {
       slug: "posicoes-finais",
       titulo: "Posições Finais",
-      descricao: "Análise das dezenas mais frequentes nas posições 4, 5 e 6 — 6 slides em tela cheia para gravação.",
+      descricao: "Análise das dezenas mais frequentes nas posições 4, 5 e 6 — sincronizado com o estudo publicado/rascunho.",
       rota: "/admin/gravacao-estudo/megasena/posicoes-finais",
-      cor: "#7C3AED",
+      cor: "#39D353",
+      tema_estudo: "analise_posicoes_finais",
     },
   ],
   lotofacil: [],
