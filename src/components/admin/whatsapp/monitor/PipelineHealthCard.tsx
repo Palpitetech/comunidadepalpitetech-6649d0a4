@@ -1,3 +1,4 @@
+// 4 cards de saúde do pipeline (Prepare, Fila, Instâncias, Próximo Envio) com auto-refresh 60s.
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";

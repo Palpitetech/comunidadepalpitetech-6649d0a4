@@ -1,3 +1,4 @@
+// Tabela dos 7 últimos runs do prepare, com expansão para mensagens de erro.
 import { useCallback, useEffect, useState, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
