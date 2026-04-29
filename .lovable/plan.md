@@ -1,67 +1,108 @@
-## Diagnóstico do "não houve disparo nos grupos hoje"
+## Refatoração 100% — Disparo em Grupo (backend)
 
-### O que os dados mostram
+Foco aprovado: **simplificar a arquitetura backend**. UI (`DisparoGrupoTab`) e tabelas continuam como estão. As duas opções de palpite (com jogos / só CTA VIP) são preservadas por loteria.
 
-- **Hora atual do banco:** 29/04 02:07 UTC = **28/04 23:07 BRT**
-- **Cron `group-blast-prepare`** (jobid 61) está agendado para `0 7 * * *` (07:00 UTC = **04:00 BRT diariamente**)
-- **Última execução do prepare:** 28/04 07:00 UTC (28/04 04:00 BRT) — sucesso
-- **Próxima execução:** 29/04 07:00 UTC (29/04 04:00 BRT) — ainda não aconteceu
-- **Logs criados após 28/04 07:00 UTC:** `0` registros
+### Diagnóstico do que está confuso hoje
 
-Ou seja, do ponto de vista do sistema, o "dia" cobertura é **28/04**, e o prepare de **29/04** só roda em ~5 horas. Tecnicamente o cron está funcionando — mas há sintomas que precisam ser corrigidos.
+```text
+prepare.ts ─┐
+send.ts    ─┼─► resolveMessageContent (IA / palpite / manual + fallbacks legados)
+send-now.ts┤        └─ janela de 15min "aguardando retry" se IA volta null
+retry.ts   ─┘        └─ dedup, cooldown, expirado>10min, stuck>30min, palpite_settings
+                            + campos legados include_palpites/vip_group_link
+```
 
-### Problema #1 — Prepare só roda 1x por dia, sem reprocessar slots futuros
+Problemas:
+1. A mensagem só é resolvida **na hora do envio** — se a IA/pipeline falha, o slot palpite vira "vazio" e fica em loop pending→failed.
+2. Lógica de fallback Lotofácil legada (`include_palpites`/`vip_group_link` soltos no config) duplica `palpite_settings`.
+3. 4 arquivos diferentes (`prepare`, `send`, `send-now`, `retry`) repetem regras de instância, dedup, retry e log.
+4. Não há rastreabilidade do "porquê" de uma mensagem ter falhado (origem, tentativas, conteúdo gerado).
 
-O cron roda às 04:00 BRT e agenda **apenas a próxima ocorrência** de cada slot (com base em `last_scheduled_index`). Se um disparo falha, é cancelado, ou um novo grupo/slot é adicionado depois das 04:00, **nada novo é agendado até o próximo dia**.
+### Objetivo da refatoração
 
-No caso de hoje: o prepare das 04:00 BRT do dia 28 agendou os horários do dia 28. Como nenhum prepare rodou ainda no dia 29, **não existe nada agendado para hoje** — e quando o relógio passar das 00:00 BRT do dia 29, qualquer slot com horário entre 00:00 e 04:00 (não há, mas poderia haver) também ficaria sem agendar.
+Garantir que **toda configuração ativa entrega palpites/IA dentro do horário programado**, com código menor, fluxo único e mensagens já prontas no momento do envio.
 
-### Problema #2 — Slots de Mega Sena foram resetados (`last_scheduled_index = -1`)
+### Nova arquitetura
 
-Todas as 3 configs de Mega Sena (`Post`, `Sala Vip`, `Sala Secreta`) estão com `last_scheduled_index: -1`. Isso indica que foram editadas/recriadas e o prepare de hoje (28/04 04:00) **deveria ter agendado** o índice 0 — mas como você fez mudanças nas configs depois das 04:00 BRT (updated_at = 28/04 02:56 a 03:52 UTC = **23:56 BRT do dia 27 a 00:52 BRT do dia 28**, ou seja, **antes do prepare**), os horários *foram* agendados às 04:00 BRT, mas todos os logs criados nesse momento têm `scheduled_for` em **28/04 03:12** (madrugada) — muito antes da hora real do slot (08:02–23:58 BRT).
+```text
+group-blast-send (router)
+  ├── action=prepare    → schedule.ts  (cria logs + pré-resolve mensagem)
+  ├── action=send       → dispatch.ts  (loop cron, só envia o que está pronto)
+  ├── action=send_now   → schedule.ts (mesmo fluxo, scheduled_for = now+5s)
+  └── action=retry      → dispatch.ts.retryOne(logId)
 
-Olhando o código de `brTimeToScheduledUtc`: ele calcula `parseInt(hh) + 3` (hora UTC = hora BRT + 3) e, se o resultado já passou, soma 24 h. Mas existe uma **falha sutil**: ele constrói o Date com `now.getUTCDate()` (data UTC). Quando o cron roda às 07:00 UTC (= 04:00 BRT), ainda é o **mesmo dia UTC**. Mas o usuário entende "08:02 BRT de hoje" como um horário do dia em curso. Os 5 logs `failed` confirmam: `scheduled_for = 2026-04-28 03:12:xx UTC` (criados pelo botão "Reagendar agora" com `force=true`, `+30s × idx`), e falharam por **"Mensagem vazia (slot.message_type=ai, source=ai:megasena, value=null)"**.
+_shared/group-blast/
+  ├── schedule.ts       ← antigo prepare + send-now unificados
+  ├── dispatch.ts       ← antigo send + retry unificados
+  ├── resolver.ts       ← resolveMessage(slot, config) → string|null  (única função)
+  ├── ai-message.ts     (mantido)
+  ├── palpite-message.ts(mantido — só limpeza de assinatura legacy)
+  ├── lottery-config.ts (mantido)
+  └── types.ts
+```
 
-### Problema #3 — Conteúdo de IA está retornando `null`
+Camadas removidas:
+- `send-now.ts`, `retry.ts`, `prepare.ts` (substituídos)
+- Compat legado de `include_palpites`/`vip_group_link` no resolver (lê **só** `palpite_settings`)
+- Janela de "aguardando retry" + lógica de stuck (deixa de existir porque a mensagem é resolvida no prepare)
 
-5 dos disparos de hoje **falharam** com `Mensagem vazia (slot.message_type=ai, source=ai:megasena/lotofacil, value=null)`. O resolver de mensagem `ai:<loteria>` está devolvendo `null` no momento do envio — provavelmente porque o post do dia ainda não foi gerado pelo `precompute-daily-posts` ou porque o lookup está procurando pela chave errada.
+### Mudanças principais
 
-### Problema #4 — Audit `group_blast_prepare_runs` quebrado
+1. **Pré-resolução no `prepare`**
+   - Para cada slot agendado, resolver a mensagem **antes** de inserir o log:
+     - `manual` → `slot.message_content`
+     - `palpite` → `generatePalpiteMessage(loteria, palpite_settings[loteria])`
+     - `ai` → último post da loteria + `generateAIMessage`
+   - Se a resolução falhar → log já entra como `failed` com `error_message` claro e `message_content=''`. **Sem fila pending sem conteúdo.**
+   - Resultado: na hora do disparo o `dispatch` só pega `pending` que **já têm `message_content` válido**.
 
-O código em `prepare.ts` insere `created_at` mas a tabela só tem `ran_at`. Isso provavelmente está gerando um warning silencioso e impedindo a auditoria de funcionar (a tabela está vazia). Não bloqueia disparos, mas dificulta debugar.
+2. **`dispatch` enxuto**
+   - Lê `pending` com `message_content != ''` e `scheduled_for <= now()`.
+   - Resolve instância via `select_best_instances`.
+   - Loop de fallback ao vivo (mantido).
+   - Se >10min sem instância → marca `failed`. Sem mais "stuck" e sem regenerar mensagem.
 
----
+3. **`retry` simplificado**
+   - Vira método `dispatch.retryOne(logId)`: reusa `message_content` do log; se vier vazio (caso raro de log antigo), regenera 1x.
 
-## Plano de correção
+4. **Coluna nova em `group_blast_logs`** (migração):
+   - `message_source text` — `'manual' | 'palpite:lotofacil' | 'palpite:megasena' | 'ai:lotofacil' | 'ai:megasena' | 'palpite:fallback_ai'` — para auditoria.
 
-### 1. Reagendar agora os disparos de 29/04 (manual)
-Acionar `group-blast-send` com `action: "prepare"` (sem force) — isso vai criar logs para os horários de hoje 29/04 que ainda não passaram, respeitando o dedup de 20 h.
+5. **Audit (`group_blast_prepare_runs`)**
+   - Adicionar contagens: `slots_resolved`, `slots_failed_resolution`, além das já existentes.
 
-### 2. Mudar o cron `prepare` para rodar mais vezes ao dia
-Alterar o schedule do jobid 61 de `0 7 * * *` (1x/dia) para `*/30 * * * *` (a cada 30 minutos). Como `prepare` já tem dedup de 20 h por (config, slot, group), múltiplas execuções não criam duplicatas — só "preenchem buracos" se um slot novo for adicionado, ou se o prepare das 04:00 falhar.
+6. **Limpeza no `group_blast_configs`**
+   - `palpite_settings` passa a ser fonte única. `include_palpites`/`vip_group_link` permanecem na tabela (compat) mas o backend **só lê `palpite_settings`**. UI já preenche os dois — sem mudança visível.
 
-### 3. Corrigir o resolver de mensagens IA
-Investigar `_shared/group-blast/send.ts` (resolução `source=ai:<loteria>`) e o status de `precompute-daily-posts`. Garantir que:
-- Se não houver post de IA pronto, o log fique como `pending` (com retry curto) em vez de `failed`.
-- O `precompute-daily-posts` rode antes das 06:00 BRT (antes do primeiro horário de slot 08:02).
+### Detalhes técnicos
 
-### 4. Corrigir audit de prepare
-Trocar `created_at` por `ran_at` no insert de `group_blast_prepare_runs` em `supabase/functions/_shared/group-blast/prepare.ts`.
+- **Cron permanece** `*/30 * * * *` (já está bom desde a última iteração).
+- **Dedup das últimas 20h** continua, mas agora considera apenas logs `pending` ou `sent` com `message_source` igual.
+- **Cooldown de instância** continua via `register_instance_usage` + `last_message_at`.
+- Cada arquivo novo terá ≤ 200 linhas; orquestração testável em unidades isoladas.
+- `resolveMessageContent` antiga será deletada (era exportada para o `retry`; novo `dispatch.retryOne` chama `resolver.ts` direto).
 
-### 5. Melhorar painel admin de WhatsApp
-Em `GroupBlastScheduleCard`:
-- Mostrar quantos logs `pending` existem para hoje (visualmente, "X disparos agendados para hoje").
-- Botão "Reagendar agora" já existe — ok.
-- Adicionar contagem de `failed` nas últimas 24 h com link para investigar.
+### Plano de execução
 
----
+1. **Migração SQL**: adicionar `message_source text` em `group_blast_logs` (nullable), atualizar `group_blast_prepare_runs` com 2 colunas de contagem.
+2. Criar `_shared/group-blast/resolver.ts` (única função `resolveMessage(slot, config, supabase)` com lookup de loteria + IA/palpite/manual).
+3. Criar `_shared/group-blast/schedule.ts` (substitui `prepare.ts` + `send-now.ts`, chama `resolveMessage` antes do insert).
+4. Criar `_shared/group-blast/dispatch.ts` (substitui `send.ts` + `retry.ts`).
+5. Atualizar `supabase/functions/group-blast-send/index.ts` para o novo router.
+6. Apagar `prepare.ts`, `send.ts`, `send-now.ts`, `retry.ts`.
+7. Smoke test: invocar `prepare` (force=true) numa config Mega-Sena com slot palpite → confirmar que log entra com `message_content` real e `message_source='palpite:megasena'`.
+8. Confirmar que `GroupBlastScheduleCard` continua funcionando (não muda contrato dos jobs cron).
 
-## Resumo executivo (para o usuário)
+### Não muda
 
-> Hoje (29/04) ainda não houve disparos porque:
-> 1. O agendamento automático roda só **1x/dia, às 04:00 da manhã**, e o de hoje ainda não rodou (faltam ~5 h).
-> 2. Os disparos do dia 28 que rodaram à noite **falharam** porque a mensagem de IA voltou vazia.
->
-> Vou: rodar o "Reagendar agora" para criar os disparos de hoje, mudar o cron para rodar a cada 30 min (mais resiliente), corrigir o gerador de mensagem IA e melhorar o painel admin para você enxergar isso na hora.
+- UI `DisparoGrupoTab` — mesma experiência (criar config, slots, com/sem jogos).
+- Tabelas `group_blast_configs`, `group_blast_logs`, `group_blast_prepare_runs` (só ganham colunas).
+- Cron `group-blast-prepare` (`*/30 * * * *`) e `group-blast-send` (`* * * * *`).
+- Lottery config, prompt da IA, formato da mensagem de palpite.
 
-Aprova para eu implementar?
+### Critério de sucesso
+
+Após aprovar e implantar:
+- Próximo ciclo do `prepare` insere logs com `message_content` preenchido para slots palpite/IA da Mega-Sena e Lotofácil.
+- Logs `failed` por "Mensagem vazia" desaparecem do histórico recente.
+- Ler 1 log no admin permite ver de onde veio a mensagem (`message_source`).
