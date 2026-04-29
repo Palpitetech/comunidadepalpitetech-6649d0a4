@@ -109,14 +109,29 @@ export function useEstudosGravacaoLista({
         }
       }
 
+      // Deduplica por proximo_concurso, mantendo apenas a versão mais recente
+      // (publicar_em desc, depois created_at desc — já é a ordem da query).
+      // Estudos sem proximo_concurso são preservados individualmente.
+      const vistos = new Set<number>();
+      const dedup: EstudoListItem[] = [];
+      for (const e of base) {
+        if (e.proximo_concurso == null) {
+          dedup.push(e);
+          continue;
+        }
+        if (vistos.has(e.proximo_concurso)) continue;
+        vistos.add(e.proximo_concurso);
+        dedup.push(e);
+      }
+
       // Ordena por proximo_concurso desc (nulls por último)
-      base.sort((a, b) => {
+      dedup.sort((a, b) => {
         const A = a.proximo_concurso ?? -Infinity;
         const B = b.proximo_concurso ?? -Infinity;
         return B - A;
       });
 
-      return base;
+      return dedup;
     },
     staleTime: 60_000,
   });
