@@ -1,3 +1,5 @@
+import { CheckCircle2, XCircle, RefreshCw, Trophy, Calendar } from "lucide-react";
+
 interface Props {
   trio: number[];
   premioEstimado?: string;
@@ -5,114 +7,185 @@ interface Props {
 }
 
 const CHECKLIST = [
-  "Combine o trio com 3 dezenas baixas (P1 — P3)",
-  "Evite repetir P6 abaixo de 30",
-  "Inclua ao menos 1 dezena ≥ 50",
-  "Confira se a soma final fica entre 150 e 220",
+  { ok: true, text: "Use o trio como base do fechamento." },
+  { ok: true, text: "Combine com dezenas intermediárias para equilibrar." },
+  { ok: false, text: "Evite terminar com dezenas fora da faixa 30–60." },
+  { ok: true, text: "Reavalie diariamente — estatística muda sempre.", icon: "refresh" as const },
 ];
 
+// V2 — Premium green-neon strategic conclusion
 export default function Slide6Conclusao({ trio, premioEstimado, proximoConcurso }: Props) {
   return (
     <div className="flex flex-col items-center justify-center gap-8 w-full h-full max-w-6xl mx-auto">
+      {/* Header */}
       <div className="text-center">
-        <p className="text-purple-400 text-sm tracking-[0.4em] uppercase font-medium mb-3">
-          Conclusão Estratégica
+        <p
+          className="text-xs tracking-[0.55em] uppercase font-bold mb-3"
+          style={{ color: "rgba(125, 255, 58, 0.75)" }}
+        >
+          ◆ Conclusão Estratégica ◆
         </p>
-        <h2 className="text-5xl md:text-6xl font-extrabold text-white tracking-tight">
-          Trio recomendado
+        <h2
+          className="text-5xl md:text-6xl font-black tracking-tight"
+          style={{ color: "#F8FAFC" }}
+        >
+          TRIO RECOMENDADO
         </h2>
-        <p className="text-white/55 text-lg md:text-xl mt-3 max-w-3xl mx-auto">
-          As dezenas mais decisivas das posições 4, 5 e 6
-        </p>
       </div>
 
-      {/* Trio em círculos grandes */}
-      <div className="flex items-center justify-center gap-6 md:gap-10">
+      {/* Trio em círculos grandes — destaque máximo */}
+      <div className="flex items-center justify-center gap-6 md:gap-12">
         {trio.map((dez, i) => (
-          <div key={i} className="flex flex-col items-center gap-3">
+          <div
+            key={i}
+            className="flex flex-col items-center gap-3"
+            style={{
+              animation: `fadeScale 0.7s cubic-bezier(0.16, 1, 0.3, 1) ${i * 0.18}s both`,
+            }}
+          >
             <div
               className="rounded-full flex items-center justify-center relative"
               style={{
-                width: 180,
-                height: 180,
-                background: "linear-gradient(145deg, #1E1B4B, #0F0A2E)",
-                border: "3px solid #7C3AED",
-                boxShadow: "0 0 60px rgba(124, 58, 237, 0.55), inset 0 0 30px rgba(124, 58, 237, 0.2)",
+                width: 200,
+                height: 200,
+                background:
+                  "radial-gradient(circle at 30% 25%, rgba(125, 255, 58, 0.12), rgba(7, 12, 8, 0.95) 70%)",
+                border: "2.5px solid #7DFF3A",
+                boxShadow:
+                  "0 0 70px rgba(125, 255, 58, 0.65), inset 0 0 40px rgba(125, 255, 58, 0.12), 0 0 0 1px rgba(183, 255, 138, 0.3)",
+                animation: "neonPulse 3s ease-in-out infinite",
               }}
             >
               <span
-                className="text-7xl font-extrabold"
+                className="text-8xl font-black"
                 style={{
-                  color: "#F9FAFB",
-                  textShadow: "0 0 25px rgba(167, 139, 250, 0.7)",
+                  color: "#F8FAFC",
+                  textShadow:
+                    "0 0 35px rgba(125, 255, 58, 0.95), 0 0 12px rgba(183, 255, 138, 0.7)",
+                  fontFeatureSettings: '"tnum"',
                 }}
               >
                 {String(dez).padStart(2, "0")}
               </span>
             </div>
-            <span className="text-purple-300/70 text-sm font-bold tracking-[0.3em] uppercase">
+            <span
+              className="text-sm font-black tracking-[0.45em] uppercase"
+              style={{
+                color: "#7DFF3A",
+                textShadow: "0 0 12px rgba(125, 255, 58, 0.6)",
+              }}
+            >
               P{i + 4}
             </span>
           </div>
         ))}
       </div>
 
-      {/* Checklist */}
-      <div
-        className="rounded-2xl p-6 max-w-3xl w-full"
-        style={{
-          background: "#111827",
-          border: "1px solid #1F2937",
-        }}
-      >
-        <p className="text-emerald-400 text-xs uppercase tracking-[0.3em] font-bold mb-4 text-center">
-          Checklist Estratégico
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {CHECKLIST.map((item, i) => (
-            <div key={i} className="flex items-start gap-3">
-              <div
-                className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5"
-                style={{
-                  background: "rgba(16, 185, 129, 0.15)",
-                  border: "1px solid rgba(16, 185, 129, 0.4)",
-                }}
-              >
-                <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <span className="text-white/85 text-base md:text-lg leading-snug">{item}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Próximo prêmio */}
-      {premioEstimado && (
+      {/* Bottom row: checklist + prêmio */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full max-w-5xl">
+        {/* Checklist 2/3 */}
         <div
-          className="rounded-2xl px-8 py-4 text-center"
+          className="md:col-span-2 rounded-2xl p-6 backdrop-blur-sm"
           style={{
-            background: "linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(167, 139, 250, 0.05))",
-            border: "1px solid rgba(124, 58, 237, 0.35)",
-            boxShadow: "0 0 50px rgba(124, 58, 237, 0.2)",
+            background: "rgba(15, 25, 17, 0.7)",
+            border: "1.5px solid rgba(125, 255, 58, 0.25)",
+            boxShadow: "0 0 30px rgba(125, 255, 58, 0.1)",
           }}
         >
-          <p className="text-purple-300 text-xs uppercase tracking-[0.3em] mb-1">
-            Próximo Concurso{proximoConcurso ? ` · ${proximoConcurso}` : ""}
-          </p>
-          <p
-            className="text-3xl md:text-5xl font-extrabold"
+          <div className="space-y-3">
+            {CHECKLIST.map((item, i) => {
+              const Icon = item.icon === "refresh" ? RefreshCw : item.ok ? CheckCircle2 : XCircle;
+              const color = item.icon === "refresh" ? "#B7FF8A" : item.ok ? "#7DFF3A" : "#EF4444";
+              return (
+                <div key={i} className="flex items-center gap-4">
+                  <div
+                    className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
+                    style={{
+                      background: `${color}1A`,
+                      border: `1.5px solid ${color}55`,
+                      boxShadow: `0 0 16px ${color}40`,
+                    }}
+                  >
+                    <Icon className="w-5 h-5" style={{ color }} strokeWidth={2.5} />
+                  </div>
+                  <span className="text-[#F8FAFC]/90 text-base md:text-lg leading-snug">
+                    {item.text}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Próximo prêmio 1/3 */}
+        {premioEstimado && (
+          <div
+            className="rounded-2xl p-6 flex flex-col items-center justify-center text-center backdrop-blur-sm"
             style={{
-              background: "linear-gradient(135deg, #FFFFFF, #C4B5FD)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
+              background:
+                "linear-gradient(160deg, rgba(125, 255, 58, 0.1), rgba(57, 211, 83, 0.04))",
+              border: "1.5px solid rgba(125, 255, 58, 0.45)",
+              boxShadow: "0 0 50px rgba(125, 255, 58, 0.2), inset 0 0 30px rgba(125, 255, 58, 0.05)",
             }}
           >
-            {premioEstimado}
-          </p>
-        </div>
-      )}
+            <Trophy
+              className="h-9 w-9 mb-2"
+              style={{ color: "#B7FF8A", filter: "drop-shadow(0 0 12px rgba(125, 255, 58, 0.7))" }}
+            />
+            <p
+              className="text-[10px] uppercase tracking-[0.45em] font-black mb-1"
+              style={{ color: "rgba(125, 255, 58, 0.75)" }}
+            >
+              Próximo Prêmio
+            </p>
+            <p
+              className="text-3xl md:text-4xl font-black leading-tight"
+              style={{
+                color: "#F8FAFC",
+                textShadow: "0 0 20px rgba(125, 255, 58, 0.7)",
+              }}
+            >
+              {premioEstimado}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Footer ribbon */}
+      <div className="flex items-center justify-center gap-4 mt-2 text-[10px] tracking-[0.4em] uppercase font-bold"
+           style={{ color: "rgba(248, 250, 252, 0.45)" }}>
+        {proximoConcurso && (
+          <>
+            <Calendar className="h-3.5 w-3.5" style={{ color: "#7DFF3A" }} />
+            <span>Concurso {proximoConcurso}</span>
+            <span style={{ color: "rgba(125, 255, 58, 0.5)" }}>•</span>
+          </>
+        )}
+        <span>Estudo Diário</span>
+        <span style={{ color: "rgba(125, 255, 58, 0.5)" }}>•</span>
+        <span>Análise Real</span>
+        <span style={{ color: "rgba(125, 255, 58, 0.5)" }}>•</span>
+        <span style={{ color: "#7DFF3A" }}>Mais Inteligência, Mais Estratégia</span>
+      </div>
+
+      <p className="text-[#F8FAFC]/30 text-[10px] tracking-[0.35em] uppercase">
+        Este material é informativo e não garante resultados · Loteria envolve sorte
+      </p>
+
+      <style>{`
+        @keyframes fadeScale {
+          from { opacity: 0; transform: scale(0.85); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes neonPulse {
+          0%, 100% {
+            box-shadow: 0 0 70px rgba(125, 255, 58, 0.55), inset 0 0 40px rgba(125, 255, 58, 0.12), 0 0 0 1px rgba(183, 255, 138, 0.3);
+          }
+          50% {
+            box-shadow: 0 0 90px rgba(125, 255, 58, 0.8), inset 0 0 50px rgba(125, 255, 58, 0.2), 0 0 0 1px rgba(183, 255, 138, 0.5);
+          }
+        }
+      `}</style>
     </div>
   );
 }
