@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { toEvolutionBR } from "../_shared/br-phone.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,6 +21,10 @@ function formatDate(isoStr: string): string {
 }
 
 function formatarCelularE164(celular: string): string {
+  // Usa o helper compartilhado: aceita qualquer formato e devolve "55..." canônico.
+  const e164 = toEvolutionBR(celular);
+  if (e164) return `+${e164}`;
+  // Fallback defensivo (mantém comportamento antigo se inválido).
   const numeros = celular.replace(/\D/g, "");
   if (!numeros.startsWith("55")) return `+55${numeros}`;
   return `+${numeros}`;
