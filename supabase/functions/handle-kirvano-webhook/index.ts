@@ -458,24 +458,53 @@ serve(async (req) => {
     if (error) logStep("Failed to update kirvano_webhook_logs", { message: error.message });
   };
 
-  // Mapa de event_type → tag no perfil
+  // ============================================================
+  // Mapeamento canônico de eventos da Kirvano → event_type interno
+  // (deve cobrir TODOS os eventos que o webhook recebe)
+  // ============================================================
+  const KIRVANO_EVENT_MAP: Record<string, string> = {
+    sale_approved: "compra_aprovada",
+    sale_refunded: "compra_reembolsada",
+    sale_chargeback: "compra_chargeback",
+    sale_refused: "compra_recusada",
+    subscription_renewed: "assinatura_renovada",
+    subscription_canceled: "assinatura_cancelada",
+    subscription_cancelled: "assinatura_cancelada",
+    subscription_expired: "assinatura_expirada",
+    subscription_overdue: "assinatura_inadimplente",
+    pix_generated: "pix_gerado",
+    pix_expired: "pix_expirado",
+    bank_slip_generated: "boleto_gerado",
+    bank_slip_expired: "boleto_expirado",
+    abandoned_cart: "carrinho_abandonado",
+    checkout_abandoned: "checkout_abandonado",
+  };
+
+  const mapKirvanoEventType = (raw: string): string => {
+    const key = (raw || "").toLowerCase();
+    return KIRVANO_EVENT_MAP[key] ?? key;
+  };
+
+  // Mapa event_type interno → tag no perfil (gestão de CRM, separada do log)
   const EVENT_TAG_MAP: Record<string, string> = {
     novo_cadastro: "comunidade",
     compra_aprovada: "ativo",
+    assinatura_renovada: "ativo",
     pix_gerado: "pix_gerado",
     pix_expirado: "pix_expirado",
     boleto_gerado: "boleto_gerado",
     boleto_expirado: "boleto_expirado",
     assinatura_cancelada: "cancelado",
+    assinatura_expirada: "cancelado",
     assinatura_inadimplente: "inadimplente",
+    compra_reembolsada: "cancelado",
+    compra_chargeback: "cancelado",
     checkout_abandonado: "checkout_abandonado",
     carrinho_abandonado: "carrinho_abandonado",
   };
 
-  // Tags de plano conhecidas
   const PLAN_TAGS = ["gratis", "mensal", "semestral", "anual", "anual-vip"];
 
-  // Regras de transição: ao adicionar uma tag, quais tags remover
   const TAG_REMOVES: Record<string, string[]> = {
     inadimplente: ["ativo"],
     cancelado: ["ativo", "inadimplente"],
@@ -484,15 +513,52 @@ serve(async (req) => {
     boleto_expirado: ["boleto_gerado"],
   };
 
-  // Helper: registra evento na tabela events + gerencia tags no perfil
-  const insertEvent = async (userId: string, eventType: string, meta: Record<string, any> = {}) => {
+  // ============================================================
+  // insertKirvanoEvent: SEMPRE grava em events (append-only).
+  // - Se userId existir → grava com user_id
+  // - Senão → grava com lead_email/lead_phone (lead anônimo)
+  // ============================================================
+  const insertKirvanoEvent = async (
+    eventType: string,
+    args: {
+      userId?: string | null;
+      meta?: Record<string, any>;
+    } = {},
+  ) => {
     try {
+      const userId = args.userId ?? null;
       await admin.from("events").insert({
         user_id: userId,
+        lead_email: userId ? null : (email ?? null),
+        lead_phone: userId ? null : (phone ?? null),
         event_type: eventType,
-        metadata: { ...meta, webhook_event: eventName, email: email ?? null },
+        source: "kirvano",
+        metadata: {
+          ...(args.meta ?? {}),
+          webhook_event: eventName,
+          email: email ?? null,
+          phone: phone ?? null,
+        },
       });
+      logStep("Event logged", { eventType, hasUser: !!userId });
+    } catch (e) {
+      logStep("Event insert error (non-fatal)", {
+        eventType,
+        message: e instanceof Error ? e.message : String(e),
+      });
+    }
+  };
 
+  // ============================================================
+  // applyKirvanoTags: gerencia tags do perfil — só roda quando há userId.
+  // Separado do log para deixar claro que events é append-only.
+  // ============================================================
+  const applyKirvanoTags = async (
+    userId: string,
+    eventType: string,
+    meta: Record<string, any> = {},
+  ) => {
+    try {
       const tag = EVENT_TAG_MAP[eventType] ?? eventType;
       const { data: perfRow } = await admin
         .from("perfis")
@@ -501,18 +567,15 @@ serve(async (req) => {
         .single();
       let currentTags: string[] = perfRow?.tags ?? [];
 
-      // Remove tags conflitantes conforme regras de transição
       const toRemove = TAG_REMOVES[tag] ?? [];
       if (toRemove.length > 0) {
         currentTags = currentTags.filter((t) => !toRemove.includes(t));
       }
 
-      // Adiciona a nova tag se não existir
       if (!currentTags.includes(tag)) {
         currentTags.push(tag);
       }
 
-      // Se tem plan_id no metadata, resolve o slug e troca a tag de plano
       if (meta.plan_id) {
         const { data: planRow } = await admin
           .from("plans")
@@ -520,7 +583,6 @@ serve(async (req) => {
           .eq("id", meta.plan_id)
           .single();
         if (planRow?.slug) {
-          // Mapeia slug para tag
           const slugToTag: Record<string, string> = {
             gratis: "gratis",
             mensal: "mensal",
@@ -529,23 +591,33 @@ serve(async (req) => {
             "plano-anual-vip": "anual-vip",
           };
           const planTag = slugToTag[planRow.slug] ?? planRow.slug;
-          // Remove todas as tags de plano antigas
           currentTags = currentTags.filter((t) => !PLAN_TAGS.includes(t));
-          // Adiciona a tag do plano novo
           currentTags.push(planTag);
           logStep("Plan tag updated", { planTag, slug: planRow.slug });
         }
       }
 
-      await admin
-        .from("perfis")
-        .update({ tags: currentTags })
-        .eq("id", userId);
-
-      logStep("Event + tag updated", { eventType, tag, removed: toRemove, userId });
+      await admin.from("perfis").update({ tags: currentTags }).eq("id", userId);
+      logStep("Tags applied", { eventType, tag, removed: toRemove, userId });
     } catch (e) {
-      logStep("Event insert error (non-fatal)", { message: e instanceof Error ? e.message : String(e) });
+      logStep("Apply tags error (non-fatal)", {
+        eventType,
+        message: e instanceof Error ? e.message : String(e),
+      });
     }
+  };
+
+  // ============================================================
+  // insertEvent (legado): mantém compatibilidade — log + tags.
+  // Usado pelos blocos "activate/cancel/overdue" mais abaixo.
+  // ============================================================
+  const insertEvent = async (
+    userId: string,
+    eventType: string,
+    meta: Record<string, any> = {},
+  ) => {
+    await insertKirvanoEvent(eventType, { userId, meta });
+    await applyKirvanoTags(userId, eventType, meta);
   };
 
   if (!email) {
