@@ -176,6 +176,24 @@ export function GroupBlastScheduleCard({ onAfterReschedule }: Props) {
         </div>
       </div>
 
+      {/* Contagens de hoje (BRT) */}
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="rounded-md border bg-card p-2">
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Pendentes hoje</p>
+          <p className="text-lg font-bold tabular-nums">{counts.pending}</p>
+        </div>
+        <div className="rounded-md border bg-card p-2">
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Enviados hoje</p>
+          <p className="text-lg font-bold tabular-nums text-green-600">{counts.sent}</p>
+        </div>
+        <div className="rounded-md border bg-card p-2">
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Falhas hoje</p>
+          <p className={`text-lg font-bold tabular-nums ${counts.failed > 0 ? "text-red-600" : ""}`}>
+            {counts.failed}
+          </p>
+        </div>
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2">
         {items.map((s) => {
           const next = s.next_run_at ? new Date(s.next_run_at) : null;
