@@ -9,12 +9,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Loader2, Search, CreditCard, QrCode, Barcode, ChevronRight,
+  Loader2, Search, QrCode, ChevronRight,
   CheckCircle2, XCircle, Clock, AlertTriangle, RefreshCw, ArrowLeft,
   ShoppingCart, User, Calendar, DollarSign, FileText, Copy, Check,
-  MessageCircle, ChevronLeft, X, CalendarDays
+  MessageCircle, ChevronLeft, X, CalendarDays, Send,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
@@ -77,35 +81,29 @@ const EVENT_LABELS: Record<string, { label: string; color: string }> = {
   SUBSCRIPTION_EXPIRED: { label: "Expirada", color: "bg-orange-500/10 text-orange-700 border-orange-200" },
 };
 
-const RESULT_LABELS: Record<string, { label: string; icon: typeof CheckCircle2 }> = {
-  updated_user_activated: { label: "Assinatura ativada", icon: CheckCircle2 },
-  created_user_activated: { label: "Conta criada + ativada", icon: CheckCircle2 },
-  canceled_removed_role: { label: "Cancelado", icon: XCircle },
-  delinquent_removed_role: { label: "Inadimplente", icon: AlertTriangle },
-  ignored_non_paid: { label: "Ignorado (pendente)", icon: Clock },
-  missing_email: { label: "Sem email", icon: AlertTriangle },
-  missing_offer_id: { label: "Sem offer_id", icon: AlertTriangle },
-  offer_mapping_not_found: { label: "Oferta não mapeada", icon: AlertTriangle },
-  no_profile_to_update: { label: "Perfil não encontrado", icon: AlertTriangle },
+// Mapa do nome bruto da Kirvano para o event_trigger interno usado em message_templates.
+// Espelha KIRVANO_EVENT_MAP de supabase/functions/handle-kirvano-webhook/index.ts.
+const KIRVANO_TO_TRIGGER: Record<string, string> = {
+  SALE_APPROVED: "compra_aprovada",
+  SALE_REFUSED: "compra_recusada",
+  SALE_REFUNDED: "compra_reembolsada",
+  SALE_CHARGEBACK: "compra_chargeback",
+  PIX_GENERATED: "pix_gerado",
+  PIX_EXPIRED: "pix_expirado",
+  BANK_SLIP_GENERATED: "boleto_gerado",
+  BANK_SLIP_EXPIRED: "boleto_expirado",
+  ABANDONED_CART: "carrinho_abandonado",
+  CHECKOUT_ABANDONED: "checkout_abandonado",
+  SUBSCRIPTION_RENEWED: "assinatura_renovada",
+  SUBSCRIPTION_CANCELED: "assinatura_cancelada",
+  SUBSCRIPTION_EXPIRED: "assinatura_expirada",
+  SUBSCRIPTION_OVERDUE: "assinatura_inadimplente",
+  SUBSCRIPTION_REACTIVATED: "assinatura_reativada",
 };
-
-function PaymentMethodIcon({ method }: { method: string | null }) {
-  if (!method) return <ShoppingCart className="h-4 w-4 text-muted-foreground" />;
-  const m = method.toUpperCase();
-  if (m.includes("PIX")) return <QrCode className="h-4 w-4 text-green-600" />;
-  if (m.includes("CREDIT") || m.includes("CARD")) return <CreditCard className="h-4 w-4 text-blue-600" />;
-  if (m.includes("BANK") || m.includes("SLIP") || m.includes("BOLETO")) return <Barcode className="h-4 w-4 text-yellow-600" />;
-  return <ShoppingCart className="h-4 w-4 text-muted-foreground" />;
-}
 
 function getEventInfo(event: string | null) {
   if (!event) return { label: "Desconhecido", color: "bg-muted text-muted-foreground border-border" };
   return EVENT_LABELS[event] ?? { label: event, color: "bg-muted text-muted-foreground border-border" };
-}
-
-function getResultInfo(result: string | null) {
-  if (!result) return null;
-  return RESULT_LABELS[result] ?? { label: result, icon: FileText };
 }
 
 type SaleGroup = { key: string; events: WebhookLog[]; latest: WebhookLog };
@@ -200,20 +198,6 @@ export default function AdminVendas() {
 
   const customerName = (log: WebhookLog) => log.raw_payload?.customer?.name || null;
   const totalPrice = (log: WebhookLog) => log.raw_payload?.total_price || null;
-  const pixCodeFromEvents = (events: WebhookLog[]): string | null => {
-    const pixEvent = events.find((e) => e.event === "PIX_GENERATED");
-    return pixEvent?.raw_payload?.payment?.qrcode || null;
-  };
-
-  const copyPixCode = async (e: React.MouseEvent, code: string) => {
-    e.stopPropagation();
-    try {
-      await navigator.clipboard.writeText(code);
-      toast.success("Código PIX copiado!");
-    } catch {
-      toast.error("Erro ao copiar");
-    }
-  };
 
   const getFilterCount = (key: FilterTab) => stats[key === "todos" ? "total" : key];
 
@@ -230,7 +214,6 @@ export default function AdminVendas() {
   return (
     <AdminLayout
       pageTitle="Vendas"
-     
       headerRightContent={
         <button onClick={fetchLogs} disabled={loading} className="text-muted-foreground hover:text-foreground">
           <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
@@ -319,20 +302,17 @@ export default function AdminVendas() {
 
         {/* Sales list */}
         <div className="space-y-0.5">
-          {paginatedSales.map(({ key, events, latest }) => {
+          {paginatedSales.map(({ key, latest }) => {
             const evInfo = getEventInfo(latest.event);
             const name = customerName(latest);
             const price = totalPrice(latest);
-            const pixCode = pixCodeFromEvents(events);
             return (
-              <div
+              <button
                 key={key}
-                className="flex items-center gap-3 w-full px-3 py-2 rounded-lg active:bg-muted/60 transition-colors border-b border-border/30 last:border-0"
+                className="flex items-center gap-3 w-full px-3 py-2 rounded-lg active:bg-muted/60 transition-colors border-b border-border/30 last:border-0 text-left"
+                onClick={() => setSelectedLog(latest)}
               >
-                <button
-                  className="flex-1 min-w-0 text-left"
-                  onClick={() => setSelectedLog(latest)}
-                >
+                <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{name || latest.email || "Sem identificação"}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 inline-flex", evInfo.color)}>
@@ -344,21 +324,9 @@ export default function AdminVendas() {
                       </span>
                     )}
                   </div>
-                </button>
-                {pixCode && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 px-2 gap-1 shrink-0"
-                    onClick={(e) => copyPixCode(e, pixCode)}
-                    title="Copiar código PIX"
-                  >
-                    <QrCode className="h-3.5 w-3.5" />
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                )}
+                </div>
                 <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
-              </div>
+              </button>
             );
           })}
           {filteredSales.length === 0 && (
@@ -467,7 +435,6 @@ export default function AdminVendas() {
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fetchLogs} disabled={loading}>
             <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
           </Button>
-
         </div>
 
         {/* Table */}
@@ -475,35 +442,29 @@ export default function AdminVendas() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-10 pl-6"></TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Cliente</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Email / Telefone</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground pl-6">Nome</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Email</TableHead>
+                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Telefone</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Valor</TableHead>
                 <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Resultado</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Data</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Eventos</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">PIX</TableHead>
                 <TableHead className="w-8"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedSales.map(({ key, events, latest }) => {
+              {paginatedSales.map(({ key, latest }) => {
                 const evInfo = getEventInfo(latest.event);
                 const name = customerName(latest);
                 const price = totalPrice(latest);
-                const resultInfo = getResultInfo(latest.process_result);
-                const pixCode = pixCodeFromEvents(events);
                 return (
                   <TableRow key={key} className="cursor-pointer group" onClick={() => setSelectedLog(latest)}>
                     <TableCell className="pl-6 py-2.5">
-                      <PaymentMethodIcon method={latest.payment_method} />
+                      <span className="text-sm font-medium truncate max-w-[220px] block">{name || "Sem nome"}</span>
                     </TableCell>
-                    <TableCell className="py-2.5">
-                      <span className="text-sm font-medium truncate max-w-[200px] block">{name || "Sem nome"}</span>
+                    <TableCell className="py-2.5 text-sm text-muted-foreground truncate max-w-[240px]">
+                      {latest.email || "—"}
                     </TableCell>
-                    <TableCell className="py-2.5 text-sm text-muted-foreground truncate max-w-[220px]">
-                      {latest.email || latest.phone || "—"}
+                    <TableCell className="py-2.5 text-sm text-muted-foreground tabular-nums">
+                      {latest.phone || "—"}
                     </TableCell>
                     <TableCell className="py-2.5">
                       <span className="text-sm font-medium tabular-nums">{price || "—"}</span>
@@ -513,39 +474,6 @@ export default function AdminVendas() {
                         {evInfo.label}
                       </Badge>
                     </TableCell>
-                    <TableCell className="py-2.5">
-                      {resultInfo ? (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <resultInfo.icon className="h-3 w-3 shrink-0" />
-                          <span className="truncate max-w-[140px]">{resultInfo.label}</span>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="py-2.5 text-xs text-muted-foreground tabular-nums">
-                      {format(new Date(latest.received_at), "dd/MM/yy HH:mm", { locale: ptBR })}
-                    </TableCell>
-                    <TableCell className="py-2.5 text-xs text-muted-foreground text-center tabular-nums">
-                      {events.length}
-                    </TableCell>
-                    <TableCell className="py-2.5">
-                      {pixCode ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 px-2 gap-1 text-xs"
-                          onClick={(e) => copyPixCode(e, pixCode)}
-                          title="Copiar código PIX"
-                        >
-                          <QrCode className="h-3 w-3" />
-                          <Copy className="h-3 w-3" />
-                          Copiar
-                        </Button>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
                     <TableCell className="py-2.5 pr-4">
                       <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
                     </TableCell>
@@ -554,7 +482,7 @@ export default function AdminVendas() {
               })}
               {filteredSales.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-16 text-sm text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-16 text-sm text-muted-foreground">
                     {search ? "Nenhuma venda encontrada" : "Nenhuma venda registrada"}
                   </TableCell>
                 </TableRow>
@@ -649,6 +577,9 @@ function PixCodeBlock({ code }: { code: string }) {
 
 function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog[] }) {
   const [planMap, setPlanMap] = useState<Record<string, { planName: string; checkoutLink: string | null }>>({});
+  const [dispatchingId, setDispatchingId] = useState<string | null>(null);
+  const [recentlyDispatched, setRecentlyDispatched] = useState<Set<string>>(new Set());
+  const [confirmEvent, setConfirmEvent] = useState<WebhookLog | null>(null);
 
   useEffect(() => {
     const loadPlanMappings = async () => {
@@ -681,6 +612,105 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
   const customer = payload.customer || {};
   const products = Array.isArray(payload.products) ? payload.products : [];
   const payment = payload.payment || {};
+
+  const dispatchEventTemplate = async (ev: WebhookLog) => {
+    const rawEvent = ev.event || "";
+    const trigger = KIRVANO_TO_TRIGGER[rawEvent];
+    if (!trigger) {
+      toast.error("Este evento não tem trigger mapeado.");
+      return;
+    }
+
+    const evPayload = ev.raw_payload || {};
+    const evCustomer = evPayload.customer || {};
+    const evPayment = evPayload.payment || {};
+    const evProducts = Array.isArray(evPayload.products) ? evPayload.products : [];
+    const phone = ev.phone || evCustomer.phone_number;
+
+    if (!phone) {
+      toast.error("Esta venda não tem telefone.");
+      return;
+    }
+
+    setDispatchingId(ev.id);
+    try {
+      // Verifica se há template ativo
+      const { data: tpls, error: tplErr } = await supabase
+        .from("message_templates" as any)
+        .select("id")
+        .eq("event_trigger", trigger)
+        .eq("is_active", true)
+        .limit(1);
+      if (tplErr) throw tplErr;
+      if (!tpls || tpls.length === 0) {
+        toast.error(`Nenhum template ativo para "${trigger}".`);
+        return;
+      }
+
+      // Tenta resolver user_id pelo email
+      let userId: string | null = null;
+      if (ev.email) {
+        const { data: perfil } = await supabase
+          .from("perfis")
+          .select("id")
+          .eq("email", ev.email)
+          .maybeSingle();
+        userId = (perfil as any)?.id ?? null;
+      }
+
+      // Resolve link de novo pix via offer_id do primeiro produto
+      const firstProduct = evProducts[0] || {};
+      const offerId = firstProduct.offer_id;
+      const mapped = offerId ? planMap[offerId] : null;
+
+      const variables: Record<string, any> = {
+        nome: evCustomer.name || "",
+        telefone: phone,
+        email: ev.email || "",
+        produto: firstProduct.name || firstProduct.offer_name || "",
+        plano_nome: mapped?.planName || firstProduct.name || "",
+        total_price: evPayload.total_price || "",
+        sale_id: ev.sale_id || "",
+        checkout_id: ev.checkout_id || "",
+      };
+      if (evPayment.qrcode) variables.pix_codigo = evPayment.qrcode;
+      if (mapped?.checkoutLink) variables.link_novo_pix = mapped.checkoutLink;
+
+      const { data: count, error: rpcErr } = await supabase.rpc(
+        "queue_templates_for_event" as any,
+        {
+          p_event_trigger: trigger,
+          p_phone: phone,
+          p_name: evCustomer.name || "",
+          p_user_id: userId,
+          p_variables: variables,
+          p_priority: 1,
+        }
+      );
+      if (rpcErr) throw rpcErr;
+
+      const n = (count as number) ?? 0;
+      if (n > 0) {
+        toast.success(`${n} mensagem(ns) enfileirada(s).`);
+        setRecentlyDispatched((s) => new Set(s).add(ev.id));
+        setTimeout(() => {
+          setRecentlyDispatched((s) => {
+            const next = new Set(s);
+            next.delete(ev.id);
+            return next;
+          });
+        }, 5000);
+      } else {
+        toast.info("Nenhuma mensagem enfileirada (filtro/dedupe).");
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Erro ao disparar.");
+    } finally {
+      setDispatchingId(null);
+      setConfirmEvent(null);
+    }
+  };
 
   return (
     <ScrollArea className="h-[calc(100vh-80px)]">
@@ -720,7 +750,7 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
           <div className="bg-muted/50 rounded-lg p-3 space-y-1 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Valor</span><span className="font-medium">{payload.total_price || "—"}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Tipo</span><span>{payload.type === "RECURRING" ? "Assinatura" : "Pagamento único"}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Pagamento</span><span className="flex items-center gap-1.5"><PaymentMethodIcon method={latest.payment_method} />{latest.payment_method || "—"}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Pagamento</span><span>{latest.payment_method || "—"}</span></div>
             {payment.brand && <div className="flex justify-between"><span className="text-muted-foreground">Bandeira</span><span className="capitalize">{payment.brand}</span></div>}
             {payment.installments && <div className="flex justify-between"><span className="text-muted-foreground">Parcelas</span><span>{payment.installments}x</span></div>}
             <div className="flex justify-between"><span className="text-muted-foreground">Sale ID</span><span className="text-xs font-mono">{latest.sale_id || "—"}</span></div>
@@ -819,11 +849,15 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
           <div className="relative pl-4 border-l-2 border-border space-y-4">
             {events.map((ev) => {
               const evInfo = getEventInfo(ev.event);
-              const resultInfo = getResultInfo(ev.process_result);
+              const trigger = ev.event ? KIRVANO_TO_TRIGGER[ev.event] : null;
+              const phone = latest.phone || customer.phone_number;
+              const canDispatch = !!trigger && !!phone;
+              const isLoading = dispatchingId === ev.id;
+              const justDispatched = recentlyDispatched.has(ev.id);
               return (
                 <div key={ev.id} className="relative">
                   <div className="absolute -left-[21px] top-1 h-3 w-3 rounded-full bg-background border-2 border-primary" />
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", evInfo.color)}>
                         {evInfo.label}
@@ -832,13 +866,25 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
                         {format(new Date(ev.received_at), "dd/MM/yy HH:mm:ss", { locale: ptBR })}
                       </span>
                     </div>
-                    {resultInfo && (
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <resultInfo.icon className="h-3 w-3" />
-                        {resultInfo.label}
-                      </div>
-                    )}
                     {ev.error && <p className="text-xs text-destructive">Erro: {ev.error}</p>}
+                    {canDispatch && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs gap-1.5"
+                        disabled={isLoading || justDispatched}
+                        onClick={() => setConfirmEvent(ev)}
+                      >
+                        {isLoading ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : justDispatched ? (
+                          <Check className="h-3 w-3" />
+                        ) : (
+                          <Send className="h-3 w-3" />
+                        )}
+                        {justDispatched ? "Enviado" : "Enviar mensagem do evento"}
+                      </Button>
+                    )}
                   </div>
                 </div>
               );
@@ -846,6 +892,29 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
           </div>
         </div>
       </div>
+
+      <AlertDialog open={!!confirmEvent} onOpenChange={(open) => !open && setConfirmEvent(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disparar template do evento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmEvent && (
+                <>
+                  Evento: <strong>{getEventInfo(confirmEvent.event).label}</strong><br />
+                  Para: <strong>{customer.name || latest.email || latest.phone}</strong><br />
+                  Telefone: <span className="font-mono">{latest.phone || customer.phone_number}</span>
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirmEvent && dispatchEventTemplate(confirmEvent)}>
+              Disparar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </ScrollArea>
   );
 }
