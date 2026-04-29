@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { toCanonicalBR, variants as brVariants } from "../_shared/br-phone.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,35 +14,19 @@ function getSupabase() {
   );
 }
 
+// Normaliza para canonical BR (10/11 dígitos sem DDI), removendo "@s.whatsapp.net".
+// Retorna string vazia se a entrada não for um número BR válido.
 function normalizePhone(raw: string): string {
-  return (raw || "").replace(/@.*$/, "").replace(/\D/g, "");
+  const cleaned = String(raw || "").replace(/@.*$/, "");
+  return toCanonicalBR(cleaned) ?? "";
 }
 
-// Generate equivalent BR phone variants (with/without country 55, with/without mobile "9").
+// Conjunto de variantes BR (com/sem 55, com/sem 9) para casar com qualquer
+// formato salvo no banco.
 function phoneVariants(raw: string): Set<string> {
-  const digits = normalizePhone(raw);
-  const set = new Set<string>();
-  if (!digits) return set;
-  set.add(digits);
-
-  let local = digits;
-  if (local.startsWith("55") && (local.length === 12 || local.length === 13)) {
-    local = local.slice(2);
-  }
-  set.add(local);
-
-  if (local.length === 11 && local[2] === "9") {
-    const without9 = local.slice(0, 2) + local.slice(3);
-    set.add(without9);
-    set.add("55" + without9);
-  } else if (local.length === 10) {
-    const with9 = local.slice(0, 2) + "9" + local.slice(2);
-    set.add(with9);
-    set.add("55" + with9);
-  }
-
-  if (!digits.startsWith("55")) set.add("55" + digits);
-  return set;
+  const canonical = normalizePhone(raw);
+  if (!canonical) return new Set<string>();
+  return new Set(brVariants(canonical));
 }
 
 function phonesMatch(a: string, b: string): boolean {
