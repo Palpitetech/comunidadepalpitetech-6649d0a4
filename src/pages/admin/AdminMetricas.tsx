@@ -36,7 +36,7 @@ import {
   FirstVsLastSkeleton,
   FunnelSkeleton,
 } from "@/components/admin/metricas/MetricsSkeletons";
-import { Loader2 } from "lucide-react";
+
 
 const BASE_URL = "comunidadepalpitetech.lovable.app";
 
@@ -122,7 +122,7 @@ export default function AdminMetricas() {
     };
   }, [funnelData]);
 
-  const isInitialLoading = false; // legado: loading agora é por bloco
+  
 
   return (
     <AdminLayout pageTitle="Métricas">
