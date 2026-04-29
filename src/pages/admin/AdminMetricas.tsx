@@ -332,10 +332,7 @@ Compradores ${funnel?.compradores ?? ""} ${fmtNum(funnelData.totalCompradores)} 
                     </Button>
                   </div>
                 </CardContent>
-              </Card>
-            </div>
-          </>
-        )}
+        </div>
       </div>
     </AdminLayout>
   );
