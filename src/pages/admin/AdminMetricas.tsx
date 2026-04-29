@@ -5,14 +5,16 @@ import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, CalendarIcon, Copy, ShieldCheck } from "lucide-react";
+import { Loader2, Copy, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { useDashboardPeriod, PERIOD_OPTIONS, PeriodKey } from "@/hooks/useDashboardPeriod";
+import {
+  resolvePeriod,
+  useDashboardPeriod,
+  PeriodRange,
+} from "@/hooks/useDashboardPeriod";
+import { PeriodFilter } from "@/components/admin/dashboard/PeriodFilter";
 import {
   useAttributionMetrics,
   AttributionDimension,
@@ -23,6 +25,11 @@ import { MetricsKPIs } from "@/components/admin/metricas/MetricsKPIs";
 import { AttributionTable } from "@/components/admin/metricas/AttributionTable";
 import { BuyersLTVTable } from "@/components/admin/metricas/BuyersLTVTable";
 import { FirstVsLastClickTable } from "@/components/admin/metricas/FirstVsLastClickTable";
+import {
+  BlockPeriodControl,
+  BlockPeriodState,
+  initialBlockPeriodState,
+} from "@/components/admin/metricas/BlockPeriodControl";
 
 const BASE_URL = "comunidadepalpitetech.lovable.app";
 
@@ -31,12 +38,49 @@ function copyToClipboard(text: string) {
   toast.success("Link copiado!");
 }
 
+/** Resolve o PeriodRange efetivo de um bloco (override → próprio; senão → global). */
+function resolveBlockPeriod(state: BlockPeriodState, globalPeriod: PeriodRange): PeriodRange {
+  if (!state.override) return globalPeriod;
+  return resolvePeriod(state.periodKey, state.customRange);
+}
+
 export default function AdminMetricas() {
   const { period, periodKey, setPeriodKey, customRange, setCustomRange } = useDashboardPeriod("7d");
   const [dimension, setDimension] = useState<AttributionDimension>("utm_source");
-  const { data, isLoading } = useAttributionMetrics(period, dimension);
 
-  // Gerador
+  // Overrides por bloco (default = seguir global)
+  const [kpisState, setKpisState] = useState<BlockPeriodState>(() =>
+    initialBlockPeriodState(periodKey, customRange),
+  );
+  const [attrState, setAttrState] = useState<BlockPeriodState>(() =>
+    initialBlockPeriodState(periodKey, customRange),
+  );
+  const [buyersState, setBuyersState] = useState<BlockPeriodState>(() =>
+    initialBlockPeriodState(periodKey, customRange),
+  );
+  const [clickState, setClickState] = useState<BlockPeriodState>(() =>
+    initialBlockPeriodState(periodKey, customRange),
+  );
+  const [funnelState, setFunnelState] = useState<BlockPeriodState>(() =>
+    initialBlockPeriodState(periodKey, customRange),
+  );
+
+  // Períodos efetivos por bloco
+  const kpisPeriod = useMemo(() => resolveBlockPeriod(kpisState, period), [kpisState, period]);
+  const attrPeriod = useMemo(() => resolveBlockPeriod(attrState, period), [attrState, period]);
+  const buyersPeriod = useMemo(() => resolveBlockPeriod(buyersState, period), [buyersState, period]);
+  const clickPeriod = useMemo(() => resolveBlockPeriod(clickState, period), [clickState, period]);
+  const funnelPeriod = useMemo(() => resolveBlockPeriod(funnelState, period), [funnelState, period]);
+
+  // Uma query por bloco — React Query deduplica caches iguais automaticamente
+  // pela queryKey, então blocos no mesmo período compartilham o mesmo fetch.
+  const kpisQuery = useAttributionMetrics(kpisPeriod, dimension);
+  const attrQuery = useAttributionMetrics(attrPeriod, dimension);
+  const buyersQuery = useAttributionMetrics(buyersPeriod, dimension);
+  const clickQuery = useAttributionMetrics(clickPeriod, dimension);
+  const funnelQuery = useAttributionMetrics(funnelPeriod, dimension);
+
+  // Gerador de UTM (usa o período global apenas para popular o dropdown de sources)
   const [destino, setDestino] = useState(`https://${BASE_URL}`);
   const [utmSource, setUtmSource] = useState("instagram");
   const [utmMedium, setUtmMedium] = useState("");
@@ -59,22 +103,39 @@ export default function AdminMetricas() {
   }, [destino, utmSource, utmMedium, utmCampaign, utmContent, utmTerm]);
 
   // Funil
+  const funnelData = funnelQuery.data;
   const funnel = useMemo(() => {
-    if (!data) return null;
-    const max = Math.max(data.totalLeads, data.totalCadastros, data.totalCompradores, 1);
+    if (!funnelData) return null;
+    const max = Math.max(funnelData.totalLeads, funnelData.totalCadastros, funnelData.totalCompradores, 1);
     const bar = (n: number) => "█".repeat(Math.max(1, Math.round((n / max) * 24)));
     return {
-      leads: bar(data.totalLeads || 1),
-      cadastros: bar(data.totalCadastros || 1),
-      compradores: bar(data.totalCompradores || 1),
+      leads: bar(funnelData.totalLeads || 1),
+      cadastros: bar(funnelData.totalCadastros || 1),
+      compradores: bar(funnelData.totalCompradores || 1),
     };
-  }, [data]);
+  }, [funnelData]);
+
+  const isInitialLoading = kpisQuery.isLoading && !kpisQuery.data;
 
   return (
     <AdminLayout pageTitle="Métricas">
       <div className="px-4 py-3 md:container md:py-6 space-y-5 max-w-6xl mx-auto">
-        {/* Atalho auditoria */}
-        <div className="flex justify-end">
+        {/* Cabeçalho: filtro global + auditoria */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">
+              Período global
+            </span>
+            <PeriodFilter
+              value={periodKey}
+              onChange={setPeriodKey}
+              customRange={customRange}
+              onCustomRangeChange={setCustomRange}
+            />
+            <span className="text-[11px] text-muted-foreground">
+              {format(period.from, "dd/MM/yy", { locale: ptBR })} – {format(period.to, "dd/MM/yy", { locale: ptBR })}
+            </span>
+          </div>
           <Button size="sm" variant="outline" asChild className="h-8 text-xs gap-1.5">
             <Link to="/admin/metricas/auditoria-atribuicao">
               <ShieldCheck className="h-3.5 w-3.5" />
@@ -83,84 +144,98 @@ export default function AdminMetricas() {
           </Button>
         </div>
 
-        {/* Filtro de período */}
-        <div className="flex flex-wrap gap-1.5 items-center">
-          {PERIOD_OPTIONS.filter((o) => o.key !== "custom").map(({ key, label }) => (
-            <Button
-              key={key}
-              size="sm"
-              variant={periodKey === key ? "default" : "outline"}
-              className="h-8 text-xs"
-              onClick={() => setPeriodKey(key as PeriodKey)}
-            >
-              {label}
-            </Button>
-          ))}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                size="sm"
-                variant={periodKey === "custom" ? "default" : "outline"}
-                className="h-8 gap-1.5 text-xs"
-              >
-                <CalendarIcon className="h-3.5 w-3.5" />
-                {periodKey === "custom" && customRange.from
-                  ? `${format(customRange.from, "dd/MM", { locale: ptBR })}${
-                      customRange.to ? ` – ${format(customRange.to, "dd/MM", { locale: ptBR })}` : ""
-                    }`
-                  : "Personalizado"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="range"
-                selected={{ from: customRange.from, to: customRange.to }}
-                onSelect={(range) => {
-                  setCustomRange({ from: range?.from, to: range?.to });
-                  setPeriodKey("custom");
-                }}
-                numberOfMonths={1}
-                locale={ptBR}
-                disabled={(d) => d > new Date()}
-                className={cn("p-3 pointer-events-auto")}
-              />
-            </PopoverContent>
-          </Popover>
-          <span className="text-[11px] text-muted-foreground ml-1.5">
-            {format(period.from, "dd/MM/yy", { locale: ptBR })} – {format(period.to, "dd/MM/yy", { locale: ptBR })}
-          </span>
-        </div>
-
-        {isLoading || !data ? (
+        {isInitialLoading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
           <>
             {/* Bloco A — KPIs */}
-            <MetricsKPIs data={data} />
+            {kpisQuery.data && (
+              <MetricsKPIs
+                data={kpisQuery.data}
+                headerExtra={
+                  <BlockPeriodControl
+                    state={kpisState}
+                    onChange={setKpisState}
+                    globalPeriodKey={periodKey}
+                    globalCustomRange={customRange}
+                  />
+                }
+              />
+            )}
 
             {/* Bloco B — Tabela por dimensão */}
-            <AttributionTable data={data} dimension={dimension} onDimensionChange={setDimension} />
+            {attrQuery.data && (
+              <AttributionTable
+                data={attrQuery.data}
+                dimension={dimension}
+                onDimensionChange={setDimension}
+                headerExtra={
+                  <BlockPeriodControl
+                    state={attrState}
+                    onChange={setAttrState}
+                    globalPeriodKey={periodKey}
+                    globalCustomRange={customRange}
+                  />
+                }
+              />
+            )}
 
             {/* Bloco C — Compradores LTV */}
-            <BuyersLTVTable data={data} />
+            {buyersQuery.data && (
+              <BuyersLTVTable
+                data={buyersQuery.data}
+                headerExtra={
+                  <BlockPeriodControl
+                    state={buyersState}
+                    onChange={setBuyersState}
+                    globalPeriodKey={periodKey}
+                    globalCustomRange={customRange}
+                  />
+                }
+              />
+            )}
 
             {/* Bloco C2 — First vs Last Click */}
-            <FirstVsLastClickTable data={data} />
+            {clickQuery.data && (
+              <FirstVsLastClickTable
+                data={clickQuery.data}
+                headerExtra={
+                  <BlockPeriodControl
+                    state={clickState}
+                    onChange={setClickState}
+                    globalPeriodKey={periodKey}
+                    globalCustomRange={customRange}
+                  />
+                }
+              />
+            )}
 
             {/* Bloco D — Funil + Gerador */}
             <div className="grid md:grid-cols-2 gap-4">
               <Card>
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-3 flex-row items-center justify-between gap-2 flex-wrap">
                   <CardTitle className="text-base">📈 Funil do período</CardTitle>
+                  <BlockPeriodControl
+                    state={funnelState}
+                    onChange={setFunnelState}
+                    globalPeriodKey={periodKey}
+                    globalCustomRange={customRange}
+                  />
                 </CardHeader>
                 <CardContent>
-                  <pre className="text-xs font-mono leading-relaxed text-foreground bg-muted/40 rounded-lg p-3 overflow-x-auto">
-{`Leads       ${funnel?.leads ?? ""} ${fmtNum(data.totalLeads)}
-Cadastros   ${funnel?.cadastros ?? ""} ${fmtNum(data.totalCadastros)} (${fmtPct(data.convLeadCadastro)})
-Compradores ${funnel?.compradores ?? ""} ${fmtNum(data.totalCompradores)} (${fmtPct(data.convCadCompra)})`}
-                  </pre>
+                  {funnelData ? (
+                    <pre className="text-xs font-mono leading-relaxed text-foreground bg-muted/40 rounded-lg p-3 overflow-x-auto">
+{`Leads       ${funnel?.leads ?? ""} ${fmtNum(funnelData.totalLeads)}
+Cadastros   ${funnel?.cadastros ?? ""} ${fmtNum(funnelData.totalCadastros)} (${fmtPct(funnelData.convLeadCadastro)})
+Compradores ${funnel?.compradores ?? ""} ${fmtNum(funnelData.totalCompradores)} (${fmtPct(funnelData.convCadCompra)})`}
+                    </pre>
+                  ) : (
+                    <div className="flex justify-center py-6">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -191,7 +266,7 @@ Compradores ${funnel?.compradores ?? ""} ${fmtNum(data.totalCompradores)} (${fmt
                               {u}
                             </SelectItem>
                           ))}
-                          {data.uniqueUtmSources
+                          {(kpisQuery.data?.uniqueUtmSources || [])
                             .filter((u) => !["instagram", "facebook", "google", "tiktok", "whatsapp", "bio", "grupo", "meta"].includes(u))
                             .map((u) => (
                               <SelectItem key={u} value={u} className="text-xs">

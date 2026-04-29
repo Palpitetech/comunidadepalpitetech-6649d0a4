@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -18,6 +18,7 @@ interface Props {
   data: AttributionMetrics;
   dimension: AttributionDimension;
   onDimensionChange: (d: AttributionDimension) => void;
+  headerExtra?: ReactNode;
 }
 
 type SortCol = keyof Pick<
@@ -59,7 +60,7 @@ function exportCsv(rows: AttributionRow[], dimensionLabel: string) {
   URL.revokeObjectURL(url);
 }
 
-export function AttributionTable({ data, dimension, onDimensionChange }: Props) {
+export function AttributionTable({ data, dimension, onDimensionChange, headerExtra }: Props) {
   const [sortCol, setSortCol] = useState<SortCol>("cadastros");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
@@ -97,7 +98,8 @@ export function AttributionTable({ data, dimension, onDimensionChange }: Props) 
     <Card>
       <CardHeader className="pb-3 flex-row items-center justify-between gap-2 flex-wrap">
         <CardTitle className="text-base">📊 Atribuição por origem</CardTitle>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {headerExtra}
           <Select value={dimension} onValueChange={(v) => onDimensionChange(v as AttributionDimension)}>
             <SelectTrigger className="h-8 w-[180px] text-xs">
               <SelectValue />

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { AttributionMetrics, BuyerRow, fmtBRL, fmtDays } from "@/hooks/admin/use
 
 interface Props {
   data: AttributionMetrics;
+  headerExtra?: ReactNode;
 }
 
 type SortCol = "diasAteComprar" | "receitaTotal" | "firstPurchaseAt";
@@ -55,7 +56,7 @@ function exportCsv(rows: BuyerRow[]) {
   URL.revokeObjectURL(url);
 }
 
-export function BuyersLTVTable({ data }: Props) {
+export function BuyersLTVTable({ data, headerExtra }: Props) {
   const [sortCol, setSortCol] = useState<SortCol>("firstPurchaseAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [diasFilter, setDiasFilter] = useState<DiasFilter>("all");
@@ -103,6 +104,7 @@ export function BuyersLTVTable({ data }: Props) {
       <CardHeader className="pb-3 flex-row items-center justify-between gap-2 flex-wrap">
         <CardTitle className="text-base">🧑‍💼 Compradores · LTV individual</CardTitle>
         <div className="flex items-center gap-1.5 flex-wrap">
+          {headerExtra}
           {(
             [
               { v: "all" as const, l: "Todos" },

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,9 +60,10 @@ function downloadCSV(filename: string, rows: (string | number)[][]) {
 
 interface Props {
   data: AttributionMetrics;
+  headerExtra?: ReactNode;
 }
 
-export function FirstVsLastClickTable({ data }: Props) {
+export function FirstVsLastClickTable({ data, headerExtra }: Props) {
   const [dimension, setDimension] = useState<AttributionDimension>("utm_source");
   const [mode, setMode] = useState<Mode>("compare");
 
@@ -124,10 +125,13 @@ export function FirstVsLastClickTable({ data }: Props) {
       <CardHeader className="pb-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="text-base">🎯 First-Click vs Last-Click</CardTitle>
-          <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5" onClick={handleExport}>
-            <Download className="h-3.5 w-3.5" />
-            CSV
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {headerExtra}
+            <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5" onClick={handleExport}>
+              <Download className="h-3.5 w-3.5" />
+              CSV
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
