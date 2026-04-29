@@ -87,6 +87,7 @@ export function MetricsKPIs({ data, headerExtra }: Props) {
         sub="Tempo até 1ª compra"
         tone="info"
       />
+      </div>
     </div>
   );
 }
