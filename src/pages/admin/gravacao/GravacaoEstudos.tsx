@@ -78,7 +78,52 @@ export default function GravacaoEstudos() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto p-4 space-y-4">
+      <main className="max-w-5xl mx-auto p-4 space-y-6">
+        {/* Apresentações fullscreen para gravação */}
+        {(APRESENTACOES_POR_LOTERIA[loteria] || []).length > 0 && (
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <BarChart3 className="h-4 w-4" style={{ color: cfg.cor }} />
+              <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                Apresentações para gravação
+              </h2>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {APRESENTACOES_POR_LOTERIA[loteria].map((ap) => (
+                <Link
+                  key={ap.slug}
+                  to={ap.rota}
+                  className="group rounded-xl border p-4 hover:shadow-lg transition-all relative overflow-hidden"
+                  style={{ borderLeft: `4px solid ${ap.cor}` }}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded"
+                      style={{ background: `${ap.cor}20`, color: ap.cor }}
+                    >
+                      Fullscreen · 6 slides
+                    </span>
+                    <div
+                      className="rounded-full p-2 group-hover:scale-110 transition-transform"
+                      style={{ background: `${ap.cor}15`, color: ap.cor }}
+                    >
+                      <Play className="h-4 w-4 fill-current" />
+                    </div>
+                  </div>
+                  <h3 className="text-base font-bold mb-1">{ap.titulo}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{ap.descricao}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Rascunhos do dia */}
+        <section>
+          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+            Rascunhos de hoje
+          </h2>
+          <div className="space-y-4">
         {isLoading ? (
           <>
             <Skeleton className="h-40 w-full" />
@@ -119,6 +164,8 @@ export default function GravacaoEstudos() {
             </article>
           ))
         )}
+          </div>
+        </section>
       </main>
     </div>
   );
