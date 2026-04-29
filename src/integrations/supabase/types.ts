@@ -3697,6 +3697,10 @@ export type Database = {
         Args: { p_max: number; p_user_id: string }
         Returns: number
       }
+      is_pix_already_paid: {
+        Args: { p_after: string; p_phone: string }
+        Returns: boolean
+      }
       merge_user_attribution:
         | {
             Args: {
@@ -3780,10 +3784,19 @@ export type Database = {
               phone_number: string
             }[]
           }
-      should_send_template: {
-        Args: { p_template_id: string; p_user_id: string }
-        Returns: boolean
-      }
+      should_send_template:
+        | {
+            Args: { p_template_id: string; p_user_id: string }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_template_id: string
+              p_user_id: string
+              p_variables?: Json
+            }
+            Returns: boolean
+          }
       verificar_existencia_usuario: {
         Args: { p_celular?: string; p_email?: string }
         Returns: Json
