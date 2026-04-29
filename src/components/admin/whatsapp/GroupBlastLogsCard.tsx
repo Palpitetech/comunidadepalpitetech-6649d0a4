@@ -55,7 +55,7 @@ interface Props {
   configs: ConfigLite[];
 }
 
-const PAGE_SIZE = 100;
+
 
 const PAGE_SIZE_OPTIONS = [50, 100, 200, 500];
 
