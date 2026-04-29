@@ -113,6 +113,7 @@ import GravacaoLotofacil from "./pages/admin/gravacao/GravacaoLotofacil";
 import GravacaoQuina from "./pages/admin/gravacao/GravacaoQuina";
 import GravacaoMegasena from "./pages/admin/gravacao/GravacaoMegasena";
 import GravacaoEstudos from "./pages/admin/gravacao/GravacaoEstudos";
+import PosicoesFinaisMegaSena from "./pages/admin/gravacao/estudos/PosicoesFinaisMegaSena";
 import SmartLinkRedirect from "./pages/SmartLinkRedirect";
 import GerarNovoPix from "./pages/GerarNovoPix";
 import PerfilDados from "./pages/PerfilDados";
@@ -291,6 +292,7 @@ const App = () => (
                 <Route path="/admin/gravacao/resultado/quina" element={<AdminRoute><GravacaoQuina /></AdminRoute>} />
                 <Route path="/admin/gravacao/resultado/megasena" element={<AdminRoute><GravacaoMegasena /></AdminRoute>} />
                 <Route path="/admin/gravacao/estudos/:loteria" element={<AdminRoute><GravacaoEstudos /></AdminRoute>} />
+                <Route path="/admin/gravacao-estudo/megasena/posicoes-finais" element={<AdminRoute><PosicoesFinaisMegaSena /></AdminRoute>} />
 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
