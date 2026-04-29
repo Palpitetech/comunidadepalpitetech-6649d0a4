@@ -35,8 +35,8 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const action = body?.action ?? "send";
 
-    // Apenas o cron pode chamar "send" sem JWT admin
-    if (action !== "send") {
+    // Cron pode chamar "send" e "prepare" sem JWT admin
+    if (action !== "send" && action !== "prepare") {
       const authErr = await validateAdmin(req);
       if (authErr) return authErr;
     }
