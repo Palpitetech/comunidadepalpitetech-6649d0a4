@@ -31,15 +31,22 @@ interface Props {
   loteriaTag: string;
 }
 
-function fmtData(iso: string | null) {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  const hoje = new Date();
-  const diff = (hoje.getTime() - d.getTime()) / 86_400_000;
-  const hora = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-  if (diff < 1 && d.getDate() === hoje.getDate()) return `Hoje ${hora}`;
-  if (diff < 2) return `Ontem ${hora}`;
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) + " " + hora;
+import { labelDataRelativa } from "@/lib/dateLabel";
+
+const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+function fmtSorteio(ymd: string | null): string {
+  if (!ymd) return "Data a definir";
+  const [y, m, d] = ymd.split("-").map(Number);
+  if (!y || !m || !d) return "Data a definir";
+  const date = new Date(y, m - 1, d);
+  const rel = labelDataRelativa(ymd); // "Hoje" | "Ontem" | "Amanhã" | "dd/mm"
+  const dia = DIAS_SEMANA[date.getDay()];
+  // Se for label relativo (Hoje/Amanhã), mostra junto com o dia da semana
+  if (rel === "Hoje" || rel === "Ontem" || rel === "Amanhã") {
+    return `${rel} · ${dia} ${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}`;
+  }
+  return `${dia} ${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}`;
 }
 
 export default function TemaGravacaoCard({ tema, loteriaTag }: Props) {
