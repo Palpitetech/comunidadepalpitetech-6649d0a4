@@ -949,6 +949,188 @@ export type Database = {
         }
         Relationships: []
       }
+      email_queue: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          html_render: string | null
+          id: string
+          priority: number
+          recipient_email: string
+          recipient_name: string | null
+          resend_message_id: string | null
+          retry_count: number
+          scheduled_at: string
+          sent_at: string | null
+          status: string
+          subject_render: string | null
+          template_id: string | null
+          variables: Json
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          html_render?: string | null
+          id?: string
+          priority?: number
+          recipient_email: string
+          recipient_name?: string | null
+          resend_message_id?: string | null
+          retry_count?: number
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: string
+          subject_render?: string | null
+          template_id?: string | null
+          variables?: Json
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          html_render?: string | null
+          id?: string
+          priority?: number
+          recipient_email?: string
+          recipient_name?: string | null
+          resend_message_id?: string | null
+          retry_count?: number
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: string
+          subject_render?: string | null
+          template_id?: string | null
+          variables?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_queue_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_send_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          queue_id: string | null
+          recipient_email: string
+          resend_message_id: string | null
+          status: string
+          template_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          queue_id?: string | null
+          recipient_email: string
+          resend_message_id?: string | null
+          status: string
+          template_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          queue_id?: string | null
+          recipient_email?: string
+          resend_message_id?: string | null
+          status?: string
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_send_logs_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "email_queue"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_send_logs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_suppressions: {
+        Row: {
+          created_at: string
+          email: string
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          reason: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          reason?: string
+        }
+        Relationships: []
+      }
+      email_templates: {
+        Row: {
+          created_at: string
+          delay_minutes: number
+          event_trigger: string
+          exclude_tags: string[]
+          from_name: string
+          html: string
+          id: string
+          include_tags: string[]
+          is_active: boolean
+          name: string
+          plan_ids: string[]
+          reply_to: string | null
+          subject: string
+          tags_match_mode: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          delay_minutes?: number
+          event_trigger: string
+          exclude_tags?: string[]
+          from_name?: string
+          html: string
+          id?: string
+          include_tags?: string[]
+          is_active?: boolean
+          name: string
+          plan_ids?: string[]
+          reply_to?: string | null
+          subject: string
+          tags_match_mode?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          delay_minutes?: number
+          event_trigger?: string
+          exclude_tags?: string[]
+          from_name?: string
+          html?: string
+          id?: string
+          include_tags?: string[]
+          is_active?: boolean
+          name?: string
+          plan_ids?: string[]
+          reply_to?: string | null
+          subject?: string
+          tags_match_mode?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           created_at: string | null
@@ -3438,6 +3620,7 @@ export type Database = {
       }
     }
     Functions: {
+      _email_queue_dedupe_window: { Args: { ts: string }; Returns: unknown }
       _message_queue_dedupe_window: {
         Args: { p_created_at: string }
         Returns: unknown
