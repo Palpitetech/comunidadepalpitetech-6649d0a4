@@ -63,6 +63,8 @@ interface TemplateRow {
   delay_minutes: number;
   include_tags: string[];
   exclude_tags: string[];
+  exclude_tags_recent: string[];
+  exclude_recent_window_hours: number;
 }
 
 interface TemplateMetrics {
@@ -74,6 +76,8 @@ interface TemplateMetrics {
   skipped_converted: number;
   /** Skipped because the linked profile already has a paid tag. */
   skipped_paid_profile: number;
+  /** Skipped because the linked profile received an exclude_tags_recent tag within the configured window. */
+  skipped_recent_purchase: number;
   /** Skipped because the lead has no phone after trim. */
   skipped_no_phone: number;
   /** Atomic dedupe at DB level (exclusion constraint) — race-condition catches. */
@@ -94,6 +98,7 @@ function emptyMetrics(): TemplateMetrics {
     skipped_dedupe: 0,
     skipped_converted: 0,
     skipped_paid_profile: 0,
+    skipped_recent_purchase: 0,
     skipped_no_phone: 0,
     blocked_by_db_constraint: 0,
     errors_dedupe_db: 0,
@@ -190,7 +195,26 @@ async function processOneTemplate(
         }
       }
 
-      // 3) Dedupe forte: 7 dias por (template_id + recipient_phone)
+      // 2.5) Anti-conversão temporal: tag específica recebida nas últimas N horas
+      if (lead.perfil_id && template.exclude_tags_recent.length > 0) {
+        const windowHours = Math.max(1, template.exclude_recent_window_hours ?? 24);
+        const sinceWindow = new Date(Date.now() - windowHours * 60 * 60_000).toISOString();
+        const { count: recentTagCount, error: recentTagErr } = await supabase
+          .from("perfil_tag_history")
+          .select("id", { count: "exact", head: true })
+          .eq("perfil_id", lead.perfil_id)
+          .in("tag", template.exclude_tags_recent)
+          .gte("added_at", sinceWindow);
+
+        if (recentTagErr) {
+          metrics.errors.push(`recent tag ${lead.id}: ${recentTagErr.message}`);
+        } else if ((recentTagCount ?? 0) > 0) {
+          metrics.skipped++;
+          metrics.skipped_recent_purchase++;
+          continue;
+        }
+      }
+
       const dedupeClient = makeSupabaseDedupeClient(supabase as never);
       const dedupeRes = await isEnqueueAllowed(dedupeClient, template.id, phone);
       if (dedupeRes.error) {
@@ -265,7 +289,7 @@ async function processAll() {
 
   const { data: templates, error: tplErr } = await supabase
     .from("message_templates")
-    .select("id, delay_minutes, include_tags, exclude_tags")
+    .select("id, delay_minutes, include_tags, exclude_tags, exclude_tags_recent, exclude_recent_window_hours")
     .eq("event_trigger", "lead_pre_checkout_abandono")
     .eq("is_active", true);
 
@@ -285,6 +309,8 @@ async function processAll() {
       delay_minutes: (tpl.delay_minutes as number) ?? 60,
       include_tags: (tpl.include_tags as string[]) ?? [],
       exclude_tags: (tpl.exclude_tags as string[]) ?? [],
+      exclude_tags_recent: (tpl.exclude_tags_recent as string[]) ?? [],
+      exclude_recent_window_hours: (tpl.exclude_recent_window_hours as number) ?? 24,
     };
 
     if (tplRow.include_tags.length === 0) continue;
@@ -295,6 +321,7 @@ async function processAll() {
     totals.skipped_dedupe += r.skipped_dedupe;
     totals.skipped_converted += r.skipped_converted;
     totals.skipped_paid_profile += r.skipped_paid_profile;
+    totals.skipped_recent_purchase += r.skipped_recent_purchase;
     totals.skipped_no_phone += r.skipped_no_phone;
     totals.blocked_by_db_constraint += r.blocked_by_db_constraint;
     totals.errors_dedupe_db += r.errors_dedupe_db;
@@ -310,6 +337,7 @@ async function processAll() {
     skipped_dedupe: totals.skipped_dedupe,
     skipped_converted: totals.skipped_converted,
     skipped_paid_profile: totals.skipped_paid_profile,
+    skipped_recent_purchase: totals.skipped_recent_purchase,
     skipped_no_phone: totals.skipped_no_phone,
     blocked_by_db_constraint: totals.blocked_by_db_constraint,
     errors_dedupe_db: totals.errors_dedupe_db,
@@ -331,6 +359,7 @@ async function processAll() {
       skipped_dedupe: result.skipped_dedupe,
       skipped_converted: result.skipped_converted,
       skipped_paid_profile: result.skipped_paid_profile,
+      skipped_recent_purchase: result.skipped_recent_purchase,
       skipped_no_phone: result.skipped_no_phone,
       blocked_by_db_constraint: result.blocked_by_db_constraint,
       errors_dedupe_db: result.errors_dedupe_db,
