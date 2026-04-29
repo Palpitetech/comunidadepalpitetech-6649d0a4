@@ -84,45 +84,130 @@ export default function Slide2Explicacao() {
           ◆ Faixa Mais Provável ◆
         </p>
 
-        <div className="w-full relative">
-          {/* base bar */}
+        <div className="w-full relative pt-8 pb-10">
+          {/* Floating "30 — 60" label above zone */}
           <div
-            className="w-full h-10 rounded-full relative overflow-hidden"
+            className="absolute top-0 -translate-x-1/2 flex flex-col items-center gap-1"
             style={{
-              background: "rgba(15, 20, 16, 0.9)",
-              border: "1.5px solid rgba(125, 255, 58, 0.2)",
-              boxShadow: "inset 0 2px 8px rgba(0,0,0,0.6)",
+              left: `${(((30 + 60) / 2 - 1) / 59) * 100}%`,
             }}
           >
+            <span
+              className="text-[10px] tracking-[0.4em] uppercase font-black px-2.5 py-1 rounded-md whitespace-nowrap"
+              style={{
+                color: "#050805",
+                background: "linear-gradient(135deg, #B7FF8A, #7DFF3A)",
+                boxShadow: "0 0 18px rgba(125, 255, 58, 0.7)",
+              }}
+            >
+              Faixa Provável
+            </span>
+            <span
+              className="w-px h-2"
+              style={{ background: "rgba(125, 255, 58, 0.7)" }}
+            />
+          </div>
+
+          {/* base bar (track) */}
+          <div
+            className="w-full h-12 rounded-full relative overflow-hidden"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(7, 12, 8, 0.95), rgba(15, 20, 16, 0.85))",
+              border: "1.5px solid rgba(125, 255, 58, 0.22)",
+              boxShadow:
+                "inset 0 2px 10px rgba(0,0,0,0.7), 0 0 20px rgba(125, 255, 58, 0.08)",
+            }}
+          >
+            {/* Tick marks every 5 numbers — full track */}
+            {Array.from({ length: 12 }, (_, i) => {
+              const n = (i + 1) * 5; // 5, 10, ..., 60
+              const left = ((n - 1) / 59) * 100;
+              const isMajor = n % 15 === 0;
+              const inZone = n >= 30;
+              return (
+                <div
+                  key={n}
+                  className="absolute top-0 bottom-0"
+                  style={{
+                    left: `${left}%`,
+                    width: 1,
+                    background: inZone
+                      ? "rgba(125, 255, 58, 0.45)"
+                      : "rgba(248, 250, 252, 0.18)",
+                    opacity: isMajor ? 1 : 0.55,
+                  }}
+                />
+              );
+            })}
+
             {/* highlighted zone 30-60 */}
             <div
-              className="absolute top-0 bottom-0 rounded-full"
+              className="absolute top-1 bottom-1 rounded-full"
               style={{
                 left: `${((30 - 1) / 59) * 100}%`,
                 width: `${((60 - 30) / 59) * 100}%`,
                 background:
-                  "linear-gradient(90deg, rgba(57, 211, 83, 0.6), #7DFF3A, #B7FF8A)",
+                  "linear-gradient(90deg, rgba(57, 211, 83, 0.85), #7DFF3A 50%, #B7FF8A)",
                 boxShadow:
-                  "0 0 30px rgba(125, 255, 58, 0.8), inset 0 0 14px rgba(255,255,255,0.2)",
+                  "0 0 35px rgba(125, 255, 58, 0.85), 0 0 12px rgba(183, 255, 138, 0.9), inset 0 0 16px rgba(255,255,255,0.25)",
                 animation: "neonGlow 2.4s ease-in-out infinite",
+              }}
+            />
+
+            {/* Zone start marker (30) */}
+            <div
+              className="absolute top-0 bottom-0"
+              style={{
+                left: `${((30 - 1) / 59) * 100}%`,
+                width: 2,
+                background: "#B7FF8A",
+                boxShadow: "0 0 14px rgba(183, 255, 138, 1)",
+              }}
+            />
+            {/* Zone end marker (60) */}
+            <div
+              className="absolute top-0 bottom-0"
+              style={{
+                left: `${((60 - 1) / 59) * 100}%`,
+                width: 2,
+                background: "#B7FF8A",
+                boxShadow: "0 0 14px rgba(183, 255, 138, 1)",
               }}
             />
           </div>
 
-          {/* scale marks */}
-          <div className="flex justify-between mt-3 px-1 font-mono text-sm font-bold tracking-wider">
-            {[1, 15, 30, 45, 60].map((n) => {
+          {/* Tick labels — full scale 01, 10, 20, 30, 40, 50, 60 */}
+          <div className="absolute left-0 right-0 bottom-0 h-8 pointer-events-none">
+            {[1, 10, 20, 30, 40, 50, 60].map((n) => {
+              const left = ((n - 1) / 59) * 100;
               const inZone = n >= 30;
               return (
-                <span
+                <div
                   key={n}
-                  style={{
-                    color: inZone ? "#7DFF3A" : "rgba(248, 250, 252, 0.4)",
-                    textShadow: inZone ? "0 0 10px rgba(125, 255, 58, 0.7)" : "none",
-                  }}
+                  className="absolute top-0 -translate-x-1/2 flex flex-col items-center gap-1"
+                  style={{ left: `${left}%` }}
                 >
-                  {String(n).padStart(2, "0")}
-                </span>
+                  <span
+                    className="w-px h-2"
+                    style={{
+                      background: inZone
+                        ? "rgba(125, 255, 58, 0.7)"
+                        : "rgba(248, 250, 252, 0.3)",
+                    }}
+                  />
+                  <span
+                    className="font-mono text-sm font-black tracking-wider"
+                    style={{
+                      color: inZone ? "#7DFF3A" : "rgba(248, 250, 252, 0.45)",
+                      textShadow: inZone
+                        ? "0 0 12px rgba(125, 255, 58, 0.85)"
+                        : "none",
+                    }}
+                  >
+                    {String(n).padStart(2, "0")}
+                  </span>
+                </div>
               );
             })}
           </div>
