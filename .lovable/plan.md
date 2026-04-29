@@ -1,90 +1,72 @@
-## Objetivo
+# Sincronizar slides com o estudo real "Posições Finais"
 
-Criar uma apresentação fullscreen (1 página, 6 slides horizontais) para gravação de vídeo do estudo **Posições Finais da Mega-Sena**, na rota `/admin/gravacao-estudo/megasena/posicoes-finais`. Visual escuro premium, dados reais vindos do hook `useDezenasporPosicaoMegaSena`.
+Hoje os slides de gravação calculam frequências por conta própria (`useDezenasporPosicaoMegaSena`) e não correspondem ao estudo que será publicado na comunidade. Vamos invertir: o **estudo é a fonte da verdade** — exatamente como acontece no "Gerador a partir de Estudo".
 
-## Arquitetura
+## Fonte de dados
 
-Reutilizar o padrão já existente (`GravacaoShell` + slides em `src/components/gravacao/`), mas com um **shell dedicado** para estudos (sem header de "concurso") e tipografia maior pensada para gravação. Sempre 100vw × 100vh, sem rolagem.
+A tabela `postagens` já guarda tudo no `fatos_snapshot` (jsonb) das postagens com `tema_estudo = 'analise_posicoes_finais'`:
 
-## Arquivos a criar
-
-1. **`src/pages/admin/gravacao/estudos/PosicoesFinaisMegaSena.tsx`**
-   - Página principal. Busca último concurso da Mega-Sena (`resultados_loterias`) e usa `useDezenasporPosicaoMegaSena(100)`.
-   - Monta os 6 slides dentro de um shell de estudo.
-
-2. **`src/components/gravacao/estudos/EstudoShell.tsx`**
-   - Container fullscreen reaproveitando o esqueleto do `GravacaoShell`, mas com:
-     - Barra de progresso superior (linha fina roxa preenchendo conforme slide atual).
-     - Setas laterais (esquerda/direita) sempre visíveis com hover sutil.
-     - Navegação por teclado (← →, Espaço, Esc → volta para `/admin`).
-     - Suporte a swipe (touch).
-     - Indicador "1 / 6" discreto no canto inferior direito.
-     - Watermark "PALPITE TECH" repetido em opacidade ~2% (igual ao shell atual).
-     - Transição suave entre slides via `transform: translateX(-N * 100vw)` com `transition: 0.6s cubic-bezier(0.65, 0, 0.35, 1)`.
-
-3. **6 componentes de slide** em `src/components/gravacao/estudos/posicoes-finais/`:
-   - `Slide1Intro.tsx` — Título "Posições Finais da Mega-Sena", subtítulo "Estudo estatístico baseado nos últimos 100 concursos", número do concurso, animação fade+scale de entrada (`animate-fade-in` + `animate-scale-in` do tailwind config existente).
-   - `Slide2Explicacao.tsx` — Visualização da regra matemática `P1 < P2 < P3 < P4 < P5 < P6`, com 6 caixas em linha e setas conectando. Gráfico horizontal mostrando faixas típicas de cada posição (P1: 1–20, P2: 8–30, ..., P6: 45–60), destacando faixa **30–60** como zona-chave em verde claro.
-   - `Slide3P4.tsx` — Top 5 dezenas da posição 4 em cards grandes (180×180px), com número gigante (text-7xl) e frequência logo abaixo ("aparece em XX%").
-   - `Slide4P5.tsx` — Mesmo padrão, posição 5.
-   - `Slide5P6.tsx` — Posição 6 com cards ainda maiores (220×220px), glow roxo mais intenso, badge "MAIS DECISIVA".
-   - `Slide6Conclusao.tsx` — Trio recomendado (top1 de P4, P5, P6) em 3 círculos grandes centralizados; checklist estratégico ao lado (4 itens, ex: "Combine com 3 dezenas baixas (P1–P3)", "Evite P6 < 30", "Use ao menos 1 dezena ≥ 50", "Confira faixa final 30–60"); card inferior com prêmio estimado do próximo concurso.
-
-## Estilo visual (centralizado nos slides)
-
-```
-fundo:          #070B16
-card:           #111827  (bg) com border #1F2937
-roxo principal: #7C3AED
-glow:           0 0 60px rgba(124, 58, 237, 0.35)
-verde sucesso:  #10B981
-vermelho alerta:#EF4444
-texto primário: #F9FAFB
-texto suave:    rgba(255,255,255,0.55)
+```text
+fatos_snapshot:
+  proximo_concurso: 3001
+  ultimo_concurso: 3000
+  recomendacao_direta: "Use o trio final 31, 36, 58..."
+  base_geracao:
+    fixar:  [31, 36, 58]   <- TRIO recomendado
+    apoio:  [32, 40, 60]
+  resumo:  markdown com "P4 — top frequentes\n**31** (3×), **32** (3×)..."
 ```
 
-Tipografia para gravação: títulos `text-7xl/text-8xl font-extrabold`, subtítulos `text-2xl`, corpo `text-xl`. Tudo em escala generosa (mínimo 20px) — leitura fácil mesmo em smartphone.
+## Mudanças
 
-## Roteamento
+### 1. Novo hook `useEstudoPosicoesFinais(postagemId?)`
+- Busca uma postagem específica (por id) ou a mais recente de `tema_estudo='analise_posicoes_finais'` (status publicado OU rascunho).
+- Faz parse do `resumo` via regex para extrair P4/P5/P6 com top frequentes (`**31** (3×)`).
+- Lê `base_geracao.fixar` para o trio, `apoio` para alternativas.
+- Busca `proximos_concursos` para data + prêmio estimado do `proximo_concurso`.
+- Retorna objeto tipado: `{ id, titulo, status, proximo_concurso, ultimo_concurso, janela, trio, apoio, posicoes[], recomendacao, proximo_data_label, premio_estimado }`.
+- Hook auxiliar `useEstudosPosicoesFinaisLista()` lista os últimos 30 estudos para o seletor.
 
-Adicionar em `src/App.tsx`:
-```tsx
-import PosicoesFinaisMegaSena from "./pages/admin/gravacao/estudos/PosicoesFinaisMegaSena";
+### 2. Página `PosicoesFinaisMegaSena.tsx` reescrita
+- Aceita `?postagem=<id>` na URL (em vez de `?concurso=`).
+- Se ausente, abre o estudo mais recente (rascunho ou publicado).
+- Loading e empty-state quando não houver estudo.
+- Repassa os dados do estudo para os slides — sem mais cálculo on-the-fly.
 
-<Route
-  path="/admin/gravacao-estudo/megasena/posicoes-finais"
-  element={<AdminRoute><PosicoesFinaisMegaSena /></AdminRoute>}
-/>
-```
+### 3. Seletor `SeletorEstudo.tsx` (substitui `SeletorConcurso`)
+- Floating dropdown listando estudos: "Concurso 3001 · publicado · 28/04" / "rascunho".
+- Badge visual diferenciando rascunho × publicado.
+- Ao selecionar, atualiza `?postagem=<id>`.
 
-## Dados
+### 4. Slides ajustados
+- **Slide1Intro**: usa `concurso` (proximo) + `data` do estudo + badge de status (rascunho/publicado).
+- **Slide2Explicacao**: subtitulo passa a usar a `janela` real do estudo (ex: 20 sorteios) em vez do hardcoded "100 sorteios".
+- **SlidePosicao** (P4/P5/P6): consome `posicoes[]` do estudo. Se a posição tem só 4 itens, renderiza 4. Se vazia, mostra placeholder.
+- **Slide6Conclusao**: trio = `base_geracao.fixar`. Adiciona `apoio` como alternativas. `recomendacao_direta` aparece em destaque. Prêmio + próximo concurso vêm do estudo.
 
-- **Último concurso**: `supabase.from("resultados_loterias").select("concurso, data_sorteio, dezenas").eq("loteria", "megasena").order("concurso", { ascending: false }).limit(1)`.
-- **Top dezenas por posição**: `useDezenasporPosicaoMegaSena(100)` (já retorna top5 de P1–P6, exatamente o que precisamos).
-- **Próximo prêmio estimado** (slide 6): consultar a mesma origem que `useGravacaoDataMegasena` já usa (verificar campo `proximo_concurso_premio_estimado` em `resultados_loterias`); se indisponível, omitir o card.
+### 5. Listagem em `/admin/gravacao/estudos/megasena`
+- A seção "Apresentações para gravação" passa a listar UM card por estudo recente de "Posições Finais" (rascunho + publicado), cada um abrindo o slideshow com `?postagem=<id>`.
+- Mantém o card genérico "abrir o mais recente" sem parâmetro.
+- Badge de status do estudo (publicado/rascunho) e número do concurso visíveis.
 
-## Estados
+## Arquivos
 
-- Loading: tela escura com spinner roxo central + texto "Carregando estudo…".
-- Erro / sem dados: mensagem centralizada "Estudo indisponível — sem resultados suficientes".
-- Sem dados de concurso atual: ainda assim renderiza slides 1, 2 e 6 (estes dois últimos sem trio); ou bloqueia toda a apresentação. **Decisão proposta:** bloquear se faltar dado de posição (necessita ≥ 1 concurso).
+**Criar**
+- `src/hooks/useEstudoPosicoesFinais.ts`
+- `src/components/gravacao/estudos/SeletorEstudo.tsx`
 
-## Acessibilidade / UX de gravação
+**Editar**
+- `src/pages/admin/gravacao/estudos/PosicoesFinaisMegaSena.tsx` — usa novo hook, parâmetro `postagem`.
+- `src/components/gravacao/estudos/posicoes-finais/Slide1Intro.tsx` — badge status + `janela`.
+- `src/components/gravacao/estudos/posicoes-finais/Slide2Explicacao.tsx` — `janela` dinâmica.
+- `src/components/gravacao/estudos/posicoes-finais/SlidePosicao.tsx` — consome top do estudo.
+- `src/components/gravacao/estudos/posicoes-finais/Slide6Conclusao.tsx` — trio + apoio + recomendação.
+- `src/pages/admin/gravacao/GravacaoEstudos.tsx` — listagem dinâmica de estudos.
 
-- Cursor desaparece após 3s de inatividade (`cursor: none` em wrapper, voltando ao mover mouse).
-- Botão "voltar" (← canto superior esquerdo) discreto, opacity 30% → 100% em hover, navega para `/admin/gravacao/estudos/megasena`.
-- Sem badge Lovable, sem distrações, sem layout responsivo (forçar 100vw × 100vh — pensado para gravação horizontal).
+**Remover** (deprecated)
+- `src/components/gravacao/estudos/SeletorConcurso.tsx` (substituído por `SeletorEstudo`).
+- Uso de `useDezenasporPosicaoMegaSena` no slide (hook permanece para outras telas).
 
-## Padrão para próximos estudos
+## Resultado
 
-O `EstudoShell` e a estrutura `src/components/gravacao/estudos/<nome-estudo>/` ficam preparados para receber novos estudos (Frequência, Tendências, Linhas/Colunas etc.) seguindo o mesmo padrão de 6 slides e o mesmo visual.
-
-## Resumo de entregáveis
-
-- 1 nova rota
-- 1 página
-- 1 shell reutilizável para estudos
-- 6 componentes de slide
-- 1 entrada em `App.tsx`
-
-Nenhuma alteração de banco de dados, RLS ou edge function é necessária — todos os dados já estão acessíveis via hooks existentes.
+Cada postagem de "Posições Finais" da Mega — rascunho ou publicada — vira um slide pronto pra gravar, com os mesmos números, mesmo trio, mesma janela, mesmo prêmio que o usuário verá na comunidade. Igualzinho ao gerador-a-partir-de-estudo.

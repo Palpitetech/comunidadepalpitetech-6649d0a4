@@ -3,10 +3,12 @@ import { Crosshair } from "lucide-react";
 interface Props {
   concurso?: number;
   data?: string;
+  status?: string;
 }
 
 // V2 — Premium green-neon intro inspired by storyboard reference
-export default function Slide1Intro({ concurso, data }: Props) {
+export default function Slide1Intro({ concurso, data, status }: Props) {
+  const isRascunho = status === "rascunho";
   return (
     <div className="flex flex-col items-center justify-center gap-6 text-center w-full h-full animate-fade-in relative">
       {/* Top label bar */}
@@ -83,6 +85,14 @@ export default function Slide1Intro({ concurso, data }: Props) {
           </p>
           {data && (
             <p className="text-white/40 text-xs capitalize mt-2 tracking-wider">{data}</p>
+          )}
+          {isRascunho && (
+            <p
+              className="text-[9px] uppercase tracking-[0.4em] font-bold mt-2"
+              style={{ color: "#FCD34D" }}
+            >
+              ◆ Rascunho ◆
+            </p>
           )}
         </div>
       )}

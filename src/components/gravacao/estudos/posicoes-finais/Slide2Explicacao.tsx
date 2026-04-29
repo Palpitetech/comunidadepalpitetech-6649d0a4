@@ -9,8 +9,12 @@ const POSICOES = [
   { pos: "P6", highlight: true },
 ];
 
+interface Props {
+  janela?: number;
+}
+
 // V2 — Premium green-neon math explainer with horizontal range bar
-export default function Slide2Explicacao() {
+export default function Slide2Explicacao({ janela = 20 }: Props) {
   return (
     <div className="flex flex-col items-center justify-center gap-12 w-full h-full max-w-6xl mx-auto">
       <div className="text-center">
@@ -233,7 +237,7 @@ export default function Slide2Explicacao() {
         </div>
 
         <p className="text-[#F8FAFC]/45 text-xs tracking-[0.3em] uppercase font-bold mt-1">
-          ◇ Janela: 100 sorteios ◇
+          ◇ Janela: {janela} sorteios ◇
         </p>
       </div>
 
