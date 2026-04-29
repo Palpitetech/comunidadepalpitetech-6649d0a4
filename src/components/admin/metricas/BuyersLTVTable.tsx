@@ -104,6 +104,7 @@ export function BuyersLTVTable({ data, headerExtra }: Props) {
       <CardHeader className="pb-3 flex-row items-center justify-between gap-2 flex-wrap">
         <CardTitle className="text-base">🧑‍💼 Compradores · LTV individual</CardTitle>
         <div className="flex items-center gap-1.5 flex-wrap">
+          {headerExtra}
           {(
             [
               { v: "all" as const, l: "Todos" },
