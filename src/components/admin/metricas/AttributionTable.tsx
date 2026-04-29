@@ -60,7 +60,7 @@ function exportCsv(rows: AttributionRow[], dimensionLabel: string) {
   URL.revokeObjectURL(url);
 }
 
-export function AttributionTable({ data, dimension, onDimensionChange }: Props) {
+export function AttributionTable({ data, dimension, onDimensionChange, headerExtra }: Props) {
   const [sortCol, setSortCol] = useState<SortCol>("cadastros");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
