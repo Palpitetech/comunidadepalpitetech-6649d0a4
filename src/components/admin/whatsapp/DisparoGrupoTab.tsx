@@ -107,17 +107,15 @@ export function DisparoGrupoTab() {
     }
     let cancelled = false;
     (async () => {
+      const ids = configs.map((c) => c.id);
+      const { data } = await supabase
+        .from("group_blast_logs")
+        .select("*")
+        .in("config_id", ids)
+        .order("created_at", { ascending: false });
       const map: Record<string, BlastLog> = {};
-      for (const c of configs) {
-        const { data: logData } = await supabase
-          .from("group_blast_logs")
-          .select("*")
-          .eq("config_id", c.id)
-          .order("created_at", { ascending: false })
-          .limit(1);
-        if (logData && logData.length > 0) {
-          map[c.id] = logData[0] as any;
-        }
+      for (const row of (data || []) as BlastLog[]) {
+        if (!map[row.config_id]) map[row.config_id] = row;
       }
       if (!cancelled) setLastLogs(map);
     })();

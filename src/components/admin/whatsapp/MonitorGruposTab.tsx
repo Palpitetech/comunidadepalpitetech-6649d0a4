@@ -1,7 +1,5 @@
 // Aba Monitor Grupos: visão consolidada da saúde do pipeline de disparo em grupo.
-import PipelineHealthCard from "./monitor/PipelineHealthCard";
-import PrepareAuditTable from "./monitor/PrepareAuditTable";
-import InstanceGroupMatrix from "./monitor/InstanceGroupMatrix";
+import { PipelineHealthCard, PrepareAuditTable, InstanceGroupMatrix } from "./monitor";
 import { GroupBlastLogsCard } from "./GroupBlastLogsCard";
 import { useGroupBlastConfigs } from "@/hooks/useGroupBlastConfigs";
 

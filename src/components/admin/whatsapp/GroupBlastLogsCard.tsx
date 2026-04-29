@@ -51,15 +51,6 @@ interface ConfigLite {
   name: string;
 }
 
-interface PrepareRun {
-  id: string;
-  ran_at: string;
-  config_id: string | null;
-  slots_scheduled: number;
-  skipped_dedup: number;
-  error_message: string | null;
-}
-
 interface Props {
   configs: ConfigLite[];
 }
@@ -74,11 +65,9 @@ export function GroupBlastLogsCard({ configs }: Props) {
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [retrying, setRetrying] = useState<Record<string, boolean>>({});
-  const [lastRun, setLastRun] = useState<PrepareRun | null>(null);
 
   useEffect(() => {
     fetchLogs();
-    fetchLastRun();
   }, [statusFilter, configFilter, dateFrom, dateTo]);
 
   async function fetchLogs() {
@@ -109,16 +98,6 @@ export function GroupBlastLogsCard({ configs }: Props) {
     setLoading(false);
   }
 
-  async function fetchLastRun() {
-    const { data } = await supabase
-      .from("group_blast_prepare_runs")
-      .select("*")
-      .order("ran_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    setLastRun((data as any) || null);
-  }
-
   async function handleRetry(log: BlastLog) {
     setRetrying((s) => ({ ...s, [log.id]: true }));
     try {
@@ -145,29 +124,6 @@ export function GroupBlastLogsCard({ configs }: Props) {
 
   return (
     <div className="space-y-3">
-      {/* Auditoria do último prepare */}
-      {lastRun && (
-        <Card className="border-dashed">
-          <CardContent className="py-3 px-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-            <span className="font-medium">Último prepare:</span>
-            <span>{fmtDate(lastRun.ran_at, "full")}</span>
-            <Badge variant="secondary" className="text-[10px]">
-              {lastRun.slots_scheduled} agendados
-            </Badge>
-            {lastRun.skipped_dedup > 0 && (
-              <Badge variant="outline" className="text-[10px]">
-                {lastRun.skipped_dedup} dedup
-              </Badge>
-            )}
-            {lastRun.error_message && (
-              <span className="text-destructive truncate max-w-md">
-                {lastRun.error_message}
-              </span>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -223,10 +179,7 @@ export function GroupBlastLogsCard({ configs }: Props) {
               variant="outline"
               size="sm"
               className="h-8 text-xs"
-              onClick={() => {
-                fetchLogs();
-                fetchLastRun();
-              }}
+              onClick={() => fetchLogs()}
             >
               Atualizar
             </Button>

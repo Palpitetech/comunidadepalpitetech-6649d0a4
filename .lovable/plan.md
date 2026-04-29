@@ -1,72 +1,96 @@
-## Parte 4 — Logs no Monitor + Limpeza Final
 
-### Arquivos a criar
+# Parte 5 — Revisão Geral (Resultado da Auditoria)
 
-**1. `src/hooks/useGroupBlastConfigs.ts`** — hook compartilhado entre `DisparoGrupoTab` e `MonitorGruposTab`.
+Fiz a varredura ponto a ponto pedida nas etapas 5.1–5.6. A maior parte está conforme. Encontrei **3 itens menores** que merecem ajuste antes de fechar a Parte 5. Tudo o resto passou.
 
+---
+
+## Resultado por etapa
+
+### 5.1 — Visual ✅
+- Ordem correta no `MonitorGruposTab`: **Pipeline Health → Auditoria do Prepare → Instâncias × Grupos → Histórico Detalhado**.
+- Cores consistentes: todos os componentes derivam de `getHealthStyle()` em `monitor/healthStatus.ts` (verde/laranja/vermelho/cinza).
+- Grids responsivos (`grid-cols-2 lg:grid-cols-4` no Health, `overflow-x-auto` nas tabelas).
+- Tooltip nos JIDs truncados da matriz funciona via `TooltipProvider`.
+
+### 5.2 — Dados ✅
+- `PipelineHealthCard`: lê `group_blast_prepare_runs`, `group_blast_logs` (janela BRT correta), `whatsapp_instances` e próximo pendente — coerente.
+- `PrepareAuditTable`: `LIMIT 7` por `ran_at desc`, com JOIN manual em `group_blast_configs` para o nome.
+- `InstanceGroupMatrix`: 3 queries (instâncias, configs ativas, mapeamentos) — sem N+1.
+- `GroupBlastLogsCard`: filtros aplicados na query (status, config, datas) com `LIMIT 100`.
+
+### 5.3 — Duplicidades ⚠️ (1 ajuste)
+- `group_blast_configs` é lido em 4 lugares, **mas todos com propósito legítimo**:
+  - `useGroupBlastConfigs` (lista completa para Disparo + Monitor) ✅
+  - `PrepareAuditTable` (apenas `id, name` por `IN (...)` para JOIN) ✅
+  - `InstanceGroupMatrix` (apenas `group_jids` de configs ativas) ✅
+  - `PipelineHealthCard` (apenas `name` de 1 config — `eq(id, ...)`) ✅
+- Formatação BRT centralizada em `@/lib/dateUtils` ✅
+- `getHealthStyle` reutilizado no Pipeline e na Matriz ✅
+- `GroupBlastLogsCard` **não está mais** na `DisparoGrupoTab` ✅
+- **⚠️ Ajuste 1:** `GroupBlastLogsCard` ainda tem um mini-bloco interno de "auditoria do último prepare" (linhas 112–169 — `fetchLastRun` + Card pontilhado no topo). Isso agora **duplica** o `PrepareAuditTable` no Monitor. Remover o `lastRun`/`fetchLastRun` desse componente.
+
+### 5.4 — Performance ✅ (1 observação)
+- `setInterval` só existe no `PipelineHealthCard` e tem `clearInterval` no cleanup ✅
+- `InstanceGroupMatrix` faz exatamente 3 queries (Promise.all) ✅
+- `GroupBlastLogsCard` pagina em 100 com aviso de truncagem ✅
+- **⚠️ Ajuste 2:** `DisparoGrupoTab` faz N queries em loop para popular `lastLogs` (uma `select` por config, linhas 109–123). Para 5+ configs vira fetch sequencial desnecessário. Trocar por **1 query** com `.in("config_id", ids)` e agrupar no cliente.
+
+### 5.5 — Manutenibilidade ✅ (1 ajuste)
+- Header de propósito presente em todos os arquivos novos ✅
+- Props tipadas em todos os componentes do `monitor/` ✅
+- `monitor/index.ts` exporta os 3 cards ✅
+- **⚠️ Ajuste 3:** `MonitorGruposTab` importa via caminhos relativos (`./monitor/PipelineHealthCard`) em vez do barrel `./monitor`. Trocar para o barrel (consistência + facilita futuros movimentos).
+
+### 5.6 — Checklist final
+| Item | Status |
+|------|--------|
+| Aba "Monitor Grupos" no menu (entre Disparo Grupo e Aquecimento) | ✅ |
+| 4 cards de saúde com cores e dados reais | ✅ |
+| Auditoria com 7 runs e erros expansíveis | ✅ |
+| Matriz instâncias × grupos completa | ✅ |
+| Logs com filtros e Reenviar | ✅ |
+| `DisparoGrupoTab` sem `GroupBlastLogsCard` | ✅ |
+| Hook `useGroupBlastConfigs` em uso | ✅ |
+| Zero `console.log` de debug nos arquivos novos | ✅ (verificado com `rg`) |
+| Build sem erros | ✅ (sem mudanças desde a última build) |
+
+---
+
+## Plano de ajustes (mudanças pequenas)
+
+### Ajuste 1 — `GroupBlastLogsCard.tsx`
+Remover do componente:
+- Interface `PrepareRun`
+- Estado `lastRun` e função `fetchLastRun`
+- Chamada de `fetchLastRun()` no `useEffect`
+- Botão "Atualizar" também não precisa mais chamar `fetchLastRun`
+- Bloco JSX do Card pontilhado (linhas 149–169)
+
+Justificativa: `PrepareAuditTable` no Monitor já mostra os 7 últimos runs com mais detalhe.
+
+### Ajuste 2 — `DisparoGrupoTab.tsx` (`useEffect` de `lastLogs`)
+Substituir o loop por uma única query:
 ```ts
-// Hook compartilhado: busca group_blast_configs + slots normalizados.
-export function useGroupBlastConfigs() {
-  // useState configs, loading
-  // fetchConfigs() → select * from group_blast_configs order by created_at desc
-  //   normaliza c.slots = Array.isArray(c.slots) ? c.slots : []
-  // useEffect → fetchConfigs() no mount
-  // returns { configs, loading, refetch: fetchConfigs }
-}
+const ids = configs.map(c => c.id);
+const { data } = await supabase
+  .from("group_blast_logs")
+  .select("*")
+  .in("config_id", ids)
+  .order("created_at", { ascending: false });
+// reduzir para o mais recente por config_id no cliente
 ```
 
-Tipo `BlastConfig` exposto pelo hook (campos relevantes: id, name, group_jids, slots, is_active, member_tag, palpite_settings, created_at, updated_at). Tipo definido no próprio hook e re-exportado.
-
-### Arquivos a editar
-
-**2. `src/components/admin/whatsapp/GroupBlastLogsCard.tsx`**
-- Renomear título do card de `"Histórico de Envios"` → `"Histórico Detalhado de Envios"`. Nenhuma outra mudança.
-
-**3. `src/components/admin/whatsapp/MonitorGruposTab.tsx`**
-- Importar `useGroupBlastConfigs` e `GroupBlastLogsCard`.
-- Chamar o hook para obter `configs`.
-- Substituir o placeholder "Histórico Detalhado" por:
-  ```tsx
-  <GroupBlastLogsCard configs={configs.map((c) => ({ id: c.id, name: c.name }))} />
-  ```
-
-**4. `src/components/admin/whatsapp/DisparoGrupoTab.tsx`** — limpeza:
-- Remover import `GroupBlastLogsCard`.
-- Remover render `<GroupBlastLogsCard ... />` (linha 595).
-- Remover estado `logs`, `statusFilter`, `configFilter`.
-- Remover função `fetchLogs()`.
-- Remover chamada `fetchLogs()` em `Promise.all` dentro de `fetchAll()` — agora `fetchAll = await fetchConfigs()`.
-- Remover `setTimeout(() => fetchLogs(), …)` em `handleSendNow` e teste de slot — substituir por `toast` apenas (o usuário verá os logs no Monitor).
-- Remover `filteredLogs`, `statusBadge` (não usados após limpeza).
-- Remover interface local `BlastLog` se ficar órfã.
-- Substituir `useState` + `fetchConfigs` interno pelo hook `useGroupBlastConfigs()` (mantém `lastLogs` que é diferente — é busca da última msg por config exibida nos cards).
-- Remover qualquer `console.log`/`console.error` de debug (manter só toast.error para o usuário).
-- Manter intacto: `GroupBlastScheduleCard` (mostra cron + botão reschedule, info operacional única não duplicada), todos os Card de config, dialogs, `lastLogs` por config, todos os handlers de salvar/editar/deletar/test/sync.
-
-**5. `src/components/admin/whatsapp/monitor/index.ts`** — atualizar exports:
+### Ajuste 3 — `MonitorGruposTab.tsx`
+Trocar 3 imports relativos por:
 ```ts
-export { default as PipelineHealthCard } from "./PipelineHealthCard";
-export { default as PrepareAuditTable } from "./PrepareAuditTable";
-export { default as InstanceGroupMatrix } from "./InstanceGroupMatrix";
+import { PipelineHealthCard, PrepareAuditTable, InstanceGroupMatrix } from "./monitor";
 ```
-(Componentes existentes têm `export default`; ajustamos os exports nomeados aqui.)
 
-**6. Adicionar comentário-cabeçalho em uma linha** no topo de cada componente novo do Monitor:
-- `PipelineHealthCard.tsx`: `// 4 cards de saúde do pipeline (Prepare, Fila, Instâncias, Próximo Envio) com auto-refresh 60s.`
-- `PrepareAuditTable.tsx`: `// Tabela dos 7 últimos runs do prepare, com expansão para mensagens de erro.`
-- `InstanceGroupMatrix.tsx`: `// Matriz cruzada instâncias × grupos para auditar mapeamentos do disparo em grupo.`
+---
 
-### Sobre `GroupBlastScheduleCard` (Etapa 4.6)
-Ele mostra: estado dos cron jobs (`pg_cron`), botão "Reagendar agora" e contagens de hoje (pending/sent/failed). As contagens de hoje **se sobrepõem** ao card "Fila" do PipelineHealth, mas o restante (cron schedule + botão de ação) é único e operacional — pertence à aba de configuração. **Decisão: manter na DisparoGrupoTab.** A duplicação de contagem é tolerável porque os contextos são diferentes (configurar vs monitorar) e a ação de reschedule fica perto das configs.
+## Fora do escopo (apenas registrado)
+- `GroupBlastScheduleCard` permanece **só** na `DisparoGrupoTab` (operacional: "Reagendar agora"). Não duplica nada do Monitor — mantido como decidido na Parte 4.
+- `DisparoGrupoTab` ainda tem um `setLoading` redundante espelhando `configsLoading` (ruído mínimo, deixar para uma futura limpeza maior do arquivo).
 
-### Verificação (Etapa 4.5)
-- `DisparoGrupoTab` sem nenhum `GroupBlastLogsCard`, sem `logs`/`fetchLogs`/filtros de log órfãos.
-- `MonitorGruposTab` mostra os logs com filtros funcionando e botão "Reenviar" intacto (componente reutilizado sem mudanças funcionais).
-- Hook `useGroupBlastConfigs` usado em ambas as abas — sem fetch duplicado.
-- `monitor/index.ts` exporta os três componentes nomeados.
-- Sem imports quebrados.
-
-### Não muda
-- Lógica do `GroupBlastLogsCard` (retry, filtros, render).
-- `GroupBlastScheduleCard`.
-- `PipelineHealthCard` / `PrepareAuditTable` / `InstanceGroupMatrix`.
+Aprovando este plano, aplico os 3 ajustes em uma única passagem e a Parte 5 fica fechada.
