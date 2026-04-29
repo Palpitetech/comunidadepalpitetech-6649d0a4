@@ -148,40 +148,14 @@ export function useEstudoPosicoesFinais(postagemId?: string) {
   });
 }
 
-// Lista os últimos N estudos de "Posições Finais" para o seletor
-export interface EstudoListItem {
-  id: string;
-  titulo: string | null;
-  status: string;
-  publicar_em: string | null;
-  created_at: string;
-  proximo_concurso: number | null;
-}
+// Lista os últimos N estudos de "Posições Finais" — wrapper do hook genérico.
+export type { EstudoListItem } from "./useEstudosGravacaoLista";
+import { useEstudosGravacaoLista } from "./useEstudosGravacaoLista";
 
 export function useEstudosPosicoesFinaisLista(limit = 30) {
-  return useQuery({
-    queryKey: ["estudos-posicoes-finais-lista", limit],
-    queryFn: async (): Promise<EstudoListItem[]> => {
-      const { data, error } = await (supabase as any)
-        .from("postagens")
-        .select("id, titulo, status, publicar_em, created_at, fatos_snapshot")
-        .eq("loteria_tag", "Mega-Sena")
-        .eq("tema_estudo", "analise_posicoes_finais")
-        .in("status", ["publicado", "rascunho"])
-        .not("fatos_snapshot", "is", null)
-        .order("publicar_em", { ascending: false, nullsFirst: false })
-        .order("created_at", { ascending: false })
-        .limit(limit);
-      if (error) throw error;
-      return (data || []).map((p: any) => ({
-        id: p.id,
-        titulo: p.titulo,
-        status: p.status,
-        publicar_em: p.publicar_em,
-        created_at: p.created_at,
-        proximo_concurso: p.fatos_snapshot?.proximo_concurso ?? null,
-      }));
-    },
-    staleTime: 60_000,
+  return useEstudosGravacaoLista({
+    loteriaTag: "Mega-Sena",
+    temaEstudo: "analise_posicoes_finais",
+    limit,
   });
 }
