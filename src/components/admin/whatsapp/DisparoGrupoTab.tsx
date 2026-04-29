@@ -283,7 +283,7 @@ export function DisparoGrupoTab() {
       } else {
         toast.success("Configuração atualizada!");
         setDialogOpen(false);
-        fetchConfigs();
+        refetchConfigs();
       }
     } else {
       const { error } = await supabase
@@ -294,7 +294,7 @@ export function DisparoGrupoTab() {
       } else {
         toast.success("Configuração criada!");
         setDialogOpen(false);
-        fetchConfigs();
+        refetchConfigs();
       }
     }
     setSaving(false);
@@ -309,7 +309,7 @@ export function DisparoGrupoTab() {
       toast.error("Erro: " + error.message);
     } else {
       toast.success(config.is_active ? "Pausado" : "Ativado");
-      fetchConfigs();
+      refetchConfigs();
     }
   }
 
@@ -322,7 +322,7 @@ export function DisparoGrupoTab() {
       });
       if (error) throw error;
       toast.success(`✅ ${config.slots.length} mensagem(ns) agendada(s) para teste!`);
-      setTimeout(() => fetchLogs(), 2000);
+      // Logs aparecem na aba "Monitor Grupos".
     } catch (err: any) {
       toast.error("Erro: " + err.message);
     }
@@ -336,7 +336,7 @@ export function DisparoGrupoTab() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast.success(`🚀 Disparo agendado! Será enviado em ~5s.`);
-      setTimeout(() => fetchLogs(), 3000);
+      // Logs aparecem na aba "Monitor Grupos".
     } catch (err: any) {
       toast.error("Erro: " + err.message);
     }
@@ -359,14 +359,6 @@ export function DisparoGrupoTab() {
   function getConfigName(configId: string) {
     return configs.find((c) => c.id === configId)?.name || "—";
   }
-
-  const filteredLogs = logs.filter((l) => {
-    if (statusFilter !== "all" && l.status !== statusFilter) return false;
-    if (configFilter !== "all" && l.config_id !== configFilter) return false;
-    return true;
-  });
-
-  const statusBadge = (status: string) => <MessageStatusBadge status={status} variant="short" />;
 
   if (loading) {
     return <div className="text-center py-8 text-muted-foreground">Carregando...</div>;
@@ -567,9 +559,6 @@ export function DisparoGrupoTab() {
           })}
         </div>
       )}
-
-      {/* Logs Section */}
-      <GroupBlastLogsCard configs={configs.map((c) => ({ id: c.id, name: c.name }))} />
 
       {/* Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
