@@ -1,98 +1,198 @@
-## Objetivo
 
-Criar **um template de PIX gerado por produto** (cada um com 10 variações), que dispare imediatamente após o webhook `PIX_GENERATED` e que **não envie** se o cliente já tiver pago antes do momento do disparo.
+# Refatoração da tela de Eventos
 
-## Produtos cobertos (ofertas Kirvano ativas hoje)
+## Diagnóstico (por que faltava PIX gerado)
 
-| Produto / Plano | offer_id Kirvano | Link "Gerar novo PIX" |
-|---|---|---|
-| Grupo VIP Lotofácil | `19990908-…490b` | `palpitetech.com.br/gerar-novo-pix/grupo-vip-lotofacil` |
-| Mensal | `153917c3-…574a7e` | `…/gerar-novo-pix/mensal` |
-| Semestral | `0576ad87-…72014` | `…/gerar-novo-pix/semestral` |
-| Anual | `c1078d80-…6a0ee` | `…/gerar-novo-pix/anual` |
+A tabela `events` deveria ser **fonte única de verdade** (append-only), mas hoje:
 
-> Hoje só existe **um** template `pix_gerado` genérico que dispara para todo mundo. Vamos substituí-lo por 4 templates direcionados.
+- O `insertEvent` no webhook da Kirvano só grava se já existir um `perfis` com aquele email (`ilike(email)`). Como PIX/Carrinho geralmente vêm antes do cadastro, **o evento nunca é registrado**.
+- `events.user_id` é `NOT NULL` → não dá para registrar eventos de leads/visitantes anônimos (PIX gerado por quem ainda não tem conta).
+- Eventos `SUBSCRIPTION_RENEWED` da Kirvano caem em `missing_offer_id` e nunca chegam a `events`.
+- `insertEvent` mistura duas responsabilidades: registrar log + alterar tags do perfil. Isso "cheira" a update e dificulta entender que é append-only.
+- A UI tem só 4 tipos por aba e não cobre `sale_confirmed`, `assinatura_renovada`, `assinatura_expirada`, `reembolso`, `chargeback`, `lead_*`, etc.
 
-## Arquitetura existente (não muda)
+---
 
-- Webhook Kirvano grava em `events` com `event_type='pix_gerado'` e `metadata` contendo `plan_slug`, `pix_codigo`, `total_price`.
-- Trigger `trigger_queue_event_templates` monta `variables` (incluindo `plan_slug`, `link_novo_pix`, `pix_codigo`, `valor`, `nome`, `produto`) e chama `queue_templates_for_event`, que enfileira **todos** os templates ativos do evento.
-- `process-queue` envia, picando uma das 10 variantes via `pick_template_variant`.
+## Etapa 1 — Garantir que TODO evento da Kirvano vire uma linha em `events`
 
-## O que muda
+### 1.1 — Permitir eventos sem `user_id` (leads anônimos)
 
-### 1. Filtro por oferta no template (DB)
+- Migration: tornar `events.user_id` **nullable** e adicionar colunas opcionais para identificar leads sem conta:
+  - `lead_email text`, `lead_phone text`, `source text default 'system'` (`'kirvano' | 'lead_webhook' | 'system'`).
+- Adicionar índice `(event_type, created_at desc)` e `(lead_email)`.
+- RLS: manter "admins leem tudo"; `service_role` insere.
 
-`message_templates` já tem `plan_ids[]`, mas hoje ele filtra pelo `perfis.plan_id` — que só é gravado **após pagamento aprovado**. No PIX gerado o usuário ainda não tem `plan_id`. Solução: estender `should_send_template` para também aceitar match via `variables.plan_slug` quando o evento for `pix_gerado` (e correlatos).
+### 1.2 — Centralizar a gravação do evento da Kirvano
 
-Lógica nova dentro de `should_send_template` (apenas adicionada, não quebra o existente):
+- Criar helper `insertKirvanoEvent(eventType, { email, phone, userId, metadata })` em `handle-kirvano-webhook` que:
+  - **Sempre** insere em `events`, com `user_id` se existir perfil, senão grava só `lead_email`/`lead_phone`.
+  - Nunca mais retorna em silêncio quando perfil não existe.
 
-```text
-se template.plan_ids vazio  → passa
-se perfis.plan_id casa      → passa (comportamento atual)
-se variables.plan_slug bate com algum plans.slug em template.plan_ids → passa
-caso contrário              → bloqueia
+### 1.3 — Mover gestão de tags para fora do `insertEvent`
+
+- Criar função separada `applyKirvanoTags(userId, eventType, meta)` chamada **só** quando há `userId`.
+- `insertKirvanoEvent` passa a fazer apenas o log (append-only).
+
+### 1.4 — Cobrir todos os eventos do payload Kirvano
+
+Hoje o webhook só mapeia 6 tipos. Adicionar mapeamento completo:
+
+| Kirvano (`event`)           | `event_type` na tabela    |
+|-----------------------------|---------------------------|
+| `SALE_APPROVED`             | `compra_aprovada`         |
+| `SALE_REFUNDED`             | `compra_reembolsada`      |
+| `SALE_CHARGEBACK`           | `compra_chargeback`       |
+| `SUBSCRIPTION_RENEWED`      | `assinatura_renovada`     |
+| `SUBSCRIPTION_CANCELED`     | `assinatura_cancelada`    |
+| `SUBSCRIPTION_EXPIRED`      | `assinatura_expirada`     |
+| `SUBSCRIPTION_OVERDUE`      | `assinatura_inadimplente` |
+| `PIX_GENERATED`             | `pix_gerado`              |
+| `PIX_EXPIRED`               | `pix_expirado`            |
+| `BANK_SLIP_GENERATED`       | `boleto_gerado`           |
+| `BANK_SLIP_EXPIRED`         | `boleto_expirado`         |
+| `ABANDONED_CART`            | `carrinho_abandonado`     |
+| `CHECKOUT_ABANDONED`        | `checkout_abandonado`     |
+
+### 1.5 — Remover o `return` cedo no fluxo "ignore"
+
+- O bloco `if (action === "ignore")` hoje grava evento condicionalmente. Refatorar para que a chamada a `insertKirvanoEvent` aconteça **sempre, no início**, antes de qualquer decisão de "ignorar" ou "ativar".
+
+### 1.6 — Padronizar o `metadata` por tipo
+
+Cada tipo grava um JSON consistente, sem campos faltando. Exemplo:
+
+- `pix_gerado`: `{ payment_method, total_price, pix_codigo, pix_expires_at, plan_slug, offer_id, sale_id }`
+- `compra_aprovada`: `{ payment_method, total_price, plan_slug, offer_id, sale_id, validade_assinatura }`
+- `assinatura_renovada` / `assinatura_expirada` / `assinatura_inadimplente`: `{ plan_slug, offer_id, validade_assinatura }`
+- `carrinho_abandonado` / `checkout_abandonado`: `{ checkout_id, total_price, plan_slug }`
+
+---
+
+## Etapa 2 — Reforçar append-only nos eventos do sistema
+
+### 2.1 — Auditar todos os pontos que escrevem em `events`
+
+Locais identificados:
+- `handle-subscription-expiration` → `assinatura_expirada`
+- `promote-lead-to-user` → `lead_inbox_promovido`
+- `receive-lead` → `lead_bloqueado_validacao`, `lead_inbox_capturado`, `email_pendente_criado`, `lead_recebido_pendente`, `lead_tag_*`
+- `Cadastro.tsx` (frontend) → `novo_cadastro`
+
+Confirmar que **todos** fazem `insert` (nunca `upsert`/`update`).
+
+### 2.2 — Padronizar `source` nos inserts do sistema
+
+- Adicionar `source: 'system'` ou `'lead_webhook'` no metadata para diferenciar de Kirvano na UI.
+
+### 2.3 — Garantir que `novo_cadastro` (frontend) sempre grava
+
+- Hoje o insert vem de `Cadastro.tsx` com `auth.uid()`. Verificar que a RLS authenticated permite e que falhas não silenciam.
+
+---
+
+## Etapa 3 — Refatoração da UI `AdminEventos.tsx`
+
+### 3.1 — Atualizar tipagem e dicionário de tipos
+
+Adicionar configs (label + ícone + cor) para os tipos que faltam:
+- `sale_confirmed`, `compra_reembolsada`, `compra_chargeback`
+- `assinatura_renovada`, `assinatura_expirada`
+- `lead_inbox_capturado`, `lead_inbox_promovido`, `lead_email_confirmado`, `lead_recebido_pendente`, `email_pendente_criado`
+- `trial_revertido_bug` (bucket "Sistema")
+
+### 3.2 — Reorganizar abas (filtros)
+
+Trocar as 4 abas atuais por 6, baseadas no funil real:
+
+| Aba           | Tipos                                                                 |
+|---------------|-----------------------------------------------------------------------|
+| Todos         | —                                                                     |
+| Leads         | `lead_inbox_capturado`, `lead_inbox_promovido`, `email_pendente_criado`, `lead_email_confirmado` |
+| Cadastros     | `novo_cadastro`                                                       |
+| PIX/Boleto    | `pix_gerado`, `pix_expirado`, `boleto_gerado`, `boleto_expirado`, `carrinho_abandonado`, `checkout_abandonado` |
+| Vendas        | `compra_aprovada`, `sale_confirmed`, `assinatura_renovada`, `compra_reembolsada`, `compra_chargeback` |
+| Cancelamentos | `assinatura_cancelada`, `assinatura_inadimplente`, `assinatura_expirada` |
+
+### 3.3 — Coluna "Detalhe" inteligente por tipo
+
+Substituir o `getMetaSummary` genérico por um renderizador por tipo:
+- `pix_gerado`: mostra `R$ valor • plano_slug`
+- `compra_aprovada`: `R$ valor • plano_slug • método`
+- `assinatura_renovada/expirada`: `plano_slug • validade`
+- `carrinho_abandonado`: `R$ valor • plano_slug`
+- `lead_*`: `webhook_name` ou `pagina_origem`
+
+### 3.4 — Sheet de detalhes mais completo
+
+No painel lateral, exibir por tipo:
+- Cabeçalho: ícone grande + label + data + origem (Kirvano/Sistema/Lead).
+- Bloco "Identificação": nome+email do perfil **ou** `lead_email`/`lead_phone` quando não houver perfil.
+- Bloco "Dados do evento": campos principais formatados (valor em R$, plano, oferta, sale_id, link Kirvano se aplicável).
+- Bloco "JSON bruto" recolhível (mantém `<pre>` atual).
+
+### 3.5 — Performance + paginação server-side
+
+Hoje carrega 500 linhas e filtra no cliente. Refatorar:
+- Buscar com `range()` paginado server-side baseado em `activeFilter` (lista de `event_type` no `.in()`) e `search` (ilike em perfil/email).
+- Manter `PAGE_SIZE = 25`. Mostrar "Carregando…" só na troca de página/filtro.
+
+### 3.6 — Indicação visual de "lead sem conta"
+
+Quando o evento não tem `user_id`, exibir badge cinza "Lead" no lugar de avatar/nome, e mostrar `lead_email` no campo Email.
+
+### 3.7 — Remover stats que enganam
+
+O contador `total = events.length` mostrava só os 500 carregados. Trocar por `count` server-side por aba (`select count exact head: true`).
+
+---
+
+## Detalhes técnicos
+
+### Migration esperada
+```sql
+ALTER TABLE public.events
+  ALTER COLUMN user_id DROP NOT NULL,
+  ADD COLUMN IF NOT EXISTS lead_email text,
+  ADD COLUMN IF NOT EXISTS lead_phone text,
+  ADD COLUMN IF NOT EXISTS source text NOT NULL DEFAULT 'system';
+
+CREATE INDEX IF NOT EXISTS idx_events_type_created
+  ON public.events(event_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_events_lead_email
+  ON public.events(lead_email) WHERE lead_email IS NOT NULL;
 ```
 
-Para isso, `should_send_template` precisa receber `p_variables jsonb` (nova assinatura). Atualizamos:
-- `should_send_template(template_id, user_id, variables)` (nova)
-- `queue_templates_for_event` passa `p_variables` adiante
-- `queue_email_templates_for_event` idem (mesmo filtro vale para email)
-
-### 2. Skip "já pago" no envio (process-queue)
-
-Antes de marcar como `sent`, o `process-queue` verifica, **só para mensagens de templates com `event_trigger='pix_gerado'`**:
-
-```text
-existe em events um registro com event_type='compra_aprovada' (ou 'sale_confirmed')
-  para o mesmo user_id (resolvido por phone do recipient)
-  criado APÓS o created_at deste item da fila?
-→ se sim, marca status='skipped_paid' e não envia.
+### Helper na edge `handle-kirvano-webhook`
+```ts
+async function insertKirvanoEvent(
+  admin: any,
+  eventType: string,
+  args: { userId?: string|null; email?: string|null; phone?: string|null; meta?: Record<string,any> }
+) {
+  await admin.from("events").insert({
+    user_id: args.userId ?? null,
+    lead_email: args.userId ? null : args.email ?? null,
+    lead_phone: args.userId ? null : args.phone ?? null,
+    event_type: eventType,
+    source: "kirvano",
+    metadata: { ...(args.meta ?? {}), webhook_event: eventName, email: args.email ?? null },
+  });
+}
 ```
 
-Implementação: query única em `events` por `user_id + event_type IN (compra_aprovada, sale_confirmed) + created_at > queue.created_at`. Resolvemos `user_id` via `perfis.celular = recipient_phone` (existe índice).
+### Garantia append-only
+- Nenhum `upsert`/`update` em `events` em todo o código (validar com `rg "from\\(['\"]events['\"]\\).*(upsert|update)"`).
+- RLS continua bloqueando UPDATE/DELETE para usuários autenticados.
 
-### 3. Criar os 4 templates + 10 variantes cada
+### Arquivos afetados
+- `supabase/migrations/<novo>.sql` (Etapa 1.1)
+- `supabase/functions/handle-kirvano-webhook/index.ts` (Etapas 1.2 → 1.6)
+- `supabase/functions/handle-subscription-expiration/index.ts` (Etapa 2.2)
+- `supabase/functions/receive-lead/index.ts` (Etapa 2.2)
+- `supabase/functions/promote-lead-to-user/index.ts` (Etapa 2.2)
+- `src/pages/admin/AdminEventos.tsx` (Etapas 3.1 → 3.7)
+- `src/lib/whatsapp-event-labels.ts` (sincronizar novos labels — opcional)
 
-Para cada um dos 4 planos: `INSERT` em `message_templates` (event_trigger=`pix_gerado`, `plan_ids={plan_id}`) + 10 `INSERT` em `message_template_variants` (positions 1–10) com texto humanizado, sem citar tom robótico, com `{{nome}}`, `{{pix_codigo}}` e `{{link_novo_pix}}`.
-
-**Template base do usuário (variação 1, ajustada por produto):**
-
-```
-Olá {{nome}}, seus 15 palpites quentes de Lotofácil já estão a um passo!
-Estou no contato para facilitar o recebimento — segue abaixo o seu PIX
-para concluir o pagamento.
-
-PIX (copia e cola):
-{{pix_codigo}}
-
-Caso queira gerar um novo PIX:
-{{link_novo_pix}}
-```
-
-As 10 variantes mudam apenas tom/abertura/CTA (mantendo as mesmas variáveis), por produto:
-
-- Grupo VIP Lotofácil → fala de "15 palpites quentes da Lotofácil"
-- Mensal / Semestral / Anual → fala em "acesso completo da Comunidade" e benefícios do plano
-
-### 4. Desativar (não deletar) o template antigo
-
-`UPDATE message_templates SET is_active=false WHERE id='5730df1c-…6625'` para não duplicar mensagem.
-
-## Mudanças técnicas (resumo)
-
-1. **Migration**:
-   - Nova versão de `should_send_template(uuid, uuid, jsonb)` com lookup adicional por `plan_slug` em `variables`.
-   - Atualizar `queue_templates_for_event` e `queue_email_templates_for_event` para repassar `p_variables`.
-2. **process-queue** (`supabase/functions/process-queue/index.ts`):
-   - Antes do envio, se `template.event_trigger='pix_gerado'`, consulta `events` por compra aprovada posterior ao `created_at` do item. Se houver → marca `status='skipped_paid'` com `error_message='compra ja aprovada'`.
-3. **Insert (data, via tool de insert)**:
-   - 4 linhas em `message_templates` (uma por plano, com `plan_ids={plan_id}`).
-   - 40 linhas em `message_template_variants` (10 por template).
-   - `UPDATE` desativando o template `pix_gerado` genérico atual.
-
-## Fora de escopo
-
-- Não muda nada no webhook handler (já popula `plan_slug`, `pix_codigo` e `total_price` corretamente).
-- Não cria novo evento — reutiliza `pix_gerado`.
-- Não toca em emails: o mesmo filtro nasce funcionando para `queue_email_templates_for_event`, mas **não** vamos criar templates de email agora (apenas WhatsApp, conforme pedido).
+### Compatibilidade
+- Eventos antigos não têm `source`/`lead_email` → default `'system'` cobre.
+- Sem breaking change em `useDisparoManual` (continua usando `event_type` distintos).
