@@ -122,38 +122,38 @@ export default function PosicoesFinaisMegaSena() {
   const trio = [p4.top5[0].dezena, p5.top5[0].dezena, p6.top5[0].dezena];
 
   return (
-    <EstudoShell>
-      {/* Seletor flutuante de concurso de referência */}
+    <>
       <SeletorConcurso
         concursos={concursosLista || []}
         selecionado={concursoEfetivo}
         onChange={handleChangeConcurso}
       />
-
-      <Slide1Intro concurso={contestInfo?.concurso} data={contestInfo?.data} />
-      <Slide2Explicacao />
-      <SlidePosicao
-        posicao={4}
-        top={p4.top5}
-        descricao="A primeira das três decisivas — costuma cair entre 28 e 52."
-      />
-      <SlidePosicao
-        posicao={5}
-        top={p5.top5}
-        descricao="Quase sempre acima de 38 — define a metade superior do jogo."
-      />
-      <SlidePosicao
-        posicao={6}
-        top={p6.top5}
-        destaque
-        badge="A mais decisiva"
-        descricao="A maior dezena do sorteio. Em 90% dos concursos é ≥ 45."
-      />
-      <Slide6Conclusao
-        trio={trio}
-        premioEstimado={contestInfo?.premioEstimado}
-        proximoConcurso={contestInfo?.proximoConcurso}
-      />
-    </EstudoShell>
+      <EstudoShell>
+        <Slide1Intro concurso={contestInfo?.concurso} data={contestInfo?.data} />
+        <Slide2Explicacao />
+        <SlidePosicao
+          posicao={4}
+          top={p4.top5}
+          descricao="A primeira das três decisivas — costuma cair entre 28 e 52."
+        />
+        <SlidePosicao
+          posicao={5}
+          top={p5.top5}
+          descricao="Quase sempre acima de 38 — define a metade superior do jogo."
+        />
+        <SlidePosicao
+          posicao={6}
+          top={p6.top5}
+          destaque
+          badge="A mais decisiva"
+          descricao="A maior dezena do sorteio. Em 90% dos concursos é ≥ 45."
+        />
+        <Slide6Conclusao
+          trio={trio}
+          premioEstimado={contestInfo?.premioEstimado}
+          proximoConcurso={contestInfo?.proximoConcurso}
+        />
+      </EstudoShell>
+    </>
   );
 }
