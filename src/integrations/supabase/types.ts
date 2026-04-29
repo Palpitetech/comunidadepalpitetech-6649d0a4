@@ -1614,6 +1614,7 @@ export type Database = {
           skipped_dedupe: number
           skipped_no_phone: number
           skipped_paid_profile: number
+          skipped_recent_purchase: number
         }
         Insert: {
           blocked_by_db_constraint?: number
@@ -1630,6 +1631,7 @@ export type Database = {
           skipped_dedupe?: number
           skipped_no_phone?: number
           skipped_paid_profile?: number
+          skipped_recent_purchase?: number
         }
         Update: {
           blocked_by_db_constraint?: number
@@ -1646,6 +1648,7 @@ export type Database = {
           skipped_dedupe?: number
           skipped_no_phone?: number
           skipped_paid_profile?: number
+          skipped_recent_purchase?: number
         }
         Relationships: []
       }
@@ -1916,7 +1919,9 @@ export type Database = {
           delay_enabled: boolean
           delay_minutes: number
           event_trigger: string
+          exclude_recent_window_hours: number
           exclude_tags: string[]
+          exclude_tags_recent: string[]
           id: string
           include_tags: string[]
           is_active: boolean
@@ -1931,7 +1936,9 @@ export type Database = {
           delay_enabled?: boolean
           delay_minutes?: number
           event_trigger: string
+          exclude_recent_window_hours?: number
           exclude_tags?: string[]
+          exclude_tags_recent?: string[]
           id?: string
           include_tags?: string[]
           is_active?: boolean
@@ -1946,7 +1953,9 @@ export type Database = {
           delay_enabled?: boolean
           delay_minutes?: number
           event_trigger?: string
+          exclude_recent_window_hours?: number
           exclude_tags?: string[]
+          exclude_tags_recent?: string[]
           id?: string
           include_tags?: string[]
           is_active?: boolean
@@ -2092,6 +2101,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      perfil_tag_history: {
+        Row: {
+          added_at: string
+          id: string
+          perfil_id: string
+          tag: string
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          perfil_id: string
+          tag: string
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          perfil_id?: string
+          tag?: string
+        }
+        Relationships: []
       }
       perfis: {
         Row: {
