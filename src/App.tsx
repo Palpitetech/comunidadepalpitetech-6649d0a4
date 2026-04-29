@@ -35,6 +35,7 @@ import Bloqueado from "./pages/Bloqueado";
 import Convites from "./pages/Convites";
 import Planos from "./pages/Planos";
 import PlanosPublico from "./pages/PlanosPublico";
+import EmailUnsubscribe from "./pages/EmailUnsubscribe";
 import AdminIndex from "./pages/admin/AdminIndex";
 import AdminPlanos from "./pages/admin/AdminPlanos";
 import AdminUsuarios from "./pages/admin/AdminUsuarios";
@@ -175,6 +176,7 @@ const App = () => (
                 <Route path="/palpites-estudos" element={<PalpitesEstudos />} />
                 <Route path="/g/:slug" element={<SmartLinkRedirect />} />
                 <Route path="/gerar-novo-pix/:slug" element={<GerarNovoPix />} />
+                <Route path="/email/descadastrar" element={<EmailUnsubscribe />} />
                 <Route path="/dashboard" element={<ProtectedRoute><Index /></ProtectedRoute>} />
 
 

@@ -98,7 +98,7 @@ const sections: NavSection[] = [
     label: "Comunicação",
     icon: Radio,
     items: [
-      { title: "WhatsApp", url: "/admin/whatsapp", icon: MessageCircle },
+      { title: "Comunicação", url: "/admin/whatsapp", icon: MessageCircle },
       { title: "Convites", url: "/admin/convites", icon: Gift },
       { title: "Eventos", url: "/admin/eventos", icon: Activity },
     ],

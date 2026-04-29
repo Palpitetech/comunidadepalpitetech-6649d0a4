@@ -1,20 +1,37 @@
-import { Smartphone, FileText, Send, ScrollText, Flame, Users, Megaphone, MessageSquare, Link2, Target, Inbox, Globe } from "lucide-react";
+import { Smartphone, FileText, Send, ScrollText, Flame, Users, Megaphone, MessageSquare, Link2, Target, Inbox, Globe, Mail, Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const items = [
-  { value: "instancias", label: "Instâncias", icon: Smartphone },
-  { value: "proxies", label: "Proxies", icon: Globe },
-  { value: "templates", label: "Templates", icon: FileText },
-  { value: "fila", label: "Fila", icon: Send },
-  { value: "mensagens", label: "Mensagens", icon: Inbox },
-  { value: "disparo", label: "Disparo Manual", icon: Megaphone },
-  { value: "logs", label: "Logs", icon: ScrollText },
-  { value: "retargeting", label: "Retargeting", icon: Target },
-  { value: "disparo-grupo", label: "Disparo Grupo", icon: Send },
-  { value: "aquecimento", label: "Aquecimento", icon: Flame },
-  { value: "grupos", label: "Grupos", icon: Users },
-  { value: "smart-links", label: "Smart Links", icon: Link2 },
+const sections = [
+  {
+    label: "WhatsApp",
+    items: [
+      { value: "instancias", label: "Instâncias", icon: Smartphone },
+      { value: "proxies", label: "Proxies", icon: Globe },
+      { value: "templates", label: "Templates", icon: FileText },
+      { value: "fila", label: "Fila", icon: Send },
+      { value: "mensagens", label: "Mensagens", icon: Inbox },
+      { value: "disparo", label: "Disparo Manual", icon: Megaphone },
+      { value: "logs", label: "Logs", icon: ScrollText },
+      { value: "retargeting", label: "Retargeting", icon: Target },
+      { value: "disparo-grupo", label: "Disparo Grupo", icon: Send },
+      { value: "aquecimento", label: "Aquecimento", icon: Flame },
+      { value: "grupos", label: "Grupos", icon: Users },
+      { value: "smart-links", label: "Smart Links", icon: Link2 },
+    ],
+  },
+  {
+    label: "Email Transacional",
+    items: [
+      { value: "email-templates", label: "Templates Email", icon: FileText },
+      { value: "email-fila", label: "Fila Email", icon: Send },
+      { value: "email-disparo", label: "Disparo Email", icon: Megaphone },
+      { value: "email-logs", label: "Logs Email", icon: ScrollText },
+      { value: "email-suppressions", label: "Bloqueados", icon: Ban },
+    ],
+  },
 ] as const;
+
+const allItems = sections.flatMap((s) => s.items.map((i) => ({ ...i })));
 
 interface WhatsAppSubSidebarProps {
   activeTab: string;
@@ -23,34 +40,42 @@ interface WhatsAppSubSidebarProps {
 
 export function WhatsAppSubSidebar({ activeTab, onTabChange }: WhatsAppSubSidebarProps) {
   return (
-    <nav className="w-[180px] shrink-0 border-r border-border bg-card/40 hidden md:flex md:flex-col">
-      {/* Mini header */}
+    <nav className="w-[200px] shrink-0 border-r border-border bg-card/40 hidden md:flex md:flex-col">
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border/60">
         <MessageSquare className="h-4 w-4 text-primary" />
-        <span className="text-sm font-semibold">WhatsApp</span>
+        <span className="text-sm font-semibold">Comunicação</span>
       </div>
 
-      {/* Nav items */}
-      <ul className="space-y-0.5 px-2 py-2 flex-1">
-        {items.map((item) => (
-          <li key={item.value}>
-            <button
-              onClick={() => onTabChange(item.value)}
-              className={cn(
-                "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors",
-                activeTab === item.value
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <item.icon className="h-3.5 w-3.5 shrink-0" />
-              {item.label}
-            </button>
-          </li>
+      <div className="flex-1 overflow-y-auto py-2">
+        {sections.map((section) => (
+          <div key={section.label} className="mb-3">
+            <div className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5">
+              {section.label === "Email Transacional" ? <Mail className="h-3 w-3" /> : <MessageSquare className="h-3 w-3" />}
+              {section.label}
+            </div>
+            <ul className="space-y-0.5 px-2">
+              {section.items.map((item) => (
+                <li key={item.value}>
+                  <button
+                    onClick={() => onTabChange(item.value)}
+                    className={cn(
+                      "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors",
+                      activeTab === item.value
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    <item.icon className="h-3.5 w-3.5 shrink-0" />
+                    {item.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         ))}
-      </ul>
+      </div>
     </nav>
   );
 }
 
-export { items as whatsappTabs };
+export { allItems as whatsappTabs };
