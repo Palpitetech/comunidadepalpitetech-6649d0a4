@@ -1,67 +1,140 @@
 
-## Visão geral
+# Plano — Email Transacional automático por evento
 
-Hoje `/admin/whatsapp` concentra templates, fila, logs e disparo manual de WhatsApp. Vamos elevar esse hub para um módulo **Comunicação** que abriga dois canais lado a lado: **WhatsApp** (existente) e **Email Transacional** (novo, via Resend). Os mesmos eventos (`novo_cadastro`, `pix_gerado`, `sale_confirmed`, `lead_pre_checkout_abandono`, `trial_iniciado`, `assinatura_expirada`, `acesso_cortado`) poderão disparar email, WhatsApp ou ambos.
+## Descoberta importante
 
-Não vamos usar Lovable Emails (delegação de subdomínio conflita com o domínio atual). Mantemos o padrão Resend já usado em `send-subscription-email`, `enviar-codigo-email`, etc., com `RESEND_API_KEY` que já está configurado e o domínio `palpitetech.com.br` já verificado.
+Os webhooks (`handle-kirvano-webhook`, `cadastro-finalizar`, `handle-subscription-expiration`, `promote-lead-to-user`, etc.) **não chamam o WhatsApp diretamente**. Eles inserem em `public.events`, e o trigger `trigger_queue_event_templates` chama `queue_templates_for_event(...)`, que enfileira em `message_queue` para todos os templates ativos com aquele `event_trigger`.
 
-## Navegação (UI)
+Vamos **reaproveitar essa mesma arquitetura desacoplada**: criar uma função gêmea para email, acionada pelo mesmo trigger. Resultado: **zero alteração nos webhooks** — todo evento já registrado dispara WhatsApp **e** email simultaneamente.
 
-1. Renomear rota/título visível de "WhatsApp" para **"Comunicação"** mantendo a URL `/admin/whatsapp` (para não quebrar links salvos). Atualizar o `AdminSidebar` para o novo label.
-2. No `WhatsAppSubSidebar`, adicionar um **separador de seção** com dois grupos:
-   - **WhatsApp**: itens atuais (Instâncias, Proxies, Templates, Fila, Mensagens, Disparo, Logs, Retargeting, Disparo Grupo, Aquecimento, Grupos, Smart Links).
-   - **Email**: novos itens — **Templates Email**, **Fila Email**, **Logs Email**, **Disparo Manual Email**.
-3. Header/título do tab atualiza com `TAB_TITLES`.
+---
 
-## Banco de dados (migrations)
+## Etapa 1 — Backend: pipeline de eventos → email
 
-Tabelas novas, espelhando as de WhatsApp (RLS apenas para admin + service_role):
+### 1.1 Função `queue_email_templates_for_event`
+Espelho de `queue_templates_for_event` mas para email:
+- recebe `event_trigger`, `email`, `nome`, `user_id`, `variables jsonb`, `priority`
+- itera em `email_templates WHERE event_trigger = ? AND is_active = true`
+- valida supressão (`email_suppressions`), respeita `delay_minutes`, `include_tags`/`exclude_tags`/`plan_ids`
+- renderiza `subject` e `html` substituindo `{{variavel}}` no momento do enfileiramento (snapshot)
+- insere em `email_queue` (a constraint EXCLUDE atual já cuida do dedupe 7d)
 
-- **`email_templates`**: `id, name, subject, html, event_trigger, is_active, delay_minutes, include_tags[], exclude_tags[], plan_ids[], tags_match_mode, from_name, reply_to, created_at, updated_at`.
-- **`email_queue`**: `id, template_id, recipient_email, recipient_name, variables jsonb, subject_render, html_render, status (pending|sent|failed|skipped), scheduled_at, sent_at, resend_message_id, error_message, retry_count, priority, created_at`. Índice parcial por `status='pending'` ordenado por priority/scheduled_at, e dedupe por `(template_id, recipient_email)` em janela de 7 dias (mesma lógica do `message_queue`).
-- **`email_send_logs`**: `id, queue_id, recipient_email, template_id, status, resend_message_id, error_message, created_at` (espelha `send_logs`).
-- **`email_suppressions`**: `email PK, reason (bounce|complaint|manual|unsubscribe), created_at` — bloqueia envios para endereços já marcados.
+### 1.2 Atualizar `trigger_queue_event_templates`
+Adicionar uma chamada extra ao final:
+```sql
+IF v_perfil.email IS NOT NULL AND v_perfil.email <> '' THEN
+  PERFORM public.queue_email_templates_for_event(
+    NEW.event_type, v_perfil.email, v_perfil.nome,
+    v_perfil.id, v_variables, v_priority
+  );
+END IF;
+```
+Mantém o fluxo WhatsApp intocado. Mesma lista de variáveis (`{{nome}}`, `{{email}}`, `{{produto}}`, `{{valor}}`, `{{link_novo_pix}}`, `{{pix_codigo}}`, `{{link_grupo_vip}}`, `{{link_sala_secreta_mega}}`, `{{link_sala_vip_mega}}`).
 
-Trigger ou hook nas mesmas funções que hoje enfileiram WhatsApp (eventos Kirvano, novo cadastro, PIX gerado, etc.) para também enfileirar em `email_queue` quando existir `email_template` ativo para o `event_trigger` e o destinatário tiver email válido. Reaproveita os filtros `include_tags`/`plan_ids`.
+### 1.3 Hardening do `process-email-queue`
+Revisar se já renderiza variáveis no momento do envio; se sim, manter snapshot da etapa 1.1 como fallback. Garantir retry com backoff e marcação de `bounce`/`complaint` em `email_suppressions` via `resend-webhook`.
 
-## Edge Functions
+---
 
-1. **`process-email-queue`** (cron a cada 1 min, padrão WhatsApp): pega lote `pending` (limite 30), renderiza variáveis `{{nome}}`, `{{email}}`, `{{produto}}`, `{{plano_nome}}`, `{{link}}` no `subject` e `html`, envia via Resend (`from: "Palpite Tech <noreply@palpitetech.com.br>"`), grava `resend_message_id`, atualiza status, registra em `email_send_logs`. Em caso de bounce permanente, insere em `email_suppressions`.
-2. **`enqueue-email`** (helper interno chamado por outras edges): `{ event_trigger, recipient_email, recipient_name, variables, plan_id, tags }` → resolve template ativo, aplica `delay_minutes`, insere em `email_queue` se não suprimido nem duplicado.
-3. **`resend-webhook`** (POST público): recebe `email.bounced`, `email.complained`, `email.delivered`, `email.opened` da Resend. Atualiza `email_send_logs.status` e popula `email_suppressions` em bounces/complaints. Configurado no painel Resend após deploy.
-4. Atualizar `handle-kirvano-webhook`, `cadastro-iniciar-email` (apenas em pontos novos — não mexer no fluxo de OTP atual), `receive-lead` e o cron de assinaturas para chamar `enqueue-email` em paralelo ao enfileiramento WhatsApp.
+## Etapa 2 — Auditoria template-a-template (WhatsApp → Email)
 
-Cron (via `pg_cron` + `pg_net`) no padrão já usado pelo projeto.
+Para cada template WhatsApp ativo, criar a versão email correspondente. Email tem mais espaço e formato HTML, então cada template ganha:
+- **Cabeçalho** com logo/cor da marca
+- **CTA principal grande** (botão) levando à ação esperada
+- **Bloco de credenciais** quando aplicável (login, senha temporária)
+- **Rodapé** com suporte WhatsApp (51 98185-4281) + link unsubscribe (já injetado pela infra)
 
-## UI dos novos tabs (`src/components/admin/email/`)
+| # | Evento (`event_trigger`)     | Template WhatsApp atual                       | Template Email a criar                                        | CTA principal                          | Delay |
+|---|------------------------------|-----------------------------------------------|---------------------------------------------------------------|----------------------------------------|-------|
+| 1 | `novo_cadastro`              | "Cadastro Comunidade" (imediato)              | **Boas-vindas Palpite Tech** — credenciais, tour rápido       | Acessar minha conta                    | 0     |
+| 2 | `novo_cadastro`              | "Lembrete verificar email" (60 min)           | **Confirme seu email — libere o teste grátis de 3 dias**      | Reenviar código de verificação         | 60    |
+| 3 | `pix_gerado`                 | "PIX Gerado" (imediato)                       | **Seu PIX está pronto — finalize em minutos**                 | Pagar agora / Copiar código PIX        | 0     |
+| 4 | `sale_confirmed`             | "Compra aprovada (Acesso ao App)" (imediato)  | **Pagamento confirmado — acesso liberado**                    | Entrar no app + Entrar no grupo VIP    | 0     |
+| 5 | `sale_confirmed`             | "Compra aprovada — Aula Mega VIP"             | **Sua vaga na Sala VIP da Mega-Sena está garantida**          | Entrar na sala VIP                     | 0     |
+| 6 | `assinatura_expirada`        | "Assinatura vencida" (imediato)               | **Sua assinatura venceu — renove com condição especial**      | Renovar com desconto                   | 0     |
+| 7 | `acesso_cortado`             | "Reativação 7 dias após corte" (10080 min)    | **Sentimos sua falta — volte com benefícios**                 | Reativar minha conta                   | 10080 |
+| 8 | `lead_pre_checkout_abandono` | "Lead pré-checkout - Sala Secreta Lotofácil"  | **Sua vaga no Grupo VIP Lotofácil está reservada — finalize** | Concluir pagamento (link Kirvano)      | 5     |
+| 9 | `lead_pre_checkout_abandono` | "Lead Maratona Mega 30 Anos — Sala Secreta"   | **Entre na Sala Secreta da Mega-Sena (gratuito)**             | Entrar no grupo gratuito               | 60    |
 
-- **`EmailTemplatesTab`**: lista, criar/editar (nome, evento, assunto, editor HTML simples com preview, variáveis disponíveis, filtros `include_tags`/`exclude_tags`/`plan_ids`, `delay_minutes`, `is_active`). Estilo idêntico ao `TemplatesTab` do WhatsApp.
-- **`EmailFilaTab`**: tabela paginada de `email_queue` com filtros por status/template/destinatário, ações “reenviar” e “cancelar”.
-- **`EmailLogsTab`**: tabela de `email_send_logs` com status colorido, busca por email e link para o `resend_message_id`.
-- **`EmailDisparoManualTab`**: clone do `DisparoManualTab` atual, mas usa email — filtros por tags/plano/evento, contagem ao vivo, modo Template ou HTML livre, confirmação e enfileiramento em lotes de 500.
+Total: **9 templates email**, mesmos `event_trigger`, mesmos `delay_minutes`, mesmos filtros de plano/tag — paridade 1:1 com WhatsApp.
 
-Hooks novos: `useEmailTemplates`, `useEmailQueue`, `useEmailLogs`, `useDisparoManualEmail` (refatorando o `useDisparoManual` para um core compartilhado entre canais).
+### Padrão visual de cada template (HTML)
+- Largura 600px, fundo `#0F172A` (Navy) no header, corpo branco
+- Tipografia Arial 16px, headings 22px (segue Senior UX)
+- Botão CTA: `#10B981` (Success), 14px padding, border-radius 8px, link absoluto rastreável (UTM `utm_source=email&utm_medium=transactional&utm_campaign={{event}}`)
+- Dois CTAs no máximo por email (primário + secundário "falar no WhatsApp")
+- Preheader text customizado por template
+- Sem referências a "AI" (Core memory): usar "Análise técnica", "Estatística"
 
-## Resend e domínio
+---
 
-- Reusar `RESEND_API_KEY` já existente (sem `add_secret`).
-- Remetente padrão `noreply@palpitetech.com.br` com `reply_to` configurável por template.
-- Adicionar footer obrigatório com link “Não quero mais receber” → rota pública `/email/descadastrar?token=...` que insere o email em `email_suppressions` (LGPD).
+## Etapa 3 — Seed dos templates no banco
 
-## Não-objetivos (fora deste escopo)
+Migration que faz `INSERT ... ON CONFLICT (name) DO UPDATE` (ou `DELETE` dos 5 inativos atuais + insert dos 9 novos) com:
+- `is_active = true`
+- `from_name = 'Palpite Tech'`
+- `reply_to = 'suporte@palpitetech.com.br'` (ou null)
+- `subject` e `html` versionados (HTML completo inline, ~150-300 linhas por template)
 
-- Não vamos migrar para Lovable Emails (mantemos Resend conforme pedido).
-- Não vamos criar campanhas de marketing/newsletter — somente transacionais disparados por evento ou disparo manual segmentado.
-- Não vamos mexer no fluxo OTP de cadastro/recuperação atual.
+Após seed, todos os eventos novos disparam email automaticamente.
 
-## Etapas de implementação (ordem)
+---
 
-1. Migration: criar tabelas `email_templates`, `email_queue`, `email_send_logs`, `email_suppressions` + RLS + índices + dedupe.
-2. Edge functions `enqueue-email`, `process-email-queue`, `resend-webhook` + cron.
-3. Integrar `enqueue-email` nos pontos atuais que disparam WhatsApp (Kirvano, novo cadastro, PIX, leads).
-4. Renomear módulo para “Comunicação”, reorganizar sub-sidebar em duas seções.
-5. Implementar `EmailTemplatesTab`, `EmailFilaTab`, `EmailLogsTab`, `EmailDisparoManualTab` + hooks.
-6. Página pública de unsubscribe.
-7. Seed: criar templates de email iniciais espelhando os 11 do WhatsApp (assinatura vencida, PIX gerado, compra aprovada, lead pré-checkout, trial expirando, etc.) reaproveitando o HTML do `send-subscription-email`.
+## Etapa 4 — UI: revisão na aba "Comunicação → Email"
 
-Quer que eu prossiga assim? Se preferir começar só pelo MVP (passos 1, 2, 5 e 7 sem integrar ainda nos webhooks), me avise.
+- **EmailTemplatesTab**: já existe; só garantir que o seletor de evento mostre exatamente os mesmos 7 valores usados no trigger (`novo_cadastro`, `pix_gerado`, `sale_confirmed`, `assinatura_expirada`, `acesso_cortado`, `lead_pre_checkout_abandono`, `trial_iniciado`). Adicionar dica visual “este evento já dispara WhatsApp também”.
+- **EmailFilaTab**: adicionar coluna “Evento” (via join template) e badge de status colorido igual à fila WhatsApp.
+- **EmailLogsTab**: link “ver mensagem WhatsApp correspondente” quando existir entrada em `send_logs` para o mesmo `user_id` + janela de 1 min.
+- Banner no topo da seção Email: “Os mesmos eventos disparam WhatsApp e Email em paralelo. Desativando o template aqui, só o email pára.”
+
+---
+
+## Etapa 5 — Validação e QA
+
+1. **Teste em sandbox**: inserir manualmente um evento `pix_gerado` para um perfil de teste com email válido → confirmar que aparece em `email_queue` e é enviado em <1 min.
+2. **Teste de cada gatilho real** (novo cadastro, PIX, compra aprovada via webhook Kirvano de teste, expiração via cron de assinatura, lead pré-checkout via `process-lead-retargeting`).
+3. **Inspecionar HTML em 3 clientes** (Gmail web, iOS Mail, Outlook web) renderizando via `process-email-queue` em modo dry-run (rota local de preview já existente em `EmailTemplatesTab`).
+4. **Suppression**: enviar para email inválido controlado, esperar `resend-webhook` registrar bounce, confirmar próximo evento ser pulado.
+5. **Dedupe**: disparar duas vezes o mesmo evento em 1 min → segundo não deve ser enviado (constraint `email_queue_dedupe_7d_excl`).
+
+---
+
+## Etapa 6 — Comunicação na UI ao usuário admin
+
+Após deploy, mostrar toast no `/admin/whatsapp?tab=email-templates` com:
+> “9 templates de email criados e ativos. Cada evento que dispara WhatsApp agora também envia email automaticamente.”
+
+---
+
+## Resumo de arquivos impactados
+
+**Migration nova** (estrutura + seed):
+- `supabase/migrations/<ts>_email_event_dispatch.sql`
+  - `CREATE OR REPLACE FUNCTION queue_email_templates_for_event(...)`
+  - `CREATE OR REPLACE FUNCTION trigger_queue_event_templates()` (versão atualizada chamando ambos)
+  - `INSERT ... INTO email_templates` × 9 (com HTML completo)
+
+**Edge functions**:
+- `supabase/functions/process-email-queue/index.ts` — revisão pequena (variáveis + UTM no link, suppression, retry).
+
+**UI**:
+- `src/components/admin/email/EmailTemplatesTab.tsx` — adicionar dica de paridade WhatsApp e completar lista de eventos.
+- `src/components/admin/email/EmailFilaTab.tsx` — coluna “Evento”.
+- `src/components/admin/email/EmailLogsTab.tsx` — pequenas melhorias.
+
+**Não mudamos**:
+- Nenhum webhook (`handle-kirvano-webhook`, `cadastro-finalizar`, `receive-lead`, `handle-subscription-expiration`, `promote-lead-to-user`, `process-lead-retargeting`).
+- Nenhuma função WhatsApp (`process-queue`, `queue_templates_for_event`).
+- O fluxo OTP de cadastro continua intocado (Core memory).
+
+---
+
+## Ordem de execução
+
+1. Migration: função `queue_email_templates_for_event` + atualização do trigger.
+2. Migration de seed dos 9 templates (HTML completo, ativos).
+3. Pequenos ajustes em `process-email-queue` (UTM, suppression, retry hardening) + redeploy.
+4. Ajustes finos UI (3 tabs).
+5. Disparar evento de teste em prod e validar.
+
+Pronto para implementar quando você aprovar.
