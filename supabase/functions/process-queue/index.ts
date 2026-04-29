@@ -109,6 +109,31 @@ async function sendMessage(
   supabase: any,
   item: any
 ): Promise<{ success: boolean; error?: string }> {
+  // Skip de PIX gerado se cliente já pagou após o agendamento da mensagem
+  if (item.template_id) {
+    const { data: tpl } = await supabase
+      .from("message_templates")
+      .select("event_trigger")
+      .eq("id", item.template_id)
+      .maybeSingle();
+    if (tpl?.event_trigger === "pix_gerado") {
+      const { data: alreadyPaid } = await supabase.rpc("is_pix_already_paid", {
+        p_phone: item.recipient_phone,
+        p_after: item.created_at,
+      });
+      if (alreadyPaid === true) {
+        await supabase
+          .from("message_queue")
+          .update({
+            status: "skipped_paid",
+            error_message: "compra ja aprovada antes do envio",
+          })
+          .eq("id", item.id);
+        return { success: true };
+      }
+    }
+  }
+
   // Mark as sending
   await supabase
     .from("message_queue")
