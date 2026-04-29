@@ -1,4 +1,4 @@
-import { Smartphone, FileText, Send, ScrollText, Flame, Users, Megaphone, MessageSquare, Link2, Target, Inbox, Globe, Mail, Ban } from "lucide-react";
+import { Smartphone, FileText, Send, ScrollText, Flame, Users, Megaphone, MessageSquare, Link2, Target, Inbox, Globe, Mail, Ban, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const sections = [
@@ -14,6 +14,7 @@ const sections = [
       { value: "logs", label: "Logs", icon: ScrollText },
       { value: "retargeting", label: "Retargeting", icon: Target },
       { value: "disparo-grupo", label: "Disparo Grupo", icon: Send },
+      { value: "monitor-grupos", label: "Monitor Grupos", icon: Activity },
       { value: "aquecimento", label: "Aquecimento", icon: Flame },
       { value: "grupos", label: "Grupos", icon: Users },
       { value: "smart-links", label: "Smart Links", icon: Link2 },
