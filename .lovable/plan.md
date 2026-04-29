@@ -1,74 +1,104 @@
 
-# Mensagens de templates falhando — Causa raiz e correção
+# Padronização universal de telefone BR
 
-## Diagnóstico (confirmado nos dados reais)
+## Problema
 
-Nas últimas 48h: **4 falhas, 3 sucessos**. As 4 falhas — todas as compras aprovadas — têm o **mesmo erro** retornado pela Evolution API:
+Hoje cada edge function tem sua própria função `normalizePhone` (Kirvano, receive-lead, sync-group-members, group-member-webhook, group-promote-admin, import-csv-users, process-queue, cadastro-iniciar-whatsapp, check-overdue-subscriptions). Resultado:
 
-```
-HTTP 400: {"status":400,"error":"Bad Request",
- "response":{"message":[{"jid":"<numero>@s.whatsapp.net","exists":false,"number":"<numero>"}]}}
-```
+- Algumas só "removem o 55" e aceitam qualquer coisa com ≥10 dígitos (ex.: Kirvano salva número quebrado sem validar DDD nem 9º dígito).
+- Outras validam DDD mas não acrescentam o 9 quando falta.
+- O `process-queue` precisou de patch ad-hoc para reanexar o `55` no envio.
+- Já existe `supabase/functions/_shared/br-phone.ts` com `normalizeBR` + `variants`, **mas só `verify-whatsapp-number` usa**.
 
-| Cliente | `recipient_phone` salvo | DDD interpretado errado pela Evolution |
-|---|---|---|
-| Maria Regina | `55999051993` | `55` virou DDI, sobra `999051993` |
-| Francisco Sales | `98984954601` | `98` (MA) virou DDI |
-| Denis Cury | `11991447973` | `11` (SP) virou DDI (USA) |
-| Alexandre Nalon | `33991540838` | `33` (MG) virou DDI (França) |
+Isso causou os 4 templates falhados: número entrou no banco como veio (sem 9, ou só com DDI cortado), e na hora de enviar a Evolution rejeitou.
 
-### Por que está acontecendo
-1. Webhook do Kirvano chega em `handle-kirvano-webhook/index.ts`. A função `normalizePhone()` (linhas 79–87) **remove** o `55` quando o número tem 12/13 dígitos.
-2. O número é salvo em `perfis.celular` e na fila `message_queue.recipient_phone` **sem o DDI**, com 10 ou 11 dígitos.
-3. `process-queue/index.ts` linha 137 envia para a Evolution **direto**: `number: item.recipient_phone`.
-4. A Evolution monta o JID `<DDD+numero>@s.whatsapp.net` — sem `55` — e responde `exists: false` porque interpreta o DDD como código de país.
+## Objetivo
 
-**Os números existem no WhatsApp; o problema é o formato enviado.** O resto do sistema já espera os dados sem o DDI; não convém mexer no que está armazenado.
+Toda entrada de telefone (webhook, formulário, CSV, sync de grupo) passa por **uma única função** que:
 
-## Correção (cirúrgica, 1 arquivo)
+1. Limpa máscara e espaços.
+2. Detecta e remove DDI (`55`, `+55`, `0055`).
+3. Valida DDD brasileiro (11–99).
+4. Aplica regra do 9º dígito por região:
+   - DDD ≤ 28 (Sudeste/SP/RJ/ES/MG): celular sempre com 9 → 11 dígitos obrigatório.
+   - DDD ≥ 31: celular pode ter ou não 9 historicamente; padrão atual da Anatel é **com 9**, então normalizamos para 11 dígitos sempre que o número parecer celular (não-fixo).
+   - Fixos (segundo dígito 2–5) ficam com 10 dígitos.
+5. Retorna número canônico **sem DDI, com 9 quando aplicável** (formato salvo no banco hoje).
+6. Para envio à Evolution, expõe `toEvolutionFormat()` que devolve `55` + canônico.
 
-Em **`supabase/functions/process-queue/index.ts`** (função que dispara templates da fila), prefixar `55` no momento do POST para a Evolution, sem alterar o valor salvo no banco:
+Se a entrada for inválida (DDD inexistente, tamanho fora do padrão, sequência óbvia, número internacional não-BR), retorna `null` e o caller decide: webhook salva como `phone_invalid=true` e dispara log; envio marca a fila como `failed` com `error_message: "phone_invalid"` antes de chamar a Evolution (poupa rate limit).
+
+## Etapas
+
+### 1. Expandir `supabase/functions/_shared/br-phone.ts`
+
+Adicionar e exportar:
 
 ```ts
-// Antes do fetch:
-const digits = String(item.recipient_phone || "").replace(/\D/g, "");
-const numberWithDdi =
-  digits.startsWith("55") && (digits.length === 12 || digits.length === 13)
-    ? digits
-    : `55${digits}`;
+// Já existem: normalizeBR(raw) -> string|null  e  variants(n)
 
-// No body:
-body: JSON.stringify({ number: numberWithDdi, text: messageText }),
+// NOVO
+export type PhoneNormalizeResult =
+  | { ok: true; canonical: string; e164: string; ddd: number; isMobile: boolean }
+  | { ok: false; reason: 'empty'|'too_short'|'too_long'|'invalid_ddd'|'invalid_mobile'|'sequence'|'non_br' };
+
+export function normalizePhoneBR(raw: string | null | undefined): PhoneNormalizeResult;
+
+// Atalhos
+export function toCanonicalBR(raw: string): string | null;   // 10/11 dígitos sem DDI, ou null
+export function toEvolutionBR(raw: string): string | null;   // "55" + canonical, ou null
 ```
 
-Trata os 3 casos:
-- `11991447973` (11 dígitos) → vira `5511991447973` ✅
-- `98984954601` (11 dígitos) → vira `5598984954601` ✅
-- `5511991447973` (já com DDI) → mantém ✅
-- `999051993` (9 dígitos, irregular) → vira `55999051993` (Evolution julga validade)
+Regras de `normalizePhoneBR`:
 
-## Reprocessamento dos 4 envios falhos
+- Strip não-dígitos. Se começa com `00`, remove. Se começa com `55` e total = 12 ou 13, remove o `55`.
+- Rejeita se restar < 10 ou > 11 dígitos.
+- DDD = primeiros 2; rejeita se < 11 ou > 99 (lista oficial pode vir depois).
+- Se 10 dígitos e 3º dígito ∈ {6,7,8,9} → era celular sem 9 → **insere 9** automaticamente, vira 11. (`isMobile=true`)
+- Se 10 dígitos e 3º dígito ∈ {2,3,4,5} → fixo. (`isMobile=false`)
+- Se 11 dígitos e 3º dígito ≠ 9 → `invalid_mobile`.
+- Sequências triviais (todos iguais, `1234…`) → `sequence`.
+- Retorna `canonical` (10 ou 11 dígitos) e `e164 = "55" + canonical`.
 
-Após o fix, reenfileirar via UPDATE:
+### 2. Substituir as duplicatas
 
-```sql
-UPDATE message_queue
-SET status = 'pending', error_message = NULL, retry_count = 0
-WHERE id IN (
- 'fa0ac564-4d4a-4f78-8115-28d11d018b80',
- 'a3c38ff5-06c5-41f0-8c54-d69af2e7c3ab',
- '381a40c6-fc3b-4f4a-9f2b-4e954ca7ff2d',
- '4962fb83-341e-4762-adc0-d2e8d64a0bfc'
-);
-```
+Trocar a `normalizePhone` local pelo helper em:
 
-Como UPDATE não é permitido pelo acesso atual, isso vira uma **migration** após aprovação.
+- `handle-kirvano-webhook/index.ts` → `pickPhone` agora usa `normalizePhoneBR` e devolve `{ canonical, e164, valid }`. Se inválido, segue o fluxo mas grava `phone_invalid=true` no log do webhook e **não** enfileira mensagem de boas-vindas (evita o erro que vimos hoje).
+- `receive-lead/index.ts` → `validateCelular` vira wrapper de `normalizePhoneBR`.
+- `sync-group-members`, `group-member-webhook`, `group-promote-admin` → usam `toCanonicalBR`.
+- `import-csv-users` → usa `toCanonicalBR`; linhas inválidas ficam no relatório de erro do CSV.
+- `cadastro-iniciar-whatsapp`, `verificar-codigo` → usam `toCanonicalBR`.
+- `check-overdue-subscriptions` → usa `toEvolutionBR`.
+- `process-queue/index.ts` → substitui o patch atual por `toEvolutionBR(item.recipient_phone)`. Se retornar `null`, marca `failed` com `error_message: "phone_invalid"` antes de chamar a Evolution.
 
-## Fora do escopo (registrado, não vou tocar agora)
-- `process-lead-retargeting`, `cadastro-iniciar-whatsapp`, broadcasts de grupo: usam fluxos próprios, não impactaram esses 4 envios. Se quiser, em uma próxima rodada centralizo o "garante DDI" em `_shared/br-phone.ts` e aplico em todos os pontos.
-- `normalizePhone` no webhook do Kirvano: deixar como está. Mexer ali muda dado armazenado em perfis e quebra outras buscas.
+### 3. Espelhar regra no frontend
 
-## Resumo do que muda ao aprovar
-1. Edit em `supabase/functions/process-queue/index.ts` (8 linhas).
-2. Migration reabrindo as 4 mensagens falhas como `pending`.
-3. O cron pega as 4 no próximo ciclo e dispara — agora com `5511…`, `5598…` etc.
+`src/lib/celular.ts` ganha o mesmo algoritmo (insere 9 automaticamente em 10 dígitos quando for celular). Assim formulários de cadastro também salvam o número já no formato canônico. Mantém compatibilidade com o que já está validando.
+
+### 4. Migration de saneamento (opcional, sob aprovação)
+
+Script `SELECT` que mostra quantos registros em `profiles.celular`, `leads.phone`, `message_queue.recipient_phone`, `kirvano_sales.phone` estão fora do padrão (10 ou 11 dígitos com DDD válido). Se você aprovar, gero um `UPDATE` que aplica `normalizePhoneBR` a todos eles e marca como `phone_invalid=true` os irrecuperáveis.
+
+### 5. Testes
+
+Estender `verify-whatsapp-number/br-phone_test.ts` (já existe) cobrindo:
+
+- 10 dígitos celular SP → vira 11 (insere 9).
+- 10 dígitos fixo SP → fica 10.
+- 11 dígitos celular interior MG → fica 11.
+- DDI `+55`, `0055`, `55` redundante.
+- Lixo: `(11) 99999-999`, `551199`, `999999999999`.
+
+## O que NÃO faz parte
+
+- Não toco em telefones internacionais (fora de escopo BR — se chegar não-BR, retorna `non_br` e o caller decide).
+- Não muda o schema de tabelas; só conteúdo via UPDATE opcional.
+- Não altera UI do Monitor Grupos.
+
+## Resultado esperado
+
+- Qualquer webhook (Kirvano, lead externo, grupo) entrega no banco sempre o mesmo formato.
+- `process-queue` nunca mais precisa de "if startsWith 55" — chama `toEvolutionBR` e pronto.
+- Falhas tipo "exists: false" da Evolution caem para zero por causa de DDI faltando ou 9º dígito faltando.
+- Código reduzido: ~9 cópias de `normalizePhone` viram 1.
