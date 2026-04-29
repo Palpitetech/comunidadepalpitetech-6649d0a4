@@ -1260,7 +1260,8 @@ serve(async (req) => {
       logStep("Overdue email error (non-fatal)", { message: e instanceof Error ? e.message : String(e) });
     }
 
-    await insertEvent(perfil.id, "assinatura_inadimplente", {
+    // Evento já foi registrado cedo — apenas aplica tags
+    await applyKirvanoTags(perfil.id, "assinatura_inadimplente", {
       validade: perfil.validade_assinatura,
     });
 
