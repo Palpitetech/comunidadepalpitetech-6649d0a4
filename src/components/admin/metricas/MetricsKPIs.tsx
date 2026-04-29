@@ -43,10 +43,19 @@ const KPI = ({
   );
 };
 
-export function MetricsKPIs({ data }: Props) {
+export function MetricsKPIs({ data, headerExtra }: Props) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-      <KPI icon={Users} label="Leads" value={fmtNum(data.totalLeads)} tone="info" />
+    <div className="space-y-2">
+      {headerExtra && (
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Indicadores
+          </h3>
+          {headerExtra}
+        </div>
+      )}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+        <KPI icon={Users} label="Leads" value={fmtNum(data.totalLeads)} tone="info" />
       <KPI icon={UserPlus} label="Cadastros" value={fmtNum(data.totalCadastros)} />
       <KPI icon={ShoppingCart} label="Compradores" value={fmtNum(data.totalCompradores)} tone="success" />
       <KPI
