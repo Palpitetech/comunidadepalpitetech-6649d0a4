@@ -1,72 +1,98 @@
 ## Objetivo
 
-No painel `/admin/metricas`, oferecer **dois níveis de filtro de período**:
+Criar **um template de PIX gerado por produto** (cada um com 10 variações), que dispare imediatamente após o webhook `PIX_GENERATED` e que **não envie** se o cliente já tiver pago antes do momento do disparo.
 
-1. **Global** (já existe no topo) — define o período padrão de todos os blocos.
-2. **Por tabela** (novo) — cada tabela pode ter seu próprio período, sobrescrevendo o global. Útil para comparar, por exemplo, "Compradores dos últimos 30 dias" enquanto a Atribuição mostra "Hoje".
+## Produtos cobertos (ofertas Kirvano ativas hoje)
 
-Opções disponíveis em todos os filtros (já existem em `PERIOD_OPTIONS`):
-Hoje · Ontem · 7 dias · 14 dias · 21 dias · 1 mês · Mês passado · 2 meses · 3 meses · Personalizado.
+| Produto / Plano | offer_id Kirvano | Link "Gerar novo PIX" |
+|---|---|---|
+| Grupo VIP Lotofácil | `19990908-…490b` | `palpitetech.com.br/gerar-novo-pix/grupo-vip-lotofacil` |
+| Mensal | `153917c3-…574a7e` | `…/gerar-novo-pix/mensal` |
+| Semestral | `0576ad87-…72014` | `…/gerar-novo-pix/semestral` |
+| Anual | `c1078d80-…6a0ee` | `…/gerar-novo-pix/anual` |
 
-## Mudanças
+> Hoje só existe **um** template `pix_gerado` genérico que dispara para todo mundo. Vamos substituí-lo por 4 templates direcionados.
 
-### 1. Padronizar o filtro global (topo da página)
-- Substituir os botões inline atuais em `src/pages/admin/AdminMetricas.tsx` pelo componente reutilizável `PeriodFilter` (já existe em `src/components/admin/dashboard/PeriodFilter.tsx`), que já tem dropdown + calendário e cobre todas as opções pedidas.
-- Mantém o range atual exibido ao lado ("dd/MM/yy – dd/MM/yy").
+## Arquitetura existente (não muda)
 
-### 2. Filtro por tabela (override local)
-Cada um destes blocos ganha um `PeriodFilter` próprio no header, ao lado do título/ações:
-- `MetricsKPIs` (KPIs do topo)
-- `AttributionTable` (Atribuição por origem)
-- `BuyersLTVTable` (Compradores · LTV)
-- `FirstVsLastClickTable` (First vs Last click)
-- Card "Funil do período"
+- Webhook Kirvano grava em `events` com `event_type='pix_gerado'` e `metadata` contendo `plan_slug`, `pix_codigo`, `total_price`.
+- Trigger `trigger_queue_event_templates` monta `variables` (incluindo `plan_slug`, `link_novo_pix`, `pix_codigo`, `valor`, `nome`, `produto`) e chama `queue_templates_for_event`, que enfileira **todos** os templates ativos do evento.
+- `process-queue` envia, picando uma das 10 variantes via `pick_template_variant`.
 
-Comportamento:
-- Estado inicial de cada tabela = "seguir global" (sem override).
-- Quando o usuário escolhe um período local, aparece um chip "↻ Seguir global" para resetar.
-- Quando "seguindo global", mudar o filtro global atualiza todas as tabelas automaticamente.
+## O que muda
 
-### 3. Buscar dados por período independente
-O hook `useAttributionMetrics(period, dimension)` já recebe `PeriodRange`. Para suportar períodos diferentes por tabela sem refetch desnecessário:
+### 1. Filtro por oferta no template (DB)
 
-- Criar **um único hook agregador** `useMetricsData({ globalPeriod, kpisPeriod?, attributionPeriod?, buyersPeriod?, clickPeriod? })` que internamente usa `useAttributionMetrics` em paralelo (uma chamada por período distinto, deduplicado por chave ISO from-to). React Query cuida de cache.
-- Cada bloco recebe seu próprio `data` derivado.
-- Quando todos os overrides são iguais ao global → 1 única query (caso comum, sem custo extra).
+`message_templates` já tem `plan_ids[]`, mas hoje ele filtra pelo `perfis.plan_id` — que só é gravado **após pagamento aprovado**. No PIX gerado o usuário ainda não tem `plan_id`. Solução: estender `should_send_template` para também aceitar match via `variables.plan_slug` quando o evento for `pix_gerado` (e correlatos).
 
-### 4. Persistência leve
-Os overrides por tabela ficam em estado local (não persistem entre navegações). O período global continua só em memória, como hoje.
-
-## Arquivos afetados
-
-- `src/pages/admin/AdminMetricas.tsx` — usa `PeriodFilter` no topo, gerencia estado de overrides, passa períodos para cada bloco.
-- `src/components/admin/metricas/MetricsKPIs.tsx` — recebe `period` + `onPeriodChange` opcionais e renderiza `PeriodFilter` no header.
-- `src/components/admin/metricas/AttributionTable.tsx` — idem.
-- `src/components/admin/metricas/BuyersLTVTable.tsx` — idem.
-- `src/components/admin/metricas/FirstVsLastClickTable.tsx` — idem.
-- `src/hooks/admin/useMetricsData.ts` *(novo)* — agregador com dedupe de queries.
-- `src/components/admin/dashboard/PeriodFilter.tsx` — sem mudanças (já cobre todas as opções).
-
-## Layout
+Lógica nova dentro de `should_send_template` (apenas adicionada, não quebra o existente):
 
 ```text
-┌──────────────────────────────────────────────────┐
-│ [Auditoria]                       [⏱ 7 dias ▾]   │  ← Global
-├──────────────────────────────────────────────────┤
-│ KPIs                              [⏱ Hoje ▾] [↻] │  ← override
-│ ┌─────┐┌─────┐┌─────┐┌─────┐                    │
-├──────────────────────────────────────────────────┤
-│ Atribuição por origem  [Dim ▾] [⏱ 7d ▾] [CSV]   │
-│ ...                                              │
-├──────────────────────────────────────────────────┤
-│ Compradores LTV     [≤7d|8-30|...] [⏱ 1m ▾][CSV]│
-│ ...                                              │
-├──────────────────────────────────────────────────┤
-│ First vs Last click            [⏱ 14d ▾]         │
-└──────────────────────────────────────────────────┘
+se template.plan_ids vazio  → passa
+se perfis.plan_id casa      → passa (comportamento atual)
+se variables.plan_slug bate com algum plans.slug em template.plan_ids → passa
+caso contrário              → bloqueia
 ```
 
-## Fora do escopo
+Para isso, `should_send_template` precisa receber `p_variables jsonb` (nova assinatura). Atualizamos:
+- `should_send_template(template_id, user_id, variables)` (nova)
+- `queue_templates_for_event` passa `p_variables` adiante
+- `queue_email_templates_for_event` idem (mesmo filtro vale para email)
 
-- Não altera lógica de cálculo do hook nem o schema do banco.
-- Não persiste overrides entre sessões.
+### 2. Skip "já pago" no envio (process-queue)
+
+Antes de marcar como `sent`, o `process-queue` verifica, **só para mensagens de templates com `event_trigger='pix_gerado'`**:
+
+```text
+existe em events um registro com event_type='compra_aprovada' (ou 'sale_confirmed')
+  para o mesmo user_id (resolvido por phone do recipient)
+  criado APÓS o created_at deste item da fila?
+→ se sim, marca status='skipped_paid' e não envia.
+```
+
+Implementação: query única em `events` por `user_id + event_type IN (compra_aprovada, sale_confirmed) + created_at > queue.created_at`. Resolvemos `user_id` via `perfis.celular = recipient_phone` (existe índice).
+
+### 3. Criar os 4 templates + 10 variantes cada
+
+Para cada um dos 4 planos: `INSERT` em `message_templates` (event_trigger=`pix_gerado`, `plan_ids={plan_id}`) + 10 `INSERT` em `message_template_variants` (positions 1–10) com texto humanizado, sem citar tom robótico, com `{{nome}}`, `{{pix_codigo}}` e `{{link_novo_pix}}`.
+
+**Template base do usuário (variação 1, ajustada por produto):**
+
+```
+Olá {{nome}}, seus 15 palpites quentes de Lotofácil já estão a um passo!
+Estou no contato para facilitar o recebimento — segue abaixo o seu PIX
+para concluir o pagamento.
+
+PIX (copia e cola):
+{{pix_codigo}}
+
+Caso queira gerar um novo PIX:
+{{link_novo_pix}}
+```
+
+As 10 variantes mudam apenas tom/abertura/CTA (mantendo as mesmas variáveis), por produto:
+
+- Grupo VIP Lotofácil → fala de "15 palpites quentes da Lotofácil"
+- Mensal / Semestral / Anual → fala em "acesso completo da Comunidade" e benefícios do plano
+
+### 4. Desativar (não deletar) o template antigo
+
+`UPDATE message_templates SET is_active=false WHERE id='5730df1c-…6625'` para não duplicar mensagem.
+
+## Mudanças técnicas (resumo)
+
+1. **Migration**:
+   - Nova versão de `should_send_template(uuid, uuid, jsonb)` com lookup adicional por `plan_slug` em `variables`.
+   - Atualizar `queue_templates_for_event` e `queue_email_templates_for_event` para repassar `p_variables`.
+2. **process-queue** (`supabase/functions/process-queue/index.ts`):
+   - Antes do envio, se `template.event_trigger='pix_gerado'`, consulta `events` por compra aprovada posterior ao `created_at` do item. Se houver → marca `status='skipped_paid'` com `error_message='compra ja aprovada'`.
+3. **Insert (data, via tool de insert)**:
+   - 4 linhas em `message_templates` (uma por plano, com `plan_ids={plan_id}`).
+   - 40 linhas em `message_template_variants` (10 por template).
+   - `UPDATE` desativando o template `pix_gerado` genérico atual.
+
+## Fora de escopo
+
+- Não muda nada no webhook handler (já popula `plan_slug`, `pix_codigo` e `total_price` corretamente).
+- Não cria novo evento — reutiliza `pix_gerado`.
+- Não toca em emails: o mesmo filtro nasce funcionando para `queue_email_templates_for_event`, mas **não** vamos criar templates de email agora (apenas WhatsApp, conforme pedido).
