@@ -25,8 +25,15 @@ interface ScheduleInfo {
 
 function describeSchedule(schedule: string): string {
   if (schedule === "* * * * *") return "A cada 1 minuto";
+  if (schedule === "*/30 * * * *") return "A cada 30 minutos";
   if (schedule === "0 7 * * *") return "Diário às 04:00 BRT (07:00 UTC)";
   return schedule;
+}
+
+interface TodayCounts {
+  pending: number;
+  sent: number;
+  failed: number;
 }
 
 interface Props {
