@@ -180,7 +180,6 @@ export async function handleSend(
     .select("*")
     .eq("status", "pending")
     .lte("scheduled_for", new Date().toISOString())
-    .neq("message_content", "")
     .order("scheduled_for", { ascending: true })
     .limit(5);
 
@@ -193,11 +192,41 @@ export async function handleSend(
 
   console.log(`[dispatch] send: ${logs.length} pronto(s) — ids=${logs.map((l: any) => l.id).join(",")}`);
 
+  const apiKey = Deno.env.get("LOVABLE_API_KEY") ?? "";
+  const baseUrl = Deno.env.get("COMMUNITY_BASE_URL") ?? "";
+
   let sent = 0;
   let failed = 0;
   let pendingNoInstance = 0;
 
   for (const log of logs) {
+    // Safety net: log sem conteúdo (órfão de transição ou falha de prepare)
+    // Tenta resolver na hora; se falhar, marca failed em vez de ficar preso.
+    if (!log.message_content?.trim()) {
+      console.warn(`[dispatch] log=${log.id} sem message_content — tentando last-chance resolve`);
+      const { data: cfg } = await supabase
+        .from("group_blast_configs")
+        .select("slots, palpite_settings")
+        .eq("id", log.config_id)
+        .maybeSingle();
+      const slot = (cfg?.slots ?? []).find((s: any) => s.id === log.slot_id);
+      const r = await resolveMessage(supabase, slot, cfg, apiKey, baseUrl);
+      if (!r.content) {
+        await markFailed(
+          supabase,
+          log.id,
+          `Sem conteúdo pré-resolvido + last-chance resolve falhou (source=${r.source})`,
+        );
+        failed++;
+        continue;
+      }
+      log.message_content = r.content;
+      await supabase
+        .from("group_blast_logs")
+        .update({ message_content: r.content, message_source: r.source })
+        .eq("id", log.id);
+    }
+
     const { data: candidates, error: candErr } = await selectInstancesForGroup(
       supabase,
       log.group_jid,
