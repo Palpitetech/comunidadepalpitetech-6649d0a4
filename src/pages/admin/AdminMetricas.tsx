@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Copy, ShieldCheck } from "lucide-react";
+import { Copy, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   resolvePeriod,
@@ -30,6 +30,13 @@ import {
   BlockPeriodState,
   initialBlockPeriodState,
 } from "@/components/admin/metricas/BlockPeriodControl";
+import {
+  KPIsSkeleton,
+  TableCardSkeleton,
+  FirstVsLastSkeleton,
+  FunnelSkeleton,
+} from "@/components/admin/metricas/MetricsSkeletons";
+import { Loader2 } from "lucide-react";
 
 const BASE_URL = "comunidadepalpitetech.lovable.app";
 
