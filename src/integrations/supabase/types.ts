@@ -1162,6 +1162,7 @@ export type Database = {
           instance_id: string | null
           last_error_at: string | null
           message_content: string
+          message_source: string | null
           retry_count: number
           scheduled_for: string
           sent_at: string | null
@@ -1178,6 +1179,7 @@ export type Database = {
           instance_id?: string | null
           last_error_at?: string | null
           message_content: string
+          message_source?: string | null
           retry_count?: number
           scheduled_for: string
           sent_at?: string | null
@@ -1194,6 +1196,7 @@ export type Database = {
           instance_id?: string | null
           last_error_at?: string | null
           message_content?: string
+          message_source?: string | null
           retry_count?: number
           scheduled_for?: string
           sent_at?: string | null
@@ -1224,6 +1227,8 @@ export type Database = {
           id: string
           ran_at: string
           skipped_dedup: number
+          slots_failed_resolution: number
+          slots_resolved: number
           slots_scheduled: number
         }
         Insert: {
@@ -1232,6 +1237,8 @@ export type Database = {
           id?: string
           ran_at?: string
           skipped_dedup?: number
+          slots_failed_resolution?: number
+          slots_resolved?: number
           slots_scheduled?: number
         }
         Update: {
@@ -1240,6 +1247,8 @@ export type Database = {
           id?: string
           ran_at?: string
           skipped_dedup?: number
+          slots_failed_resolution?: number
+          slots_resolved?: number
           slots_scheduled?: number
         }
         Relationships: [
