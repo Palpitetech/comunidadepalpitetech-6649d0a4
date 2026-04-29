@@ -3721,6 +3721,17 @@ export type Database = {
         Args: { p_template_id: string }
         Returns: string
       }
+      queue_email_templates_for_event: {
+        Args: {
+          p_email: string
+          p_event_trigger: string
+          p_name: string
+          p_priority?: number
+          p_user_id: string
+          p_variables?: Json
+        }
+        Returns: number
+      }
       queue_templates_for_event: {
         Args: {
           p_event_trigger: string
