@@ -1,8 +1,30 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, FileText } from "lucide-react";
+import { ArrowLeft, FileText, Play, BarChart3 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+
+interface EstudoApresentacao {
+  slug: string;
+  titulo: string;
+  descricao: string;
+  rota: string;
+  cor: string;
+}
+
+const APRESENTACOES_POR_LOTERIA: Record<string, EstudoApresentacao[]> = {
+  megasena: [
+    {
+      slug: "posicoes-finais",
+      titulo: "Posições Finais",
+      descricao: "Análise das dezenas mais frequentes nas posições 4, 5 e 6 — 6 slides em tela cheia para gravação.",
+      rota: "/admin/gravacao-estudo/megasena/posicoes-finais",
+      cor: "#7C3AED",
+    },
+  ],
+  lotofacil: [],
+  quina: [],
+};
 
 const LOTERIA_TAG: Record<string, { tag: string; cor: string; nome: string }> = {
   lotofacil: { tag: "Lotofácil", cor: "hsl(270 60% 50%)", nome: "Lotofácil" },
