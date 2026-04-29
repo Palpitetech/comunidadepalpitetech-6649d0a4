@@ -13,6 +13,11 @@ import { SmartLinksTab } from "@/components/admin/whatsapp/SmartLinksTab";
 import { MensagensTab } from "@/components/admin/whatsapp/MensagensTab";
 import { RetargetingPanelTab } from "@/components/admin/whatsapp/RetargetingPanelTab";
 import { WhatsAppSubSidebar, whatsappTabs } from "@/components/admin/whatsapp/WhatsAppSubSidebar";
+import { EmailTemplatesTab } from "@/components/admin/email/EmailTemplatesTab";
+import { EmailFilaTab } from "@/components/admin/email/EmailFilaTab";
+import { EmailLogsTab } from "@/components/admin/email/EmailLogsTab";
+import { EmailDisparoManualTab } from "@/components/admin/email/EmailDisparoManualTab";
+import { EmailSuppressionsTab } from "@/components/admin/email/EmailSuppressionsTab";
 import { ForceUpdateButton } from "@/components/admin/ForceUpdateButton";
 import { cn } from "@/lib/utils";
 
@@ -29,13 +34,18 @@ const TAB_TITLES: Record<string, string> = {
   aquecimento: "Aquecimento",
   grupos: "Grupos",
   "smart-links": "Smart Links",
+  "email-templates": "Templates de Email",
+  "email-fila": "Fila de Email",
+  "email-disparo": "Disparo Manual de Email",
+  "email-logs": "Logs de Email",
+  "email-suppressions": "Emails Bloqueados",
 };
 
 export default function AdminWhatsApp() {
   const [activeTab, setActiveTab] = useState("instancias");
 
   return (
-    <AdminLayout pageTitle="WhatsApp">
+    <AdminLayout pageTitle="Comunicação">
       {/* Mobile: pill tabs */}
       <div className="overflow-x-auto px-4 pt-3 no-scrollbar md:hidden">
         <div className="flex gap-1.5 min-w-max">
@@ -82,6 +92,11 @@ export default function AdminWhatsApp() {
               {activeTab === "aquecimento" && <AquecimentoTab />}
               {activeTab === "grupos" && <GruposTab />}
               {activeTab === "smart-links" && <SmartLinksTab />}
+              {activeTab === "email-templates" && <EmailTemplatesTab />}
+              {activeTab === "email-fila" && <EmailFilaTab />}
+              {activeTab === "email-disparo" && <EmailDisparoManualTab />}
+              {activeTab === "email-logs" && <EmailLogsTab />}
+              {activeTab === "email-suppressions" && <EmailSuppressionsTab />}
             </div>
           </div>
         </div>
