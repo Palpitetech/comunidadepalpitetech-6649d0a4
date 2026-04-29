@@ -1,96 +1,74 @@
 
-# Parte 5 — Revisão Geral (Resultado da Auditoria)
+# Mensagens de templates falhando — Causa raiz e correção
 
-Fiz a varredura ponto a ponto pedida nas etapas 5.1–5.6. A maior parte está conforme. Encontrei **3 itens menores** que merecem ajuste antes de fechar a Parte 5. Tudo o resto passou.
+## Diagnóstico (confirmado nos dados reais)
 
----
+Nas últimas 48h: **4 falhas, 3 sucessos**. As 4 falhas — todas as compras aprovadas — têm o **mesmo erro** retornado pela Evolution API:
 
-## Resultado por etapa
-
-### 5.1 — Visual ✅
-- Ordem correta no `MonitorGruposTab`: **Pipeline Health → Auditoria do Prepare → Instâncias × Grupos → Histórico Detalhado**.
-- Cores consistentes: todos os componentes derivam de `getHealthStyle()` em `monitor/healthStatus.ts` (verde/laranja/vermelho/cinza).
-- Grids responsivos (`grid-cols-2 lg:grid-cols-4` no Health, `overflow-x-auto` nas tabelas).
-- Tooltip nos JIDs truncados da matriz funciona via `TooltipProvider`.
-
-### 5.2 — Dados ✅
-- `PipelineHealthCard`: lê `group_blast_prepare_runs`, `group_blast_logs` (janela BRT correta), `whatsapp_instances` e próximo pendente — coerente.
-- `PrepareAuditTable`: `LIMIT 7` por `ran_at desc`, com JOIN manual em `group_blast_configs` para o nome.
-- `InstanceGroupMatrix`: 3 queries (instâncias, configs ativas, mapeamentos) — sem N+1.
-- `GroupBlastLogsCard`: filtros aplicados na query (status, config, datas) com `LIMIT 100`.
-
-### 5.3 — Duplicidades ⚠️ (1 ajuste)
-- `group_blast_configs` é lido em 4 lugares, **mas todos com propósito legítimo**:
-  - `useGroupBlastConfigs` (lista completa para Disparo + Monitor) ✅
-  - `PrepareAuditTable` (apenas `id, name` por `IN (...)` para JOIN) ✅
-  - `InstanceGroupMatrix` (apenas `group_jids` de configs ativas) ✅
-  - `PipelineHealthCard` (apenas `name` de 1 config — `eq(id, ...)`) ✅
-- Formatação BRT centralizada em `@/lib/dateUtils` ✅
-- `getHealthStyle` reutilizado no Pipeline e na Matriz ✅
-- `GroupBlastLogsCard` **não está mais** na `DisparoGrupoTab` ✅
-- **⚠️ Ajuste 1:** `GroupBlastLogsCard` ainda tem um mini-bloco interno de "auditoria do último prepare" (linhas 112–169 — `fetchLastRun` + Card pontilhado no topo). Isso agora **duplica** o `PrepareAuditTable` no Monitor. Remover o `lastRun`/`fetchLastRun` desse componente.
-
-### 5.4 — Performance ✅ (1 observação)
-- `setInterval` só existe no `PipelineHealthCard` e tem `clearInterval` no cleanup ✅
-- `InstanceGroupMatrix` faz exatamente 3 queries (Promise.all) ✅
-- `GroupBlastLogsCard` pagina em 100 com aviso de truncagem ✅
-- **⚠️ Ajuste 2:** `DisparoGrupoTab` faz N queries em loop para popular `lastLogs` (uma `select` por config, linhas 109–123). Para 5+ configs vira fetch sequencial desnecessário. Trocar por **1 query** com `.in("config_id", ids)` e agrupar no cliente.
-
-### 5.5 — Manutenibilidade ✅ (1 ajuste)
-- Header de propósito presente em todos os arquivos novos ✅
-- Props tipadas em todos os componentes do `monitor/` ✅
-- `monitor/index.ts` exporta os 3 cards ✅
-- **⚠️ Ajuste 3:** `MonitorGruposTab` importa via caminhos relativos (`./monitor/PipelineHealthCard`) em vez do barrel `./monitor`. Trocar para o barrel (consistência + facilita futuros movimentos).
-
-### 5.6 — Checklist final
-| Item | Status |
-|------|--------|
-| Aba "Monitor Grupos" no menu (entre Disparo Grupo e Aquecimento) | ✅ |
-| 4 cards de saúde com cores e dados reais | ✅ |
-| Auditoria com 7 runs e erros expansíveis | ✅ |
-| Matriz instâncias × grupos completa | ✅ |
-| Logs com filtros e Reenviar | ✅ |
-| `DisparoGrupoTab` sem `GroupBlastLogsCard` | ✅ |
-| Hook `useGroupBlastConfigs` em uso | ✅ |
-| Zero `console.log` de debug nos arquivos novos | ✅ (verificado com `rg`) |
-| Build sem erros | ✅ (sem mudanças desde a última build) |
-
----
-
-## Plano de ajustes (mudanças pequenas)
-
-### Ajuste 1 — `GroupBlastLogsCard.tsx`
-Remover do componente:
-- Interface `PrepareRun`
-- Estado `lastRun` e função `fetchLastRun`
-- Chamada de `fetchLastRun()` no `useEffect`
-- Botão "Atualizar" também não precisa mais chamar `fetchLastRun`
-- Bloco JSX do Card pontilhado (linhas 149–169)
-
-Justificativa: `PrepareAuditTable` no Monitor já mostra os 7 últimos runs com mais detalhe.
-
-### Ajuste 2 — `DisparoGrupoTab.tsx` (`useEffect` de `lastLogs`)
-Substituir o loop por uma única query:
-```ts
-const ids = configs.map(c => c.id);
-const { data } = await supabase
-  .from("group_blast_logs")
-  .select("*")
-  .in("config_id", ids)
-  .order("created_at", { ascending: false });
-// reduzir para o mais recente por config_id no cliente
+```
+HTTP 400: {"status":400,"error":"Bad Request",
+ "response":{"message":[{"jid":"<numero>@s.whatsapp.net","exists":false,"number":"<numero>"}]}}
 ```
 
-### Ajuste 3 — `MonitorGruposTab.tsx`
-Trocar 3 imports relativos por:
+| Cliente | `recipient_phone` salvo | DDD interpretado errado pela Evolution |
+|---|---|---|
+| Maria Regina | `55999051993` | `55` virou DDI, sobra `999051993` |
+| Francisco Sales | `98984954601` | `98` (MA) virou DDI |
+| Denis Cury | `11991447973` | `11` (SP) virou DDI (USA) |
+| Alexandre Nalon | `33991540838` | `33` (MG) virou DDI (França) |
+
+### Por que está acontecendo
+1. Webhook do Kirvano chega em `handle-kirvano-webhook/index.ts`. A função `normalizePhone()` (linhas 79–87) **remove** o `55` quando o número tem 12/13 dígitos.
+2. O número é salvo em `perfis.celular` e na fila `message_queue.recipient_phone` **sem o DDI**, com 10 ou 11 dígitos.
+3. `process-queue/index.ts` linha 137 envia para a Evolution **direto**: `number: item.recipient_phone`.
+4. A Evolution monta o JID `<DDD+numero>@s.whatsapp.net` — sem `55` — e responde `exists: false` porque interpreta o DDD como código de país.
+
+**Os números existem no WhatsApp; o problema é o formato enviado.** O resto do sistema já espera os dados sem o DDI; não convém mexer no que está armazenado.
+
+## Correção (cirúrgica, 1 arquivo)
+
+Em **`supabase/functions/process-queue/index.ts`** (função que dispara templates da fila), prefixar `55` no momento do POST para a Evolution, sem alterar o valor salvo no banco:
+
 ```ts
-import { PipelineHealthCard, PrepareAuditTable, InstanceGroupMatrix } from "./monitor";
+// Antes do fetch:
+const digits = String(item.recipient_phone || "").replace(/\D/g, "");
+const numberWithDdi =
+  digits.startsWith("55") && (digits.length === 12 || digits.length === 13)
+    ? digits
+    : `55${digits}`;
+
+// No body:
+body: JSON.stringify({ number: numberWithDdi, text: messageText }),
 ```
 
----
+Trata os 3 casos:
+- `11991447973` (11 dígitos) → vira `5511991447973` ✅
+- `98984954601` (11 dígitos) → vira `5598984954601` ✅
+- `5511991447973` (já com DDI) → mantém ✅
+- `999051993` (9 dígitos, irregular) → vira `55999051993` (Evolution julga validade)
 
-## Fora do escopo (apenas registrado)
-- `GroupBlastScheduleCard` permanece **só** na `DisparoGrupoTab` (operacional: "Reagendar agora"). Não duplica nada do Monitor — mantido como decidido na Parte 4.
-- `DisparoGrupoTab` ainda tem um `setLoading` redundante espelhando `configsLoading` (ruído mínimo, deixar para uma futura limpeza maior do arquivo).
+## Reprocessamento dos 4 envios falhos
 
-Aprovando este plano, aplico os 3 ajustes em uma única passagem e a Parte 5 fica fechada.
+Após o fix, reenfileirar via UPDATE:
+
+```sql
+UPDATE message_queue
+SET status = 'pending', error_message = NULL, retry_count = 0
+WHERE id IN (
+ 'fa0ac564-4d4a-4f78-8115-28d11d018b80',
+ 'a3c38ff5-06c5-41f0-8c54-d69af2e7c3ab',
+ '381a40c6-fc3b-4f4a-9f2b-4e954ca7ff2d',
+ '4962fb83-341e-4762-adc0-d2e8d64a0bfc'
+);
+```
+
+Como UPDATE não é permitido pelo acesso atual, isso vira uma **migration** após aprovação.
+
+## Fora do escopo (registrado, não vou tocar agora)
+- `process-lead-retargeting`, `cadastro-iniciar-whatsapp`, broadcasts de grupo: usam fluxos próprios, não impactaram esses 4 envios. Se quiser, em uma próxima rodada centralizo o "garante DDI" em `_shared/br-phone.ts` e aplico em todos os pontos.
+- `normalizePhone` no webhook do Kirvano: deixar como está. Mexer ali muda dado armazenado em perfis e quebra outras buscas.
+
+## Resumo do que muda ao aprovar
+1. Edit em `supabase/functions/process-queue/index.ts` (8 linhas).
+2. Migration reabrindo as 4 mensagens falhas como `pending`.
+3. O cron pega as 4 no próximo ciclo e dispara — agora com `5511…`, `5598…` etc.
