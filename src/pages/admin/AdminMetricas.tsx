@@ -122,7 +122,7 @@ export default function AdminMetricas() {
     };
   }, [funnelData]);
 
-  const isInitialLoading = kpisQuery.isLoading && !kpisQuery.data;
+  const isInitialLoading = false; // legado: loading agora é por bloco
 
   return (
     <AdminLayout pageTitle="Métricas">
@@ -151,100 +151,100 @@ export default function AdminMetricas() {
           </Button>
         </div>
 
-        {isInitialLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
+        {/* Bloco A — KPIs */}
+        {kpisQuery.isLoading || !kpisQuery.data ? (
+          <KPIsSkeleton />
         ) : (
-          <>
-            {/* Bloco A — KPIs */}
-            {kpisQuery.data && (
-              <MetricsKPIs
-                data={kpisQuery.data}
-                headerExtra={
-                  <BlockPeriodControl
-                    state={kpisState}
-                    onChange={setKpisState}
-                    globalPeriodKey={periodKey}
-                    globalCustomRange={customRange}
-                  />
-                }
+          <MetricsKPIs
+            data={kpisQuery.data}
+            headerExtra={
+              <BlockPeriodControl
+                state={kpisState}
+                onChange={setKpisState}
+                globalPeriodKey={periodKey}
+                globalCustomRange={customRange}
               />
-            )}
+            }
+          />
+        )}
 
-            {/* Bloco B — Tabela por dimensão */}
-            {attrQuery.data && (
-              <AttributionTable
-                data={attrQuery.data}
-                dimension={dimension}
-                onDimensionChange={setDimension}
-                headerExtra={
-                  <BlockPeriodControl
-                    state={attrState}
-                    onChange={setAttrState}
-                    globalPeriodKey={periodKey}
-                    globalCustomRange={customRange}
-                  />
-                }
+        {/* Bloco B — Tabela por dimensão */}
+        {attrQuery.isLoading || !attrQuery.data ? (
+          <TableCardSkeleton titleWidth="w-56" rows={6} cols={8} />
+        ) : (
+          <AttributionTable
+            data={attrQuery.data}
+            dimension={dimension}
+            onDimensionChange={setDimension}
+            headerExtra={
+              <BlockPeriodControl
+                state={attrState}
+                onChange={setAttrState}
+                globalPeriodKey={periodKey}
+                globalCustomRange={customRange}
               />
-            )}
+            }
+          />
+        )}
 
-            {/* Bloco C — Compradores LTV */}
-            {buyersQuery.data && (
-              <BuyersLTVTable
-                data={buyersQuery.data}
-                headerExtra={
-                  <BlockPeriodControl
-                    state={buyersState}
-                    onChange={setBuyersState}
-                    globalPeriodKey={periodKey}
-                    globalCustomRange={customRange}
-                  />
-                }
+        {/* Bloco C — Compradores LTV */}
+        {buyersQuery.isLoading || !buyersQuery.data ? (
+          <TableCardSkeleton titleWidth="w-64" rows={6} cols={8} />
+        ) : (
+          <BuyersLTVTable
+            data={buyersQuery.data}
+            headerExtra={
+              <BlockPeriodControl
+                state={buyersState}
+                onChange={setBuyersState}
+                globalPeriodKey={periodKey}
+                globalCustomRange={customRange}
               />
-            )}
+            }
+          />
+        )}
 
-            {/* Bloco C2 — First vs Last Click */}
-            {clickQuery.data && (
-              <FirstVsLastClickTable
-                data={clickQuery.data}
-                headerExtra={
-                  <BlockPeriodControl
-                    state={clickState}
-                    onChange={setClickState}
-                    globalPeriodKey={periodKey}
-                    globalCustomRange={customRange}
-                  />
-                }
+        {/* Bloco C2 — First vs Last Click */}
+        {clickQuery.isLoading || !clickQuery.data ? (
+          <FirstVsLastSkeleton />
+        ) : (
+          <FirstVsLastClickTable
+            data={clickQuery.data}
+            headerExtra={
+              <BlockPeriodControl
+                state={clickState}
+                onChange={setClickState}
+                globalPeriodKey={periodKey}
+                globalCustomRange={customRange}
               />
-            )}
+            }
+          />
+        )}
 
-            {/* Bloco D — Funil + Gerador */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader className="pb-3 flex-row items-center justify-between gap-2 flex-wrap">
-                  <CardTitle className="text-base">📈 Funil do período</CardTitle>
-                  <BlockPeriodControl
-                    state={funnelState}
-                    onChange={setFunnelState}
-                    globalPeriodKey={periodKey}
-                    globalCustomRange={customRange}
-                  />
-                </CardHeader>
-                <CardContent>
-                  {funnelData ? (
-                    <pre className="text-xs font-mono leading-relaxed text-foreground bg-muted/40 rounded-lg p-3 overflow-x-auto">
+        {/* Bloco D — Funil + Gerador */}
+        <div className="grid md:grid-cols-2 gap-4">
+          {funnelQuery.isLoading || !funnelData ? (
+            <FunnelSkeleton />
+          ) : (
+            <Card>
+              <CardHeader className="pb-3 flex-row items-center justify-between gap-2 flex-wrap">
+                <CardTitle className="text-base">📈 Funil do período</CardTitle>
+                <BlockPeriodControl
+                  state={funnelState}
+                  onChange={setFunnelState}
+                  globalPeriodKey={periodKey}
+                  globalCustomRange={customRange}
+                />
+              </CardHeader>
+              <CardContent>
+                <pre className="text-xs font-mono leading-relaxed text-foreground bg-muted/40 rounded-lg p-3 overflow-x-auto">
 {`Leads       ${funnel?.leads ?? ""} ${fmtNum(funnelData.totalLeads)}
 Cadastros   ${funnel?.cadastros ?? ""} ${fmtNum(funnelData.totalCadastros)} (${fmtPct(funnelData.convLeadCadastro)})
 Compradores ${funnel?.compradores ?? ""} ${fmtNum(funnelData.totalCompradores)} (${fmtPct(funnelData.convCadCompra)})`}
-                    </pre>
-                  ) : (
-                    <div className="flex justify-center py-6">
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                </pre>
+              </CardContent>
+            </Card>
+          )}
 
               <Card>
                 <CardHeader className="pb-3">
