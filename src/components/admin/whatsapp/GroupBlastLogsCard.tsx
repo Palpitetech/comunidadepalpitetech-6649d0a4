@@ -172,7 +172,7 @@ export function GroupBlastLogsCard({ configs }: Props) {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <Send className="h-4 w-4" />
-            Histórico de Envios
+            Histórico Detalhado de Envios
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">

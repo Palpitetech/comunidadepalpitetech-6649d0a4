@@ -13,10 +13,10 @@ import { toast } from "sonner";
 import { Plus, Pencil, Pause, Play, TestTube, X, Clock, Send, Trash2, Sparkles, Bot, PenLine, Dices, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageStatusBadge } from "./shared/MessageStatusBadge";
+
 import { GroupBlastScheduleCard } from "./GroupBlastScheduleCard";
-import { GroupBlastLogsCard } from "./GroupBlastLogsCard";
 import { GroupAdminsCard } from "./GroupAdminsCard";
+import { useGroupBlastConfigs } from "@/hooks/useGroupBlastConfigs";
 
 type BlastLoteria = "lotofacil" | "megasena";
 
@@ -74,13 +74,10 @@ interface BlastLog {
 }
 
 export function DisparoGrupoTab() {
-  const [configs, setConfigs] = useState<BlastConfig[]>([]);
-  const [logs, setLogs] = useState<BlastLog[]>([]);
+  const { configs, loading: configsLoading, refetch: refetchConfigs } = useGroupBlastConfigs();
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingConfig, setEditingConfig] = useState<BlastConfig | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [configFilter, setConfigFilter] = useState<string>("all");
 
   // Form state
   const [formName, setFormName] = useState("");
@@ -95,38 +92,23 @@ export function DisparoGrupoTab() {
   });
   const [saving, setSaving] = useState(false);
 
-  // Last log per config
+  // Last log per config (mostrado nos cards de configuração)
   const [lastLogs, setLastLogs] = useState<Record<string, BlastLog>>({});
 
   useEffect(() => {
-    fetchAll();
-  }, []);
+    setLoading(configsLoading);
+  }, [configsLoading]);
 
-  async function fetchAll() {
-    setLoading(true);
-    await Promise.all([fetchConfigs(), fetchLogs()]);
-    setLoading(false);
-  }
-
-  async function fetchConfigs() {
-    const { data, error } = await supabase
-      .from("group_blast_configs")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) {
-      console.error(error);
+  // Atualiza últimas mensagens sempre que a lista de configs muda
+  useEffect(() => {
+    if (configs.length === 0) {
+      setLastLogs({});
       return;
     }
-    const parsed = (data || []).map((c: any) => ({
-      ...c,
-      slots: Array.isArray(c.slots) ? c.slots : [],
-    }));
-    setConfigs(parsed);
-
-    // Fetch last log for each config
-    if (parsed.length > 0) {
+    let cancelled = false;
+    (async () => {
       const map: Record<string, BlastLog> = {};
-      for (const c of parsed) {
+      for (const c of configs) {
         const { data: logData } = await supabase
           .from("group_blast_logs")
           .select("*")
@@ -137,26 +119,21 @@ export function DisparoGrupoTab() {
           map[c.id] = logData[0] as any;
         }
       }
-      setLastLogs(map);
-    }
-  }
+      if (!cancelled) setLastLogs(map);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [configs]);
 
-  async function fetchLogs() {
-    const { data, error } = await supabase
-      .from("group_blast_logs")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(50);
-    if (error) {
-      console.error(error);
-      return;
-    }
-    setLogs((data as any) || []);
+  async function fetchAll() {
+    await refetchConfigs();
   }
 
   function createEmptySlot(index: number): Slot {
     return { id: `slot_${index}`, schedule_times: [], last_scheduled_index: -1, message_type: "ai", message_content: "", loteria: "lotofacil" };
   }
+
 
   function openNewDialog() {
     setEditingConfig(null);
@@ -306,7 +283,7 @@ export function DisparoGrupoTab() {
       } else {
         toast.success("Configuração atualizada!");
         setDialogOpen(false);
-        fetchConfigs();
+        refetchConfigs();
       }
     } else {
       const { error } = await supabase
@@ -317,7 +294,7 @@ export function DisparoGrupoTab() {
       } else {
         toast.success("Configuração criada!");
         setDialogOpen(false);
-        fetchConfigs();
+        refetchConfigs();
       }
     }
     setSaving(false);
@@ -332,7 +309,7 @@ export function DisparoGrupoTab() {
       toast.error("Erro: " + error.message);
     } else {
       toast.success(config.is_active ? "Pausado" : "Ativado");
-      fetchConfigs();
+      refetchConfigs();
     }
   }
 
@@ -345,7 +322,7 @@ export function DisparoGrupoTab() {
       });
       if (error) throw error;
       toast.success(`✅ ${config.slots.length} mensagem(ns) agendada(s) para teste!`);
-      setTimeout(() => fetchLogs(), 2000);
+      // Logs aparecem na aba "Monitor Grupos".
     } catch (err: any) {
       toast.error("Erro: " + err.message);
     }
@@ -359,7 +336,7 @@ export function DisparoGrupoTab() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast.success(`🚀 Disparo agendado! Será enviado em ~5s.`);
-      setTimeout(() => fetchLogs(), 3000);
+      // Logs aparecem na aba "Monitor Grupos".
     } catch (err: any) {
       toast.error("Erro: " + err.message);
     }
@@ -379,17 +356,6 @@ export function DisparoGrupoTab() {
     }
   }
 
-  function getConfigName(configId: string) {
-    return configs.find((c) => c.id === configId)?.name || "—";
-  }
-
-  const filteredLogs = logs.filter((l) => {
-    if (statusFilter !== "all" && l.status !== statusFilter) return false;
-    if (configFilter !== "all" && l.config_id !== configFilter) return false;
-    return true;
-  });
-
-  const statusBadge = (status: string) => <MessageStatusBadge status={status} variant="short" />;
 
   if (loading) {
     return <div className="text-center py-8 text-muted-foreground">Carregando...</div>;
@@ -590,9 +556,6 @@ export function DisparoGrupoTab() {
           })}
         </div>
       )}
-
-      {/* Logs Section */}
-      <GroupBlastLogsCard configs={configs.map((c) => ({ id: c.id, name: c.name }))} />
 
       {/* Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

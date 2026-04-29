@@ -1,9 +1,13 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// Aba Monitor Grupos: visão consolidada da saúde do pipeline de disparo em grupo.
 import PipelineHealthCard from "./monitor/PipelineHealthCard";
 import PrepareAuditTable from "./monitor/PrepareAuditTable";
 import InstanceGroupMatrix from "./monitor/InstanceGroupMatrix";
+import { GroupBlastLogsCard } from "./GroupBlastLogsCard";
+import { useGroupBlastConfigs } from "@/hooks/useGroupBlastConfigs";
 
 export default function MonitorGruposTab() {
+  const { configs } = useGroupBlastConfigs();
+
   return (
     <div className="space-y-4">
       <div>
@@ -16,15 +20,7 @@ export default function MonitorGruposTab() {
       <PipelineHealthCard />
       <PrepareAuditTable />
       <InstanceGroupMatrix />
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Histórico Detalhado</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">Em construção...</p>
-        </CardContent>
-      </Card>
+      <GroupBlastLogsCard configs={configs.map((c) => ({ id: c.id, name: c.name }))} />
     </div>
   );
 }

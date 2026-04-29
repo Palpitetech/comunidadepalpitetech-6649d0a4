@@ -1,56 +1,72 @@
-## Parte 3 — Auditoria do Prepare + Matriz Instâncias × Grupos
+## Parte 4 — Logs no Monitor + Limpeza Final
 
 ### Arquivos a criar
 
-**1. `src/components/admin/whatsapp/monitor/PrepareAuditTable.tsx`**
+**1. `src/hooks/useGroupBlastConfigs.ts`** — hook compartilhado entre `DisparoGrupoTab` e `MonitorGruposTab`.
 
-Busca dos últimos 7 runs de `group_blast_prepare_runs`:
-- Query principal: `select id, ran_at, config_id, slots_scheduled, slots_resolved, slots_failed_resolution, skipped_dedup, error_message order by ran_at desc limit 7`.
-- Resolução de nome da config: segunda query em `group_blast_configs` com `.in('id', configIds)` (mais simples que JOIN; runs com `config_id` nulo aparecem como "Global").
-- Reutiliza `formatBRT` da Parte 2.
+```ts
+// Hook compartilhado: busca group_blast_configs + slots normalizados.
+export function useGroupBlastConfigs() {
+  // useState configs, loading
+  // fetchConfigs() → select * from group_blast_configs order by created_at desc
+  //   normaliza c.slots = Array.isArray(c.slots) ? c.slots : []
+  // useEffect → fetchConfigs() no mount
+  // returns { configs, loading, refetch: fetchConfigs }
+}
+```
 
-UI:
-- `Card` shadcn com header (título + subtítulo "Últimos 7 runs do prepare" + botão refresh com spinner).
-- `Table` com colunas: chevron expand · Data/hora · Config · Agendados (right) · Dedup (right) · Status (centro).
-- Status badge: verde "OK" (`CheckCircle2`) se `slots_scheduled > 0 && !error_message`; senão vermelho "Falha" (`XCircle`).
-- Linha com `slots_scheduled === 0` recebe `bg-red-50`.
-- Linhas com `error_message` ficam clicáveis (`cursor-pointer`); ao clicar, expande uma sub-row mostrando o erro completo (`whitespace-pre-wrap`) + contador de `slots_failed_resolution` se > 0.
-- Estado vazio: "Nenhum run registrado".
-
-**2. `src/components/admin/whatsapp/monitor/InstanceGroupMatrix.tsx`**
-
-Fetches em paralelo via `Promise.all`:
-- `whatsapp_instances` → `id, friendly_name, name, status, last_message_at` ordenado por nome.
-- `group_blast_configs` ativas → `group_jids`; agrega num `Set<string>` de JIDs únicos, ordenado.
-- `whatsapp_instance_groups` → `instance_id, group_jid`; vira `Set<"${instId}::${jid}">` para lookup O(1).
-
-UI:
-- `Card` com refresh button.
-- `Table` com primeira coluna fixa (instância) e uma coluna por JID. JID exibido truncado (`…últimos 10 chars` sem `@g.us`) com `Tooltip` mostrando o JID completo.
-- Primeira coluna mostra: badge de status (via `getHealthStyle`) + nome (`friendly_name || name`) + `último envio ${formatBRT(last_message_at)}` em texto pequeno.
-- Status mapping: `"open"` → ok; `"close"`/`"closed"`/null → critical; outros → warn.
-- Célula da matriz: `Check` verde quando mapeada, `·` cinza-claro quando não.
-- Linha inteira com `bg-red-50` se status !== ok.
-- Rodapé do card: "Instâncias offline não recebem novos envios."
-- Estados vazios para "nenhum grupo configurado" e "nenhuma instância cadastrada".
+Tipo `BlastConfig` exposto pelo hook (campos relevantes: id, name, group_jids, slots, is_active, member_tag, palpite_settings, created_at, updated_at). Tipo definido no próprio hook e re-exportado.
 
 ### Arquivos a editar
 
+**2. `src/components/admin/whatsapp/GroupBlastLogsCard.tsx`**
+- Renomear título do card de `"Histórico de Envios"` → `"Histórico Detalhado de Envios"`. Nenhuma outra mudança.
+
 **3. `src/components/admin/whatsapp/MonitorGruposTab.tsx`**
-- Importar `PrepareAuditTable` e `InstanceGroupMatrix`.
-- Substituir os placeholders das seções 2 e 3 (PrepareAuditTable acima, InstanceGroupMatrix abaixo).
-- Manter placeholder "Histórico Detalhado" para Parte 5.
+- Importar `useGroupBlastConfigs` e `GroupBlastLogsCard`.
+- Chamar o hook para obter `configs`.
+- Substituir o placeholder "Histórico Detalhado" por:
+  ```tsx
+  <GroupBlastLogsCard configs={configs.map((c) => ({ id: c.id, name: c.name }))} />
+  ```
 
-### Verificação (Etapa 3.4)
-- Audit mostra 7 runs com formatação BRT correta.
-- Linhas com erro expandem ao clicar.
-- Linhas com 0 agendados em vermelho.
-- Matriz lista todas instâncias × todos os JIDs ativos; checks batem com `whatsapp_instance_groups`.
-- Tooltip exibe JID completo no hover do header.
-- Instâncias offline destacadas em vermelho.
+**4. `src/components/admin/whatsapp/DisparoGrupoTab.tsx`** — limpeza:
+- Remover import `GroupBlastLogsCard`.
+- Remover render `<GroupBlastLogsCard ... />` (linha 595).
+- Remover estado `logs`, `statusFilter`, `configFilter`.
+- Remover função `fetchLogs()`.
+- Remover chamada `fetchLogs()` em `Promise.all` dentro de `fetchAll()` — agora `fetchAll = await fetchConfigs()`.
+- Remover `setTimeout(() => fetchLogs(), …)` em `handleSendNow` e teste de slot — substituir por `toast` apenas (o usuário verá os logs no Monitor).
+- Remover `filteredLogs`, `statusBadge` (não usados após limpeza).
+- Remover interface local `BlastLog` se ficar órfã.
+- Substituir `useState` + `fetchConfigs` interno pelo hook `useGroupBlastConfigs()` (mantém `lastLogs` que é diferente — é busca da última msg por config exibida nos cards).
+- Remover qualquer `console.log`/`console.error` de debug (manter só toast.error para o usuário).
+- Manter intacto: `GroupBlastScheduleCard` (mostra cron + botão reschedule, info operacional única não duplicada), todos os Card de config, dialogs, `lastLogs` por config, todos os handlers de salvar/editar/deletar/test/sync.
 
-### Refatoração (Etapa 3.5)
-- `formatBRT` reutilizado (não há duplicação).
-- `getHealthStyle` reutilizado para os badges das instâncias.
-- `GroupBlastScheduleCard` não consulta `whatsapp_instances` — não há lógica duplicada, então **não é necessário** criar `useWhatsappInstances()`.
-- Sem `console.log`, sem imports não usados.
+**5. `src/components/admin/whatsapp/monitor/index.ts`** — atualizar exports:
+```ts
+export { default as PipelineHealthCard } from "./PipelineHealthCard";
+export { default as PrepareAuditTable } from "./PrepareAuditTable";
+export { default as InstanceGroupMatrix } from "./InstanceGroupMatrix";
+```
+(Componentes existentes têm `export default`; ajustamos os exports nomeados aqui.)
+
+**6. Adicionar comentário-cabeçalho em uma linha** no topo de cada componente novo do Monitor:
+- `PipelineHealthCard.tsx`: `// 4 cards de saúde do pipeline (Prepare, Fila, Instâncias, Próximo Envio) com auto-refresh 60s.`
+- `PrepareAuditTable.tsx`: `// Tabela dos 7 últimos runs do prepare, com expansão para mensagens de erro.`
+- `InstanceGroupMatrix.tsx`: `// Matriz cruzada instâncias × grupos para auditar mapeamentos do disparo em grupo.`
+
+### Sobre `GroupBlastScheduleCard` (Etapa 4.6)
+Ele mostra: estado dos cron jobs (`pg_cron`), botão "Reagendar agora" e contagens de hoje (pending/sent/failed). As contagens de hoje **se sobrepõem** ao card "Fila" do PipelineHealth, mas o restante (cron schedule + botão de ação) é único e operacional — pertence à aba de configuração. **Decisão: manter na DisparoGrupoTab.** A duplicação de contagem é tolerável porque os contextos são diferentes (configurar vs monitorar) e a ação de reschedule fica perto das configs.
+
+### Verificação (Etapa 4.5)
+- `DisparoGrupoTab` sem nenhum `GroupBlastLogsCard`, sem `logs`/`fetchLogs`/filtros de log órfãos.
+- `MonitorGruposTab` mostra os logs com filtros funcionando e botão "Reenviar" intacto (componente reutilizado sem mudanças funcionais).
+- Hook `useGroupBlastConfigs` usado em ambas as abas — sem fetch duplicado.
+- `monitor/index.ts` exporta os três componentes nomeados.
+- Sem imports quebrados.
+
+### Não muda
+- Lógica do `GroupBlastLogsCard` (retry, filtros, render).
+- `GroupBlastScheduleCard`.
+- `PipelineHealthCard` / `PrepareAuditTable` / `InstanceGroupMatrix`.
