@@ -620,6 +620,76 @@ serve(async (req) => {
     await applyKirvanoTags(userId, eventType, meta);
   };
 
+  // ============================================================
+  // SEMPRE registra o evento na tabela `events` (append-only),
+  // ANTES de qualquer decisão (ignore/activate/cancel).
+  // - Se já existe perfil → user_id preenchido
+  // - Se não existe → grava como lead anônimo (lead_email/lead_phone)
+  // ============================================================
+  const earlyEventType = mapKirvanoEventType(eventName);
+
+  // Resolve perfil existente (se houver) — sem bloquear
+  let earlyUserId: string | null = null;
+  if (email) {
+    try {
+      const { data: perfilEarly } = await admin
+        .from("perfis")
+        .select("id")
+        .ilike("email", email)
+        .maybeSingle();
+      if (perfilEarly?.id) earlyUserId = perfilEarly.id as string;
+    } catch (_e) {
+      // não-fatal
+    }
+  }
+
+  // Resolve plan_slug a partir da oferta (útil para PIX/boleto/checkout)
+  let earlyPlanSlug: string | null = null;
+  if (offerId) {
+    try {
+      const { data: mapRow } = await admin
+        .from("kirvano_offer_plan_map")
+        .select("plan_id, plans:plan_id(slug)")
+        .eq("offer_id", offerId)
+        .eq("is_active", true)
+        .maybeSingle();
+      const planRel: any = (mapRow as any)?.plans;
+      if (planRel?.slug) earlyPlanSlug = planRel.slug as string;
+    } catch (_e) {
+      // não-fatal
+    }
+  }
+
+  // Metadata canônica gravada para QUALQUER evento da Kirvano
+  const earlyPixMeta = (payload?.payment ?? {}) as Record<string, any>;
+  const earlyMeta: Record<string, any> = {
+    payment_method: payload?.payment_method ?? null,
+    total_price: payload?.total_price ?? null,
+    plan_slug: earlyPlanSlug,
+    offer_id: offerId,
+    sale_id: typeof payload?.sale_id === "string" ? payload.sale_id : null,
+    checkout_id: typeof payload?.checkout_id === "string" ? payload.checkout_id : null,
+    customer_name: customerName,
+    raw_status: rawStatus || null,
+  };
+  // Para PIX: inclui dados do pagamento
+  if (earlyEventType === "pix_gerado" || earlyEventType === "pix_expirado") {
+    earlyMeta.pix_codigo = earlyPixMeta?.qrcode ?? null;
+    earlyMeta.pix_expires_at = earlyPixMeta?.expires_at ?? null;
+  }
+  // Para assinaturas: inclui validade
+  if (
+    earlyEventType === "assinatura_renovada" ||
+    earlyEventType === "assinatura_expirada" ||
+    earlyEventType === "assinatura_cancelada" ||
+    earlyEventType === "assinatura_inadimplente" ||
+    earlyEventType === "compra_aprovada"
+  ) {
+    earlyMeta.valid_until = validUntilIso;
+  }
+
+  await insertKirvanoEvent(earlyEventType, { userId: earlyUserId, meta: earlyMeta });
+
   if (!email) {
     logStep("No email in payload", { keys: Object.keys(payload ?? {}) });
     await finalizeLog({ processed: true, process_result: "missing_email" });
@@ -665,66 +735,22 @@ serve(async (req) => {
       }
     }
 
-    // Tenta registrar evento para ações intermediárias (PIX gerado, boleto etc.)
-    if (email) {
-      const { data: perfilIgnore } = await admin
-        .from("perfis")
-        .select("id")
-        .ilike("email", email)
-        .maybeSingle();
-      if (perfilIgnore?.id) {
-        const eventMap: Record<string, string> = {
-          pix_generated: "pix_gerado",
-          pix_expired: "pix_expirado",
-          bank_slip_generated: "boleto_gerado",
-          bank_slip_expired: "boleto_expirado",
-          checkout_abandoned: "checkout_abandonado",
-          abandoned_cart: "carrinho_abandonado",
-        };
-        const mappedType = eventMap[ev] ?? ev;
+    // Aplica tags + atribuição APENAS se houver perfil (evento já foi registrado acima)
+    if (earlyUserId) {
+      await applyKirvanoTags(earlyUserId, earlyEventType, earlyMeta);
 
-        // Resolve plan slug via offer mapping (para montar link mascarado /gerar-novo-pix/<slug>)
-        let planSlug: string | null = null;
-        if (offerId) {
-          try {
-            const { data: mapRow } = await admin
-              .from("kirvano_offer_plan_map")
-              .select("plan_id, plans:plan_id(slug)")
-              .eq("offer_id", offerId)
-              .eq("is_active", true)
-              .maybeSingle();
-            const planRel: any = (mapRow as any)?.plans;
-            if (planRel?.slug) planSlug = planRel.slug as string;
-          } catch (e) {
-            logStep("Failed to resolve plan slug for intermediate event", {
-              message: e instanceof Error ? e.message : String(e),
-            });
-          }
+      try {
+        const attr = pickAttribution(payload);
+        if (Object.keys(attr).length > 0) {
+          await admin.rpc("merge_user_attribution", {
+            p_user_id: earlyUserId,
+            p_new_attr: attr,
+            p_mark_purchase: false,
+            p_source: `kirvano:${earlyEventType || "intermediate"}`,
+          });
         }
-
-        const pixPaymentMeta = payload?.payment ?? {};
-        await insertEvent(perfilIgnore.id, mappedType, {
-          payment_method: payload?.payment_method ?? null,
-          total_price: payload?.total_price ?? null,
-          pix_codigo: pixPaymentMeta?.qrcode ?? null,
-          pix_expires_at: pixPaymentMeta?.expires_at ?? null,
-          plan_slug: planSlug,
-        });
-
-        // Atribuição: first-touch também em PIX/checkout (não marca compra)
-        try {
-          const attr = pickAttribution(payload);
-          if (Object.keys(attr).length > 0) {
-            await admin.rpc("merge_user_attribution", {
-              p_user_id: perfilIgnore.id,
-              p_new_attr: attr,
-              p_mark_purchase: false,
-              p_source: `kirvano:${mappedType || "intermediate"}`,
-            });
-          }
-        } catch (e) {
-          logStep("Attribution merge error on intermediate event", { message: e instanceof Error ? e.message : String(e) });
-        }
+      } catch (e) {
+        logStep("Attribution merge error on intermediate event", { message: e instanceof Error ? e.message : String(e) });
       }
     }
 
