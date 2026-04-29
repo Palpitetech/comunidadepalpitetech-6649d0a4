@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { DISPOSABLE_DOMAINS, COMMON_TYPOS } from "./disposable-domains.ts";
+import { normalizePhoneBR } from "../_shared/br-phone.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -146,34 +147,20 @@ async function dominioTemMX(domain: string): Promise<boolean> {
 
 
 function validateCelular(celular: string): { ok: boolean; normalized?: string; reason?: string } {
-  const digits = celular.replace(/\D/g, "");
-  let normalized = digits;
-  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
-    normalized = digits.substring(2);
+  const r = normalizePhoneBR(celular);
+  if (!r.ok) {
+    const map: Record<string, string> = {
+      empty: "tamanho_invalido",
+      too_short: "tamanho_invalido",
+      too_long: "tamanho_invalido",
+      invalid_ddd: "ddd_invalido",
+      invalid_mobile: "nono_digito_invalido",
+      sequence: "todos_iguais",
+      non_br: "tamanho_invalido",
+    };
+    return { ok: false, reason: map[r.reason] ?? "tamanho_invalido" };
   }
-
-  if (normalized.length < 10 || normalized.length > 11) {
-    return { ok: false, reason: "tamanho_invalido" };
-  }
-
-  // DDD válido (11-99)
-  const ddd = parseInt(normalized.substring(0, 2), 10);
-  if (isNaN(ddd) || ddd < 11 || ddd > 99) {
-    return { ok: false, reason: "ddd_invalido" };
-  }
-
-  // Se 11 dígitos, o terceiro deve ser 9 (celular)
-  if (normalized.length === 11 && normalized[2] !== "9") {
-    return { ok: false, reason: "nono_digito_invalido" };
-  }
-
-  // Sequências óbvias
-  if (/^(\d)\1+$/.test(normalized)) return { ok: false, reason: "todos_iguais" };
-  if (normalized === "12345678901" || normalized === "1234567890") {
-    return { ok: false, reason: "sequencia_obvia" };
-  }
-
-  return { ok: true, normalized };
+  return { ok: true, normalized: r.canonical };
 }
 
 async function logBloqueio(

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { toCanonicalBR } from "../_shared/br-phone.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,10 +42,8 @@ function addDays(isoDate: string, days: number): string {
 
 function normalizePhone(raw: string): string | null {
   if (!raw || raw === "-") return null;
-  const digits = raw.replace(/\D/g, "");
-  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) return digits.slice(2);
-  if (digits.length === 10 || digits.length === 11) return digits;
-  return digits || null;
+  // Helper compartilhado: aceita máscara, +55, 0055, insere o 9 quando faltar.
+  return toCanonicalBR(raw);
 }
 
 function normalizeCpf(raw: string): string | null {

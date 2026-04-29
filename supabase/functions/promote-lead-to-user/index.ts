@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { normalizePhoneBR } from "../_shared/br-phone.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,14 +16,8 @@ function json(body: Record<string, unknown>, status = 200) {
 }
 
 function normalizeCelular(v: string): { ok: boolean; normalized?: string } {
-  const digits = v.replace(/\D/g, "");
-  let n = digits;
-  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) n = digits.substring(2);
-  if (n.length < 10 || n.length > 11) return { ok: false };
-  const ddd = parseInt(n.substring(0, 2), 10);
-  if (isNaN(ddd) || ddd < 11 || ddd > 99) return { ok: false };
-  if (n.length === 11 && n[2] !== "9") return { ok: false };
-  return { ok: true, normalized: n };
+  const r = normalizePhoneBR(v);
+  return r.ok ? { ok: true, normalized: r.canonical } : { ok: false };
 }
 
 serve(async (req) => {

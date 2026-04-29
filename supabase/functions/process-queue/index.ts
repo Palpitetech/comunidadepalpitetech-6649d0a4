@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { toEvolutionBR } from "../_shared/br-phone.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -124,17 +125,24 @@ async function sendMessage(
     return { success: false, error: "Mensagem vazia" };
   }
 
+  // Normaliza o número usando o helper compartilhado.
+  // Aceita qualquer formato de entrada (com/sem 55, com/sem 9, com máscara)
+  // e devolve "55" + canonical pronto para a Evolution.
+  const numberWithDdi = toEvolutionBR(item.recipient_phone);
+  if (!numberWithDdi) {
+    await supabase
+      .from("message_queue")
+      .update({
+        status: "failed",
+        error_message: `phone_invalid: ${item.recipient_phone}`,
+        retry_count: (item.retry_count ?? 0) + 1,
+      })
+      .eq("id", item.id);
+    return { success: false, error: "phone_invalid" };
+  }
+
   // Call Evolution API
   try {
-    // Garante DDI 55 (Brasil): números salvos têm 10 ou 11 dígitos (DDD + número),
-    // sem o DDI. Sem o 55, a Evolution interpreta o DDD como código de país e
-    // responde { exists: false } com HTTP 400.
-    const digits = String(item.recipient_phone || "").replace(/\D/g, "");
-    const numberWithDdi =
-      digits.startsWith("55") && (digits.length === 12 || digits.length === 13)
-        ? digits
-        : `55${digits}`;
-
     const url = `${EVOLUTION_API_URL}/message/sendText/${instance.evolution_instance_id}`;
     const res = await fetch(url, {
       method: "POST",

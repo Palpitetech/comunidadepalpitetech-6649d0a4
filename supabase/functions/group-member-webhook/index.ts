@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { toCanonicalBR } from "../_shared/br-phone.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,17 +15,13 @@ function getSupabase() {
 }
 
 /**
- * Normalizes a phone number to match the format stored in perfis.celular
- * Evolution sends numbers like "5511999887755@s.whatsapp.net"
+ * Normalizes a phone number to match the format stored in perfis.celular.
+ * Evolution sends numbers like "5511999887755@s.whatsapp.net".
+ * Retorna canonical BR (10/11 dígitos sem DDI) ou string vazia se inválido.
  */
 function normalizePhone(raw: string): string {
-  // Remove @s.whatsapp.net suffix and any non-digit chars
-  let digits = raw.replace(/@.*$/, "").replace(/\D/g, "");
-  // Remove country code 55 if present (Brazilian numbers)
-  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
-    digits = digits.substring(2);
-  }
-  return digits;
+  const cleaned = String(raw || "").replace(/@.*$/, "");
+  return toCanonicalBR(cleaned) ?? "";
 }
 
 Deno.serve(async (req) => {

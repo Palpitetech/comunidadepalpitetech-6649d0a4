@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { toCanonicalBR } from "../_shared/br-phone.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -77,13 +78,9 @@ function pickEmail(payload: any): string | undefined {
 }
 
 function normalizePhone(raw: string): string {
-  // Remove tudo que não é dígito
-  let digits = raw.replace(/\D/g, "");
-  // Remove código do país 55 se presente (resultando em 10 ou 11 dígitos)
-  if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
-    digits = digits.substring(2);
-  }
-  return digits;
+  // Usa o helper compartilhado (insere o 9 quando faltar, valida DDD, remove DDI).
+  // Se o número for inválido, devolve string vazia — o caller decide.
+  return toCanonicalBR(raw) ?? "";
 }
 
 function pickPhone(payload: any): string | null {
@@ -100,7 +97,8 @@ function pickPhone(payload: any): string | null {
   );
   if (typeof phone !== "string") return null;
   const normalized = normalizePhone(phone);
-  return normalized.length >= 10 ? normalized : null;
+  // Só retorna se for um número BR válido (10 ou 11 dígitos canônicos).
+  return normalized.length === 10 || normalized.length === 11 ? normalized : null;
 }
 
 function pickCpf(payload: any): string | null {

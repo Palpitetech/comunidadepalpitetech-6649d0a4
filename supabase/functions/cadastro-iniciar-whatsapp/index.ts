@@ -1,6 +1,7 @@
 // Funil de cadastro — Etapa 3: recebe celular, envia código via WhatsApp (Evolution API)
 // usando o sistema de fila existente (message_queue) com prioridade máxima.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { normalizePhoneBR } from '../_shared/br-phone.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,15 +13,21 @@ const json = (b: Record<string, unknown>, s = 200) =>
 const gerarCodigo = () => Math.floor(100000 + Math.random() * 900000).toString();
 
 function validateCelular(value: string): { ok: boolean; normalized?: string; reason?: string } {
-  const digits = value.replace(/\D/g, '');
-  let n = digits;
-  if (digits.startsWith('55') && (digits.length === 12 || digits.length === 13)) n = digits.substring(2);
-  if (n.length < 10 || n.length > 11) return { ok: false, reason: 'Celular precisa ter DDD + número' };
-  const ddd = parseInt(n.substring(0, 2), 10);
-  if (isNaN(ddd) || ddd < 11 || ddd > 99) return { ok: false, reason: 'DDD inválido' };
-  if (n.length === 11 && n[2] !== '9') return { ok: false, reason: 'Celular deve começar com 9 após o DDD' };
-  if (/^(\d)\1+$/.test(n)) return { ok: false, reason: 'Celular inválido' };
-  return { ok: true, normalized: `55${n}` };
+  const r = normalizePhoneBR(value);
+  if (!r.ok) {
+    const map: Record<string, string> = {
+      empty: 'Celular obrigatório',
+      too_short: 'Celular precisa ter DDD + número',
+      too_long: 'Celular inválido',
+      invalid_ddd: 'DDD inválido',
+      invalid_mobile: 'Celular deve começar com 9 após o DDD',
+      sequence: 'Celular inválido',
+      non_br: 'Celular inválido',
+    };
+    return { ok: false, reason: map[r.reason] ?? 'Celular inválido' };
+  }
+  // Mantém retorno antigo: "55" + canonical (e164 sem "+").
+  return { ok: true, normalized: r.e164 };
 }
 
 Deno.serve(async (req) => {
