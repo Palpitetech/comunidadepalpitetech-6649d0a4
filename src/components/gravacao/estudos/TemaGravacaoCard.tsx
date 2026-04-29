@@ -222,13 +222,13 @@ function ItemLabel({
         {isRascunho ? "Rascunho" : "Publicado"}
       </span>
       {!compact && (
-        <span className="text-[10px] text-muted-foreground ml-auto pl-2">
-          {fmtData(estudo.publicar_em ?? estudo.created_at)}
+        <span className="text-[10px] text-muted-foreground ml-auto pl-2 whitespace-nowrap">
+          Sorteio: {fmtSorteio(estudo.data_proximo_sorteio)}
         </span>
       )}
       {compact && (
         <span className="text-[10px] text-muted-foreground truncate">
-          · {fmtData(estudo.publicar_em ?? estudo.created_at)}
+          · {fmtSorteio(estudo.data_proximo_sorteio)}
         </span>
       )}
     </span>
