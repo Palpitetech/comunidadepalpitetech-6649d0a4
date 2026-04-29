@@ -12,23 +12,33 @@ interface PosicaoData {
   top5: DezenaFrequencia[];
 }
 
-export function useDezenasporPosicaoMegaSena(periodo: number = 100) {
+/**
+ * Frequência das dezenas por posição (1–6) na Mega-Sena.
+ * @param periodo Quantidade de concursos analisados (default 100)
+ * @param concursoRef Se informado, limita a análise aos `periodo` concursos com número ≤ concursoRef
+ */
+export function useDezenasporPosicaoMegaSena(periodo: number = 100, concursoRef?: number) {
   return useQuery({
-    queryKey: ["dezenas-posicao-megasena", periodo],
+    queryKey: ["dezenas-posicao-megasena", periodo, concursoRef ?? "latest"],
     queryFn: async (): Promise<PosicaoData[]> => {
-      const { data: resultados, error } = await (supabase as any)
+      let query = (supabase as any)
         .from("resultados_loterias")
         .select("dezenas")
         .eq("loteria", "megasena")
         .order("concurso", { ascending: false })
         .limit(periodo);
 
+      if (concursoRef) {
+        query = query.lte("concurso", concursoRef);
+      }
+
+      const { data: resultados, error } = await query;
+
       if (error) throw error;
       if (!resultados || resultados.length === 0) return [];
 
       const totalConcursos = resultados.length;
 
-      // Inicializar contagem para cada posição (1-6) e cada dezena (1-60)
       const contagemPorPosicao: Record<number, Record<number, number>> = {};
       for (let pos = 1; pos <= 6; pos++) {
         contagemPorPosicao[pos] = {};
@@ -37,8 +47,7 @@ export function useDezenasporPosicaoMegaSena(periodo: number = 100) {
         }
       }
 
-      // Contar dezenas em cada posição
-      resultados.forEach((resultado) => {
+      resultados.forEach((resultado: any) => {
         const dezenas = [...resultado.dezenas].sort((a, b) => a - b);
         dezenas.forEach((dezena, index) => {
           const posicao = index + 1;
@@ -48,9 +57,8 @@ export function useDezenasporPosicaoMegaSena(periodo: number = 100) {
         });
       });
 
-      // Calcular top 5 para cada posição
       const dadosPosicoes: PosicaoData[] = [];
-      
+
       for (let pos = 1; pos <= 6; pos++) {
         const dezenas = Object.entries(contagemPorPosicao[pos])
           .map(([dez, qtd]) => ({
