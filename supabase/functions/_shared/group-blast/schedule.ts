@@ -12,21 +12,30 @@ import { resolveMessage } from "./resolver.ts";
 import type { PreparePayload, Slot } from "./types.ts";
 
 /**
- * Converte um horário BRT (hh:mm) em Date UTC para hoje.
+ * Converte um horário BRT (hh:mm) em Date UTC para hoje (em BRT).
  * Se o horário calculado já passou, agenda para amanhã.
+ *
+ * IMPORTANTE: usa o "dia do relógio BRT", não o dia UTC. Isso é crítico
+ * na janela 21:00-23:59 BRT (= 00:00-02:59 UTC do dia seguinte): se
+ * usássemos getUTCDate(), o "dia base" seria o de amanhã BRT, fazendo
+ * o agendamento sair 24h depois do esperado.
+ *
+ * Brasil não observa horário de verão desde 2019, então UTC-3 fixo.
  */
 function brTimeToScheduledUtc(hh: string, mm: string): Date {
   const now = new Date();
+  // "Agora" projetado no fuso BRT (UTC-3): usamos componentes UTC desse
+  // ponto deslocado para extrair o dia/mês/ano do calendário BRT atual.
+  const nowBrt = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+  const brtY = nowBrt.getUTCFullYear();
+  const brtM = nowBrt.getUTCMonth();
+  const brtD = nowBrt.getUTCDate();
+
+  // Slot BRT (hh:mm) do dia BRT atual → UTC: somamos +3h ao hh.
+  // Date.UTC normaliza overflow (hora 26 vira "dia+1, 02h"), então slots
+  // noturnos como 23:30 BRT viram corretamente "dia+1, 02:30 UTC".
   let scheduled = new Date(
-    Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate(),
-      parseInt(hh) + 3,
-      parseInt(mm),
-      0,
-      0,
-    ),
+    Date.UTC(brtY, brtM, brtD, parseInt(hh) + 3, parseInt(mm), 0, 0),
   );
   if (scheduled.getTime() <= now.getTime()) {
     scheduled = new Date(scheduled.getTime() + 24 * 60 * 60 * 1000);
