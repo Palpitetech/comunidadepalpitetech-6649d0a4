@@ -1287,7 +1287,8 @@ serve(async (req) => {
     }
 
     const eventType = action === "cancel" ? "assinatura_cancelada" : "assinatura_inadimplente";
-    await insertEvent(perfil.id, eventType, { action });
+    // Evento já foi registrado cedo — apenas aplica tags
+    await applyKirvanoTags(perfil.id, eventType, { action });
 
     const { error: deleteRoleError } = await admin.from("user_roles").delete().eq("user_id", perfil.id).eq("role", "premium");
     if (deleteRoleError) logStep("Failed to delete premium role", { message: deleteRoleError.message });
