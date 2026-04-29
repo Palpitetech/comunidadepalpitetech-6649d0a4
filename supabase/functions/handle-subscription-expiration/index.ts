@@ -93,10 +93,11 @@ serve(async (req) => {
           console.error(`[EXPIRATION-CHECK] Erro ao remover role premium para ${user.email}:`, roleError.message);
         }
 
-        // Registrar evento de expiração
+        // Registrar evento de expiração (append-only)
         await admin.from("events").insert({
           user_id: user.id,
           event_type: "assinatura_expirada",
+          source: "system",
           metadata: {
             previous_status: user.status_assinatura,
             email: user.email

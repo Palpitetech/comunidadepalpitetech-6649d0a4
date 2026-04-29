@@ -1136,22 +1136,31 @@ export type Database = {
           created_at: string | null
           event_type: string
           id: string
+          lead_email: string | null
+          lead_phone: string | null
           metadata: Json | null
-          user_id: string
+          source: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
           event_type: string
           id?: string
+          lead_email?: string | null
+          lead_phone?: string | null
           metadata?: Json | null
-          user_id: string
+          source?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
           event_type?: string
           id?: string
+          lead_email?: string | null
+          lead_phone?: string | null
           metadata?: Json | null
-          user_id?: string
+          source?: string
+          user_id?: string | null
         }
         Relationships: [
           {
