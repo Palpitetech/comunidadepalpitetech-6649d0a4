@@ -98,7 +98,8 @@ export function AttributionTable({ data, dimension, onDimensionChange, headerExt
     <Card>
       <CardHeader className="pb-3 flex-row items-center justify-between gap-2 flex-wrap">
         <CardTitle className="text-base">📊 Atribuição por origem</CardTitle>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {headerExtra}
           <Select value={dimension} onValueChange={(v) => onDimensionChange(v as AttributionDimension)}>
             <SelectTrigger className="h-8 w-[180px] text-xs">
               <SelectValue />
