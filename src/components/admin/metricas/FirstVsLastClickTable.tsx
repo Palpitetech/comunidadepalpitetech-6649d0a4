@@ -60,9 +60,10 @@ function downloadCSV(filename: string, rows: (string | number)[][]) {
 
 interface Props {
   data: AttributionMetrics;
+  headerExtra?: ReactNode;
 }
 
-export function FirstVsLastClickTable({ data }: Props) {
+export function FirstVsLastClickTable({ data, headerExtra }: Props) {
   const [dimension, setDimension] = useState<AttributionDimension>("utm_source");
   const [mode, setMode] = useState<Mode>("compare");
 
