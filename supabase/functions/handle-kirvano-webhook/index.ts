@@ -1027,14 +1027,20 @@ serve(async (req) => {
       if (insertError) logStep("Failed to insert premium role", { message: insertError.message });
     }
 
-    await insertEvent(targetPerfilId!, "sale_confirmed", {
-      plan_id: offerMap.plan_id,
-      days_valid: daysValid,
-      offer_id: offerId,
-      payment_method: payload?.payment_method ?? null,
-      customer_name: customerName,
-      is_new_account: isNewAccount,
+    // Marcador interno: confirma a ativação do acesso (separado do compra_aprovada gravado cedo)
+    await insertKirvanoEvent("sale_confirmed", {
+      userId: targetPerfilId!,
+      meta: {
+        plan_id: offerMap.plan_id,
+        days_valid: daysValid,
+        offer_id: offerId,
+        payment_method: payload?.payment_method ?? null,
+        customer_name: customerName,
+        is_new_account: isNewAccount,
+      },
     });
+    // Aplica tags do plano (ativo + tag de plano)
+    await applyKirvanoTags(targetPerfilId!, "compra_aprovada", { plan_id: offerMap.plan_id });
 
     // Atribuição de marketing — first-touch + marca primeira compra
     try {
