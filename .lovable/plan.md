@@ -1,62 +1,56 @@
-## Parte 2 — Pipeline Health (Seção 1)
-
-Objetivo: 4 cards no topo da aba Monitor Grupos com leitura instantânea da saúde do pipeline (Prepare, Fila, Instâncias, Próximo Envio). Auto-refresh 60s. Usa dados reais do banco.
+## Parte 3 — Auditoria do Prepare + Matriz Instâncias × Grupos
 
 ### Arquivos a criar
 
-**1. `src/lib/dateUtils.ts`** — utilitários BRT reutilizáveis nas próximas partes:
-- `formatBRT(iso)` → `"hoje às 23:01"` / `"ontem às 14:32"` / `"12/03 às 09:15"`, via `Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo" })`.
-- `timeAgoBRT(iso)` → `"agora"` / `"há 12 min"` / `"há 3h"` / `"há 2d"`.
-- `currentHourBRT()` → hora atual (0–23) em BRT.
-- `todayBRT()` / `toBRTDate(iso)` → `YYYY-MM-DD` em BRT.
+**1. `src/components/admin/whatsapp/monitor/PrepareAuditTable.tsx`**
 
-**2. `src/components/admin/whatsapp/monitor/healthStatus.ts`** — helpers visuais:
-- Tipo `HealthStatus = "ok" | "warn" | "critical" | "neutral"`.
-- `getHealthStyle(status)` → `{ badgeClass, borderClass, label }` com classes Tailwind padronizadas (`bg-green-100/text-green-800`, `border-l-green-500`, etc.) — mesma paleta usada nas Partes 3–5.
-- `getHealthByThreshold(value, { warn, critical })` → utilitário genérico.
+Busca dos últimos 7 runs de `group_blast_prepare_runs`:
+- Query principal: `select id, ran_at, config_id, slots_scheduled, slots_resolved, slots_failed_resolution, skipped_dedup, error_message order by ran_at desc limit 7`.
+- Resolução de nome da config: segunda query em `group_blast_configs` com `.in('id', configIds)` (mais simples que JOIN; runs com `config_id` nulo aparecem como "Global").
+- Reutiliza `formatBRT` da Parte 2.
 
-**3. `src/components/admin/whatsapp/monitor/PipelineHealthCard.tsx`** — componente principal.
+UI:
+- `Card` shadcn com header (título + subtítulo "Últimos 7 runs do prepare" + botão refresh com spinner).
+- `Table` com colunas: chevron expand · Data/hora · Config · Agendados (right) · Dedup (right) · Status (centro).
+- Status badge: verde "OK" (`CheckCircle2`) se `slots_scheduled > 0 && !error_message`; senão vermelho "Falha" (`XCircle`).
+- Linha com `slots_scheduled === 0` recebe `bg-red-50`.
+- Linhas com `error_message` ficam clicáveis (`cursor-pointer`); ao clicar, expande uma sub-row mostrando o erro completo (`whitespace-pre-wrap`) + contador de `slots_failed_resolution` se > 0.
+- Estado vazio: "Nenhum run registrado".
 
-Layout:
-- Container `grid grid-cols-2 lg:grid-cols-4 gap-3`.
-- Cada card usa `Card` shadcn com `border-l-4 ${borderClass}`.
-- Header do card: ícone (h-4 w-4) + título (`text-xs font-medium text-muted-foreground uppercase tracking-wide`) à esquerda, badge de status à direita (`Badge` com `badgeClass`).
-- Botão refresh global (RefreshCw) no canto direito do header da seção (não em cada card individual — fica mais limpo). Spinner durante fetch.
-- Corpo: número principal `text-2xl font-bold` + linha secundária `text-xs text-muted-foreground`.
+**2. `src/components/admin/whatsapp/monitor/InstanceGroupMatrix.tsx`**
 
-Fontes de dados (via `supabase` client):
+Fetches em paralelo via `Promise.all`:
+- `whatsapp_instances` → `id, friendly_name, name, status, last_message_at` ordenado por nome.
+- `group_blast_configs` ativas → `group_jids`; agrega num `Set<string>` de JIDs únicos, ordenado.
+- `whatsapp_instance_groups` → `instance_id, group_jid`; vira `Set<"${instId}::${jid}">` para lookup O(1).
 
-| Card | Query | Status |
-|------|-------|--------|
-| **Prepare** | `group_blast_prepare_runs` order by `ran_at` desc limit 1 | `ok` se `ran_at` é hoje BRT após 03:00; `critical` se hora BRT ≥ 5 e não rodou hoje; senão `warn`. Principal: `slots_scheduled`. Secundário: `formatBRT(ran_at)` |
-| **Fila** | `group_blast_logs` filtro `created_at >= todayBRT 00:00 UTC-3` agrupado por status (faz 1 select com `status, scheduled_for` e conta no client) | Principal: `pending` agora. Secundário: `X enviados` (verde) e `X falhas` (vermelho). `critical` se pending > 10 com `created_at` há > 30 min; `warn` se failed > 0; `ok` caso contrário. |
-| **Instâncias** | `whatsapp_instances` select `id, friendly_name, status` | Principal: `X / Y online` (status === "open" conta como online). Lista nomes offline (até 3, depois "+N mais") em `text-xs text-red-600`. `critical` se 0 online; `warn` se alguma offline; `ok` se todas. |
-| **Próximo Envio** | `group_blast_logs` filtro `status='pending' and scheduled_for > now()` order asc limit 1, join leve via `config_id` lookup em `group_blast_configs(name)` (segunda query simples) | Principal: `formatBRT(scheduled_for)`. Secundário: `${configName} · ${groupJid.slice(-12)}`. `warn` (laranja) se nenhum agendado para hoje BRT; `ok` caso contrário. |
-
-Comportamento:
-- `useEffect` faz fetch inicial; `setInterval(fetchAll, 60_000)` com `clearInterval` no cleanup.
-- Estado `loading` para o botão refresh; estado `lastUpdated` exibido em `text-[10px] text-muted-foreground` ao lado do botão (`atualizado ${timeAgoBRT}`).
-- Erros de fetch tratados com `try/catch` e `toast.error` (sonner) — mantém UI funcionando.
-- Sem `console.log`.
+UI:
+- `Card` com refresh button.
+- `Table` com primeira coluna fixa (instância) e uma coluna por JID. JID exibido truncado (`…últimos 10 chars` sem `@g.us`) com `Tooltip` mostrando o JID completo.
+- Primeira coluna mostra: badge de status (via `getHealthStyle`) + nome (`friendly_name || name`) + `último envio ${formatBRT(last_message_at)}` em texto pequeno.
+- Status mapping: `"open"` → ok; `"close"`/`"closed"`/null → critical; outros → warn.
+- Célula da matriz: `Check` verde quando mapeada, `·` cinza-claro quando não.
+- Linha inteira com `bg-red-50` se status !== ok.
+- Rodapé do card: "Instâncias offline não recebem novos envios."
+- Estados vazios para "nenhum grupo configurado" e "nenhuma instância cadastrada".
 
 ### Arquivos a editar
 
-**4. `src/components/admin/whatsapp/MonitorGruposTab.tsx`**
-- Importar `PipelineHealthCard`.
-- Substituir o card placeholder "Pipeline Health" pelo `<PipelineHealthCard />` (mantém os outros 3 placeholders).
-- Como `PipelineHealthCard` já renderiza seu próprio cabeçalho com título + refresh, o slot da seção é apenas o componente em si (sem `Card` extra envolvendo).
+**3. `src/components/admin/whatsapp/MonitorGruposTab.tsx`**
+- Importar `PrepareAuditTable` e `InstanceGroupMatrix`.
+- Substituir os placeholders das seções 2 e 3 (PrepareAuditTable acima, InstanceGroupMatrix abaixo).
+- Manter placeholder "Histórico Detalhado" para Parte 5.
 
-### Verificação (Etapa 2.4)
-- Os 4 cards mostram dados reais (Prepare conta 12 slots conforme execução recente).
-- Mobile (2×2) e desktop (4×1) renderizam corretamente.
-- Cores mudam conforme thresholds.
-- Botão refresh recarrega todos os cards; auto-refresh ocorre a cada 60s.
-- Cleanup do interval no unmount (sem warning de memory leak).
+### Verificação (Etapa 3.4)
+- Audit mostra 7 runs com formatação BRT correta.
+- Linhas com erro expandem ao clicar.
+- Linhas com 0 agendados em vermelho.
+- Matriz lista todas instâncias × todos os JIDs ativos; checks batem com `whatsapp_instance_groups`.
+- Tooltip exibe JID completo no hover do header.
+- Instâncias offline destacadas em vermelho.
 
-### Refatoração (Etapa 2.5)
-- `dateUtils.ts` e `healthStatus.ts` ficam disponíveis para Partes 3–5.
-- Sem `console.log`. Todo `useEffect` com cleanup.
-- `supabase` importado direto de `@/integrations/supabase/client` (não passado como prop — segue padrão do resto do admin).
-
-### Não faz parte desta parte
-- Auditoria do Prepare, Instâncias × Grupos e Histórico Detalhado seguem como placeholders "Em construção…" — Partes 3, 4 e 5.
+### Refatoração (Etapa 3.5)
+- `formatBRT` reutilizado (não há duplicação).
+- `getHealthStyle` reutilizado para os badges das instâncias.
+- `GroupBlastScheduleCard` não consulta `whatsapp_instances` — não há lógica duplicada, então **não é necessário** criar `useWhatsappInstances()`.
+- Sem `console.log`, sem imports não usados.

@@ -1,11 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PipelineHealthCard from "./monitor/PipelineHealthCard";
-
-const PLACEHOLDERS = [
-  "Auditoria do Prepare",
-  "Instâncias × Grupos",
-  "Histórico Detalhado",
-] as const;
+import PrepareAuditTable from "./monitor/PrepareAuditTable";
+import InstanceGroupMatrix from "./monitor/InstanceGroupMatrix";
 
 export default function MonitorGruposTab() {
   return (
@@ -18,17 +14,17 @@ export default function MonitorGruposTab() {
       </div>
 
       <PipelineHealthCard />
+      <PrepareAuditTable />
+      <InstanceGroupMatrix />
 
-      {PLACEHOLDERS.map((title) => (
-        <Card key={title}>
-          <CardHeader>
-            <CardTitle className="text-base">{title}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">Em construção...</p>
-          </CardContent>
-        </Card>
-      ))}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Histórico Detalhado</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">Em construção...</p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
