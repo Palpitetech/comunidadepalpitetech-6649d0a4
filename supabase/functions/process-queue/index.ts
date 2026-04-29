@@ -126,6 +126,15 @@ async function sendMessage(
 
   // Call Evolution API
   try {
+    // Garante DDI 55 (Brasil): números salvos têm 10 ou 11 dígitos (DDD + número),
+    // sem o DDI. Sem o 55, a Evolution interpreta o DDD como código de país e
+    // responde { exists: false } com HTTP 400.
+    const digits = String(item.recipient_phone || "").replace(/\D/g, "");
+    const numberWithDdi =
+      digits.startsWith("55") && (digits.length === 12 || digits.length === 13)
+        ? digits
+        : `55${digits}`;
+
     const url = `${EVOLUTION_API_URL}/message/sendText/${instance.evolution_instance_id}`;
     const res = await fetch(url, {
       method: "POST",
@@ -134,7 +143,7 @@ async function sendMessage(
         apikey: EVOLUTION_API_KEY,
       },
       body: JSON.stringify({
-        number: item.recipient_phone,
+        number: numberWithDdi,
         text: messageText,
       }),
     });
