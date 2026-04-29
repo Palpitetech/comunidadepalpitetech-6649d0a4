@@ -42,22 +42,50 @@ interface Props {
 
 export function GroupBlastScheduleCard({ onAfterReschedule }: Props) {
   const [items, setItems] = useState<ScheduleInfo[]>([]);
+  const [counts, setCounts] = useState<TodayCounts>({ pending: 0, sent: 0, failed: 0 });
   const [loading, setLoading] = useState(true);
   const [rescheduling, setRescheduling] = useState(false);
   const [now, setNow] = useState(() => new Date());
 
   const fetchSchedule = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await (supabase.rpc as unknown as (
-      fn: string
-    ) => Promise<{ data: unknown; error: unknown }>)(
-      "get_group_blast_schedule"
-    );
-    if (!error && Array.isArray(data)) {
-      setItems(data as ScheduleInfo[]);
+    const [scheduleRes, countsRes] = await Promise.all([
+      (supabase.rpc as unknown as (
+        fn: string
+      ) => Promise<{ data: unknown; error: unknown }>)(
+        "get_group_blast_schedule"
+      ),
+      (async () => {
+        // Janela de "hoje" em BRT (UTC-3): das 03:00 UTC do dia atual até 03:00 UTC do dia seguinte
+        const nowUtc = new Date();
+        const startBrt = new Date(nowUtc);
+        startBrt.setUTCHours(3, 0, 0, 0);
+        if (nowUtc.getTime() < startBrt.getTime()) {
+          startBrt.setUTCDate(startBrt.getUTCDate() - 1);
+        }
+        const endBrt = new Date(startBrt.getTime() + 24 * 60 * 60 * 1000);
+        const { data } = await supabase
+          .from("group_blast_logs")
+          .select("status")
+          .gte("scheduled_for", startBrt.toISOString())
+          .lt("scheduled_for", endBrt.toISOString());
+        const acc: TodayCounts = { pending: 0, sent: 0, failed: 0 };
+        for (const row of data ?? []) {
+          const s = (row as { status: string }).status;
+          if (s === "pending") acc.pending++;
+          else if (s === "sent") acc.sent++;
+          else if (s === "failed") acc.failed++;
+        }
+        return acc;
+      })(),
+    ]);
+
+    if (!scheduleRes.error && Array.isArray(scheduleRes.data)) {
+      setItems(scheduleRes.data as ScheduleInfo[]);
     } else {
       setItems([]);
     }
+    setCounts(countsRes);
     setLoading(false);
   }, []);
 
