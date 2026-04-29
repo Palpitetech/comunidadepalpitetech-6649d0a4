@@ -118,7 +118,7 @@ export function TemplateSegmentationSection({
 
       {/* Exclude tags */}
       <div className="space-y-1.5">
-        <Label className="text-xs">Excluir quem tem as tags</Label>
+        <Label className="text-xs">Excluir quem tem as tags <span className="text-muted-foreground font-normal">(permanente)</span></Label>
         <Popover open={excludeOpen} onOpenChange={setExcludeOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" role="combobox" className="w-full justify-between font-normal min-h-[36px] h-auto text-xs">
@@ -154,6 +154,63 @@ export function TemplateSegmentationSection({
             </Command>
           </PopoverContent>
         </Popover>
+      </div>
+
+      {/* Exclude tags recent (temporal) */}
+      <div className="space-y-1.5 rounded-md border border-dashed border-border/60 p-2 bg-muted/20">
+        <div className="flex items-center gap-1.5">
+          <Clock className="h-3 w-3 text-muted-foreground" />
+          <Label className="text-xs">Excluir quem recebeu estas tags recentemente</Label>
+        </div>
+        <p className="text-[10px] text-muted-foreground leading-tight">
+          Bloqueia o lead apenas se recebeu uma destas tags na janela abaixo. Útil para evitar enviar pré-checkout do mesmo produto recém-comprado, sem bloquear cross-sell.
+        </p>
+        <Popover open={excludeRecentOpen} onOpenChange={setExcludeRecentOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" role="combobox" className="w-full justify-between font-normal min-h-[36px] h-auto text-xs">
+              {excludeTagsRecent.length === 0 ? (
+                <span className="text-muted-foreground">Nenhuma tag temporal</span>
+              ) : (
+                <div className="flex flex-wrap gap-1">
+                  {excludeTagsRecent.map((tag) => (
+                    <Badge key={tag} variant="outline" className="text-[10px] gap-0.5 border-amber-500/50 text-amber-700 dark:text-amber-400">
+                      {tag}
+                      <X className="h-2.5 w-2.5 cursor-pointer" onClick={(e) => { e.stopPropagation(); toggleTag(tag, excludeTagsRecent, onExcludeTagsRecentChange); }} />
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Buscar tag..." />
+              <CommandList>
+                <CommandEmpty>Nenhuma tag.</CommandEmpty>
+                <CommandGroup>
+                  {allTags.map((tag) => (
+                    <CommandItem key={tag} value={tag} onSelect={() => toggleTag(tag, excludeTagsRecent, onExcludeTagsRecentChange)}>
+                      <Check className={cn("mr-2 h-3.5 w-3.5", excludeTagsRecent.includes(tag) ? "opacity-100" : "opacity-0")} />
+                      {tag}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+        <div className="flex items-center gap-2">
+          <Label className="text-[10px] text-muted-foreground whitespace-nowrap">Janela (horas):</Label>
+          <Input
+            type="number"
+            min={1}
+            max={720}
+            value={excludeRecentWindowHours}
+            onChange={(e) => onExcludeRecentWindowHoursChange(Math.max(1, parseInt(e.target.value || "24", 10)))}
+            className="h-7 text-xs w-20"
+          />
+        </div>
       </div>
 
       {/* Match mode */}
