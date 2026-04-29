@@ -1,118 +1,50 @@
-
 ## Objetivo
 
-Refatorar a tela `/admin/vendas` para mostrar uma linha por **venda** (não por evento), com colunas mais úteis, e adicionar no painel lateral a ação "Enviar mensagem do evento" para disparar manualmente o template configurado para aquele evento.
+Reescrever a mensagem principal + 9 variações do template **"Lead pré-checkout - Sala Secreta Lotofácil"** (id `319592b0-...`) para o novo contexto fornecido: anúncio do estudo/palpites pós-sorteio, oferta de R$ 19,00 com garantia de 7 dias, e CTA secundário para a sala secreta gratuita.
 
----
+## Novo contexto (base das 10 mensagens)
 
-## Etapa 1 — Refatorar a tabela de Vendas (desktop + mobile)
+> Olá NOME, em breve enviaremos o novo estudo e os novos palpites quentes após o sorteio. É sério — fazemos estudos de todos os concursos, você vai se surpreender. Não fique de fora: garanta **15 palpites quentes diários + estudos completos** de todos os concursos da Lotofácil. Apenas **R$ 19,00**, com **reembolso em 7 dias** se não estiver contente.
+>
+> Gere um novo PIX e acesse: [https://pay.kirvano.com/19990908-ca9b-4df1-a0df-e2690927490b](https://pay.kirvano.com/19990908-ca9b-4df1-a0df-e2690927490b)
+>
+> Ou, se quiser receber só os estudos de graça (sem os palpites), entre na sala secreta Lotofácil sem custo: [https://www.palpitetech.com.br/g/grupo-vip-assinantes](https://www.palpitetech.com.br/g/grupo-vip-assinantes)
 
-### 1.1 Novas colunas da tabela (desktop)
+## O que muda
 
-Sequência exata (substitui as atuais):
+- **Mantém** variável `{{nome}}` em todas as 10 mensagens.
+- **Mantém** o link Kirvano com os mesmos UTMs já existentes (`utm_content=v1_main` a `v10`) por variante.
+- **Adiciona** o segundo link da sala secreta gratuita em todas as variantes.
+- **Remove** a narrativa antiga de "reserva de vaga / comprovante / 30 minutos".
+- **Aplica** o tom Palpite Tech: sem acentos, leves erros humanos (vc, tbm, agr, pra, ta), 1–2 emojis no máx., variar abertura/ordem/fechamento entre as 10.
 
-| Coluna | Origem |
-|---|---|
-| Nome | `raw_payload.customer.name` do log mais recente da venda |
-| Email | `email` do log (já mascarado pela view) |
-| Telefone | `phone` do log (já mascarado) |
-| Valor | `raw_payload.total_price` |
-| Status | `latest.event` mapeado via `EVENT_LABELS` (Aprovada / PIX Gerado / Recusada / etc.) |
+## Como será feito
 
-**Removidas:** Resultado, Data, Eventos, PIX (botão de copiar), ícone de método de pagamento na 1ª coluna (vira parte do Status ou é descartado — ver 1.3).
+1. Update no registro principal `message_templates.content` (mensagem v1_main).
+2. Update em cada uma das 9 linhas de `message_template_variants` (positions 2–10), preservando `id`, `position`, `is_active` e o `utm_content=vN` correspondente em cada link Kirvano.
+3. As 10 mensagens serão escritas manualmente (não via IA) para garantir fidelidade ao novo contexto, com variações de abertura, ordem das frases (oferta primeiro vs. CTA primeiro vs. garantia primeiro), e fechamentos distintos.
 
-### 1.2 Status agregado (não cria linha nova)
+## Exemplo de variação (v1_main, ilustrativo)
 
-O agrupamento por `sale_id || checkout_id` já existe (`sales` em `useMemo`). O campo `latest.event` já reflete o evento mais recente de cada venda — ou seja, **o status já é evolutivo** (PIX_GENERATED → SALE_APPROVED sobrescreve o badge mostrado). Apenas precisamos garantir que a UI exiba uma linha por venda usando esse `latest.event` como Status.
+```
+Olá {{nome}} 🍀 *Chegou* seus 15 papites quentes para Lotofácil.
 
-### 1.3 Lista mobile (cards)
+Em breve vamos liberar o novo estudo e os palpites quentes do próximo sorteio da Lotofacil. É serio, fazemos estudo de TODOS os concursos, vc vai se surpreender.
 
-- Remover o botão de copiar PIX inline.
-- Manter: Nome, badge de Status (`latest.event`), Valor à direita.
-- Mantém o tap para abrir o painel lateral.
+Garante já: *15 palpites quentes por dia* + estudos completos da Lotofacil por apenas R$ 19,00. E se não curtir, pede reembolso em 7 dias, sem stress.
 
-### 1.4 Limpeza
+Gera o PIX e acessa agr:
+👉 https://pay.kirvano.com/19990908-ca9b-4df1-a0df-e2690927490b?utm_source=whatsapp&utm_medium=recuperacao_carrinho&utm_campaign=sala_secreta_lotofacil&utm_content=v1_main
 
-- Remover `pixCodeFromEvents`, `copyPixCode`, `RESULT_LABELS`, `getResultInfo` da listagem (mantidos apenas dentro do `SaleDetail` se ainda fizerem sentido na timeline — o bloco `PixCodeBlock` continua disponível dentro do detalhe).
-- Remover imports não usados (`Copy` do header da linha, etc.).
-
----
-
-## Etapa 2 — Painel lateral: enviar mensagem do evento
-
-### 2.1 Botão por evento na Linha do Tempo
-
-Dentro de `SaleDetail`, em cada item da timeline (`events.map`), adicionar um botão **"Enviar mensagem deste evento"** ao lado do timestamp/badge.
-
-- Visível apenas se houver telefone na venda (`latest.phone || customer.phone_number`).
-- Ao clicar:
-  1. Mapear o `event` bruto da Kirvano (ex: `PIX_GENERATED`) para o `event_trigger` interno (ex: `pix_gerado`) usando o mesmo `KIRVANO_EVENT_MAP` do webhook (será replicado no front como constante).
-  2. Verificar se existem templates ativos com aquele `event_trigger` em `message_templates`. Se não houver, mostrar toast: *"Nenhum template ativo para este evento."* e abortar.
-  3. Confirmar com `AlertDialog`: *"Disparar template do evento `{label}` para `{nome/telefone}`?"*
-  4. Chamar `supabase.rpc('queue_templates_for_event', { p_event_trigger, p_phone, p_name, p_user_id, p_variables, p_priority: 1 })`.
-  5. Toast com a contagem retornada (`N mensagens enfileiradas`).
-
-### 2.2 Variáveis enviadas
-
-Construir `p_variables` a partir do `raw_payload` do evento clicado, contemplando todos os tokens já usados nos templates (PIX inclusive):
-
-```ts
-{
-  nome: customer.name,
-  telefone: phone,
-  email,
-  produto: products?.[0]?.name,
-  plano_nome: products?.[0]?.name,
-  total_price: payload.total_price,
-  pix_codigo: payment.qrcode,           // se PIX
-  link_novo_pix: planMap[offer_id]?.checkoutLink,  // resolvido via kirvano_offer_plan_map
-  sale_id, checkout_id,
-}
+Ou, se preferir só os estudos de graça (sem os palpites), entra na sala secreta Lotofacil, é sem custo:
+👉 https://www.palpitetech.com.br/g/grupo-vip-assinantes
 ```
 
-`p_user_id`: tentar resolver via `perfis.email = latest.email` (consulta rápida antes da RPC) — se não houver, passa `null` (a função aceita).
+As outras 9 seguirão o mesmo conteúdo em estilos variados (mais curtas, mais informais, focadas na garantia, focadas no CTA gratuito primeiro etc.). Na primeira linha sempre adicionar algo induzindo o clique que chegou os 15 palpites quentes e deixe em destauqe palavras importantes
 
-### 2.3 Estado visual
+## Importante
 
-- Loading no botão clicado (spinner).
-- Desabilitar botão após disparo bem-sucedido por 5s para evitar duplo clique.
+- **Não** vou disparar mensagens nem corrigir as tags dos 13 leads ainda — isso fica para a próxima etapa, conforme solicitado.
+- Após o update, basta abrir o template no admin e revisar antes de ativar o disparo.
 
----
-
-## Detalhes técnicos
-
-**Arquivos editados:**
-- `src/pages/admin/AdminVendas.tsx` — toda a refatoração de tabela, lista mobile e adição do botão de disparo na timeline + helper `dispatchEventTemplate(event, sale)`.
-
-**Sem alterações:**
-- Banco de dados: `queue_templates_for_event` já existe e aceita `p_variables jsonb`.
-- Webhook: nenhum ajuste necessário.
-- `useDisparoManual`: não é reutilizado aqui (esse hook é para massa); o disparo individual chama a RPC diretamente.
-
-**Mapa de eventos (constante local em AdminVendas.tsx):**
-```ts
-const KIRVANO_TO_TRIGGER: Record<string, string> = {
-  SALE_APPROVED: "compra_aprovada",
-  SALE_REFUSED: "compra_recusada",
-  SALE_REFUNDED: "compra_reembolsada",
-  SALE_CHARGEBACK: "compra_chargeback",
-  PIX_GENERATED: "pix_gerado",
-  PIX_EXPIRED: "pix_expirado",
-  BANK_SLIP_GENERATED: "boleto_gerado",
-  BANK_SLIP_EXPIRED: "boleto_expirado",
-  ABANDONED_CART: "carrinho_abandonado",
-  CHECKOUT_ABANDONED: "checkout_abandonado",
-  SUBSCRIPTION_RENEWED: "assinatura_renovada",
-  SUBSCRIPTION_CANCELED: "assinatura_cancelada",
-  SUBSCRIPTION_EXPIRED: "assinatura_expirada",
-  SUBSCRIPTION_OVERDUE: "assinatura_inadimplente",
-};
-```
-
----
-
-## Fora do escopo
-
-- Não alterar `AdminEventos` nem `handle-kirvano-webhook`.
-- Não criar novos templates; o disparo usa o que já está em `message_templates` para aquele `event_trigger`.
-- Não mexer em `should_send_template` (dedupe por janela continua valendo — se o usuário já recebeu este template recentemente, será silenciosamente pulado pela função; o toast informará `0 enfileiradas`).
+Pronto para aplicar os updates nas 10 mensagens?
