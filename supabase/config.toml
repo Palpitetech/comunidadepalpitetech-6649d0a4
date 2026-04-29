@@ -93,6 +93,9 @@ verify_jwt = false
 [functions.backfill-megasena-excel]
 verify_jwt = false
 
+[functions.send-compra-aprovada-onetime]
+verify_jwt = false
+
 [functions.precompute-daily-posts]
 verify_jwt = false
 
