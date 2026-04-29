@@ -63,6 +63,8 @@ interface TemplateRow {
   delay_minutes: number;
   include_tags: string[];
   exclude_tags: string[];
+  exclude_tags_recent: string[];
+  exclude_recent_window_hours: number;
 }
 
 interface TemplateMetrics {
@@ -74,6 +76,8 @@ interface TemplateMetrics {
   skipped_converted: number;
   /** Skipped because the linked profile already has a paid tag. */
   skipped_paid_profile: number;
+  /** Skipped because the linked profile received an exclude_tags_recent tag within the configured window. */
+  skipped_recent_purchase: number;
   /** Skipped because the lead has no phone after trim. */
   skipped_no_phone: number;
   /** Atomic dedupe at DB level (exclusion constraint) — race-condition catches. */
@@ -94,6 +98,7 @@ function emptyMetrics(): TemplateMetrics {
     skipped_dedupe: 0,
     skipped_converted: 0,
     skipped_paid_profile: 0,
+    skipped_recent_purchase: 0,
     skipped_no_phone: 0,
     blocked_by_db_constraint: 0,
     errors_dedupe_db: 0,
