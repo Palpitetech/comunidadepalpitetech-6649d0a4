@@ -116,10 +116,15 @@ export default function PrepareAuditTable() {
                 </TableRow>
               )}
               {runs.map((r) => {
-                const ok = r.slots_scheduled > 0 && !r.error_message;
+                const isFailed = !!r.error_message;
+                const isWarning = r.slots_scheduled === 0 && r.skipped_dedup === 0 && !r.error_message;
+                const isOk = !r.error_message && !isWarning;
+                
                 const isExpanded = expanded === r.id;
-                const canExpand = !!r.error_message;
-                const rowDanger = r.slots_scheduled === 0;
+                const canExpand = isFailed;
+                const rowDanger = isFailed;
+                const rowWarning = isWarning;
+                
                 return (
                   <Fragment key={r.id}>
                     <TableRow
@@ -127,6 +132,7 @@ export default function PrepareAuditTable() {
                       className={cn(
                         canExpand && "cursor-pointer",
                         rowDanger && "bg-red-50 hover:bg-red-100/70",
+                        rowWarning && "bg-amber-50 hover:bg-amber-100/70",
                       )}
                     >
                       <TableCell className="w-8">
