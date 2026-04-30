@@ -1079,6 +1079,7 @@ export type Database = {
       }
       email_templates: {
         Row: {
+          category: string | null
           created_at: string
           delay_minutes: number
           event_trigger: string
@@ -1096,6 +1097,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
           delay_minutes?: number
           event_trigger: string
@@ -1113,6 +1115,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category?: string | null
           created_at?: string
           delay_minutes?: number
           event_trigger?: string
@@ -1914,6 +1917,7 @@ export type Database = {
       }
       message_templates: {
         Row: {
+          category: string | null
           content: string
           created_at: string | null
           delay_enabled: boolean
@@ -1931,6 +1935,7 @@ export type Database = {
           tags_match_mode: string
         }
         Insert: {
+          category?: string | null
           content: string
           created_at?: string | null
           delay_enabled?: boolean
@@ -1948,6 +1953,7 @@ export type Database = {
           tags_match_mode?: string
         }
         Update: {
+          category?: string | null
           content?: string
           created_at?: string | null
           delay_enabled?: boolean
