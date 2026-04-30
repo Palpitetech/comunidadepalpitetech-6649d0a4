@@ -18,6 +18,7 @@ interface EmailTemplate {
   subject: string;
   html: string;
   event_trigger: string;
+  category: "transactional" | "marketing";
   is_active: boolean;
   delay_minutes: number;
   include_tags: string[];
@@ -45,6 +46,7 @@ const EMPTY: Partial<EmailTemplate> = {
   subject: "",
   html: "",
   event_trigger: "novo_cadastro",
+  category: "marketing",
   is_active: true,
   delay_minutes: 0,
   include_tags: [],
@@ -127,6 +129,17 @@ export function EmailTemplatesTab() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-medium truncate">{tpl.name}</span>
+                    <Badge 
+                      variant={tpl.category === 'transactional' ? "default" : "secondary"} 
+                      className={cn(
+                        "text-[9px] uppercase tracking-wider py-0 px-1.5 h-4",
+                        tpl.category === 'transactional' 
+                          ? "bg-emerald-500 hover:bg-emerald-600 border-none text-white" 
+                          : "bg-blue-500 hover:bg-blue-600 border-none text-white"
+                      )}
+                    >
+                      {tpl.category === 'transactional' ? 'Transacional' : 'Marketing'}
+                    </Badge>
                     {!tpl.is_active && <Badge variant="outline">Inativo</Badge>}
                   </div>
                   <div className="text-xs text-muted-foreground truncate">
@@ -159,6 +172,33 @@ export function EmailTemplatesTab() {
           </DialogHeader>
           {editing && (
             <div className="space-y-3">
+              <div className="flex gap-4 p-1 bg-muted/50 rounded-lg border border-border">
+                <button
+                  type="button"
+                  onClick={() => setEditing(e => ({ ...e, category: 'marketing' }))}
+                  className={cn(
+                    "flex-1 py-2 text-xs font-medium rounded-md transition-all",
+                    editing.category === 'marketing' 
+                      ? "bg-background text-foreground shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Marketing
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditing(e => ({ ...e, category: 'transactional' }))}
+                  className={cn(
+                    "flex-1 py-2 text-xs font-medium rounded-md transition-all",
+                    editing.category === 'transactional' 
+                      ? "bg-background text-foreground shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Transacional
+                </button>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label>Nome interno</Label>
