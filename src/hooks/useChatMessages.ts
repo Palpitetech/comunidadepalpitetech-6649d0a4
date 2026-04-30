@@ -35,7 +35,7 @@ export function useChatMessages(conversationId: string | null) {
         .order("received_at", { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+      setMessages((data as any[]) || []);
     } catch (err) {
       console.error("Error fetching messages:", err);
     } finally {
