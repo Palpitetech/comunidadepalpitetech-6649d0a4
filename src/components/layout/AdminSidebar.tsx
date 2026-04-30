@@ -67,7 +67,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-type BadgeKey = "usuarios" | "pagamentos" | "resgates";
+type BadgeKey = "usuarios" | "pagamentos" | "resgates" | "chat";
 
 interface NavItem {
   title: string;
@@ -98,7 +98,7 @@ const sections: NavSection[] = [
     label: "Comunicação",
     icon: Radio,
     items: [
-      { title: "Chat Central", url: "/admin/chat", icon: MessageCircle },
+      { title: "Chat Central", url: "/admin/chat", icon: MessageCircle, badge: "chat", badgeTone: "danger" },
       { title: "Comunicação", url: "/admin/whatsapp", icon: Radio },
       { title: "Convites", url: "/admin/convites", icon: Gift },
       { title: "Eventos", url: "/admin/eventos", icon: Activity },

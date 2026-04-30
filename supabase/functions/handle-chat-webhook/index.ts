@@ -18,7 +18,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    console.log("Webhook received:", JSON.stringify(body, null, 2));
+    // console.log("Webhook received:", JSON.stringify(body, null, 2));
 
     const { event, data, instance } = body;
 
