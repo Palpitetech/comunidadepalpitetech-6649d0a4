@@ -35,6 +35,7 @@ interface MessageTemplate {
   name: string;
   content: string;
   event_trigger: string;
+  category: "transactional" | "marketing";
   created_at: string;
   is_active?: boolean;
   delay_enabled?: boolean;
@@ -56,6 +57,7 @@ interface FormData {
   name: string;
   content: string;
   event_trigger: string;
+  category: "transactional" | "marketing";
   delay_enabled: boolean;
   delay_minutes: number;
   include_tags: string[];
@@ -68,6 +70,7 @@ interface FormData {
 
 const emptyForm: FormData = {
   name: "", content: "", event_trigger: "manual",
+  category: "marketing",
   delay_enabled: false, delay_minutes: 0,
   include_tags: [], exclude_tags: [],
   exclude_tags_recent: [], exclude_recent_window_hours: 24,
@@ -206,6 +209,7 @@ export function TemplatesTab() {
       name: t.name,
       content: t.content,
       event_trigger: t.event_trigger,
+      category: t.category ?? "marketing",
       delay_enabled: t.delay_enabled ?? false,
       delay_minutes: t.delay_minutes ?? 0,
       include_tags: t.include_tags ?? [],
@@ -280,11 +284,12 @@ export function TemplatesTab() {
         name: form.name.trim(),
         content: mainContent,
         event_trigger: form.event_trigger,
+        category: form.category,
         delay_enabled: form.delay_enabled,
         delay_minutes: form.delay_enabled ? form.delay_minutes : 0,
-        include_tags: form.include_tags,
-        exclude_tags: form.exclude_tags,
-        exclude_tags_recent: form.exclude_tags_recent,
+        include_tags: form.category === "marketing" ? form.include_tags : [],
+        exclude_tags: form.category === "marketing" ? form.exclude_tags : [],
+        exclude_tags_recent: form.category === "marketing" ? form.exclude_tags_recent : [],
         exclude_recent_window_hours: form.exclude_recent_window_hours,
         plan_ids: form.plan_ids,
         tags_match_mode: form.tags_match_mode,
@@ -540,6 +545,33 @@ export function TemplatesTab() {
             </DialogHeader>
             <ScrollArea className="max-h-[calc(85vh-80px)] pr-3">
             <div className="space-y-4 pt-2">
+              <div className="flex gap-4 p-1 bg-muted/50 rounded-lg border border-border">
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, category: 'marketing' }))}
+                  className={cn(
+                    "flex-1 py-2 text-xs font-medium rounded-md transition-all",
+                    form.category === 'marketing' 
+                      ? "bg-background text-foreground shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Marketing
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, category: 'transactional' }))}
+                  className={cn(
+                    "flex-1 py-2 text-xs font-medium rounded-md transition-all",
+                    form.category === 'transactional' 
+                      ? "bg-background text-foreground shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Transacional
+                </button>
+              </div>
+
               <div className="space-y-1.5">
                 <Label htmlFor="tpl-name">Nome do template *</Label>
                 <Input
@@ -729,6 +761,7 @@ export function TemplatesTab() {
               </div>
 
               <TemplateSegmentationSection
+                category={form.category}
                 allTags={allTags}
                 includeTags={form.include_tags}
                 excludeTags={form.exclude_tags}
@@ -789,12 +822,31 @@ export function TemplatesTab() {
                     {triggerBadge(tpl.event_trigger)}
                   </div>
                 </div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Badge 
+                    variant={tpl.category === 'transactional' ? "default" : "secondary"} 
+                    className={cn(
+                      "text-[9px] uppercase tracking-wider py-0 px-1.5 h-4",
+                      tpl.category === 'transactional' 
+                        ? "bg-emerald-500 hover:bg-emerald-600 border-none text-white" 
+                        : "bg-blue-500 hover:bg-blue-600 border-none text-white"
+                    )}
+                  >
+                    {tpl.category === 'transactional' ? 'Transacional' : 'Marketing'}
+                  </Badge>
+                </div>
                 <p className="text-xs text-muted-foreground line-clamp-2">{tpl.content}</p>
                 <div className="flex flex-wrap items-center gap-2">
-                  {((tpl.include_tags && tpl.include_tags.length > 0) || (tpl.exclude_tags && tpl.exclude_tags.length > 0) || (tpl.plan_ids && tpl.plan_ids.length > 0)) && (
+                  {tpl.category === 'marketing' && ((tpl.include_tags && tpl.include_tags.length > 0) || (tpl.exclude_tags && tpl.exclude_tags.length > 0)) && (
                     <div className="flex items-center gap-1">
                       <Filter className="h-3 w-3 text-muted-foreground" />
                       <span className="text-[10px] text-muted-foreground">Segmentado</span>
+                    </div>
+                  )}
+                  {tpl.plan_ids && tpl.plan_ids.length > 0 && (
+                    <div className="flex items-center gap-1">
+                      <Check className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-[10px] text-muted-foreground">{tpl.plan_ids.length} plano(s)</span>
                     </div>
                   )}
                   <div className="flex items-center gap-1">
