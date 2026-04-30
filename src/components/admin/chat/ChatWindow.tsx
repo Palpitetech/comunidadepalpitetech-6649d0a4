@@ -113,7 +113,9 @@ export const ChatWindow = ({ conversationId, onBack }: ChatWindowProps) => {
                   {showDateSeparator && (
                     <div className="flex justify-center my-4">
                       <span className="bg-background/80 backdrop-blur px-3 py-1 rounded-full text-[11px] font-medium shadow-sm border uppercase">
-                        {new Date(msg.received_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                        {msg.received_at && isValid(new Date(msg.received_at))
+                          ? new Date(msg.received_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                          : ""}
                       </span>
                     </div>
                   )}
