@@ -138,25 +138,27 @@ const Central = () => {
                   onOpenChange={(open) => setOpenDropdownId(open ? item.id! : null)}
                 >
                   <DropdownMenuTrigger asChild>
-                    <Card
-                      onTouchStart={handleTouchStart}
-                      onTouchMove={handleTouchMove}
-                      onClick={(e) => {
-                        if (touchMoved.current) {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          touchMoved.current = false;
-                          return;
-                        }
-                        setOpenDropdownId(item.id!);
-                      }}
-                      onPointerDown={(e) => e.preventDefault()}
-                      className="group relative h-20 cursor-pointer border border-white/60 bg-gradient-to-b from-white to-slate-50 rounded-3xl p-2 flex flex-col items-center justify-center text-center select-none touch-manipulation shadow-[0_10px_25px_-8px_rgba(0,0,0,0.15),0_4px_10px_-4px_rgba(0,0,0,0.08),inset_0_1px_0_0_rgba(255,255,255,0.9)] hover:shadow-[0_18px_35px_-10px_rgba(0,0,0,0.22),0_6px_14px_-6px_rgba(0,0,0,0.12),inset_0_1px_0_0_rgba(255,255,255,0.95)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] active:shadow-[0_4px_10px_-4px_rgba(0,0,0,0.15),inset_0_2px_4px_0_rgba(0,0,0,0.06)] transition-all duration-200 ease-out"
-                    >
-                      <span className="text-xs font-bold text-senior-dark leading-tight px-2">
-                        {item.title}
-                      </span>
-                    </Card>
+                    <div className="touch-none">
+                      <Card
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onClick={(e) => {
+                          if (touchMoved.current) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            touchMoved.current = false;
+                            return;
+                          }
+                          setOpenDropdownId(item.id!);
+                        }}
+                        onPointerDown={(e) => e.preventDefault()}
+                        className="group relative h-20 cursor-pointer border border-white/60 bg-gradient-to-b from-white to-slate-50 rounded-3xl p-2 flex flex-col items-center justify-center text-center select-none touch-manipulation shadow-[0_10px_25px_-8px_rgba(0,0,0,0.15),0_4px_10px_-4px_rgba(0,0,0,0.08),inset_0_1px_0_0_rgba(255,255,255,0.9)] hover:shadow-[0_18px_35px_-10px_rgba(0,0,0,0.22),0_6px_14px_-6px_rgba(0,0,0,0.12),inset_0_1px_0_0_rgba(255,255,255,0.95)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] active:shadow-[0_4px_10px_-4px_rgba(0,0,0,0.15),inset_0_2px_4px_0_rgba(0,0,0,0.06)] transition-all duration-200 ease-out"
+                      >
+                        <span className="text-xs font-bold text-senior-dark leading-tight px-2">
+                          {item.title}
+                        </span>
+                      </Card>
+                    </div>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="center" className="w-48">
                     {lotteries.map((lottery) => (
