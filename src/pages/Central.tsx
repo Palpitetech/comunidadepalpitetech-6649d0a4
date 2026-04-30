@@ -138,7 +138,7 @@ const Central = () => {
                   onOpenChange={(open) => setOpenDropdownId(open ? item.id! : null)}
                 >
                   <DropdownMenuTrigger asChild className="w-full">
-                    <div className="touch-none w-full">
+                    <div className="touch-none">
                       <Card
                         onTouchStart={handleTouchStart}
                         onTouchMove={handleTouchMove}
