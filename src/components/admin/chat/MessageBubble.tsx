@@ -1,6 +1,6 @@
 import React from "react";
 import { Message } from "@/hooks/useChatMessages";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 
 interface MessageBubbleProps {
   message: Message;
