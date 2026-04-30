@@ -136,7 +136,7 @@ async function ensureWebhookConfigured(
 
   if (!inst || inst.webhook_configured) return;
 
-  const webhookUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/group-member-webhook`;
+  const webhookUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/handle-chat-webhook`;
 
   try {
     const res = await fetch(
@@ -152,7 +152,7 @@ async function ensureWebhookConfigured(
             enabled: true,
             url: webhookUrl,
             webhookByEvents: true,
-            events: ["GROUP_PARTICIPANTS_UPDATE"],
+            events: ["GROUP_PARTICIPANTS_UPDATE", "MESSAGES_UPSERT"],
           },
         }),
       }
@@ -797,7 +797,7 @@ Deno.serve(async (req) => {
             enabled: reqBody.enabled ?? true,
             url: reqBody.webhookUrl,
             webhookByEvents: true,
-            events: reqBody.events || ["GROUP_PARTICIPANTS_UPDATE"],
+            events: reqBody.events || ["GROUP_PARTICIPANTS_UPDATE", "MESSAGES_UPSERT"],
           },
         });
         break;

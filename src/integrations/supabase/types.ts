@@ -3353,6 +3353,101 @@ export type Database = {
           },
         ]
       }
+      whatsapp_chat_conversations: {
+        Row: {
+          created_at: string | null
+          id: string
+          instance_id: string | null
+          last_message_at: string | null
+          last_message_preview: string | null
+          phone_number: string
+          profile_name: string | null
+          unread_count: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          instance_id?: string | null
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          phone_number: string
+          profile_name?: string | null
+          unread_count?: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          instance_id?: string | null
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          phone_number?: string
+          profile_name?: string | null
+          unread_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_chat_conversations_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_chat_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          direction: string
+          evolution_message_id: string | null
+          expires_at: string
+          id: string
+          instance_id: string | null
+          phone_number: string
+          received_at: string
+          status: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          direction: string
+          evolution_message_id?: string | null
+          expires_at?: string
+          id?: string
+          instance_id?: string | null
+          phone_number: string
+          received_at?: string
+          status?: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          direction?: string
+          evolution_message_id?: string | null
+          expires_at?: string
+          id?: string
+          instance_id?: string | null
+          phone_number?: string
+          received_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_chat_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_chat_messages_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_instance_groups: {
         Row: {
           created_at: string
@@ -3726,6 +3821,10 @@ export type Database = {
       }
       increment_smart_link_clicks: {
         Args: { p_slug: string }
+        Returns: undefined
+      }
+      increment_unread_count: {
+        Args: { p_phone_number: string }
         Returns: undefined
       }
       incrementar_uso_gerador: {
