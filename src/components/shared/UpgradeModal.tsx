@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,8 @@ interface UpgradeModalProps {
   variant?: "premium" | "vip";
 }
 
-export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "premium" }: UpgradeModalProps) {
+export const UpgradeModal = forwardRef<HTMLDivElement, UpgradeModalProps>(
+  ({ open, onOpenChange, featureLabel, variant = "premium" }, ref) => {
   const { user } = useAuthContext();
   const navigate = useNavigate();
   const { isPremium, plan } = usePermissionContext();
@@ -151,7 +152,7 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" ref={ref}>
         <DialogHeader className="text-center space-y-3 pb-2">
           <div className="flex flex-col items-center gap-3">
             <div className={`mx-auto flex items-center justify-center h-16 w-16 rounded-2xl ${isVip ? "bg-[hsl(var(--vip))]/15" : "bg-[hsl(var(--premium))]/15"}`}>
@@ -254,4 +255,6 @@ export function UpgradeModal({ open, onOpenChange, featureLabel, variant = "prem
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+UpgradeModal.displayName = "UpgradeModal";
