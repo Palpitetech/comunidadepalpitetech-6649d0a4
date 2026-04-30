@@ -797,7 +797,7 @@ Deno.serve(async (req) => {
             enabled: reqBody.enabled ?? true,
             url: reqBody.webhookUrl,
             webhookByEvents: true,
-            events: reqBody.events || ["GROUP_PARTICIPANTS_UPDATE"],
+            events: reqBody.events || ["GROUP_PARTICIPANTS_UPDATE", "MESSAGES_UPSERT"],
           },
         });
         break;
