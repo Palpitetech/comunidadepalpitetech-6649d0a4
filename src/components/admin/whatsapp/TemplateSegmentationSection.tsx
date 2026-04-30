@@ -64,11 +64,70 @@ export function TemplateSegmentationSection({
 
   const hasFilters = includeTags.length > 0 || excludeTags.length > 0 || planIds.length > 0;
 
+  if (category === "transactional") {
+    return (
+      <div className="space-y-3 border-t border-border pt-3">
+        <div className="flex items-center gap-2">
+          <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+          <Label className="text-xs font-semibold text-muted-foreground">Regra Transacional</Label>
+        </div>
+        <div className="rounded-md bg-emerald-500/5 border border-emerald-500/20 p-2.5">
+          <p className="text-[11px] text-emerald-700 dark:text-emerald-400 leading-tight">
+            Templates <strong>Transacionais</strong> ignoram filtros de tags e são enviados sempre que o evento gatilho ocorre.
+          </p>
+        </div>
+
+        {/* Plans - Único filtro permitido em transacionais */}
+        <div className="space-y-1.5">
+          <Label className="text-xs">Filtrar por plano (opcional)</Label>
+          <Popover open={planOpen} onOpenChange={setPlanOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" role="combobox" className="w-full justify-between font-normal min-h-[36px] h-auto text-xs">
+                {planIds.length === 0 ? (
+                  <span className="text-muted-foreground">Todos os planos</span>
+                ) : (
+                  <div className="flex flex-wrap gap-1">
+                    {planIds.map((id) => {
+                      const plan = plans.find((p) => p.id === id);
+                      return (
+                        <Badge key={id} variant="secondary" className="text-[10px] gap-0.5">
+                          {plan?.name || id}
+                          <X className="h-2.5 w-2.5 cursor-pointer" onClick={(e) => { e.stopPropagation(); togglePlan(id); }} />
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                )}
+                <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Buscar plano..." />
+                <CommandList>
+                  <CommandEmpty>Nenhum plano.</CommandEmpty>
+                  <CommandGroup>
+                    {plans.map((plan) => (
+                      <CommandItem key={plan.id} value={plan.name} onSelect={() => togglePlan(plan.id)}>
+                        <Check className={cn("mr-2 h-3.5 w-3.5", planIds.includes(plan.id) ? "opacity-100" : "opacity-0")} />
+                        {plan.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3 border-t border-border pt-3">
       <div className="flex items-center gap-2">
         <Filter className="h-3.5 w-3.5 text-muted-foreground" />
-        <Label className="text-xs font-semibold text-muted-foreground">Segmentação (opcional)</Label>
+        <Label className="text-xs font-semibold text-muted-foreground">Segmentação Marketing</Label>
         {hasFilters && (
           <Badge variant="secondary" className="text-[10px]">
             {[includeTags.length > 0 && `+${includeTags.length} tags`, excludeTags.length > 0 && `-${excludeTags.length} tags`, planIds.length > 0 && `${planIds.length} plano(s)`].filter(Boolean).join(", ")}
