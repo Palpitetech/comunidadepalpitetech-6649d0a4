@@ -104,9 +104,9 @@ export default function PipelineHealthCard() {
       if (instErr) throw instErr;
 
       const total = insts?.length ?? 0;
-      const online = (insts || []).filter((i: any) => i.status === "open").length;
+      const online = (insts || []).filter((i: any) => i.status === "open" || i.status === "online").length;
       const offlineNames = (insts || [])
-        .filter((i: any) => i.status !== "open")
+        .filter((i: any) => i.status !== "open" && i.status !== "online")
         .map((i: any) => i.friendly_name || i.name || "?");
 
       let instStatus: HealthStatus = "ok";

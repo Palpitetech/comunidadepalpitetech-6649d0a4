@@ -86,8 +86,8 @@ export default function InstanceGroupMatrix() {
   );
 
   const instanceStatus = (s: string | null): HealthStatus => {
-    if (s === "open") return "ok";
-    if (!s || s === "close" || s === "closed") return "critical";
+    if (s === "open" || s === "online") return "ok";
+    if (!s || s === "close" || s === "closed" || s === "offline") return "critical";
     return "warn";
   };
 
