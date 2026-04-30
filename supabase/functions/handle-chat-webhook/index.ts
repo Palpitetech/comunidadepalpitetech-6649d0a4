@@ -22,6 +22,19 @@ serve(async (req) => {
 
     const { event, data, instance } = body;
 
+    // Redireciona eventos de grupo para a função original
+    if (event === "GROUP_PARTICIPANTS_UPDATE") {
+      const groupWebhookUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/group-member-webhook`;
+      return fetch(groupWebhookUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": req.headers.get("Authorization") || ""
+        },
+        body: JSON.stringify(body)
+      });
+    }
+
     if (event !== "MESSAGES_UPSERT") {
       return new Response(JSON.stringify({ message: "Event ignored" }), { status: 200 });
     }
