@@ -103,7 +103,7 @@ export const ChatWindow = ({ conversationId, onBack }: ChatWindowProps) => {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            messages.map((msg, index) => {
+            messages.map((msg: any, index: number) => {
               const prevMsg = messages[index - 1];
               const showDateSeparator = !prevMsg || 
                 new Date(msg.received_at).toDateString() !== new Date(prevMsg.received_at).toDateString();
