@@ -136,7 +136,7 @@ async function ensureWebhookConfigured(
 
   if (!inst || inst.webhook_configured) return;
 
-  const webhookUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/group-member-webhook`;
+  const webhookUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/handle-chat-webhook`;
 
   try {
     const res = await fetch(
