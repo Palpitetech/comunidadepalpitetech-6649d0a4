@@ -15,6 +15,7 @@ interface PlanOption {
 }
 
 interface TemplateSegmentationSectionProps {
+  category: "transactional" | "marketing";
   allTags: string[];
   includeTags: string[];
   excludeTags: string[];
@@ -32,6 +33,7 @@ interface TemplateSegmentationSectionProps {
 }
 
 export function TemplateSegmentationSection({
+  category,
   allTags,
   includeTags,
   excludeTags,
