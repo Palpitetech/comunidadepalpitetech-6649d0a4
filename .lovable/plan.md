@@ -1,77 +1,70 @@
-# Segmentação cirúrgica: excluir só quem comprou ESTE produto nas últimas 24h
+## Diagnóstico
 
-## Problema atual
+Os disparos noturnos de **29/04 (23h BRT)** não saíram porque os logs já estavam na fila **antes do refactor do módulo de Disparo em Grupo** feito hoje mais cedo. Antes do refactor, a mensagem (palpite/IA) era resolvida no momento do envio (`dispatch`). Depois do refactor, o `dispatch` passou a exigir que `message_content` já estivesse preenchido pelo `prepare` — e marca como `failed` qualquer log "órfão" sem conteúdo, com a mensagem:
 
-O campo `exclude_tags` do template é avaliado **sem janela de tempo**: se o lead (ou seu perfil vinculado) tem qualquer tag listada em `exclude_tags`, ele é descartado para sempre.
+> *"Órfão da transição de refactor — sem conteúdo pré-resolvido. Use Reenviar para regenerar."*
 
-Isso é amplo demais — quem comprou Lotofácil há 6 meses e agora demonstra interesse em outro produto não recebe nada.
+**Logs afetados no dia 29 (noturno):** 8 logs entre 23:18 e 23:34 BRT, distribuídos entre:
+- Mega Sena - Post (slot_2)
+- Mega Sena - Sala Vip / Sala Secreta
+- Lotofácil - Post (slot_2) / Sala Secreta
 
-A anti-conversão por venda (`kirvano_webhook_logs`) já é restrita a 24h, mas a exclusão por **tag de perfil** não é. Esse é o gap.
+Total atual de órfãos pendentes/failed na tabela: **12**.
 
-## Solução proposta
+Os disparos diurnos do dia 30 (00h e 12h BRT) saíram normalmente porque foram agendados pelo `prepare` novo (com `message_content` pré-resolvido).
 
-Adicionar um novo campo no template — **`exclude_tags_recent`** (array de tags) — que age como filtro **temporal**:
+## Por que o "Reagendar agora" não cobriu?
 
-> "Bloqueia o lead apenas se ele recebeu uma destas tags nas últimas 24h."
+O botão **Reagendar agora** chama `prepare`, que agenda apenas o **próximo horário** de cada slot (`last_scheduled_index + 1`). Como vários horários noturnos já tinham logs antigos na fila, o `prepare` os ignorou via dedup de 20h e seguiu para o próximo horário do dia seguinte. Ou seja, os órfãos ficaram travando o dedup sem nunca serem substituídos.
 
-Assim cada template pode ter dois níveis de exclusão:
+## Plano de correção
 
-- `exclude_tags` → bloqueio permanente (quem tem o plano que cobre ESTE produto, ex: `pago_anualvip` para qualquer pré-checkout)
-- `exclude_tags_recent` → bloqueio temporário (quem comprou ESTE produto específico há menos de 24h, ex: `pago_grupovip_lotofacil` no template da Lotofácil)
+### 1. Limpar órfãos travados (one-shot SQL)
 
-### Como detectar "recebeu tag nas últimas 24h"
+Apagar todos os logs sem `message_source` E sem `message_content` que estejam `pending` ou `failed`, para liberar o dedup. Isso é seguro porque eles nunca serão enviados como estão.
 
-Fonte: tabela `perfil_tag_history` (já existente — registra cada tag adicionada com timestamp). Se não existir, usaremos o `created_at` da venda em `kirvano_webhook_logs` cruzado com email/celular como proxy.
-
-Verificarei a tabela na fase de implementação e escolherei a fonte mais confiável.
-
-## Mudanças
-
-### 1. Schema (migration)
-- Adicionar coluna `exclude_tags_recent text[] default '{}'` em `message_templates`
-- Adicionar coluna `exclude_recent_window_hours integer default 24` (configurável por template, padrão 24h)
-
-### 2. Edge function `process-lead-retargeting`
-- Ler os novos campos do template
-- Após o check de `exclude_tags` (permanente), adicionar nova verificação:
-  - Para cada tag em `exclude_tags_recent`, checar se o perfil/lead a recebeu na janela configurada
-  - Se sim → skip com novo contador `skipped_recent_purchase`
-- Adicionar métrica `skipped_recent_purchase` em `TemplateMetrics`
-
-### 3. UI Admin (`/admin/whatsapp` → editor de templates)
-- Adicionar campo "Tags de exclusão recente (24h)" no formulário de edição de template
-- Adicionar input numérico "Janela de exclusão (horas)" — default 24
-- Tooltip explicando: "Bloqueia o lead apenas se recebeu estas tags na janela definida. Útil para evitar enviar pré-checkout de Lotofácil para quem acabou de comprar Lotofácil, sem bloquear permanentemente."
-
-### 4. Configuração inicial dos templates existentes
-Após deploy, popular `exclude_tags_recent` nos 3 templates de pré-checkout abandono:
-- Template Lotofácil → `exclude_tags_recent = ['pago_grupovip_lotofacil']`
-- Template Mensal → `exclude_tags_recent = ['pago_mensal']`
-- Template Anual → `exclude_tags_recent = ['pago_anual', 'pago_anualvip']`
-
-E **reduzir** `exclude_tags` (permanente) para conter apenas planos que cobrem TUDO (ex: `pago_anualvip`), liberando cross-sell legítimo.
-
-## Detalhes técnicos
-
-```text
-Lead chega → janela [now-24h, now-delay]
-  ↓
-overlap com include_tags? ────── não → ignora
-  ↓ sim
-exclude_tags (permanente) no perfil? ── sim → skip (skipped_paid_profile)
-  ↓ não
-exclude_tags_recent recebida nas últimas N horas? ── sim → skip (skipped_recent_purchase) ← NOVO
-  ↓ não
-venda aprovada nas últimas 24h (kirvano)? ── sim → skip (skipped_converted)
-  ↓ não
-dedupe 7d OK? → enfileira
+```sql
+DELETE FROM group_blast_logs
+WHERE message_source IS NULL
+  AND (message_content IS NULL OR message_content = '')
+  AND status IN ('pending','failed');
 ```
 
-## Resultado esperado
+### 2. Forçar replanejamento dos slots noturnos hoje (30/04)
 
-- Cliente que comprou Lotofácil ontem **não** recebe pré-checkout abandonado de Lotofácil hoje
-- Mas **recebe** pré-checkout de Mega/Anual/outros produtos (cross-sell preservado)
-- Cliente AnualVIP nunca recebe nada (continua bloqueado permanentemente)
-- Cliente cancelado há 2 meses pode receber win-back novamente
+Disparar `prepare` com `force=true` apenas para cobrir os horários noturnos. Como `force=true` agenda em `now + 30s * (slotIdx+1)` (modo teste imediato), **não usar force agora**. Em vez disso, basta um `prepare` normal — após a limpeza acima, ele encontrará os slots livres e reagendará os próximos horários (incluindo os noturnos de hoje).
 
-Confirma esta direção? Posso prosseguir com a implementação.
+```bash
+# Via UI: botão "Reagendar agora" na aba WhatsApp → Disparo em Grupo
+# OU via curl:
+POST /functions/v1/group-blast-send  body: { "action": "prepare" }
+```
+
+### 3. Hardening no `prepare` para evitar nova ocorrência
+
+Atualizar `supabase/functions/_shared/group-blast/schedule.ts` na função `scheduleOne`: a checagem de dedup atual é
+
+```ts
+.neq("status", "failed")
+```
+
+Adicionar também: ignorar logs órfãos (sem `message_source`) ao calcular dedup. Ou seja, trocar para:
+
+```ts
+.neq("status", "failed")
+.not("message_source", "is", null)
+```
+
+Assim, mesmo se houver órfão "pending" travado, o `prepare` cria um novo log válido por cima e o dispatcher entrega o novo (o órfão envelhece e some do dedup em 20h).
+
+### 4. (Opcional) Limpeza automática
+
+Adicionar um job cron diário (`0 5 * * *` BRT = `8 UTC`) que rode a query do passo 1 para garantir que nenhum órfão fique acumulando.
+
+## Resumo de arquivos a tocar
+
+- **Migração SQL** (one-shot): DELETE dos órfãos.
+- **`supabase/functions/_shared/group-blast/schedule.ts`**: ajuste na query de dedup em `scheduleOne` (~3 linhas).
+- **(Opcional)** Migração SQL adicional: cron diário de limpeza.
+
+Após implantado, clico "Reagendar agora" para repopular a fila de hoje à noite com conteúdo pré-resolvido.
