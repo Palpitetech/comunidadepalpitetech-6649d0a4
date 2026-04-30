@@ -6,6 +6,7 @@ export interface AdminBadges {
   usuarios: number;
   pagamentos: number;
   resgates: number;
+  chat: number;
 }
 
 /**
