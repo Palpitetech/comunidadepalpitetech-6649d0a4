@@ -23,7 +23,9 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
         </p>
         <div className="flex justify-end items-center mt-1 space-x-1">
           <span className="text-[10px] text-muted-foreground/80 leading-none">
-            {format(new Date(message.received_at), "HH:mm")}
+            {message.received_at && isValid(new Date(message.received_at)) 
+              ? format(new Date(message.received_at), "HH:mm") 
+              : ""}
           </span>
           {isOutbound && (
             <span className="text-[10px] text-primary-foreground/60 leading-none">
