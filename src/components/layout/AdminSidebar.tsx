@@ -67,7 +67,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-type BadgeKey = "usuarios" | "pagamentos" | "resgates";
+type BadgeKey = "usuarios" | "pagamentos" | "resgates" | "chat";
 
 interface NavItem {
   title: string;
