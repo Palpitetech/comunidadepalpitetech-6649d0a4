@@ -152,7 +152,7 @@ async function ensureWebhookConfigured(
             enabled: true,
             url: webhookUrl,
             webhookByEvents: true,
-            events: ["GROUP_PARTICIPANTS_UPDATE"],
+            events: ["GROUP_PARTICIPANTS_UPDATE", "MESSAGES_UPSERT"],
           },
         }),
       }
