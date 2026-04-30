@@ -155,9 +155,13 @@ export default function PrepareAuditTable() {
                         {r.skipped_dedup}
                       </TableCell>
                       <TableCell className="text-center">
-                        {ok ? (
+                        {isOk ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-green-100 text-green-800 text-xs font-medium border border-green-200">
                             <CheckCircle2 className="h-3 w-3" /> OK
+                          </span>
+                        ) : isWarning ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-xs font-medium border border-amber-200">
+                            <RefreshCw className="h-3 w-3" /> Atenção
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-100 text-red-800 text-xs font-medium border border-red-200">
