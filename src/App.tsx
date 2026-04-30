@@ -66,6 +66,7 @@ import DezenasporPosicao from "./pages/DezenasporPosicao";
 import NotFound from "./pages/NotFound";
 import Termos from "./pages/Termos";
 import Privacidade from "./pages/Privacidade";
+import ChatAdmin from "./pages/admin/ChatAdmin";
 
 // AtivarConta e VerificarEmail removidos
 import ResultadosMegaSena from "./pages/megasena/ResultadosMegaSena";
