@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { isValid } from "date-fns";
 import { useChatMessages } from "@/hooks/useChatMessages";
 import { MessageBubble } from "./MessageBubble";
 import { ScrollArea } from "@/components/ui/scroll-area";
