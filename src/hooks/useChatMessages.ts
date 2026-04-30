@@ -59,7 +59,7 @@ export function useChatMessages(conversationId: string | null) {
           filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message]);
+          setMessages((prev) => [...prev, payload.new as any]);
         }
       )
       .subscribe();
