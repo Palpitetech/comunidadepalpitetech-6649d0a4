@@ -106,8 +106,13 @@ export const ChatWindow = ({ conversationId, onBack }: ChatWindowProps) => {
           ) : (
             messages.map((msg: any, index: number) => {
               const prevMsg = messages[index - 1];
-              const showDateSeparator = !prevMsg || 
-                new Date(msg.received_at).toDateString() !== new Date(prevMsg.received_at).toDateString();
+              const msgDateStr = msg.received_at && isValid(new Date(msg.received_at)) 
+                ? new Date(msg.received_at).toDateString() 
+                : null;
+              const prevMsgDateStr = prevMsg?.received_at && isValid(new Date(prevMsg.received_at))
+                ? new Date(prevMsg.received_at).toDateString()
+                : null;
+              const showDateSeparator = !prevMsg || msgDateStr !== prevMsgDateStr;
               
               return (
                 <React.Fragment key={msg.id}>
