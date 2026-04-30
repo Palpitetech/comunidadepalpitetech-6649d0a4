@@ -68,6 +68,10 @@ async function scheduleOne(
   if (!force) {
     const twentyHoursAgo = new Date(Date.now() - 20 * 60 * 60 * 1000)
       .toISOString();
+    // Dedup ignora:
+    //  - logs `failed` (podem ser substituídos)
+    //  - logs órfãos sem `message_source` (resíduo do refactor pré-2026-04-29;
+    //    nunca seriam entregues, então não devem travar o agendamento).
     const { count } = await supabase
       .from("group_blast_logs")
       .select("id", { count: "exact", head: true })
@@ -75,7 +79,8 @@ async function scheduleOne(
       .eq("slot_id", slot.id)
       .eq("group_jid", groupJid)
       .gte("created_at", twentyHoursAgo)
-      .neq("status", "failed");
+      .neq("status", "failed")
+      .not("message_source", "is", null);
     if ((count ?? 0) > 0) return { status: "skipped" };
   }
 
