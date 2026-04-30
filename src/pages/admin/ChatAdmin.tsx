@@ -5,6 +5,7 @@ import { ChatWindow } from "@/components/admin/chat/ChatWindow";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 
 const ChatAdmin = () => {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
@@ -15,8 +16,8 @@ const ChatAdmin = () => {
   const showList = !isMobile || !selectedConversationId;
   const showChat = !isMobile || !!selectedConversationId;
 
-  return (
-    <div className="fixed inset-0 z-50 flex bg-background h-screen w-screen overflow-hidden">
+  const content = (
+    <div className="flex bg-background h-[calc(100vh-3.5rem)] w-full overflow-hidden border-t">
       {/* Sidebar / Lista de Conversas */}
       {showList && (
         <div className={`${isMobile ? 'w-full' : 'w-[350px] border-r'} flex flex-col h-full bg-muted/30`}>
@@ -49,6 +50,12 @@ const ChatAdmin = () => {
         </div>
       )}
     </div>
+  );
+
+  return (
+    <AdminLayout pageTitle="Chat Central">
+      {content}
+    </AdminLayout>
   );
 };
 
