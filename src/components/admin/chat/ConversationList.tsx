@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, User } from "lucide-react";
 import { Conversation } from "@/hooks/useChatConversations";
 import { formatPhoneDisplay, formatChatTime, truncatePreview } from "@/lib/chatUtils";
-import { Skeleton } from "@/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ConversationListProps {
   conversations: Conversation[];
