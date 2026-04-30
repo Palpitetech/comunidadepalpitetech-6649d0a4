@@ -35,6 +35,7 @@ interface MessageTemplate {
   name: string;
   content: string;
   event_trigger: string;
+  category: "transactional" | "marketing";
   created_at: string;
   is_active?: boolean;
   delay_enabled?: boolean;
@@ -56,6 +57,7 @@ interface FormData {
   name: string;
   content: string;
   event_trigger: string;
+  category: "transactional" | "marketing";
   delay_enabled: boolean;
   delay_minutes: number;
   include_tags: string[];
@@ -68,6 +70,7 @@ interface FormData {
 
 const emptyForm: FormData = {
   name: "", content: "", event_trigger: "manual",
+  category: "marketing",
   delay_enabled: false, delay_minutes: 0,
   include_tags: [], exclude_tags: [],
   exclude_tags_recent: [], exclude_recent_window_hours: 24,
