@@ -154,6 +154,21 @@ function getOriginLabel(ev: EventRow): { label: string; color: string } {
 
 const PAGE_SIZE = 25;
 
+const KIRVANO_TO_TRIGGER: Record<string, string> = {
+  compra_aprovada: "compra_aprovada",
+  sale_confirmed: "compra_aprovada",
+  pix_gerado: "pix_gerado",
+  pix_expirado: "pix_expirado",
+  boleto_gerado: "boleto_gerado",
+  boleto_expirado: "boleto_expirado",
+  carrinho_abandonado: "carrinho_abandonado",
+  checkout_abandonado: "checkout_abandonado",
+  assinatura_renovada: "assinatura_renovada",
+  assinatura_cancelada: "assinatura_cancelada",
+  assinatura_expirada: "assinatura_expirada",
+  assinatura_inadimplente: "assinatura_inadimplente",
+};
+
 export default function AdminEventos() {
   const navigate = useNavigate();
   const [events, setEvents] = useState<EventRow[]>([]);
@@ -163,6 +178,8 @@ export default function AdminEventos() {
   const [activeFilter, setActiveFilter] = useState<FilterTab>("todos");
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [planMap, setPlanMap] = useState<Record<string, { planName: string; checkoutLink: string | null }>>({});
+  const [dispatchingId, setDispatchingId] = useState<string | null>(null);
   const [counters, setCounters] = useState<Record<FilterTab, number>>({
     todos: 0, leads: 0, cadastros: 0, pix_boleto: 0, vendas: 0, cancelamentos: 0,
   });
