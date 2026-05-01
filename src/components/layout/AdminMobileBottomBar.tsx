@@ -87,6 +87,12 @@ export function AdminMobileBottomBar() {
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         <NavButton 
+          to="/admin" 
+          icon={Activity} 
+          label="Painel" 
+          isActive={isActive("/admin")} 
+        />
+        <NavButton 
           to="/admin/eventos" 
           icon={Activity} 
           label="Eventos" 
@@ -101,7 +107,7 @@ export function AdminMobileBottomBar() {
         <NavButton 
           onClick={() => openDrawer('comunicacao')} 
           icon={Radio} 
-          label="Comunicação" 
+          label="Comunic." 
           isActive={isDrawerOpen && drawerView === 'comunicacao'} 
         />
         <NavButton 
@@ -118,6 +124,7 @@ export function AdminMobileBottomBar() {
           variant="menu"
         />
       </div>
+
     </div>
   );
 }
