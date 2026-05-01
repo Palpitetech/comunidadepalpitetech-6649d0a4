@@ -2,26 +2,22 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Loader2, Search, ChevronRight, ArrowLeft, Activity,
-  UserPlus, ShoppingCart, QrCode, ChevronLeft,
-  CreditCard, XCircle, AlertTriangle, Clock, Ban, X,
+  Activity, UserPlus, ShoppingCart, QrCode,
+  CreditCard, XCircle, Clock, Ban, X,
   RefreshCw, Mail, UserCheck, Wallet, RotateCcw, ShieldAlert, Inbox,
-  CheckCircle2, User, Calendar, Filter,
+  CheckCircle2, User, Calendar, ChevronRight
 } from "lucide-react";
+
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { AdminListContainer, AdminListItem, AdminHeader, AdminPagination } from "@/components/admin/AdminListComponents";
+
 
 
 import { format } from "date-fns";
