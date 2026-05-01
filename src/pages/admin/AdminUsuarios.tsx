@@ -1,13 +1,16 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, Users, UserCheck, ChevronRight, ChevronLeft, X, ArrowLeft, Timer, CheckCircle2, AlertCircle, Circle, Inbox, Globe, Columns3 } from "lucide-react";
+import { 
+  Search, Loader2, Users, UserCheck, ChevronRight, ChevronLeft, X, 
+  ArrowLeft, Timer, CheckCircle2, AlertCircle, Circle, Inbox, 
+  Globe, Columns3, RefreshCw, Filter, Shield, User as UserIcon
+} from "lucide-react";
 import { toast } from "sonner";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
 import { LeadDetailSheet, type LeadInbox } from "@/components/admin/LeadDetailSheet";
@@ -19,12 +22,15 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 import type { Plan, PlanFeatures, ExtendedProfile } from "@/types/plans";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AdminHeader, AdminListContainer, AdminListItem, AdminPagination } from "@/components/admin/AdminListComponents";
+
 
 const getValidadeInfo = (validade: string | null | undefined) => {
   if (!validade) return null;
