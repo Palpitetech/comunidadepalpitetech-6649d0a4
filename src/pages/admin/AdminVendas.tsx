@@ -717,6 +717,7 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </ScrollArea>
+      </div>
+    </div>
   );
 }
