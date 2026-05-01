@@ -307,11 +307,14 @@ export default function AdminVendas() {
 
       {/* Mobile Full Screen View */}
       {selectedLog && (
-        <div className="fixed inset-0 z-[100] bg-background md:hidden flex flex-col animate-in slide-in-from-bottom duration-300">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background shrink-0 z-50">
-            <h2 className="text-base font-semibold">Detalhes da Venda</h2>
-            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={() => setSelectedLog(null)}>
-              <X className="h-5 w-5" />
+        <div className="fixed inset-0 z-[100] bg-white md:hidden flex flex-col animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center justify-between px-4 h-16 border-b border-border bg-white shrink-0 z-50 relative">
+            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full" onClick={() => setSelectedLog(null)}>
+              <X className="h-6 w-6" />
+            </Button>
+            <h2 className="text-base font-bold absolute left-1/2 -translate-x-1/2">Detalhes da Venda</h2>
+            <Button variant="ghost" size="icon" className={cn("h-10 w-10 rounded-full", loading && "animate-spin")} onClick={fetchLogs}>
+              <RefreshCw className="h-5 w-5" />
             </Button>
           </div>
           <div className="flex-1 overflow-y-auto overscroll-contain">
