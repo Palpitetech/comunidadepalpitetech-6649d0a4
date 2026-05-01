@@ -351,20 +351,17 @@ export default function AdminEventos() {
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          {/* Linha 1: Nome - Tipo · Hora */}
+                          {/* Linha 1: Nome ou Email */}
                           <div className="flex items-center gap-1.5 leading-tight">
-                            <span className="text-sm font-semibold text-foreground truncate max-w-[150px] sm:max-w-md">
+                            <span className="text-sm font-semibold text-foreground truncate max-w-[180px] sm:max-w-md">
                               {renderUserCell(ev)}
-                            </span>
-                            <span className="text-muted-foreground/60 text-sm">/</span>
-                            <span className="text-xs text-muted-foreground truncate italic">
-                              {renderEmailCell(ev) !== renderUserCell(ev) ? renderEmailCell(ev) : getMetaSummary(ev)}
                             </span>
                           </div>
 
-                          {/* Linha 2: Info Secundária (Email/Metadados/Origem) */}
+                          {/* Linha 2: Email Secundário / Metadados / Origem */}
                           <div className="flex items-center gap-1.5 mt-0.5 leading-tight">
                             <span className="text-[11px] text-muted-foreground/70 truncate">
+                              {renderEmailCell(ev) !== renderUserCell(ev) ? `${renderEmailCell(ev)} • ` : ""}
                               {getMetaSummary(ev)}
                               {!ev.user_id && ` • ${origin.label}`}
                             </span>
@@ -375,7 +372,7 @@ export default function AdminEventos() {
                       {/* Status Badge + Hora + Chevron */}
                       <div className="flex items-center gap-3 flex-shrink-0">
                         <div className={cn(
-                          "flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight",
+                          "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight border",
                           config.color
                         )}>
                           <StatusIcon className="h-3 w-3" />
@@ -391,6 +388,7 @@ export default function AdminEventos() {
                     </button>
                   );
                 })}
+
 
 
                 {events.length === 0 && !loading && (
