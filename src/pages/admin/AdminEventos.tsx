@@ -280,6 +280,37 @@ export default function AdminEventos() {
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-10 w-10 rounded-xl border-border/50 bg-background hover:bg-muted/50 transition-all"
+                  >
+                    <Filter className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Filtrar Eventos</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {FILTER_TABS.map(({ key, label, icon: Icon }) => (
+                    <DropdownMenuItem 
+                      key={key} 
+                      onClick={() => setActiveFilter(key)}
+                      className={cn(activeFilter === key && "bg-accent")}
+                    >
+                      <Icon className="mr-2 h-4 w-4" />
+                      <span>{label}</span>
+                      {getFilterCount(key) > 0 && (
+                        <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground">
+                          {getFilterCount(key)}
+                        </span>
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Button 
                 variant="outline" 
                 size="icon" 
@@ -290,6 +321,7 @@ export default function AdminEventos() {
                 <RefreshCw className={cn("h-4 w-4 text-muted-foreground", loading && "animate-spin")} />
               </Button>
             </div>
+
           </div>
 
 
