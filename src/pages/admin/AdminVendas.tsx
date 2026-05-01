@@ -515,7 +515,7 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
   };
 
   return (
-    <ScrollArea className="h-[calc(100vh-80px)]">
+    <div className="pb-10">
       <div className="p-4 space-y-5">
         {/* Customer Info */}
         <div className="space-y-2">
