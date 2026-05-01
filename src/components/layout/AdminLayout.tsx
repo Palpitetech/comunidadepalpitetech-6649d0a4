@@ -39,7 +39,7 @@ export function AdminLayout({ children, pageTitle, headerRightContent }: AdminLa
             }}
           >
             {pageTitle && (
-              <h1 className="text-lg font-semibold truncate flex-1">{pageTitle}</h1>
+              <h1 className="text-lg font-semibold truncate flex-1 md:block">{pageTitle}</h1>
             )}
             {headerRightContent && <div className="ml-auto">{headerRightContent}</div>}
           </header>
