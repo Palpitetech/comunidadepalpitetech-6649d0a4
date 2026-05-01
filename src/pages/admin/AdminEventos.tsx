@@ -2,14 +2,15 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetHeader } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Activity, UserPlus, ShoppingCart, QrCode,
   CreditCard, XCircle, Clock, Ban, X,
   RefreshCw, Mail, UserCheck, Wallet, RotateCcw, ShieldAlert, Inbox,
-  CheckCircle2, User, Calendar, ChevronRight
+  CheckCircle2, User, Calendar, ChevronRight, Copy, Globe, Phone, Hash, Info
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
