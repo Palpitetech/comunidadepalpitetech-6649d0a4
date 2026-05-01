@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -8,6 +8,8 @@ import { Search, Zap, ArrowLeft, ChevronRight, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { AdminCommandPalette } from "@/components/admin/AdminCommandPalette";
+import { adminNavConfig, type NavSection, type NavItem } from "@/config/adminNavConfig";
+import { useAdminBadges } from "@/hooks/useAdminBadges";
 
 interface AdminMobileDrawerProps {
   isOpen: boolean;
@@ -19,6 +21,8 @@ interface AdminMobileDrawerProps {
 export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: AdminMobileDrawerProps) {
   const { profile, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { data: badges } = useAdminBadges();
   const [searchOpen, setSearchOpen] = useState(false);
 
   const initials = (profile?.nome || user?.email || "A")
@@ -28,6 +32,58 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
     .slice(0, 2)
     .join("")
     .toUpperCase();
+
+  const isActive = (url: string, exact?: boolean) => {
+    if (exact) return location.pathname === url;
+    return location.pathname.startsWith(url) && (url !== '/admin' || location.pathname === '/admin');
+  };
+
+  const handleNavigate = (url: string) => {
+    onClose();
+    navigate(url);
+  };
+
+  const NavBadge = ({ count, tone = "info" }: { count: number; tone?: "danger" | "info" }) => {
+    if (!count) return null;
+    return (
+      <span
+        className={cn(
+          "inline-flex items-center justify-center rounded-full px-1.5 min-w-[1.1rem] h-[1.1rem] text-[10px] font-semibold leading-none",
+          tone === "danger"
+            ? "bg-destructive/15 text-destructive"
+            : "bg-primary/15 text-primary"
+        )}
+      >
+        {count > 99 ? "99+" : count}
+      </span>
+    );
+  };
+
+  const RenderNavItem = ({ item }: { item: NavItem }) => {
+    const active = isActive(item.url, item.exact);
+    const badgeCount = item.badge ? badges?.[item.badge] ?? 0 : 0;
+
+    return (
+      <button
+        onClick={() => handleNavigate(item.url)}
+        className={cn(
+          "flex items-center justify-between w-full px-3 py-2.5 text-sm rounded-md transition-colors",
+          active ? "bg-primary/10 text-primary font-medium" : "hover:bg-accent"
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <item.icon className={cn("h-4.5 w-4.5", active ? "text-primary" : "text-muted-foreground")} />
+          <span>{item.title}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {badgeCount > 0 && <NavBadge count={badgeCount} tone={item.badgeTone} />}
+          <ChevronRight className="h-4 w-4 text-muted-foreground/30" />
+        </div>
+      </button>
+    );
+  };
+
+  const comunicacaoSection = adminNavConfig.find(s => s.id === 'comunicacao');
 
   return (
     <>
@@ -64,7 +120,6 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
           </div>
 
           <div className="flex-1 overflow-hidden relative">
-            {/* Sliding Views Container */}
             <div 
               className={cn(
                 "h-full w-[200%] flex transition-transform duration-300 ease-in-out",
@@ -73,28 +128,48 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
             >
               {/* Root View */}
               <div className="w-1/2 h-full flex flex-col">
-                <ScrollArea className="flex-1 px-2">
-                  <div className="space-y-1 p-2">
-                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-2 mb-2">Geral</p>
-                    <Link to="/admin" onClick={onClose} className="flex items-center justify-between w-full px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors">
-                      <span>Painel Principal</span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-                    </Link>
-                    <Link to="/admin/usuarios" onClick={onClose} className="flex items-center justify-between w-full px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors">
-                      <span>Gestão de Usuários</span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-                    </Link>
-                    
-                    <div className="pt-4">
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-2 mb-2">Modulos</p>
-                      <button 
-                        onClick={() => onViewChange('comunicacao')}
-                        className="flex items-center justify-between w-full px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
-                      >
-                        <span>Comunicação</span>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-                      </button>
-                    </div>
+                <ScrollArea className="flex-1">
+                  <div className="space-y-6 p-4">
+                    {adminNavConfig.map((section) => {
+                      if (section.inline) {
+                        return (
+                          <div key={section.id} className="space-y-1">
+                            {section.items.map((item) => (
+                              <RenderNavItem key={item.url} item={item} />
+                            ))}
+                          </div>
+                        );
+                      }
+
+                      const sectionBadgeTotal = section.items.reduce(
+                        (sum, i) => sum + (i.badge ? badges?.[i.badge] ?? 0 : 0),
+                        0
+                      );
+
+                      return (
+                        <div key={section.id} className="space-y-1">
+                          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-3 mb-2">
+                            {section.label}
+                          </p>
+                          <button 
+                            onClick={() => section.id === 'comunicacao' ? onViewChange('comunicacao') : null}
+                            className={cn(
+                              "flex items-center justify-between w-full px-3 py-2.5 text-sm rounded-md transition-colors",
+                              section.items.some(i => isActive(i.url)) ? "bg-accent/50 text-foreground" : "hover:bg-accent"
+                            )}
+                          >
+                            <div className="flex items-center gap-3">
+                              {section.icon && <section.icon className="h-4.5 w-4.5 text-muted-foreground" />}
+                              <span>{section.label}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {sectionBadgeTotal > 0 && <NavBadge count={sectionBadgeTotal} tone="danger" />}
+                              <ChevronRight className="h-4 w-4 text-muted-foreground/30" />
+                            </div>
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </ScrollArea>
               </div>
@@ -107,20 +182,11 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
                   </Button>
                   <span className="text-sm font-semibold">Comunicação</span>
                 </div>
-                <ScrollArea className="flex-1 px-2">
-                  <div className="space-y-1 p-2">
-                    <Link to="/admin/chat" onClick={onClose} className="flex items-center justify-between w-full px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors">
-                      <span>Chat Central</span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-                    </Link>
-                    <Link to="/admin/whatsapp" onClick={onClose} className="flex items-center justify-between w-full px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors">
-                      <span>WhatsApp Marketing</span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-                    </Link>
-                    <Link to="/admin/eventos" onClick={onClose} className="flex items-center justify-between w-full px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors">
-                      <span>Logs de Eventos</span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-                    </Link>
+                <ScrollArea className="flex-1">
+                  <div className="space-y-1 p-4">
+                    {comunicacaoSection?.items.map((item) => (
+                      <RenderNavItem key={item.url} item={item} />
+                    ))}
                   </div>
                 </ScrollArea>
               </div>
