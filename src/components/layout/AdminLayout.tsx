@@ -1,6 +1,10 @@
 import { ReactNode } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from "./AdminSidebar";
+import { AdminMobileBottomBar } from "./AdminMobileBottomBar";
+import { AdminMobileDrawer } from "./AdminMobileDrawer";
+import { useMobileNav } from "@/hooks/useMobileNav";
+import { cn } from "@/lib/utils";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -9,10 +13,16 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children, pageTitle, headerRightContent }: AdminLayoutProps) {
+  const { isDrawerOpen, closeDrawer, drawerView, setDrawerView } = useMobileNav();
+
   return (
     <SidebarProvider defaultOpen>
-      <div className="min-h-screen flex w-full">
-        <AdminSidebar />
+      <div className="min-h-screen flex w-full bg-background">
+        {/* Desktop Sidebar */}
+        <div className="hidden md:flex">
+          <AdminSidebar />
+        </div>
+
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
           <header 
@@ -29,11 +39,23 @@ export function AdminLayout({ children, pageTitle, headerRightContent }: AdminLa
           </header>
 
           {/* Content */}
-          <main className="flex-1 overflow-auto">
+          <main className={cn("flex-1 overflow-auto pb-20 md:pb-0")}>
             {children}
           </main>
+        </div>
+
+        {/* Mobile Components */}
+        <div className="md:hidden">
+          <AdminMobileBottomBar />
+          <AdminMobileDrawer 
+            isOpen={isDrawerOpen} 
+            onClose={closeDrawer} 
+            view={drawerView}
+            onViewChange={setDrawerView}
+          />
         </div>
       </div>
     </SidebarProvider>
   );
 }
+
