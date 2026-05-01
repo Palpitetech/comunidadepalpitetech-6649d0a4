@@ -25,6 +25,8 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
 
 import type { Plan, PlanFeatures, ExtendedProfile } from "@/types/plans";
 import { format, differenceInDays } from "date-fns";
