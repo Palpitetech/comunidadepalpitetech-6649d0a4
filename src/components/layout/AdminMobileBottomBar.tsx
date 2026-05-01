@@ -5,7 +5,8 @@
  */
 import { useLocation, Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Activity, ShoppingCart, Radio, Users, Menu } from "lucide-react";
+import { Activity, ShoppingCart, Radio, Users, Menu, LayoutDashboard } from "lucide-react";
+
 import { useMobileNav } from "@/hooks/useMobileNav";
 
 
@@ -88,10 +89,11 @@ export function AdminMobileBottomBar() {
       >
         <NavButton 
           to="/admin" 
-          icon={Activity} 
+          icon={LayoutDashboard} 
           label="Painel" 
           isActive={isActive("/admin")} 
         />
+
         <NavButton 
           to="/admin/eventos" 
           icon={Activity} 
