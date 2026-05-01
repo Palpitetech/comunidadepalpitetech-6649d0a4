@@ -508,6 +508,12 @@ export default function AdminEventos() {
                     copyable
                   />
                   <NewInfoRow 
+                    icon={ShoppingCart} 
+                    label="Produto/Oferta" 
+                    value={selectedEvent.metadata?.product_name || selectedEvent.metadata?.offer_name || planMap[selectedEvent.metadata?.offer_id]?.planName || selectedEvent.metadata?.offer_id || "Não identificado"} 
+                    copyable
+                  />
+                  <NewInfoRow 
                     icon={Hash} 
                     label="ID do Evento" 
                     value={selectedEvent.id} 
