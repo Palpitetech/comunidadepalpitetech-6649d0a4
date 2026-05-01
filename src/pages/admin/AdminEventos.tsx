@@ -428,7 +428,7 @@ export default function AdminEventos() {
                     ))}
                   </pre>
                 </div>
-              </div>
+              </div>}
             </div>
           </ScrollArea>
 
