@@ -1,13 +1,16 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, Users, UserCheck, ChevronRight, ChevronLeft, X, ArrowLeft, Timer, CheckCircle2, AlertCircle, Circle, Inbox, Globe, Columns3 } from "lucide-react";
+import { 
+  Search, Loader2, Users, UserCheck, ChevronRight, ChevronLeft, X, 
+  ArrowLeft, Timer, CheckCircle2, AlertCircle, Circle, Inbox, 
+  Globe, Columns3, RefreshCw, Filter, Shield, User as UserIcon
+} from "lucide-react";
 import { toast } from "sonner";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
 import { LeadDetailSheet, type LeadInbox } from "@/components/admin/LeadDetailSheet";
@@ -19,12 +22,15 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 import type { Plan, PlanFeatures, ExtendedProfile } from "@/types/plans";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AdminHeader, AdminListContainer, AdminListItem, AdminPagination } from "@/components/admin/AdminListComponents";
+
 
 const getValidadeInfo = (validade: string | null | undefined) => {
   if (!validade) return null;
@@ -424,7 +430,7 @@ export default function AdminUsuarios() {
     return <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground font-medium">{utm}</span>;
   };
 
-  if (loading) {
+  if (loading && users.length === 0 && leads.length === 0) {
     return (
       <AdminLayout pageTitle="Usuários">
         <div className="flex items-center justify-center min-h-[50vh]">
@@ -435,648 +441,127 @@ export default function AdminUsuarios() {
   }
 
   return (
-    <AdminLayout
-      pageTitle="Usuários"
-      headerRightContent={
-        <span className="text-xs text-muted-foreground font-medium">{stats.total}</span>
-      }
-    >
-      {/* ======= MOBILE ======= */}
-      <div className="md:hidden px-4 py-3 space-y-3">
-        {/* Filtros principais */}
-        <div className="grid grid-cols-4 gap-1">
-          {FILTROS_PRINCIPAIS.map(({ key, label, icon: Icon }) => {
-            const isActive = activeFilter === key;
-            return (
-              <button
-                key={key}
-                onClick={() => setActiveFilter(key)}
-                className={cn(
-                  "flex flex-col items-center gap-0.5 rounded-xl p-2 transition-colors text-center",
-                  isActive ? "bg-primary/10 ring-1 ring-primary/30" : "bg-muted/40 hover:bg-muted/60"
-                )}
-              >
-                <Icon className={cn("h-4 w-4", isActive ? "text-primary" : "text-muted-foreground")} />
-                <span className="text-lg font-bold">{getPrincipalCount(key)}</span>
-                <span className={cn("text-[10px]", isActive ? "text-primary font-medium" : "text-muted-foreground")}>{label}</span>
-              </button>
-            );
-          })}
-        </div>
+    <AdminLayout pageTitle="Usuários">
+      <div className="flex flex-col flex-1 min-h-0 bg-background">
+        <AdminHeader 
+          title="Usuários"
+          search={searchTerm}
+          onSearchChange={setSearchTerm}
+          onRefresh={fetchData}
+          loading={loading}
+          filters={FILTROS_PRINCIPAIS.map(f => ({
+            label: f.label,
+            isActive: activeFilter === f.key,
+            onClick: () => setActiveFilter(f.key),
+            icon: f.icon,
+            count: getPrincipalCount(f.key)
+          }))}
+        />
 
-        {/* Subfiltros (rolagem horizontal, agrupados) */}
-        <div className="-mx-4 px-4 overflow-x-auto">
-          <div className="flex items-center gap-2 w-max">
-            {FILTROS_SECUNDARIOS_GRUPOS.map((grupo, idx) => (
-              <div key={grupo.label} className="flex items-center gap-1.5">
-                {idx > 0 && <div className="h-5 w-px bg-border mx-1" aria-hidden />}
-                {grupo.items.map(({ key, label }) => {
-                  const isActive = activeSubFilter === key;
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => toggleSubFilter(key)}
-                      className={cn(
-                        "shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors border inline-flex items-center gap-1",
-                        isActive
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-background text-muted-foreground border-border hover:bg-muted"
-                      )}
-                    >
-                      {label} <span className="opacity-70">{getSubCount(key)}</span>
-                      {isActive && <X className="h-3 w-3" />}
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Search + Tag filter */}
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar nome, email ou celular..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10 h-9 pr-9" />
-            {searchTerm && (
-              <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-          <TagFilterPopover
-            allTags={allTags}
-            includeTags={includeTags}
-            excludeTags={excludeTags}
-            exactMatch={exactMatch}
-            onIncludeTagsChange={setIncludeTags}
-            onExcludeTagsChange={setExcludeTags}
-            onExactMatchChange={setExactMatch}
-            align="end"
-          />
-        </div>
-
-        {/* Lista — usuários OU leads */}
-        {activeFilter === "leads" ? (
-          <div className="space-y-0.5">
-            {filteredLeads.map((lead) => (
-              <button
-                key={lead.id}
-                className="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg active:bg-muted/60 transition-colors border-b border-border/30 last:border-0"
-                onClick={() => handleLeadClick(lead)}
-              >
-                <div className="h-9 w-9 shrink-0 rounded-full bg-muted flex items-center justify-center">
-                  <Inbox className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-medium truncate">{lead.nome || "Sem nome"}</p>
-                    <span className={cn("text-[9px] px-1.5 py-0.5 rounded border", getLeadStatusClass(lead.status))}>
-                      {lead.status}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground truncate">
-                    {lead.email || lead.celular || "—"}
-                  </p>
-                  {lead.pagina_origem && (
-                    <p className="text-[10px] text-muted-foreground/70 truncate">{lead.pagina_origem}</p>
-                  )}
-                </div>
-                {getUtmBadge(lead.utm_source)}
-                <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
-              </button>
-            ))}
-            {filteredLeads.length === 0 && (
-              <div className="text-center py-12 text-sm text-muted-foreground">
-                {searchTerm ? "Nenhum lead encontrado" : "Nenhum lead capturado ainda"}
-              </div>
-            )}
-          </div>
-        ) : (
-        <div className="space-y-0.5">
-          {paginatedUsers.map((user) => (
-            <button
-              key={user.id}
-              className="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg active:bg-muted/60 transition-colors border-b border-border/30 last:border-0"
-              onClick={() => handleRowClick(user)}
-            >
-              <Avatar className="h-9 w-9 shrink-0">
-                <AvatarImage src={user.avatar_url || undefined} />
-                <AvatarFallback className="text-[11px]">{getInitials(user.nome)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-sm font-medium truncate">{user.nome || "Sem nome"}</p>
-                  {user.is_blocked && <span className="w-2 h-2 rounded-full bg-destructive shrink-0" title="Bloqueado" />}
-                  {user.email_verificado
-                    ? <CheckCircle2 className="h-3 w-3 text-emerald-500 shrink-0" aria-label="Verificado" />
-                    : <AlertCircle className="h-3 w-3 text-amber-500 shrink-0" aria-label="Não verificado" />}
-                  {isPaidActive(user) && <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Plano ativo" />}
-                </div>
-                <p className="text-[11px] text-muted-foreground truncate">{user.email || user.celular || "-"}</p>
-                {(() => {
-                  const info = getValidadeInfo(user.validade_assinatura);
-                  if (!info) return null;
-                  return (
-                    <p className={cn("text-[10px] font-medium truncate", TONE_CLASSES[info.tone])}>
-                      Vence {info.dataFormatada} · {info.label}
-                    </p>
-                  );
-                })()}
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                {getUtmBadge(user.utm_source)}
-                <Badge variant="secondary" className={cn(
-                  "text-[10px] px-1.5 py-0.5",
-                  user.plan && user.plan.price > 0 && "bg-primary/10 text-primary border-primary/20",
-                  user.plan?.slug === TRIAL_SLUG && "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 border-orange-200"
-                )}>
-                  {user.plan?.name || "Free"}
-                </Badge>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
-            </button>
-          ))}
-          {filteredUsers.length === 0 && (
-            <div className="text-center py-12 text-sm text-muted-foreground">
-              {searchTerm ? "Nenhum resultado encontrado" : "Nenhum usuário"}
-            </div>
-          )}
-        </div>
-        )}
-
-        {/* Bottom pagination mobile */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between pt-2 pb-4">
-            <p className="text-xs text-muted-foreground">
-              {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredUsers.length)} de {filteredUsers.length}
-            </p>
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}><ChevronLeft className="h-4 w-4" /></Button>
-              <span className="text-xs text-muted-foreground min-w-[3ch] text-center">{page + 1}/{totalPages}</span>
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}><ChevronRight className="h-4 w-4" /></Button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ======= DESKTOP ======= */}
-      <div className="hidden md:flex flex-col flex-1 min-h-0">
-        {/* Toolbar — linha 1 (principais + busca) */}
-        <div className="border-b border-border bg-card/50 px-6 py-3 flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => navigate("/admin")}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-lg font-semibold mr-2">Usuários</h1>
-
-          <div className="flex items-center gap-1">
-            {FILTROS_PRINCIPAIS.map(({ key, label }) => {
-              const isActive = activeFilter === key;
-              return (
-                <button
-                  key={key}
-                  onClick={() => setActiveFilter(key)}
-                  className={cn(
-                    "px-3 py-1 rounded-full text-xs font-medium transition-colors",
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-muted"
-                  )}
-                >
-                  {label} <span className="opacity-70">{getPrincipalCount(key)}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex-1" />
-
-          <TagFilterPopover
-            allTags={allTags}
-            includeTags={includeTags}
-            excludeTags={excludeTags}
-            exactMatch={exactMatch}
-            onIncludeTagsChange={setIncludeTags}
-            onExcludeTagsChange={setExcludeTags}
-            onExactMatchChange={setExactMatch}
-            align="end"
-          />
-
-          <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input
-              placeholder={activeFilter === "leads" ? "Buscar lead por nome, email ou celular..." : "Buscar..."}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 h-8 text-sm bg-background"
+        <div className="flex-1 overflow-auto bg-background">
+          {/* Barra de Subfiltros e Tags */}
+          <div className="max-w-7xl mx-auto w-full px-4 md:px-6 py-4 flex items-center gap-3 overflow-x-auto no-scrollbar">
+            <TagFilterPopover
+              allTags={allTags}
+              includeTags={includeTags}
+              excludeTags={excludeTags}
+              exactMatch={exactMatch}
+              onIncludeTagsChange={setIncludeTags}
+              onExcludeTagsChange={setExcludeTags}
+              onExactMatchChange={setExactMatch}
             />
-            {searchTerm && (
-              <button onClick={() => setSearchTerm("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                <X className="h-3.5 w-3.5" />
+            
+            <div className="h-4 w-px bg-border/60 shrink-0" />
+            
+            {activeFilter !== "leads" && FILTROS_SECUNDARIOS_GRUPOS.flatMap(g => g.items).map(item => (
+              <button
+                key={item.key}
+                onClick={() => toggleSubFilter(item.key)}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-tight transition-all border shrink-0 whitespace-nowrap",
+                  activeSubFilter === item.key
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                    : "bg-background text-muted-foreground border-border/50 hover:bg-muted/50"
+                )}
+              >
+                {item.label}
+                {getSubCount(item.key) > 0 && (
+                  <span className="ml-1.5 opacity-60 font-medium">{getSubCount(item.key)}</span>
+                )}
               </button>
-            )}
-          </div>
-        </div>
-
-        {/* Toolbar — linha 2: subfiltros (não-leads) OU dropdown de colunas (leads) */}
-        {activeFilter !== "leads" ? (
-          <div className="border-b border-border bg-background px-6 py-2 flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mr-1">Filtros:</span>
-            {FILTROS_SECUNDARIOS_GRUPOS.map((grupo, idx) => (
-              <div key={grupo.label} className="flex items-center gap-1.5">
-                {idx > 0 && <div className="h-4 w-px bg-border mx-1" aria-hidden />}
-                <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 font-medium">{grupo.label}</span>
-                {grupo.items.map(({ key, label }) => {
-                  const isActive = activeSubFilter === key;
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => toggleSubFilter(key)}
-                      className={cn(
-                        "px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-colors border inline-flex items-center gap-1",
-                        isActive
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-background text-muted-foreground border-border hover:bg-muted"
-                      )}
-                    >
-                      {label} <span className="opacity-70">{getSubCount(key)}</span>
-                      {isActive && <X className="h-3 w-3" />}
-                    </button>
-                  );
-                })}
-              </div>
             ))}
           </div>
-        ) : (
-          <div className="border-b border-border bg-background px-6 py-2 flex items-center justify-between">
-            <span className="text-[11px] text-muted-foreground">
-              {filteredLeads.length} lead{filteredLeads.length !== 1 ? "s" : ""}
-            </span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
-                  <Columns3 className="h-3.5 w-3.5" />
-                  Colunas
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel className="text-[11px]">Colunas visíveis</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {LEAD_COLUMNS.map((col) => (
-                  <DropdownMenuCheckboxItem
-                    key={col.key}
-                    checked={isLeadColVisible(col.key)}
-                    onCheckedChange={() => toggleLeadCol(col.key)}
-                    onSelect={(e) => e.preventDefault()}
-                    className="text-xs"
-                  >
-                    {col.label}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
 
-        {/* Table */}
-        <div className="flex-1 overflow-auto">
-          {activeFilter === "leads" ? (
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  {LEAD_COLUMNS.filter(c => isLeadColVisible(c.key)).map((col, idx) => (
-                    <TableHead
-                      key={col.key}
-                      className={cn(
-                        "text-xs font-medium uppercase tracking-wider text-muted-foreground",
-                        idx === 0 && "pl-6",
-                        col.key === "status" && "w-24",
-                      )}
-                    >
-                      {col.label}
-                    </TableHead>
-                  ))}
-                  <TableHead className="w-8"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredLeads.map((lead) => {
-                  const origem = lead.slug || lead.utm_source || lead.webhook_name || "—";
-                  const statusClass =
-                    lead.status === "convertido"
-                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
-                      : lead.status === "contatado"
-                      ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
-                      : lead.status === "descartado"
-                      ? "bg-muted text-muted-foreground border-border"
-                      : "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30";
-
-                  const renderCell = (key: LeadColumnKey, isFirst: boolean) => {
-                    const baseCls = cn("py-2.5", isFirst && "pl-6");
-                    switch (key) {
-                      case "status":
-                        return (
-                          <TableCell key={key} className={baseCls}>
-                            <Badge variant="outline" className={cn("text-[10px] capitalize", statusClass)}>
-                              {lead.status}
-                            </Badge>
-                          </TableCell>
-                        );
-                      case "nome":
-                        return (
-                          <TableCell key={key} className={cn(baseCls, "text-sm font-medium truncate max-w-[180px]")}>
-                            {lead.nome || <span className="text-muted-foreground italic">sem nome</span>}
-                          </TableCell>
-                        );
-                      case "email":
-                        return (
-                          <TableCell key={key} className={cn(baseCls, "text-sm text-muted-foreground truncate max-w-[200px]")}>
-                            {lead.email || "—"}
-                          </TableCell>
-                        );
-                      case "celular":
-                        return (
-                          <TableCell key={key} className={cn(baseCls, "text-sm text-muted-foreground tabular-nums")}>
-                            {lead.celular || "—"}
-                          </TableCell>
-                        );
-                      case "origem":
-                        return (
-                          <TableCell key={key} className={baseCls}>
-                            <span className="inline-block px-2 py-0.5 rounded bg-muted text-[10px] text-foreground/80 truncate max-w-[140px]">
-                              {origem}
-                            </span>
-                          </TableCell>
-                        );
-                      case "campanha":
-                        return (
-                          <TableCell key={key} className={cn(baseCls, "text-xs text-muted-foreground truncate max-w-[140px]")}>
-                            {lead.utm_campaign || <span className="text-muted-foreground/40">—</span>}
-                          </TableCell>
-                        );
-                      case "medium":
-                        return (
-                          <TableCell key={key} className={cn(baseCls, "text-xs text-muted-foreground font-mono")}>
-                            {lead.utm_medium || <span className="text-muted-foreground/40">—</span>}
-                          </TableCell>
-                        );
-                      case "content":
-                        return (
-                          <TableCell key={key} className={cn(baseCls, "text-xs text-muted-foreground font-mono truncate max-w-[120px]")}>
-                            {lead.utm_content || <span className="text-muted-foreground/40">—</span>}
-                          </TableCell>
-                        );
-                      case "term":
-                        return (
-                          <TableCell key={key} className={cn(baseCls, "text-xs text-muted-foreground font-mono truncate max-w-[120px]")}>
-                            {lead.utm_term || <span className="text-muted-foreground/40">—</span>}
-                          </TableCell>
-                        );
-                      case "referrer":
-                        return (
-                          <TableCell key={key} className={cn(baseCls, "text-xs text-muted-foreground max-w-[160px]")}>
-                            {lead.referrer ? (
-                              <a
-                                href={lead.referrer}
-                                target="_blank"
-                                rel="noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="text-primary hover:underline truncate inline-block max-w-full"
-                                title={lead.referrer}
-                              >
-                                {lead.referrer.replace(/^https?:\/\//, "")}
-                              </a>
-                            ) : (
-                              <span className="text-muted-foreground/40">—</span>
-                            )}
-                          </TableCell>
-                        );
-                      case "click_ids":
-                        return (
-                          <TableCell key={key} className={baseCls}>
-                            <div className="flex gap-1">
-                              {lead.gclid && (
-                                <Badge variant="outline" className="bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30 text-[9px]">
-                                  Google
-                                </Badge>
-                              )}
-                              {lead.fbclid && (
-                                <Badge variant="outline" className="bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/30 text-[9px]">
-                                  Meta
-                                </Badge>
-                              )}
-                              {!lead.gclid && !lead.fbclid && (
-                                <span className="text-muted-foreground/40 text-xs">—</span>
-                              )}
-                            </div>
-                          </TableCell>
-                        );
-                      case "pagina":
-                        return (
-                          <TableCell key={key} className={cn(baseCls, "text-xs text-muted-foreground max-w-[200px]")}>
-                            {lead.pagina_origem ? (
-                              <a
-                                href={lead.pagina_origem}
-                                target="_blank"
-                                rel="noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="inline-flex items-center gap-1 text-primary hover:underline truncate"
-                                title={lead.pagina_origem}
-                              >
-                                <Globe className="h-3 w-3 shrink-0" />
-                                <span className="truncate">{lead.pagina_origem.replace(/^https?:\/\//, "")}</span>
-                              </a>
-                            ) : (
-                              <span className="text-muted-foreground/40">—</span>
-                            )}
-                          </TableCell>
-                        );
-                      case "tags":
-                        return (
-                          <TableCell key={key} className={baseCls}>
-                            <div className="flex flex-wrap gap-1 max-w-[200px]">
-                              {lead.tags?.slice(0, 2).map((tag) => (
-                                <span key={tag} className="inline-block px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">
-                                  {tag}
-                                </span>
-                              ))}
-                              {lead.tags && lead.tags.length > 2 && (
-                                <span className="inline-block px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">
-                                  +{lead.tags.length - 2}
-                                </span>
-                              )}
-                            </div>
-                          </TableCell>
-                        );
-                      case "data":
-                        return (
-                          <TableCell key={key} className={cn(baseCls, "text-xs text-muted-foreground tabular-nums")}>
-                            {format(new Date(lead.created_at), "dd/MM HH:mm", { locale: ptBR })}
-                          </TableCell>
-                        );
-                    }
-                  };
-
-                  const visible = LEAD_COLUMNS.filter(c => isLeadColVisible(c.key));
+          <div className="max-w-7xl mx-auto w-full">
+            <AdminListContainer 
+              loading={loading && users.length === 0 && leads.length === 0}
+              emptyMessage={activeFilter === "leads" ? "Nenhum lead encontrado" : "Nenhum usuário encontrado"}
+            >
+              {activeFilter === "leads" ? (
+                filteredLeads.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map((lead) => (
+                  <AdminListItem
+                    key={lead.id}
+                    onClick={() => handleLeadClick(lead)}
+                    title={lead.nome || lead.email || "Lead sem nome"}
+                    subtitle={`${lead.email || ""} ${lead.celular ? `• ${lead.celular}` : ""}`}
+                    badge={{
+                      text: lead.status || "Novo",
+                      color: getLeadStatusClass(lead.status || "novo")
+                    }}
+                    timestamp={format(new Date(lead.created_at), "HH:mm", { locale: ptBR })}
+                    rightContent={lead.slug && (
+                      <span className="text-[10px] font-bold text-primary/40 uppercase tracking-tighter shrink-0">
+                        {lead.slug}
+                      </span>
+                    )}
+                  />
+                ))
+              ) : (
+                paginatedUsers.map((user) => {
+                  const validade = getValidadeInfo(user.validade_assinatura);
+                  const isPaid = isPaidActive(user);
+                  const isTrial = isTrialActive(user);
+                  
                   return (
-                    <TableRow
-                      key={lead.id}
-                      className="cursor-pointer group"
-                      onClick={() => handleLeadClick(lead)}
-                    >
-                      {visible.map((col, idx) => renderCell(col.key, idx === 0))}
-                      <TableCell className="py-2.5 pr-4">
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-                {filteredLeads.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={visibleLeadCols.size + 1} className="text-center py-16 text-sm text-muted-foreground">
-                      <Inbox className="h-8 w-8 mx-auto mb-2 text-muted-foreground/40" />
-                      {searchTerm ? "Nenhum lead encontrado" : "Nenhum lead capturado ainda"}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-10 pl-6"></TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Nome</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Email / Celular</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Plano</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground text-center">Verificado</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground text-center">Ativo</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Próx. vencimento</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Origem</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Tags</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Cadastro</TableHead>
-                <TableHead className="w-8"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedUsers.map((user) => (
-                <TableRow
-                  key={user.id}
-                  className="cursor-pointer group"
-                  onClick={() => handleRowClick(user)}
-                >
-                  <TableCell className="pl-6 py-2.5">
-                    <Avatar className="h-7 w-7">
-                      <AvatarImage src={user.avatar_url || undefined} />
-                      <AvatarFallback className="text-[10px] bg-muted">{getInitials(user.nome)}</AvatarFallback>
-                    </Avatar>
-                  </TableCell>
-                  <TableCell className="py-2.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-medium truncate max-w-[200px]">{user.nome || "Sem nome"}</span>
-                      {user.is_blocked && <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" title="Bloqueado" />}
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-2.5 text-sm text-muted-foreground truncate max-w-[220px]">
-                    {user.email || user.celular || "—"}
-                  </TableCell>
-                  <TableCell className="py-2.5">
-                    <span className={cn(
-                      "text-xs font-medium px-2 py-0.5 rounded-full",
-                      user.plan && user.plan.price > 0 ? "text-primary bg-primary/10" :
-                      user.plan?.slug === TRIAL_SLUG ? "text-orange-700 bg-orange-100 dark:text-orange-300 dark:bg-orange-900/40" :
-                      "text-muted-foreground bg-muted/50"
-                    )}>
-                      {user.plan?.name || "Free"}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-2.5 text-center">
-                    {user.email_verificado ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400" title="Email verificado">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        <span className="hidden lg:inline">Sim</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400" title="Email não verificado">
-                        <AlertCircle className="h-3.5 w-3.5" />
-                        <span className="hidden lg:inline">Não</span>
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="py-2.5 text-center">
-                    {isPaidActive(user) ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400" title="Plano pago ativo">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        <span className="hidden lg:inline">Ativo</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/60" title="Sem plano pago ativo">
-                        <Circle className="h-3 w-3" />
-                        <span className="hidden lg:inline">—</span>
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="py-2.5">
-                    {(() => {
-                      const info = getValidadeInfo(user.validade_assinatura);
-                      if (!info) return <span className="text-xs text-muted-foreground/60">—</span>;
-                      return (
-                        <div className="flex flex-col leading-tight">
-                          <span className="text-xs tabular-nums text-foreground">{info.dataFormatada}</span>
-                          <span className={cn("text-[10px] font-medium", TONE_CLASSES[info.tone])}>{info.label}</span>
-                        </div>
-                      );
-                    })()}
-                  </TableCell>
-                  <TableCell className="py-2.5">
-                    {getUtmBadge(user.utm_source) || <span className="text-[10px] text-muted-foreground">—</span>}
-                  </TableCell>
-                  <TableCell className="py-2.5">
-                    <div className="flex flex-wrap gap-1 max-w-[280px]">
-                      {user.tags?.slice(0, 4).map((tag) => (
-                        <span key={tag} className="inline-block px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">
-                          {tag}
-                        </span>
-                      ))}
-                      {user.tags && user.tags.length > 4 && (
-                        <span className="inline-block px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground">
-                          +{user.tags.length - 4}
+                    <AdminListItem
+                      key={user.id}
+                      onClick={() => handleRowClick(user)}
+                      title={user.nome || user.email || "Usuário"}
+                      subtitle={`${user.email || ""} ${user.celular ? `• ${user.celular}` : ""}`}
+                      badge={{
+                        text: user.plan?.name || (user.is_blocked ? "Bloqueado" : "Gratuito"),
+                        color: user.is_blocked 
+                          ? "bg-red-500/10 text-red-700 border-red-200" 
+                          : isPaid 
+                            ? "bg-green-500/10 text-green-700 border-green-200"
+                            : isTrial
+                              ? "bg-blue-500/10 text-blue-700 border-blue-200"
+                              : "bg-muted/50 text-muted-foreground border-border/50",
+                        icon: user.is_blocked ? AlertCircle : isPaid ? CheckCircle2 : UserIcon
+                      }}
+                      timestamp={format(new Date(user.created_at), "dd/MM", { locale: ptBR })}
+                      rightContent={validade && (
+                        <span className={cn("text-[10px] font-bold uppercase tracking-tighter shrink-0", TONE_CLASSES[validade.tone])}>
+                          {validade.label}
                         </span>
                       )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-2.5 text-xs text-muted-foreground tabular-nums">
-                    {format(new Date(user.created_at), "dd/MM/yy", { locale: ptBR })}
-                  </TableCell>
-                  <TableCell className="py-2.5 pr-4">
-                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filteredUsers.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={11} className="text-center py-16 text-sm text-muted-foreground">
-                    {searchTerm ? "Nenhum usuário encontrado" : "Nenhum usuário cadastrado"}
-                  </TableCell>
-                </TableRow>
+                    />
+                  );
+                })
               )}
-            </TableBody>
-          </Table>
-          )}
-        </div>
+            </AdminListContainer>
 
-        {activeFilter !== "leads" && totalPages > 1 && (
-          <div className="border-t border-border px-6 py-2 flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">
-              {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredUsers.length)} de {filteredUsers.length}
-            </p>
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}><ChevronLeft className="h-3.5 w-3.5" /></Button>
-              <span className="text-xs text-muted-foreground min-w-[3ch] text-center">{page + 1}/{totalPages}</span>
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}><ChevronRight className="h-3.5 w-3.5" /></Button>
-            </div>
+            <AdminPagination 
+              page={page}
+              pageSize={PAGE_SIZE}
+              totalCount={activeFilter === "leads" ? filteredLeads.length : filteredUsers.length}
+              totalPages={activeFilter === "leads" ? Math.ceil(filteredLeads.length / PAGE_SIZE) : totalPages}
+              onPageChange={setPage}
+              hasNextPage={page < (activeFilter === "leads" ? Math.ceil(filteredLeads.length / PAGE_SIZE) : totalPages) - 1}
+              hasPrevPage={page > 0}
+            />
           </div>
-        )}
+        </div>
       </div>
 
       <UserDetailSheet
@@ -1084,15 +569,17 @@ export default function AdminUsuarios() {
         plans={plans}
         open={sheetOpen}
         onOpenChange={setSheetOpen}
-        onUserUpdated={() => fetchData()}
+        onUserUpdated={fetchData}
       />
 
       <LeadDetailSheet
         lead={selectedLead}
         open={leadSheetOpen}
         onOpenChange={setLeadSheetOpen}
-        onChanged={() => fetchData()}
+        onChanged={fetchData}
       />
+
     </AdminLayout>
   );
 }
+
