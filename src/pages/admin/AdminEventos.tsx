@@ -296,6 +296,84 @@ export default function AdminEventos() {
     return "—";
   };
 
+  const dispatchEventTemplate = async (ev: EventRow) => {
+    const rawEvent = ev.event_type || "";
+    const trigger = KIRVANO_TO_TRIGGER[rawEvent];
+    if (!trigger) {
+      toast.error("Este evento não tem trigger mapeado.");
+      return;
+    }
+
+    const m = ev.metadata || {};
+    const phone = ev.lead_phone || m.phone || m.phone_number;
+    const email = ev.lead_email || m.email;
+
+    if (!phone) {
+      toast.error("Este evento não tem telefone para disparo.");
+      return;
+    }
+
+    setDispatchingId(ev.id);
+    try {
+      const { data: tpls, error: tplErr } = await supabase
+        .from("message_templates" as any)
+        .select("id")
+        .eq("event_trigger", trigger)
+        .eq("is_active", true)
+        .limit(1);
+      
+      if (tplErr) throw tplErr;
+      if (!tpls || tpls.length === 0) {
+        toast.error(`Nenhum template ativo para "${trigger}".`);
+        return;
+      }
+
+      const offerId = m.offer_id;
+      const mapped = offerId ? planMap[offerId] : null;
+
+      const variables: Record<string, any> = {
+        nome: ev.perfis?.nome || m.customer?.name || m.name || "",
+        telefone: phone,
+        email: email || "",
+        produto: m.product_name || m.offer_name || mapped?.planName || "",
+        plano_nome: mapped?.planName || "",
+        total_price: m.total_price || "",
+        sale_id: m.sale_id || "",
+        checkout_id: m.checkout_id || "",
+      };
+      
+      if (m.pix_code || m.pix_payload || m.pix_codigo) {
+        variables.pix_codigo = m.pix_code || m.pix_payload || m.pix_codigo;
+      }
+      if (mapped?.checkoutLink) variables.link_novo_pix = mapped.checkoutLink;
+
+      const { data: count, error: rpcErr } = await supabase.rpc(
+        "queue_templates_for_event" as any,
+        {
+          p_event_trigger: trigger,
+          p_phone: phone,
+          p_name: variables.nome,
+          p_user_id: ev.user_id,
+          p_variables: variables,
+          p_priority: 1,
+        }
+      );
+      if (rpcErr) throw rpcErr;
+
+      const n = (count as number) ?? 0;
+      if (n > 0) {
+        toast.success(`${n} mensagem(ns) enfileirada(s).`);
+      } else {
+        toast.info("Nenhuma mensagem enfileirada (filtro/dedupe).");
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Erro ao disparar.");
+    } finally {
+      setDispatchingId(null);
+    }
+  };
+
   return (
     <AdminLayout pageTitle="Eventos">
       <div className="flex flex-col flex-1 min-h-0 bg-background">
