@@ -331,49 +331,37 @@ export default function AdminEventos() {
                     <button
                       key={ev.id}
                       onClick={() => setSelectedEvent(ev)}
-                      className="w-full flex items-center justify-between gap-4 py-2.5 px-4 hover:bg-muted/30 active:bg-muted/50 transition-colors text-left group"
+                      className="w-full flex items-center justify-between gap-3 py-2 px-3 hover:bg-muted/30 active:bg-muted/50 transition-colors text-left group"
                     >
                       <div className="flex-1 min-w-0">
-                        {/* Linha 1: Nome/Email Principal + Tipo + Data */}
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-sm font-semibold text-foreground truncate max-w-[200px] sm:max-w-md">
+                        {/* Linha 1: Nome - Tipo · Hora */}
+                        <div className="flex items-center gap-1 leading-tight">
+                          <span className="text-sm font-medium text-foreground truncate max-w-[180px] sm:max-w-md">
                             {renderUserCell(ev)}
                           </span>
-                          <span className="text-muted-foreground/40 text-xs">•</span>
-                          <span className={cn("text-xs font-medium uppercase tracking-tight", config.color.split(' ')[1].replace('text-', 'text-'))}>
+                          <span className="text-muted-foreground/60 text-sm">-</span>
+                          <span className={cn("text-sm font-medium", config.color.split(' ')[1].replace('text-', 'text-'))}>
                             {config.label}
                           </span>
-                          <span className="text-muted-foreground/40 text-xs">•</span>
-                          <span className="text-[10px] font-medium text-muted-foreground/60 whitespace-nowrap">
+                          <span className="text-muted-foreground/60 text-sm ml-1">·</span>
+                          <span className="text-[11px] font-medium text-muted-foreground/50 ml-0.5">
                             {format(new Date(ev.created_at), "HH:mm", { locale: ptBR })}
                           </span>
                         </div>
 
-                        {/* Linha 2: Info Secundária + Origem */}
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[11px] text-muted-foreground/70 truncate italic">
+                        {/* Linha 2: Info Secundária */}
+                        <div className="flex items-center gap-1.5 mt-0.5 leading-tight">
+                          <span className="text-xs text-muted-foreground truncate">
+                            {renderEmailCell(ev) !== renderUserCell(ev) ? `${renderEmailCell(ev)} • ` : ""}
                             {getMetaSummary(ev)}
+                            {!ev.user_id && ` • ${origin.label}`}
                           </span>
-                          {!ev.user_id && (
-                            <>
-                              <span className="text-muted-foreground/30 text-[10px]">•</span>
-                              <span className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-tighter">
-                                {origin.label}
-                              </span>
-                            </>
-                          )}
                         </div>
                       </div>
 
-                      {/* Desktop Only: Data Simplificada à Direita */}
-                      <div className="hidden md:flex flex-col items-end shrink-0">
-                        <span className="text-[10px] font-bold text-muted-foreground/40 uppercase">
-                          {format(new Date(ev.created_at), "dd MMM", { locale: ptBR })}
-                        </span>
-                      </div>
-                      
                       <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/20 group-hover:text-muted-foreground/40 transition-colors shrink-0" />
                     </button>
+
                   );
                 })}
 
