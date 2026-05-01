@@ -301,13 +301,13 @@ export default function AdminVendas() {
           side="bottom" 
           className="h-[100dvh] w-full p-0 flex flex-col border-none bg-white sm:max-w-full outline-none focus:ring-0 overflow-hidden"
         >
-          <div className="flex items-center justify-between p-4 pb-4 border-b border-border bg-white shrink-0 relative z-[100]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-white shrink-0 z-50">
             <SheetTitle className="text-base font-semibold">Detalhes da Venda</SheetTitle>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setSelectedLog(null)}>
-              <X className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={() => setSelectedLog(null)}>
+              <X className="h-5 w-5" />
             </Button>
           </div>
-          <div className="flex-1 overflow-y-auto overflow-x-hidden bg-white">
+          <div className="flex-1 overflow-y-auto bg-white overscroll-contain">
             {selectedLog && (
               <SaleDetail
                 saleKey={selectedLog.sale_id || selectedLog.checkout_id || selectedLog.id}
@@ -511,8 +511,8 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 space-y-5 pb-20">
+    <div className="flex flex-col min-h-full">
+      <div className="p-4 space-y-6 pb-24 lg:pb-8">
         {/* Customer Info */}
         <div className="space-y-2">
           <h3 className="text-sm font-semibold flex items-center gap-2">
