@@ -680,20 +680,75 @@ export default function AdminUsuarios() {
         </div>
       </div>
 
-      <UserDetailSheet
-        user={selectedUser}
-        plans={plans}
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-        onUserUpdated={fetchData}
-      />
+      {/* Mobile Full Screen View - Usuário */}
+      {selectedUser && (
+        <div className="fixed inset-0 z-[100] bg-white md:hidden flex flex-col animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center justify-between px-4 h-16 border-b border-border bg-white shrink-0 z-50 relative">
+            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full" onClick={() => setSelectedUser(null)}>
+              <X className="h-6 w-6" />
+            </Button>
+            <h2 className="text-base font-bold absolute left-1/2 -translate-x-1/2">Perfil do Usuário</h2>
+            <Button variant="ghost" size="icon" className={cn("h-10 w-10 rounded-full", loading && "animate-spin")} onClick={fetchData}>
+              <RefreshCw className="h-5 w-5" />
+            </Button>
+          </div>
+          <div className="flex-1 overflow-y-auto overscroll-contain bg-white">
+            <div className="p-4 pb-[calc(4rem+env(safe-area-inset-bottom))]">
+              <UserDetailSheet
+                user={selectedUser}
+                plans={plans}
+                open={true}
+                onOpenChange={(open) => !open && setSelectedUser(null)}
+                onUserUpdated={fetchData}
+                isMobileView={true}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
-      <LeadDetailSheet
-        lead={selectedLead}
-        open={leadSheetOpen}
-        onOpenChange={setLeadSheetOpen}
-        onChanged={fetchData}
-      />
+      {/* Mobile Full Screen View - Lead */}
+      {selectedLead && (
+        <div className="fixed inset-0 z-[100] bg-white md:hidden flex flex-col animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center justify-between px-4 h-16 border-b border-border bg-white shrink-0 z-50 relative">
+            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full" onClick={() => setSelectedLead(null)}>
+              <X className="h-6 w-6" />
+            </Button>
+            <h2 className="text-base font-bold absolute left-1/2 -translate-x-1/2 text-center w-full pointer-events-none px-12">Detalhes do Lead</h2>
+            <Button variant="ghost" size="icon" className={cn("h-10 w-10 rounded-full", loading && "animate-spin")} onClick={fetchData}>
+              <RefreshCw className="h-5 w-5" />
+            </Button>
+          </div>
+          <div className="flex-1 overflow-y-auto overscroll-contain bg-white">
+            <div className="p-4 pb-[calc(4rem+env(safe-area-inset-bottom))]">
+              <LeadDetailSheet
+                lead={selectedLead}
+                open={true}
+                onOpenChange={(open) => !open && setSelectedLead(null)}
+                onChanged={fetchData}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Sheet Views */}
+      <div className="hidden md:block">
+        <UserDetailSheet
+          user={selectedUser}
+          plans={plans}
+          open={sheetOpen}
+          onOpenChange={setSheetOpen}
+          onUserUpdated={fetchData}
+        />
+
+        <LeadDetailSheet
+          lead={selectedLead}
+          open={leadSheetOpen}
+          onOpenChange={setLeadSheetOpen}
+          onChanged={fetchData}
+        />
+      </div>
 
     </AdminLayout>
   );
