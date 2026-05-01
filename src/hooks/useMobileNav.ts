@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-type DrawerView = 'root' | 'comunicacao';
+export type DrawerView = 'root' | 'comunicacao' | 'financeiro' | 'boloes' | 'gravacao-resultado' | 'gravacao-estudos' | 'sistema';
 
 interface MobileNavState {
   isDrawerOpen: boolean;
@@ -19,3 +19,4 @@ export const useMobileNav = create<MobileNavState>((set) => ({
   goBack: () => set({ drawerView: 'root' }),
   setDrawerView: (view) => set({ drawerView: view }),
 }));
+

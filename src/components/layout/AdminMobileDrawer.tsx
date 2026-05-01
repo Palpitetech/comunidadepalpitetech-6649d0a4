@@ -16,14 +16,17 @@ import { cn } from "@/lib/utils";
 import { AdminCommandPalette } from "@/components/admin/AdminCommandPalette";
 import { adminNavConfig, type NavSection, type NavItem } from "@/config/adminNavConfig";
 import { useAdminBadges } from "@/hooks/useAdminBadges";
+import { type DrawerView } from "@/hooks/useMobileNav";
+
 
 
 interface AdminMobileDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  view: 'root' | 'comunicacao';
-  onViewChange: (view: 'root' | 'comunicacao') => void;
+  view: DrawerView;
+  onViewChange: (view: DrawerView) => void;
 }
+
 
 export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: AdminMobileDrawerProps) {
   const { profile, user } = useAuth();
@@ -123,7 +126,28 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
     );
   };
 
-  const comunicacaoSection = adminNavConfig.find(s => s.id === 'comunicacao');
+  const getSubmenuContent = () => {
+    const section = adminNavConfig.find(s => s.id === view);
+    if (!section) return null;
+
+    return (
+      <div className="w-1/2 h-full flex flex-col">
+        <div className="px-4 py-2 flex items-center gap-2 border-b bg-accent/30">
+          <Button variant="ghost" size="icon" onClick={() => onViewChange('root')} className="h-8 w-8">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm font-semibold">{section.label}</span>
+        </div>
+        <ScrollArea className="flex-1">
+          <div className="space-y-1 p-4">
+            {section.items.map((item) => (
+              <RenderNavItem key={item.url} item={item} />
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -136,7 +160,6 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
           onTouchEnd={handleTouchEnd}
           aria-label="Menu de navegação"
         >
-
           <SheetHeader className="p-4 border-b flex flex-row items-center justify-between space-y-0">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm">
@@ -167,12 +190,11 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
             </button>
           </div>
 
-
           <div className="flex-1 overflow-hidden relative">
             <div 
               className={cn(
                 "h-full w-[200%] flex transition-transform duration-300 ease-in-out",
-                view === 'comunicacao' ? "-translate-x-1/2" : "translate-x-0"
+                view !== 'root' ? "-translate-x-1/2" : "translate-x-0"
               )}
             >
               {/* Root View */}
@@ -201,7 +223,7 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
                             {section.label}
                           </p>
                           <button 
-                            onClick={() => section.id === 'comunicacao' ? onViewChange('comunicacao') : null}
+                            onClick={() => onViewChange(section.id as DrawerView)}
                             className={cn(
                               "flex items-center justify-between w-full px-3 py-2.5 text-sm rounded-md transition-colors",
                               section.items.some(i => isActive(i.url)) ? "bg-accent/50 text-foreground" : "hover:bg-accent"
@@ -223,22 +245,8 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
                 </ScrollArea>
               </div>
 
-              {/* Comunicacao View */}
-              <div className="w-1/2 h-full flex flex-col">
-                <div className="px-4 py-2 flex items-center gap-2 border-b bg-accent/30">
-                  <Button variant="ghost" size="icon" onClick={() => onViewChange('root')} className="h-8 w-8">
-                    <ArrowLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm font-semibold">Comunicação</span>
-                </div>
-                <ScrollArea className="flex-1">
-                  <div className="space-y-1 p-4">
-                    {comunicacaoSection?.items.map((item) => (
-                      <RenderNavItem key={item.url} item={item} />
-                    ))}
-                  </div>
-                </ScrollArea>
-              </div>
+              {/* Dynamic Submenu View */}
+              {getSubmenuContent()}
             </div>
           </div>
 
@@ -267,7 +275,6 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
               <ArrowLeft className="h-3.5 w-3.5" />
               Voltar ao app
             </Button>
-
           </div>
         </SheetContent>
       </Sheet>
@@ -276,3 +283,4 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
     </>
   );
 }
+
