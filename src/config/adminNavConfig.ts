@@ -1,3 +1,7 @@
+/**
+ * adminNavConfig - Fonte única de verdade para a navegação do painel Admin.
+ * Compartilhada entre AdminSidebar (Desktop) e AdminMobileDrawer (Mobile).
+ */
 import {
   LayoutDashboard,
   FileText,
@@ -25,6 +29,7 @@ import {
   Settings,
   type LucideIcon,
 } from "lucide-react";
+
 
 export type BadgeKey = "usuarios" | "pagamentos" | "resgates" | "chat";
 

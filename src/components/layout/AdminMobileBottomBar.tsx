@@ -1,7 +1,13 @@
+/**
+ * AdminMobileBottomBar - Barra de navegação inferior exclusiva para Mobile.
+ * Visível apenas em telas menores que 'md' (768px).
+ * Controla as ações rápidas e o acionamento do Drawer principal.
+ */
 import { useLocation, Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Activity, ShoppingCart, Radio, Users, Menu } from "lucide-react";
 import { useMobileNav } from "@/hooks/useMobileNav";
+
 
 interface NavButtonProps {
   to?: string;

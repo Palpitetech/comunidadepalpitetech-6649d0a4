@@ -1,3 +1,9 @@
+/**
+ * AdminMobileDrawer - Menu lateral (Drawer) para Mobile.
+ * Acionado pela BottomBar em telas < md.
+ * Suporta navegação em múltiplos níveis (ex: Comunicação).
+ * Consome 'adminNavConfig' para manter paridade com o Desktop.
+ */
 import { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -10,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { AdminCommandPalette } from "@/components/admin/AdminCommandPalette";
 import { adminNavConfig, type NavSection, type NavItem } from "@/config/adminNavConfig";
 import { useAdminBadges } from "@/hooks/useAdminBadges";
+
 
 interface AdminMobileDrawerProps {
   isOpen: boolean;

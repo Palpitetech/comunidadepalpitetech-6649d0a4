@@ -1,3 +1,8 @@
+/**
+ * AdminSidebar - Sidebar de navegação para Desktop.
+ * Visível apenas em telas 'md' (768px) ou superiores.
+ * Consome 'adminNavConfig' como fonte de verdade para rotas.
+ */
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -38,7 +43,6 @@ import {
   Search,
   Zap,
   ArrowLeft,
-  Settings,
   ChevronsRight,
   type LucideIcon,
 } from "lucide-react";
@@ -48,6 +52,7 @@ import {
   type NavSection, 
   type BadgeKey 
 } from "@/config/adminNavConfig";
+
 
 
 
@@ -394,8 +399,11 @@ export function AdminSidebar() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const { data: badges } = useAdminBadges();
 
-  const isActive = (url: string, exact?: boolean) =>
-    exact ? currentPath === url : currentPath === url || currentPath.startsWith(url + "/");
+  const isActive = (url: string, exact?: boolean) => {
+    if (exact) return currentPath === url;
+    return currentPath.startsWith(url) && (url !== '/admin' || currentPath === '/admin');
+  };
+
 
   return (
     <TooltipProvider delayDuration={100}>

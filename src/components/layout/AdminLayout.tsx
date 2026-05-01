@@ -1,3 +1,8 @@
+/**
+ * AdminLayout - Layout principal da área administrativa.
+ * Gerencia a alternância entre Sidebar (Desktop) e BottomBar/Drawer (Mobile).
+ * Breakpoint de transição: md (768px).
+ */
 import { ReactNode } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from "./AdminSidebar";
@@ -5,6 +10,7 @@ import { AdminMobileBottomBar } from "./AdminMobileBottomBar";
 import { AdminMobileDrawer } from "./AdminMobileDrawer";
 import { useMobileNav } from "@/hooks/useMobileNav";
 import { cn } from "@/lib/utils";
+
 
 interface AdminLayoutProps {
   children: ReactNode;
