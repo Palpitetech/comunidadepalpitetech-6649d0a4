@@ -31,6 +31,7 @@ export function UserDetailSheet({
   open,
   onOpenChange,
   onUserUpdated,
+  isMobileView,
 }: UserDetailSheetProps) {
   const isMobile = useIsMobile();
 
