@@ -12,7 +12,9 @@ import {
   UserPlus, ShoppingCart, QrCode, ChevronLeft,
   CreditCard, XCircle, AlertTriangle, Clock, Ban, X,
   RefreshCw, Mail, UserCheck, Wallet, RotateCcw, ShieldAlert, Inbox,
+  CheckCircle2, User, Calendar,
 } from "lucide-react";
+
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
