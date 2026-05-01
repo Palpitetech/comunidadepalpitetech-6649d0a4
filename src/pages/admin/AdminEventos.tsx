@@ -303,8 +303,8 @@ export default function AdminEventos() {
 
       <Sheet open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>
         <SheetContent 
-          side="bottom" 
-          className="h-[100dvh] w-full p-0 flex flex-col border-none bg-white sm:max-w-full outline-none focus:ring-0 overflow-hidden"
+          side="right" 
+          className="h-screen w-[99vw] p-0 flex flex-col border-none bg-white sm:max-w-[99vw] outline-none focus:ring-0 overflow-hidden"
         >
           {/* Reconstrução Total - Etapa 03 */}
           {selectedEvent && (
