@@ -327,7 +327,7 @@ export default function AdminVendas() {
       )}
 
       {/* Desktop Sheet View */}
-      <Sheet open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
+      <Sheet open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)} modal={false}>
         <SheetContent 
           side="right" 
           className="hidden md:flex p-0 flex-col border-l border-border bg-white w-full md:max-w-lg outline-none focus:ring-0 overflow-hidden"
