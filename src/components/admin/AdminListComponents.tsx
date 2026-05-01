@@ -316,4 +316,3 @@ export function AdminPagination({
   );
 }
 
-import { ChevronLeft } from "lucide-react";
