@@ -257,20 +257,76 @@ export default function AdminEventos() {
   return (
     <AdminLayout pageTitle="Eventos">
       <div className="flex flex-col flex-1 min-h-0 bg-background">
-        <AdminHeader 
-          title="Eventos"
-          search={search}
-          onSearchChange={setSearch}
-          onRefresh={() => { fetchEvents(); fetchCounters(); }}
-          loading={loading}
-          filters={FILTER_TABS.map(tab => ({
-            label: tab.label,
-            isActive: activeFilter === tab.key,
-            onClick: () => setActiveFilter(tab.key),
-            icon: tab.icon,
-            count: getFilterCount(tab.key)
-          }))}
-        />
+        {/* HEADER DINÂMICO */}
+        <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b">
+          <div className="flex items-center justify-between h-16 px-4 max-w-7xl mx-auto w-full">
+            {!isSearching ? (
+              <>
+                <h1 className="text-xl font-bold tracking-tight">Eventos</h1>
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="icon" onClick={() => setIsSearching(true)}>
+                    <Search className="w-5 h-5 text-muted-foreground" />
+                  </Button>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <Filter className="w-5 h-5 text-muted-foreground" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuLabel>Filtrar Eventos</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {FILTER_TABS.map((tab) => (
+                        <DropdownMenuItem 
+                          key={tab.key} 
+                          onClick={() => setActiveFilter(tab.key)}
+                          className={cn(activeFilter === tab.key && "bg-accent font-bold")}
+                        >
+                          <tab.icon className="mr-2 h-4 w-4" />
+                          <span>{tab.label}</span>
+                          {getFilterCount(tab.key) > 0 && (
+                            <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground">
+                              {getFilterCount(tab.key)}
+                            </span>
+                          )}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <Button variant="ghost" size="icon" onClick={() => { fetchEvents(); fetchCounters(); }} disabled={loading}>
+                    <RefreshCw className={cn("w-5 h-5 text-muted-foreground", loading && "animate-spin")} />
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center w-full gap-2 animate-in fade-in slide-in-from-top-1">
+                <Button variant="ghost" size="icon" onClick={() => { setIsSearching(false); setSearch(""); }}>
+                  <ChevronLeft className="w-6 h-6" />
+                </Button>
+                <div className="flex-1 relative">
+                  <Input 
+                    autoFocus
+                    placeholder="Buscar por email ou tipo..." 
+                    className="h-10 bg-muted/30 border-none focus-visible:ring-1 shadow-none pr-9"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                  {search && (
+                    <button 
+                      onClick={() => setSearch("")} 
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </header>
+
 
         <div className="flex-1 overflow-auto bg-background">
           <div className="max-w-7xl mx-auto w-full">
