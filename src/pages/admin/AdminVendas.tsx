@@ -225,299 +225,186 @@ export default function AdminVendas() {
   }
 
   return (
-    <AdminLayout
-      pageTitle="Vendas"
-      headerRightContent={
-        <button onClick={fetchLogs} disabled={loading} className="text-muted-foreground hover:text-foreground">
-          <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
-        </button>
-      }
-    >
-      {/* ======= MOBILE ======= */}
-      <div className="md:hidden px-4 py-3 space-y-3">
-        {/* Stats row */}
-        <div className="grid grid-cols-4 gap-1.5">
-          {FILTER_TABS.map(({ key, label, icon: Icon }) => {
-            const count = getFilterCount(key);
-            const isActive = activeFilter === key;
-            return (
-              <button
-                key={key}
-                onClick={() => setActiveFilter(key)}
-                className={cn(
-                  "flex flex-col items-center gap-0.5 rounded-xl p-2 transition-colors text-center",
-                  isActive ? "bg-primary/10 ring-1 ring-primary/30" : "bg-muted/40 hover:bg-muted/60"
-                )}
-              >
-                <Icon className={cn("h-4 w-4", isActive ? "text-primary" : "text-muted-foreground")} />
-                <span className="text-lg font-bold">{count}</span>
-                <span className={cn("text-[10px]", isActive ? "text-primary font-medium" : "text-muted-foreground")}>{label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Search + Date filter */}
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar email, telefone, nome..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-10 pr-9" />
-            {search && (
-              <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className={cn(
-                  "h-10 w-10 shrink-0 relative",
-                  hasDateFilter && "border-primary/40 bg-primary/5 text-primary"
-                )}
-              >
-                <CalendarDays className="h-4 w-4" />
-                {hasDateFilter && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground rounded-full w-4 h-4 text-[9px] font-bold flex items-center justify-center">✓</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-auto p-0" sideOffset={8}>
-              <div className="p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold">Filtrar por data</span>
-                  {hasDateFilter && (
-                    <button onClick={() => setDateRange(undefined)} className="text-[11px] text-primary hover:text-primary/80 font-medium">
-                      Limpar
-                    </button>
-                  )}
-                </div>
-                {hasDateFilter && (
-                  <p className="text-[11px] text-muted-foreground">
-                    {dateRange?.from && format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })}
-                    {dateRange?.to && ` — ${format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}`}
-                  </p>
-                )}
-              </div>
-              <CalendarComponent
-                mode="range"
-                selected={dateRange}
-                onSelect={setDateRange}
-                numberOfMonths={1}
-                locale={ptBR}
-                className="p-3 pointer-events-auto"
+    <AdminLayout pageTitle="Vendas">
+      <div className="flex flex-col flex-1 min-h-0 bg-background">
+        {/* ======= HEADER UNIFICADO ======= */}
+        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
+          <div className="px-4 md:px-6 py-4 flex items-center justify-between gap-3 max-w-7xl mx-auto w-full">
+            <div className="flex-1 max-w-[240px] md:max-w-md relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <Input 
+                placeholder="Buscar..." 
+                value={search} 
+                onChange={(e) => setSearch(e.target.value)} 
+                className="pl-9 h-10 bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all" 
               />
-            </PopoverContent>
-          </Popover>
-        </div>
+              {search && (
+                <button 
+                  onClick={() => setSearch("")} 
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
 
-        {/* Sales list */}
-        <div className="space-y-0.5">
-          {paginatedSales.map(({ key, latest }) => {
-            const evInfo = getEventInfo(latest.event);
-            const name = customerName(latest);
-            const price = totalPrice(latest);
-            return (
-              <button
-                key={key}
-                className="flex items-center gap-3 w-full px-3 py-2 rounded-lg active:bg-muted/60 transition-colors border-b border-border/30 last:border-0 text-left"
-                onClick={() => setSelectedLog(latest)}
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{name || latest.email || "Sem identificação"}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 inline-flex", evInfo.color)}>
-                      {evInfo.label}
-                    </Badge>
-                    {price && (
-                      <span className="text-[11px] font-semibold tabular-nums text-foreground/70 ml-auto">
-                        {price}
-                      </span>
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Filtro por Data */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className={cn(
+                      "h-10 w-10 rounded-xl border-border/50 bg-background hover:bg-muted/50 transition-all",
+                      hasDateFilter && "border-primary/40 bg-primary/5 text-primary"
+                    )}
+                  >
+                    <CalendarDays className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-auto p-0" sideOffset={8}>
+                  <div className="p-3 flex items-center justify-between">
+                    <span className="text-sm font-semibold">Filtrar por data</span>
+                    {hasDateFilter && (
+                      <button onClick={() => setDateRange(undefined)} className="text-[11px] text-primary hover:text-primary/80 font-medium">
+                        Limpar
+                      </button>
                     )}
                   </div>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
-              </button>
-            );
-          })}
-          {filteredSales.length === 0 && (
-            <div className="text-center py-12 text-sm text-muted-foreground">
-              {search ? "Nenhum resultado encontrado" : "Nenhuma venda"}
+                  <CalendarComponent
+                    mode="range"
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    numberOfMonths={window.innerWidth > 768 ? 2 : 1}
+                    locale={ptBR}
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+
+              {/* Filtro por Status */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-10 w-10 rounded-xl border-border/50 bg-background hover:bg-muted/50 transition-all"
+                  >
+                    <Filter className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Filtrar Status</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {FILTER_TABS.map(({ key, label, icon: Icon }) => (
+                    <DropdownMenuItem 
+                      key={key} 
+                      onClick={() => setActiveFilter(key)}
+                      className={cn(activeFilter === key && "bg-accent")}
+                    >
+                      <Icon className="mr-2 h-4 w-4" />
+                      <span>{label}</span>
+                      {getFilterCount(key) > 0 && (
+                        <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground">
+                          {getFilterCount(key)}
+                        </span>
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="h-10 w-10 rounded-xl border-border/50 bg-background hover:bg-muted/50 transition-all"
+                onClick={fetchLogs}
+                disabled={loading}
+              >
+                <RefreshCw className={cn("h-4 w-4 text-muted-foreground", loading && "animate-spin")} />
+              </Button>
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Bottom pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between pt-2 pb-4">
-            <p className="text-xs text-muted-foreground">
-              {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredSales.length)} de {filteredSales.length}
-            </p>
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}><ChevronLeft className="h-4 w-4" /></Button>
-              <span className="text-xs text-muted-foreground min-w-[3ch] text-center">{page + 1}/{totalPages}</span>
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}><ChevronRight className="h-4 w-4" /></Button>
-            </div>
-          </div>
-        )}
-      </div>
+        {/* ======= LISTAGEM ULTRA COMPACTA ======= */}
+        <div className="flex-1 overflow-auto bg-background">
+          <div className="max-w-7xl mx-auto w-full">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-2">
+                <Loader2 className="h-6 w-6 animate-spin text-primary/40" />
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Sincronizando logs...</p>
+              </div>
+            ) : (
+              <AdminListContainer>
+                {paginatedSales.map(({ key, latest }) => {
+                  const evInfo = getEventInfo(latest.event);
+                  const name = customerName(latest);
+                  const price = totalPrice(latest);
+                  
+                  return (
+                    <AdminListItem
+                      key={key}
+                      onClick={() => setSelectedLog(latest)}
+                      title={name || latest.email || "Sem identificação"}
+                      subtitle={latest.email || "—"}
+                      badge={{
+                        text: evInfo.label,
+                        color: evInfo.color
+                      }}
+                      timestamp={format(new Date(latest.received_at), "HH:mm", { locale: ptBR })}
+                      rightContent={price && (
+                        <span className="text-[10px] font-bold text-foreground/80 tabular-nums">
+                          {price}
+                        </span>
+                      )}
+                    />
+                  );
+                })}
 
-      {/* ======= DESKTOP — fullscreen minimal ======= */}
-      <div className="hidden md:flex flex-col flex-1 min-h-0">
-        {/* Toolbar */}
-        <div className="border-b border-border bg-card/50 px-6 py-3 flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => navigate("/admin")}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-lg font-semibold mr-2">Vendas</h1>
+                {filteredSales.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-20 gap-2 text-center">
+                    <Search className="h-6 w-6 text-muted-foreground/20" />
+                    <p className="text-[11px] font-bold text-muted-foreground/50 uppercase tracking-widest">Nenhuma venda encontrada</p>
+                  </div>
+                )}
+              </AdminListContainer>
+            )}
 
-          {/* Filter pills */}
-          <div className="flex items-center gap-1">
-            {FILTER_TABS.map(({ key, label }) => {
-              const count = getFilterCount(key);
-              const isActive = activeFilter === key;
-              return (
-                <button
-                  key={key}
-                  onClick={() => setActiveFilter(key)}
-                  className={cn(
-                    "px-3 py-1 rounded-full text-xs font-medium transition-colors",
-                    isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
-                  )}
-                >
-                  {label} <span className="opacity-70">{count}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex-1" />
-
-          {/* Search */}
-          <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-8 text-sm bg-background" />
-            {search && (
-              <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                <X className="h-3.5 w-3.5" />
-              </button>
+            {/* ======= PAGINAÇÃO ULTRA COMPACTA ======= */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between gap-4 px-4 py-3 bg-muted/5">
+                <p className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-tighter">
+                  {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredSales.length)} <span className="mx-1">/</span> {filteredSales.length}
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7 hover:bg-muted" 
+                    disabled={page === 0} 
+                    onClick={() => setPage((p) => p - 1)}
+                  >
+                    <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                  <span className="text-[10px] font-bold w-8 text-center">{page + 1}</span>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7 hover:bg-muted" 
+                    disabled={page >= totalPages - 1} 
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
-
-          {/* Date filter */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={hasDateFilter ? "outline" : "ghost"}
-                size="sm"
-                className={cn(
-                  "h-8 gap-1.5 text-xs shrink-0",
-                  hasDateFilter && "border-primary/40 bg-primary/5 text-primary"
-                )}
-              >
-                <CalendarDays className="h-3.5 w-3.5" />
-                {hasDateFilter
-                  ? `${format(dateRange!.from!, "dd/MM", { locale: ptBR })}${dateRange?.to ? ` – ${format(dateRange.to, "dd/MM", { locale: ptBR })}` : ""}`
-                  : "Data"
-                }
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-auto p-0" sideOffset={8}>
-              <div className="p-3 flex items-center justify-between">
-                <span className="text-sm font-semibold">Filtrar por data</span>
-                {hasDateFilter && (
-                  <button onClick={() => setDateRange(undefined)} className="text-[11px] text-primary hover:text-primary/80 font-medium">
-                    Limpar
-                  </button>
-                )}
-              </div>
-              <CalendarComponent
-                mode="range"
-                selected={dateRange}
-                onSelect={setDateRange}
-                numberOfMonths={2}
-                locale={ptBR}
-                className="p-3 pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-
-          {/* Refresh */}
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={fetchLogs} disabled={loading}>
-            <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
-          </Button>
         </div>
-
-        {/* Table */}
-        <div className="flex-1 overflow-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground pl-6">Nome</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Email</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Telefone</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Valor</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Status</TableHead>
-                <TableHead className="w-8"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedSales.map(({ key, latest }) => {
-                const evInfo = getEventInfo(latest.event);
-                const name = customerName(latest);
-                const price = totalPrice(latest);
-                return (
-                  <TableRow key={key} className="cursor-pointer group" onClick={() => setSelectedLog(latest)}>
-                    <TableCell className="pl-6 py-2.5">
-                      <span className="text-sm font-medium truncate max-w-[220px] block">{name || "Sem nome"}</span>
-                    </TableCell>
-                    <TableCell className="py-2.5 text-sm text-muted-foreground truncate max-w-[240px]">
-                      {latest.email || "—"}
-                    </TableCell>
-                    <TableCell className="py-2.5 text-sm text-muted-foreground tabular-nums">
-                      {latest.phone || "—"}
-                    </TableCell>
-                    <TableCell className="py-2.5">
-                      <span className="text-sm font-medium tabular-nums">{price || "—"}</span>
-                    </TableCell>
-                    <TableCell className="py-2.5">
-                      <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", evInfo.color)}>
-                        {evInfo.label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-2.5 pr-4">
-                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-              {filteredSales.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-16 text-sm text-muted-foreground">
-                    {search ? "Nenhuma venda encontrada" : "Nenhuma venda registrada"}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* Bottom pagination desktop */}
-        {totalPages > 1 && (
-          <div className="border-t border-border px-6 py-2 flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">
-              {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredSales.length)} de {filteredSales.length}
-            </p>
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}><ChevronLeft className="h-3.5 w-3.5" /></Button>
-              <span className="text-xs text-muted-foreground min-w-[3ch] text-center">{page + 1}/{totalPages}</span>
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}><ChevronRight className="h-3.5 w-3.5" /></Button>
-            </div>
-          </div>
-        )}
       </div>
+
 
       {/* Detail Sheet */}
       <Sheet open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
