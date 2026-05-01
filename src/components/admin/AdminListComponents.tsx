@@ -47,9 +47,11 @@ export function AdminHeader({
   onSearchChange,
   onRefresh,
   loading,
-  filters,
-  dateFilter
-}: AdminHeaderProps) {
+   filters,
+   dateFilter,
+   customFilterContent
+ }: AdminHeaderProps) {
+
   return (
     <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
       <div className="px-4 md:px-6 py-4 flex items-center justify-between gap-3 max-w-7xl mx-auto w-full">
