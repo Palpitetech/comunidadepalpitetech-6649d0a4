@@ -32,8 +32,10 @@ import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { AdminListContainer, AdminListItem } from "@/components/admin/AdminListComponents";
+import { AdminListContainer, AdminListItem, AdminHeader, AdminPagination } from "@/components/admin/AdminListComponents";
 import type { DateRange } from "react-day-picker";
+
+
 
 
 
@@ -214,7 +216,7 @@ export default function AdminVendas() {
 
   const getFilterCount = (key: FilterTab) => stats[key === "todos" ? "total" : key];
 
-  if (loading) {
+  if (loading && logs.length === 0) {
     return (
       <AdminLayout pageTitle="Vendas">
         <div className="flex items-center justify-center min-h-[50vh]">
@@ -227,190 +229,80 @@ export default function AdminVendas() {
   return (
     <AdminLayout pageTitle="Vendas">
       <div className="flex flex-col flex-1 min-h-0 bg-background">
-        {/* ======= HEADER UNIFICADO ======= */}
-        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
-          <div className="px-4 md:px-6 py-4 flex items-center justify-between gap-3 max-w-7xl mx-auto w-full">
-            <div className="flex-1 max-w-[240px] md:max-w-md relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              <Input 
-                placeholder="Buscar..." 
-                value={search} 
-                onChange={(e) => setSearch(e.target.value)} 
-                className="pl-9 h-10 bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all" 
-              />
-              {search && (
-                <button 
-                  onClick={() => setSearch("")} 
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
+        <AdminHeader 
+          title="Vendas"
+          search={search}
+          onSearchChange={setSearch}
+          onRefresh={fetchLogs}
+          loading={loading}
+          dateFilter={{
+            range: dateRange,
+            onRangeChange: setDateRange,
+            isActive: hasDateFilter,
+            onClear: () => setDateRange(undefined)
+          }}
+          filters={FILTER_TABS.map(tab => ({
+            label: tab.label,
+            isActive: activeFilter === tab.key,
+            onClick: () => setActiveFilter(tab.key),
+            icon: tab.icon,
+            count: getFilterCount(tab.key)
+          }))}
+        />
 
-            <div className="flex items-center gap-2 shrink-0">
-              {/* Filtro por Data */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className={cn(
-                      "h-10 w-10 rounded-xl border-border/50 bg-background hover:bg-muted/50 transition-all",
-                      hasDateFilter && "border-primary/40 bg-primary/5 text-primary"
-                    )}
-                  >
-                    <CalendarDays className="h-4 w-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-auto p-0" sideOffset={8}>
-                  <div className="p-3 flex items-center justify-between">
-                    <span className="text-sm font-semibold">Filtrar por data</span>
-                    {hasDateFilter && (
-                      <button onClick={() => setDateRange(undefined)} className="text-[11px] text-primary hover:text-primary/80 font-medium">
-                        Limpar
-                      </button>
-                    )}
-                  </div>
-                  <CalendarComponent
-                    mode="range"
-                    selected={dateRange}
-                    onSelect={setDateRange}
-                    numberOfMonths={window.innerWidth > 768 ? 2 : 1}
-                    locale={ptBR}
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-
-              {/* Filtro por Status */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    className="h-10 w-10 rounded-xl border-border/50 bg-background hover:bg-muted/50 transition-all"
-                  >
-                    <Filter className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>Filtrar Status</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {FILTER_TABS.map(({ key, label, icon: Icon }) => (
-                    <DropdownMenuItem 
-                      key={key} 
-                      onClick={() => setActiveFilter(key)}
-                      className={cn(activeFilter === key && "bg-accent")}
-                    >
-                      <Icon className="mr-2 h-4 w-4" />
-                      <span>{label}</span>
-                      {getFilterCount(key) > 0 && (
-                        <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground">
-                          {getFilterCount(key)}
-                        </span>
-                      )}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <Button 
-                variant="outline" 
-                size="icon" 
-                className="h-10 w-10 rounded-xl border-border/50 bg-background hover:bg-muted/50 transition-all"
-                onClick={fetchLogs}
-                disabled={loading}
-              >
-                <RefreshCw className={cn("h-4 w-4 text-muted-foreground", loading && "animate-spin")} />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* ======= LISTAGEM ULTRA COMPACTA ======= */}
         <div className="flex-1 overflow-auto bg-background">
           <div className="max-w-7xl mx-auto w-full">
-            {loading ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-2">
-                <Loader2 className="h-6 w-6 animate-spin text-primary/40" />
-                <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Sincronizando logs...</p>
-              </div>
-            ) : (
-              <AdminListContainer>
-                {paginatedSales.map(({ key, latest }) => {
-                  const evInfo = getEventInfo(latest.event);
-                  const name = customerName(latest);
-                  const price = totalPrice(latest);
-                  
-                  return (
-                    <AdminListItem
-                      key={key}
-                      onClick={() => setSelectedLog(latest)}
-                      title={name || latest.email || "Sem identificação"}
-                      subtitle={latest.email || "—"}
-                      badge={{
-                        text: evInfo.label,
-                        color: evInfo.color
-                      }}
-                      timestamp={format(new Date(latest.received_at), "HH:mm", { locale: ptBR })}
-                      rightContent={price && (
-                        <span className="text-[10px] font-bold text-foreground/80 tabular-nums">
-                          {price}
-                        </span>
-                      )}
-                    />
-                  );
-                })}
+            <AdminListContainer 
+              loading={loading && logs.length === 0}
+              emptyMessage="Nenhuma venda encontrada"
+            >
+              {paginatedSales.map(({ key, latest }) => {
+                const evInfo = getEventInfo(latest.event);
+                const name = customerName(latest);
+                const price = totalPrice(latest);
+                
+                return (
+                  <AdminListItem
+                    key={key}
+                    onClick={() => setSelectedLog(latest)}
+                    title={name || latest.email || "Sem identificação"}
+                    subtitle={latest.email || "—"}
+                    badge={{
+                      text: evInfo.label,
+                      color: evInfo.color,
+                      icon: evInfo.label.includes('Aprovada') ? CheckCircle2 : Clock
+                    }}
+                    timestamp={format(new Date(latest.received_at), "HH:mm", { locale: ptBR })}
+                    rightContent={price && (
+                      <span className="text-[10px] font-bold text-foreground/80 tabular-nums">
+                        {price}
+                      </span>
+                    )}
+                  />
+                );
+              })}
+            </AdminListContainer>
 
-                {filteredSales.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-20 gap-2 text-center">
-                    <Search className="h-6 w-6 text-muted-foreground/20" />
-                    <p className="text-[11px] font-bold text-muted-foreground/50 uppercase tracking-widest">Nenhuma venda encontrada</p>
-                  </div>
-                )}
-              </AdminListContainer>
-            )}
-
-            {/* ======= PAGINAÇÃO ULTRA COMPACTA ======= */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between gap-4 px-4 py-3 bg-muted/5">
-                <p className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-tighter">
-                  {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filteredSales.length)} <span className="mx-1">/</span> {filteredSales.length}
-                </p>
-                <div className="flex items-center gap-1">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-7 w-7 hover:bg-muted" 
-                    disabled={page === 0} 
-                    onClick={() => setPage((p) => p - 1)}
-                  >
-                    <ChevronLeft className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                  <span className="text-[10px] font-bold w-8 text-center">{page + 1}</span>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-7 w-7 hover:bg-muted" 
-                    disabled={page >= totalPages - 1} 
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                </div>
-              </div>
-            )}
+            <AdminPagination 
+              page={page}
+              pageSize={PAGE_SIZE}
+              totalCount={filteredSales.length}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              hasNextPage={page < totalPages - 1}
+              hasPrevPage={page > 0}
+            />
           </div>
         </div>
       </div>
 
-
-      {/* Detail Sheet */}
       <Sheet open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
         <SheetContent side="bottom" className="h-[92vh] rounded-t-2xl p-0 md:!inset-y-0 md:!right-0 md:!left-auto md:!bottom-auto md:!h-full md:!w-[480px] md:!max-w-lg md:rounded-none">
           <div className="flex items-center justify-between p-4 pb-2 border-b border-border">
             <SheetTitle className="text-base font-semibold">Detalhes da Venda</SheetTitle>
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setSelectedLog(null)}>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
           {selectedLog && (
             <SaleDetail
@@ -423,6 +315,7 @@ export default function AdminVendas() {
     </AdminLayout>
   );
 }
+
 
 function CopyableField({ label, value }: { label: string; value: string }) {
   const handleCopy = async () => {
