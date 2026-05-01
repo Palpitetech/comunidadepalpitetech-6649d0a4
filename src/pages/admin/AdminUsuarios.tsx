@@ -376,6 +376,26 @@ export default function AdminUsuarios() {
     );
   }, [users, activeFilter, activeSubFilter, searchTerm, includeTags, excludeTags, exactMatch]);
 
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedUser(null);
+        setSelectedLead(null);
+      }
+    };
+    window.addEventListener("keydown", handleEsc);
+    
+    if (selectedUser || selectedLead) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      window.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = 'unset';
+    };
+  }, [selectedUser, selectedLead]);
+
   useEffect(() => { setPage(0); }, [activeFilter, activeSubFilter, searchTerm, includeTags, excludeTags, exactMatch]);
 
   const totalPages = Math.ceil(filteredUsers.length / PAGE_SIZE);
