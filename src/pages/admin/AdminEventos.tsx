@@ -339,7 +339,7 @@ export default function AdminEventos() {
                     <button
                       key={ev.id}
                       onClick={() => setSelectedEvent(ev)}
-                      className="w-full flex items-center justify-between gap-3 py-2 px-3 hover:bg-muted/30 active:bg-muted/50 transition-colors text-left group"
+                      className="w-full flex items-center justify-between gap-3 py-2.5 px-3 hover:bg-muted/30 active:bg-muted/50 transition-colors text-left group"
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         {/* Ícone à Esquerda */}
@@ -352,43 +352,41 @@ export default function AdminEventos() {
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          {/* Linha 1: Nome ou Email */}
-                          <div className="flex items-center gap-1.5 leading-tight">
-                            <span className="text-sm font-semibold text-foreground truncate max-w-[180px] sm:max-w-md">
+                          {/* Linha 1: Nome Principal + Badge */}
+                          <div className="flex items-center justify-between gap-2 leading-tight">
+                            <span className="text-sm font-semibold text-foreground truncate max-w-[150px] sm:max-w-md">
                               {renderUserCell(ev)}
                             </span>
+                            
+                            <div className={cn(
+                              "flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tight border shrink-0",
+                              config.color
+                            )}>
+                              <StatusIcon className="h-2.5 w-2.5" />
+                              {config.label}
+                            </div>
                           </div>
 
-                          {/* Linha 2: Email Secundário / Metadados / Origem */}
-                          <div className="flex items-center gap-1.5 mt-0.5 leading-tight">
-                            <span className="text-[11px] text-muted-foreground/70 truncate">
+                          {/* Linha 2: Info Secundária + Horário */}
+                          <div className="flex items-center justify-between gap-2 mt-1 leading-tight">
+                            <span className="text-[11px] text-muted-foreground/70 truncate italic">
                               {renderEmailCell(ev) !== renderUserCell(ev) ? `${renderEmailCell(ev)} • ` : ""}
                               {getMetaSummary(ev)}
                               {!ev.user_id && ` • ${origin.label}`}
                             </span>
+                            
+                            <span className="text-[10px] font-medium text-muted-foreground/50 whitespace-nowrap shrink-0">
+                              {format(new Date(ev.created_at), "HH:mm", { locale: ptBR })}
+                            </span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Status Badge + Hora + Chevron */}
-                      <div className="flex items-center gap-3 flex-shrink-0">
-                        <div className={cn(
-                          "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight border",
-                          config.color
-                        )}>
-                          <StatusIcon className="h-3 w-3" />
-                          {config.label}
-                        </div>
-                        
-                        <span className="text-[10px] font-medium text-muted-foreground/50 whitespace-nowrap">
-                          {format(new Date(ev.created_at), "HH:mm", { locale: ptBR })}
-                        </span>
-
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/20 group-hover:text-muted-foreground/40 transition-colors" />
-                      </div>
+                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/20 group-hover:text-muted-foreground/40 transition-colors shrink-0 ml-1" />
                     </button>
                   );
                 })}
+
 
 
 
