@@ -363,7 +363,7 @@ export default function AdminEventos() {
               )}
 
               {/* 3. Lista de Identificação - Layout Vertical Limpo */}
-              <div className="space-y-5 px-1">
+              {selectedEvent && <div className="space-y-5 px-1">
                 <InfoRow 
                   icon={User} 
                   label="Nome/Lead" 
