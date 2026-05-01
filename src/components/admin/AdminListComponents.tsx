@@ -113,35 +113,41 @@ export function AdminHeader({
                 <Button 
                   variant="outline" 
                   size="icon" 
-                  className="h-10 w-10 rounded-xl border-border/50 bg-background hover:bg-muted/50 transition-all"
+                  className={cn(
+                    "h-10 w-10 rounded-xl border-border/50 bg-background hover:bg-muted/50 transition-all",
+                    filters.some(f => f.isActive) && "border-primary/40 bg-primary/5 text-primary"
+                  )}
                 >
                   <Filter className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Filtrar {title}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {filters.map((filter, idx) => {
-                  const Icon = filter.icon;
-                  return (
-                    <DropdownMenuItem 
-                      key={idx} 
-                      onClick={filter.onClick}
-                      className={cn(filter.isActive && "bg-accent")}
-                    >
-                      {Icon && <Icon className="mr-2 h-4 w-4" />}
-                      <span>{filter.label}</span>
-                      {filter.count !== undefined && filter.count > 0 && (
-                        <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground">
-                          {filter.count}
-                        </span>
-                      )}
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuContent>
+              {customFilterContent ? customFilterContent : (
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Filtrar {title}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {filters.map((filter, idx) => {
+                    const Icon = filter.icon;
+                    return (
+                      <DropdownMenuItem 
+                        key={idx} 
+                        onClick={filter.onClick}
+                        className={cn(filter.isActive && "bg-accent")}
+                      >
+                        {Icon && <Icon className="mr-2 h-4 w-4" />}
+                        <span>{filter.label}</span>
+                        {filter.count !== undefined && filter.count > 0 && (
+                          <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground">
+                            {filter.count}
+                          </span>
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              )}
             </DropdownMenu>
           )}
+
 
           <Button 
             variant="outline" 
