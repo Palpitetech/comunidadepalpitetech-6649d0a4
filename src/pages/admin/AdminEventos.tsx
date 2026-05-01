@@ -564,7 +564,7 @@ export default function AdminEventos() {
                         disabled={isDispatching}
                         onClick={() => dispatchEventTemplate(selectedEvent)}
                       >
-                        {isDispatching ? <Loader2 size={24} className="animate-spin" /> : <RotateCcw size={24} />}
+                        {isDispatching ? <RefreshCw size={24} className="animate-spin" /> : <RotateCcw size={24} />}
                         Disparar Template Manual
                       </Button>
                     );
