@@ -566,16 +566,19 @@ export default function AdminUsuarios() {
 
       <UserDetailSheet
         user={selectedUser}
+        plans={plans}
         open={sheetOpen}
         onOpenChange={setSheetOpen}
-        onUserUpdate={fetchData}
+        onUserUpdated={fetchData}
       />
 
       <LeadDetailSheet
         lead={selectedLead}
         open={leadSheetOpen}
         onOpenChange={setLeadSheetOpen}
+        onChanged={fetchData}
       />
+
     </AdminLayout>
   );
 }
