@@ -67,39 +67,40 @@ const FILTER_TABS: { key: FilterTab; label: string; icon: typeof Activity; types
 
 const EVENT_TYPE_CONFIG: Record<string, { label: string; icon: typeof Activity; color: string }> = {
   // Leads
-  lead_inbox_capturado: { label: "Lead Capturado", icon: Inbox, color: "bg-sky-500/10 text-sky-700 border-sky-200" },
-  lead_inbox_promovido: { label: "Lead Promovido", icon: UserCheck, color: "bg-sky-500/10 text-sky-700 border-sky-200" },
-  email_pendente_criado: { label: "Email Pendente", icon: Mail, color: "bg-sky-500/10 text-sky-700 border-sky-200" },
-  lead_email_confirmado: { label: "Email Confirmado", icon: Mail, color: "bg-sky-500/10 text-sky-700 border-sky-200" },
-  lead_recebido_pendente: { label: "Lead Pendente", icon: Inbox, color: "bg-sky-500/10 text-sky-700 border-sky-200" },
+  lead_inbox_capturado: { label: "Lead Capturado", icon: Inbox, color: "bg-sky-500/10 text-sky-700 border-sky-200/50" },
+  lead_inbox_promovido: { label: "Lead Promovido", icon: UserCheck, color: "bg-sky-500/10 text-sky-700 border-sky-200/50" },
+  email_pendente_criado: { label: "Email Pendente", icon: Mail, color: "bg-sky-500/10 text-sky-700 border-sky-200/50" },
+  lead_email_confirmado: { label: "Email Confirmado", icon: Mail, color: "bg-sky-500/10 text-sky-700 border-sky-200/50" },
+  lead_recebido_pendente: { label: "Lead Pendente", icon: Inbox, color: "bg-sky-500/10 text-sky-700 border-sky-200/50" },
 
   // Cadastros
-  novo_cadastro: { label: "Novo Cadastro", icon: UserPlus, color: "bg-blue-500/10 text-blue-700 border-blue-200" },
+  novo_cadastro: { label: "Novo Cadastro", icon: UserPlus, color: "bg-blue-500/10 text-blue-700 border-blue-200/50" },
 
   // PIX / Boleto / Carrinho
-  pix_gerado: { label: "PIX Gerado", icon: QrCode, color: "bg-yellow-500/10 text-yellow-700 border-yellow-200" },
-  pix_expirado: { label: "PIX Expirado", icon: Clock, color: "bg-muted text-muted-foreground border-border" },
-  boleto_gerado: { label: "Boleto Gerado", icon: CreditCard, color: "bg-yellow-500/10 text-yellow-700 border-yellow-200" },
-  boleto_expirado: { label: "Boleto Expirado", icon: Clock, color: "bg-muted text-muted-foreground border-border" },
-  carrinho_abandonado: { label: "Carrinho Abandonado", icon: Ban, color: "bg-muted text-muted-foreground border-border" },
-  checkout_abandonado: { label: "Checkout Abandonado", icon: Ban, color: "bg-muted text-muted-foreground border-border" },
+  pix_gerado: { label: "PIX Gerado", icon: QrCode, color: "bg-yellow-500/10 text-yellow-700 border-yellow-200/50" },
+  pix_expirado: { label: "PIX Expirado", icon: Clock, color: "bg-muted/50 text-muted-foreground border-border/50" },
+  boleto_gerado: { label: "Boleto Gerado", icon: CreditCard, color: "bg-yellow-500/10 text-yellow-700 border-yellow-200/50" },
+  boleto_expirado: { label: "Boleto Expirado", icon: Clock, color: "bg-muted/50 text-muted-foreground border-border/50" },
+  carrinho_abandonado: { label: "Carrinho Abandonado", icon: Ban, color: "bg-muted/50 text-muted-foreground border-border/50" },
+  checkout_abandonado: { label: "Checkout Abandonado", icon: Ban, color: "bg-muted/50 text-muted-foreground border-border/50" },
 
   // Vendas
-  compra_aprovada: { label: "Compra Aprovada", icon: ShoppingCart, color: "bg-green-500/10 text-green-700 border-green-200" },
-  sale_confirmed: { label: "Venda Confirmada", icon: Wallet, color: "bg-green-500/10 text-green-700 border-green-200" },
-  assinatura_renovada: { label: "Assinatura Renovada", icon: RotateCcw, color: "bg-green-500/10 text-green-700 border-green-200" },
-  compra_reembolsada: { label: "Reembolso", icon: RotateCcw, color: "bg-red-500/10 text-red-700 border-red-200" },
-  compra_chargeback: { label: "Chargeback", icon: ShieldAlert, color: "bg-red-500/10 text-red-700 border-red-200" },
-  compra_recusada: { label: "Compra Recusada", icon: XCircle, color: "bg-red-500/10 text-red-700 border-red-200" },
+  compra_aprovada: { label: "Compra Aprovada", icon: ShoppingCart, color: "bg-green-500/10 text-green-700 border-green-200/50" },
+  sale_confirmed: { label: "Venda Confirmada", icon: Wallet, color: "bg-green-500/10 text-green-700 border-green-200/50" },
+  assinatura_renovada: { label: "Assinatura Renovada", icon: RotateCcw, color: "bg-green-500/10 text-green-700 border-green-200/50" },
+  compra_reembolsada: { label: "Reembolso", icon: RotateCcw, color: "bg-red-500/10 text-red-700 border-red-200/50" },
+  compra_chargeback: { label: "Chargeback", icon: ShieldAlert, color: "bg-red-500/10 text-red-700 border-red-200/50" },
+  compra_recusada: { label: "Compra Recusada", icon: XCircle, color: "bg-red-500/10 text-red-700 border-red-200/50" },
 
   // Cancelamentos
-  assinatura_cancelada: { label: "Cancelada", icon: XCircle, color: "bg-red-500/10 text-red-700 border-red-200" },
-  assinatura_expirada: { label: "Expirada", icon: Clock, color: "bg-muted text-muted-foreground border-border" },
-  assinatura_inadimplente: { label: "Inadimplente", icon: AlertTriangle, color: "bg-orange-500/10 text-orange-700 border-orange-200" },
+  assinatura_cancelada: { label: "Cancelada", icon: XCircle, color: "bg-red-500/10 text-red-700 border-red-200/50" },
+  assinatura_expirada: { label: "Expirada", icon: Clock, color: "bg-muted/50 text-muted-foreground border-border/50" },
+  assinatura_inadimplente: { label: "Inadimplente", icon: AlertTriangle, color: "bg-orange-500/10 text-orange-700 border-orange-200/50" },
 
   // Sistema
-  trial_revertido_bug: { label: "Trial Revertido", icon: ShieldAlert, color: "bg-muted text-muted-foreground border-border" },
+  trial_revertido_bug: { label: "Trial Revertido", icon: ShieldAlert, color: "bg-muted/50 text-muted-foreground border-border/50" },
 };
+
 
 function getEventConfig(type: string) {
   return EVENT_TYPE_CONFIG[type] ?? { label: type, icon: Activity, color: "bg-muted text-muted-foreground border-border" };
