@@ -94,8 +94,8 @@ export default function AdminIndex() {
     <AdminLayout pageTitle="Dashboard">
       <div className="px-4 py-3 md:container-senior md:py-8 space-y-4 md:space-y-6">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <h1 className="text-xl md:text-3xl font-bold">Painel Administrativo</h1>
-          <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-xl md:text-3xl font-bold hidden md:block">Painel Administrativo</h1>
+          <div className="flex items-center gap-3 flex-wrap w-full md:w-auto justify-between md:justify-end">
             <div className="flex items-center gap-2">
               <Label htmlFor="per-block-toggle" className="text-xs cursor-pointer text-muted-foreground">
                 Filtro por bloco
