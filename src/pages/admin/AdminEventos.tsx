@@ -449,13 +449,13 @@ export default function AdminEventos() {
 function NewInfoRow({ icon: Icon, label, value, copyable }: { icon: any; label: string; value: string; copyable?: boolean }) {
   return (
     <div className="flex items-start gap-4 group">
-      <div className="mt-1 p-0.5 text-gray-400">
+      <div className="mt-1 p-0.5 text-gray-400 shrink-0">
         <Icon size={22} strokeWidth={1.5} />
       </div>
-      <div className="flex-1 min-w-0 border-b border-gray-50 pb-4 last:border-0">
+      <div className="flex-1 min-w-0 border-b border-gray-50 pb-4 last:border-0 overflow-hidden">
         <p className="text-xs font-medium text-gray-400 mb-0.5 tracking-tight uppercase">{label}</p>
         <div className="flex items-center justify-between gap-2">
-          <p className="text-[15px] font-bold text-gray-900 truncate leading-snug">
+          <p className="text-[15px] font-bold text-gray-900 truncate leading-snug break-all">
             {value || <span className="text-gray-300 italic font-normal text-sm">Não informado</span>}
           </p>
           {copyable && value && (
