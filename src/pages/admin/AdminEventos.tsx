@@ -67,39 +67,40 @@ const FILTER_TABS: { key: FilterTab; label: string; icon: typeof Activity; types
 
 const EVENT_TYPE_CONFIG: Record<string, { label: string; icon: typeof Activity; color: string }> = {
   // Leads
-  lead_inbox_capturado: { label: "Lead Capturado", icon: Inbox, color: "bg-sky-500/10 text-sky-700 border-sky-200" },
-  lead_inbox_promovido: { label: "Lead Promovido", icon: UserCheck, color: "bg-sky-500/10 text-sky-700 border-sky-200" },
-  email_pendente_criado: { label: "Email Pendente", icon: Mail, color: "bg-sky-500/10 text-sky-700 border-sky-200" },
-  lead_email_confirmado: { label: "Email Confirmado", icon: Mail, color: "bg-sky-500/10 text-sky-700 border-sky-200" },
-  lead_recebido_pendente: { label: "Lead Pendente", icon: Inbox, color: "bg-sky-500/10 text-sky-700 border-sky-200" },
+  lead_inbox_capturado: { label: "Lead Capturado", icon: Inbox, color: "bg-sky-500/10 text-sky-700 border-sky-200/50" },
+  lead_inbox_promovido: { label: "Lead Promovido", icon: UserCheck, color: "bg-sky-500/10 text-sky-700 border-sky-200/50" },
+  email_pendente_criado: { label: "Email Pendente", icon: Mail, color: "bg-sky-500/10 text-sky-700 border-sky-200/50" },
+  lead_email_confirmado: { label: "Email Confirmado", icon: Mail, color: "bg-sky-500/10 text-sky-700 border-sky-200/50" },
+  lead_recebido_pendente: { label: "Lead Pendente", icon: Inbox, color: "bg-sky-500/10 text-sky-700 border-sky-200/50" },
 
   // Cadastros
-  novo_cadastro: { label: "Novo Cadastro", icon: UserPlus, color: "bg-blue-500/10 text-blue-700 border-blue-200" },
+  novo_cadastro: { label: "Novo Cadastro", icon: UserPlus, color: "bg-blue-500/10 text-blue-700 border-blue-200/50" },
 
   // PIX / Boleto / Carrinho
-  pix_gerado: { label: "PIX Gerado", icon: QrCode, color: "bg-yellow-500/10 text-yellow-700 border-yellow-200" },
-  pix_expirado: { label: "PIX Expirado", icon: Clock, color: "bg-muted text-muted-foreground border-border" },
-  boleto_gerado: { label: "Boleto Gerado", icon: CreditCard, color: "bg-yellow-500/10 text-yellow-700 border-yellow-200" },
-  boleto_expirado: { label: "Boleto Expirado", icon: Clock, color: "bg-muted text-muted-foreground border-border" },
-  carrinho_abandonado: { label: "Carrinho Abandonado", icon: Ban, color: "bg-muted text-muted-foreground border-border" },
-  checkout_abandonado: { label: "Checkout Abandonado", icon: Ban, color: "bg-muted text-muted-foreground border-border" },
+  pix_gerado: { label: "PIX Gerado", icon: QrCode, color: "bg-yellow-500/10 text-yellow-700 border-yellow-200/50" },
+  pix_expirado: { label: "PIX Expirado", icon: Clock, color: "bg-muted/50 text-muted-foreground border-border/50" },
+  boleto_gerado: { label: "Boleto Gerado", icon: CreditCard, color: "bg-yellow-500/10 text-yellow-700 border-yellow-200/50" },
+  boleto_expirado: { label: "Boleto Expirado", icon: Clock, color: "bg-muted/50 text-muted-foreground border-border/50" },
+  carrinho_abandonado: { label: "Carrinho Abandonado", icon: Ban, color: "bg-muted/50 text-muted-foreground border-border/50" },
+  checkout_abandonado: { label: "Checkout Abandonado", icon: Ban, color: "bg-muted/50 text-muted-foreground border-border/50" },
 
   // Vendas
-  compra_aprovada: { label: "Compra Aprovada", icon: ShoppingCart, color: "bg-green-500/10 text-green-700 border-green-200" },
-  sale_confirmed: { label: "Venda Confirmada", icon: Wallet, color: "bg-green-500/10 text-green-700 border-green-200" },
-  assinatura_renovada: { label: "Assinatura Renovada", icon: RotateCcw, color: "bg-green-500/10 text-green-700 border-green-200" },
-  compra_reembolsada: { label: "Reembolso", icon: RotateCcw, color: "bg-red-500/10 text-red-700 border-red-200" },
-  compra_chargeback: { label: "Chargeback", icon: ShieldAlert, color: "bg-red-500/10 text-red-700 border-red-200" },
-  compra_recusada: { label: "Compra Recusada", icon: XCircle, color: "bg-red-500/10 text-red-700 border-red-200" },
+  compra_aprovada: { label: "Compra Aprovada", icon: ShoppingCart, color: "bg-green-500/10 text-green-700 border-green-200/50" },
+  sale_confirmed: { label: "Venda Confirmada", icon: Wallet, color: "bg-green-500/10 text-green-700 border-green-200/50" },
+  assinatura_renovada: { label: "Assinatura Renovada", icon: RotateCcw, color: "bg-green-500/10 text-green-700 border-green-200/50" },
+  compra_reembolsada: { label: "Reembolso", icon: RotateCcw, color: "bg-red-500/10 text-red-700 border-red-200/50" },
+  compra_chargeback: { label: "Chargeback", icon: ShieldAlert, color: "bg-red-500/10 text-red-700 border-red-200/50" },
+  compra_recusada: { label: "Compra Recusada", icon: XCircle, color: "bg-red-500/10 text-red-700 border-red-200/50" },
 
   // Cancelamentos
-  assinatura_cancelada: { label: "Cancelada", icon: XCircle, color: "bg-red-500/10 text-red-700 border-red-200" },
-  assinatura_expirada: { label: "Expirada", icon: Clock, color: "bg-muted text-muted-foreground border-border" },
-  assinatura_inadimplente: { label: "Inadimplente", icon: AlertTriangle, color: "bg-orange-500/10 text-orange-700 border-orange-200" },
+  assinatura_cancelada: { label: "Cancelada", icon: XCircle, color: "bg-red-500/10 text-red-700 border-red-200/50" },
+  assinatura_expirada: { label: "Expirada", icon: Clock, color: "bg-muted/50 text-muted-foreground border-border/50" },
+  assinatura_inadimplente: { label: "Inadimplente", icon: AlertTriangle, color: "bg-orange-500/10 text-orange-700 border-orange-200/50" },
 
   // Sistema
-  trial_revertido_bug: { label: "Trial Revertido", icon: ShieldAlert, color: "bg-muted text-muted-foreground border-border" },
+  trial_revertido_bug: { label: "Trial Revertido", icon: ShieldAlert, color: "bg-muted/50 text-muted-foreground border-border/50" },
 };
+
 
 function getEventConfig(type: string) {
   return EVENT_TYPE_CONFIG[type] ?? { label: type, icon: Activity, color: "bg-muted text-muted-foreground border-border" };
@@ -237,362 +238,342 @@ export default function AdminEventos() {
     return "—";
   };
 
-  if (loading && events.length === 0) {
-    return (
-      <AdminLayout pageTitle="Eventos">
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </AdminLayout>
-    );
-  }
-
   return (
     <AdminLayout
       pageTitle="Eventos"
-      headerRightContent={
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground font-medium">{counters.todos.toLocaleString("pt-BR")}</span>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { fetchEvents(); fetchCounters(); }}>
-            <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
-          </Button>
-        </div>
-      }
     >
-      {/* ======= MOBILE ======= */}
-      <div className="md:hidden px-4 py-3 space-y-3">
-        <div className="grid grid-cols-3 gap-1.5">
-          {FILTER_TABS.map(({ key, label, icon: Icon }) => {
-            const count = getFilterCount(key);
-            const isActive = activeFilter === key;
-            return (
-              <button
-                key={key}
-                onClick={() => setActiveFilter(key)}
-                className={cn(
-                  "flex flex-col items-center gap-0.5 rounded-xl p-2 transition-colors text-center min-h-[64px]",
-                  isActive ? "bg-primary/10 ring-1 ring-primary/30" : "bg-muted/40 hover:bg-muted/60"
-                )}
-              >
-                <Icon className={cn("h-4 w-4", isActive ? "text-primary" : "text-muted-foreground")} />
-                <span className="text-base font-bold leading-none">{count}</span>
-                <span className={cn("text-[10px] leading-tight", isActive ? "text-primary font-medium" : "text-muted-foreground")}>{label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar email, tipo..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-10 pr-9" />
-          {search && (
-            <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-
-        <div className="space-y-0.5">
-          {events.map((ev) => {
-            const config = getEventConfig(ev.event_type);
-            const Icon = config.icon;
-            const origin = getOriginLabel(ev);
-            return (
-              <button
-                key={ev.id}
-                className="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg active:bg-muted/60 transition-colors border-b border-border/30 last:border-0"
-                onClick={() => setSelectedEvent(ev)}
-              >
-                <Icon className={cn("h-4 w-4 shrink-0 text-muted-foreground")} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-medium truncate">{renderUserCell(ev)}</p>
-                    {!ev.user_id && (
-                      <Badge variant="outline" className={cn("text-[9px] px-1 py-0 shrink-0", origin.color)}>
-                        {origin.label}
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    {format(new Date(ev.created_at), "dd/MM HH:mm", { locale: ptBR })} • {getMetaSummary(ev)}
-                  </p>
-                </div>
-                <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0.5 shrink-0", config.color)}>
-                  {config.label}
-                </Badge>
-                <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
-              </button>
-            );
-          })}
-          {events.length === 0 && !loading && (
-            <div className="text-center py-12 text-sm text-muted-foreground">
-              {search ? "Nenhum resultado encontrado" : "Nenhum evento"}
-            </div>
-          )}
-        </div>
-
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between pt-2 pb-4">
-            <p className="text-xs text-muted-foreground">
-              {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} de {totalCount}
-            </p>
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-xs text-muted-foreground min-w-[3ch] text-center">{page + 1}/{totalPages}</span>
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ======= DESKTOP ======= */}
-      <div className="hidden md:flex flex-col flex-1 min-h-0">
-        <div className="border-b border-border bg-card/50 px-6 py-3 flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => navigate("/admin")}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-lg font-semibold mr-2">Eventos</h1>
-
-          <div className="flex items-center gap-1 flex-wrap">
-            {FILTER_TABS.map(({ key, label }) => {
-              const count = getFilterCount(key);
-              const isActive = activeFilter === key;
-              return (
-                <button
-                  key={key}
-                  onClick={() => setActiveFilter(key)}
-                  className={cn(
-                    "px-3 py-1 rounded-full text-xs font-medium transition-colors",
-                    isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
-                  )}
+      <div className="flex flex-col flex-1 min-h-0 bg-background">
+        {/* ======= HEADER MINIMALISTA ======= */}
+        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
+          <div className="px-4 md:px-6 py-4 flex items-center justify-between gap-4 max-w-7xl mx-auto w-full">
+            <h1 className="text-xl font-bold tracking-tight hidden md:block">Eventos</h1>
+            
+            <div className="flex-1 max-w-md relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <Input 
+                placeholder="Buscar por email, tipo..." 
+                value={search} 
+                onChange={(e) => setSearch(e.target.value)} 
+                className="pl-9 h-10 bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all" 
+              />
+              {search && (
+                <button 
+                  onClick={() => setSearch("")} 
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {label} <span className="opacity-70">{count}</span>
+                  <X className="h-4 w-4" />
                 </button>
-              );
-            })}
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="h-10 w-10 rounded-xl border-border/50 bg-background hover:bg-muted/50 transition-all"
+                onClick={() => { fetchEvents(); fetchCounters(); }}
+                disabled={loading}
+              >
+                <RefreshCw className={cn("h-4 w-4 text-muted-foreground", loading && "animate-spin")} />
+              </Button>
+            </div>
           </div>
 
-          <div className="flex-1" />
+          {/* ======= FILTROS COMPACTOS ======= */}
+          <div className="px-4 md:px-6 pb-4 max-w-7xl mx-auto w-full">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+              {FILTER_TABS.map(({ key, label }) => {
+                const isActive = activeFilter === key;
+                const count = getFilterCount(key);
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setActiveFilter(key)}
+                    className={cn(
+                      "px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border shrink-0 flex items-center gap-2",
+                      isActive 
+                        ? "bg-primary text-primary-foreground border-primary shadow-sm" 
+                        : "bg-background text-muted-foreground border-border/50 hover:bg-muted/50"
+                    )}
+                  >
+                    {label}
+                    {count > 0 && (
+                      <span className={cn(
+                        "text-[10px] px-1.5 py-0.5 rounded-full",
+                        isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+                      )}>
+                        {count > 999 ? `${(count/1000).toFixed(1)}k` : count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
 
-          <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-8 text-sm bg-background" />
-            {search && (
-              <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                <X className="h-3.5 w-3.5" />
-              </button>
+        {/* ======= CONTEÚDO PRINCIPAL (MOBILE FIRST) ======= */}
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-7xl mx-auto w-full px-4 md:px-6 py-6">
+            
+            {loading && events.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-3">
+                <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
+                <p className="text-sm text-muted-foreground animate-pulse">Carregando eventos...</p>
+              </div>
+            ) : (
+              <>
+                {/* LISTAGEM MOBILE (md:hidden) */}
+                <div className="md:hidden space-y-4">
+                  {events.map((ev) => {
+                    const config = getEventConfig(ev.event_type);
+                    const origin = getOriginLabel(ev);
+                    return (
+                      <button
+                        key={ev.id}
+                        onClick={() => setSelectedEvent(ev)}
+                        className="w-full flex items-start gap-4 p-4 rounded-2xl bg-background border border-border/50 hover:border-primary/20 hover:bg-muted/30 transition-all text-left group active:scale-[0.98]"
+                      >
+                        <div className={cn("p-2.5 rounded-xl border border-border/50 bg-muted/30 group-hover:bg-background transition-colors", config.color.split(' ')[1])}>
+                          <config.icon className="h-5 w-5" />
+                        </div>
+                        
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-semibold truncate text-foreground/90">
+                              {renderUserCell(ev)}
+                            </p>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground/30" />
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant="outline" className={cn("text-[10px] font-medium px-2 py-0 border-none capitalize", config.color)}>
+                              {config.label}
+                            </Badge>
+                            {!ev.user_id && (
+                              <Badge variant="outline" className={cn("text-[10px] font-medium px-2 py-0 border-none", origin.color)}>
+                                {origin.label}
+                              </Badge>
+                            )}
+                          </div>
+
+                          <div className="flex items-center justify-between gap-2 pt-1">
+                            <p className="text-[11px] text-muted-foreground font-medium italic truncate">
+                              {getMetaSummary(ev)}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground/60 whitespace-nowrap">
+                              {format(new Date(ev.created_at), "HH:mm", { locale: ptBR })}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* LISTAGEM DESKTOP (hidden md:block) */}
+                <div className="hidden md:block bg-card rounded-2xl border border-border/50 overflow-hidden shadow-sm">
+                  <Table>
+                    <TableHeader className="bg-muted/30">
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="w-12 pl-6"></TableHead>
+                        <TableHead className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground">Usuário / Lead</TableHead>
+                        <TableHead className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground">Evento & Status</TableHead>
+                        <TableHead className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground">Resumo</TableHead>
+                        <TableHead className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground text-right pr-6">Data / Hora</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {events.map((ev) => {
+                        const config = getEventConfig(ev.event_type);
+                        const origin = getOriginLabel(ev);
+                        return (
+                          <TableRow 
+                            key={ev.id} 
+                            className="group cursor-pointer hover:bg-muted/40 transition-colors"
+                            onClick={() => setSelectedEvent(ev)}
+                          >
+                            <TableCell className="pl-6">
+                              <div className={cn("p-2 rounded-lg border border-border/50 bg-muted/20", config.color.split(' ')[1])}>
+                                <config.icon className="h-4 w-4" />
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-sm font-semibold text-foreground/90 truncate">
+                                  {renderUserCell(ev)}
+                                </span>
+                                <span className="text-[11px] text-muted-foreground truncate">
+                                  {renderEmailCell(ev)}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className={cn("text-[10px] font-medium px-2 py-0 border-none capitalize", config.color)}>
+                                  {config.label}
+                                </Badge>
+                                {!ev.user_id && (
+                                  <Badge variant="outline" className={cn("text-[10px] font-medium px-2 py-0 border-none", origin.color)}>
+                                    {origin.label}
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-[11px] text-muted-foreground font-medium italic">
+                                {getMetaSummary(ev)}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right pr-6">
+                              <div className="flex flex-col items-end">
+                                <span className="text-xs font-semibold text-foreground/80">
+                                  {format(new Date(ev.created_at), "dd/MM", { locale: ptBR })}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground/60">
+                                  {format(new Date(ev.created_at), "HH:mm", { locale: ptBR })}
+                                </span>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {events.length === 0 && !loading && (
+                  <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
+                    <div className="p-4 rounded-full bg-muted/30">
+                      <Search className="h-8 w-8 text-muted-foreground/30" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground/80">Nenhum evento encontrado</p>
+                      <p className="text-xs text-muted-foreground">Tente ajustar sua busca ou filtros.</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* ======= PAGINAÇÃO ======= */}
+                {totalPages > 1 && (
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-8 pt-4 border-t border-border/30">
+                    <p className="text-xs text-muted-foreground font-medium">
+                      Exibindo <span className="text-foreground">{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)}</span> de {totalCount.toLocaleString("pt-BR")}
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="h-8 w-8 rounded-lg" 
+                        disabled={page === 0} 
+                        onClick={() => setPage((p) => p - 1)}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <div className="flex items-center gap-1 mx-2">
+                        <span className="text-xs font-bold text-foreground">{page + 1}</span>
+                        <span className="text-xs text-muted-foreground">/</span>
+                        <span className="text-xs text-muted-foreground">{totalPages}</span>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="h-8 w-8 rounded-lg" 
+                        disabled={page >= totalPages - 1} 
+                        onClick={() => setPage((p) => p + 1)}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
-
-        <div className="flex-1 overflow-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-10 pl-6"></TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Usuário / Lead</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Email</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Tipo</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Origem</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Detalhe</TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Data</TableHead>
-                <TableHead className="w-8"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {events.map((ev) => {
-                const config = getEventConfig(ev.event_type);
-                const Icon = config.icon;
-                const origin = getOriginLabel(ev);
-                return (
-                  <TableRow key={ev.id} className="cursor-pointer group" onClick={() => setSelectedEvent(ev)}>
-                    <TableCell className="pl-6 py-2.5">
-                      <Icon className="h-4 w-4 text-muted-foreground" />
-                    </TableCell>
-                    <TableCell className="py-2.5">
-                      <span className={cn("text-sm font-medium truncate max-w-[200px] block", !ev.user_id && "italic text-muted-foreground")}>
-                        {renderUserCell(ev)}
-                      </span>
-                    </TableCell>
-                    <TableCell className="py-2.5 text-sm text-muted-foreground truncate max-w-[220px]">
-                      {renderEmailCell(ev)}
-                    </TableCell>
-                    <TableCell className="py-2.5">
-                      <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", config.color)}>
-                        {config.label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-2.5">
-                      <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", origin.color)}>
-                        {origin.label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-2.5 text-xs text-muted-foreground truncate max-w-[200px]">
-                      {getMetaSummary(ev)}
-                    </TableCell>
-                    <TableCell className="py-2.5 text-xs text-muted-foreground tabular-nums">
-                      {format(new Date(ev.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
-                    </TableCell>
-                    <TableCell className="py-2.5 pr-4">
-                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-              {events.length === 0 && !loading && (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-16 text-sm text-muted-foreground">
-                    {search ? "Nenhum evento encontrado" : "Nenhum evento registrado"}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        {totalPages > 1 && (
-          <div className="border-t border-border px-6 py-2 flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">
-              {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} de {totalCount}
-            </p>
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
-                <ChevronLeft className="h-3.5 w-3.5" />
-              </Button>
-              <span className="text-xs text-muted-foreground min-w-[3ch] text-center">{page + 1}/{totalPages}</span>
-              <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>
-                <ChevronRight className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* ======= SHEET DE DETALHES ======= */}
+      {/* ======= DRAWER DE DETALHES (MINIMALISTA) ======= */}
       <Sheet open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>
-        <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl p-0 md:!inset-y-0 md:!right-0 md:!left-auto md:!bottom-auto md:!h-full md:!w-[480px] md:!max-w-lg md:rounded-none">
-          <div className="flex items-center justify-between p-4 pb-2 border-b border-border">
-            <SheetTitle className="text-base font-semibold">Detalhes do Evento</SheetTitle>
+        <SheetContent className="w-full sm:max-w-md p-0 flex flex-col border-l border-border/50">
+          <div className="px-6 py-5 border-b border-border/50 flex items-center justify-between bg-muted/10">
+            <SheetTitle className="text-lg font-bold flex items-center gap-2">
+              Detalhes do Evento
+            </SheetTitle>
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setSelectedEvent(null)}>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
-          {selectedEvent && (() => {
-            const config = getEventConfig(selectedEvent.event_type);
-            const Icon = config.icon;
-            const origin = getOriginLabel(selectedEvent);
-            const m = selectedEvent.metadata ?? {};
-            const valor = formatBRL(m.total_price);
-
-            return (
-              <ScrollArea className="h-[calc(100%-60px)] p-4">
-                <div className="space-y-4">
-                  {/* Cabeçalho */}
-                  <div className="flex items-start gap-3 p-3 bg-muted/40 rounded-lg">
-                    <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center shrink-0", config.color)}>
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-semibold">{config.label}</p>
-                        <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", origin.color)}>
-                          {origin.label}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {format(new Date(selectedEvent.created_at), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}
-                      </p>
-                    </div>
+          
+          {selectedEvent && (
+            <ScrollArea className="flex-1">
+              <div className="p-6 space-y-8">
+                {/* Cabeçalho do Evento no Drawer */}
+                <div className="flex items-start gap-4 p-4 rounded-2xl bg-muted/20 border border-border/50">
+                  <div className={cn("p-3 rounded-xl border border-border/50", getEventConfig(selectedEvent.event_type).color.split(' ')[1])}>
+                    {(() => {
+                      const Icon = getEventConfig(selectedEvent.event_type).icon;
+                      return <Icon className="h-6 w-6" />;
+                    })()}
                   </div>
-
-                  {/* Identificação */}
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Identificação</p>
-                    {selectedEvent.user_id ? (
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-medium">{selectedEvent.perfis?.nome || "Sem nome"}</p>
-                        <p className="text-xs text-muted-foreground">{selectedEvent.perfis?.email || "—"}</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-medium italic text-muted-foreground">Lead sem conta</p>
-                        {selectedEvent.lead_email && <p className="text-xs">{selectedEvent.lead_email}</p>}
-                        {selectedEvent.lead_phone && <p className="text-xs text-muted-foreground">{selectedEvent.lead_phone}</p>}
-                      </div>
-                    )}
+                  <div className="space-y-1">
+                    <p className="text-base font-bold text-foreground/90">{getEventConfig(selectedEvent.event_type).label}</p>
+                    <p className="text-xs text-muted-foreground font-medium">
+                      {format(new Date(selectedEvent.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                    </p>
                   </div>
-
-                  {/* Dados do evento */}
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Dados</p>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      {valor && (
-                        <div>
-                          <p className="text-muted-foreground">Valor</p>
-                          <p className="font-medium">{valor}</p>
-                        </div>
-                      )}
-                      {m.plan_slug && (
-                        <div>
-                          <p className="text-muted-foreground">Plano</p>
-                          <p className="font-medium">{m.plan_slug}</p>
-                        </div>
-                      )}
-                      {m.payment_method && (
-                        <div>
-                          <p className="text-muted-foreground">Método</p>
-                          <p className="font-medium">{m.payment_method}</p>
-                        </div>
-                      )}
-                      {m.offer_id && (
-                        <div>
-                          <p className="text-muted-foreground">Oferta</p>
-                          <p className="font-mono text-[10px] truncate">{m.offer_id}</p>
-                        </div>
-                      )}
-                      {m.sale_id && (
-                        <div>
-                          <p className="text-muted-foreground">Venda</p>
-                          <p className="font-mono text-[10px] truncate">{m.sale_id}</p>
-                        </div>
-                      )}
-                      {m.checkout_id && (
-                        <div>
-                          <p className="text-muted-foreground">Checkout</p>
-                          <p className="font-mono text-[10px] truncate">{m.checkout_id}</p>
-                        </div>
-                      )}
-                      {m.pix_expires_at && (
-                        <div className="col-span-2">
-                          <p className="text-muted-foreground">PIX expira em</p>
-                          <p className="font-medium">{format(new Date(m.pix_expires_at), "dd/MM HH:mm", { locale: ptBR })}</p>
-                        </div>
-                      )}
-                      {m.pix_codigo && (
-                        <div className="col-span-2">
-                          <p className="text-muted-foreground">Código PIX</p>
-                          <p className="font-mono text-[10px] break-all bg-muted/50 rounded p-2 mt-1">{m.pix_codigo}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* JSON bruto */}
-                  <details>
-                    <summary className="text-[10px] uppercase tracking-wider text-muted-foreground cursor-pointer mb-1.5">
-                      JSON bruto
-                    </summary>
-                    <pre className="text-xs bg-muted/50 rounded-lg p-3 overflow-auto max-h-[300px] whitespace-pre-wrap break-all mt-2">
-                      {JSON.stringify(selectedEvent.metadata, null, 2)}
-                    </pre>
-                  </details>
                 </div>
-              </ScrollArea>
-            );
-          })()}
+
+                {/* Seções de Informação */}
+                <div className="space-y-6">
+                  <section className="space-y-3">
+                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Identificação</h3>
+                    <div className="grid gap-2">
+                      <InfoRow label="Nome/Lead" value={renderUserCell(selectedEvent)} />
+                      <InfoRow label="Email" value={renderEmailCell(selectedEvent)} />
+                      <InfoRow label="Origem" value={getOriginLabel(selectedEvent).label} />
+                      <InfoRow label="ID do Evento" value={selectedEvent.id} copyable />
+                    </div>
+                  </section>
+
+                  <section className="space-y-3">
+                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Metadados</h3>
+                    <div className="rounded-2xl bg-muted/30 border border-border/50 p-4 overflow-hidden">
+                      <pre className="text-[11px] font-mono leading-relaxed text-foreground/80 overflow-x-auto no-scrollbar">
+                        {JSON.stringify(selectedEvent.metadata, null, 2)}
+                      </pre>
+                    </div>
+                  </section>
+                </div>
+              </div>
+            </ScrollArea>
+          )}
         </SheetContent>
       </Sheet>
     </AdminLayout>
   );
 }
+
+function InfoRow({ label, value, copyable }: { label: string; value: string; copyable?: boolean }) {
+  return (
+    <div className="flex flex-col gap-1 p-3 rounded-xl bg-background border border-border/30">
+      <span className="text-[10px] font-bold text-muted-foreground/60 uppercase">{label}</span>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold text-foreground/90 truncate">{value}</span>
+        {copyable && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-6 w-6 rounded-md hover:bg-muted"
+            onClick={() => {
+              navigator.clipboard.writeText(value);
+            }}
+          >
+            <RefreshCw className="h-3 w-3 text-muted-foreground" />
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
