@@ -89,7 +89,7 @@ export function UserDetailSheet({
             )}
           </div>
         </div>
-      </SheetHeader>
+      </div>
 
       <Tabs defaultValue="dados" className="mt-2">
         <TabsList className="grid w-full grid-cols-4 h-10 shrink-0">
