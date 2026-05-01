@@ -543,7 +543,7 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
 
   return (
     <div className="flex flex-col min-h-full">
-      <div className="p-4 space-y-6 pb-24 lg:pb-8">
+      <div className="p-4 space-y-6 pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-8">
         {/* Customer Info */}
         <div className="space-y-2">
           <h3 className="text-sm font-semibold flex items-center gap-2">
