@@ -552,7 +552,23 @@ export default function AdminEventos() {
                 </div>
 
                 {/* 5. Footer Action Component inside scroll if needed, or fixed */}
-                <div className="pt-4">
+                <div className="pt-4 space-y-3">
+                  {(() => {
+                    const trigger = KIRVANO_TO_TRIGGER[selectedEvent.event_type];
+                    const isDispatching = dispatchingId === selectedEvent.id;
+                    if (!trigger) return null;
+                    return (
+                      <Button 
+                        variant="outline"
+                        className="w-full h-14 border-primary/20 text-primary hover:bg-primary/5 rounded-[18px] text-lg font-bold gap-3"
+                        disabled={isDispatching}
+                        onClick={() => dispatchEventTemplate(selectedEvent)}
+                      >
+                        {isDispatching ? <Loader2 size={24} className="animate-spin" /> : <RotateCcw size={24} />}
+                        Disparar Template Manual
+                      </Button>
+                    );
+                  })()}
                   <Button 
                     className="w-full h-14 bg-green-600 hover:bg-green-700 text-white rounded-[18px] text-lg font-bold gap-3 shadow-lg shadow-green-100"
                     onClick={() => {
