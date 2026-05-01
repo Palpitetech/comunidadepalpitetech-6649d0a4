@@ -306,106 +306,116 @@ export default function AdminEventos() {
       <Sheet open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>
         <SheetContent 
           side="bottom" 
-          className="h-screen w-full p-0 rounded-none border-none flex flex-col focus:ring-0 outline-none"
+          className="h-screen w-full p-0 rounded-none border-none flex flex-col focus:ring-0 outline-none overflow-hidden"
         >
-          {/* Header Sticky */}
-          <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between shrink-0">
+          {/* 1. Header Sticky (Inspiração: Fixed no topo, ícones laterais) */}
+          <div className="sticky top-0 z-20 bg-white border-b border-gray-100/80 px-4 py-3.5 flex items-center justify-between shrink-0">
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-9 w-9 rounded-full" 
+              className="h-10 w-10 rounded-full hover:bg-gray-50 active:scale-95 transition-transform" 
               onClick={() => setSelectedEvent(null)}
-              aria-label="Fechar"
             >
-              <X size={20} className="text-gray-600" />
+              <X size={22} className="text-gray-900" />
             </Button>
-            <SheetTitle className="text-base font-semibold text-gray-900">Detalhes do Evento</SheetTitle>
+            <SheetTitle className="text-[17px] font-semibold text-gray-900">Detalhes do Evento</SheetTitle>
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-9 w-9 rounded-full" 
+              className="h-10 w-10 rounded-full hover:bg-gray-50 active:scale-95 transition-transform" 
               onClick={() => fetchEvents()}
-              aria-label="Atualizar"
             >
-              <RefreshCw size={18} className="text-gray-600" />
+              <RefreshCw size={20} className="text-gray-900" />
             </Button>
           </div>
 
           <ScrollArea className="flex-1 bg-white">
             {loading ? (
-              <div className="p-6 space-y-6">
-                <Skeleton className="h-24 w-full rounded-2xl" />
-                <div className="space-y-4">
-                  {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="flex gap-4">
-                      <Skeleton className="h-10 w-10 rounded-lg" />
+              <div className="p-6 space-y-8">
+                <Skeleton className="h-32 w-full rounded-3xl" />
+                <div className="space-y-6">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <div key={i} className="flex gap-4 items-center">
+                      <Skeleton className="h-12 w-12 rounded-2xl" />
                       <div className="flex-1 space-y-2">
-                        <Skeleton className="h-3 w-20" />
-                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-3 w-24" />
+                        <Skeleton className="h-5 w-full" />
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
             ) : selectedEvent && (
-              <div className="flex flex-col min-h-full">
-                {/* Hero Section */}
-                <div className="px-6 py-8">
-                  <div className="bg-gray-50 rounded-3xl p-6 border border-gray-100/50 flex flex-col items-center text-center space-y-4">
-                    <div className={cn("p-4 rounded-2xl shadow-sm bg-white border border-gray-100", getEventConfig(selectedEvent.event_type).color.split(' ')[1])}>
+              <div className="flex flex-col pb-40">
+                {/* 2. Hero de Status (Inspiração: Card centralizado com ícone grande) */}
+                <div className="px-5 py-6">
+                  <div className="bg-gray-50/50 rounded-[32px] p-8 border border-gray-100/80 flex flex-col items-center text-center">
+                    <div className={cn(
+                      "p-6 rounded-[24px] shadow-sm bg-white border border-gray-100 mb-5",
+                      getEventConfig(selectedEvent.event_type).color.split(' ')[1]
+                    )}>
                       {(() => {
                         const Icon = getEventConfig(selectedEvent.event_type).icon;
-                        return <Icon size={32} />;
+                        return <Icon size={40} strokeWidth={2.5} />;
                       })()}
                     </div>
-                    <div className="space-y-1">
-                      <h2 className="text-xl font-bold text-gray-900 leading-tight">
+                    <div className="space-y-2">
+                      <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
                         {getEventConfig(selectedEvent.event_type).label}
                       </h2>
-                      <div className="flex flex-col text-sm text-gray-500 font-medium">
-                        <span>{format(new Date(selectedEvent.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}</span>
-                        <span className="text-xs text-gray-400 mt-1">ID: {selectedEvent.id.split('-')[0]}...</span>
+                      <div className="flex flex-col gap-1.5">
+                        <p className="text-[15px] font-medium text-gray-500">
+                          {format(new Date(selectedEvent.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                        </p>
+                        <div className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-gray-100/80 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                          ID: {selectedEvent.id.split('-')[0]}...
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Lista de Dados */}
-                <div className="px-6 space-y-6">
-                  <div className="space-y-5">
-                    <InfoRowMinimalist icon={User} label="Nome/Lead" value={renderUserCell(selectedEvent)} />
-                    <InfoRowMinimalist icon={Mail} label="Email Principal" value={renderEmailCell(selectedEvent)} copyable />
-                    <InfoRowMinimalist icon={Globe} label="Origem" value={getOriginLabel(selectedEvent).label} />
-                    <InfoRowMinimalist icon={Hash} label="ID do Evento" value={selectedEvent.id} copyable />
+                {/* 3. Lista de Informações (Inspiração: Ícones modernos e labels minimalistas) */}
+                <div className="px-6 space-y-7">
+                  <div className="space-y-6">
+                    <InfoRowModern icon={User} label="Nome/Lead" value={renderUserCell(selectedEvent)} />
+                    <InfoRowModern icon={Mail} label="Email Principal" value={renderEmailCell(selectedEvent)} copyable />
+                    <InfoRowModern icon={Globe} label="Origem" value={getOriginLabel(selectedEvent).label} />
+                    <InfoRowModern icon={Hash} label="ID do Evento" value={selectedEvent.id} copyable />
+                    {selectedEvent.metadata?.phone && (
+                      <InfoRowModern icon={Phone} label="Telefone" value={selectedEvent.metadata.phone} copyable />
+                    )}
                   </div>
 
-                  {/* Metadados / Código */}
-                  <div className="space-y-4 pt-4 pb-32">
+                  {/* 4. Bloco JSON (Inspiração: Fundo ultra-escuro e syntax highlighting) */}
+                  <div className="space-y-4 pt-6">
                     <div className="flex items-center justify-between px-1">
-                      <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">Metadados (JSON)</h3>
+                      <h3 className="text-[12px] font-extrabold uppercase tracking-[0.15em] text-gray-400">Metadados (JSON)</h3>
                       <Button 
-                        variant="ghost" 
+                        variant="secondary" 
                         size="sm" 
-                        className="h-7 text-[11px] font-bold text-blue-600 hover:bg-blue-50 px-2"
+                        className="h-8 text-[11px] font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 border-none rounded-lg px-3"
                         onClick={() => {
                           navigator.clipboard.writeText(JSON.stringify(selectedEvent.metadata, null, 2));
                           toast.success("JSON copiado!");
                         }}
                       >
+                        <Copy size={12} className="mr-1.5" />
                         Copiar Tudo
                       </Button>
                     </div>
-                    <div className="bg-[#0d1117] rounded-2xl p-5 overflow-hidden border border-gray-800 shadow-inner">
-                      <pre className="text-[13px] font-mono leading-relaxed overflow-x-auto no-scrollbar">
+                    <div className="bg-[#0d1117] rounded-3xl p-6 overflow-hidden border border-gray-800/50 shadow-2xl relative group">
+                      <pre className="text-[13px] font-mono leading-relaxed overflow-x-auto no-scrollbar scroll-smooth">
                         {Object.entries(selectedEvent.metadata || {}).map(([key, val], idx) => (
-                          <div key={idx} className="flex gap-2">
-                            <span className="text-[#7ee0ff]">"{key}"</span>
-                            <span className="text-white">:</span>
+                          <div key={idx} className="flex gap-2.5 py-0.5">
+                            <span className="text-[#7ee0ff] font-medium">"{key}"</span>
+                            <span className="text-gray-500">:</span>
                             <span className={cn(
+                              "break-all",
                               typeof val === 'string' ? "text-[#ffa657]" : "text-[#d2a8ff]"
                             )}>
                               {typeof val === 'string' ? `"${val}"` : String(val)}
-                              {idx < Object.entries(selectedEvent.metadata).length - 1 && <span className="text-white">,</span>}
+                              {idx < Object.entries(selectedEvent.metadata).length - 1 && <span className="text-gray-500">,</span>}
                             </span>
                           </div>
                         ))}
@@ -417,17 +427,17 @@ export default function AdminEventos() {
             )}
           </ScrollArea>
 
-          {/* Rodapé Fixo */}
+          {/* 5. Ação Fixa no Rodapé (Inspiração: Botão verde vibrante Full-width) */}
           {!loading && selectedEvent?.metadata?.pix_codigo && (
-            <div className="fixed bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100 z-20">
+            <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-xl border-t border-gray-100 z-30">
               <Button 
-                className="w-full h-14 rounded-2xl bg-green-600 hover:bg-green-700 text-base font-bold text-white shadow-xl shadow-green-100 transition-all active:scale-[0.97]"
+                className="w-full h-15 rounded-[22px] bg-[#10b981] hover:bg-[#059669] text-[16px] font-bold text-white shadow-2xl shadow-emerald-200/50 transition-all active:scale-[0.96] flex items-center justify-center gap-3 py-7"
                 onClick={() => {
                   navigator.clipboard.writeText(selectedEvent.metadata.pix_codigo);
                   toast.success("Código PIX copiado!");
                 }}
               >
-                <QrCode className="mr-2 h-5 w-5" />
+                <QrCode size={22} strokeWidth={2.5} />
                 Copiar Código PIX
               </Button>
             </div>
@@ -438,27 +448,32 @@ export default function AdminEventos() {
   );
 }
 
-function InfoRowMinimalist({ icon: Icon, label, value, copyable }: { icon: any; label: string; value: string; copyable?: boolean }) {
+/**
+ * Componente de Linha de Informação Moderno
+ */
+function InfoRowModern({ icon: Icon, label, value, copyable }: { icon: any; label: string; value: string; copyable?: boolean }) {
   return (
-    <div className="flex items-center gap-4 group">
-      <div className="h-10 w-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 shrink-0">
-        <Icon size={20} />
+    <div className="flex items-center gap-4.5 group">
+      <div className="h-12 w-12 rounded-[18px] bg-gray-50 flex items-center justify-center text-gray-400 group-hover:text-gray-900 group-hover:bg-gray-100 transition-colors shrink-0">
+        <Icon size={22} strokeWidth={2} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider leading-none mb-1">{label}</p>
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-semibold text-gray-900 truncate">{value || "—"}</p>
+        <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest leading-none mb-1.5">{label}</p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[15px] font-bold text-gray-900 truncate leading-tight">
+            {value || <span className="text-gray-300 italic font-normal">Não informado</span>}
+          </p>
           {copyable && value && (
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-7 w-7 text-gray-400 hover:text-blue-600 hover:bg-blue-50 shrink-0"
+              className="h-9 w-9 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all shrink-0"
               onClick={() => {
                 navigator.clipboard.writeText(value);
                 toast.success(`${label} copiado!`);
               }}
             >
-              <Copy size={13} />
+              <Copy size={15} />
             </Button>
           )}
         </div>
