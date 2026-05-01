@@ -360,9 +360,9 @@ export default function AdminEventos() {
                         {/* Linha 2: Info Secundária + Horário */}
                           <div className="flex items-center justify-between gap-2 mt-1 leading-tight">
                             <span className="text-[11px] text-muted-foreground/70 truncate italic text-left">
-                              {renderEmailCell(ev)} • {getMetaSummary(ev)}
-                              {!ev.user_id && ` • ${origin.label}`}
+                              {renderEmailCell(ev)}
                             </span>
+
 
                           
                           <span className="text-[10px] font-medium text-muted-foreground/50 whitespace-nowrap shrink-0">
