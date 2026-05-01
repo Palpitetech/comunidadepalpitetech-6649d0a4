@@ -391,10 +391,10 @@ export default function AdminEventos() {
                   label="Telefone" 
                   value={selectedEvent?.metadata?.phone || selectedEvent?.lead_phone || ""} 
                 />
-              </div>
+              </div>}
 
               {/* 4. Bloco de Metadados (JSON) - Estilo Editor */}
-              <div className="space-y-3 px-1 pt-2">
+              {selectedEvent && <div className="space-y-3 px-1 pt-2">
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-semibold text-gray-600">Metadados (JSON)</h4>
                   <Button 
