@@ -305,26 +305,46 @@ export default function AdminEventos() {
     }
 
     const m = ev.metadata || {};
-    const phone = ev.lead_phone || m.phone || m.phone_number;
-    const email = ev.lead_email || m.email;
+    
+    // Extração robusta de telefone
+    const phone = ev.lead_phone || 
+                  m.phone || 
+                  m.phone_number || 
+                  m.customer?.phone_number || 
+                  m.customer?.phone || 
+                  (ev.perfis as any)?.telefone;
+
+    // Extração robusta de nome
+    const nome = ev.perfis?.nome || 
+                 m.customer?.name || 
+                 m.name || 
+                 m.nome || 
+                 "Cliente";
+
+    const email = ev.lead_email || m.email || m.customer?.email;
 
     if (!phone) {
-      toast.error("Este evento não tem telefone para disparo.");
+      toast.error("Telefone não encontrado para este evento.", {
+        description: "Verifique os metadados do evento."
+      });
       return;
     }
 
     setDispatchingId(ev.id);
     try {
+      // 1. Verificar template ativo
       const { data: tpls, error: tplErr } = await supabase
         .from("message_templates" as any)
-        .select("id")
+        .select("id, name")
         .eq("event_trigger", trigger)
-        .eq("is_active", true)
-        .limit(1);
+        .eq("is_active", true);
       
       if (tplErr) throw tplErr;
+      
       if (!tpls || tpls.length === 0) {
-        toast.error(`Nenhum template ativo para "${trigger}".`);
+        toast.error(`Nenhum template ativo para "${trigger}"`, {
+          description: "Ative um template em 'WhatsApp > Templates' primeiro."
+        });
         return;
       }
 
@@ -332,10 +352,10 @@ export default function AdminEventos() {
       const mapped = offerId ? planMap[offerId] : null;
 
       const variables: Record<string, any> = {
-        nome: ev.perfis?.nome || m.customer?.name || m.name || "",
+        nome: nome,
         telefone: phone,
         email: email || "",
-        produto: m.product_name || m.offer_name || mapped?.planName || "",
+        produto: m.product_name || m.offer_name || mapped?.planName || "Produto",
         plano_nome: mapped?.planName || "",
         total_price: m.total_price || "",
         sale_id: m.sale_id || "",
