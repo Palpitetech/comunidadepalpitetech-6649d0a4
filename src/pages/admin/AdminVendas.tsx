@@ -32,8 +32,9 @@ import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { AdminListContainer, AdminListItem } from "@/components/admin/AdminListComponents";
+import { AdminListContainer, AdminListItem, AdminHeader, AdminPagination } from "@/components/admin/AdminListComponents";
 import type { DateRange } from "react-day-picker";
+
 
 
 
