@@ -6,14 +6,23 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Search, ChevronRight, ArrowLeft, Activity,
   UserPlus, ShoppingCart, QrCode, ChevronLeft,
   CreditCard, XCircle, AlertTriangle, Clock, Ban, X,
   RefreshCw, Mail, UserCheck, Wallet, RotateCcw, ShieldAlert, Inbox,
-  CheckCircle2, User, Calendar,
+  CheckCircle2, User, Calendar, Filter,
 } from "lucide-react";
+
 
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
