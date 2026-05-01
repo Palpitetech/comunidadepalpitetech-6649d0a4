@@ -25,6 +25,8 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
 
 import type { Plan, PlanFeatures, ExtendedProfile } from "@/types/plans";
 import { format, differenceInDays } from "date-fns";
@@ -430,15 +432,7 @@ export default function AdminUsuarios() {
     return <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-muted text-[10px] text-muted-foreground font-medium">{utm}</span>;
   };
 
-  if (loading && users.length === 0 && leads.length === 0) {
-    return (
-      <AdminLayout pageTitle="Usuários">
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </AdminLayout>
-    );
-  }
+  const [filterView, setFilterView] = useState<'main' | 'subfilters' | 'tags'>('main');
 
   return (
     <AdminLayout pageTitle="Usuários">
@@ -449,50 +443,152 @@ export default function AdminUsuarios() {
           onSearchChange={setSearchTerm}
           onRefresh={fetchData}
           loading={loading}
-          filters={FILTROS_PRINCIPAIS.map(f => ({
-            label: f.label,
-            isActive: activeFilter === f.key,
-            onClick: () => setActiveFilter(f.key),
-            icon: f.icon,
-            count: getPrincipalCount(f.key)
-          }))}
+          filters={[
+            {
+              label: "Filtros Avançados",
+              isActive: activeSubFilter !== null || includeTags.length > 0 || excludeTags.length > 0,
+              onClick: () => {},
+              icon: Filter
+            },
+            ...FILTROS_PRINCIPAIS.map(f => ({
+              label: f.label,
+              isActive: activeFilter === f.key,
+              onClick: () => setActiveFilter(f.key),
+              icon: f.icon,
+              count: getPrincipalCount(f.key)
+            }))
+          ]}
+          customFilterContent={
+            <DropdownMenuContent align="end" className="w-72 p-0 overflow-hidden">
+              {filterView === 'main' && (
+                <>
+                  <DropdownMenuLabel className="flex items-center justify-between py-3 px-4">
+                    <span>Filtrar usuários</span>
+                    <Button variant="ghost" size="sm" className="h-auto p-0 text-[10px] uppercase font-bold text-primary" onClick={() => {
+                      setActiveSubFilter(null);
+                      setIncludeTags([]);
+                      setExcludeTags([]);
+                      fetchData();
+                    }}>Resetar</Button>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="m-0" />
+                  <div className="p-2 space-y-1">
+                    <DropdownMenuItem onClick={(e) => { e.preventDefault(); setFilterView('subfilters'); }} className="flex items-center justify-between py-2.5">
+                      <div className="flex items-center gap-3">
+                        <Circle className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">Status do Plano</span>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuItem onClick={(e) => { e.preventDefault(); setFilterView('tags'); }} className="flex items-center justify-between py-2.5">
+                      <div className="flex items-center gap-3">
+                        <Shield className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">Filtrar por Tags</span>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
+                    </DropdownMenuItem>
+                  </div>
+                </>
+              )}
+
+              {filterView === 'subfilters' && (
+                <div className="flex flex-col h-full bg-background">
+                  <button 
+                    onClick={(e) => { e.preventDefault(); setFilterView('main'); }}
+                    className="flex items-center gap-2 px-4 py-3 border-b hover:bg-muted/50 transition-colors text-left w-full"
+                  >
+                    <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-bold">Status do Plano</span>
+                  </button>
+                  <ScrollArea className="h-[300px]">
+                    <div className="p-2 space-y-4">
+                      {FILTROS_SECUNDARIOS_GRUPOS.map(grupo => (
+                        <div key={grupo.label} className="space-y-1">
+                          <p className="px-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-2">{grupo.label}</p>
+                          {grupo.items.map(item => (
+                            <DropdownMenuCheckboxItem
+                              key={item.key}
+                              checked={activeSubFilter === item.key}
+                              onCheckedChange={() => toggleSubFilter(item.key)}
+                              className="py-2"
+                              onSelect={(e) => e.preventDefault()}
+                            >
+                              {item.label}
+                              {getSubCount(item.key) > 0 && (
+                                <span className="ml-auto text-[10px] opacity-60 font-medium">{getSubCount(item.key)}</span>
+                               )}
+                            </DropdownMenuCheckboxItem>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+              )}
+
+              {filterView === 'tags' && (
+                <div className="flex flex-col h-full bg-background">
+                  <button 
+                    onClick={(e) => { e.preventDefault(); setFilterView('main'); }}
+                    className="flex items-center gap-2 px-4 py-3 border-b hover:bg-muted/50 transition-colors text-left w-full"
+                  >
+                    <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-bold">Tags</span>
+                  </button>
+                  <div className="p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium">Correspondência Exata</span>
+                      <Button 
+                        variant={exactMatch ? "default" : "outline"} 
+                        size="sm" 
+                        className="h-7 text-[10px]"
+                        onClick={() => setExactMatch(!exactMatch)}
+                      >
+                        {exactMatch ? "SIM" : "NÃO"}
+                      </Button>
+                    </div>
+                    <ScrollArea className="h-[250px] pr-2">
+                      <div className="space-y-1">
+                        {allTags.map(tag => (
+                          <div key={tag} className="flex items-center justify-between p-1">
+                            <span className="text-xs truncate flex-1">{tag}</span>
+                            <div className="flex items-center gap-1">
+                              <Button 
+                                variant={includeTags.includes(tag) ? "default" : "outline"} 
+                                size="icon" 
+                                className="h-6 w-6"
+                                onClick={() => {
+                                  setIncludeTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+                                }}
+                              >
+                                <CheckCircle2 className="h-3 w-3" />
+                              </Button>
+                              <Button 
+                                variant={excludeTags.includes(tag) ? "destructive" : "outline"} 
+                                size="icon" 
+                                className="h-6 w-6"
+                                onClick={() => {
+                                  setExcludeTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+                                }}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                </div>
+              )}
+            </DropdownMenuContent>
+          }
         />
 
         <div className="flex-1 overflow-auto bg-background">
-          {/* Barra de Subfiltros e Tags */}
-          <div className="max-w-7xl mx-auto w-full px-4 md:px-6 py-4 flex items-center gap-3 overflow-x-auto no-scrollbar">
-            <TagFilterPopover
-              allTags={allTags}
-              includeTags={includeTags}
-              excludeTags={excludeTags}
-              exactMatch={exactMatch}
-              onIncludeTagsChange={setIncludeTags}
-              onExcludeTagsChange={setExcludeTags}
-              onExactMatchChange={setExactMatch}
-            />
-            
-            <div className="h-4 w-px bg-border/60 shrink-0" />
-            
-            {activeFilter !== "leads" && FILTROS_SECUNDARIOS_GRUPOS.flatMap(g => g.items).map(item => (
-              <button
-                key={item.key}
-                onClick={() => toggleSubFilter(item.key)}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-tight transition-all border shrink-0 whitespace-nowrap",
-                  activeSubFilter === item.key
-                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                    : "bg-background text-muted-foreground border-border/50 hover:bg-muted/50"
-                )}
-              >
-                {item.label}
-                {getSubCount(item.key) > 0 && (
-                  <span className="ml-1.5 opacity-60 font-medium">{getSubCount(item.key)}</span>
-                )}
-              </button>
-            ))}
-          </div>
-
           <div className="max-w-7xl mx-auto w-full">
+
             <AdminListContainer 
               loading={loading && users.length === 0 && leads.length === 0}
               emptyMessage={activeFilter === "leads" ? "Nenhum lead encontrado" : "Nenhum usuário encontrado"}
