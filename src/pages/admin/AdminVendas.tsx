@@ -13,12 +13,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Search, QrCode, ChevronRight,
   CheckCircle2, XCircle, Clock, AlertTriangle, RefreshCw, ArrowLeft,
   ShoppingCart, User, Calendar, DollarSign, FileText, Copy, Check,
-  MessageCircle, ChevronLeft, X, Filter, Ban, RotateCcw,
+  MessageCircle, ChevronLeft, X, Filter, Ban, RotateCcw, CalendarDays, Send,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
@@ -26,6 +33,8 @@ import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { AdminListContainer, AdminListItem } from "@/components/admin/AdminListComponents";
+import type { DateRange } from "react-day-picker";
+
 
 
 type WebhookLog = {
