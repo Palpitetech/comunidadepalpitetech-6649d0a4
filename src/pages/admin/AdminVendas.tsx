@@ -131,12 +131,20 @@ export default function AdminVendas() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
   useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedLog(null);
+    };
+    window.addEventListener("keydown", handleEsc);
+    
     if (selectedLog) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
     }
-    return () => { document.body.style.overflow = 'unset'; };
+    return () => {
+      window.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = 'unset';
+    };
   }, [selectedLog]);
   const PAGE_SIZE = 25;
 
@@ -327,7 +335,7 @@ export default function AdminVendas() {
       )}
 
       {/* Desktop Sheet View */}
-      <Sheet open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
+      <Sheet open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)} modal={false}>
         <SheetContent 
           side="right" 
           className="hidden md:flex p-0 flex-col border-l border-border bg-white w-full md:max-w-lg outline-none focus:ring-0 overflow-hidden"
