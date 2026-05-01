@@ -131,12 +131,20 @@ export default function AdminVendas() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
   useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedLog(null);
+    };
+    window.addEventListener("keydown", handleEsc);
+    
     if (selectedLog) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
     }
-    return () => { document.body.style.overflow = 'unset'; };
+    return () => {
+      window.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = 'unset';
+    };
   }, [selectedLog]);
   const PAGE_SIZE = 25;
 
