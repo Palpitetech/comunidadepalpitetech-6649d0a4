@@ -32,12 +32,14 @@ interface AdminHeaderProps {
     count?: number;
   }[];
   customFilterContent?: ReactNode;
+  dateFilter?: {
     range: any;
     onRangeChange: (range: any) => void;
     isActive: boolean;
     onClear: () => void;
   };
 }
+
 
 export function AdminHeader({
   title,
