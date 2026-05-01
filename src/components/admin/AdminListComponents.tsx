@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { ChevronRight, Search, X, RefreshCw, Filter, CalendarDays, Loader2 } from "lucide-react";
+import { ChevronRight, Search, X, RefreshCw, Filter, CalendarDays, Loader2, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
