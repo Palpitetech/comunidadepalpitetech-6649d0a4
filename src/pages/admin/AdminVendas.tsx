@@ -296,10 +296,29 @@ export default function AdminVendas() {
         </div>
       </div>
 
+      {/* Mobile Full Screen View */}
+      {selectedLog && (
+        <div className="fixed inset-0 z-[100] bg-background md:hidden flex flex-col animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background shrink-0 z-50">
+            <h2 className="text-base font-semibold">Detalhes da Venda</h2>
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={() => setSelectedLog(null)}>
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+          <div className="flex-1 overflow-y-auto overscroll-contain">
+            <SaleDetail
+              saleKey={selectedLog.sale_id || selectedLog.checkout_id || selectedLog.id}
+              allLogs={logs}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Sheet View */}
       <Sheet open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
         <SheetContent 
-          side="bottom" 
-          className="h-[100dvh] w-full p-0 flex flex-col border-none bg-white sm:max-w-full outline-none focus:ring-0 overflow-hidden"
+          side="right" 
+          className="hidden md:flex p-0 flex-col border-l border-border bg-white w-full md:max-w-lg outline-none focus:ring-0 overflow-hidden"
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-white shrink-0 z-50">
             <SheetTitle className="text-base font-semibold">Detalhes da Venda</SheetTitle>
@@ -307,7 +326,7 @@ export default function AdminVendas() {
               <X className="h-5 w-5" />
             </Button>
           </div>
-          <div className="flex-1 overflow-y-auto bg-white overscroll-contain">
+          <div className="flex-1 overflow-y-auto bg-white">
             {selectedLog && (
               <SaleDetail
                 saleKey={selectedLog.sale_id || selectedLog.checkout_id || selectedLog.id}
