@@ -23,9 +23,10 @@ import { type DrawerView } from "@/hooks/useMobileNav";
 interface AdminMobileDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  view: 'root' | 'comunicacao';
-  onViewChange: (view: 'root' | 'comunicacao') => void;
+  view: DrawerView;
+  onViewChange: (view: DrawerView) => void;
 }
+
 
 export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: AdminMobileDrawerProps) {
   const { profile, user } = useAuth();
