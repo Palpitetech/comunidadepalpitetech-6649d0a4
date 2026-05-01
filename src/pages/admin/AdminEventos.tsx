@@ -326,8 +326,8 @@ export default function AdminEventos() {
 
 
 
-          {/* ======= FILTROS COMPACTOS ======= */}
-          <div className="px-4 md:px-6 pb-4 max-w-7xl mx-auto w-full">
+          {/* ======= FILTROS COMPACTOS (VISÍVEIS APENAS SE NECESSÁRIO) ======= */}
+          <div className="px-4 md:px-6 pb-4 max-w-7xl mx-auto w-full hidden md:block">
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
               {FILTER_TABS.map(({ key, label }) => {
                 const isActive = activeFilter === key;
@@ -357,6 +357,7 @@ export default function AdminEventos() {
               })}
             </div>
           </div>
+
         </div>
 
         {/* ======= CONTEÚDO PRINCIPAL (ULTRA COMPACTO) ======= */}
