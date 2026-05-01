@@ -399,8 +399,11 @@ export function AdminSidebar() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const { data: badges } = useAdminBadges();
 
-  const isActive = (url: string, exact?: boolean) =>
-    exact ? currentPath === url : currentPath === url || currentPath.startsWith(url + "/");
+  const isActive = (url: string, exact?: boolean) => {
+    if (exact) return currentPath === url;
+    return currentPath.startsWith(url) && (url !== '/admin' || currentPath === '/admin');
+  };
+
 
   return (
     <TooltipProvider delayDuration={100}>
