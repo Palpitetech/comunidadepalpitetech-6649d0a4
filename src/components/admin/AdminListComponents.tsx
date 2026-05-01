@@ -31,7 +31,7 @@ interface AdminHeaderProps {
     icon?: any;
     count?: number;
   }[];
-  dateFilter?: {
+  customFilterContent?: ReactNode;
     range: any;
     onRangeChange: (range: any) => void;
     isActive: boolean;
