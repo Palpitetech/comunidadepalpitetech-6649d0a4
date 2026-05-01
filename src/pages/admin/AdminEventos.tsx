@@ -358,12 +358,12 @@ export default function AdminEventos() {
                         </div>
 
                         {/* Linha 2: Info Secundária + Horário */}
-                        <div className="flex items-center justify-between gap-2 mt-1 leading-tight">
-                          <span className="text-[11px] text-muted-foreground/70 truncate italic text-left">
-                            {renderEmailCell(ev) !== renderUserCell(ev) ? `${renderEmailCell(ev)} • ` : ""}
-                            {getMetaSummary(ev)}
-                            {!ev.user_id && ` • ${origin.label}`}
-                          </span>
+                          <div className="flex items-center justify-between gap-2 mt-1 leading-tight">
+                            <span className="text-[11px] text-muted-foreground/70 truncate italic text-left">
+                              {renderEmailCell(ev)} • {getMetaSummary(ev)}
+                              {!ev.user_id && ` • ${origin.label}`}
+                            </span>
+
                           
                           <span className="text-[10px] font-medium text-muted-foreground/50 whitespace-nowrap shrink-0">
                             {format(new Date(ev.created_at), "HH:mm", { locale: ptBR })}
