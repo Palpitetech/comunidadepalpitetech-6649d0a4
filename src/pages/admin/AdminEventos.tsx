@@ -329,6 +329,7 @@ export default function AdminEventos() {
                 {events.map((ev) => {
                   const config = getEventConfig(ev.event_type);
                   const origin = getOriginLabel(ev);
+                  const StatusIcon = config.icon;
                   
                   return (
                     <button
@@ -336,37 +337,58 @@ export default function AdminEventos() {
                       onClick={() => setSelectedEvent(ev)}
                       className="w-full flex items-center justify-between gap-3 py-2 px-3 hover:bg-muted/30 active:bg-muted/50 transition-colors text-left group"
                     >
-                      <div className="flex-1 min-w-0">
-                        {/* Linha 1: Nome - Tipo · Hora */}
-                        <div className="flex items-center gap-1 leading-tight">
-                          <span className="text-sm font-medium text-foreground truncate max-w-[180px] sm:max-w-md">
-                            {renderUserCell(ev)}
-                          </span>
-                          <span className="text-muted-foreground/60 text-sm">-</span>
-                          <span className={cn("text-sm font-medium", config.color.split(' ')[1].replace('text-', 'text-'))}>
-                            {config.label}
-                          </span>
-                          <span className="text-muted-foreground/60 text-sm ml-1">·</span>
-                          <span className="text-[11px] font-medium text-muted-foreground/50 ml-0.5">
-                            {format(new Date(ev.created_at), "HH:mm", { locale: ptBR })}
-                          </span>
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        {/* Ícone à Esquerda */}
+                        <div className="flex-shrink-0">
+                          {ev.event_type === "pix_gerado" ? (
+                            <QrCode className="h-4 w-4 text-muted-foreground/60" />
+                          ) : (
+                            <Ban className="h-4 w-4 text-muted-foreground/60" />
+                          )}
                         </div>
 
-                        {/* Linha 2: Info Secundária */}
-                        <div className="flex items-center gap-1.5 mt-0.5 leading-tight">
-                          <span className="text-xs text-muted-foreground truncate">
-                            {renderEmailCell(ev) !== renderUserCell(ev) ? `${renderEmailCell(ev)} • ` : ""}
-                            {getMetaSummary(ev)}
-                            {!ev.user_id && ` • ${origin.label}`}
-                          </span>
+                        <div className="flex-1 min-w-0">
+                          {/* Linha 1: Nome - Tipo · Hora */}
+                          <div className="flex items-center gap-1.5 leading-tight">
+                            <span className="text-sm font-semibold text-foreground truncate max-w-[150px] sm:max-w-md">
+                              {renderUserCell(ev)}
+                            </span>
+                            <span className="text-muted-foreground/60 text-sm">/</span>
+                            <span className="text-xs text-muted-foreground truncate italic">
+                              {renderEmailCell(ev) !== renderUserCell(ev) ? renderEmailCell(ev) : getMetaSummary(ev)}
+                            </span>
+                          </div>
+
+                          {/* Linha 2: Info Secundária (Email/Metadados/Origem) */}
+                          <div className="flex items-center gap-1.5 mt-0.5 leading-tight">
+                            <span className="text-[11px] text-muted-foreground/70 truncate">
+                              {getMetaSummary(ev)}
+                              {!ev.user_id && ` • ${origin.label}`}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
-                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/20 group-hover:text-muted-foreground/40 transition-colors shrink-0" />
-                    </button>
+                      {/* Status Badge + Hora + Chevron */}
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <div className={cn(
+                          "flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight",
+                          config.color
+                        )}>
+                          <StatusIcon className="h-3 w-3" />
+                          {config.label}
+                        </div>
+                        
+                        <span className="text-[10px] font-medium text-muted-foreground/50 whitespace-nowrap">
+                          {format(new Date(ev.created_at), "HH:mm", { locale: ptBR })}
+                        </span>
 
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/20 group-hover:text-muted-foreground/40 transition-colors" />
+                      </div>
+                    </button>
                   );
                 })}
+
 
                 {events.length === 0 && !loading && (
                   <div className="flex flex-col items-center justify-center py-20 gap-2 text-center">
