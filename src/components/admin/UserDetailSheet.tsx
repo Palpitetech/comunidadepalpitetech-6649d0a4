@@ -22,6 +22,7 @@ interface UserDetailSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUserUpdated: () => void;
+  isMobileView?: boolean;
 }
 
 export function UserDetailSheet({
