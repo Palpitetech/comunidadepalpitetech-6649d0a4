@@ -306,95 +306,91 @@ export default function AdminEventos() {
       <Sheet open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>
         <SheetContent 
           side="bottom" 
-          className="h-screen w-full p-0 rounded-none border-none flex flex-col focus:ring-0 outline-none overflow-hidden"
+          className="h-[100dvh] w-full p-0 rounded-none border-none flex flex-col focus:ring-0 outline-none overflow-hidden"
         >
-          {/* 1. Header Sticky (Inspiração: Fixed no topo, ícones laterais) */}
-          <div className="sticky top-0 z-20 bg-white border-b border-gray-100/80 px-4 py-3.5 flex items-center justify-between shrink-0">
+          {/* 1. Cabeçalho (Header Sticky) */}
+          <div className="sticky top-0 z-20 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between shrink-0 h-14">
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-10 w-10 rounded-full hover:bg-gray-50 active:scale-95 transition-transform" 
+              className="h-10 w-10 rounded-full hover:bg-gray-50" 
               onClick={() => setSelectedEvent(null)}
             >
-              <X size={22} className="text-gray-900" />
+              <X size={20} className="text-gray-900" />
             </Button>
-            <SheetTitle className="text-[17px] font-semibold text-gray-900">Detalhes do Evento</SheetTitle>
+            <SheetTitle className="text-base font-semibold text-gray-900">Detalhes do Evento</SheetTitle>
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-10 w-10 rounded-full hover:bg-gray-50 active:scale-95 transition-transform" 
+              className="h-10 w-10 rounded-full hover:bg-gray-50" 
               onClick={() => fetchEvents()}
             >
-              <RefreshCw size={20} className="text-gray-900" />
+              <RefreshCw size={18} className="text-gray-900" />
             </Button>
           </div>
 
           <ScrollArea className="flex-1 bg-white">
             {loading ? (
               <div className="p-6 space-y-8">
-                <Skeleton className="h-32 w-full rounded-3xl" />
+                <Skeleton className="h-32 w-full rounded-2xl" />
                 <div className="space-y-6">
                   {[1, 2, 3, 4, 5].map(i => (
                     <div key={i} className="flex gap-4 items-center">
-                      <Skeleton className="h-12 w-12 rounded-2xl" />
+                      <Skeleton className="h-10 w-10 rounded-full" />
                       <div className="flex-1 space-y-2">
-                        <Skeleton className="h-3 w-24" />
-                        <Skeleton className="h-5 w-full" />
+                        <Skeleton className="h-3 w-20" />
+                        <Skeleton className="h-4 w-full" />
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
             ) : selectedEvent && (
-              <div className="flex flex-col pb-40">
-                {/* 2. Hero de Status (Inspiração: Card centralizado com ícone grande) */}
-                <div className="px-5 py-6">
-                  <div className="bg-gray-50/50 rounded-[32px] p-8 border border-gray-100/80 flex flex-col items-center text-center">
+              <div className="flex flex-col pb-32">
+                {/* 2. Seção de Status (Hero Card) */}
+                <div className="px-4 py-6">
+                  <div className="bg-gray-50 rounded-2xl p-6 flex items-center gap-4 border border-gray-100">
                     <div className={cn(
-                      "p-6 rounded-[24px] shadow-sm bg-white border border-gray-100 mb-5",
+                      "p-4 rounded-xl shadow-sm bg-white border border-gray-100",
                       getEventConfig(selectedEvent.event_type).color.split(' ')[1]
                     )}>
                       {(() => {
                         const Icon = getEventConfig(selectedEvent.event_type).icon;
-                        return <Icon size={40} strokeWidth={2.5} />;
+                        return <Icon size={32} strokeWidth={2.5} />;
                       })()}
                     </div>
-                    <div className="space-y-2">
-                      <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-lg font-bold text-gray-900 leading-tight">
                         {getEventConfig(selectedEvent.event_type).label}
                       </h2>
-                      <div className="flex flex-col gap-1.5">
-                        <p className="text-[15px] font-medium text-gray-500">
-                          {format(new Date(selectedEvent.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
-                        </p>
-                        <div className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-gray-100/80 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-                          ID: {selectedEvent.id.split('-')[0]}...
-                        </div>
+                      <p className="text-sm font-medium text-gray-500 mt-0.5">
+                        {format(new Date(selectedEvent.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                      </p>
+                      <div className="text-[11px] font-medium text-muted-foreground mt-1 truncate">
+                        Event ID: {selectedEvent.id}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* 3. Lista de Informações (Inspiração: Ícones modernos e labels minimalistas) */}
-                <div className="px-6 space-y-7">
-                  <div className="space-y-6">
-                    <InfoRowModern icon={User} label="Nome/Lead" value={renderUserCell(selectedEvent)} />
-                    <InfoRowModern icon={Mail} label="Email Principal" value={renderEmailCell(selectedEvent)} copyable />
-                    <InfoRowModern icon={Globe} label="Origem" value={getOriginLabel(selectedEvent).label} />
-                    <InfoRowModern icon={Hash} label="ID do Evento" value={selectedEvent.id} copyable />
-                    {selectedEvent.metadata?.phone && (
-                      <InfoRowModern icon={Phone} label="Telefone" value={selectedEvent.metadata.phone} copyable />
-                    )}
-                  </div>
+                {/* 3. Lista de Identificação */}
+                <div className="px-6 space-y-6">
+                  <InfoRow icon={User} label="Nome/Lead" value={renderUserCell(selectedEvent)} />
+                  <InfoRow icon={Mail} label="Email Principal" value={renderEmailCell(selectedEvent)} copyable />
+                  <InfoRow icon={Globe} label="Origem" value={getOriginLabel(selectedEvent).label} />
+                  <InfoRow icon={Hash} label="ID do Evento" value={selectedEvent.id} copyable />
+                  {selectedEvent.metadata?.phone && (
+                    <InfoRow icon={Phone} label="Telefone" value={selectedEvent.metadata.phone} copyable />
+                  )}
 
-                  {/* 4. Bloco JSON (Inspiração: Fundo ultra-escuro e syntax highlighting) */}
-                  <div className="space-y-4 pt-6">
-                    <div className="flex items-center justify-between px-1">
-                      <h3 className="text-[12px] font-extrabold uppercase tracking-[0.15em] text-gray-400">Metadados (JSON)</h3>
+                  {/* 4. Bloco de Metadados (JSON) */}
+                  <div className="space-y-3 pt-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Metadados (JSON)</h3>
                       <Button 
-                        variant="secondary" 
+                        variant="ghost" 
                         size="sm" 
-                        className="h-8 text-[11px] font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 border-none rounded-lg px-3"
+                        className="h-7 text-[11px] font-bold text-blue-600 hover:bg-blue-50"
                         onClick={() => {
                           navigator.clipboard.writeText(JSON.stringify(selectedEvent.metadata, null, 2));
                           toast.success("JSON copiado!");
@@ -404,18 +400,18 @@ export default function AdminEventos() {
                         Copiar Tudo
                       </Button>
                     </div>
-                    <div className="bg-[#0d1117] rounded-3xl p-6 overflow-hidden border border-gray-800/50 shadow-2xl relative group">
-                      <pre className="text-[13px] font-mono leading-relaxed overflow-x-auto no-scrollbar scroll-smooth">
+                    <div className="bg-slate-950 rounded-xl p-5 overflow-hidden border border-slate-800 shadow-lg">
+                      <pre className="text-[12px] font-mono leading-relaxed overflow-x-auto no-scrollbar">
                         {Object.entries(selectedEvent.metadata || {}).map(([key, val], idx) => (
-                          <div key={idx} className="flex gap-2.5 py-0.5">
-                            <span className="text-[#7ee0ff] font-medium">"{key}"</span>
-                            <span className="text-gray-500">:</span>
+                          <div key={idx} className="flex gap-2 py-0.5">
+                            <span className="text-blue-300">"{key}"</span>
+                            <span className="text-slate-500">:</span>
                             <span className={cn(
                               "break-all",
-                              typeof val === 'string' ? "text-[#ffa657]" : "text-[#d2a8ff]"
+                              typeof val === 'string' ? "text-emerald-300" : "text-amber-200"
                             )}>
                               {typeof val === 'string' ? `"${val}"` : String(val)}
-                              {idx < Object.entries(selectedEvent.metadata).length - 1 && <span className="text-gray-500">,</span>}
+                              {idx < Object.entries(selectedEvent.metadata).length - 1 && <span className="text-slate-500">,</span>}
                             </span>
                           </div>
                         ))}
@@ -427,17 +423,17 @@ export default function AdminEventos() {
             )}
           </ScrollArea>
 
-          {/* 5. Ação Fixa no Rodapé (Inspiração: Botão verde vibrante Full-width) */}
+          {/* 5. Rodapé Fixo (Action Button) */}
           {!loading && selectedEvent?.metadata?.pix_codigo && (
-            <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-xl border-t border-gray-100 z-30">
+            <div className="sticky bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-30">
               <Button 
-                className="w-full h-15 rounded-[22px] bg-[#10b981] hover:bg-[#059669] text-[16px] font-bold text-white shadow-2xl shadow-emerald-200/50 transition-all active:scale-[0.96] flex items-center justify-center gap-3 py-7"
+                className="w-full h-14 rounded-xl bg-green-600 hover:bg-green-700 text-base font-bold text-white shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                 onClick={() => {
                   navigator.clipboard.writeText(selectedEvent.metadata.pix_codigo);
                   toast.success("Código PIX copiado!");
                 }}
               >
-                <QrCode size={22} strokeWidth={2.5} />
+                <QrCode size={20} />
                 Copiar Código PIX
               </Button>
             </div>
@@ -449,17 +445,17 @@ export default function AdminEventos() {
 }
 
 /**
- * Componente de Linha de Informação Moderno
+ * Componente de Linha de Informação (Mobile First)
  */
-function InfoRowModern({ icon: Icon, label, value, copyable }: { icon: any; label: string; value: string; copyable?: boolean }) {
+function InfoRow({ icon: Icon, label, value, copyable }: { icon: any; label: string; value: string; copyable?: boolean }) {
   return (
-    <div className="flex items-center gap-4.5 group">
-      <div className="h-12 w-12 rounded-[18px] bg-gray-50 flex items-center justify-center text-gray-400 group-hover:text-gray-900 group-hover:bg-gray-100 transition-colors shrink-0">
-        <Icon size={22} strokeWidth={2} />
+    <div className="flex items-start gap-4">
+      <div className="mt-1 h-9 w-9 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 shrink-0">
+        <Icon size={18} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest leading-none mb-1.5">{label}</p>
-        <div className="flex items-center justify-between gap-3">
+        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">{label}</p>
+        <div className="flex items-center justify-between gap-2">
           <p className="text-[15px] font-bold text-gray-900 truncate leading-tight">
             {value || <span className="text-gray-300 italic font-normal">Não informado</span>}
           </p>
@@ -467,13 +463,13 @@ function InfoRowModern({ icon: Icon, label, value, copyable }: { icon: any; labe
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-9 w-9 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all shrink-0"
+              className="h-8 w-8 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg shrink-0"
               onClick={() => {
                 navigator.clipboard.writeText(value);
                 toast.success(`${label} copiado!`);
               }}
             >
-              <Copy size={15} />
+              <Copy size={14} />
             </Button>
           )}
         </div>
