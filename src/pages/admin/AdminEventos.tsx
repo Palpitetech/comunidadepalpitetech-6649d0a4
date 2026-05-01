@@ -368,6 +368,7 @@ export default function AdminEventos() {
                       icon={User} 
                       label="Nome/Lead" 
                       value={selectedEvent.perfis?.nome || renderUserCell(selectedEvent)} 
+                      copyable
                     />
                     <NewInfoRow 
                       icon={Mail} 
@@ -379,6 +380,7 @@ export default function AdminEventos() {
                       icon={Globe} 
                       label="Origem" 
                       value={getOriginLabel(selectedEvent).label} 
+                      copyable
                     />
                     <NewInfoRow 
                       icon={Hash} 
