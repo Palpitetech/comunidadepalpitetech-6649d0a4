@@ -619,7 +619,7 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="font-medium truncate">{p.name || p.offer_name}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">Oferta: <span className="font-mono">{p.offer_id}</span></p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Oferta: <span className="font-mono break-all">{p.offer_id}</span></p>
                       </div>
                       <div className="text-right shrink-0">
                         <p className="font-medium">{p.price}</p>
