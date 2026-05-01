@@ -251,32 +251,32 @@ export default function AdminEventos() {
       <div className="flex flex-col flex-1 min-h-0 bg-background">
         {/* ======= HEADER MINIMALISTA ======= */}
         <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
-          <div className="px-4 md:px-6 py-4 flex items-center justify-between gap-4 max-w-7xl mx-auto w-full">
-            <h1 className="text-xl font-bold tracking-tight hidden md:block">Eventos</h1>
+          <div className="px-4 md:px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 max-w-7xl mx-auto w-full">
+            <h1 className="text-xl font-bold tracking-tight text-foreground">Eventos</h1>
             
-            <div className="flex-1 max-w-md relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              <Input 
-                placeholder="Buscar por email, tipo..." 
-                value={search} 
-                onChange={(e) => setSearch(e.target.value)} 
-                className="pl-9 h-10 bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all" 
-              />
-              {search && (
-                <button 
-                  onClick={() => setSearch("")} 
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
+            <div className="flex items-center gap-3 w-full md:max-w-md">
+              <div className="flex-1 relative group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <Input 
+                  placeholder="Buscar por email, tipo..." 
+                  value={search} 
+                  onChange={(e) => setSearch(e.target.value)} 
+                  className="pl-9 h-10 bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all" 
+                />
+                {search && (
+                  <button 
+                    onClick={() => setSearch("")} 
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
 
-            <div className="flex items-center gap-2">
               <Button 
                 variant="outline" 
                 size="icon" 
-                className="h-10 w-10 rounded-xl border-border/50 bg-background hover:bg-muted/50 transition-all"
+                className="h-10 w-10 shrink-0 rounded-xl border-border/50 bg-background hover:bg-muted/50 transition-all"
                 onClick={() => { fetchEvents(); fetchCounters(); }}
                 disabled={loading}
               >
@@ -284,6 +284,7 @@ export default function AdminEventos() {
               </Button>
             </div>
           </div>
+
 
           {/* ======= FILTROS COMPACTOS ======= */}
           <div className="px-4 md:px-6 pb-4 max-w-7xl mx-auto w-full">
