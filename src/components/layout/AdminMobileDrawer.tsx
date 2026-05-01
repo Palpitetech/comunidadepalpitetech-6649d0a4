@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils";
 import { AdminCommandPalette } from "@/components/admin/AdminCommandPalette";
 import { adminNavConfig, type NavSection, type NavItem } from "@/config/adminNavConfig";
 import { useAdminBadges } from "@/hooks/useAdminBadges";
+import { type DrawerView } from "@/hooks/useMobileNav";
+
 
 
 interface AdminMobileDrawerProps {
