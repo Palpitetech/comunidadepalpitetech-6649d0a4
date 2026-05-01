@@ -154,6 +154,21 @@ function getOriginLabel(ev: EventRow): { label: string; color: string } {
 
 const PAGE_SIZE = 25;
 
+const KIRVANO_TO_TRIGGER: Record<string, string> = {
+  compra_aprovada: "compra_aprovada",
+  sale_confirmed: "compra_aprovada",
+  pix_gerado: "pix_gerado",
+  pix_expirado: "pix_expirado",
+  boleto_gerado: "boleto_gerado",
+  boleto_expirado: "boleto_expirado",
+  carrinho_abandonado: "carrinho_abandonado",
+  checkout_abandonado: "checkout_abandonado",
+  assinatura_renovada: "assinatura_renovada",
+  assinatura_cancelada: "assinatura_cancelada",
+  assinatura_expirada: "assinatura_expirada",
+  assinatura_inadimplente: "assinatura_inadimplente",
+};
+
 export default function AdminEventos() {
   const navigate = useNavigate();
   const [events, setEvents] = useState<EventRow[]>([]);
@@ -163,6 +178,8 @@ export default function AdminEventos() {
   const [activeFilter, setActiveFilter] = useState<FilterTab>("todos");
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [planMap, setPlanMap] = useState<Record<string, { planName: string; checkoutLink: string | null }>>({});
+  const [dispatchingId, setDispatchingId] = useState<string | null>(null);
   const [counters, setCounters] = useState<Record<FilterTab, number>>({
     todos: 0, leads: 0, cadastros: 0, pix_boleto: 0, vendas: 0, cancelamentos: 0,
   });
@@ -236,6 +253,26 @@ export default function AdminEventos() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const loadPlanMappings = async () => {
+      const { data } = await supabase
+        .from("kirvano_offer_plan_map")
+        .select("offer_id, plans!inner(name, checkout_link)")
+        .eq("is_active", true);
+      if (data) {
+        const map: Record<string, { planName: string; checkoutLink: string | null }> = {};
+        for (const row of data as any[]) {
+          map[row.offer_id] = {
+            planName: row.plans?.name || "—",
+            checkoutLink: row.plans?.checkout_link || null,
+          };
+        }
+        setPlanMap(map);
+      }
+    };
+    loadPlanMappings();
+  }, []);
+
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
   useEffect(() => { fetchCounters(); }, [fetchCounters]);
   useEffect(() => { setPage(0); }, [activeFilter, search]);
@@ -257,6 +294,84 @@ export default function AdminEventos() {
     if (ev.perfis?.email) return ev.perfis.email;
     if (ev.lead_email) return ev.lead_email;
     return "—";
+  };
+
+  const dispatchEventTemplate = async (ev: EventRow) => {
+    const rawEvent = ev.event_type || "";
+    const trigger = KIRVANO_TO_TRIGGER[rawEvent];
+    if (!trigger) {
+      toast.error("Este evento não tem trigger mapeado.");
+      return;
+    }
+
+    const m = ev.metadata || {};
+    const phone = ev.lead_phone || m.phone || m.phone_number;
+    const email = ev.lead_email || m.email;
+
+    if (!phone) {
+      toast.error("Este evento não tem telefone para disparo.");
+      return;
+    }
+
+    setDispatchingId(ev.id);
+    try {
+      const { data: tpls, error: tplErr } = await supabase
+        .from("message_templates" as any)
+        .select("id")
+        .eq("event_trigger", trigger)
+        .eq("is_active", true)
+        .limit(1);
+      
+      if (tplErr) throw tplErr;
+      if (!tpls || tpls.length === 0) {
+        toast.error(`Nenhum template ativo para "${trigger}".`);
+        return;
+      }
+
+      const offerId = m.offer_id;
+      const mapped = offerId ? planMap[offerId] : null;
+
+      const variables: Record<string, any> = {
+        nome: ev.perfis?.nome || m.customer?.name || m.name || "",
+        telefone: phone,
+        email: email || "",
+        produto: m.product_name || m.offer_name || mapped?.planName || "",
+        plano_nome: mapped?.planName || "",
+        total_price: m.total_price || "",
+        sale_id: m.sale_id || "",
+        checkout_id: m.checkout_id || "",
+      };
+      
+      if (m.pix_code || m.pix_payload || m.pix_codigo) {
+        variables.pix_codigo = m.pix_code || m.pix_payload || m.pix_codigo;
+      }
+      if (mapped?.checkoutLink) variables.link_novo_pix = mapped.checkoutLink;
+
+      const { data: count, error: rpcErr } = await supabase.rpc(
+        "queue_templates_for_event" as any,
+        {
+          p_event_trigger: trigger,
+          p_phone: phone,
+          p_name: variables.nome,
+          p_user_id: ev.user_id,
+          p_variables: variables,
+          p_priority: 1,
+        }
+      );
+      if (rpcErr) throw rpcErr;
+
+      const n = (count as number) ?? 0;
+      if (n > 0) {
+        toast.success(`${n} mensagem(ns) enfileirada(s).`);
+      } else {
+        toast.info("Nenhuma mensagem enfileirada (filtro/dedupe).");
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Erro ao disparar.");
+    } finally {
+      setDispatchingId(null);
+    }
   };
 
   return (
@@ -393,6 +508,12 @@ export default function AdminEventos() {
                     copyable
                   />
                   <NewInfoRow 
+                    icon={ShoppingCart} 
+                    label="Produto/Oferta" 
+                    value={selectedEvent.metadata?.product_name || selectedEvent.metadata?.offer_name || planMap[selectedEvent.metadata?.offer_id]?.planName || selectedEvent.metadata?.offer_id || "Não identificado"} 
+                    copyable
+                  />
+                  <NewInfoRow 
                     icon={Hash} 
                     label="ID do Evento" 
                     value={selectedEvent.id} 
@@ -431,7 +552,23 @@ export default function AdminEventos() {
                 </div>
 
                 {/* 5. Footer Action Component inside scroll if needed, or fixed */}
-                <div className="pt-4">
+                <div className="pt-4 space-y-3">
+                  {(() => {
+                    const trigger = KIRVANO_TO_TRIGGER[selectedEvent.event_type];
+                    const isDispatching = dispatchingId === selectedEvent.id;
+                    if (!trigger) return null;
+                    return (
+                      <Button 
+                        variant="outline"
+                        className="w-full h-14 border-primary/20 text-primary hover:bg-primary/5 rounded-[18px] text-lg font-bold gap-3"
+                        disabled={isDispatching}
+                        onClick={() => dispatchEventTemplate(selectedEvent)}
+                      >
+                        {isDispatching ? <RefreshCw size={24} className="animate-spin" /> : <RotateCcw size={24} />}
+                        Disparar Template Manual
+                      </Button>
+                    );
+                  })()}
                   <Button 
                     className="w-full h-14 bg-green-600 hover:bg-green-700 text-white rounded-[18px] text-lg font-bold gap-3 shadow-lg shadow-green-100"
                     onClick={() => {
