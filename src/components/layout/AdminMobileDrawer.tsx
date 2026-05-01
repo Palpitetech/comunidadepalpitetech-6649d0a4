@@ -24,6 +24,28 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
   const location = useLocation();
   const { data: badges } = useAdminBadges();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStart === null) return;
+    const currentTouch = e.targetTouches[0].clientX;
+    const diff = touchStart - currentTouch;
+
+    // Se arrastar mais de 60px para a esquerda, fecha o drawer
+    if (diff > 60) {
+      onClose();
+      setTouchStart(null);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setTouchStart(null);
+  };
+
 
   const initials = (profile?.nome || user?.email || "A")
     .split(" ")
