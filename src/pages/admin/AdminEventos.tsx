@@ -250,217 +250,64 @@ export default function AdminEventos() {
   };
 
   return (
-    <AdminLayout
-      pageTitle="Eventos"
-    >
+    <AdminLayout pageTitle="Eventos">
       <div className="flex flex-col flex-1 min-h-0 bg-background">
-        {/* ======= HEADER MINIMALISTA ======= */}
-        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
-          <div className="px-4 md:px-6 py-4 flex items-center justify-between gap-3 max-w-7xl mx-auto w-full">
-            <div className="flex-1 max-w-[240px] md:max-w-md relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              <Input 
-                placeholder="Buscar..." 
-                value={search} 
-                onChange={(e) => setSearch(e.target.value)} 
-                className="pl-9 h-10 bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all" 
-              />
-              {search && (
-                <button 
-                  onClick={() => setSearch("")} 
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
+        <AdminHeader 
+          title="Eventos"
+          search={search}
+          onSearchChange={setSearch}
+          onRefresh={() => { fetchEvents(); fetchCounters(); }}
+          loading={loading}
+          filters={FILTER_TABS.map(tab => ({
+            label: tab.label,
+            isActive: activeFilter === tab.key,
+            onClick: () => setActiveFilter(tab.key),
+            icon: tab.icon,
+            count: getFilterCount(tab.key)
+          }))}
+        />
 
-            <div className="flex items-center gap-2 shrink-0">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
-                    className="h-10 w-10 rounded-xl border-border/50 bg-background hover:bg-muted/50 transition-all"
-                  >
-                    <Filter className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>Filtrar Eventos</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {FILTER_TABS.map(({ key, label, icon: Icon }) => (
-                    <DropdownMenuItem 
-                      key={key} 
-                      onClick={() => setActiveFilter(key)}
-                      className={cn(activeFilter === key && "bg-accent")}
-                    >
-                      <Icon className="mr-2 h-4 w-4" />
-                      <span>{label}</span>
-                      {getFilterCount(key) > 0 && (
-                        <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground">
-                          {getFilterCount(key)}
-                        </span>
-                      )}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <Button 
-                variant="outline" 
-                size="icon" 
-                className="h-10 w-10 rounded-xl border-border/50 bg-background hover:bg-muted/50 transition-all"
-                onClick={() => { fetchEvents(); fetchCounters(); }}
-                disabled={loading}
-              >
-                <RefreshCw className={cn("h-4 w-4 text-muted-foreground", loading && "animate-spin")} />
-              </Button>
-            </div>
-
-          </div>
-
-
-
-          {/* ======= FILTROS COMPACTOS (VISÍVEIS APENAS SE NECESSÁRIO) ======= */}
-          <div className="px-4 md:px-6 pb-4 max-w-7xl mx-auto w-full hidden md:block">
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-              {FILTER_TABS.map(({ key, label }) => {
-                const isActive = activeFilter === key;
-                const count = getFilterCount(key);
-                return (
-                  <button
-                    key={key}
-                    onClick={() => setActiveFilter(key)}
-                    className={cn(
-                      "px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all border shrink-0 flex items-center gap-2",
-                      isActive 
-                        ? "bg-primary text-primary-foreground border-primary shadow-sm" 
-                        : "bg-background text-muted-foreground border-border/50 hover:bg-muted/50"
-                    )}
-                  >
-                    {label}
-                    {count > 0 && (
-                      <span className={cn(
-                        "text-[10px] px-1.5 py-0.5 rounded-full",
-                        isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
-                      )}>
-                        {count > 999 ? `${(count/1000).toFixed(1)}k` : count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-        </div>
-
-        {/* ======= CONTEÚDO PRINCIPAL (ULTRA COMPACTO) ======= */}
         <div className="flex-1 overflow-auto bg-background">
           <div className="max-w-7xl mx-auto w-full">
-            
-            {loading && events.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-2">
-                <Loader2 className="h-6 w-6 animate-spin text-primary/40" />
-                <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Sincronizando logs...</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-border/40 border-b border-border/40">
-                {events.map((ev) => {
-                  const config = getEventConfig(ev.event_type);
-                  const origin = getOriginLabel(ev);
-                  const StatusIcon = config.icon;
-                  
-                  return (
-                    <button
-                      key={ev.id}
-                      onClick={() => setSelectedEvent(ev)}
-                      className="w-full flex items-center justify-between gap-3 py-2.5 px-3 hover:bg-muted/30 active:bg-muted/50 transition-colors text-left group"
-                    >
-                      <div className="flex-1 min-w-0">
-                        {/* Linha 1: Nome Principal + Badge */}
-                        <div className="flex items-center justify-between gap-2 leading-tight">
-                          <span className="text-sm font-semibold text-foreground truncate max-w-[200px] sm:max-w-md">
-                            {renderUserCell(ev)}
-                          </span>
-                          
-                          <div className={cn(
-                            "flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tight border shrink-0",
-                            config.color
-                          )}>
-                            <StatusIcon className="h-2.5 w-2.5" />
-                            {config.label}
-                          </div>
-                        </div>
+            <AdminListContainer 
+              loading={loading && events.length === 0}
+              emptyMessage="Nenhum log encontrado"
+            >
+              {events.map((ev) => {
+                const config = getEventConfig(ev.event_type);
+                const origin = getOriginLabel(ev);
+                const StatusIcon = config.icon;
+                
+                return (
+                  <AdminListItem
+                    key={ev.id}
+                    onClick={() => setSelectedEvent(ev)}
+                    title={renderUserCell(ev)}
+                    badge={{
+                      text: config.label,
+                      color: config.color,
+                      icon: StatusIcon
+                    }}
+                    subtitle={`${renderEmailCell(ev) !== renderUserCell(ev) ? `${renderEmailCell(ev)} • ` : ""}${getMetaSummary(ev)}${!ev.user_id ? ` • ${origin.label}` : ""}`}
+                    timestamp={format(new Date(ev.created_at), "HH:mm", { locale: ptBR })}
+                  />
+                );
+              })}
+            </AdminListContainer>
 
-                        {/* Linha 2: Info Secundária + Horário */}
-                          <div className="flex items-center justify-between gap-2 mt-1 leading-tight">
-                            <span className="text-[11px] text-muted-foreground/70 truncate italic text-left">
-                              {renderEmailCell(ev)}
-                            </span>
-
-
-                          
-                          <span className="text-[10px] font-medium text-muted-foreground/50 whitespace-nowrap shrink-0">
-                            {format(new Date(ev.created_at), "HH:mm", { locale: ptBR })}
-                          </span>
-                        </div>
-                      </div>
-
-                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/20 group-hover:text-muted-foreground/40 transition-colors shrink-0 ml-1" />
-                    </button>
-                  );
-                })}
-
-
-
-
-
-                {events.length === 0 && !loading && (
-                  <div className="flex flex-col items-center justify-center py-20 gap-2 text-center">
-                    <Search className="h-6 w-6 text-muted-foreground/20" />
-                    <p className="text-[11px] font-bold text-muted-foreground/50 uppercase tracking-widest">Nenhum log encontrado</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ======= PAGINAÇÃO ULTRA COMPACTA ======= */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between gap-4 px-4 py-3 bg-muted/5">
-                <p className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-tighter">
-                  {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} <span className="mx-1">/</span> {totalCount.toLocaleString("pt-BR")}
-                </p>
-                <div className="flex items-center gap-1">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-7 w-7 hover:bg-muted" 
-                    disabled={page === 0} 
-                    onClick={() => setPage((p) => p - 1)}
-                  >
-                    <ChevronLeft className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                  <span className="text-[10px] font-bold w-8 text-center">{page + 1}</span>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-7 w-7 hover:bg-muted" 
-                    disabled={page >= totalPages - 1} 
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                </div>
-              </div>
-            )}
+            <AdminPagination 
+              page={page}
+              pageSize={PAGE_SIZE}
+              totalCount={totalCount}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              hasNextPage={page < totalPages - 1}
+              hasPrevPage={page > 0}
+            />
           </div>
         </div>
-
       </div>
 
-      {/* ======= DRAWER DE DETALHES (MINIMALISTA) ======= */}
       <Sheet open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>
         <SheetContent className="w-full sm:max-w-md p-0 flex flex-col border-l border-border/50">
           <div className="px-6 py-5 border-b border-border/50 flex items-center justify-between bg-muted/10">
@@ -475,7 +322,6 @@ export default function AdminEventos() {
           {selectedEvent && (
             <ScrollArea className="flex-1">
               <div className="p-6 space-y-8">
-                {/* Cabeçalho do Evento no Drawer */}
                 <div className="flex items-start gap-4 p-4 rounded-2xl bg-muted/20 border border-border/50">
                   <div className={cn("p-3 rounded-xl border border-border/50", getEventConfig(selectedEvent.event_type).color.split(' ')[1])}>
                     {(() => {
@@ -491,7 +337,6 @@ export default function AdminEventos() {
                   </div>
                 </div>
 
-                {/* Seções de Informação */}
                 <div className="space-y-6">
                   <section className="space-y-3">
                     <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">Identificação</h3>
@@ -534,6 +379,7 @@ function InfoRow({ label, value, copyable }: { label: string; value: string; cop
             className="h-6 w-6 rounded-md hover:bg-muted"
             onClick={() => {
               navigator.clipboard.writeText(value);
+              toast.success("Copiado!");
             }}
           >
             <RefreshCw className="h-3 w-3 text-muted-foreground" />
@@ -543,4 +389,5 @@ function InfoRow({ label, value, copyable }: { label: string; value: string; cop
     </div>
   );
 }
+
 
