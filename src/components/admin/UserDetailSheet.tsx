@@ -56,7 +56,7 @@ export function UserDetailSheet({
         </div>
       )}
 
-      <SheetHeader className="pb-3 px-0 text-left">
+      <div className="pb-3 px-0 text-left">
         <div className="flex items-center gap-3">
           <Avatar className="h-12 w-12 md:h-14 md:w-14 shrink-0">
             <AvatarImage src={user.avatar_url || undefined} />
@@ -65,9 +65,9 @@ export function UserDetailSheet({
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <SheetTitle className="text-left text-base md:text-lg truncate">
+            <h2 className="text-left text-base md:text-lg truncate font-semibold">
               {user.nome || "Sem nome"}
-            </SheetTitle>
+            </h2>
             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
               <Badge variant="secondary" className={cn(
                 "text-[10px] md:text-xs",
