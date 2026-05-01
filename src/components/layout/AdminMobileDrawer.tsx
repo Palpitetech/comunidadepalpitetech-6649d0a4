@@ -24,6 +24,28 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
   const location = useLocation();
   const { data: badges } = useAdminBadges();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStart === null) return;
+    const currentTouch = e.targetTouches[0].clientX;
+    const diff = touchStart - currentTouch;
+
+    // Se arrastar mais de 60px para a esquerda, fecha o drawer
+    if (diff > 60) {
+      onClose();
+      setTouchStart(null);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setTouchStart(null);
+  };
+
 
   const initials = (profile?.nome || user?.email || "A")
     .split(" ")
@@ -88,7 +110,15 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
   return (
     <>
       <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <SheetContent side="left" className="p-0 w-[280px] flex flex-col border-r shadow-2xl">
+        <SheetContent 
+          side="left" 
+          className="p-0 w-[280px] flex flex-col border-r shadow-2xl focus:outline-none"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          aria-label="Menu de navegação"
+        >
+
           <SheetHeader className="p-4 border-b flex flex-row items-center justify-between space-y-0">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm">
