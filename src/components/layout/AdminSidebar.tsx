@@ -39,14 +39,16 @@ import {
   Zap,
   ArrowLeft,
   Settings,
+  ChevronsRight,
   type LucideIcon,
 } from "lucide-react";
 import { 
-  adminNavConfig, 
+  adminNavConfig as sections, 
   type NavItem, 
   type NavSection, 
   type BadgeKey 
 } from "@/config/adminNavConfig";
+
 
 
 // ---------- Badge ----------
