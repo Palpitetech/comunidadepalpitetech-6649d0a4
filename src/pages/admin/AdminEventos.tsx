@@ -6,14 +6,23 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Search, ChevronRight, ArrowLeft, Activity,
   UserPlus, ShoppingCart, QrCode, ChevronLeft,
   CreditCard, XCircle, AlertTriangle, Clock, Ban, X,
   RefreshCw, Mail, UserCheck, Wallet, RotateCcw, ShieldAlert, Inbox,
-  CheckCircle2, User, Calendar,
+  CheckCircle2, User, Calendar, Filter,
 } from "lucide-react";
+
 
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -251,43 +260,74 @@ export default function AdminEventos() {
       <div className="flex flex-col flex-1 min-h-0 bg-background">
         {/* ======= HEADER MINIMALISTA ======= */}
         <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
-          <div className="px-4 md:px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 max-w-7xl mx-auto w-full">
-            <h1 className="text-xl font-bold tracking-tight text-foreground">Eventos</h1>
-            
-            <div className="flex items-center gap-3 w-full md:max-w-md">
-              <div className="flex-1 relative group">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                <Input 
-                  placeholder="Buscar por email, tipo..." 
-                  value={search} 
-                  onChange={(e) => setSearch(e.target.value)} 
-                  className="pl-9 h-10 bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all" 
-                />
-                {search && (
-                  <button 
-                    onClick={() => setSearch("")} 
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          <div className="px-4 md:px-6 py-4 flex items-center justify-between gap-3 max-w-7xl mx-auto w-full">
+            <div className="flex-1 max-w-[240px] md:max-w-md relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <Input 
+                placeholder="Buscar..." 
+                value={search} 
+                onChange={(e) => setSearch(e.target.value)} 
+                className="pl-9 h-10 bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all" 
+              />
+              {search && (
+                <button 
+                  onClick={() => setSearch("")} 
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-10 w-10 rounded-xl border-border/50 bg-background hover:bg-muted/50 transition-all"
                   >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
+                    <Filter className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Filtrar Eventos</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {FILTER_TABS.map(({ key, label, icon: Icon }) => (
+                    <DropdownMenuItem 
+                      key={key} 
+                      onClick={() => setActiveFilter(key)}
+                      className={cn(activeFilter === key && "bg-accent")}
+                    >
+                      <Icon className="mr-2 h-4 w-4" />
+                      <span>{label}</span>
+                      {getFilterCount(key) > 0 && (
+                        <span className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground">
+                          {getFilterCount(key)}
+                        </span>
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               <Button 
                 variant="outline" 
                 size="icon" 
-                className="h-10 w-10 shrink-0 rounded-xl border-border/50 bg-background hover:bg-muted/50 transition-all"
+                className="h-10 w-10 rounded-xl border-border/50 bg-background hover:bg-muted/50 transition-all"
                 onClick={() => { fetchEvents(); fetchCounters(); }}
                 disabled={loading}
               >
                 <RefreshCw className={cn("h-4 w-4 text-muted-foreground", loading && "animate-spin")} />
               </Button>
             </div>
+
           </div>
 
 
-          {/* ======= FILTROS COMPACTOS ======= */}
-          <div className="px-4 md:px-6 pb-4 max-w-7xl mx-auto w-full">
+
+          {/* ======= FILTROS COMPACTOS (VISÍVEIS APENAS SE NECESSÁRIO) ======= */}
+          <div className="px-4 md:px-6 pb-4 max-w-7xl mx-auto w-full hidden md:block">
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
               {FILTER_TABS.map(({ key, label }) => {
                 const isActive = activeFilter === key;
@@ -317,6 +357,7 @@ export default function AdminEventos() {
               })}
             </div>
           </div>
+
         </div>
 
         {/* ======= CONTEÚDO PRINCIPAL (ULTRA COMPACTO) ======= */}
