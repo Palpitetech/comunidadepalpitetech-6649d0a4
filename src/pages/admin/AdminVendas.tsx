@@ -297,19 +297,24 @@ export default function AdminVendas() {
       </div>
 
       <Sheet open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
-        <SheetContent side="bottom" className="h-[92vh] rounded-t-2xl p-0 md:!inset-y-0 md:!right-0 md:!left-auto md:!bottom-auto md:!h-full md:!w-[480px] md:!max-w-lg md:rounded-none">
-          <div className="flex items-center justify-between p-4 pb-2 border-b border-border">
+        <SheetContent 
+          side="bottom" 
+          className="h-[100dvh] w-full p-0 flex flex-col border-none bg-white sm:max-w-full outline-none focus:ring-0 overflow-hidden"
+        >
+          <div className="flex items-center justify-between p-4 pb-4 border-b border-border bg-white sticky top-0 z-10">
             <SheetTitle className="text-base font-semibold">Detalhes da Venda</SheetTitle>
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setSelectedLog(null)}>
               <X className="h-4 w-4" />
             </Button>
           </div>
-          {selectedLog && (
-            <SaleDetail
-              saleKey={selectedLog.sale_id || selectedLog.checkout_id || selectedLog.id}
-              allLogs={logs}
-            />
-          )}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden bg-white">
+            {selectedLog && (
+              <SaleDetail
+                saleKey={selectedLog.sale_id || selectedLog.checkout_id || selectedLog.id}
+                allLogs={logs}
+              />
+            )}
+          </div>
         </SheetContent>
       </Sheet>
     </AdminLayout>
@@ -506,8 +511,8 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
   };
 
   return (
-    <ScrollArea className="h-[calc(100vh-80px)]">
-      <div className="p-4 space-y-5">
+    <div className="flex flex-col h-full">
+      <div className="p-4 space-y-5 pb-20">
         {/* Customer Info */}
         <div className="space-y-2">
           <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -546,8 +551,8 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
             <div className="flex justify-between"><span className="text-muted-foreground">Pagamento</span><span>{latest.payment_method || "—"}</span></div>
             {payment.brand && <div className="flex justify-between"><span className="text-muted-foreground">Bandeira</span><span className="capitalize">{payment.brand}</span></div>}
             {payment.installments && <div className="flex justify-between"><span className="text-muted-foreground">Parcelas</span><span>{payment.installments}x</span></div>}
-            <div className="flex justify-between"><span className="text-muted-foreground">Sale ID</span><span className="text-xs font-mono">{latest.sale_id || "—"}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Checkout ID</span><span className="text-xs font-mono">{latest.checkout_id || "—"}</span></div>
+            <div className="flex justify-between gap-4"><span className="text-muted-foreground shrink-0">Sale ID</span><span className="text-xs font-mono break-all text-right">{latest.sale_id || "—"}</span></div>
+            <div className="flex justify-between gap-4"><span className="text-muted-foreground shrink-0">Checkout ID</span><span className="text-xs font-mono break-all text-right">{latest.checkout_id || "—"}</span></div>
           </div>
         </div>
 
@@ -708,6 +713,6 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </ScrollArea>
+    </div>
   );
 }
