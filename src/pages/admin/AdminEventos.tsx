@@ -168,7 +168,9 @@ const PAGE_SIZE = 25;
 
 export default function AdminEventos() {
   const navigate = useNavigate();
+  const [isSearching, setIsSearching] = useState(false);
   const [events, setEvents] = useState<EventRow[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedEvent, setSelectedEvent] = useState<EventRow | null>(null);
