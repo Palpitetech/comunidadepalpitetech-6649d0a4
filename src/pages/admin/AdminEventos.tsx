@@ -303,6 +303,7 @@ export default function AdminEventos() {
         </div>
       </div>
 
+      <Sheet open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>
         <SheetContent 
           side="bottom" 
           className="h-screen w-full p-0 rounded-none border-none flex flex-col focus:ring-0 outline-none"
