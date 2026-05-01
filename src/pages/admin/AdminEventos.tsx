@@ -312,185 +312,112 @@ export default function AdminEventos() {
           </div>
         </div>
 
-        {/* ======= CONTEÚDO PRINCIPAL (MOBILE FIRST) ======= */}
-        <div className="flex-1 overflow-auto">
-          <div className="max-w-7xl mx-auto w-full px-4 md:px-6 py-6">
+        {/* ======= CONTEÚDO PRINCIPAL (ULTRA COMPACTO) ======= */}
+        <div className="flex-1 overflow-auto bg-background">
+          <div className="max-w-7xl mx-auto w-full">
             
             {loading && events.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-3">
-                <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
-                <p className="text-sm text-muted-foreground animate-pulse">Carregando eventos...</p>
+              <div className="flex flex-col items-center justify-center py-20 gap-2">
+                <Loader2 className="h-6 w-6 animate-spin text-primary/40" />
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Sincronizando logs...</p>
               </div>
             ) : (
-              <>
-                {/* LISTAGEM MOBILE (md:hidden) */}
-                <div className="md:hidden space-y-4">
-                  {events.map((ev) => {
-                    const config = getEventConfig(ev.event_type);
-                    const origin = getOriginLabel(ev);
-                    return (
-                      <button
-                        key={ev.id}
-                        onClick={() => setSelectedEvent(ev)}
-                        className="w-full flex items-start gap-4 p-4 rounded-2xl bg-background border border-border/50 hover:border-primary/20 hover:bg-muted/30 transition-all text-left group active:scale-[0.98]"
-                      >
-                        <div className={cn("p-2.5 rounded-xl border border-border/50 bg-muted/30 group-hover:bg-background transition-colors", config.color.split(' ')[1])}>
-                          <config.icon className="h-5 w-5" />
+              <div className="divide-y divide-border/40 border-b border-border/40">
+                {events.map((ev) => {
+                  const config = getEventConfig(ev.event_type);
+                  const origin = getOriginLabel(ev);
+                  
+                  return (
+                    <button
+                      key={ev.id}
+                      onClick={() => setSelectedEvent(ev)}
+                      className="w-full flex items-center justify-between gap-4 py-2.5 px-4 hover:bg-muted/30 active:bg-muted/50 transition-colors text-left group"
+                    >
+                      <div className="flex-1 min-w-0">
+                        {/* Linha 1: Nome/Email Principal + Tipo + Data */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-sm font-semibold text-foreground truncate max-w-[200px] sm:max-w-md">
+                            {renderUserCell(ev)}
+                          </span>
+                          <span className="text-muted-foreground/40 text-xs">•</span>
+                          <span className={cn("text-xs font-medium uppercase tracking-tight", config.color.split(' ')[1].replace('text-', 'text-'))}>
+                            {config.label}
+                          </span>
+                          <span className="text-muted-foreground/40 text-xs">•</span>
+                          <span className="text-[10px] font-medium text-muted-foreground/60 whitespace-nowrap">
+                            {format(new Date(ev.created_at), "HH:mm", { locale: ptBR })}
+                          </span>
                         </div>
-                        
-                        <div className="flex-1 min-w-0 space-y-2">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-sm font-semibold truncate text-foreground/90">
-                              {renderUserCell(ev)}
-                            </p>
-                            <ChevronRight className="h-4 w-4 text-muted-foreground/30" />
-                          </div>
-                          
-                          <div className="flex flex-wrap gap-2">
-                            <Badge variant="outline" className={cn("text-[10px] font-medium px-2 py-0 border-none capitalize", config.color)}>
-                              {config.label}
-                            </Badge>
-                            {!ev.user_id && (
-                              <Badge variant="outline" className={cn("text-[10px] font-medium px-2 py-0 border-none", origin.color)}>
+
+                        {/* Linha 2: Info Secundária + Origem */}
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[11px] text-muted-foreground/70 truncate italic">
+                            {getMetaSummary(ev)}
+                          </span>
+                          {!ev.user_id && (
+                            <>
+                              <span className="text-muted-foreground/30 text-[10px]">•</span>
+                              <span className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-tighter">
                                 {origin.label}
-                              </Badge>
-                            )}
-                          </div>
-
-                          <div className="flex items-center justify-between gap-2 pt-1">
-                            <p className="text-[11px] text-muted-foreground font-medium italic truncate">
-                              {getMetaSummary(ev)}
-                            </p>
-                            <p className="text-[10px] text-muted-foreground/60 whitespace-nowrap">
-                              {format(new Date(ev.created_at), "HH:mm", { locale: ptBR })}
-                            </p>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* LISTAGEM DESKTOP (hidden md:block) */}
-                <div className="hidden md:block bg-card rounded-2xl border border-border/50 overflow-hidden shadow-sm">
-                  <Table>
-                    <TableHeader className="bg-muted/30">
-                      <TableRow className="hover:bg-transparent">
-                        <TableHead className="w-12 pl-6"></TableHead>
-                        <TableHead className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground">Usuário / Lead</TableHead>
-                        <TableHead className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground">Evento & Status</TableHead>
-                        <TableHead className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground">Resumo</TableHead>
-                        <TableHead className="text-[11px] uppercase tracking-wider font-bold text-muted-foreground text-right pr-6">Data / Hora</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {events.map((ev) => {
-                        const config = getEventConfig(ev.event_type);
-                        const origin = getOriginLabel(ev);
-                        return (
-                          <TableRow 
-                            key={ev.id} 
-                            className="group cursor-pointer hover:bg-muted/40 transition-colors"
-                            onClick={() => setSelectedEvent(ev)}
-                          >
-                            <TableCell className="pl-6">
-                              <div className={cn("p-2 rounded-lg border border-border/50 bg-muted/20", config.color.split(' ')[1])}>
-                                <config.icon className="h-4 w-4" />
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex flex-col min-w-0">
-                                <span className="text-sm font-semibold text-foreground/90 truncate">
-                                  {renderUserCell(ev)}
-                                </span>
-                                <span className="text-[11px] text-muted-foreground truncate">
-                                  {renderEmailCell(ev)}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline" className={cn("text-[10px] font-medium px-2 py-0 border-none capitalize", config.color)}>
-                                  {config.label}
-                                </Badge>
-                                {!ev.user_id && (
-                                  <Badge variant="outline" className={cn("text-[10px] font-medium px-2 py-0 border-none", origin.color)}>
-                                    {origin.label}
-                                  </Badge>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <span className="text-[11px] text-muted-foreground font-medium italic">
-                                {getMetaSummary(ev)}
                               </span>
-                            </TableCell>
-                            <TableCell className="text-right pr-6">
-                              <div className="flex flex-col items-end">
-                                <span className="text-xs font-semibold text-foreground/80">
-                                  {format(new Date(ev.created_at), "dd/MM", { locale: ptBR })}
-                                </span>
-                                <span className="text-[10px] text-muted-foreground/60">
-                                  {format(new Date(ev.created_at), "HH:mm", { locale: ptBR })}
-                                </span>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Desktop Only: Data Simplificada à Direita */}
+                      <div className="hidden md:flex flex-col items-end shrink-0">
+                        <span className="text-[10px] font-bold text-muted-foreground/40 uppercase">
+                          {format(new Date(ev.created_at), "dd MMM", { locale: ptBR })}
+                        </span>
+                      </div>
+                      
+                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/20 group-hover:text-muted-foreground/40 transition-colors shrink-0" />
+                    </button>
+                  );
+                })}
 
                 {events.length === 0 && !loading && (
-                  <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
-                    <div className="p-4 rounded-full bg-muted/30">
-                      <Search className="h-8 w-8 text-muted-foreground/30" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground/80">Nenhum evento encontrado</p>
-                      <p className="text-xs text-muted-foreground">Tente ajustar sua busca ou filtros.</p>
-                    </div>
+                  <div className="flex flex-col items-center justify-center py-20 gap-2 text-center">
+                    <Search className="h-6 w-6 text-muted-foreground/20" />
+                    <p className="text-[11px] font-bold text-muted-foreground/50 uppercase tracking-widest">Nenhum log encontrado</p>
                   </div>
                 )}
+              </div>
+            )}
 
-                {/* ======= PAGINAÇÃO ======= */}
-                {totalPages > 1 && (
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-8 pt-4 border-t border-border/30">
-                    <p className="text-xs text-muted-foreground font-medium">
-                      Exibindo <span className="text-foreground">{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)}</span> de {totalCount.toLocaleString("pt-BR")}
-                    </p>
-                    <div className="flex items-center gap-1.5">
-                      <Button 
-                        variant="outline" 
-                        size="icon" 
-                        className="h-8 w-8 rounded-lg" 
-                        disabled={page === 0} 
-                        onClick={() => setPage((p) => p - 1)}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <div className="flex items-center gap-1 mx-2">
-                        <span className="text-xs font-bold text-foreground">{page + 1}</span>
-                        <span className="text-xs text-muted-foreground">/</span>
-                        <span className="text-xs text-muted-foreground">{totalPages}</span>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="icon" 
-                        className="h-8 w-8 rounded-lg" 
-                        disabled={page >= totalPages - 1} 
-                        onClick={() => setPage((p) => p + 1)}
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </>
+            {/* ======= PAGINAÇÃO ULTRA COMPACTA ======= */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between gap-4 px-4 py-3 bg-muted/5">
+                <p className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-tighter">
+                  {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} <span className="mx-1">/</span> {totalCount.toLocaleString("pt-BR")}
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7 hover:bg-muted" 
+                    disabled={page === 0} 
+                    onClick={() => setPage((p) => p - 1)}
+                  >
+                    <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                  <span className="text-[10px] font-bold w-8 text-center">{page + 1}</span>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7 hover:bg-muted" 
+                    disabled={page >= totalPages - 1} 
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
         </div>
+
       </div>
 
       {/* ======= DRAWER DE DETALHES (MINIMALISTA) ======= */}
