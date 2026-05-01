@@ -253,6 +253,26 @@ export default function AdminEventos() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const loadPlanMappings = async () => {
+      const { data } = await supabase
+        .from("kirvano_offer_plan_map")
+        .select("offer_id, plans!inner(name, checkout_link)")
+        .eq("is_active", true);
+      if (data) {
+        const map: Record<string, { planName: string; checkoutLink: string | null }> = {};
+        for (const row of data as any[]) {
+          map[row.offer_id] = {
+            planName: row.plans?.name || "—",
+            checkoutLink: row.plans?.checkout_link || null,
+          };
+        }
+        setPlanMap(map);
+      }
+    };
+    loadPlanMappings();
+  }, []);
+
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
   useEffect(() => { fetchCounters(); }, [fetchCounters]);
   useEffect(() => { setPage(0); }, [activeFilter, search]);
