@@ -85,11 +85,15 @@ export function AdminCommandPalette({ open, onOpenChange }: AdminCommandPaletteP
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Ignora atalhos de teclado em dispositivos móveis (largura < 768px)
+      if (window.innerWidth < 768) return;
+
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         onOpenChange(!open);
       }
     };
+
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onOpenChange]);

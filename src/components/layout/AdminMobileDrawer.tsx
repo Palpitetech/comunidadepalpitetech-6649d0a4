@@ -65,6 +65,17 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
     navigate(url);
   };
 
+  const handleSearchClick = () => {
+    onClose();
+    setSearchOpen(true);
+  };
+
+  const handleGoBackApp = () => {
+    onClose();
+    navigate("/");
+  };
+
+
   const NavBadge = ({ count, tone = "info" }: { count: number; tone?: "danger" | "info" }) => {
     if (!count) return null;
     return (
@@ -141,13 +152,14 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
           {/* Search Trigger */}
           <div className="px-4 py-3">
             <button
-              onClick={() => setSearchOpen(true)}
+              onClick={handleSearchClick}
               className="flex w-full items-center gap-2 rounded-md border border-input bg-background/50 px-3 py-2 text-sm text-muted-foreground hover:bg-accent transition-colors"
             >
               <Search className="h-4 w-4" />
               <span>Buscar página...</span>
             </button>
           </div>
+
 
           <div className="flex-1 overflow-hidden relative">
             <div 
@@ -243,14 +255,12 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
             <Button 
               variant="outline" 
               className="w-full justify-start gap-2 h-9 text-xs" 
-              onClick={() => {
-                onClose();
-                navigate("/");
-              }}
+              onClick={handleGoBackApp}
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               Voltar ao app
             </Button>
+
           </div>
         </SheetContent>
       </Sheet>
