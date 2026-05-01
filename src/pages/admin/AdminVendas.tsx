@@ -555,8 +555,8 @@ function SaleDetail({ saleKey, allLogs }: { saleKey: string; allLogs: WebhookLog
             <div className="flex justify-between"><span className="text-muted-foreground">Pagamento</span><span>{latest.payment_method || "—"}</span></div>
             {payment.brand && <div className="flex justify-between"><span className="text-muted-foreground">Bandeira</span><span className="capitalize">{payment.brand}</span></div>}
             {payment.installments && <div className="flex justify-between"><span className="text-muted-foreground">Parcelas</span><span>{payment.installments}x</span></div>}
-            <div className="flex justify-between"><span className="text-muted-foreground">Sale ID</span><span className="text-xs font-mono">{latest.sale_id || "—"}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Checkout ID</span><span className="text-xs font-mono">{latest.checkout_id || "—"}</span></div>
+            <div className="flex justify-between items-center"><span className="text-muted-foreground">Sale ID</span><div className="max-w-[180px]"><CopyableField label="Sale ID" value={latest.sale_id || "—"} /></div></div>
+            <div className="flex justify-between items-center"><span className="text-muted-foreground">Checkout ID</span><div className="max-w-[180px]"><CopyableField label="Checkout ID" value={latest.checkout_id || "—"} /></div></div>
           </div>
         </div>
 
