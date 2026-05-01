@@ -12,7 +12,9 @@ import {
   UserPlus, ShoppingCart, QrCode, ChevronLeft,
   CreditCard, XCircle, AlertTriangle, Clock, Ban, X,
   RefreshCw, Mail, UserCheck, Wallet, RotateCcw, ShieldAlert, Inbox,
+  CheckCircle2, User, Calendar,
 } from "lucide-react";
+
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
@@ -67,39 +69,43 @@ const FILTER_TABS: { key: FilterTab; label: string; icon: typeof Activity; types
 
 const EVENT_TYPE_CONFIG: Record<string, { label: string; icon: typeof Activity; color: string }> = {
   // Leads
-  lead_inbox_capturado: { label: "Lead Capturado", icon: Inbox, color: "bg-sky-500/10 text-sky-700 border-sky-200/50" },
-  lead_inbox_promovido: { label: "Lead Promovido", icon: UserCheck, color: "bg-sky-500/10 text-sky-700 border-sky-200/50" },
-  email_pendente_criado: { label: "Email Pendente", icon: Mail, color: "bg-sky-500/10 text-sky-700 border-sky-200/50" },
-  lead_email_confirmado: { label: "Email Confirmado", icon: Mail, color: "bg-sky-500/10 text-sky-700 border-sky-200/50" },
-  lead_recebido_pendente: { label: "Lead Pendente", icon: Inbox, color: "bg-sky-500/10 text-sky-700 border-sky-200/50" },
+  lead_inbox_capturado: { label: "Confirmado", icon: CheckCircle2, color: "bg-green-500/10 text-green-700 border-green-200/50" },
+  lead_inbox_promovido: { label: "Confirmado", icon: CheckCircle2, color: "bg-green-500/10 text-green-700 border-green-200/50" },
+  email_pendente_criado: { label: "Pendente", icon: Clock, color: "bg-yellow-500/10 text-yellow-700 border-yellow-200/50" },
+  lead_email_confirmado: { label: "Confirmado", icon: CheckCircle2, color: "bg-green-500/10 text-green-700 border-green-200/50" },
+  lead_recebido_pendente: { label: "Pendente", icon: Clock, color: "bg-yellow-500/10 text-yellow-700 border-yellow-200/50" },
 
   // Cadastros
-  novo_cadastro: { label: "Novo Cadastro", icon: UserPlus, color: "bg-blue-500/10 text-blue-700 border-blue-200/50" },
+  novo_cadastro: { label: "Cadastrado", icon: User, color: "bg-blue-500/10 text-blue-700 border-blue-200/50" },
 
   // PIX / Boleto / Carrinho
-  pix_gerado: { label: "PIX Gerado", icon: QrCode, color: "bg-yellow-500/10 text-yellow-700 border-yellow-200/50" },
-  pix_expirado: { label: "PIX Expirado", icon: Clock, color: "bg-muted/50 text-muted-foreground border-border/50" },
+  pix_gerado: { label: "PIX Gerado", icon: QrCode, color: "bg-green-500/10 text-green-700 border-green-200/50" },
+  pix_expirado: { label: "Expirado", icon: Clock, color: "bg-muted/50 text-muted-foreground border-border/50" },
   boleto_gerado: { label: "Boleto Gerado", icon: CreditCard, color: "bg-yellow-500/10 text-yellow-700 border-yellow-200/50" },
   boleto_expirado: { label: "Boleto Expirado", icon: Clock, color: "bg-muted/50 text-muted-foreground border-border/50" },
-  carrinho_abandonado: { label: "Carrinho Abandonado", icon: Ban, color: "bg-muted/50 text-muted-foreground border-border/50" },
-  checkout_abandonado: { label: "Checkout Abandonado", icon: Ban, color: "bg-muted/50 text-muted-foreground border-border/50" },
+  carrinho_abandonado: { label: "Abandono", icon: Ban, color: "bg-orange-500/10 text-orange-700 border-orange-200/50" },
+  checkout_abandonado: { label: "Abandono", icon: Ban, color: "bg-orange-500/10 text-orange-700 border-orange-200/50" },
 
   // Vendas
-  compra_aprovada: { label: "Compra Aprovada", icon: ShoppingCart, color: "bg-green-500/10 text-green-700 border-green-200/50" },
-  sale_confirmed: { label: "Venda Confirmada", icon: Wallet, color: "bg-green-500/10 text-green-700 border-green-200/50" },
-  assinatura_renovada: { label: "Assinatura Renovada", icon: RotateCcw, color: "bg-green-500/10 text-green-700 border-green-200/50" },
-  compra_reembolsada: { label: "Reembolso", icon: RotateCcw, color: "bg-red-500/10 text-red-700 border-red-200/50" },
-  compra_chargeback: { label: "Chargeback", icon: ShieldAlert, color: "bg-red-500/10 text-red-700 border-red-200/50" },
-  compra_recusada: { label: "Compra Recusada", icon: XCircle, color: "bg-red-500/10 text-red-700 border-red-200/50" },
+  compra_aprovada: { label: "Confirmado", icon: CheckCircle2, color: "bg-green-500/10 text-green-700 border-green-200/50" },
+  sale_confirmed: { label: "Venda", icon: ShoppingCart, color: "bg-green-500/10 text-green-700 border-green-200/50" },
+  assinatura_renovada: { label: "Renovado", icon: RotateCcw, color: "bg-green-500/10 text-green-700 border-green-200/50" },
+  compra_reembolsada: { label: "Cancelado", icon: XCircle, color: "bg-red-500/10 text-red-700 border-red-200/50" },
+  compra_chargeback: { label: "Cancelado", icon: XCircle, color: "bg-red-500/10 text-red-700 border-red-200/50" },
+  compra_recusada: { label: "Cancelado", icon: XCircle, color: "bg-red-500/10 text-red-700 border-red-200/50" },
+
 
   // Cancelamentos
-  assinatura_cancelada: { label: "Cancelada", icon: XCircle, color: "bg-red-500/10 text-red-700 border-red-200/50" },
-  assinatura_expirada: { label: "Expirada", icon: Clock, color: "bg-muted/50 text-muted-foreground border-border/50" },
-  assinatura_inadimplente: { label: "Inadimplente", icon: AlertTriangle, color: "bg-orange-500/10 text-orange-700 border-orange-200/50" },
+  assinatura_cancelada: { label: "Cancelado", icon: XCircle, color: "bg-red-500/10 text-red-700 border-red-200/50" },
+  assinatura_expirada: { label: "Cancelado", icon: XCircle, color: "bg-red-500/10 text-red-700 border-red-200/50" },
+  assinatura_inadimplente: { label: "Pendente", icon: Clock, color: "bg-yellow-500/10 text-yellow-700 border-yellow-200/50" },
 
   // Sistema
-  trial_revertido_bug: { label: "Trial Revertido", icon: ShieldAlert, color: "bg-muted/50 text-muted-foreground border-border/50" },
+  trial_revertido_bug: { label: "Cancelado", icon: XCircle, color: "bg-muted/50 text-muted-foreground border-border/50" },
+  agendado: { label: "Agendado", icon: Calendar, color: "bg-purple-500/10 text-purple-700 border-purple-200/50" },
 };
+
+
 
 
 function getEventConfig(type: string) {
@@ -245,32 +251,32 @@ export default function AdminEventos() {
       <div className="flex flex-col flex-1 min-h-0 bg-background">
         {/* ======= HEADER MINIMALISTA ======= */}
         <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border/50">
-          <div className="px-4 md:px-6 py-4 flex items-center justify-between gap-4 max-w-7xl mx-auto w-full">
-            <h1 className="text-xl font-bold tracking-tight hidden md:block">Eventos</h1>
+          <div className="px-4 md:px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 max-w-7xl mx-auto w-full">
+            <h1 className="text-xl font-bold tracking-tight text-foreground">Eventos</h1>
             
-            <div className="flex-1 max-w-md relative group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              <Input 
-                placeholder="Buscar por email, tipo..." 
-                value={search} 
-                onChange={(e) => setSearch(e.target.value)} 
-                className="pl-9 h-10 bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all" 
-              />
-              {search && (
-                <button 
-                  onClick={() => setSearch("")} 
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
+            <div className="flex items-center gap-3 w-full md:max-w-md">
+              <div className="flex-1 relative group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <Input 
+                  placeholder="Buscar por email, tipo..." 
+                  value={search} 
+                  onChange={(e) => setSearch(e.target.value)} 
+                  className="pl-9 h-10 bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-primary/20 transition-all" 
+                />
+                {search && (
+                  <button 
+                    onClick={() => setSearch("")} 
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
 
-            <div className="flex items-center gap-2">
               <Button 
                 variant="outline" 
                 size="icon" 
-                className="h-10 w-10 rounded-xl border-border/50 bg-background hover:bg-muted/50 transition-all"
+                className="h-10 w-10 shrink-0 rounded-xl border-border/50 bg-background hover:bg-muted/50 transition-all"
                 onClick={() => { fetchEvents(); fetchCounters(); }}
                 disabled={loading}
               >
@@ -278,6 +284,7 @@ export default function AdminEventos() {
               </Button>
             </div>
           </div>
+
 
           {/* ======= FILTROS COMPACTOS ======= */}
           <div className="px-4 md:px-6 pb-4 max-w-7xl mx-auto w-full">
@@ -326,6 +333,7 @@ export default function AdminEventos() {
                 {events.map((ev) => {
                   const config = getEventConfig(ev.event_type);
                   const origin = getOriginLabel(ev);
+                  const StatusIcon = config.icon;
                   
                   return (
                     <button
@@ -333,37 +341,56 @@ export default function AdminEventos() {
                       onClick={() => setSelectedEvent(ev)}
                       className="w-full flex items-center justify-between gap-3 py-2 px-3 hover:bg-muted/30 active:bg-muted/50 transition-colors text-left group"
                     >
-                      <div className="flex-1 min-w-0">
-                        {/* Linha 1: Nome - Tipo · Hora */}
-                        <div className="flex items-center gap-1 leading-tight">
-                          <span className="text-sm font-medium text-foreground truncate max-w-[180px] sm:max-w-md">
-                            {renderUserCell(ev)}
-                          </span>
-                          <span className="text-muted-foreground/60 text-sm">-</span>
-                          <span className={cn("text-sm font-medium", config.color.split(' ')[1].replace('text-', 'text-'))}>
-                            {config.label}
-                          </span>
-                          <span className="text-muted-foreground/60 text-sm ml-1">·</span>
-                          <span className="text-[11px] font-medium text-muted-foreground/50 ml-0.5">
-                            {format(new Date(ev.created_at), "HH:mm", { locale: ptBR })}
-                          </span>
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        {/* Ícone à Esquerda */}
+                        <div className="flex-shrink-0">
+                          {ev.event_type === "pix_gerado" ? (
+                            <QrCode className="h-4 w-4 text-muted-foreground/60" />
+                          ) : (
+                            <Ban className="h-4 w-4 text-muted-foreground/60" />
+                          )}
                         </div>
 
-                        {/* Linha 2: Info Secundária */}
-                        <div className="flex items-center gap-1.5 mt-0.5 leading-tight">
-                          <span className="text-xs text-muted-foreground truncate">
-                            {renderEmailCell(ev) !== renderUserCell(ev) ? `${renderEmailCell(ev)} • ` : ""}
-                            {getMetaSummary(ev)}
-                            {!ev.user_id && ` • ${origin.label}`}
-                          </span>
+                        <div className="flex-1 min-w-0">
+                          {/* Linha 1: Nome ou Email */}
+                          <div className="flex items-center gap-1.5 leading-tight">
+                            <span className="text-sm font-semibold text-foreground truncate max-w-[180px] sm:max-w-md">
+                              {renderUserCell(ev)}
+                            </span>
+                          </div>
+
+                          {/* Linha 2: Email Secundário / Metadados / Origem */}
+                          <div className="flex items-center gap-1.5 mt-0.5 leading-tight">
+                            <span className="text-[11px] text-muted-foreground/70 truncate">
+                              {renderEmailCell(ev) !== renderUserCell(ev) ? `${renderEmailCell(ev)} • ` : ""}
+                              {getMetaSummary(ev)}
+                              {!ev.user_id && ` • ${origin.label}`}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
-                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/20 group-hover:text-muted-foreground/40 transition-colors shrink-0" />
-                    </button>
+                      {/* Status Badge + Hora + Chevron */}
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <div className={cn(
+                          "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight border",
+                          config.color
+                        )}>
+                          <StatusIcon className="h-3 w-3" />
+                          {config.label}
+                        </div>
+                        
+                        <span className="text-[10px] font-medium text-muted-foreground/50 whitespace-nowrap">
+                          {format(new Date(ev.created_at), "HH:mm", { locale: ptBR })}
+                        </span>
 
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/20 group-hover:text-muted-foreground/40 transition-colors" />
+                      </div>
+                    </button>
                   );
                 })}
+
+
 
                 {events.length === 0 && !loading && (
                   <div className="flex flex-col items-center justify-center py-20 gap-2 text-center">
