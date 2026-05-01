@@ -39,9 +39,10 @@ export function AdminLayout({ children, pageTitle, headerRightContent }: AdminLa
           </header>
 
           {/* Content */}
-          <main className={cn("flex-1 overflow-auto pb-20 md:pb-0")}>
+          <main className={cn("flex-1 overflow-auto pb-20 md:pb-0 landscape:pb-16")}>
             {children}
           </main>
+
         </div>
 
         {/* Mobile Components */}
