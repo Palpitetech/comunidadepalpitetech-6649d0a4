@@ -110,7 +110,15 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
   return (
     <>
       <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <SheetContent side="left" className="p-0 w-[280px] flex flex-col border-r shadow-2xl">
+        <SheetContent 
+          side="left" 
+          className="p-0 w-[280px] flex flex-col border-r shadow-2xl focus:outline-none"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          aria-label="Menu de navegação"
+        >
+
           <SheetHeader className="p-4 border-b flex flex-row items-center justify-between space-y-0">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-sm">
