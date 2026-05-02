@@ -599,6 +599,201 @@ export type Database = {
         }
         Relationships: []
       }
+      campaign_cancel_rules: {
+        Row: {
+          campaign_id: string
+          cancel_on_any_purchase: boolean
+          cancel_on_event: string | null
+          cancel_on_tag_added: string | null
+          cancel_on_tag_removed: string | null
+          created_at: string
+          id: string
+          label: string
+        }
+        Insert: {
+          campaign_id: string
+          cancel_on_any_purchase?: boolean
+          cancel_on_event?: string | null
+          cancel_on_tag_added?: string | null
+          cancel_on_tag_removed?: string | null
+          created_at?: string
+          id?: string
+          label?: string
+        }
+        Update: {
+          campaign_id?: string
+          cancel_on_any_purchase?: boolean
+          cancel_on_event?: string | null
+          cancel_on_tag_added?: string | null
+          cancel_on_tag_removed?: string | null
+          created_at?: string
+          id?: string
+          label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_cancel_rules_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_triggers: {
+        Row: {
+          audience_event_type: string | null
+          audience_exclude_tags: string[] | null
+          audience_include_tags: string[] | null
+          audience_window_days: number | null
+          campaign_id: string
+          created_at: string
+          event_type: string | null
+          exclude_tags: string[] | null
+          id: string
+          include_tags: string[] | null
+          ltv_days: number | null
+          tag_operator: Database["public"]["Enums"]["tag_match_operator"] | null
+        }
+        Insert: {
+          audience_event_type?: string | null
+          audience_exclude_tags?: string[] | null
+          audience_include_tags?: string[] | null
+          audience_window_days?: number | null
+          campaign_id: string
+          created_at?: string
+          event_type?: string | null
+          exclude_tags?: string[] | null
+          id?: string
+          include_tags?: string[] | null
+          ltv_days?: number | null
+          tag_operator?:
+            | Database["public"]["Enums"]["tag_match_operator"]
+            | null
+        }
+        Update: {
+          audience_event_type?: string | null
+          audience_exclude_tags?: string[] | null
+          audience_include_tags?: string[] | null
+          audience_window_days?: number | null
+          campaign_id?: string
+          created_at?: string
+          event_type?: string | null
+          exclude_tags?: string[] | null
+          id?: string
+          include_tags?: string[] | null
+          ltv_days?: number | null
+          tag_operator?:
+            | Database["public"]["Enums"]["tag_match_operator"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_triggers_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: true
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_variants: {
+        Row: {
+          campaign_id: string
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_used_at: string | null
+          position: number
+          times_used: number
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          position?: number
+          times_used?: number
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          position?: number
+          times_used?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_variants_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          created_at: string
+          delay_enabled: boolean
+          delay_minutes: number | null
+          description: string | null
+          id: string
+          is_active: boolean
+          legacy_template_id: string | null
+          name: string
+          product_id: string | null
+          trigger_type: Database["public"]["Enums"]["campaign_trigger_type"]
+          type: Database["public"]["Enums"]["campaign_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          delay_enabled?: boolean
+          delay_minutes?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          legacy_template_id?: string | null
+          name: string
+          product_id?: string | null
+          trigger_type: Database["public"]["Enums"]["campaign_trigger_type"]
+          type: Database["public"]["Enums"]["campaign_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          delay_enabled?: boolean
+          delay_minutes?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          legacy_template_id?: string | null
+          name?: string
+          product_id?: string | null
+          trigger_type?: Database["public"]["Enums"]["campaign_trigger_type"]
+          type?: Database["public"]["Enums"]["campaign_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_legacy_template_id_fkey"
+            columns: ["legacy_template_id"]
+            isOneToOne: false
+            referencedRelation: "message_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       carteira_movimentacoes: {
         Row: {
           bolao_id: string | null
@@ -1800,10 +1995,15 @@ export type Database = {
       }
       message_queue: {
         Row: {
+          campaign_id: string | null
+          campaign_variant_id: string | null
+          cancel_reason: string | null
+          cancelled_at: string | null
           created_at: string | null
           error_message: string | null
           id: string
           instance_id: string | null
+          lead_id: string | null
           priority: number
           recipient_name: string | null
           recipient_phone: string
@@ -1816,10 +2016,15 @@ export type Database = {
           variant_id: string | null
         }
         Insert: {
+          campaign_id?: string | null
+          campaign_variant_id?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string | null
           error_message?: string | null
           id?: string
           instance_id?: string | null
+          lead_id?: string | null
           priority?: number
           recipient_name?: string | null
           recipient_phone: string
@@ -1832,10 +2037,15 @@ export type Database = {
           variant_id?: string | null
         }
         Update: {
+          campaign_id?: string | null
+          campaign_variant_id?: string | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string | null
           error_message?: string | null
           id?: string
           instance_id?: string | null
+          lead_id?: string | null
           priority?: number
           recipient_name?: string | null
           recipient_phone?: string
@@ -1849,10 +2059,45 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "message_queue_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_queue_campaign_variant_id_fkey"
+            columns: ["campaign_variant_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_variants"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "message_queue_instance_id_fkey"
             columns: ["instance_id"]
             isOneToOne: false
             referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_queue_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "perfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_queue_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_publicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_queue_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios_notificaveis_hoje"
             referencedColumns: ["id"]
           },
           {
@@ -3964,6 +4209,9 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "premium" | "moderator" | "admin"
+      campaign_trigger_type: "evento" | "tag" | "publico" | "ltv"
+      campaign_type: "transacional" | "recuperacao" | "ltv" | "publico"
+      tag_match_operator: "any" | "all" | "none" | "not"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4092,6 +4340,9 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "premium", "moderator", "admin"],
+      campaign_trigger_type: ["evento", "tag", "publico", "ltv"],
+      campaign_type: ["transacional", "recuperacao", "ltv", "publico"],
+      tag_match_operator: ["any", "all", "none", "not"],
     },
   },
 } as const
