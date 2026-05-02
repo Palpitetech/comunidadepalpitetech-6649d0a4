@@ -143,6 +143,10 @@ function getMetaSummary(ev: EventRow): string {
   if (t.startsWith("lead_") || t === "email_pendente_criado") {
     return m.webhook_name || m.pagina_origem || m.source || "—";
   }
+  if (t === "smart_link_click") {
+    return `${m.slug}${m.group_name ? ` (${m.group_name})` : ""}`;
+  }
+
   if (m.email) return m.email;
   return "—";
 }
