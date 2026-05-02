@@ -108,7 +108,7 @@ function formatDelay(minutes: number): string {
 
 // Event labels: usar helper compartilhado em src/lib/whatsapp-event-labels.ts
 
-const VARIABLES = ["{{nome}}", "{{telefone}}", "{{email}}", "{{produto}}"];
+const VARIABLES = ["{{nome}}", "{{telefone}}", "{{email}}", "{{produto}}", "{{link_atendimento}}", "{{valor}}"];
 const TEST_PHONE = "5516997175392";
 
 export function TemplatesTab() {
