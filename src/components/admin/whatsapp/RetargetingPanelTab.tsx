@@ -98,7 +98,7 @@ export function RetargetingPanelTab() {
     }
 
     if (!autoRes.error && autoRes.data) {
-      setAutomations(autoRes.data as AutomationSummary[]);
+      setAutomations(autoRes.data as unknown as AutomationSummary[]);
     }
 
     setLoading(false);
