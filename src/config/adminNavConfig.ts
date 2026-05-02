@@ -26,9 +26,11 @@ import {
   BarChart2,
   Plug,
   Database,
+  RefreshCw,
   Settings,
   type LucideIcon,
 } from "lucide-react";
+
 
 
 export type BadgeKey = "usuarios" | "pagamentos" | "resgates" | "chat";
