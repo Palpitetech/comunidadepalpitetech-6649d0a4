@@ -49,6 +49,7 @@ interface MessageTemplate {
   content: string;
   event_trigger: string;
   category: "transactional" | "marketing";
+  type: "single" | "sequence" | "random"; // Added for Phase 1
   created_at: string;
   is_active?: boolean;
   delay_enabled?: boolean;
@@ -71,6 +72,7 @@ interface FormData {
   content: string;
   event_trigger: string;
   category: "transactional" | "marketing";
+  type: "single" | "sequence" | "random";
   delay_enabled: boolean;
   delay_minutes: number;
   include_tags: string[];
@@ -84,6 +86,7 @@ interface FormData {
 const emptyForm: FormData = {
   name: "", content: "", event_trigger: "manual",
   category: "marketing",
+  type: "single",
   delay_enabled: false, delay_minutes: 0,
   include_tags: [], exclude_tags: [],
   exclude_tags_recent: [], exclude_recent_window_hours: 24,
@@ -222,6 +225,7 @@ export function TemplatesTab() {
       content: t.content,
       event_trigger: t.event_trigger,
       category: t.category ?? "marketing",
+      type: t.type ?? "single",
       delay_enabled: t.delay_enabled ?? false,
       delay_minutes: t.delay_minutes ?? 0,
       include_tags: t.include_tags ?? [],
@@ -297,6 +301,7 @@ export function TemplatesTab() {
         content: mainContent,
         event_trigger: form.event_trigger,
         category: form.category,
+        type: form.type,
         delay_enabled: form.delay_enabled,
         delay_minutes: form.delay_enabled ? form.delay_minutes : 0,
         include_tags: form.category === "marketing" ? form.include_tags : [],
