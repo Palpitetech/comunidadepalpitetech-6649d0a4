@@ -52,6 +52,7 @@ import {
   type NavSection, 
   type BadgeKey 
 } from "@/config/adminNavConfig";
+import { AppVersion } from "./AppVersion";
 
 
 
