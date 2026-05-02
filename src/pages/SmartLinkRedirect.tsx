@@ -95,7 +95,9 @@ export default function SmartLinkRedirect() {
             </svg>
           </div>
           {groupName && (
-            <h1 className="text-lg font-semibold text-foreground">{groupName}</h1>
+            <h1 className="text-lg font-semibold text-foreground">
+              {redirectType === 'checkout' ? `Redirecionando para: ${groupName}` : groupName}
+            </h1>
           )}
         </div>
 
