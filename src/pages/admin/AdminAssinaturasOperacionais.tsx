@@ -252,7 +252,7 @@ export default function AdminAssinaturasOperacionais() {
   };
 
   return (
-    <AdminLayout>
+    <AdminLayout pageTitle="Assinaturas Op.">
       <div className="container-senior py-6 space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="hidden md:block">
