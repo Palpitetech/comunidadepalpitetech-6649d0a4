@@ -48,6 +48,7 @@ interface CommunicationHeaderSelectorProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   showMetrics: boolean;
+  activeTab: string;
   onToggleMetrics: (show: boolean) => void;
 }
 
