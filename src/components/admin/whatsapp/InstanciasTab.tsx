@@ -827,10 +827,10 @@ export function InstanciasTab() {
           </Dialog>
         </div>
       </div>
-
-
-
+      {/* QR Code Dialog */}
+      <Dialog
         open={qrDialogOpen}
+
         onOpenChange={(open) => {
           if (!open && qrPhase !== "connected") {
             handleCancelQr();
