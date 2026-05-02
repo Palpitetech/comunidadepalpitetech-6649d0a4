@@ -637,495 +637,128 @@ export function InstanciasTab() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      {/* Legacy metrics removed - centralized in CommunicationQuickMetrics via Header */}
+    <UnifiedLayout>
+      <UnifiedToolbar
+        left={
+          <ActionButton
+            label="Nova Instância"
+            icon={Plus}
+            onClick={openCreate}
+            variant="default"
+          />
+        }
+        right={
+          <ActionButton
+            label="Sincronizar"
+            icon={RefreshCw}
+            onClick={fetchInstances}
+            loading={syncing}
+          />
+        }
+      />
 
-      {/* Header - Ações principais unificadas */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          <div className="relative w-full sm:flex-1">
-            <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Filtrar instâncias..."
-              className="pl-9 h-11 sm:h-10 rounded-xl bg-card border-border/60"
-            />
-          </div>
-          
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="flex-1 sm:flex-none gap-2 h-11 sm:h-10 rounded-xl border-border/60 text-xs">
-                  <Replace className="h-4 w-4" />
-                  <span>Mudar Foto</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Mudar Foto de Perfil</DialogTitle>
-                </DialogHeader>
-                <div className="pt-4 max-h-[70vh] overflow-y-auto pr-2">
-                  <ProfilePictureCard />
-                </div>
-              </DialogContent>
-            </Dialog>
-
-            <Button 
-              variant="outline" 
-              onClick={handleSyncFromEvolution} 
-              disabled={syncing}
-              className="flex-1 sm:flex-none gap-2 h-11 sm:h-10 rounded-xl border-border/60 text-xs"
-            >
-              {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              <span>Buscar</span>
-            </Button>
-            
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={openCreate} className="flex-1 sm:flex-none gap-2 h-11 sm:h-10 rounded-xl shadow-lg shadow-primary/20 text-xs">
-                  <Plus className="h-4 w-4" />
-                  <span>Nova</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>{editingId ? "Editar Instância" : "Nova Instância"}</DialogTitle>
-                </DialogHeader>
-
-                {!editingId ? (
-                  /* === Modo CRIAÇÃO: 1 campo, gera QR automático === */
-                  <div className="space-y-4 pt-2">
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="apelido">Apelido *</Label>
-                    <Input
-                      id="apelido"
-                      placeholder="Ex: Tablet Sala"
-                      value={createApelido}
-                      onChange={(e) => setCreateApelido(e.target.value)}
-                      maxLength={100}
-                      autoFocus
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && createApelido.trim()) {
-                          e.preventDefault();
-                          handleCreateSubmit();
-                        }
-                      }}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Este será o nome interno e o identificador na Evolution. Telefone e configurações serão preenchidos automaticamente após conectar.
-                    </p>
-                  </div>
-                  <Button className="w-full" onClick={handleCreateSubmit} disabled={!createApelido.trim()}>
-                    <QrCode className="h-4 w-4 mr-2" />
-                    Criar e gerar QR Code
-                  </Button>
-                </div>
-              ) : (
-                /* === Modo EDIÇÃO: campos completos === */
-                <div className="space-y-4 pt-2">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="name">Apelido *</Label>
-                    <Input id="name" placeholder="Ex: Chip Principal" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} maxLength={100} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="friendly_name">Nome de amigo *</Label>
-                    <Input id="friendly_name" placeholder="Ex: Carlos" value={form.friendly_name} onChange={(e) => setForm((f) => ({ ...f, friendly_name: e.target.value }))} maxLength={100} />
-                    <p className="text-xs text-muted-foreground">Este nome será usado nas conversas de aquecimento</p>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="phone_number">Número de telefone *</Label>
-                    <Input id="phone_number" placeholder="5511999999999" value={form.phone_number} onChange={(e) => setForm((f) => ({ ...f, phone_number: e.target.value }))} maxLength={20} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="evolution_id">ID na Evolution (gerado automaticamente)</Label>
-                    <Input id="evolution_id" value={form.evolution_instance_id} readOnly disabled className="font-mono text-xs bg-muted" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="daily_limit">Limite diário de mensagens *</Label>
-                    <Input id="daily_limit" type="number" min={1} value={form.daily_limit} onChange={(e) => setForm((f) => ({ ...f, daily_limit: parseInt(e.target.value) || 1 }))} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Fila de descanso (minutos) — ciclo rotativo</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Após cada envio, a instância descansa pelo tempo atual e avança para o próximo. Máximo 10 tempos.
-                    </p>
-                    <div className="flex flex-wrap gap-2 items-center">
-                      {form.cooldown_queue.map((val, idx) => (
-                        <div key={idx} className="flex items-center gap-1">
-                          <Input
-                            type="number"
-                            min={1}
-                            max={60}
-                            className="w-16 h-8 text-xs text-center"
-                            value={val}
-                            onChange={(e) => {
-                              const newQueue = [...form.cooldown_queue];
-                              newQueue[idx] = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
-                              setForm((f) => ({ ...f, cooldown_queue: newQueue }));
-                            }}
-                          />
-                          {form.cooldown_queue.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 text-destructive hover:text-destructive"
-                              onClick={() => {
-                                const newQueue = form.cooldown_queue.filter((_, i) => i !== idx);
-                                setForm((f) => ({ ...f, cooldown_queue: newQueue }));
-                              }}
-                            >
-                              ×
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                      {form.cooldown_queue.length < 10 && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-8 text-xs"
-                          onClick={() => setForm((f) => ({ ...f, cooldown_queue: [...f.cooldown_queue, 3] }))}
-                        >
-                          <Plus className="h-3 w-3 mr-1" /> Adicionar
-                        </Button>
-                      )}
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        className="h-8 text-xs"
-                        onClick={() => {
-                          const randomQueue = Array.from({ length: 10 }, () => Math.floor(Math.random() * 15) + 1);
-                          setForm((f) => ({ ...f, cooldown_queue: randomQueue }));
-                        }}
-                        title="Preenche os 10 slots com valores aleatórios entre 1 e 15 minutos"
-                      >
-                        🎲 Aleatório (1-15min)
-                      </Button>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground">
-                      Ciclo: {form.cooldown_queue.map((v) => `${v}min`).join(" → ")} → volta ao início
-                    </p>
-                  </div>
-                  <Button className="w-full" onClick={handleSave} disabled={saving}>
-                    {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                    Salvar Alterações
-                  </Button>
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-      </div>
-
-      {/* QR Code Dialog */}
-
-      <Dialog
-        open={qrDialogOpen}
-
-        onOpenChange={(open) => {
-          if (!open && qrPhase !== "connected") {
-            handleCancelQr();
-          } else if (!open) {
-            setQrDialogOpen(false);
-          }
+      <UnifiedList
+        isLoading={loading}
+        count={instances.length}
+        empty={{
+          icon: Smartphone,
+          message: "Nenhuma instância encontrada",
+          submessage: "Clique em '+ Nova Instância' para conectar seu WhatsApp"
         }}
       >
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>
-              {qrPhase === "connected" ? "Conectado!" : qrPhase === "expired" ? "QR Code expirou" : qrPhase === "error" ? "Falha ao conectar" : qrPhase === "no_proxy" ? "Sem proxy disponível" : "Conectar Instância"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col items-center gap-4 py-4 min-h-[280px] justify-center">
-            {qrPhase === "creating" && (
-              <>
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                <div className="text-center space-y-1">
-                  <p className="text-sm font-medium text-card-foreground">Criando instância…</p>
-                  <p className="text-xs text-muted-foreground">Reservando proxy e gerando QR Code</p>
-                </div>
-              </>
-            )}
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {instances.map((inst) => {
+            const proxy = proxiesByInstance.get(inst.id);
+            const isOnline = inst.status === "online";
+            const currentAction = actionLoading[inst.id];
+            const pct = inst.daily_limit > 0 ? Math.min((inst.messages_sent_today / inst.daily_limit) * 100, 100) : 0;
+            const status = statusConfig(inst.status);
 
-            {qrPhase === "waiting" && qrData && (
-              <>
-                <img
-                  src={qrData.startsWith("data:") ? qrData : `data:image/png;base64,${qrData}`}
-                  alt="QR Code"
-                  className="w-56 h-56 sm:w-64 sm:h-64 rounded-lg border bg-white p-1"
-                />
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
-                  </span>
-                  Aguardando leitura do QR Code…
-                </div>
-                <p className="text-xs text-muted-foreground text-center">
-                  Abra o WhatsApp → Aparelhos conectados → Conectar aparelho
-                  <br />
-                  <span className="text-[10px] tabular-nums">Expira em {qrSecondsLeft}s</span>
-                </p>
-              </>
-            )}
-
-            {qrPhase === "waiting" && !qrData && (
-              <>
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">Gerando QR Code…</p>
-              </>
-            )}
-
-            {qrPhase === "connected" && (
-              <>
-                <div className="rounded-full bg-accent/10 p-4">
-                  <CheckCircle2 className="h-12 w-12 text-accent" />
-                </div>
-                <div className="text-center space-y-1">
-                  <p className="text-base font-semibold text-card-foreground">Conectado com sucesso!</p>
-                  {qrPhone && (
-                    <p className="text-sm text-muted-foreground font-mono">+{qrPhone}</p>
-                  )}
-                </div>
-              </>
-            )}
-
-            {qrPhase === "expired" && (
-              <>
-                <div className="rounded-full bg-muted p-4">
-                  <AlertTriangle className="h-10 w-10 text-muted-foreground" />
-                </div>
-                <div className="text-center space-y-1">
-                  <p className="text-sm font-medium text-card-foreground">QR Code expirou</p>
-                  <p className="text-xs text-muted-foreground">Gere um novo QR para continuar.</p>
-                </div>
-                <div className="flex gap-2 w-full">
-                  <Button variant="outline" className="flex-1" onClick={handleCancelQr}>Cancelar</Button>
-                  <Button className="flex-1" onClick={handleRetryQr}>Gerar novo QR</Button>
-                </div>
-              </>
-            )}
-
-            {qrPhase === "error" && (
-              <>
-                <div className="rounded-full bg-destructive/10 p-4">
-                  <AlertCircle className="h-10 w-10 text-destructive" />
-                </div>
-                <div className="text-center space-y-1">
-                  <p className="text-sm font-medium text-card-foreground">Falha ao conectar</p>
-                  <p className="text-xs text-muted-foreground">{qrErrorMsg}</p>
-                </div>
-                <div className="flex gap-2 w-full">
-                  <Button variant="outline" className="flex-1" onClick={handleCancelQr}>Cancelar</Button>
-                  <Button className="flex-1" onClick={handleRetryQr}>Tentar novamente</Button>
-                </div>
-              </>
-            )}
-
-            {qrPhase === "no_proxy" && (
-              <>
-                <div className="rounded-full bg-muted p-4">
-                  <Globe className="h-10 w-10 text-muted-foreground" />
-                </div>
-                <div className="text-center space-y-1">
-                  <p className="text-sm font-medium text-card-foreground">Sem proxy disponível</p>
-                  <p className="text-xs text-muted-foreground">{qrErrorMsg}</p>
-                </div>
-                <Button variant="outline" className="w-full" onClick={handleCancelQr}>
-                  Fechar
-                </Button>
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir instância?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Isso removerá a instância "{deleteConfirm?.friendly_name}" da Evolution API e do banco de dados. Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
-            >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Cards */}
-      {instances.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
-          <Smartphone className="h-8 w-8 opacity-40" />
-          <p className="text-sm">Nenhuma instância cadastrada</p>
-        </div>
-      ) : (
-        <TooltipProvider delayDuration={300}>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {instances.map((inst) => {
-              const pct = inst.daily_limit > 0 ? Math.min((inst.messages_sent_today / inst.daily_limit) * 100, 100) : 0;
-              const currentAction = actionLoading[inst.id];
-              const status = statusConfig(inst.status);
-              const isOnline = inst.status === "online";
-
-              return (
-                <div
-                  key={inst.id}
-                  className={`rounded-xl border bg-card p-4 space-y-4 transition-shadow hover:shadow-md ${
-                    isOnline ? "border-accent/30" : "border-border"
-                  }`}
-                >
-                  {/* Header */}
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                      <Smartphone className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-base font-semibold truncate text-card-foreground">{inst.friendly_name}</h3>
-                      <p className="text-xs text-muted-foreground truncate">{inst.phone_number}</p>
-                    </div>
-                    <Badge className={`shrink-0 gap-1.5 text-[11px] font-medium ${status.badgeClass}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${status.dotClass}`} />
-                      {status.label}
-                    </Badge>
-                    {(inst as any).webhook_configured && (
+            return (
+              <UnifiedCardItem
+                key={inst.id}
+                className={cn(
+                  "space-y-4",
+                  isOnline ? "border-accent/30" : "border-border"
+                )}
+              >
+                {/* Header */}
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    <Smartphone className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base font-semibold truncate text-card-foreground">{inst.friendly_name}</h3>
+                    <p className="text-xs text-muted-foreground truncate">{inst.phone_number}</p>
+                  </div>
+                  <Badge className={`shrink-0 gap-1.5 text-[11px] font-medium ${status.badgeClass}`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${status.dotClass}`} />
+                    {status.label}
+                  </Badge>
+                  {(inst as any).webhook_configured && (
+                    <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Link2 className="h-3.5 w-3.5 text-accent shrink-0" />
                         </TooltipTrigger>
                         <TooltipContent>Webhook de grupos ativo</TooltipContent>
                       </Tooltip>
-                    )}
+                    </TooltipProvider>
+                  )}
+                </div>
+
+                {/* Proxy info */}
+                <div className="flex items-center gap-1.5 text-xs">
+                  <Globe className={`h-3.5 w-3.5 shrink-0 ${proxy ? "text-accent" : "text-muted-foreground"}`} />
+                  {proxy ? (
+                    <span className="text-card-foreground truncate">
+                      {proxy.label}
+                      {proxy.external_ip && (
+                        <span className="text-muted-foreground font-mono ml-1">· {maskIp(proxy.external_ip)}</span>
+                      )}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">Sem proxy</span>
+                  )}
+                </div>
+
+                {/* Stats */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      Mensagens hoje
+                    </span>
+                    <span className="font-semibold tabular-nums text-card-foreground">
+                      {inst.messages_sent_today}
+                      <span className="text-muted-foreground font-normal">/{inst.daily_limit}</span>
+                    </span>
                   </div>
+                  <Progress
+                    value={pct}
+                    className={`h-2 ${pct >= 90 ? "[&>div]:bg-destructive" : pct >= 70 ? "[&>div]:bg-yellow-500" : "[&>div]:bg-accent"}`}
+                  />
+                </div>
 
-                  {/* Proxy chip */}
-                  {(() => {
-                    const proxy = proxiesByInstance.get(inst.id);
-                    return (
-                      <div className="flex items-center gap-1.5 text-xs">
-                        <Globe className={`h-3.5 w-3.5 shrink-0 ${proxy ? "text-accent" : "text-muted-foreground"}`} />
-                        {proxy ? (
-                          <span className="text-card-foreground truncate">
-                            {proxy.label}
-                            {proxy.external_ip && (
-                              <span className="text-muted-foreground font-mono ml-1">· {maskIp(proxy.external_ip)}</span>
-                            )}
-                          </span>
-                        ) : (
-                          <>
-                            <span className="text-muted-foreground">Sem proxy</span>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-6 px-2 ml-auto text-xs"
-                                  onClick={() => handleAssignProxy(inst)}
-                                  disabled={!!currentAction}
-                                >
-                                  {currentAction === "assign" ? (
-                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                  ) : (
-                                    "Atribuir proxy"
-                                  )}
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Reserva e aplica um proxy nesta instância (reinicia)</TooltipContent>
-                            </Tooltip>
-                          </>
-                        )}
-                        {proxy && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 ml-auto"
-                                onClick={() => handleSwapProxy(inst)}
-                                disabled={!!currentAction}
-                              >
-                                {currentAction === "swap" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Replace className="h-3 w-3" />}
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Trocar proxy (libera o atual)</TooltipContent>
-                          </Tooltip>
-                        )}
-                      </div>
-                    );
-                  })()}
+                {/* Last message */}
+                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  {inst.last_message_at
+                    ? format(new Date(inst.last_message_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+                    : "Nenhuma mensagem enviada"}
+                </p>
 
-                  {/* Stats */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1.5">
-                        <MessageSquare className="h-3.5 w-3.5" />
-                        Mensagens hoje
-                      </span>
-                      <span className="font-semibold tabular-nums text-card-foreground">
-                        {inst.messages_sent_today}
-                        <span className="text-muted-foreground font-normal">/{inst.daily_limit}</span>
-                      </span>
-                    </div>
-                    <Progress
-                      value={pct}
-                      className={`h-2 ${pct >= 90 ? "[&>div]:bg-destructive" : pct >= 70 ? "[&>div]:bg-yellow-500" : "[&>div]:bg-accent"}`}
-                    />
-                  </div>
-
-                  {/* Cooldown queue info */}
-                  {(() => {
-                    const queue = Array.isArray((inst as any).cooldown_queue) ? (inst as any).cooldown_queue as number[] : [3];
-                    const idx = (inst as any).cooldown_queue_index ?? 0;
-                    const current = queue[idx % queue.length] ?? 3;
-                    return (
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        <span>Descanso atual: <span className="font-semibold text-card-foreground">{current}min</span></span>
-                        {queue.length > 1 && (
-                          <span className="text-[10px]">({queue.map((v, i) => i === idx % queue.length ? `[${v}]` : v).join("→")})</span>
-                        )}
-                      </div>
-                    );
-                  })()}
-
-                  {/* Last message */}
-                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    {inst.last_message_at
-                      ? format(new Date(inst.last_message_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
-                      : "Nenhuma mensagem enviada"}
-                  </p>
-
-                  {/* Action buttons */}
-                  <div className="flex items-center gap-1 pt-1 border-t border-border">
+                {/* Actions */}
+                <div className="flex items-center gap-1 pt-2 border-t border-border">
+                  <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleConnect(inst)} disabled={!!currentAction}>
                           <QrCode className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Conectar (QR Code)</TooltipContent>
+                      <TooltipContent>Conectar</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>
@@ -1134,7 +767,7 @@ export function InstanciasTab() {
                           {currentAction === "status" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Verificar status</TooltipContent>
+                      <TooltipContent>Status</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>
@@ -1145,18 +778,11 @@ export function InstanciasTab() {
                       </TooltipTrigger>
                       <TooltipContent>Reiniciar</TooltipContent>
                     </Tooltip>
+                  </TooltipProvider>
 
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleLogout(inst)} disabled={!!currentAction}>
-                          {currentAction === "logout" ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Deslogar</TooltipContent>
-                    </Tooltip>
+                  <div className="flex-1" />
 
-                    <div className="flex-1" />
-
+                  <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(inst)}>
@@ -1168,19 +794,108 @@ export function InstanciasTab() {
 
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(inst)} disabled={!!currentAction}>
-                          {currentAction === "delete" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeleteConfirm(inst)} disabled={!!currentAction}>
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>Excluir</TooltipContent>
                     </Tooltip>
-                  </div>
+                  </TooltipProvider>
                 </div>
-              );
-            })}
+              </UnifiedCardItem>
+            );
+          })}
+        </div>
+      </UnifiedList>
+
+      {/* Forms and Dialogs */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingId ? "Editar Instância" : "Nova Instância"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            {!editingId ? (
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="apelido">Apelido *</Label>
+                  <Input
+                    id="apelido"
+                    placeholder="Ex: Tablet Sala"
+                    value={createApelido}
+                    onChange={(e) => setCreateApelido(e.target.value)}
+                    maxLength={100}
+                    autoFocus
+                  />
+                </div>
+                <Button className="w-full" onClick={handleCreateSubmit} disabled={!createApelido.trim()}>
+                  <QrCode className="h-4 w-4 mr-2" />
+                  Gerar QR Code
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="name">Apelido *</Label>
+                  <Input id="name" value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="friendly_name">Nome amigável *</Label>
+                  <Input id="friendly_name" value={form.friendly_name} onChange={(e) => setForm(f => ({ ...f, friendly_name: e.target.value }))} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="phone_number">Telefone *</Label>
+                  <Input id="phone_number" value={form.phone_number} onChange={(e) => setForm(f => ({ ...f, phone_number: e.target.value }))} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="daily_limit">Limite diário</Label>
+                  <Input id="daily_limit" type="number" value={form.daily_limit} onChange={(e) => setForm(f => ({ ...f, daily_limit: parseInt(e.target.value) || 0 }))} />
+                </div>
+                <Button className="w-full" onClick={handleSave} disabled={saving}>
+                  {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  Salvar
+                </Button>
+              </div>
+            )}
           </div>
-        </TooltipProvider>
-      )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={qrDialogOpen} onOpenChange={(o) => !o && handleCancelQr()}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Conectar Instância</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-8">
+            {qrPhase === "creating" && <Loader2 className="h-8 w-8 animate-spin" />}
+            {qrPhase === "waiting" && qrData && (
+              <>
+                <img src={qrData.startsWith("data:") ? qrData : `data:image/png;base64,${qrData}`} alt="QR Code" className="w-64 h-64 border rounded" />
+                <p className="text-xs text-muted-foreground text-center">Escaneie o código no seu WhatsApp</p>
+              </>
+            )}
+            {qrPhase === "connected" && (
+              <div className="text-center space-y-2">
+                <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto" />
+                <p className="font-medium">Conectado!</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(o) => !o && setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir instância?</AlertDialogTitle>
+            <AlertDialogDescription>Esta ação removerá a instância definitivamente.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive" onClick={() => deleteConfirm && handleDelete(deleteConfirm)}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </UnifiedLayout>
   );
 }
