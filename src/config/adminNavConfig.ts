@@ -127,6 +127,8 @@ export const adminNavConfig: NavSection[] = [
       { title: "Métricas", url: "/admin/metricas", icon: BarChart2 },
       { title: "Integrações", url: "/admin/integracoes", icon: Plug },
       { title: "Backfill Resultados", url: "/admin/backfill", icon: Database },
+      { title: "Forçar Atualização", url: "/admin/force-update", icon: RefreshCw },
     ],
   },
+
 ];
