@@ -3,7 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, TrendingUp, ShieldAlert, AlertTriangle, Inbox, Clock, CheckCircle2, XCircle, LayoutGrid } from "lucide-react";
+import { 
+  Loader2, RefreshCw, TrendingUp, ShieldAlert, AlertTriangle, 
+  Inbox, Clock, CheckCircle2, XCircle, LayoutGrid, Zap, 
+  Settings2, ArrowRight, MousePointerClick
+} from "lucide-react";
 import { format, startOfDay, subDays, formatDistanceToNowStrict } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MetricCard, toneClass, type Tone } from "./shared/MetricCard";
@@ -11,6 +15,7 @@ import { UnifiedLayout } from "./UnifiedLayout";
 import { UnifiedToolbar, ActionButton } from "./shared/UnifiedToolbar";
 import { UnifiedList, UnifiedCardItem } from "./shared/UnifiedList";
 import { cn } from "@/lib/utils";
+import { getEventLabel } from "@/lib/whatsapp-event-labels";
 
 interface ScheduleInfo {
   jobid: number;
@@ -19,6 +24,14 @@ interface ScheduleInfo {
   active: boolean;
   last_ran_at: string | null;
   next_run_at: string | null;
+}
+
+interface AutomationSummary {
+  id: string;
+  name: string;
+  event_trigger: string;
+  is_active: boolean;
+  type: string;
 }
 
 function describeSchedule(schedule: string): string {
@@ -54,27 +67,38 @@ export function RetargetingPanelTab() {
   const [loading, setLoading] = useState(true);
   const [runs, setRuns] = useState<RunRow[]>([]);
   const [schedule, setSchedule] = useState<ScheduleInfo | null>(null);
+  const [automations, setAutomations] = useState<AutomationSummary[]>([]);
   const [now, setNow] = useState(() => new Date());
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     const since = subDays(new Date(), 7).toISOString();
 
-    const runsRes = await supabase
-      .from("lead_retargeting_runs" as never)
-      .select("*")
-      .gte("ran_at", since)
-      .order("ran_at", { ascending: false })
-      .limit(200);
-    if (!runsRes.error && runsRes.data) setRuns(runsRes.data as unknown as RunRow[]);
+    const [runsRes, schedRes, autoRes] = await Promise.all([
+      supabase
+        .from("lead_retargeting_runs" as any)
+        .select("*")
+        .gte("ran_at", since)
+        .order("ran_at", { ascending: false })
+        .limit(200),
+      (supabase.rpc as any)("get_lead_retargeting_schedule"),
+      supabase
+        .from("message_templates" as any)
+        .select("id, name, event_trigger, is_active, type")
+        .neq("event_trigger", "manual")
+        .order("name")
+    ]);
 
-    const schedRes = await (supabase.rpc as unknown as (
-      fn: string
-    ) => Promise<{ data: unknown; error: unknown }>)("get_lead_retargeting_schedule");
+    if (!runsRes.error && runsRes.data) setRuns(runsRes.data as unknown as RunRow[]);
+    
     if (!schedRes.error && Array.isArray(schedRes.data) && schedRes.data.length > 0) {
       setSchedule(schedRes.data[0] as ScheduleInfo);
     } else {
       setSchedule(null);
+    }
+
+    if (!autoRes.error && autoRes.data) {
+      setAutomations(autoRes.data as unknown as AutomationSummary[]);
     }
 
     setLoading(false);
@@ -119,48 +143,117 @@ export function RetargetingPanelTab() {
   return (
     <UnifiedLayout>
       <UnifiedToolbar
-        left={<p className="text-xs text-muted-foreground">Execuções automáticas (últimos 7 dias)</p>}
+        left={<p className="text-xs text-muted-foreground">Execuções automáticas e gatilhos de CRM</p>}
         right={<ActionButton label="Atualizar" icon={RefreshCw} onClick={fetchData} />}
       />
 
-      <div className="space-y-6">
+      <div className="space-y-6 pb-10">
         <ScheduleStatusCard schedule={schedule} now={now} />
 
-        <UnifiedList
-          isLoading={loading}
-          count={dailyRows.length}
-          empty={{
-            icon: Inbox,
-            message: "Nenhuma execução encontrada",
-            submessage: "O retargeting automatiza o re-engajamento de leads"
-          }}
-        >
-          <div className="grid gap-3">
-            {dailyRows.map((d) => (
-              <UnifiedCardItem key={d.day} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                    <TrendingUp className="h-5 w-5 text-primary" />
+        {/* Automações Ativas */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 flex items-center gap-2">
+              <Zap className="h-3 w-3 text-amber-500" />
+              Gatilhos de Automação Ativos
+            </h3>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {automations.map((auto) => (
+              <Card key={auto.id} className="p-4 flex flex-col justify-between border-border/60 hover:border-primary/30 transition-colors group">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold group-hover:text-primary transition-colors">{auto.name}</p>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-[10px] h-4 py-0 bg-muted/30">
+                        {getEventLabel(auto.event_trigger)}
+                      </Badge>
+                      <Badge variant="secondary" className="text-[10px] h-4 py-0 uppercase">
+                        {auto.type || "single"}
+                      </Badge>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold">
-                      {format(new Date(d.day + "T12:00:00"), "EEEE, dd 'de' MMMM", { locale: ptBR })}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {d.runs} execução(ões) no período
-                    </p>
-                  </div>
+                  <div className={cn(
+                    "h-2 w-2 rounded-full",
+                    auto.is_active ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-muted-foreground/30"
+                  )} />
                 </div>
                 
-                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-                  <Stat label="Enfileirados" value={d.enqueued} tone="success" />
-                  <Stat label="Dedupe" value={d.dedupe} tone="warning" />
-                  <Stat label="Erros" value={d.db_errors} tone={d.db_errors > 0 ? "error" : "muted"} />
+                <div className="flex items-center justify-between pt-3 border-t border-border/40">
+                  <span className="text-[10px] text-muted-foreground italic">
+                    Gatilho: {auto.event_trigger}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" className="h-7 text-[10px] px-2 gap-1 opacity-0 group-hover:opacity-100 transition-opacity" disabled>
+                      <Settings2 className="h-3 w-3" />
+                      Ajustar
+                    </Button>
+                  </div>
                 </div>
-              </UnifiedCardItem>
+              </Card>
             ))}
+            {automations.length === 0 && !loading && (
+              <div className="sm:col-span-2 p-8 border-2 border-dashed border-muted rounded-2xl flex flex-col items-center justify-center text-center space-y-2">
+                <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground">
+                  <Zap className="h-5 w-5" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Nenhuma automação ativa</p>
+                  <p className="text-xs text-muted-foreground/60 max-w-[200px]">
+                    Configure gatilhos em seus templates para automatizar o envio.
+                  </p>
+                </div>
+              </div>
+            )}
+            {loading && automations.length === 0 && (
+              <div className="sm:col-span-2 p-8 flex justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-primary/40" />
+              </div>
+            )}
           </div>
-        </UnifiedList>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 px-1 flex items-center gap-2">
+            <LayoutGrid className="h-3 w-3" />
+            Histórico de Execuções (Retargeting)
+          </h3>
+          <UnifiedList
+            isLoading={loading}
+            count={dailyRows.length}
+            empty={{
+              icon: Inbox,
+              message: "Nenhuma execução encontrada",
+              submessage: "O retargeting automatiza o re-engajamento de leads"
+            }}
+          >
+            <div className="grid gap-3">
+              {dailyRows.map((d) => (
+                <UnifiedCardItem key={d.day} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">
+                        {format(new Date(d.day + "T12:00:00"), "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {d.runs} execução(ões) no período
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                    <Stat label="Enfileirados" value={d.enqueued} tone="success" />
+                    <Stat label="Dedupe" value={d.dedupe} tone="warning" />
+                    <Stat label="Erros" value={d.db_errors} tone={d.db_errors > 0 ? "error" : "muted"} />
+                  </div>
+                </UnifiedCardItem>
+              ))}
+            </div>
+          </UnifiedList>
+        </div>
 
         {runs.some((r) => r.errors && r.errors.length > 0) && (
           <div className="space-y-3">

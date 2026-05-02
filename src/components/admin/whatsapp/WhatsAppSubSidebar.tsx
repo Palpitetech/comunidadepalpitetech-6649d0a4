@@ -3,31 +3,45 @@ import { cn } from "@/lib/utils";
 
 const sections = [
   {
-    label: "WhatsApp",
+    label: "Conexão",
     items: [
       { value: "instancias", label: "Instâncias", icon: Smartphone },
       { value: "proxies", label: "Proxies", icon: Globe },
-      { value: "templates", label: "Templates", icon: FileText },
-      { value: "fila", label: "Fila", icon: Send },
-      { value: "mensagens", label: "Mensagens", icon: Inbox },
-      { value: "disparo", label: "Disparo Manual", icon: Megaphone },
-      { value: "logs", label: "Logs", icon: ScrollText },
-      { value: "retargeting", label: "Retargeting", icon: Target },
-      { value: "disparo-grupo", label: "Disparo Grupo", icon: Send },
-      { value: "monitor-grupos", label: "Monitor Grupos", icon: Activity },
-      { value: "aquecimento", label: "Aquecimento", icon: Flame },
-      { value: "grupos", label: "Grupos", icon: Users },
-      { value: "smart-links", label: "Smart Links", icon: Link2 },
     ],
   },
   {
-    label: "Email Transacional",
+    label: "Conteúdo",
     items: [
-      { value: "email-templates", label: "Templates Email", icon: FileText },
-      { value: "email-fila", label: "Fila Email", icon: Send },
-      { value: "email-disparo", label: "Disparo Email", icon: Megaphone },
-      { value: "email-logs", label: "Logs Email", icon: ScrollText },
-      { value: "email-suppressions", label: "Bloqueados", icon: Ban },
+      { value: "templates", label: "Templates", icon: FileText },
+      { value: "smart-links", label: "Smart Links", icon: Link2 },
+      { value: "mensagens", label: "Histórico", icon: Inbox },
+    ],
+  },
+  {
+    label: "Envio & Grupos",
+    items: [
+      { value: "fila", label: "Fila de Envio", icon: Send },
+      { value: "disparo", label: "Disparo Manual", icon: Megaphone },
+      { value: "grupos", label: "Gestão Grupos", icon: Users },
+      { value: "disparo-grupo", label: "Disparo Grupo", icon: Send },
+      { value: "monitor-grupos", label: "Monitor Grupos", icon: Activity },
+    ],
+  },
+  {
+    label: "Automações",
+    items: [
+      { value: "retargeting", label: "Automações CRM", icon: Target },
+      { value: "aquecimento", label: "Aquecimento", icon: Flame },
+      { value: "logs", label: "Logs Gerais", icon: ScrollText },
+    ],
+  },
+  {
+    label: "Email",
+    items: [
+      { value: "email-templates", label: "Templates", icon: FileText },
+      { value: "email-fila", label: "Fila", icon: Send },
+      { value: "email-suppressions", label: "Bloqueios", icon: Ban },
+      { value: "email-logs", label: "Logs", icon: ScrollText },
     ],
   },
 ] as const;
@@ -51,7 +65,7 @@ export function WhatsAppSubSidebar({ activeTab, onTabChange }: WhatsAppSubSideba
         {sections.map((section) => (
           <div key={section.label} className="mb-3">
             <div className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5">
-              {section.label === "Email Transacional" ? <Mail className="h-3 w-3" /> : <MessageSquare className="h-3 w-3" />}
+              {section.label === "Email" ? <Mail className="h-3 w-3" /> : <MessageSquare className="h-3 w-3" />}
               {section.label}
             </div>
             <ul className="space-y-0.5 px-2">

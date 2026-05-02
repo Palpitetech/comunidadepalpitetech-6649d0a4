@@ -702,36 +702,37 @@ export function TemplatesTab() {
                   </button>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Modo de Disparo</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { id: 'single', label: 'Único', icon: MessageSquare },
-                      { id: 'sequence', label: 'Sequência', icon: Timer },
-                      { id: 'random', label: 'Random', icon: Sparkles }
-                    ].map((mode) => (
-                      <button
-                        key={mode.id}
-                        type="button"
-                        onClick={() => setForm(f => ({ ...f, type: mode.id as any }))}
-                        className={cn(
-                          "flex flex-col items-center justify-center gap-1.5 p-2 rounded-md border transition-all",
-                          form.type === mode.id 
-                            ? "bg-primary/10 border-primary text-primary" 
-                            : "bg-background border-border text-muted-foreground hover:border-primary/50"
-                        )}
-                      >
-                        <mode.icon className="h-4 w-4" />
-                        <span className="text-[10px] font-bold">{mode.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-[10px] text-muted-foreground leading-tight px-1">
-                    {form.type === 'single' && "Envia apenas a mensagem principal do Slot 1."}
-                    {form.type === 'sequence' && "Envia as variações em ordem (1, 2, 3...) para cada novo contato."}
-                    {form.type === 'random' && "Escolhe uma variação ativa aleatoriamente para cada envio."}
-                  </p>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Modo de Envio</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: 'single', label: 'Individual', icon: Send, desc: 'Envia apenas o Slot 1' },
+                    { id: 'sequence', label: 'Sequência', icon: Timer, desc: 'Slots 1 a 10 em ordem' },
+                    { id: 'random', label: 'Aleatório', icon: Repeat, desc: 'Sorteia entre os slots' }
+                  ].map((mode) => (
+                    <button
+                      key={mode.id}
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, type: mode.id as any }))}
+                      className={cn(
+                        "flex flex-col items-center justify-center gap-2 p-3 rounded-xl border transition-all h-20",
+                        form.type === mode.id 
+                          ? "bg-primary border-primary text-primary-foreground shadow-md" 
+                          : "bg-background border-border text-muted-foreground hover:border-primary/50"
+                      )}
+                    >
+                      <mode.icon className="h-5 w-5" />
+                      <div className="flex flex-col items-center">
+                        <span className="text-[11px] font-bold">{mode.label}</span>
+                        <span className={cn(
+                          "text-[8px] leading-none mt-0.5",
+                          form.type === mode.id ? "text-primary-foreground/80" : "text-muted-foreground/60"
+                        )}>{mode.desc}</span>
+                      </div>
+                    </button>
+                  ))}
                 </div>
+              </div>
               </div>
 
               <div className="space-y-1.5">
