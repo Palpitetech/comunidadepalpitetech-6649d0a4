@@ -22,6 +22,7 @@ import {
   Gift, ArrowLeft, MessageCircle, LogOut, ChevronRight,
   User, CreditCard, Ticket, Lock, Crown,
 } from "lucide-react";
+import { AppVersion } from "./AppVersion";
 
 interface MobileMenuSheetProps {
   open: boolean;
@@ -296,9 +297,12 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
             </div>
 
             {/* Rodapé */}
-            <div className="flex items-center justify-center gap-1.5 mt-8 text-xs text-muted-foreground">
-              <Lock className="h-3.5 w-3.5" />
-              Seus dados estão protegidos
+            <div className="mt-8 flex flex-col items-center gap-4">
+              <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+                <Lock className="h-3.5 w-3.5" />
+                Seus dados estão protegidos
+              </div>
+              <AppVersion className="w-full max-w-[200px]" />
             </div>
           </div>
         </SheetContent>

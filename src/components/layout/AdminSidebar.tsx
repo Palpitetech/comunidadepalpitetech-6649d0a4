@@ -52,6 +52,7 @@ import {
   type NavSection, 
   type BadgeKey 
 } from "@/config/adminNavConfig";
+import { AppVersion } from "./AppVersion";
 
 
 
@@ -377,6 +378,7 @@ function AdminSidebarFooter({ collapsed }: { collapsed: boolean }) {
           <span className="text-[10px] text-muted-foreground truncate block">
             {user?.email}
           </span>
+          <AppVersion />
         </div>
       </Link>
       <button
