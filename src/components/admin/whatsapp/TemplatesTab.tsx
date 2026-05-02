@@ -854,6 +854,15 @@ export function TemplatesTab() {
                 {/* Actions */}
                 <div className="pt-4 space-y-3">
                   <Button 
+                    variant="default"
+                    className="w-full h-14 bg-primary hover:bg-primary/90 rounded-[18px] text-lg font-bold gap-3"
+                    onClick={() => handleTestSend(selectedTemplate)}
+                    disabled={!!testingId}
+                  >
+                    {testingId === selectedTemplate.id ? <Loader2 size={24} className="animate-spin" /> : <Send size={24} />}
+                    Testar Mensagem
+                  </Button>
+                  <Button 
                     variant="outline"
                     className="w-full h-14 border-primary/20 text-primary hover:bg-primary/5 rounded-[18px] text-lg font-bold gap-3"
                     onClick={() => {
