@@ -92,7 +92,7 @@ export function GruposTab() {
   const selectedInst = instances.find((i) => i.id === selectedInstance);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pt-2">
       {/* Controls */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1">

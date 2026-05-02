@@ -9,7 +9,7 @@ export function DisparoManualTab() {
   const dm = useDisparoManual();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-2">
       {/* ── FILTRO DE PÚBLICO ── */}
       <DisparoPublicoFilter
         allTags={dm.allTags}
