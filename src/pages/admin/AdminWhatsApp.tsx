@@ -13,14 +13,13 @@ import MonitorGruposTab from "@/components/admin/whatsapp/MonitorGruposTab";
 import { SmartLinksTab } from "@/components/admin/whatsapp/SmartLinksTab";
 import { MensagensTab } from "@/components/admin/whatsapp/MensagensTab";
 import { RetargetingPanelTab } from "@/components/admin/whatsapp/RetargetingPanelTab";
-import { WhatsAppSubSidebar, whatsappTabs } from "@/components/admin/whatsapp/WhatsAppSubSidebar";
 import { EmailTemplatesTab } from "@/components/admin/email/EmailTemplatesTab";
 import { EmailFilaTab } from "@/components/admin/email/EmailFilaTab";
 import { EmailLogsTab } from "@/components/admin/email/EmailLogsTab";
 import { EmailDisparoManualTab } from "@/components/admin/email/EmailDisparoManualTab";
 import { EmailSuppressionsTab } from "@/components/admin/email/EmailSuppressionsTab";
 import { ForceUpdateButton } from "@/components/admin/ForceUpdateButton";
-import { cn } from "@/lib/utils";
+import { CommunicationHeaderSelector } from "@/components/admin/whatsapp/CommunicationHeaderSelector";
 
 const TAB_TITLES: Record<string, string> = {
   instancias: "Instâncias",
@@ -47,32 +46,13 @@ export default function AdminWhatsApp() {
   const [activeTab, setActiveTab] = useState("instancias");
 
   return (
-    <AdminLayout pageTitle="Comunicação">
-      {/* Mobile: pill tabs */}
-      <div className="overflow-x-auto px-4 pt-3 no-scrollbar md:hidden">
-        <div className="flex gap-1.5 min-w-max">
-          {whatsappTabs.map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => setActiveTab(tab.value)}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors border",
-                activeTab === tab.value
-                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                  : "bg-card text-muted-foreground border-border hover:bg-secondary"
-              )}
-            >
-              <tab.icon className="h-3.5 w-3.5" />
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Layout: sub-sidebar + content */}
+    <AdminLayout 
+      pageTitle="Comunicação" 
+      headerRightContent={
+        <CommunicationHeaderSelector activeTab={activeTab} onTabChange={setActiveTab} />
+      }
+    >
       <div className="flex flex-1 min-h-0">
-        <WhatsAppSubSidebar activeTab={activeTab} onTabChange={setActiveTab} />
-
         <div className="flex-1 min-w-0 overflow-auto">
           {/* Content header (desktop only) */}
           <div className="hidden md:flex items-center gap-2 px-5 lg:px-6 pt-5 lg:pt-6 pb-1">
@@ -107,3 +87,4 @@ export default function AdminWhatsApp() {
     </AdminLayout>
   );
 }
+
