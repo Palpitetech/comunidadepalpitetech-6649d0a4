@@ -49,6 +49,7 @@ import AdminEventos from "./pages/admin/AdminEventos";
 import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
 import Integracoes from "./pages/admin/Integracoes";
 import AdminMetricas from "./pages/admin/AdminMetricas";
+import AdminBI from "./pages/admin/AdminBI";
 import AdminAtribuicaoAuditoria from "./pages/admin/AdminAtribuicaoAuditoria";
 import AdminBackfill from "./pages/admin/AdminBackfill";
 import AdminForceUpdate from "./pages/admin/AdminForceUpdate";
