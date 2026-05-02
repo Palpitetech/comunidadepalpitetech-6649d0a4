@@ -121,7 +121,7 @@ export function CommunicationHeaderSelector({
 
       {showMetrics && (
         <div className="animate-in slide-in-from-top-1 fade-in duration-200 mt-1 border-t border-border/30 pt-1">
-          <CommunicationQuickMetrics />
+          <CommunicationQuickMetrics activeTab={activeTab} />
         </div>
       )}
     </div>
