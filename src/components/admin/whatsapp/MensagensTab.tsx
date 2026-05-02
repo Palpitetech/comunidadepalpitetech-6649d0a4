@@ -3,13 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Loader2, Inbox, Filter, X, RefreshCw, AlertTriangle, Clock, CheckCircle2, Send, FileText, Smartphone } from "lucide-react";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { 
+  Loader2, Inbox, Filter, X, RefreshCw, AlertTriangle, 
+  Clock, CheckCircle2, Send, FileText, Smartphone, Phone, User, Hash, Info, Calendar, AlertCircle
+} from "lucide-react";
 import { MessageStatusBadge } from "./shared/MessageStatusBadge";
 import { MetricCard } from "./shared/MetricCard";
 import { Field } from "./shared/Field";
@@ -17,7 +16,12 @@ import { fmtDate } from "./shared/format-date";
 import { UnifiedLayout } from "./UnifiedLayout";
 import { UnifiedToolbar, ActionButton } from "./shared/UnifiedToolbar";
 import { UnifiedList, UnifiedCardItem } from "./shared/UnifiedList";
+import { AdminListContainer, AdminListItem } from "../AdminListComponents";
+import { MobileInfoRow } from "./shared/MobileInfoRow";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface QueueRow {
   id: string;
@@ -102,16 +106,6 @@ export function MensagensTab() {
     [baseRows, statusFilter, searchPhone]
   );
 
-  const counts = useMemo(
-    () => ({
-      pending: baseRows.filter((r) => r.status === "pending").length,
-      sending: baseRows.filter((r) => r.status === "sending").length,
-      sent: baseRows.filter((r) => r.status === "sent").length,
-      failed: baseRows.filter((r) => r.status === "failed").length,
-    }),
-    [baseRows]
-  );
-
   const hasActiveFilters = statusFilter !== "all" || searchPhone.length > 0;
 
   const clearFilters = () => {
@@ -188,7 +182,8 @@ export function MensagensTab() {
           submessage: "Ajuste os filtros ou aguarde novos disparos"
         }}
       >
-        <div className="space-y-2">
+        {/* Desktop View */}
+        <div className="hidden md:grid gap-3 lg:grid-cols-2">
           {filtered.slice(0, 100).map((r) => (
             <UnifiedCardItem key={r.id} onClick={() => setSelected(r)} className="space-y-3">
               <div className="flex items-start justify-between gap-2">
@@ -222,38 +217,137 @@ export function MensagensTab() {
             </UnifiedCardItem>
           ))}
         </div>
+
+        {/* Mobile View - Eventos Style */}
+        <div className="md:hidden border-t border-border/40">
+          <AdminListContainer loading={loading && filtered.length === 0}>
+            {filtered.slice(0, 100).map((r) => (
+              <AdminListItem
+                key={r.id}
+                onClick={() => setSelected(r)}
+                title={r.recipient_phone}
+                badge={{
+                  text: r.status === "pending" ? "Aguardando" : r.status === "sent" ? "Enviado" : r.status === "failed" ? "Erro" : "Enviando",
+                  color: r.status === "sent" ? "bg-green-500/10 text-green-700 border-green-200/50" : 
+                         r.status === "failed" ? "bg-red-500/10 text-red-700 border-red-200/50" :
+                         "bg-yellow-500/10 text-yellow-700 border-yellow-200/50",
+                  icon: r.status === "sent" ? CheckCircle2 : r.status === "failed" ? AlertCircle : Clock
+                }}
+                subtitle={`${r.template_name} • ${r.instance_name}`}
+                timestamp={r.created_at ? format(new Date(r.created_at), "HH:mm", { locale: ptBR }) : ""}
+              />
+            ))}
+          </AdminListContainer>
+        </div>
       </UnifiedList>
 
-      <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Detalhes da mensagem</DialogTitle>
-          </DialogHeader>
-          {selected && (
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-base font-medium tabular-nums">{selected.recipient_phone}</span>
-                <MessageStatusBadge status={selected.status} />
+      {/* Mobile Detail View */}
+      {selected && (
+        <div className="fixed inset-0 z-[100] bg-white md:hidden flex flex-col animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center justify-between px-4 h-16 border-b border-border bg-white shrink-0 z-50 relative">
+            <Button variant="ghost" size="icon" onClick={() => setSelected(null)} className="text-gray-500">
+              <X size={24} />
+            </Button>
+            <h2 className="text-base font-bold absolute left-1/2 -translate-x-1/2">Detalhes da Mensagem</h2>
+            <Button variant="ghost" size="icon" onClick={fetchData} className="text-gray-500">
+              <RefreshCw size={22} className={cn(loading && "animate-spin")} />
+            </Button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto bg-white">
+            <div className="p-4 space-y-6 pb-20">
+              <div className="bg-gray-50 rounded-[20px] p-4 flex items-start gap-4 border border-gray-100/50">
+                <div className={cn(
+                  "p-3 rounded-2xl shrink-0 flex items-center justify-center",
+                  selected.status === "sent" ? "bg-green-500/10" : "bg-yellow-500/10"
+                )}>
+                  <MessageSquare size={28} className={selected.status === "sent" ? "text-green-600" : "text-yellow-600"} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-gray-900 text-lg leading-tight">{selected.recipient_phone}</h3>
+                  <p className="text-sm text-gray-500 mt-0.5 font-medium">
+                    {selected.created_at ? format(new Date(selected.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR }) : "—"}
+                  </p>
+                  <div className="mt-2">
+                    <MessageStatusBadge status={selected.status} />
+                  </div>
+                </div>
               </div>
-              <Field label="Destinatário" value={selected.recipient_name || "—"} />
-              <Field label="Template" value={selected.template_name || "—"} />
-              <Field label="Instância" value={selected.instance_name || "—"} />
-              <Field label="Criada em" value={fmtDate(selected.created_at)} />
-              <Field label="Agendada para" value={fmtDate(selected.scheduled_at)} />
-              <Field label="Enviada em" value={fmtDate(selected.sent_at)} />
-              <Field label="Tentativas" value={String(selected.retry_count ?? 0)} />
+
+              <div className="space-y-5 px-1">
+                <MobileInfoRow icon={User} label="Nome" value={selected.recipient_name || "—"} copyable />
+                <MobileInfoRow icon={Phone} label="Telefone" value={selected.recipient_phone} copyable />
+                <MobileInfoRow icon={FileText} label="Template" value={selected.template_name || "—"} />
+                <MobileInfoRow icon={Info} label="Instância" value={selected.instance_name || "—"} />
+                <MobileInfoRow icon={Calendar} label="Criada em" value={fmtDate(selected.created_at)} />
+                <MobileInfoRow icon={Calendar} label="Agendada para" value={fmtDate(selected.scheduled_at)} />
+                {selected.sent_at && <MobileInfoRow icon={CheckCircle2} label="Enviada em" value={fmtDate(selected.sent_at)} />}
+                <MobileInfoRow icon={Hash} label="ID" value={selected.id} copyable />
+              </div>
+
               {selected.error_message && (
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Erro</p>
-                  <pre className="text-[11px] bg-red-500/5 border border-red-500/20 rounded-md p-2 whitespace-pre-wrap break-words text-red-700">
-                    {selected.error_message}
-                  </pre>
+                <div className="space-y-3 px-1 pt-2">
+                  <h4 className="text-sm font-semibold text-red-600">Erro</h4>
+                  <div className="bg-red-50 rounded-[18px] p-4 border border-red-100">
+                    <pre className="text-xs text-red-700 whitespace-pre-wrap font-mono">{selected.error_message}</pre>
+                  </div>
                 </div>
               )}
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Sheet View */}
+      <Sheet open={!!selected && window.innerWidth >= 768} onOpenChange={(open) => !open && setSelected(null)}>
+        <SheetContent side="right" className="p-0 flex flex-col md:max-w-lg">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+            <SheetTitle>Detalhes da Mensagem</SheetTitle>
+            <Button variant="ghost" size="icon" onClick={() => setSelected(null)}><X className="h-5 w-5" /></Button>
+          </div>
+          <ScrollArea className="flex-1 bg-white">
+            {selected && (
+              <div className="p-4 space-y-6">
+                <div className="bg-gray-50 rounded-[20px] p-4 flex items-start gap-4 border border-gray-100/50">
+                  <div className={cn("p-3 rounded-2xl shrink-0", selected.status === "sent" ? "bg-green-500/10" : "bg-yellow-500/10")}>
+                    <MessageSquare size={28} className={selected.status === "sent" ? "text-green-600" : "text-yellow-600"} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-gray-900 text-lg leading-tight">{selected.recipient_phone}</h3>
+                    <p className="text-sm text-gray-500 font-medium">{fmtDate(selected.created_at)}</p>
+                  </div>
+                </div>
+                <div className="space-y-5">
+                  <MobileInfoRow icon={User} label="Nome" value={selected.recipient_name || "—"} copyable />
+                  <MobileInfoRow icon={Phone} label="Telefone" value={selected.recipient_phone} copyable />
+                  <MobileInfoRow icon={FileText} label="Template" value={selected.template_name || "—"} />
+                  <MobileInfoRow icon={Info} label="Instância" value={selected.instance_name || "—"} />
+                  <MobileInfoRow icon={Hash} label="ID" value={selected.id} copyable />
+                </div>
+              </div>
+            )}
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
     </UnifiedLayout>
+  );
+}
+
+function MessageSquare(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
   );
 }

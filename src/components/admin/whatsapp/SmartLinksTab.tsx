@@ -5,17 +5,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, CheckCheck, Plus, Link2, QrCode, Trash2, ExternalLink, Loader2, RefreshCw } from "lucide-react";
+import { 
+  Copy, CheckCheck, Plus, Link2, QrCode, Trash2, 
+  ExternalLink, Loader2, RefreshCw, Hash, Info, Calendar, MousePointer2, Play, Pause, X
+} from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { UnifiedLayout } from "./UnifiedLayout";
 import { UnifiedToolbar, ActionButton } from "./shared/UnifiedToolbar";
 import { UnifiedList, UnifiedCardItem } from "./shared/UnifiedList";
+import { AdminListContainer, AdminListItem } from "../AdminListComponents";
+import { MobileInfoRow } from "./shared/MobileInfoRow";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 
 interface SmartLink {
   id: string;
@@ -48,6 +56,7 @@ export function SmartLinksTab() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedLink, setSelectedLink] = useState<SmartLink | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [qrSlug, setQrSlug] = useState<string | null>(null);
 
@@ -88,7 +97,6 @@ export function SmartLinksTab() {
     if (dialogOpen) fetchInstances();
   }, [dialogOpen, fetchInstances]);
 
-  // Fetch groups when instance changes
   useEffect(() => {
     if (!selectedInstance) { setGroups([]); return; }
     const inst = instances.find(i => i.id === selectedInstance);
@@ -111,72 +119,41 @@ export function SmartLinksTab() {
   const handleCreateAuto = async () => {
     if (!selectedGroup || !selectedInstance) return;
     setCreating(true);
-
     const inst = instances.find(i => i.id === selectedInstance);
     if (!inst) { setCreating(false); return; }
 
-    // Get invite code from Evolution API
     const { data: codeData, error: codeErr } = await supabase.functions.invoke("evolution-proxy", {
       body: { action: "groupInviteCode", instanceName: inst.evolution_instance_id, groupJid: selectedGroup },
     });
 
     if (codeErr || !codeData) {
-      toast({ title: "Erro ao obter código de convite", description: codeErr?.message || "Tente novamente", variant: "destructive" });
-      setCreating(false);
-      return;
+      toast({ title: "Erro", description: "Falha ao obter convite", variant: "destructive" });
+      setCreating(false); return;
     }
 
     const inviteCode = codeData?.inviteCode || codeData?.code || codeData?.invite || "";
-    if (!inviteCode) {
-      toast({ title: "Código de convite não encontrado", description: "A API não retornou o código. Tente o modo manual.", variant: "destructive" });
-      setCreating(false);
-      return;
-    }
-
     const group = groups.find(g => g.id === selectedGroup);
     const name = autoGroupName.trim() || group?.subject || "";
     const slug = autoSlug.trim() || generateSlug();
 
     const { error } = await supabase.from("whatsapp_smart_links").insert({
-      slug,
-      group_invite_code: inviteCode,
-      group_name: name || null,
+      slug, group_invite_code: inviteCode, group_name: name || null,
       original_url: `https://chat.whatsapp.com/${inviteCode}`,
     });
 
-    if (error) {
-      toast({ title: "Erro ao criar", description: error.message.includes("unique") ? "Esse slug já está em uso" : error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Smart Link criado!" });
-      resetForm();
-      setDialogOpen(false);
-      fetchLinks();
-    }
+    if (!error) { toast({ title: "Link criado!" }); resetForm(); setDialogOpen(false); fetchLinks(); }
     setCreating(false);
   };
 
   const handleCreateManual = async () => {
     const code = extractInviteCode(originalUrl);
-    if (!code) {
-      toast({ title: "URL inválida", description: "Cole um link válido do formato https://chat.whatsapp.com/XXXXX", variant: "destructive" });
-      return;
-    }
+    if (!code) { toast({ title: "URL inválida", variant: "destructive" }); return; }
     setCreating(true);
     const slug = customSlug.trim() || generateSlug();
     const { error } = await supabase.from("whatsapp_smart_links").insert({
-      slug,
-      group_invite_code: code,
-      group_name: groupName.trim() || null,
-      original_url: originalUrl.trim(),
+      slug, group_invite_code: code, group_name: groupName.trim() || null, original_url: originalUrl.trim(),
     });
-    if (error) {
-      toast({ title: "Erro ao criar", description: error.message.includes("unique") ? "Esse slug já está em uso" : error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Smart Link criado!" });
-      resetForm();
-      setDialogOpen(false);
-      fetchLinks();
-    }
+    if (!error) { toast({ title: "Link criado!" }); resetForm(); setDialogOpen(false); fetchLinks(); }
     setCreating(false);
   };
 
@@ -188,115 +165,134 @@ export function SmartLinksTab() {
   const handleToggle = async (id: string, active: boolean) => {
     await supabase.from("whatsapp_smart_links").update({ is_active: active }).eq("id", id);
     setLinks(prev => prev.map(l => l.id === id ? { ...l, is_active: active } : l));
+    if (selectedLink?.id === id) setSelectedLink({ ...selectedLink, is_active: active });
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este smart link?")) return;
+    if (!confirm("Excluir?")) return;
     await supabase.from("whatsapp_smart_links").delete().eq("id", id);
     setLinks(prev => prev.filter(l => l.id !== id));
-    toast({ title: "Smart link excluído" });
+    toast({ title: "Excluído" });
   };
 
   const handleCopy = async (slug: string, id: string) => {
     await navigator.clipboard.writeText(`${BASE_URL}/g/${slug}`);
     setCopiedId(id);
+    toast({ title: "Copiado!" });
     setTimeout(() => setCopiedId(null), 2000);
   };
 
   const getQrUrl = (slug: string) =>
     `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${BASE_URL}/g/${slug}`)}`;
 
-  if (loading) {
-    return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
-  }
-
   return (
     <UnifiedLayout>
       <UnifiedToolbar
-        left={
-          <ActionButton
-            label="Novo Smart Link"
-            icon={Plus}
-            onClick={() => setDialogOpen(true)}
-            variant="default"
-          />
-        }
-        right={
-          <ActionButton
-            label="Atualizar"
-            icon={RefreshCw}
-            onClick={fetchLinks}
-          />
-        }
+        left={<ActionButton label="Novo Smart Link" icon={Plus} onClick={() => setDialogOpen(true)} variant="default" />}
+        right={<ActionButton label="Atualizar" icon={RefreshCw} onClick={fetchLinks} />}
       />
 
       <UnifiedList
-        isLoading={loading}
-        count={links.length}
-        empty={{
-          icon: Link2,
-          message: "Nenhum smart link criado",
-          submessage: "Links inteligentes facilitam a entrada em grupos"
-        }}
+        isLoading={loading} count={links.length}
+        empty={{ icon: Link2, message: "Nenhum smart link", submessage: "Links inteligentes" }}
       >
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="hidden md:grid gap-3 md:grid-cols-2">
           {links.map((link) => (
-            <UnifiedCardItem
-              key={link.id}
-              className={cn(
-                "space-y-3",
-                !link.is_active && "opacity-60 grayscale-[0.5]"
-              )}
-            >
+            <UnifiedCardItem key={link.id} className={cn("space-y-3", !link.is_active && "opacity-60")}>
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                    <Link2 className="h-5 w-5 text-primary" />
-                  </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10"><Link2 className="h-5 w-5 text-primary" /></div>
                   <div className="min-w-0">
                     <h3 className="text-sm font-semibold truncate">{link.group_name || link.slug}</h3>
                     <p className="text-[10px] text-muted-foreground font-mono truncate">{BASE_URL}/g/{link.slug}</p>
                   </div>
                 </div>
-                <Switch checked={link.is_active} onCheckedChange={(v) => handleToggle(link.id, v)} className="scale-75" />
+                <Switch checked={link.is_active} onCheckedChange={(v) => handleToggle(link.id, v)} />
               </div>
-
-              <div className="flex items-center gap-4 text-[11px] text-muted-foreground pt-1">
-                <Badge variant="secondary" className="h-5 px-2 font-bold tabular-nums">
-                  {link.clicks} cliques
-                </Badge>
-                <span className="truncate opacity-70">Convite: {link.group_invite_code.slice(0, 10)}...</span>
-              </div>
-
               <div className="flex items-center gap-1 pt-2 border-t border-border">
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleCopy(link.slug, link.id)}>
-                  {copiedId === link.id ? <CheckCheck className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
-                </Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setQrSlug(qrSlug === link.slug ? null : link.slug)}>
-                  <QrCode className="h-3.5 w-3.5" />
-                </Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => window.open(`/g/${link.slug}`, "_blank")}>
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </Button>
+                <Button size="icon" variant="ghost" onClick={() => handleCopy(link.slug, link.id)}>{copiedId === link.id ? <CheckCheck className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}</Button>
+                <Button size="icon" variant="ghost" onClick={() => setQrSlug(qrSlug === link.slug ? null : link.slug)}><QrCode className="h-4 w-4" /></Button>
                 <div className="flex-1" />
-                <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDelete(link.id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDelete(link.id)}><Trash2 className="h-4 w-4" /></Button>
               </div>
-
-              {qrSlug === link.slug && (
-                <div className="flex justify-center p-4 bg-white rounded-lg border">
-                  <img src={getQrUrl(link.slug)} alt="QR Code" width={160} height={160} />
-                </div>
-              )}
             </UnifiedCardItem>
           ))}
         </div>
+
+        <div className="md:hidden border-t border-border/40">
+          <AdminListContainer loading={loading && links.length === 0}>
+            {links.map((link) => (
+              <AdminListItem
+                key={link.id} onClick={() => setSelectedLink(link)} title={link.group_name || link.slug}
+                badge={{ text: `${link.clicks} cliques`, color: "bg-blue-500/10 text-blue-700", icon: MousePointer2 }}
+                subtitle={`${BASE_URL}/g/${link.slug}`}
+                timestamp={format(new Date(link.created_at), "HH:mm", { locale: ptBR })}
+              />
+            ))}
+          </AdminListContainer>
+        </div>
       </UnifiedList>
+
+      {selectedLink && (
+        <div className="fixed inset-0 z-[100] bg-white md:hidden flex flex-col animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center justify-between px-4 h-16 border-b border-border bg-white">
+            <Button variant="ghost" size="icon" onClick={() => setSelectedLink(null)}><X size={24} /></Button>
+            <h2 className="text-base font-bold">Smart Link</h2>
+            <Button variant="ghost" size="icon" onClick={fetchLinks}><RefreshCw size={22} /></Button>
+          </div>
+          <div className="flex-1 overflow-y-auto bg-white p-4 space-y-6">
+            <div className="bg-gray-50 rounded-[20px] p-4 flex items-start gap-4">
+              <div className={cn("p-3 rounded-2xl", selectedLink.is_active ? "bg-green-500/10" : "bg-gray-100")}><Link2 size={28} className={selectedLink.is_active ? "text-green-600" : "text-gray-400"} /></div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-gray-900">{selectedLink.group_name || selectedLink.slug}</h3>
+                <p className="text-sm text-gray-500">{format(new Date(selectedLink.created_at), "dd/MM/yyyy")}</p>
+              </div>
+            </div>
+            <div className="space-y-5">
+              <MobileInfoRow icon={Link2} label="URL Curta" value={`${BASE_URL}/g/${selectedLink.slug}`} copyable />
+              <MobileInfoRow icon={ExternalLink} label="URL Destino" value={selectedLink.original_url} copyable />
+            </div>
+            <div className="flex flex-col items-center p-6 bg-gray-50 rounded-xl border">
+               <img src={getQrUrl(selectedLink.slug)} alt="QR" width={200} height={200} className="bg-white p-2" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Sheet open={!!selectedLink && window.innerWidth >= 768} onOpenChange={(open) => !open && setSelectedLink(null)}>
+        <SheetContent side="right" className="p-0 flex flex-col md:max-w-lg">
+          <div className="flex items-center justify-between px-4 py-3 border-b"><SheetTitle>Detalhes</SheetTitle><Button variant="ghost" size="icon" onClick={() => setSelectedLink(null)}><X className="h-5 w-5" /></Button></div>
+          <ScrollArea className="flex-1 bg-white p-4">
+            {selectedLink && <div className="space-y-6">
+              <div className="bg-gray-50 rounded-[20px] p-4 flex items-start gap-4">
+                <div className={cn("p-3 rounded-2xl", selectedLink.is_active ? "bg-green-500/10" : "bg-gray-100")}><Link2 size={28} /></div>
+                <div className="flex-1"><h3 className="font-bold text-gray-900">{selectedLink.group_name || selectedLink.slug}</h3></div>
+              </div>
+              <MobileInfoRow icon={Link2} label="URL Curta" value={`${BASE_URL}/g/${selectedLink.slug}`} copyable />
+            </div>}
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
 
       <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) resetForm(); }}>
         <DialogContent className="sm:max-w-lg">
-          {/* ... existing form content ... */}
+          <DialogHeader><DialogTitle>Novo Smart Link</DialogTitle></DialogHeader>
+          <Tabs defaultValue="auto">
+            <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="auto">Automático</TabsTrigger><TabsTrigger value="manual">Manual</TabsTrigger></TabsList>
+            <TabsContent value="auto" className="space-y-4 pt-4">
+               <div className="space-y-2"><Label>Instância</Label>
+                  <Select value={selectedInstance} onValueChange={setSelectedInstance}>
+                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                    <SelectContent>{instances.map(i => <SelectItem key={i.id} value={i.id}>{i.evolution_instance_id}</SelectItem>)}</SelectContent>
+                  </Select>
+               </div>
+               <Button className="w-full" onClick={handleCreateAuto} disabled={creating}>{creating ? "Criando..." : "Criar"}</Button>
+            </TabsContent>
+            <TabsContent value="manual" className="space-y-4 pt-4">
+               <div className="space-y-2"><Label>URL</Label><Input value={originalUrl} onChange={e => setOriginalUrl(e.target.value)} /></div>
+               <Button className="w-full" onClick={handleCreateManual} disabled={creating}>{creating ? "Criando..." : "Criar"}</Button>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </UnifiedLayout>

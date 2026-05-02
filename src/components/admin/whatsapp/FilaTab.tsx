@@ -4,14 +4,18 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Play, RotateCcw, Send, Filter, X, RefreshCw, FileText } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Loader2, Play, RotateCcw, Send, Filter, X, RefreshCw, FileText, Phone, User, Calendar, Hash, Info, AlertCircle } from "lucide-react";
 import { MessageStatusBadge } from "./shared/MessageStatusBadge";
 import { fmtDate } from "./shared/format-date";
 import { UnifiedLayout } from "./UnifiedLayout";
 import { UnifiedToolbar, ActionButton } from "./shared/UnifiedToolbar";
 import { UnifiedList, UnifiedCardItem } from "./shared/UnifiedList";
+import { AdminListContainer, AdminListItem } from "../AdminListComponents";
+import { MobileInfoRow } from "./shared/MobileInfoRow";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 interface QueueItem {
@@ -41,12 +45,12 @@ const STATUS_OPTIONS = [
 ];
 
 export function FilaTab() {
-  const isMobile = useIsMobile();
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [templates, setTemplates] = useState<TemplateOption[]>([]);
   const [instances, setInstances] = useState<InstanceOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<QueueItem | null>(null);
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterDate, setFilterDate] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -187,7 +191,8 @@ export function FilaTab() {
           submessage: "Crie novos envios através do Disparo Manual"
         }}
       >
-        <div className="space-y-2">
+        {/* Desktop View */}
+        <div className="hidden md:grid gap-3 lg:grid-cols-2">
           {filtered.map((item) => (
             <UnifiedCardItem key={item.id} className="space-y-3">
               <div className="flex items-start justify-between gap-2">
@@ -220,7 +225,209 @@ export function FilaTab() {
             </UnifiedCardItem>
           ))}
         </div>
+
+        {/* Mobile View - Eventos Style */}
+        <div className="md:hidden border-t border-border/40">
+          <AdminListContainer loading={loading && filtered.length === 0}>
+            {filtered.map((item) => (
+              <AdminListItem
+                key={item.id}
+                onClick={() => setSelectedItem(item)}
+                title={item.recipient_name || item.recipient_phone}
+                badge={{
+                  text: item.status,
+                  color: item.status === "sent" ? "bg-green-500/10 text-green-700 border-green-200/50" : 
+                         item.status === "failed" ? "bg-red-500/10 text-red-700 border-red-200/50" :
+                         item.status === "pending" ? "bg-yellow-500/10 text-yellow-700 border-yellow-200/50" :
+                         "bg-muted/50 text-muted-foreground border-border/50",
+                  icon: item.status === "sent" ? Send : item.status === "failed" ? AlertCircle : RefreshCw
+                }}
+                subtitle={`${getTemplateName(item.template_id)} • ${item.recipient_phone}`}
+                timestamp={format(new Date(item.scheduled_at), "HH:mm", { locale: ptBR })}
+              />
+            ))}
+          </AdminListContainer>
+        </div>
       </UnifiedList>
+
+      {/* Mobile Detail View */}
+      {selectedItem && (
+        <div className="fixed inset-0 z-[100] bg-white md:hidden flex flex-col animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center justify-between px-4 h-16 border-b border-border bg-white shrink-0 z-50 relative">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setSelectedItem(null)}
+              className="text-gray-500 hover:bg-transparent p-0"
+            >
+              <X size={24} strokeWidth={1.5} />
+            </Button>
+            <h2 className="text-base font-bold absolute left-1/2 -translate-x-1/2">Detalhes do Envio</h2>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-gray-500 hover:bg-transparent p-0"
+              onClick={() => fetchAll()}
+            >
+              <RefreshCw size={22} strokeWidth={1.5} className={cn(loading && "animate-spin")} />
+            </Button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto overscroll-contain bg-white">
+            <div className="flex flex-col min-h-full">
+              <div className="p-4 space-y-6 pb-[calc(4rem+env(safe-area-inset-bottom))]">
+                {/* Status Card */}
+                <div className="bg-gray-50 rounded-[20px] p-4 flex items-start gap-4 border border-gray-100/50">
+                  <div className={cn(
+                    "p-3 rounded-2xl shrink-0 flex items-center justify-center",
+                    selectedItem.status === "sent" ? "bg-green-500/10" : selectedItem.status === "failed" ? "bg-red-500/10" : "bg-yellow-500/10"
+                  )}>
+                    <Send size={28} className={cn(
+                      selectedItem.status === "sent" ? "text-green-600" : selectedItem.status === "failed" ? "text-red-600" : "text-yellow-600"
+                    )} />
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 text-lg leading-tight">
+                      {selectedItem.recipient_name || "Sem nome"}
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-0.5 font-medium">
+                      Agendado: {format(new Date(selectedItem.scheduled_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                    </p>
+                    <div className="mt-2">
+                      <MessageStatusBadge status={selectedItem.status} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Identification */}
+                <div className="space-y-5 px-1">
+                  <MobileInfoRow 
+                    icon={Phone} 
+                    label="Telefone" 
+                    value={selectedItem.recipient_phone} 
+                    copyable
+                  />
+                  <MobileInfoRow 
+                    icon={FileText} 
+                    label="Template" 
+                    value={getTemplateName(selectedItem.template_id)} 
+                  />
+                  <MobileInfoRow 
+                    icon={Info} 
+                    label="Instância" 
+                    value={getInstanceName(selectedItem.instance_id)} 
+                  />
+                  <MobileInfoRow 
+                    icon={Hash} 
+                    label="ID do Registro" 
+                    value={selectedItem.id} 
+                    copyable 
+                  />
+                </div>
+
+                {/* Variables */}
+                {selectedItem.variables && Object.keys(selectedItem.variables).length > 0 && (
+                  <div className="space-y-3 px-1 pt-2">
+                    <h4 className="text-sm font-semibold text-gray-600">Variáveis</h4>
+                    <div className="bg-gray-50 rounded-[18px] p-4 border border-gray-100 shadow-inner space-y-2">
+                      {Object.entries(selectedItem.variables).map(([key, val]) => (
+                        <div key={key} className="flex justify-between text-xs">
+                          <span className="text-muted-foreground uppercase">{key}:</span>
+                          <span className="font-mono font-bold">{val}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Error message */}
+                {selectedItem.status === "failed" && selectedItem.error_message && (
+                  <div className="space-y-3 px-1 pt-2">
+                    <h4 className="text-sm font-semibold text-red-600">Erro no Envio</h4>
+                    <div className="bg-red-50 rounded-[18px] p-4 border border-red-100">
+                      <p className="text-xs text-red-700 font-mono italic">
+                        {selectedItem.error_message}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="pt-4 space-y-3">
+                  {selectedItem.status === "failed" && (
+                    <Button 
+                      className="w-full h-14 bg-primary text-white rounded-[18px] text-lg font-bold gap-3"
+                      onClick={() => {
+                        handleRetry(selectedItem.id);
+                        setSelectedItem(null);
+                      }}
+                    >
+                      <RotateCcw size={24} />
+                      Retentar Envio
+                    </Button>
+                  )}
+                  <Button 
+                    variant="outline"
+                    className="w-full h-14 border-border rounded-[18px] text-lg font-bold gap-3"
+                    onClick={() => setSelectedItem(null)}
+                  >
+                    Fechar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Sheet View */}
+      <Sheet open={!!selectedItem && window.innerWidth >= 768} onOpenChange={(open) => !open && setSelectedItem(null)}>
+        <SheetContent 
+          side="right" 
+          className="p-0 flex flex-col border-l border-border bg-white w-full md:max-w-lg outline-none focus:ring-0 overflow-hidden"
+        >
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-white shrink-0 z-50">
+            <SheetTitle className="text-base font-semibold">Detalhes do Envio</SheetTitle>
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={() => setSelectedItem(null)}>
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+          <ScrollArea className="flex-1 bg-white">
+            {selectedItem && (
+              <div className="p-4 space-y-6 pb-20">
+                <div className="bg-gray-50 rounded-[20px] p-4 flex items-start gap-4 border border-gray-100/50">
+                  <div className={cn(
+                    "p-3 rounded-2xl shrink-0 flex items-center justify-center",
+                    selectedItem.status === "sent" ? "bg-green-500/10" : "bg-yellow-500/10"
+                  )}>
+                    <Send size={28} className={selectedItem.status === "sent" ? "text-green-600" : "text-yellow-600"} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 text-lg leading-tight">{selectedItem.recipient_name || "Sem nome"}</h3>
+                    <p className="text-sm text-gray-500 mt-0.5 font-medium">
+                      {format(new Date(selectedItem.scheduled_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-5">
+                  <MobileInfoRow icon={Phone} label="Telefone" value={selectedItem.recipient_phone} copyable />
+                  <MobileInfoRow icon={FileText} label="Template" value={getTemplateName(selectedItem.template_id)} />
+                  <MobileInfoRow icon={Info} label="Status" value={selectedItem.status} />
+                  <MobileInfoRow icon={Hash} label="ID" value={selectedItem.id} copyable />
+                </div>
+
+                {selectedItem.status === "failed" && (
+                  <Button className="w-full h-12 rounded-xl" onClick={() => { handleRetry(selectedItem.id); setSelectedItem(null); }}>
+                    <RotateCcw className="mr-2 h-4 w-4" /> Retentar Envio
+                  </Button>
+                )}
+              </div>
+            )}
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
     </UnifiedLayout>
   );
 }
