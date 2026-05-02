@@ -13,6 +13,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
+import { LeadStatus, LEAD_STATUS_OPTIONS, getLeadStatusConfig } from "@/types/crm";
+
 export interface LeadInbox {
   id: string;
   nome: string | null;
@@ -45,12 +47,6 @@ interface Props {
   onChanged: () => void;
 }
 
-const STATUS_OPTIONS: { key: string; label: string; className: string }[] = [
-  { key: "novo", label: "Novo", className: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30" },
-  { key: "contatado", label: "Contatado", className: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30" },
-  { key: "convertido", label: "Convertido", className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30" },
-  { key: "descartado", label: "Descartado", className: "bg-muted text-muted-foreground border-border" },
-];
 
 function AttrRow({ label, value, mono = true, link = false }: { label: string; value: string | null | undefined; mono?: boolean; link?: boolean }) {
   if (!value) return null;
@@ -153,7 +149,7 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onChanged }: Props) 
     }
   };
 
-  const currentStatusOpt = STATUS_OPTIONS.find((s) => s.key === lead.status) || STATUS_OPTIONS[0];
+  const currentStatusOpt = getLeadStatusConfig(lead.status);
 
   // Quick attribution summary (always visible)
   const hasAnyUtm = !!(lead.utm_source || lead.utm_medium || lead.utm_campaign || lead.utm_content || lead.utm_term);
@@ -180,7 +176,7 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onChanged }: Props) 
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Mudar status</Label>
             <div className="flex flex-wrap gap-1.5 mt-2">
-              {STATUS_OPTIONS.map((opt) => (
+              {LEAD_STATUS_OPTIONS.map((opt) => (
                 <Button
                   key={opt.key}
                   size="sm"
@@ -194,6 +190,7 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onChanged }: Props) 
               ))}
             </div>
           </div>
+
 
           <Separator />
 
