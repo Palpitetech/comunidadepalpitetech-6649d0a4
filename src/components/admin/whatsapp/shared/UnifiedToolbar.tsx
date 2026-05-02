@@ -9,7 +9,7 @@ interface UnifiedToolbarProps {
 
 export function UnifiedToolbar({ left, right }: UnifiedToolbarProps) {
   return (
-    <div className="flex items-center justify-between gap-2 flex-wrap mb-4">
+    <div className="flex items-center justify-between gap-2 flex-wrap mb-4 sticky top-0 md:relative z-20 bg-background/95 backdrop-blur-sm py-2 -mx-2 px-2 rounded-md">
       <div className="flex items-center gap-2 flex-wrap">
         {left}
       </div>
