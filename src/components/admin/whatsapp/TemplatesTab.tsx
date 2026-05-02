@@ -956,7 +956,6 @@ export function TemplatesTab() {
                     </Button>
                   </div>
                 </div>
-                </div>
               </div>
             )}
           </ScrollArea>
