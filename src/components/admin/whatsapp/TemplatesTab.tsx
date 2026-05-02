@@ -664,31 +664,64 @@ export function TemplatesTab() {
           </DialogHeader>
           <ScrollArea className="max-h-[calc(85vh-80px)] pr-3">
             <div className="space-y-4 pt-2">
-              <div className="flex gap-4 p-1 bg-muted/50 rounded-lg border border-border">
-                <button
-                  type="button"
-                  onClick={() => setForm(f => ({ ...f, category: 'marketing' }))}
-                  className={cn(
-                    "flex-1 py-2 text-xs font-medium rounded-md transition-all",
-                    form.category === 'marketing'
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Marketing
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setForm(f => ({ ...f, category: 'transactional' }))}
-                  className={cn(
-                    "flex-1 py-2 text-xs font-medium rounded-md transition-all",
-                    form.category === 'transactional'
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Transacional
-                </button>
+              <div className="space-y-4 p-3 bg-muted/30 rounded-lg border border-border/50">
+                <div className="flex gap-2 p-1 bg-background rounded-md border border-border">
+                  <button
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, category: 'marketing' }))}
+                    className={cn(
+                      "flex-1 py-1.5 text-[11px] font-semibold rounded transition-all",
+                      form.category === 'marketing'
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    Marketing
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, category: 'transactional' }))}
+                    className={cn(
+                      "flex-1 py-1.5 text-[11px] font-semibold rounded transition-all",
+                      form.category === 'transactional'
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    Transacional
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Modo de Disparo</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'single', label: 'Único', icon: MessageSquare },
+                      { id: 'sequence', label: 'Sequência', icon: Timer },
+                      { id: 'random', label: 'Random', icon: Sparkles }
+                    ].map((mode) => (
+                      <button
+                        key={mode.id}
+                        type="button"
+                        onClick={() => setForm(f => ({ ...f, type: mode.id as any }))}
+                        className={cn(
+                          "flex flex-col items-center justify-center gap-1.5 p-2 rounded-md border transition-all",
+                          form.type === mode.id 
+                            ? "bg-primary/10 border-primary text-primary" 
+                            : "bg-background border-border text-muted-foreground hover:border-primary/50"
+                        )}
+                      >
+                        <mode.icon className="h-4 w-4" />
+                        <span className="text-[10px] font-bold">{mode.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground leading-tight px-1">
+                    {form.type === 'single' && "Envia apenas a mensagem principal do Slot 1."}
+                    {form.type === 'sequence' && "Envia as variações em ordem (1, 2, 3...) para cada novo contato."}
+                    {form.type === 'random' && "Escolhe uma variação ativa aleatoriamente para cada envio."}
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-1.5">
