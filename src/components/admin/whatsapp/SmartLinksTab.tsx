@@ -34,6 +34,12 @@ interface SmartLink {
   clicks: number;
   is_active: boolean;
   created_at: string;
+  plan_id: string | null;
+  redirect_type: 'whatsapp' | 'checkout';
+  plans?: {
+    name: string;
+    checkout_link: string | null;
+  };
 }
 
 interface WaInstance {
@@ -59,6 +65,7 @@ export function SmartLinksTab() {
   const [selectedLink, setSelectedLink] = useState<SmartLink | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [qrSlug, setQrSlug] = useState<string | null>(null);
+  const [plans, setPlans] = useState<{ id: string, name: string }[]>([]);
 
   // Manual form
   const [originalUrl, setOriginalUrl] = useState("");
@@ -74,13 +81,27 @@ export function SmartLinksTab() {
   const [autoGroupName, setAutoGroupName] = useState("");
   const [autoSlug, setAutoSlug] = useState("");
 
+  // Checkout form
+  const [selectedPlan, setSelectedPlan] = useState("");
+  const [checkoutSlug, setCheckoutSlug] = useState("");
+  const [checkoutName, setCheckoutName] = useState("");
+
   const fetchLinks = async () => {
     const { data } = await supabase
       .from("whatsapp_smart_links")
-      .select("*")
+      .select("*, plans(name, checkout_link)")
       .order("created_at", { ascending: false });
-    setLinks((data as SmartLink[]) ?? []);
+    setLinks((data as any[]) ?? []);
     setLoading(false);
+  };
+
+  const fetchPlans = async () => {
+    const { data } = await supabase
+      .from("plans")
+      .select("id, name")
+      .eq("is_active", true)
+      .order("display_order", { ascending: true });
+    setPlans(data ?? []);
   };
 
   const fetchInstances = useCallback(async () => {
@@ -91,7 +112,10 @@ export function SmartLinksTab() {
     setInstances((data as WaInstance[]) ?? []);
   }, []);
 
-  useEffect(() => { fetchLinks(); }, []);
+  useEffect(() => { 
+    fetchLinks(); 
+    fetchPlans();
+  }, []);
 
   useEffect(() => {
     if (dialogOpen) fetchInstances();
@@ -157,9 +181,38 @@ export function SmartLinksTab() {
     setCreating(false);
   };
 
+  const handleCreateCheckout = async () => {
+    if (!selectedPlan) return;
+    setCreating(true);
+    
+    const plan = plans.find(p => p.id === selectedPlan);
+    const slug = checkoutSlug.trim() || generateSlug();
+    const name = checkoutName.trim() || plan?.name || "";
+
+    const { error } = await supabase.from("whatsapp_smart_links").insert({
+      slug,
+      plan_id: selectedPlan,
+      group_name: name || null,
+      redirect_type: 'checkout',
+      original_url: '', // Will be resolved during redirect
+      group_invite_code: ''
+    });
+
+    if (!error) { 
+      toast({ title: "Link de Checkout criado!" }); 
+      resetForm(); 
+      setDialogOpen(false); 
+      fetchLinks(); 
+    } else {
+      toast({ title: "Erro ao criar link", variant: "destructive" });
+    }
+    setCreating(false);
+  };
+
   const resetForm = () => {
     setOriginalUrl(""); setGroupName(""); setCustomSlug("");
     setSelectedInstance(""); setSelectedGroup(""); setAutoGroupName(""); setAutoSlug("");
+    setSelectedPlan(""); setCheckoutSlug(""); setCheckoutName("");
   };
 
   const handleToggle = async (id: string, active: boolean) => {
@@ -201,13 +254,29 @@ export function SmartLinksTab() {
             <UnifiedCardItem key={link.id} className={cn("space-y-3", !link.is_active && "opacity-60")}>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10"><Link2 className="h-5 w-5 text-primary" /></div>
+                  <div className={cn(
+                    "flex h-10 w-10 items-center justify-center rounded-full",
+                    link.redirect_type === 'checkout' ? "bg-orange-500/10" : "bg-primary/10"
+                  )}>
+                    {link.redirect_type === 'checkout' ? <QrCode className="h-5 w-5 text-orange-600" /> : <Link2 className="h-5 w-5 text-primary" />}
+                  </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold truncate">{link.group_name || link.slug}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold truncate">{link.group_name || link.slug}</h3>
+                      <Badge variant="outline" className="text-[10px] h-4 px-1 capitalize">
+                        {link.redirect_type === 'checkout' ? 'Kirvano' : 'WhatsApp'}
+                      </Badge>
+                    </div>
                     <p className="text-[10px] text-muted-foreground font-mono truncate">{BASE_URL}/g/{link.slug}</p>
+                    {link.redirect_type === 'checkout' && link.plans && (
+                      <p className="text-[9px] text-orange-600 font-medium truncate uppercase">🛒 {link.plans.name}</p>
+                    )}
                   </div>
                 </div>
-                <Switch checked={link.is_active} onCheckedChange={(v) => handleToggle(link.id, v)} />
+                <div className="flex flex-col items-end gap-1">
+                  <Switch checked={link.is_active} onCheckedChange={(v) => handleToggle(link.id, v)} />
+                  <span className="text-[9px] font-medium text-muted-foreground">{link.clicks} cliques</span>
+                </div>
               </div>
               <div className="flex items-center gap-1 pt-2 border-t border-border">
                 <Button size="icon" variant="ghost" onClick={() => handleCopy(link.slug, link.id)}>{copiedId === link.id ? <CheckCheck className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}</Button>
@@ -223,8 +292,14 @@ export function SmartLinksTab() {
           <AdminListContainer loading={loading && links.length === 0}>
             {links.map((link) => (
               <AdminListItem
-                key={link.id} onClick={() => setSelectedLink(link)} title={link.group_name || link.slug}
-                badge={{ text: `${link.clicks} cliques`, color: "bg-blue-500/10 text-blue-700", icon: MousePointer2 }}
+                key={link.id} 
+                onClick={() => setSelectedLink(link)} 
+                title={link.group_name || link.slug}
+                badge={{ 
+                  text: link.redirect_type === 'checkout' ? `🛒 ${link.plans?.name || 'Checkout'}` : `${link.clicks} cliques`, 
+                  color: link.redirect_type === 'checkout' ? "bg-orange-500/10 text-orange-700" : "bg-blue-500/10 text-blue-700", 
+                  icon: link.redirect_type === 'checkout' ? QrCode : MousePointer2 
+                }}
                 subtitle={`${BASE_URL}/g/${link.slug}`}
                 timestamp={format(new Date(link.created_at), "HH:mm", { locale: ptBR })}
               />
@@ -277,8 +352,36 @@ export function SmartLinksTab() {
       <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) resetForm(); }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader><DialogTitle>Novo Smart Link</DialogTitle></DialogHeader>
-          <Tabs defaultValue="auto">
-            <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="auto">Automático</TabsTrigger><TabsTrigger value="manual">Manual</TabsTrigger></TabsList>
+          <Tabs defaultValue="checkout">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="checkout">Checkout</TabsTrigger>
+              <TabsTrigger value="auto">Automático</TabsTrigger>
+              <TabsTrigger value="manual">Manual</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="checkout" className="space-y-4 pt-4">
+               <div className="space-y-2">
+                  <Label>Produto / Plano</Label>
+                  <Select value={selectedPlan} onValueChange={setSelectedPlan}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o produto..." /></SelectTrigger>
+                    <SelectContent>
+                      {plans.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+               </div>
+               <div className="space-y-2">
+                  <Label>Nome Identificador (Opcional)</Label>
+                  <Input value={checkoutName} onChange={e => setCheckoutName(e.target.value)} placeholder="Ex: Campanha Black Friday" />
+               </div>
+               <div className="space-y-2">
+                  <Label>Slug Personalizado (Opcional)</Label>
+                  <Input value={checkoutSlug} onChange={e => setCheckoutSlug(e.target.value)} placeholder="Ex: promo-especial" />
+               </div>
+               <Button className="w-full" onClick={handleCreateCheckout} disabled={creating || !selectedPlan}>
+                 {creating ? "Criando..." : "Criar Link de Checkout"}
+               </Button>
+            </TabsContent>
+
             <TabsContent value="auto" className="space-y-4 pt-4">
                <div className="space-y-2"><Label>Instância</Label>
                   <Select value={selectedInstance} onValueChange={setSelectedInstance}>
@@ -288,6 +391,7 @@ export function SmartLinksTab() {
                </div>
                <Button className="w-full" onClick={handleCreateAuto} disabled={creating}>{creating ? "Criando..." : "Criar"}</Button>
             </TabsContent>
+
             <TabsContent value="manual" className="space-y-4 pt-4">
                <div className="space-y-2"><Label>URL</Label><Input value={originalUrl} onChange={e => setOriginalUrl(e.target.value)} /></div>
                <Button className="w-full" onClick={handleCreateManual} disabled={creating}>{creating ? "Criando..." : "Criar"}</Button>
