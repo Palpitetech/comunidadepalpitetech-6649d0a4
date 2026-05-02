@@ -44,14 +44,21 @@ const TAB_TITLES: Record<string, string> = {
 
 export default function AdminWhatsApp() {
   const [activeTab, setActiveTab] = useState("instancias");
+  const [showMetrics, setShowMetrics] = useState(false);
 
   return (
     <AdminLayout 
       pageTitle="Comunicação" 
       headerRightContent={
-        <CommunicationHeaderSelector activeTab={activeTab} onTabChange={setActiveTab} />
+        <CommunicationHeaderSelector 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab}
+          showMetrics={showMetrics}
+          onToggleMetrics={setShowMetrics}
+        />
       }
     >
+
       <div className="flex flex-1 min-h-0">
         <div className="flex-1 min-w-0 overflow-auto">
           {/* Content header (desktop only) */}

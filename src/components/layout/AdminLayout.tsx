@@ -35,9 +35,11 @@ export function AdminLayout({ children, pageTitle, headerRightContent }: AdminLa
             className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-background/95 backdrop-blur px-4 flex-none"
             style={{ 
               paddingTop: 'env(safe-area-inset-top, 0px)',
-              height: 'calc(3.5rem + env(safe-area-inset-top, 0px))' 
+              minHeight: 'calc(3.5rem + env(safe-area-inset-top, 0px))',
+              height: 'auto'
             }}
           >
+
             <div className="flex items-center gap-2 overflow-hidden flex-1">
               {pageTitle && (
                 <h1 className="text-sm md:text-lg font-semibold truncate">
