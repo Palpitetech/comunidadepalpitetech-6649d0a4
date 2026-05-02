@@ -623,9 +623,10 @@ export default function AdminUsuarios() {
                     title={lead.nome || lead.email || "Lead sem nome"}
                     subtitle={`${lead.email || ""} ${lead.celular ? `• ${lead.celular}` : ""}`}
                     badge={{
-                      text: lead.status || "Novo",
+                      text: getLeadStatusLabel(lead.status || "novo"),
                       color: getLeadStatusClass(lead.status || "novo")
                     }}
+
                     timestamp={format(new Date(lead.created_at), "HH:mm", { locale: ptBR })}
                     rightContent={lead.slug && (
                       <span className="text-[10px] font-bold text-primary/40 uppercase tracking-tighter shrink-0">
