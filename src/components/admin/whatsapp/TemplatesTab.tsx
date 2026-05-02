@@ -936,14 +936,26 @@ export function TemplatesTab() {
                   </p>
                 </div>
                 
-                <div className="flex gap-3">
-                  <Button className="flex-1 h-12 rounded-xl" onClick={() => { setSelectedTemplate(null); openEdit(selectedTemplate); }}>
-                    <Pencil className="mr-2 h-4 w-4" /> Editar
+                <div className="flex flex-col gap-3">
+                  <Button 
+                    variant="default" 
+                    className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 font-bold" 
+                    onClick={() => handleTestSend(selectedTemplate)}
+                    disabled={!!testingId}
+                  >
+                    {testingId === selectedTemplate.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                    Testar Mensagem
                   </Button>
-                  <Button variant="outline" className="flex-1 h-12 rounded-xl" onClick={() => handleToggleActive(selectedTemplate)}>
-                    {(selectedTemplate.is_active ?? true) ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
-                    {(selectedTemplate.is_active ?? true) ? "Pausar" : "Ativar"}
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button className="flex-1 h-12 rounded-xl" onClick={() => { setSelectedTemplate(null); openEdit(selectedTemplate); }}>
+                      <Pencil className="mr-2 h-4 w-4" /> Editar
+                    </Button>
+                    <Button variant="outline" className="flex-1 h-12 rounded-xl" onClick={() => handleToggleActive(selectedTemplate)}>
+                      {(selectedTemplate.is_active ?? true) ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
+                      {(selectedTemplate.is_active ?? true) ? "Pausar" : "Ativar"}
+                    </Button>
+                  </div>
+                </div>
                 </div>
               </div>
             )}
