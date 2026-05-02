@@ -426,13 +426,13 @@ export default function AdminUsuarios() {
   };
 
   const getLeadStatusClass = (status: string) => {
-    switch (status) {
-      case "novo": return "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30";
-      case "contatado": return "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30";
-      case "convertido": return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30";
-      default: return "bg-muted text-muted-foreground border-border";
-    }
+    return getLeadStatusConfig(status).className;
   };
+
+  const getLeadStatusLabel = (status: string) => {
+    return getLeadStatusConfig(status).label;
+  };
+
 
   const getSubCount = (key: SubFilterKey) => stats[key];
 
