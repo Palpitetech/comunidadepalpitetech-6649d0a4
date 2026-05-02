@@ -181,9 +181,38 @@ export function SmartLinksTab() {
     setCreating(false);
   };
 
+  const handleCreateCheckout = async () => {
+    if (!selectedPlan) return;
+    setCreating(true);
+    
+    const plan = plans.find(p => p.id === selectedPlan);
+    const slug = checkoutSlug.trim() || generateSlug();
+    const name = checkoutName.trim() || plan?.name || "";
+
+    const { error } = await supabase.from("whatsapp_smart_links").insert({
+      slug,
+      plan_id: selectedPlan,
+      group_name: name || null,
+      redirect_type: 'checkout',
+      original_url: '', // Will be resolved during redirect
+      group_invite_code: ''
+    });
+
+    if (!error) { 
+      toast({ title: "Link de Checkout criado!" }); 
+      resetForm(); 
+      setDialogOpen(false); 
+      fetchLinks(); 
+    } else {
+      toast({ title: "Erro ao criar link", variant: "destructive" });
+    }
+    setCreating(false);
+  };
+
   const resetForm = () => {
     setOriginalUrl(""); setGroupName(""); setCustomSlug("");
     setSelectedInstance(""); setSelectedGroup(""); setAutoGroupName(""); setAutoSlug("");
+    setSelectedPlan(""); setCheckoutSlug(""); setCheckoutName("");
   };
 
   const handleToggle = async (id: string, active: boolean) => {
