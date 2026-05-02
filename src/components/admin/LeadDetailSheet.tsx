@@ -149,7 +149,7 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onChanged }: Props) 
     }
   };
 
-  const currentStatusOpt = STATUS_OPTIONS.find((s) => s.key === lead.status) || STATUS_OPTIONS[0];
+  const currentStatusOpt = getLeadStatusConfig(lead.status);
 
   // Quick attribution summary (always visible)
   const hasAnyUtm = !!(lead.utm_source || lead.utm_medium || lead.utm_campaign || lead.utm_content || lead.utm_term);
@@ -176,7 +176,7 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onChanged }: Props) 
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Mudar status</Label>
             <div className="flex flex-wrap gap-1.5 mt-2">
-              {STATUS_OPTIONS.map((opt) => (
+              {LEAD_STATUS_OPTIONS.map((opt) => (
                 <Button
                   key={opt.key}
                   size="sm"
@@ -190,6 +190,7 @@ export function LeadDetailSheet({ lead, open, onOpenChange, onChanged }: Props) 
               ))}
             </div>
           </div>
+
 
           <Separator />
 
