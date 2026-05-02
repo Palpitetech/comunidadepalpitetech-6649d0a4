@@ -12,6 +12,7 @@ import { Loader2, Plus, Pencil, Trash2, Smartphone, QrCode, RefreshCw, Power, Lo
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { maskIp } from "./shared/mask-ip";
 import { ProfilePictureCard } from "./ProfilePictureCard";
 import { UnifiedLayout } from "./UnifiedLayout";

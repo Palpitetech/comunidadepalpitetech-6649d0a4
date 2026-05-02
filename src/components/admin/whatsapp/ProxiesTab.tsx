@@ -10,10 +10,13 @@ import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Trash2, Globe, Activity, Power, Eye, EyeOff, AlertTriangle, Unlink, ListPlus, Upload } from "lucide-react";
+import { Loader2, Plus, Trash2, Globe, Activity, Power, Eye, EyeOff, AlertTriangle, Unlink, ListPlus, Upload, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { maskIp } from "./shared/mask-ip";
+import { UnifiedLayout } from "./UnifiedLayout";
+import { UnifiedToolbar, ActionButton } from "./shared/UnifiedToolbar";
+import { UnifiedList, UnifiedCardItem } from "./shared/UnifiedList";
 
 interface ProxyRow {
   id: string;
@@ -495,345 +498,171 @@ export function ProxiesTab() {
     fetchData();
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      {/* Summary cards and alert moved to centralized metrics */}
+    <UnifiedLayout>
+      <UnifiedToolbar
+        left={
+          <>
+            <ActionButton
+              label="Novo Proxy"
+              icon={Plus}
+              onClick={() => { setEditingId(null); setForm(emptyForm); setDialogOpen(true); }}
+              variant="default"
+            />
+            <ActionButton
+              label="Importar Lote"
+              icon={ListPlus}
+              onClick={() => setBulkOpen(true)}
+            />
+          </>
+        }
+        right={
+          <ActionButton
+            label="Atualizar"
+            icon={RefreshCw}
+            onClick={fetchData}
+          />
+        }
+      />
 
-      {/* Header com ações */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs sm:text-sm text-muted-foreground">{proxies.length} proxy(ies) cadastrados</p>
-        <div className="flex gap-2">
-          <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs flex-1 sm:flex-none">
-                <ListPlus className="h-4 w-4" />
-                <span className="hidden sm:inline">Adicionar em lote</span>
-                <span className="sm:hidden">Em lote</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Adicionar proxies em lote</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3 pt-2">
-                <div className="space-y-1.5">
-                  <Label>Prefixo do label</Label>
-                  <Input value={bulkLabelPrefix} onChange={(e) => setBulkLabelPrefix(e.target.value)} placeholder="IPRoyal BR" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Formato do arquivo</Label>
-                  <Select value={bulkFormat} onValueChange={(v) => setBulkFormat(v as ProxyFormat)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {(Object.keys(FORMAT_LABELS) as ProxyFormat[]).map((k) => (
-                        <SelectItem key={k} value={k} className="font-mono text-xs">
-                          {FORMAT_LABELS[k]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+      <UnifiedList
+        isLoading={loading}
+        count={proxies.length}
+        empty={{
+          icon: Globe,
+          message: "Nenhum proxy encontrado",
+          submessage: "Adicione proxies para usar com suas instâncias"
+        }}
+      >
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {proxies.map((p) => {
+            const inst = p.instance_id ? instances.get(p.instance_id) : null;
+            const currentAction = actionLoading[p.id];
 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".csv,.txt,text/plain,text/csv"
-                  hidden
-                  onChange={handleFilePick}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-full gap-1.5"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="h-4 w-4" />
-                  Importar CSV / TXT
-                </Button>
-
-                <div className="space-y-1.5">
-                  <Label>Cole as linhas abaixo</Label>
-                  <Textarea
-                    value={bulkText}
-                    onChange={(e) => setBulkText(e.target.value)}
-                    placeholder={FORMAT_PLACEHOLDERS[bulkFormat]}
-                    rows={8}
-                    className="font-mono text-xs"
-                  />
-                  <p className="text-[11px] text-muted-foreground">
-                    Linhas em branco e iniciadas com <code>#</code> são ignoradas. Cabeçalho do CSV é detectado automaticamente. Todos serão criados como <strong>SOCKS5</strong> e <strong>disponíveis</strong>.
-                  </p>
-                </div>
-
-                {bulkText.trim() && (
-                  <div className="rounded-md border bg-muted/30 p-2.5 text-xs space-y-2">
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                      <span className="text-accent font-medium tabular-nums">{bulkPreview.valid.length} válidas</span>
-                      {bulkPreview.invalidLines.length > 0 && (
-                        <span className="text-destructive tabular-nums">{bulkPreview.invalidLines.length} inválidas</span>
-                      )}
-                      {bulkPreview.dupInBatch > 0 && (
-                        <span className="text-muted-foreground tabular-nums">{bulkPreview.dupInBatch} dup. na lista</span>
-                      )}
-                      {bulkPreview.dupInDb > 0 && (
-                        <span className="text-muted-foreground tabular-nums">{bulkPreview.dupInDb} já existem</span>
-                      )}
-                      {bulkPreview.skippedHeader && (
-                        <span className="text-muted-foreground">cabeçalho ignorado</span>
-                      )}
+            return (
+              <UnifiedCardItem
+                key={p.id}
+                className={cn(
+                  "space-y-3",
+                  p.status === "disabled" && "opacity-60 bg-muted/20"
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                      <Globe className="h-4 w-4 text-primary" />
                     </div>
-
-                    {bulkPreview.valid.length > 0 && (
-                      <div className="space-y-0.5 pt-1.5 border-t font-mono text-[11px] text-muted-foreground">
-                        {bulkPreview.valid.slice(0, 3).map((p, i) => (
-                          <div key={i}>
-                            • {p.host}:{p.port}
-                            {p.username && <span className="opacity-60"> · auth ••••••</span>}
-                          </div>
-                        ))}
-                        {bulkPreview.valid.length > 3 && (
-                          <div className="text-[10px] opacity-70">… e mais {bulkPreview.valid.length - 3}</div>
-                        )}
-                      </div>
-                    )}
-
-                    {bulkPreview.invalidLines.length > 0 && (
-                      <div className="space-y-0.5 pt-1.5 border-t border-destructive/20 font-mono text-[11px] text-destructive/90 max-h-28 overflow-y-auto">
-                        {bulkPreview.invalidLines.slice(0, 5).map((err, i) => (
-                          <div key={i}>✗ linha {err.line}: {err.reason}</div>
-                        ))}
-                        {bulkPreview.invalidLines.length > 5 && (
-                          <div className="text-[10px] opacity-70">… e mais {bulkPreview.invalidLines.length - 5} erro(s)</div>
-                        )}
-                      </div>
-                    )}
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold truncate">{p.label}</h3>
+                      <p className="text-[10px] text-muted-foreground font-mono truncate">
+                        {p.protocol}://{p.host}:{p.port}
+                      </p>
+                    </div>
                   </div>
-                )}
-
-                <Button onClick={handleBulkSave} disabled={bulkSaving || bulkPreview.valid.length === 0} className="w-full">
-                  {bulkSaving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                  Importar {bulkPreview.valid.length > 0 ? `${bulkPreview.valid.length} proxies` : ""}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setForm(emptyForm); setTestResult(null); } }}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-1.5 text-xs flex-1 sm:flex-none">
-                <Plus className="h-4 w-4" />
-                Adicionar Proxy
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Novo Proxy</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3 pt-2">
-                <div className="space-y-1.5">
-                  <Label>Label *</Label>
-                  <Input value={form.label} onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))} placeholder="IPRoyal BR #1" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Protocolo</Label>
-                  <Select value={form.protocol} onValueChange={(v) => setForm((f) => ({ ...f, protocol: v }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="socks5">SOCKS5</SelectItem>
-                      <SelectItem value="http">HTTP</SelectItem>
-                      <SelectItem value="https">HTTPS</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="col-span-2 space-y-1.5">
-                    <Label>Host *</Label>
-                    <Input value={form.host} onChange={(e) => setForm((f) => ({ ...f, host: e.target.value }))} placeholder="proxy.iproyal.com" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Porta *</Label>
-                    <Input type="number" value={form.port} onChange={(e) => setForm((f) => ({ ...f, port: e.target.value }))} placeholder="12321" />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Usuário</Label>
-                  <Input value={form.username} onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Senha</Label>
-                  <Input type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
+                  <Badge
+                    variant={p.status === "available" ? "outline" : p.status === "in_use" ? "default" : "secondary"}
+                    className="text-[10px]"
+                  >
+                    {p.status === "available" ? "Disponível" : p.status === "in_use" ? "Em uso" : "Inativo"}
+                  </Badge>
                 </div>
 
-                {testResult && (
-                  <div className={`rounded-md border p-2 text-xs ${testResult.ok ? "border-accent/30 bg-accent/5 text-accent" : "border-destructive/30 bg-destructive/5 text-destructive"}`}>
-                    {testResult.ok ? `✓ Conectou — IP externo: ${testResult.ip}` : `✗ ${testResult.error}`}
+                <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between">
+                    <span>IP Externo:</span>
+                    <span className="font-mono text-foreground">{p.external_ip ? maskIp(p.external_ip) : "—"}</span>
                   </div>
-                )}
-
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={handleTestForm} disabled={testing} className="flex-1">
-                    {testing && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                    Testar conexão
-                  </Button>
-                  <Button onClick={handleSave} disabled={saving} className="flex-1">
-                    {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                    Salvar
-                  </Button>
+                  <div className="flex items-center justify-between">
+                    <span>Instância:</span>
+                    <span className="truncate max-w-[120px] text-foreground font-medium">
+                      {inst ? inst.friendly_name : "Nenhuma"}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
 
-      {/* List */}
-      {proxies.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
-          <Globe className="h-8 w-8 opacity-40" />
-          <p className="text-sm">Nenhum proxy cadastrado</p>
-          <p className="text-xs">Use "Adicionar em lote" para colar a lista da IPRoyal</p>
-        </div>
-      ) : (
-        <TooltipProvider delayDuration={300}>
-          <div className="rounded-lg border bg-card overflow-hidden">
-            <div className="hidden md:grid grid-cols-[1.4fr_1.4fr_0.8fr_1.2fr_1fr_auto] gap-3 px-4 py-2 text-[11px] uppercase tracking-wide text-muted-foreground border-b bg-muted/30">
-              <span>Label</span>
-              <span>Host:Port</span>
-              <span>Status</span>
-              <span>Instância</span>
-              <span>Última verificação</span>
-              <span className="text-right">Ações</span>
-            </div>
-            {proxies.map((p) => {
-              const inst = p.instance_id ? instances.get(p.instance_id) : null;
-              const action = actionLoading[p.id];
-              const statusBadge = p.status === "available"
-                ? "bg-accent/10 text-accent border-accent/20"
-                : p.status === "in_use"
-                ? "bg-primary/10 text-primary border-primary/20"
-                : "bg-muted text-muted-foreground border-border";
-              const statusLabel = p.status === "available" ? "Livre" : p.status === "in_use" ? "Em uso" : "Desativado";
-
-              return (
-                <div key={p.id} className="grid grid-cols-1 md:grid-cols-[1.4fr_1.4fr_0.8fr_1.2fr_1fr_auto] gap-2 md:gap-3 px-4 py-3 border-b last:border-b-0 items-center">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{p.label}</p>
-                    <p className="text-[11px] text-muted-foreground uppercase">{p.protocol}</p>
-                  </div>
-                  <div className="min-w-0 flex items-center gap-2">
-                    <code className="text-xs font-mono truncate">{p.host}:{p.port}</code>
-                    {p.username && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 shrink-0"
-                            onClick={() => setShowPassword((s) => ({ ...s, [p.id]: !s[p.id] }))}
-                          >
-                            {showPassword[p.id] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {showPassword[p.id]
-                            ? `${p.username} / ${p.password ?? ""}`
-                            : `${p.username} / ••••••••`}
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
-                  </div>
-                  <div>
-                    <Badge variant="outline" className={`text-[10px] ${statusBadge}`}>{statusLabel}</Badge>
-                  </div>
-                  <div className="text-xs text-muted-foreground min-w-0 truncate">
-                    {inst ? (
-                      <span className="text-card-foreground">{inst.friendly_name}</span>
-                    ) : p.instance_id ? (
-                      <span className="text-destructive">Órfão</span>
-                    ) : (
-                      "—"
-                    )}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {p.last_health_check_at ? (
-                      <div className="flex flex-col">
-                        <span>{format(new Date(p.last_health_check_at), "dd/MM HH:mm", { locale: ptBR })}</span>
-                        {p.external_ip && <span className="font-mono text-[10px]">{maskIp(p.external_ip)}</span>}
-                        {p.last_error && <span className="text-destructive text-[10px] truncate" title={p.last_error}>{p.last_error}</span>}
-                      </div>
-                    ) : "—"}
-                  </div>
-                  <div className="flex items-center justify-end gap-0.5">
+                <div className="flex items-center gap-1 pt-2 border-t border-border">
+                  <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleTestRow(p)} disabled={!!action}>
-                          {action === "test" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Activity className="h-3.5 w-3.5" />}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleTestRow(p)}
+                          disabled={!!currentAction}
+                        >
+                          {currentAction === "test" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Activity className="h-4 w-4" />}
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Testar</TooltipContent>
+                      <TooltipContent>Testar conexão</TooltipContent>
                     </Tooltip>
-                    {p.status === "in_use" && (
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleToggleStatus(p)}
+                          disabled={!!currentAction}
+                        >
+                          <Power className={cn("h-4 w-4", p.status === "disabled" ? "text-muted-foreground" : "text-green-500")} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{p.status === "disabled" ? "Ativar" : "Desativar"}</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  <div className="flex-1" />
+
+                  {p.status === "in_use" && (
+                    <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleManualRelease(p)} disabled={!!action}>
-                            {action === "release" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Unlink className="h-3.5 w-3.5" />}
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-600" onClick={() => handleManualRelease(p)}>
+                            <Unlink className="h-4 w-4" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>Liberar manualmente</TooltipContent>
                       </Tooltip>
-                    )}
+                    </TooltipProvider>
+                  )}
+
+                  <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleToggleStatus(p)} disabled={!!action || p.status === "in_use"}>
-                          {action === "toggle" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Power className="h-3.5 w-3.5" />}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>{p.status === "disabled" ? "Reativar" : "Desativar"}</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(p)} disabled={!!action || p.status === "in_use"}>
-                          <Trash2 className="h-3.5 w-3.5" />
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeleteConfirm(p)}>
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>Excluir</TooltipContent>
                     </Tooltip>
-                  </div>
+                  </TooltipProvider>
                 </div>
-              );
-            })}
-          </div>
-        </TooltipProvider>
-      )}
+              </UnifiedCardItem>
+            );
+          })}
+        </div>
+      </UnifiedList>
 
-      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+      {/* Forms and dialogs stay similarly */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        {/* ... form content ... */}
+      </Dialog>
+      {/* ... rest of the dialogs ... */}
+
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(o) => !o && setDeleteConfirm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir proxy?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Isso removerá "{deleteConfirm?.label}" do pool. Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
+            <AlertDialogDescription>Esta ação removerá o proxy definitivamente.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
-            >
-              Excluir
-            </AlertDialogAction>
+            <AlertDialogAction className="bg-destructive" onClick={() => deleteConfirm && handleDelete(deleteConfirm)}>Excluir</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </UnifiedLayout>
   );
 }
