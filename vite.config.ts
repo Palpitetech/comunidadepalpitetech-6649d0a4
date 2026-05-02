@@ -128,7 +128,7 @@ export default defineConfig(({ mode }) => ({
         background_color: "#1e3a5f",
         display: "standalone",
         orientation: "portrait",
-        start_url: "/",
+        start_url: "/admin",
         scope: "/",
         categories: ["entertainment", "utilities"],
         icons: [
