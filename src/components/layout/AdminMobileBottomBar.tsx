@@ -107,10 +107,10 @@ export function AdminMobileBottomBar() {
           isActive={isActive("/admin/vendas")} 
         />
         <NavButton 
-          onClick={() => openDrawer('comunicacao')} 
+          to="/admin/whatsapp" 
           icon={Radio} 
           label="Comunic." 
-          isActive={isDrawerOpen && drawerView === 'comunicacao'} 
+          isActive={isActive("/admin/whatsapp")} 
         />
         <NavButton 
           to="/admin/usuarios" 
