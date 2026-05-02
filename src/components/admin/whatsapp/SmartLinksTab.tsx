@@ -330,9 +330,34 @@ export function SmartLinksTab() {
       <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) resetForm(); }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader><DialogTitle>Novo Smart Link</DialogTitle></DialogHeader>
-          <Tabs defaultValue="auto">
-            <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="auto">Automático</TabsTrigger><TabsTrigger value="manual">Manual</TabsTrigger></TabsList>
-            <TabsContent value="auto" className="space-y-4 pt-4">
+          <Tabs defaultValue="checkout">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="checkout">Checkout</TabsTrigger>
+              <TabsTrigger value="auto">Automático</TabsTrigger>
+              <TabsTrigger value="manual">Manual</TabsTrigger>
+            </TabsList>
+            <TabsContent value="checkout" className="space-y-4 pt-4">
+               <div className="space-y-2">
+                  <Label>Produto / Plano</Label>
+                  <Select value={selectedPlan} onValueChange={setSelectedPlan}>
+                    <SelectTrigger><SelectValue placeholder="Selecione o produto..." /></SelectTrigger>
+                    <SelectContent>
+                      {plans.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+               </div>
+               <div className="space-y-2">
+                  <Label>Nome Identificador (Opcional)</Label>
+                  <Input value={checkoutName} onChange={e => setCheckoutName(e.target.value)} placeholder="Ex: Campanha Black Friday" />
+               </div>
+               <div className="space-y-2">
+                  <Label>Slug Personalizado (Opcional)</Label>
+                  <Input value={checkoutSlug} onChange={e => setCheckoutSlug(e.target.value)} placeholder="Ex: promo-especial" />
+               </div>
+               <Button className="w-full" onClick={handleCreateCheckout} disabled={creating || !selectedPlan}>
+                 {creating ? "Criando..." : "Criar Link de Checkout"}
+               </Button>
+            </TabsContent>
                <div className="space-y-2"><Label>Instância</Label>
                   <Select value={selectedInstance} onValueChange={setSelectedInstance}>
                     <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
