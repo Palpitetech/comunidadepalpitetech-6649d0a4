@@ -11,12 +11,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Plus, Pencil, Trash2, FileText, ChevronsUpDown, Check, Send, Pause, Play, Timer, Filter, Repeat, Sparkles } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, FileText, ChevronsUpDown, Check, Send, Pause, Play, Timer, Filter, Repeat, Sparkles, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TemplateSegmentationSection } from "./TemplateSegmentationSection";
 import { VariantSlotSelector, type VariantSlot } from "./VariantSlotSelector";
 import { getEventLabel } from "@/lib/whatsapp-event-labels";
 import type { MessageTemplateVariant } from "@/types/whatsapp";
+import { UnifiedLayout } from "./UnifiedLayout";
+import { UnifiedToolbar, ActionButton } from "./shared/UnifiedToolbar";
+import { UnifiedList, UnifiedCardItem } from "./shared/UnifiedList";
 
 const MAX_SLOTS = 10;
 
