@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,8 +13,14 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Plus, Pencil, Trash2, FileText, ChevronsUpDown, Check, Send, Pause, Play, Timer, Filter, Repeat, Sparkles, RefreshCw } from "lucide-react";
+import { 
+  Loader2, Plus, Pencil, Trash2, FileText, ChevronsUpDown, Check, 
+  Send, Pause, Play, Timer, Filter, Repeat, Sparkles, RefreshCw,
+  X, Copy, User, Mail, Globe, Hash, Phone, MessageSquare, Info
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { TemplateSegmentationSection } from "./TemplateSegmentationSection";
 import { VariantSlotSelector, type VariantSlot } from "./VariantSlotSelector";
 import { getEventLabel } from "@/lib/whatsapp-event-labels";
@@ -21,6 +28,7 @@ import type { MessageTemplateVariant } from "@/types/whatsapp";
 import { UnifiedLayout } from "./UnifiedLayout";
 import { UnifiedToolbar, ActionButton } from "./shared/UnifiedToolbar";
 import { UnifiedList, UnifiedCardItem } from "./shared/UnifiedList";
+import { AdminListContainer, AdminListItem } from "../AdminListComponents";
 
 const MAX_SLOTS = 10;
 
@@ -103,6 +111,7 @@ export function TemplatesTab() {
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(null);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormData>(emptyForm);
@@ -116,9 +125,7 @@ export function TemplatesTab() {
   const [variantCounts, setVariantCounts] = useState<Record<string, number>>({});
   const [slots, setSlots] = useState<VariantSlot[]>(() => buildEmptySlots());
   const [activeSlot, setActiveSlot] = useState<number>(1);
-  // Track ids of variants loaded from DB (position -> id) so we can update/delete on save
   const [variantIds, setVariantIds] = useState<Record<number, string>>({});
-  // Track positions removed during the current edit session (to delete on save)
   const [removedPositions, setRemovedPositions] = useState<number[]>([]);
   const [generatingVariants, setGeneratingVariants] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
@@ -553,7 +560,8 @@ export function TemplatesTab() {
           submessage: "Crie templates para automatizar suas mensagens"
         }}
       >
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        {/* Desktop View */}
+        <div className="hidden md:grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {templates.map((t) => (
             <UnifiedCardItem
               key={t.id}
@@ -620,6 +628,26 @@ export function TemplatesTab() {
               </div>
             </UnifiedCardItem>
           ))}
+        </div>
+
+        {/* Mobile View - Eventos Style */}
+        <div className="md:hidden border-t border-border/40">
+          <AdminListContainer loading={loading && templates.length === 0}>
+            {templates.map((t) => (
+              <AdminListItem
+                key={t.id}
+                onClick={() => setSelectedTemplate(t)}
+                title={t.name}
+                badge={{
+                  text: (t.is_active ?? true) ? "Ativo" : "Pausado",
+                  color: (t.is_active ?? true) ? "bg-green-500/10 text-green-700 border-green-200/50" : "bg-muted/50 text-muted-foreground border-border/50",
+                  icon: (t.is_active ?? true) ? Play : Pause
+                }}
+                subtitle={`${getEventLabel(t.event_trigger)} • ${t.content.slice(0, 40)}${t.content.length > 40 ? "..." : ""}`}
+                timestamp={format(new Date(t.created_at), "HH:mm", { locale: ptBR })}
+              />
+            ))}
+          </AdminListContainer>
         </div>
       </UnifiedList>
 
@@ -724,6 +752,225 @@ export function TemplatesTab() {
           </ScrollArea>
         </DialogContent>
       </Dialog>
+      {/* Mobile Detail View */}
+      {selectedTemplate && (
+        <div className="fixed inset-0 z-[100] bg-white md:hidden flex flex-col animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center justify-between px-4 h-16 border-b border-border bg-white shrink-0 z-50 relative">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setSelectedTemplate(null)}
+              className="text-gray-500 hover:bg-transparent p-0"
+            >
+              <X size={24} strokeWidth={1.5} />
+            </Button>
+            <h2 className="text-base font-bold absolute left-1/2 -translate-x-1/2">Detalhes do Template</h2>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-gray-500 hover:bg-transparent p-0"
+              onClick={() => fetchTemplates()}
+            >
+              <RefreshCw size={22} strokeWidth={1.5} className={cn(loading && "animate-spin")} />
+            </Button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto overscroll-contain bg-white">
+            <div className="flex flex-col min-h-full">
+              <div className="p-4 space-y-6 pb-[calc(4rem+env(safe-area-inset-bottom))]">
+                {/* Status Card */}
+                <div className="bg-gray-50 rounded-[20px] p-4 flex items-start gap-4 border border-gray-100/50">
+                  <div className={cn(
+                    "p-3 rounded-2xl shrink-0 flex items-center justify-center relative",
+                    (selectedTemplate.is_active ?? true) ? "bg-green-500/10" : "bg-gray-100"
+                  )}>
+                    <FileText size={28} className={cn((selectedTemplate.is_active ?? true) ? "text-green-600" : "text-gray-400")} />
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 text-lg leading-tight">
+                      {selectedTemplate.name}
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-0.5 font-medium">
+                      {format(new Date(selectedTemplate.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                    </p>
+                    <Badge variant={(selectedTemplate.is_active ?? true) ? "default" : "secondary"} className="mt-2">
+                      {(selectedTemplate.is_active ?? true) ? "Ativo" : "Pausado"}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Identification */}
+                <div className="space-y-5 px-1">
+                  <MobileInfoRow 
+                    icon={Repeat} 
+                    label="Gatilho / Evento" 
+                    value={getEventLabel(selectedTemplate.event_trigger)} 
+                    copyable
+                  />
+                  <MobileInfoRow 
+                    icon={Info} 
+                    label="Categoria" 
+                    value={selectedTemplate.category === "marketing" ? "Marketing" : "Transacional"} 
+                  />
+                  <MobileInfoRow 
+                    icon={Timer} 
+                    label="Delay" 
+                    value={selectedTemplate.delay_enabled ? `${selectedTemplate.delay_minutes} minutos` : "Desativado"} 
+                  />
+                  <MobileInfoRow 
+                    icon={Hash} 
+                    label="ID do Template" 
+                    value={selectedTemplate.id} 
+                    copyable 
+                  />
+                </div>
+
+                {/* Content */}
+                <div className="space-y-3 px-1 pt-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-gray-600">Conteúdo da Mensagem</h4>
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      className="h-7 bg-gray-100 text-gray-600 hover:bg-gray-200 text-xs font-bold rounded-lg px-3"
+                      onClick={() => {
+                        navigator.clipboard.writeText(selectedTemplate.content);
+                        toast.success("Conteúdo copiado!");
+                      }}
+                    >
+                      Copiar
+                    </Button>
+                  </div>
+                  
+                  <div className="bg-gray-50 rounded-[18px] p-4 border border-gray-100 shadow-inner">
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap italic">
+                      "{selectedTemplate.content}"
+                    </p>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="pt-4 space-y-3">
+                  <Button 
+                    variant="outline"
+                    className="w-full h-14 border-primary/20 text-primary hover:bg-primary/5 rounded-[18px] text-lg font-bold gap-3"
+                    onClick={() => {
+                      setSelectedTemplate(null);
+                      openEdit(selectedTemplate);
+                    }}
+                  >
+                    <Pencil size={24} />
+                    Editar Template
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className={cn(
+                      "w-full h-14 border-border rounded-[18px] text-lg font-bold gap-3",
+                      (selectedTemplate.is_active ?? true) ? "text-amber-600 border-amber-100 hover:bg-amber-50" : "text-green-600 border-green-100 hover:bg-green-50"
+                    )}
+                    onClick={() => handleToggleActive(selectedTemplate)}
+                    disabled={!!togglingId}
+                  >
+                    {(selectedTemplate.is_active ?? true) ? <Pause size={24} /> : <Play size={24} />}
+                    {(selectedTemplate.is_active ?? true) ? "Pausar Template" : "Ativar Template"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Sheet View (Reusing the same logic for consistency) */}
+      <Sheet open={!!selectedTemplate && window.innerWidth >= 768} onOpenChange={(open) => !open && setSelectedTemplate(null)}>
+        <SheetContent 
+          side="right" 
+          className="p-0 flex flex-col border-l border-border bg-white w-full md:max-w-lg outline-none focus:ring-0 overflow-hidden"
+        >
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-white shrink-0 z-50">
+            <SheetTitle className="text-base font-semibold">Detalhes do Template</SheetTitle>
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={() => setSelectedTemplate(null)}>
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+          <ScrollArea className="flex-1 bg-white">
+            {selectedTemplate && (
+              <div className="p-4 space-y-6 pb-20">
+                {/* Status Card */}
+                <div className="bg-gray-50 rounded-[20px] p-4 flex items-start gap-4 border border-gray-100/50">
+                  <div className={cn(
+                    "p-3 rounded-2xl shrink-0 flex items-center justify-center",
+                    (selectedTemplate.is_active ?? true) ? "bg-green-500/10" : "bg-gray-100"
+                  )}>
+                    <FileText size={28} className={cn((selectedTemplate.is_active ?? true) ? "text-green-600" : "text-gray-400")} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 text-lg leading-tight">{selectedTemplate.name}</h3>
+                    <p className="text-sm text-gray-500 mt-0.5 font-medium">
+                      {format(new Date(selectedTemplate.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-5">
+                  <MobileInfoRow icon={Repeat} label="Gatilho" value={getEventLabel(selectedTemplate.event_trigger)} copyable />
+                  <MobileInfoRow icon={Info} label="Categoria" value={selectedTemplate.category} />
+                  <MobileInfoRow icon={Timer} label="Delay" value={selectedTemplate.delay_enabled ? `${selectedTemplate.delay_minutes} min` : "Não"} />
+                  <MobileInfoRow icon={Hash} label="ID" value={selectedTemplate.id} copyable />
+                </div>
+
+                <div className="bg-gray-50 rounded-[18px] p-5 border border-gray-100">
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap italic">
+                    "{selectedTemplate.content}"
+                  </p>
+                </div>
+                
+                <div className="flex gap-3">
+                  <Button className="flex-1 h-12 rounded-xl" onClick={() => { setSelectedTemplate(null); openEdit(selectedTemplate); }}>
+                    <Pencil className="mr-2 h-4 w-4" /> Editar
+                  </Button>
+                  <Button variant="outline" className="flex-1 h-12 rounded-xl" onClick={() => handleToggleActive(selectedTemplate)}>
+                    {(selectedTemplate.is_active ?? true) ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
+                    {(selectedTemplate.is_active ?? true) ? "Pausar" : "Ativar"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
     </UnifiedLayout>
+  );
+}
+
+function MobileInfoRow({ icon: Icon, label, value, copyable }: { icon: any; label: string; value: string; copyable?: boolean }) {
+  return (
+    <div className="flex items-start gap-4 group">
+      <div className="mt-1 p-0.5 text-gray-400 shrink-0">
+        <Icon size={22} strokeWidth={1.5} />
+      </div>
+      <div className="flex-1 min-w-0 border-b border-gray-50 pb-4 last:border-0 overflow-hidden text-left">
+        <p className="text-xs font-medium text-gray-400 mb-0.5 tracking-tight uppercase">{label}</p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[15px] font-bold text-gray-900 truncate leading-snug break-all">
+            {value || <span className="text-gray-300 italic font-normal text-sm">Não informado</span>}
+          </p>
+          {copyable && value && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-gray-300 hover:text-gray-500 hover:bg-gray-50 shrink-0"
+              onClick={() => {
+                navigator.clipboard.writeText(value);
+                toast.success(`${label} copiado!`);
+              }}
+            >
+              <Copy size={16} />
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
