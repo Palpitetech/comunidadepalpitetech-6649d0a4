@@ -119,44 +119,41 @@ export function MensagensTab() {
     setSearchPhone("");
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      {/* Status counters removed - centralized in CommunicationQuickMetrics */}
-
-      {/* Toolbar */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <Button
-          variant={onlyTemplates ? "default" : "outline"}
-          size="sm"
-          className="gap-1.5 text-xs"
-          onClick={() => setOnlyTemplates(!onlyTemplates)}
-        >
-          <FileText className="h-3.5 w-3.5" /> Apenas templates
-        </Button>
-        <Button
-          variant={hasActiveFilters ? "default" : "outline"}
-          size="sm"
-          className="gap-1.5 text-xs"
-          onClick={() => setShowFilters(!showFilters)}
-        >
-          <Filter className="h-3.5 w-3.5" /> Filtros
-          {hasActiveFilters && <span className="tabular-nums">({filtered.length})</span>}
-        </Button>
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={fetchData}>
-          <RefreshCw className="h-3.5 w-3.5" /> Atualizar
-        </Button>
-      </div>
+    <UnifiedLayout>
+      <UnifiedToolbar
+        left={
+          <>
+            <Button
+              variant={onlyTemplates ? "default" : "outline"}
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => setOnlyTemplates(!onlyTemplates)}
+            >
+              <FileText className="h-3.5 w-3.5" /> Apenas templates
+            </Button>
+            <Button
+              variant={hasActiveFilters ? "default" : "outline"}
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <Filter className="h-3.5 w-3.5" /> Filtros
+              {hasActiveFilters && <span>({filtered.length})</span>}
+            </Button>
+          </>
+        }
+        right={
+          <ActionButton
+            label="Atualizar"
+            icon={RefreshCw}
+            onClick={fetchData}
+          />
+        }
+      />
 
       {showFilters && (
-        <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg border border-border bg-muted/30">
+        <div className="flex flex-wrap items-center gap-2 p-3 mb-4 rounded-xl border border-border bg-muted/30">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[140px] h-8 text-xs">
               <SelectValue />
@@ -181,60 +178,52 @@ export function MensagensTab() {
         </div>
       )}
 
-      {/* List */}
-      {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
-          <Inbox className="h-8 w-8 opacity-40" />
-          <p className="text-sm">Nenhuma mensagem encontrada</p>
-        </div>
-      ) : (
+      <UnifiedList
+        isLoading={loading}
+        count={filtered.length}
+        total={rows.length}
+        empty={{
+          icon: Inbox,
+          message: "Nenhuma mensagem encontrada",
+          submessage: "Ajuste os filtros ou aguarde novos disparos"
+        }}
+      >
         <div className="space-y-2">
           {filtered.slice(0, 100).map((r) => (
-            <button
-              key={r.id}
-              onClick={() => setSelected(r)}
-              className="w-full text-left rounded-xl border border-border bg-card p-3.5 space-y-1.5 hover:bg-muted/40 transition-colors"
-            >
+            <UnifiedCardItem key={r.id} onClick={() => setSelected(r)} className="space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium tabular-nums">{r.recipient_phone}</p>
-                  <p className="text-[11px] text-muted-foreground truncate">
-                    {r.template_name} · {r.instance_name}
-                  </p>
+                  <p className="text-sm font-semibold truncate">{r.recipient_phone}</p>
+                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
+                    <span className="flex items-center gap-1">
+                      <FileText className="h-2.5 w-2.5" /> {r.template_name}
+                    </span>
+                    <span>·</span>
+                    <span className="flex items-center gap-1">
+                      <Smartphone className="h-2.5 w-2.5" /> {r.instance_name}
+                    </span>
+                  </div>
                 </div>
                 <MessageStatusBadge status={r.status} />
               </div>
 
               {r.status === "failed" && r.error_message && (
-                <div className="flex items-start gap-1.5 text-[11px] text-red-600 bg-red-500/5 border border-red-500/20 rounded-md px-2 py-1.5">
-                  <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" />
-                  <p className="line-clamp-2 break-words">{r.error_message}</p>
+                <div className="flex items-start gap-1.5 text-[10px] text-red-600 bg-red-500/5 border border-red-500/20 rounded-md px-2 py-1.5">
+                  <AlertTriangle className="h-3 w-3 shrink-0" />
+                  <p className="line-clamp-1">{r.error_message}</p>
                 </div>
               )}
 
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground tabular-nums">
-                <span>Criada: {fmtDate(r.created_at)}</span>
-                {r.sent_at && <span>Enviada: {fmtDate(r.sent_at)}</span>}
-                {!r.sent_at && r.scheduled_at && <span>Agendada: {fmtDate(r.scheduled_at)}</span>}
+              <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1 border-t border-border/40 font-mono">
+                <span>C: {fmtDate(r.created_at)}</span>
+                {r.sent_at && <span>E: {fmtDate(r.sent_at)}</span>}
+                {!r.sent_at && r.scheduled_at && <span>A: {fmtDate(r.scheduled_at)}</span>}
               </div>
-              {(r.retry_count ?? 0) > 0 && (
-                <p className="text-[10px] text-amber-700">Tentativas: {r.retry_count}</p>
-              )}
-            </button>
+            </UnifiedCardItem>
           ))}
-          {filtered.length > 100 && (
-            <p className="text-xs text-muted-foreground text-center py-2">
-              Mostrando 100 de {filtered.length} registros
-            </p>
-          )}
         </div>
-      )}
+      </UnifiedList>
 
-      <p className="text-xs text-muted-foreground text-center">
-        {filtered.length} de {baseRows.length} registro(s){onlyTemplates ? " (templates)" : ""}
-      </p>
-
-      {/* Detail dialog */}
       <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -261,18 +250,10 @@ export function MensagensTab() {
                   </pre>
                 </div>
               )}
-              {selected.variables && Object.keys(selected.variables).length > 0 && (
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Variáveis</p>
-                  <pre className="text-[11px] bg-muted/40 rounded-md p-2 whitespace-pre-wrap break-words">
-                    {JSON.stringify(selected.variables, null, 2)}
-                  </pre>
-                </div>
-              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </UnifiedLayout>
   );
 }
