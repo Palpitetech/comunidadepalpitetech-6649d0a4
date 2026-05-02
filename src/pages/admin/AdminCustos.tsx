@@ -175,7 +175,7 @@ export default function AdminCustos() {
   const userCost = summary.byOrigem.usuario.costUsd;
 
   return (
-    <AdminLayout>
+    <AdminLayout pageTitle="Custos IA">
       <div className="container-senior py-6 space-y-6">
         <div className="flex items-center justify-between hidden md:flex">
           <h1 className="text-2xl font-bold">Controle de Custos IA</h1>
