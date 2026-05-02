@@ -771,16 +771,125 @@ export function TemplatesTab() {
                 </Popover>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Conteúdo da mensagem</Label>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <Label className="text-sm font-bold">Conteúdo do Slot #{activeSlot}</Label>
+                  <div className="flex gap-1">
+                    {activeSlot > 1 && (
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={deleteActiveSlot}>
+                        <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir
+                      </Button>
+                    )}
+                  </div>
                 </div>
-                <Textarea
-                  placeholder="Olá {{nome}}, tudo bem?"
-                  value={slots[activeSlot - 1]?.content ?? ""}
-                  onChange={(e) => updateActiveSlotContent(e.target.value)}
-                  rows={5}
-                />
+
+                <div className="bg-muted/20 rounded-lg p-2 border border-border/50">
+                  <VariantSlotSelector slots={slots} activeSlot={activeSlot} onSelect={handleSlotSelect} />
+                </div>
+
+                <div className="relative group">
+                  <Textarea
+                    ref={textareaRef}
+                    placeholder="Olá {{nome}}, tudo bem?"
+                    value={slots[activeSlot - 1]?.content ?? ""}
+                    onChange={(e) => updateActiveSlotContent(e.target.value)}
+                    className="min-h-[160px] text-sm resize-none pr-10 focus-visible:ring-1"
+                  />
+                  <div className="absolute right-2 top-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-background/80 shadow-sm" onClick={() => updateActiveSlotContent("")}>
+                            <RefreshCw className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="left">Limpar texto</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {VARIABLES.map((v) => (
+                    <Button
+                      key={v}
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 text-[10px] font-bold border-dashed hover:border-primary hover:text-primary transition-colors"
+                      onClick={() => insertVariable(v)}
+                    >
+                      {v}
+                    </Button>
+                  ))}
+                </div>
+
+                <div className="pt-2">
+                  <Button
+                    variant="secondary"
+                    className="w-full h-9 text-xs font-bold gap-2 bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10"
+                    onClick={handleGenerateVariants}
+                    disabled={generatingVariants || !mainHasContent}
+                  >
+                    {generatingVariants ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                    {hasGenerated ? "Regerar Variações com IA" : "Gerar 9 Variações com IA"}
+                  </Button>
+                  {!mainHasContent && (
+                    <p className="text-[10px] text-center text-muted-foreground mt-1.5">
+                      Preencha o Slot #1 primeiro para usar IA
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <TemplateSegmentationSection
+                category={form.category}
+                allTags={allTags}
+                includeTags={form.include_tags}
+                excludeTags={form.exclude_tags}
+                excludeTagsRecent={form.exclude_tags_recent}
+                excludeRecentWindowHours={form.exclude_recent_window_hours}
+                tagsMatchMode={form.tags_match_mode}
+                planIds={form.plan_ids}
+                plans={plans}
+                onIncludeTagsChange={(tags) => setForm(f => ({ ...f, include_tags: tags }))}
+                onExcludeTagsChange={(tags) => setForm(f => ({ ...f, exclude_tags: tags }))}
+                onExcludeTagsRecentChange={(tags) => setForm(f => ({ ...f, exclude_tags_recent: tags }))}
+                onExcludeRecentWindowHoursChange={(hours) => setForm(f => ({ ...f, exclude_recent_window_hours: hours }))}
+                onTagsMatchModeChange={(mode) => setForm(f => ({ ...f, tags_match_mode: mode }))}
+                onPlanIdsChange={(ids) => setForm(f => ({ ...f, plan_ids: ids }))}
+              />
+
+              <div className="space-y-3 pt-3 border-t border-border">
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/50">
+                  <div className="space-y-0.5">
+                    <Label className="text-xs font-bold">Delay de Envio</Label>
+                    <p className="text-[10px] text-muted-foreground">Aguardar antes de disparar</p>
+                  </div>
+                  <Switch
+                    checked={form.delay_enabled}
+                    onCheckedChange={(v) => setForm(f => ({ ...f, delay_enabled: v }))}
+                  />
+                </div>
+
+                {form.delay_enabled && (
+                  <div className="grid grid-cols-5 gap-1.5 px-1">
+                    {DELAY_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setForm(f => ({ ...f, delay_minutes: opt.value }))}
+                        className={cn(
+                          "py-1.5 text-[10px] font-bold rounded-md border transition-all",
+                          form.delay_minutes === opt.value
+                            ? "bg-primary border-primary text-primary-foreground"
+                            : "bg-background border-border text-muted-foreground hover:border-primary/50"
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <Button className="w-full" onClick={handleSave} disabled={saving}>
