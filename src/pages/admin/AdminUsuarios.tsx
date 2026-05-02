@@ -458,7 +458,7 @@ export default function AdminUsuarios() {
     <AdminLayout pageTitle="Usuários">
       <div className="flex flex-col flex-1 min-h-0 bg-background">
         <AdminHeader 
-          title="Usuários"
+          title=""
           search={searchTerm}
           onSearchChange={setSearchTerm}
           onRefresh={fetchData}
