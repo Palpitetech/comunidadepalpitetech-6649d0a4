@@ -51,7 +51,9 @@ import Integracoes from "./pages/admin/Integracoes";
 import AdminMetricas from "./pages/admin/AdminMetricas";
 import AdminAtribuicaoAuditoria from "./pages/admin/AdminAtribuicaoAuditoria";
 import AdminBackfill from "./pages/admin/AdminBackfill";
+import AdminForceUpdate from "./pages/admin/AdminForceUpdate";
 import NovoBolao from "./pages/admin/boloes/NovoBolao";
+
 import ListagemBolao from "./pages/admin/boloes/ListagemBolao";
 import ResgatesBolao from "./pages/admin/boloes/ResgatesBolao";
 import ComprasSaldo from "./pages/admin/boloes/ComprasSaldo";
