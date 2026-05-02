@@ -644,39 +644,65 @@ export function InstanciasTab() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Banner de saúde da Evolution API */}
       <EvolutionHealthBanner />
 
-      {/* Foto de perfil em massa */}
-      <ProfilePictureCard />
+      {/* Header - Ações principais unificadas */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="relative w-full sm:flex-1">
+            <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Filtrar instâncias..."
+              className="pl-9 h-11 sm:h-10 rounded-xl bg-card border-border/60"
+            />
+          </div>
+          
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="flex-1 sm:flex-none gap-2 h-11 sm:h-10 rounded-xl border-border/60 text-xs">
+                  <Replace className="h-4 w-4" />
+                  <span>Mudar Foto</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Mudar Foto de Perfil</DialogTitle>
+                </DialogHeader>
+                <div className="pt-4 max-h-[70vh] overflow-y-auto pr-2">
+                  <ProfilePictureCard />
+                </div>
+              </DialogContent>
+            </Dialog>
 
+            <Button 
+              variant="outline" 
+              onClick={handleSyncFromEvolution} 
+              disabled={syncing}
+              className="flex-1 sm:flex-none gap-2 h-11 sm:h-10 rounded-xl border-border/60 text-xs"
+            >
+              {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              <span>Buscar</span>
+            </Button>
+            
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={openCreate} className="flex-1 sm:flex-none gap-2 h-11 sm:h-10 rounded-xl shadow-lg shadow-primary/20 text-xs">
+                  <Plus className="h-4 w-4" />
+                  <span>Nova</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>{editingId ? "Editar Instância" : "Nova Instância"}</DialogTitle>
+                </DialogHeader>
 
-      {/* Header - mobile-friendly stacked layout */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs sm:text-sm text-muted-foreground">{instances.length} instância(s)</p>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs flex-1 sm:flex-none" onClick={handleSyncFromEvolution} disabled={syncing}>
-            {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-            <span className="hidden sm:inline">Buscar Instâncias</span>
-            <span className="sm:hidden">Buscar</span>
-          </Button>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-1.5 text-xs flex-1 sm:flex-none" onClick={openCreate}>
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Nova Instância</span>
-                <span className="sm:hidden">Nova</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>{editingId ? "Editar Instância" : "Nova Instância"}</DialogTitle>
-              </DialogHeader>
+                {!editingId ? (
+                  /* === Modo CRIAÇÃO: 1 campo, gera QR automático === */
+                  <div className="space-y-4 pt-2">
 
-              {!editingId ? (
-                /* === Modo CRIAÇÃO: 1 campo, gera QR automático === */
-                <div className="space-y-4 pt-2">
                   <div className="space-y-1.5">
                     <Label htmlFor="apelido">Apelido *</Label>
                     <Input
@@ -801,6 +827,53 @@ export function InstanciasTab() {
           </Dialog>
         </div>
       </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
       {/* QR Code Dialog — fluxo guiado com fallbacks visuais */}
       <Dialog
@@ -1154,3 +1227,5 @@ export function InstanciasTab() {
     </div>
   );
 }
+
+
