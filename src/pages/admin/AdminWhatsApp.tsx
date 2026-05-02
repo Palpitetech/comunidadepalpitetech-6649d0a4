@@ -61,8 +61,8 @@ export default function AdminWhatsApp() {
 
           <div className="p-4 md:px-5 md:pb-6 lg:px-6">
             <div className="max-w-5xl space-y-4">
-              <ForceUpdateButton />
               {activeTab === "instancias" && <InstanciasTab />}
+
               {activeTab === "proxies" && <ProxiesTab />}
               {activeTab === "templates" && <TemplatesTab />}
               {activeTab === "fila" && <FilaTab />}
