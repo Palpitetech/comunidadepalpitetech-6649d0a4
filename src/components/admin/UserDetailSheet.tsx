@@ -48,7 +48,7 @@ export function UserDetailSheet({
   if (!user) return null;
 
   const Content = (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       {/* Mobile drag handle - Apenas se for no Sheet nativo */}
       {isMobile && !isMobileView && (
         <div className="flex justify-center mb-3">
@@ -111,7 +111,7 @@ export function UserDetailSheet({
           </TabsTrigger>
         </TabsList>
 
-        <div className="flex-1 min-h-0">
+        <div className="mt-2">
           <TabsContent value="dados" className="mt-4 outline-none">
             <UserDataTab key={user.id} user={user} onUserUpdated={onUserUpdated} />
           </TabsContent>

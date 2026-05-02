@@ -111,6 +111,7 @@ function MenuCard({
 export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
   const { isAuthenticated, profile, signOut } = useAuthContext();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [profileExpanded, setProfileExpanded] = useState(false);
 
   const close = () => onOpenChange(false);
 
@@ -179,56 +180,62 @@ export function MobileMenuSheet({ open, onOpenChange }: MobileMenuSheetProps) {
             {/* User Card */}
             {isAuthenticated ? (
               <div className="bg-card rounded-xl shadow-sm p-4 mb-6 border border-border/40">
-                <div className="flex items-center gap-3">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="shrink-0">
-                        <Avatar className="h-14 w-14">
-                          <AvatarImage src={profile?.avatar_url || undefined} />
-                          <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold">
-                            {getInitials(profile?.nome)}
-                          </AvatarFallback>
-                        </Avatar>
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-64 bg-popover z-[120]">
-                      <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base" onClick={close}>
-                        <Link to="/perfil/dados"><User className="h-5 w-5" />Dados</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base" onClick={close}>
-                        <Link to="/perfil/transacoes"><CreditCard className="h-5 w-5" />Transações</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base" onClick={close}>
-                        <Link to="/perfil/assinatura"><Ticket className="h-5 w-5" />Assinatura</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base" onClick={close}>
-                        <Link to="/perfil/seguranca"><Lock className="h-5 w-5" />Segurança</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild className="gap-3 py-3 cursor-pointer text-base" onClick={close}>
-                        <Link to="/convites"><Gift className="h-5 w-5" />Convidar Amigos</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="gap-3 py-3 cursor-pointer text-base text-destructive focus:text-destructive"
-                        onClick={handleSignOut}
-                      >
-                        <LogOut className="h-5 w-5" />Sair
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-14 w-14 shrink-0">
+                      <AvatarImage src={profile?.avatar_url || undefined} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold">
+                        {getInitials(profile?.nome)}
+                      </AvatarFallback>
+                    </Avatar>
 
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[18px] font-bold text-foreground truncate leading-tight">
-                      {profile?.nome?.split(" ")[0] || "Usuário"}
-                    </p>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <span className={cn("h-2 w-2 rounded-full", statusDot)} />
-                      <span className={cn("text-sm font-medium", statusTextColor)}>
-                        {statusLabel}
-                      </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[18px] font-bold text-foreground truncate leading-tight">
+                        {profile?.nome?.split(" ")[0] || "Usuário"}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className={cn("h-2 w-2 rounded-full", statusDot)} />
+                        <span className={cn("text-sm font-medium", statusTextColor)}>
+                          {statusLabel}
+                        </span>
+                      </div>
                     </div>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setProfileExpanded(!profileExpanded)}
+                      className="shrink-0"
+                    >
+                      <ChevronRight className={cn("h-5 w-5 transition-transform", profileExpanded && "rotate-90")} />
+                    </Button>
                   </div>
+
+                  {profileExpanded && (
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <Link to="/perfil/dados" onClick={close} className="flex items-center gap-2 p-3 rounded-lg bg-accent/50 text-sm font-medium">
+                        <User className="h-4 w-4 text-primary" /> Dados
+                      </Link>
+                      <Link to="/perfil/transacoes" onClick={close} className="flex items-center gap-2 p-3 rounded-lg bg-accent/50 text-sm font-medium">
+                        <CreditCard className="h-4 w-4 text-primary" /> Transações
+                      </Link>
+                      <Link to="/perfil/assinatura" onClick={close} className="flex items-center gap-2 p-3 rounded-lg bg-accent/50 text-sm font-medium">
+                        <Ticket className="h-4 w-4 text-primary" /> Assinatura
+                      </Link>
+                      <Link to="/perfil/seguranca" onClick={close} className="flex items-center gap-2 p-3 rounded-lg bg-accent/50 text-sm font-medium">
+                        <Lock className="h-4 w-4 text-primary" /> Segurança
+                      </Link>
+                      <Link to="/convites" onClick={close} className="flex items-center gap-2 p-3 rounded-lg bg-accent/50 text-sm font-medium col-span-2">
+                        <Gift className="h-4 w-4 text-primary" /> Convidar Amigos
+                      </Link>
+                      <button
+                        onClick={handleSignOut}
+                        className="flex items-center gap-2 p-3 rounded-lg bg-destructive/5 text-destructive text-sm font-medium col-span-2"
+                      >
+                        <LogOut className="h-4 w-4" /> Sair da conta
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {!isPremium && (

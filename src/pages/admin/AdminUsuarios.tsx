@@ -386,13 +386,10 @@ export default function AdminUsuarios() {
     window.addEventListener("keydown", handleEsc);
     
     if (selectedUser || selectedLead) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
+      // Radix UI already handles body scroll lock
     }
     return () => {
       window.removeEventListener("keydown", handleEsc);
-      document.body.style.overflow = 'unset';
     };
   }, [selectedUser, selectedLead]);
 
