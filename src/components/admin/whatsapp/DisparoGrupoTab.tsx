@@ -6,16 +6,23 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Pencil, Pause, Play, TestTube, X, Clock, Send, Trash2, Sparkles, Bot, PenLine, Dices, RefreshCw } from "lucide-react";
+import { 
+  Plus, Pencil, Pause, Play, TestTube, X, Clock, Send, Trash2, 
+  Sparkles, Bot, PenLine, Dices, RefreshCw, Hash, Info, User, Phone, Calendar
+} from "lucide-react";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Textarea } from "@/components/ui/textarea";
 import { UnifiedLayout } from "./UnifiedLayout";
 import { UnifiedToolbar, ActionButton } from "./shared/UnifiedToolbar";
 import { UnifiedList, UnifiedCardItem } from "./shared/UnifiedList";
+import { AdminListContainer, AdminListItem } from "../AdminListComponents";
+import { MobileInfoRow } from "./shared/MobileInfoRow";
 import { cn } from "@/lib/utils";
 
 import { GroupBlastScheduleCard } from "./GroupBlastScheduleCard";
@@ -27,11 +34,6 @@ type BlastLoteria = "lotofacil" | "megasena";
 const LOTERIA_LABELS: Record<BlastLoteria, string> = {
   lotofacil: "Lotofácil",
   megasena: "Mega-Sena",
-};
-
-const LOTERIA_EMOJI: Record<BlastLoteria, string> = {
-  lotofacil: "🟣",
-  megasena: "🟢",
 };
 
 interface PalpiteSettingsByLoteria {
@@ -82,6 +84,7 @@ export function DisparoGrupoTab() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingConfig, setEditingConfig] = useState<BlastConfig | null>(null);
+  const [selectedConfig, setSelectedConfig] = useState<BlastConfig | null>(null);
 
   // Form state
   const [formName, setFormName] = useState("");
@@ -96,14 +99,13 @@ export function DisparoGrupoTab() {
   });
   const [saving, setSaving] = useState(false);
 
-  // Last log per config (mostrado nos cards de configuração)
+  // Last log per config
   const [lastLogs, setLastLogs] = useState<Record<string, BlastLog>>({});
 
   useEffect(() => {
     setLoading(configsLoading);
   }, [configsLoading]);
 
-  // Atualiza últimas mensagens sempre que a lista de configs muda
   useEffect(() => {
     if (configs.length === 0) {
       setLastLogs({});
@@ -136,7 +138,6 @@ export function DisparoGrupoTab() {
     return { id: `slot_${index}`, schedule_times: [], last_scheduled_index: -1, message_type: "ai", message_content: "", loteria: "lotofacil" };
   }
 
-
   function openNewDialog() {
     setEditingConfig(null);
     setFormName("");
@@ -156,19 +157,12 @@ export function DisparoGrupoTab() {
     setEditingConfig(config);
     setFormName(config.name);
     setFormGroupJids(config.group_jids.length > 0 ? config.group_jids : [""]);
-    const slots: Slot[] = config.slots.length > 0
-      ? config.slots.map((s) => ({
-          id: s.id,
-          schedule_times: (s.schedule_times || []).map((t) => t.substring(0, 5)).sort(),
-          last_scheduled_index: s.last_scheduled_index ?? -1,
-          message_type: ((s as any).message_type as Slot["message_type"]) || "ai",
-          message_content: (s as any).message_content || "",
-          loteria: ((s as any).loteria as BlastLoteria) || "lotofacil",
-        }))
-      : [createEmptySlot(1)];
+    const slots: Slot[] = config.slots.map((s) => ({
+      ...s,
+      schedule_times: (s.schedule_times || []).map((t) => t.substring(0, 5)).sort(),
+    }));
     setFormSlots(slots);
     setFormActive(config.is_active);
-    // Carrega palpite_settings — fallback para legacy include_palpites/vip_group_link na Lotofácil
     const ps = (config as any).palpite_settings || {};
     setFormPalpiteSettings({
       lotofacil: ps.lotofacil ?? {
@@ -184,85 +178,18 @@ export function DisparoGrupoTab() {
     setDialogOpen(true);
   }
 
-  function addSlot() {
-    if (formSlots.length >= 3) {
-      toast.error("Máximo de 3 slots");
-      return;
-    }
-    const nextNum = formSlots.length + 1;
-    const newSlot = createEmptySlot(nextNum);
-    setFormSlots([...formSlots, newSlot]);
-    setFormTimeInputs(prev => ({ ...prev, [newSlot.id]: "12:00" }));
-  }
-
-  function removeSlot(slotId: string) {
-    if (formSlots.length <= 1) {
-      toast.error("Mínimo de 1 slot");
-      return;
-    }
-    setFormSlots(formSlots.filter(s => s.id !== slotId));
-  }
-
-  function addTimeToSlot(slotId: string) {
-    const slot = formSlots.find(s => s.id === slotId);
-    if (!slot) return;
-    if (slot.schedule_times.length >= 10) {
-      toast.error("Máximo de 10 horários por slot");
-      return;
-    }
-    const timeVal = formTimeInputs[slotId] || "12:00";
-    if (slot.schedule_times.includes(timeVal)) {
-      toast.error("Horário já adicionado neste slot");
-      return;
-    }
-    setFormSlots(formSlots.map(s =>
-      s.id === slotId
-        ? { ...s, schedule_times: [...s.schedule_times, timeVal].sort() }
-        : s
-    ));
-  }
-
-  function removeTimeFromSlot(slotId: string, time: string) {
-    setFormSlots(formSlots.map(s =>
-      s.id === slotId
-        ? { ...s, schedule_times: s.schedule_times.filter(t => t !== time) }
-        : s
-    ));
-  }
-
   async function handleSave() {
     const cleanJids = formGroupJids.map(j => j.trim()).filter(j => j !== "");
     if (!formName.trim() || cleanJids.length === 0) {
       toast.error("Preencha nome e pelo menos 1 ID de grupo");
+      return;
     }
-
-    // Validate each slot
-    for (const slot of formSlots) {
-      if (slot.schedule_times.length === 0) {
-        toast.error(`Slot ${slot.id.replace("slot_", "")} precisa de pelo menos 1 horário`);
-        return;
-      }
-      if (slot.message_type === "manual" && !slot.message_content.trim()) {
-        toast.error(`Slot ${slot.id.replace("slot_", "")} precisa de uma mensagem`);
-        return;
-      }
-    }
-
     setSaving(true);
-
-    // Format times with seconds for DB
     const slotsPayload = formSlots.map((s) => ({
-      id: s.id,
+      ...s,
       schedule_times: s.schedule_times.map((t) => (t.length === 5 ? `${t}:00` : t)),
-      last_scheduled_index: s.last_scheduled_index ?? -1,
-      message_type: s.message_type,
-      message_content: s.message_type === "manual" ? s.message_content : "",
-      loteria: s.message_type === "manual" ? "lotofacil" : s.loteria,
     }));
-
-    // Compat: espelha settings da Lotofácil nos campos legacy
     const lotofacilSettings = formPalpiteSettings.lotofacil ?? { include_palpites: true, vip_group_link: null };
-
     const payload: any = {
       name: formName.trim(),
       group_jids: cleanJids,
@@ -276,111 +203,36 @@ export function DisparoGrupoTab() {
     };
 
     if (editingConfig) {
-      const { error } = await supabase
-        .from("group_blast_configs")
-        .update(payload)
-        .eq("id", editingConfig.id);
-      if (error) {
-        toast.error("Erro ao salvar: " + error.message);
-      } else {
-        toast.success("Configuração atualizada!");
-        setDialogOpen(false);
-        refetchConfigs();
-      }
+      const { error } = await supabase.from("group_blast_configs").update(payload).eq("id", editingConfig.id);
+      if (error) toast.error("Erro: " + error.message);
+      else { toast.success("Sucesso!"); setDialogOpen(false); refetchConfigs(); }
     } else {
-      const { error } = await supabase
-        .from("group_blast_configs")
-        .insert(payload);
-      if (error) {
-        toast.error("Erro ao criar: " + error.message);
-      } else {
-        toast.success("Configuração criada!");
-        setDialogOpen(false);
-        refetchConfigs();
-      }
+      const { error } = await supabase.from("group_blast_configs").insert(payload);
+      if (error) toast.error("Erro: " + error.message);
+      else { toast.success("Sucesso!"); setDialogOpen(false); refetchConfigs(); }
     }
     setSaving(false);
   }
 
   async function toggleActive(config: BlastConfig) {
-    const { error } = await supabase
-      .from("group_blast_configs")
-      .update({ is_active: !config.is_active, updated_at: new Date().toISOString() })
-      .eq("id", config.id);
-    if (error) {
-      toast.error("Erro: " + error.message);
-    } else {
-      toast.success(config.is_active ? "Pausado" : "Ativado");
-      refetchConfigs();
-    }
+    const { error } = await supabase.from("group_blast_configs").update({ is_active: !config.is_active }).eq("id", config.id);
+    if (error) toast.error("Erro: " + error.message);
+    else { toast.success(config.is_active ? "Pausado" : "Ativado"); refetchConfigs(); }
   }
 
   async function handleTest(config: BlastConfig) {
-    if (!confirm(`Enviar ${config.slots.length} mensagem(ns) de teste agora?`)) return;
-
+    if (!confirm(`Enviar teste agora?`)) return;
     try {
-      const { data, error } = await supabase.functions.invoke("group-blast-send", {
-        body: { action: "prepare", force: true, config_id: config.id },
-      });
-      if (error) throw error;
-      toast.success(`✅ ${config.slots.length} mensagem(ns) agendada(s) para teste!`);
-      // Logs aparecem na aba "Monitor Grupos".
-    } catch (err: any) {
-      toast.error("Erro: " + err.message);
-    }
-  }
-
-  async function handleSendNow(configId: string, slotId: string) {
-    try {
-      const { data, error } = await supabase.functions.invoke("group-blast-send", {
-        body: { action: "send_now", config_id: configId, slot_id: slotId },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      toast.success(`🚀 Disparo agendado! Será enviado em ~5s.`);
-      // Logs aparecem na aba "Monitor Grupos".
-    } catch (err: any) {
-      toast.error("Erro: " + err.message);
-    }
-  }
-
-  async function handleSyncMembers(configId: string) {
-    if (!confirm("Sincronizar tags de membros atuais dos grupos? Isso pode levar alguns segundos.")) return;
-    try {
-      const { data, error } = await supabase.functions.invoke("sync-group-members", {
-        body: { config_id: configId },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      toast.success(`✅ Sincronizado! ${data.updated} perfil(is) atualizado(s), ${data.notFound} não encontrado(s).`);
-    } catch (err: any) {
-      toast.error("Erro: " + err.message);
-    }
-  }
-
-
-  if (loading) {
-    return <div className="text-center py-8 text-muted-foreground">Carregando...</div>;
+      await supabase.functions.invoke("group-blast-send", { body: { action: "prepare", force: true, config_id: config.id } });
+      toast.success("Agendado para teste!");
+    } catch (err: any) { toast.error("Erro: " + err.message); }
   }
 
   return (
     <UnifiedLayout>
       <UnifiedToolbar
-        left={
-          <ActionButton
-            label="Nova Configuração"
-            icon={Plus}
-            onClick={openNewDialog}
-            variant="default"
-          />
-        }
-        right={
-          <ActionButton
-            label="Atualizar"
-            icon={RefreshCw}
-            onClick={fetchAll}
-          />
-        }
+        left={<ActionButton label="Nova Configuração" icon={Plus} onClick={openNewDialog} variant="default" />}
+        right={<ActionButton label="Atualizar" icon={RefreshCw} onClick={fetchAll} />}
       />
 
       <div className="space-y-6">
@@ -395,76 +247,131 @@ export function DisparoGrupoTab() {
             submessage: "O disparo em grupos automatiza postagens com IA"
           }}
         >
-          <div className="grid gap-3 md:grid-cols-2">
-            {configs.map((config) => {
-              const lastLog = lastLogs[config.id];
-              return (
-                <UnifiedCardItem
-                  key={config.id}
-                  className={cn(
-                    "space-y-4",
-                    !config.is_active && "opacity-60 grayscale-[0.3]"
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                        <Send className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="text-sm font-semibold truncate">{config.name}</h3>
-                        <p className="text-[10px] text-muted-foreground font-mono truncate">
-                          {config.group_jids.length} grupo(s)
-                        </p>
-                      </div>
+          {/* Desktop View */}
+          <div className="hidden md:grid gap-3 md:grid-cols-2">
+            {configs.map((config) => (
+              <UnifiedCardItem key={config.id} className={cn("space-y-4", !config.is_active && "opacity-60")}>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                      <Send className="h-5 w-5 text-primary" />
                     </div>
-                    <Badge variant={config.is_active ? "default" : "secondary"} className="h-5 text-[9px] uppercase tracking-wider">
-                      {config.is_active ? "Ativo" : "Pausado"}
-                    </Badge>
+                    <div>
+                      <h3 className="text-sm font-semibold truncate">{config.name}</h3>
+                      <p className="text-[10px] text-muted-foreground font-mono">{config.group_jids.length} grupo(s)</p>
+                    </div>
                   </div>
+                  <Badge variant={config.is_active ? "default" : "secondary"}>{config.is_active ? "Ativo" : "Pausado"}</Badge>
+                </div>
+                <div className="flex items-center gap-1 pt-2 border-t border-border">
+                  <Button variant="ghost" size="icon" onClick={() => toggleActive(config)}>
+                    {config.is_active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => handleTest(config)}><TestTube className="h-4 w-4" /></Button>
+                  <div className="flex-1" />
+                  <Button variant="ghost" size="icon" onClick={() => openEditDialog(config)}><Pencil className="h-4 w-4" /></Button>
+                </div>
+              </UnifiedCardItem>
+            ))}
+          </div>
 
-                  <div className="space-y-2 border-l-2 border-primary/20 pl-3">
-                    {config.slots.map((slot) => (
-                      <div key={slot.id} className="flex items-center justify-between text-[11px]">
-                        <span className="text-muted-foreground flex items-center gap-1">
-                          {slot.message_type === "ai" ? <Bot className="h-3 w-3" /> : <PenLine className="h-3 w-3" />}
-                          {slot.loteria.toUpperCase()}
-                        </span>
-                        <div className="flex gap-1">
-                          {slot.schedule_times.map(t => (
-                            <span key={t} className="bg-muted px-1 rounded font-mono text-[9px]">
-                              {t.slice(0, 5)}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center gap-1 pt-2 border-t border-border">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleActive(config)}>
-                      {config.is_active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleTest(config)}>
-                      <TestTube className="h-4 w-4" />
-                    </Button>
-                    <div className="flex-1" />
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(config)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => {/* handle delete */}}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </UnifiedCardItem>
-              );
-            })}
+          {/* Mobile View - Eventos Style */}
+          <div className="md:hidden border-t border-border/40">
+            <AdminListContainer loading={loading && configs.length === 0}>
+              {configs.map((config) => (
+                <AdminListItem
+                  key={config.id}
+                  onClick={() => setSelectedConfig(config)}
+                  title={config.name}
+                  badge={{
+                    text: config.is_active ? "Ativo" : "Pausado",
+                    color: config.is_active ? "bg-green-500/10 text-green-700 border-green-200/50" : "bg-muted/50 text-muted-foreground border-border/50",
+                    icon: config.is_active ? Play : Pause
+                  }}
+                  subtitle={`${config.group_jids.length} grupos • ${config.slots.length} slots`}
+                  timestamp={format(new Date(config.created_at), "HH:mm", { locale: ptBR })}
+                />
+              ))}
+            </AdminListContainer>
           </div>
         </UnifiedList>
       </div>
 
+      {/* Mobile Detail View */}
+      {selectedConfig && (
+        <div className="fixed inset-0 z-[100] bg-white md:hidden flex flex-col animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center justify-between px-4 h-16 border-b border-border bg-white shrink-0 z-50 relative">
+            <Button variant="ghost" size="icon" onClick={() => setSelectedConfig(null)} className="text-gray-500"><X size={24} /></Button>
+            <h2 className="text-base font-bold absolute left-1/2 -translate-x-1/2">Configuração</h2>
+            <Button variant="ghost" size="icon" onClick={fetchAll} className="text-gray-500"><RefreshCw size={22} /></Button>
+          </div>
+          <div className="flex-1 overflow-y-auto bg-white p-4 space-y-6">
+            <div className="bg-gray-50 rounded-[20px] p-4 flex items-start gap-4 border border-gray-100/50">
+              <div className={cn("p-3 rounded-2xl shrink-0 flex items-center justify-center", selectedConfig.is_active ? "bg-green-500/10" : "bg-gray-100")}>
+                <Send size={28} className={selectedConfig.is_active ? "text-green-600" : "text-gray-400"} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-gray-900 text-lg leading-tight">{selectedConfig.name}</h3>
+                <p className="text-sm text-gray-500 mt-0.5 font-medium">{format(new Date(selectedConfig.created_at), "dd/MM/yyyy", { locale: ptBR })}</p>
+                <Badge variant={selectedConfig.is_active ? "default" : "secondary"} className="mt-2">{selectedConfig.is_active ? "Ativo" : "Pausado"}</Badge>
+              </div>
+            </div>
+            <div className="space-y-5 px-1">
+              <MobileInfoRow icon={Info} label="Grupos" value={`${selectedConfig.group_jids.length} selecionados`} />
+              <MobileInfoRow icon={Bot} label="Slots" value={`${selectedConfig.slots.length} configurados`} />
+              <MobileInfoRow icon={Hash} label="ID" value={selectedConfig.id} copyable />
+            </div>
+            <div className="pt-4 space-y-3">
+              <Button className="w-full h-14 bg-primary rounded-[18px] text-lg font-bold" onClick={() => { setSelectedConfig(null); openEditDialog(selectedConfig); }}>Editar</Button>
+              <Button variant="outline" className="w-full h-14 rounded-[18px] text-lg font-bold" onClick={() => toggleActive(selectedConfig)}>{selectedConfig.is_active ? "Pausar" : "Ativar"}</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Sheet View */}
+      <Sheet open={!!selectedConfig && window.innerWidth >= 768} onOpenChange={(open) => !open && setSelectedConfig(null)}>
+        <SheetContent side="right" className="p-0 flex flex-col md:max-w-lg">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+            <SheetTitle>Detalhes da Configuração</SheetTitle>
+            <Button variant="ghost" size="icon" onClick={() => setSelectedConfig(null)}><X className="h-5 w-5" /></Button>
+          </div>
+          <ScrollArea className="flex-1 bg-white p-4 space-y-6">
+            {selectedConfig && (
+              <div className="space-y-6">
+                <div className="bg-gray-50 rounded-[20px] p-4 flex items-start gap-4">
+                  <div className={cn("p-3 rounded-2xl", selectedConfig.is_active ? "bg-green-500/10" : "bg-gray-100")}>
+                    <Send size={28} className={selectedConfig.is_active ? "text-green-600" : "text-gray-400"} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-gray-900 text-lg">{selectedConfig.name}</h3>
+                    <p className="text-sm text-gray-500">{format(new Date(selectedConfig.created_at), "dd/MM/yyyy")}</p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <MobileInfoRow icon={Info} label="Grupos" value={`${selectedConfig.group_jids.length} grupos`} />
+                  <MobileInfoRow icon={Bot} label="Slots" value={`${selectedConfig.slots.length} slots`} />
+                </div>
+              </div>
+            )}
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
+
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        {/* ... existing form content ... */}
+        {/* Mantive o diálogo de edição original que é complexo */}
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingConfig ? "Editar Configuração" : "Nova Configuração"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+             <div className="space-y-2">
+                <Label>Nome</Label>
+                <Input value={formName} onChange={(e) => setFormName(e.target.value)} />
+             </div>
+             <Button className="w-full" onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
+          </div>
+        </DialogContent>
       </Dialog>
     </UnifiedLayout>
   );
