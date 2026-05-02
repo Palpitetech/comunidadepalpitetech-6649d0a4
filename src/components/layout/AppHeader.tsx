@@ -455,7 +455,7 @@ export function AppHeader({ pageTitle, onBack, hideBackButton }: AppHeaderProps)
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0">
+                  <Button variant="ghost" className="relative h-9 w-9 rounded-full p-0 hidden md:flex">
                     <Avatar className="h-9 w-9">
                       <AvatarImage src={profile?.avatar_url || undefined} />
                       <AvatarFallback className="bg-primary text-primary-foreground text-sm">
