@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 
 export default function SmartLinkRedirect() {
   const { slug } = useParams<{ slug: string }>();
-  const [status, setStatus] = useState<"loading" | "inapp" | "fallback" | "error">("loading");
+  const [status, setStatus] = useState<"loading" | "inapp" | "fallback" | "error" | "checkout">("loading");
   const [originalUrl, setOriginalUrl] = useState("");
   const [groupName, setGroupName] = useState("");
   const [copied, setCopied] = useState(false);
+  const [redirectType, setRedirectType] = useState<'whatsapp' | 'checkout'>('whatsapp');
 
   useEffect(() => {
     if (!slug) {
