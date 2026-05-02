@@ -5,10 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Play, RotateCcw, Send, Filter, X } from "lucide-react";
+import { Loader2, Play, RotateCcw, Send, Filter, X, RefreshCw, FileText } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MessageStatusBadge } from "./shared/MessageStatusBadge";
 import { fmtDate } from "./shared/format-date";
+import { UnifiedLayout } from "./UnifiedLayout";
+import { UnifiedToolbar, ActionButton } from "./shared/UnifiedToolbar";
+import { UnifiedList, UnifiedCardItem } from "./shared/UnifiedList";
+import { cn } from "@/lib/utils";
 
 interface QueueItem {
   id: string;
@@ -115,37 +119,40 @@ export function FilaTab() {
 
   const hasActiveFilters = filterStatus !== "all" || !!filterDate;
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      {/* Toolbar */}
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={handleProcess} disabled={processing}>
-          {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-          <span className="hidden sm:inline">Processar Fila</span>
-          <span className="sm:hidden">Processar</span>
-        </Button>
-        <div className="flex-1" />
-        <Button
-          variant={hasActiveFilters ? "default" : "outline"}
-          size="sm"
-          className="gap-1.5 text-xs"
-          onClick={() => setShowFilters(!showFilters)}
-        >
-          <Filter className="h-3.5 w-3.5" />
-          {hasActiveFilters && <span className="tabular-nums">({filtered.length})</span>}
-        </Button>
-      </div>
+    <UnifiedLayout>
+      <UnifiedToolbar
+        left={
+          <>
+            <ActionButton
+              label="Processar Fila"
+              icon={Play}
+              onClick={handleProcess}
+              loading={processing}
+              variant="default"
+            />
+            <Button
+              variant={hasActiveFilters ? "default" : "outline"}
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <Filter className="h-3.5 w-3.5" />
+              {hasActiveFilters && <span>({filtered.length})</span>}
+            </Button>
+          </>
+        }
+        right={
+          <ActionButton
+            label="Atualizar"
+            icon={RefreshCw}
+            onClick={fetchAll}
+          />
+        }
+      />
 
       {showFilters && (
-        <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg border border-border bg-muted/30">
+        <div className="flex flex-wrap items-center gap-2 p-3 mb-4 rounded-xl border border-border bg-muted/30">
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-[120px] h-8 text-xs">
               <SelectValue />
@@ -170,90 +177,50 @@ export function FilaTab() {
         </div>
       )}
 
-      {/* Content */}
-      {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
-          <Send className="h-8 w-8 opacity-40" />
-          <p className="text-sm">Nenhum envio na fila</p>
-          <p className="text-[11px] opacity-70">Para criar novos envios use a aba Disparo Manual</p>
-        </div>
-      ) : isMobile ? (
+      <UnifiedList
+        isLoading={loading}
+        count={filtered.length}
+        total={queue.length}
+        empty={{
+          icon: Send,
+          message: "Nenhum envio na fila",
+          submessage: "Crie novos envios através do Disparo Manual"
+        }}
+      >
         <div className="space-y-2">
           {filtered.map((item) => (
-            <div key={item.id} className="rounded-xl border border-border bg-card p-3.5 space-y-2">
+            <UnifiedCardItem key={item.id} className="space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{item.recipient_name || "—"}</p>
-                  <p className="text-[11px] text-muted-foreground">{item.recipient_phone}</p>
+                  <p className="text-sm font-semibold truncate">{item.recipient_name || "—"}</p>
+                  <p className="text-xs text-muted-foreground font-mono">{item.recipient_phone}</p>
                 </div>
                 <MessageStatusBadge status={item.status} variant="short" />
               </div>
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                <span>📄 {getTemplateName(item.template_id)}</span>
-                <span className="tabular-nums">{fmtDate(item.scheduled_at, "full")}</span>
+
+              <div className="grid grid-cols-2 gap-2 text-[11px] text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <FileText className="h-3 w-3" />
+                  <span className="truncate">{getTemplateName(item.template_id)}</span>
+                </div>
+                <div className="flex items-center gap-1 justify-end">
+                  <RefreshCw className="h-3 w-3" />
+                  <span>{fmtDate(item.scheduled_at, "full")}</span>
+                </div>
               </div>
-              {item.instance_id && (
-                <p className="text-[11px] text-muted-foreground">📱 {getInstanceName(item.instance_id)}</p>
-              )}
-              {item.sent_at && (
-                <p className="text-[11px] text-muted-foreground">✅ Enviado: {fmtDate(item.sent_at, "full")}</p>
-              )}
-              {item.error_message && (
-                <p className="text-[11px] text-destructive line-clamp-2">⚠️ {item.error_message}</p>
-              )}
+
               {item.status === "failed" && (
-                <Button variant="outline" size="sm" className="w-full h-8 gap-1.5 text-xs" onClick={() => handleRetry(item.id)}>
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  Retentar
-                </Button>
+                <div className="flex flex-col gap-2 pt-1 border-t border-border/50">
+                  <p className="text-[10px] text-destructive line-clamp-1">⚠️ {item.error_message}</p>
+                  <Button variant="outline" size="sm" className="w-full h-7 text-[10px] gap-1.5" onClick={() => handleRetry(item.id)}>
+                    <RotateCcw className="h-3 w-3" /> Retentar
+                  </Button>
+                </div>
               )}
-            </div>
+            </UnifiedCardItem>
           ))}
         </div>
-      ) : (
-        <div className="rounded-lg border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs">Destinatário</TableHead>
-                <TableHead className="text-xs">Template</TableHead>
-                <TableHead className="text-xs">Instância</TableHead>
-                <TableHead className="text-xs">Status</TableHead>
-                <TableHead className="text-xs">Agendado</TableHead>
-                <TableHead className="text-xs">Enviado</TableHead>
-                <TableHead className="text-xs w-[80px]">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="text-xs">
-                    <div className="font-medium">{item.recipient_name || "—"}</div>
-                    <div className="text-muted-foreground">{item.recipient_phone}</div>
-                  </TableCell>
-                  <TableCell className="text-xs">{getTemplateName(item.template_id)}</TableCell>
-                  <TableCell className="text-xs">{getInstanceName(item.instance_id)}</TableCell>
-                  <TableCell><MessageStatusBadge status={item.status} variant="short" /></TableCell>
-                  <TableCell className="text-xs tabular-nums">{fmtDate(item.scheduled_at, "full")}</TableCell>
-                  <TableCell className="text-xs tabular-nums">{fmtDate(item.sent_at, "full")}</TableCell>
-                  <TableCell>
-                    {item.status === "failed" && (
-                      <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => handleRetry(item.id)}>
-                        <RotateCcw className="h-3.5 w-3.5" />
-                        Retentar
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      <p className="text-xs text-muted-foreground text-center">
-        {filtered.length} de {queue.length} registro(s)
-      </p>
-    </div>
+      </UnifiedList>
+    </UnifiedLayout>
   );
 }

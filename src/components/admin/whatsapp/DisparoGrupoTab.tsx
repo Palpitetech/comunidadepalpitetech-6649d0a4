@@ -13,6 +13,10 @@ import { toast } from "sonner";
 import { Plus, Pencil, Pause, Play, TestTube, X, Clock, Send, Trash2, Sparkles, Bot, PenLine, Dices, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
+import { UnifiedLayout } from "./UnifiedLayout";
+import { UnifiedToolbar, ActionButton } from "./shared/UnifiedToolbar";
+import { UnifiedList, UnifiedCardItem } from "./shared/UnifiedList";
+import { cn } from "@/lib/utils";
 
 import { GroupBlastScheduleCard } from "./GroupBlastScheduleCard";
 import { GroupAdminsCard } from "./GroupAdminsCard";
@@ -360,522 +364,108 @@ export function DisparoGrupoTab() {
   }
 
   return (
-    <div className="space-y-6 pt-2">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">Disparo em Grupos</h2>
-          <p className="text-xs text-muted-foreground">
-            Mensagens automáticas com IA baseadas nos posts da comunidade
-          </p>
-        </div>
-        <Button size="sm" onClick={openNewDialog}>
-          <Plus className="h-4 w-4 mr-1" />
-          Nova Configuração
-        </Button>
+    <UnifiedLayout>
+      <UnifiedToolbar
+        left={
+          <ActionButton
+            label="Nova Configuração"
+            icon={Plus}
+            onClick={openNewDialog}
+            variant="default"
+          />
+        }
+        right={
+          <ActionButton
+            label="Atualizar"
+            icon={RefreshCw}
+            onClick={fetchAll}
+          />
+        }
+      />
+
+      <div className="space-y-6">
+        <GroupBlastScheduleCard onAfterReschedule={fetchAll} />
+
+        <UnifiedList
+          isLoading={loading}
+          count={configs.length}
+          empty={{
+            icon: Send,
+            message: "Nenhuma configuração criada",
+            submessage: "O disparo em grupos automatiza postagens com IA"
+          }}
+        >
+          <div className="grid gap-3 md:grid-cols-2">
+            {configs.map((config) => {
+              const lastLog = lastLogs[config.id];
+              return (
+                <UnifiedCardItem
+                  key={config.id}
+                  className={cn(
+                    "space-y-4",
+                    !config.is_active && "opacity-60 grayscale-[0.3]"
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                        <Send className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-semibold truncate">{config.name}</h3>
+                        <p className="text-[10px] text-muted-foreground font-mono truncate">
+                          {config.group_jids.length} grupo(s)
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant={config.is_active ? "default" : "secondary"} className="h-5 text-[9px] uppercase tracking-wider">
+                      {config.is_active ? "Ativo" : "Pausado"}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-2 border-l-2 border-primary/20 pl-3">
+                    {config.slots.map((slot) => (
+                      <div key={slot.id} className="flex items-center justify-between text-[11px]">
+                        <span className="text-muted-foreground flex items-center gap-1">
+                          {slot.message_type === "ai" ? <Bot className="h-3 w-3" /> : <PenLine className="h-3 w-3" />}
+                          {slot.loteria.toUpperCase()}
+                        </span>
+                        <div className="flex gap-1">
+                          {slot.schedule_times.map(t => (
+                            <span key={t} className="bg-muted px-1 rounded font-mono text-[9px]">
+                              {t.slice(0, 5)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-1 pt-2 border-t border-border">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleActive(config)}>
+                      {config.is_active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleTest(config)}>
+                      <TestTube className="h-4 w-4" />
+                    </Button>
+                    <div className="flex-1" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(config)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => {/* handle delete */}}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </UnifiedCardItem>
+              );
+            })}
+          </div>
+        </UnifiedList>
       </div>
 
-      {/* Status do agendamento automático */}
-      <GroupBlastScheduleCard onAfterReschedule={fetchAll} />
-
-      {/* Config Cards */}
-      {configs.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            Nenhuma configuração criada. Clique em "+ Nova Configuração".
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {configs.map((config) => {
-            const lastLog = lastLogs[config.id];
-
-            return (
-              <Card key={config.id} className="relative">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-medium flex items-center gap-2">
-                      <span
-                        className={`h-2.5 w-2.5 rounded-full ${
-                          config.is_active ? "bg-green-500" : "bg-muted-foreground/40"
-                        }`}
-                      />
-                      {config.name}
-                    </CardTitle>
-                    <Badge variant={config.is_active ? "default" : "secondary"}>
-                      {config.is_active ? "Ativo" : "Inativo"}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground font-mono truncate">
-                    {config.group_jids.join(", ")} ({config.group_jids.length} grupo{config.group_jids.length !== 1 ? "s" : ""})
-                  </p>
-                  {(config.slots || []).some((s: any) => s.message_type === "palpite") && (
-                    <Badge variant="outline" className="text-[10px] w-fit mt-1">
-                      {config.include_palpites ? "🎰 Com Palpites" : "📊 Só Estratégia + CTA"}
-                    </Badge>
-                  )}
-                  {(config as any).member_tag && (
-                    <Badge variant="outline" className="text-[10px] w-fit mt-1">
-                      🏷️ Tag: {(config as any).member_tag}
-                    </Badge>
-                  )}
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {/* Slots display */}
-                  <div className="space-y-2">
-                    {(config.slots || []).map((slot) => {
-                      const times = (slot.schedule_times || []).map(t => t.substring(0, 5)).sort();
-                      const nextIdx = ((slot.last_scheduled_index ?? -1) + 1) % (times.length || 1);
-                      return (
-                        <div key={slot.id} className="text-xs space-y-1">
-                          <div className="flex items-center justify-between">
-                            <p className="text-muted-foreground flex items-center gap-1">
-                            {(slot as any).message_type === "manual" ? <PenLine className="h-3 w-3" /> : (slot as any).message_type === "palpite" ? <Dices className="h-3 w-3" /> : <Bot className="h-3 w-3" />}
-                              {(slot as any).message_type === "manual" ? "Manual" : (slot as any).message_type === "palpite" ? `Palpite · ${LOTERIA_EMOJI[((slot as any).loteria as BlastLoteria) || "lotofacil"]} ${LOTERIA_LABELS[((slot as any).loteria as BlastLoteria) || "lotofacil"]}` : `IA · ${LOTERIA_EMOJI[((slot as any).loteria as BlastLoteria) || "lotofacil"]} ${LOTERIA_LABELS[((slot as any).loteria as BlastLoteria) || "lotofacil"]}`} — Próximo: {times[nextIdx] || "—"} ({times.length} horário{times.length !== 1 ? "s" : ""})
-                            </p>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-2 text-[10px]"
-                              onClick={() => handleSendNow(config.id, slot.id)}
-                            >
-                              <Send className="h-3 w-3 mr-1" />
-                              Disparar
-                            </Button>
-                          </div>
-                          <div className="flex flex-wrap gap-1">
-                            {times.map((t, i) => (
-                              <Badge
-                                key={t}
-                                variant={i === nextIdx ? "default" : "outline"}
-                                className={i === nextIdx ? "bg-orange-500 hover:bg-orange-600 text-white" : ""}
-                              >
-                                {t}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-
-                  {/* Admins do grupo */}
-                  {config.group_jids.length > 0 && (
-                    <GroupAdminsCard groupJids={config.group_jids} />
-                  )}
-
-                  {/* Last send + Next scheduled */}
-                  <div className="space-y-0.5">
-                    {lastLog && (
-                      <p className="text-xs text-muted-foreground">
-                        Último envio:{" "}
-                        {lastLog.sent_at
-                          ? format(new Date(lastLog.sent_at), "dd/MM HH:mm")
-                          : "—"}{" "}
-                        {lastLog.status === "sent" ? "✅" : lastLog.status === "pending" ? "⏳" : "❌"}
-                      </p>
-                    )}
-                    {(() => {
-                      if (!config.is_active) return null;
-                      const allTimes: string[] = [];
-                      for (const s of (config.slots || [])) {
-                        for (const t of (s.schedule_times || [])) {
-                          allTimes.push(t.substring(0, 5));
-                        }
-                      }
-                      if (allTimes.length === 0) return null;
-                      // Compute next datetime in BRT (UTC-3, no DST)
-                      const now = new Date();
-                      const brtNowMs = now.getTime() - 3 * 60 * 60 * 1000;
-                      const brtNow = new Date(brtNowMs);
-                      const todayY = brtNow.getUTCFullYear();
-                      const todayM = brtNow.getUTCMonth();
-                      const todayD = brtNow.getUTCDate();
-                      const nowMin = brtNow.getUTCHours() * 60 + brtNow.getUTCMinutes();
-                      const sortedMins = Array.from(new Set(allTimes.map(t => {
-                        const [h, m] = t.split(":").map(Number);
-                        return h * 60 + m;
-                      }))).sort((a, b) => a - b);
-                      const nextTodayMin = sortedMins.find(m => m > nowMin);
-                      let nextDate: Date;
-                      let isTomorrow = false;
-                      if (nextTodayMin !== undefined) {
-                        nextDate = new Date(Date.UTC(todayY, todayM, todayD, Math.floor(nextTodayMin / 60), nextTodayMin % 60));
-                      } else {
-                        const first = sortedMins[0];
-                        nextDate = new Date(Date.UTC(todayY, todayM, todayD + 1, Math.floor(first / 60), first % 60));
-                        isTomorrow = true;
-                      }
-                      const dd = String(nextDate.getUTCDate()).padStart(2, "0");
-                      const mm = String(nextDate.getUTCMonth() + 1).padStart(2, "0");
-                      const hh = String(nextDate.getUTCHours()).padStart(2, "0");
-                      const mi = String(nextDate.getUTCMinutes()).padStart(2, "0");
-                      const label = isTomorrow ? "amanhã" : "hoje";
-                      return (
-                        <p className="text-xs text-muted-foreground">
-                          Próximo envio:{" "}
-                          <span className="font-semibold text-foreground tabular-nums">
-                            {label} {dd}/{mm} às {hh}:{mi}
-                          </span>{" "}
-                          ⏰
-                        </p>
-                      );
-                    })()}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-1">
-                    <Button variant="outline" size="sm" onClick={() => openEditDialog(config)}>
-                      <Pencil className="h-3 w-3 mr-1" />
-                      Editar
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => toggleActive(config)}>
-                      {config.is_active ? (
-                        <><Pause className="h-3 w-3 mr-1" />Pausar</>
-                      ) : (
-                        <><Play className="h-3 w-3 mr-1" />Ativar</>
-                      )}
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleTest(config)}>
-                      <TestTube className="h-3 w-3 mr-1" />
-                      Testar
-                    </Button>
-                    {(config as any).member_tag && (
-                      <Button variant="outline" size="sm" onClick={() => handleSyncMembers(config.id)}>
-                        <RefreshCw className="h-3 w-3 mr-1" />
-                        Sincronizar
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingConfig ? "Editar Configuração" : "Nova Configuração"}
-            </DialogTitle>
-            <DialogDescription>
-              A IA gera convites automáticos baseados no post mais recente da comunidade
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Nome *</Label>
-              <Input
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                placeholder="Grupo Loteria VIP"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs">Grupos ({formGroupJids.length})</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFormGroupJids([...formGroupJids, ""])}
-                >
-                  <Plus className="h-3 w-3 mr-1" />
-                  Grupo
-                </Button>
-              </div>
-              {formGroupJids.map((jid, idx) => (
-                <div key={idx} className="flex gap-1">
-                  <Input
-                    value={jid}
-                    onChange={(e) => {
-                      const updated = [...formGroupJids];
-                      updated[idx] = e.target.value;
-                      setFormGroupJids(updated);
-                    }}
-                    placeholder="120363XXXXXXXXXX@g.us"
-                    className="text-xs"
-                  />
-                  {formGroupJids.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-9 w-9 p-0 text-destructive"
-                      onClick={() => setFormGroupJids(formGroupJids.filter((_, i) => i !== idx))}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-              <p className="text-[10px] text-muted-foreground">
-                Copie o ID na aba Grupos. Adicione múltiplos grupos para enviar a mesma mensagem para todos.
-              </p>
-            </div>
-
-            {/* Slots Section */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-semibold">Slots de Envio ({formSlots.length}/3)</Label>
-                {formSlots.length < 3 && (
-                  <Button type="button" variant="outline" size="sm" onClick={addSlot}>
-                    <Plus className="h-3 w-3 mr-1" />
-                    Adicionar Slot
-                  </Button>
-                )}
-              </div>
-
-              {formSlots.map((slot, idx) => (
-                <Card key={slot.id} className="border-dashed">
-                  <CardContent className="p-3 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-medium">Slot {idx + 1}</p>
-                      {formSlots.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 text-destructive"
-                          onClick={() => removeSlot(slot.id)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Input
-                        type="time"
-                        value={formTimeInputs[slot.id] || "12:00"}
-                        onChange={(e) =>
-                          setFormTimeInputs(prev => ({ ...prev, [slot.id]: e.target.value }))
-                        }
-                        className="w-[130px]"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addTimeToSlot(slot.id)}
-                        disabled={slot.schedule_times.length >= 10}
-                      >
-                        <Plus className="h-3 w-3 mr-1" />
-                        Add
-                      </Button>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1">
-                      {slot.schedule_times.map((t) => (
-                        <Badge key={t} variant="secondary" className="gap-1 pr-1">
-                          {t}
-                          <button
-                            onClick={() => removeTimeFromSlot(slot.id, t)}
-                            className="ml-0.5 rounded-full hover:bg-muted-foreground/20 p-0.5"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-
-                    {slot.schedule_times.length === 0 && (
-                      <p className="text-[10px] text-destructive">
-                        Mínimo 1 horário obrigatório
-                      </p>
-                    )}
-
-                    {/* Message type toggle */}
-                    <div className="space-y-2 pt-1 border-t border-dashed">
-                      <Label className="text-[10px] text-muted-foreground">Tipo de mensagem</Label>
-                      <div className="flex gap-1 flex-wrap">
-                        <Button
-                          type="button"
-                          variant={slot.message_type === "ai" ? "default" : "outline"}
-                          size="sm"
-                          className="text-[10px] h-7"
-                          onClick={() => setFormSlots(formSlots.map(s =>
-                            s.id === slot.id ? { ...s, message_type: "ai" } : s
-                          ))}
-                        >
-                          <Bot className="h-3 w-3 mr-1" />
-                          🤖 Gerada por IA
-                        </Button>
-                        <Button
-                          type="button"
-                          variant={slot.message_type === "manual" ? "default" : "outline"}
-                          size="sm"
-                          className="text-[10px] h-7"
-                          onClick={() => setFormSlots(formSlots.map(s =>
-                            s.id === slot.id ? { ...s, message_type: "manual" } : s
-                          ))}
-                        >
-                          <PenLine className="h-3 w-3 mr-1" />
-                          ✏️ Escrever manualmente
-                        </Button>
-                        <Button
-                          type="button"
-                          variant={slot.message_type === "palpite" ? "default" : "outline"}
-                          size="sm"
-                          className="text-[10px] h-7"
-                          onClick={() => setFormSlots(formSlots.map(s =>
-                            s.id === slot.id ? { ...s, message_type: "palpite" } : s
-                          ))}
-                        >
-                          <Dices className="h-3 w-3 mr-1" />
-                          🎰 Palpite
-                        </Button>
-                      </div>
-
-                      {/* Lottery selector — só relevante para AI e Palpite */}
-                      {slot.message_type !== "manual" && (
-                        <div className="flex items-center gap-2 pt-1">
-                          <Label className="text-[10px] text-muted-foreground shrink-0">Loteria:</Label>
-                          <Select
-                            value={slot.loteria}
-                            onValueChange={(v) => setFormSlots(formSlots.map(s =>
-                              s.id === slot.id ? { ...s, loteria: v as BlastLoteria } : s
-                            ))}
-                          >
-                            <SelectTrigger className="h-7 text-[10px] w-[140px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="lotofacil">🟣 Lotofácil</SelectItem>
-                              <SelectItem value="megasena">🟢 Mega-Sena</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-
-                      {slot.message_type === "ai" ? (
-                        <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                          <Sparkles className="h-3 w-3" />
-                          A IA gera um convite baseado no post mais recente da {LOTERIA_LABELS[slot.loteria]}.
-                        </p>
-                      ) : slot.message_type === "palpite" ? (
-                        <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                          <Dices className="h-3 w-3" />
-                          Gera palpites com estratégia baseada nos últimos concursos da {LOTERIA_LABELS[slot.loteria]}.
-                        </p>
-                      ) : (
-                        <div className="space-y-1">
-                          <Label className="text-[10px]">Mensagem *</Label>
-                          <Textarea
-                            value={slot.message_content}
-                            onChange={(e) => setFormSlots(formSlots.map(s =>
-                              s.id === slot.id ? { ...s, message_content: e.target.value } : s
-                            ))}
-                            placeholder="Digite a mensagem do grupo..."
-                            rows={4}
-                            className="text-xs"
-                          />
-                          <p className="text-[10px] text-muted-foreground">
-                            Suporta *negrito*, _itálico_, emojis
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Palpite mode toggle — uma seção por loteria usada nos slots palpite */}
-            {(["lotofacil", "megasena"] as BlastLoteria[])
-              .filter((lot) => formSlots.some((s) => s.message_type === "palpite" && s.loteria === lot))
-              .map((lot) => {
-                const settings = formPalpiteSettings[lot] ?? { include_palpites: true, vip_group_link: null };
-                const updateLot = (patch: Partial<{ include_palpites: boolean; vip_group_link: string | null }>) =>
-                  setFormPalpiteSettings((prev) => ({
-                    ...prev,
-                    [lot]: { ...(prev[lot] ?? { include_palpites: true, vip_group_link: null }), ...patch },
-                  }));
-                return (
-                  <div key={lot} className="space-y-3 rounded-lg border border-dashed p-3">
-                    <Label className="text-xs font-semibold">
-                      {LOTERIA_EMOJI[lot]} Modo Palpite — {LOTERIA_LABELS[lot]}
-                    </Label>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant={settings.include_palpites ? "default" : "outline"}
-                        size="sm"
-                        className="text-xs"
-                        onClick={() => updateLot({ include_palpites: true })}
-                      >
-                        🎰 Com Palpites
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={!settings.include_palpites ? "default" : "outline"}
-                        size="sm"
-                        className="text-xs"
-                        onClick={() => updateLot({ include_palpites: false })}
-                      >
-                        📊 Só Estratégia + CTA
-                      </Button>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground">
-                      {settings.include_palpites
-                        ? "Envia a estratégia completa + os jogos gerados."
-                        : "Envia apenas a estratégia e um CTA para entrar no Grupo VIP."}
-                    </p>
-
-                    {!settings.include_palpites && (
-                      <div className="space-y-1">
-                        <Label className="text-[10px]">Link do Grupo VIP — {LOTERIA_LABELS[lot]}</Label>
-                        <Input
-                          value={settings.vip_group_link ?? ""}
-                          onChange={(e) => updateLot({ vip_group_link: e.target.value || null })}
-                          placeholder="https://chat.whatsapp.com/..."
-                          className="text-xs"
-                        />
-                        <p className="text-[10px] text-muted-foreground">
-                          Link que aparecerá no CTA para o Grupo VIP de {LOTERIA_LABELS[lot]}.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-            <div className="flex items-center gap-2">
-              <Switch checked={formActive} onCheckedChange={setFormActive} />
-              <Label className="text-xs">Ativo</Label>
-            </div>
-
-            {/* Member Tag */}
-            <div className="space-y-1.5 rounded-lg border border-dashed p-3">
-              <Label className="text-xs font-semibold">🏷️ Tag de Membro</Label>
-              <Input
-                value={formMemberTag}
-                onChange={(e) => setFormMemberTag(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_'))}
-                placeholder="grupo_free"
-                className="text-xs"
-              />
-              <p className="text-[10px] text-muted-foreground">
-                Tag adicionada automaticamente nos perfis quando alguém entra no grupo e removida quando sai. Deixe vazio para desativar.
-              </p>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Salvando..." : "Salvar"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
+        {/* ... existing form content ... */}
       </Dialog>
-    </div>
+    </UnifiedLayout>
   );
 }

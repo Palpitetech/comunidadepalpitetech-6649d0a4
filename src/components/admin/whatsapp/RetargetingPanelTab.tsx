@@ -3,10 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, TrendingUp, ShieldAlert, AlertTriangle, Inbox, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, RefreshCw, TrendingUp, ShieldAlert, AlertTriangle, Inbox, Clock, CheckCircle2, XCircle, LayoutGrid } from "lucide-react";
 import { format, startOfDay, subDays, formatDistanceToNowStrict } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MetricCard, toneClass, type Tone } from "./shared/MetricCard";
+import { UnifiedLayout } from "./UnifiedLayout";
+import { UnifiedToolbar, ActionButton } from "./shared/UnifiedToolbar";
+import { UnifiedList, UnifiedCardItem } from "./shared/UnifiedList";
+import { cn } from "@/lib/utils";
 
 interface ScheduleInfo {
   jobid: number;
@@ -112,97 +116,83 @@ export function RetargetingPanelTab() {
     return { dailyRows, today, total7d };
   }, [runs]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">
-          Métricas das execuções automáticas de retargeting (últimos 7 dias).
-        </p>
-        <Button variant="outline" size="sm" onClick={fetchData} className="gap-1.5 text-xs">
-          <RefreshCw className="h-3.5 w-3.5" /> Atualizar
-        </Button>
-      </div>
+    <UnifiedLayout>
+      <UnifiedToolbar
+        left={<p className="text-xs text-muted-foreground">Execuções automáticas (últimos 7 dias)</p>}
+        right={<ActionButton label="Atualizar" icon={RefreshCw} onClick={fetchData} />}
+      />
 
-      {/* Status do agendamento */}
-      <ScheduleStatusCard schedule={schedule} now={now} />
+      <div className="space-y-6">
+        <ScheduleStatusCard schedule={schedule} now={now} />
 
-      {/* Legacy summary metrics removed - centralized in CommunicationQuickMetrics via Header */}
-
-      {/* Daily breakdown */}
-      <div>
-        <h3 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
-          Por dia
-        </h3>
-        {dailyRows.length === 0 ? (
-          <Card className="p-6 flex flex-col items-center text-muted-foreground gap-2">
-            <Inbox className="h-7 w-7 opacity-40" />
-            <p className="text-sm">Nenhuma execução registrada nos últimos 7 dias</p>
-          </Card>
-        ) : (
-          <Card className="divide-y">
+        <UnifiedList
+          isLoading={loading}
+          count={dailyRows.length}
+          empty={{
+            icon: Inbox,
+            message: "Nenhuma execução encontrada",
+            submessage: "O retargeting automatiza o re-engajamento de leads"
+          }}
+        >
+          <div className="grid gap-3">
             {dailyRows.map((d) => (
-              <div key={d.day} className="flex items-center justify-between gap-3 px-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">
-                    {format(new Date(d.day + "T12:00:00"), "EEE, dd/MM", { locale: ptBR })}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {d.runs} execução(ões)
-                  </p>
+              <UnifiedCardItem key={d.day} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {format(new Date(d.day + "T12:00:00"), "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {d.runs} execução(ões) no período
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                  <Stat label="Enfileiradas" value={d.enqueued} tone="success" />
+                
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                  <Stat label="Enfileirados" value={d.enqueued} tone="success" />
                   <Stat label="Dedupe" value={d.dedupe} tone="warning" />
                   <Stat label="Erros" value={d.db_errors} tone={d.db_errors > 0 ? "error" : "muted"} />
                 </div>
-              </div>
+              </UnifiedCardItem>
             ))}
-          </Card>
+          </div>
+        </UnifiedList>
+
+        {runs.some((r) => r.errors && r.errors.length > 0) && (
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 px-1">
+              Alertas de Erros Recentes
+            </h3>
+            <div className="space-y-2">
+              {runs
+                .filter((r) => r.errors && r.errors.length > 0)
+                .slice(0, 5)
+                .map((r) => (
+                  <div key={r.id} className="p-3 rounded-xl border border-destructive/20 bg-destructive/5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-destructive/80">
+                        {format(new Date(r.ran_at), "dd/MM HH:mm:ss", { locale: ptBR })}
+                      </span>
+                      <Badge variant="destructive" className="h-4 text-[9px] px-1">
+                        {r.errors!.length} falhas
+                      </Badge>
+                    </div>
+                    <ul className="text-[11px] text-destructive/90 space-y-1">
+                      {r.errors!.slice(0, 2).map((e, i) => (
+                        <li key={i} className="line-clamp-2">• {e}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+            </div>
+          </div>
         )}
       </div>
-
-      {/* Recent errors */}
-      {runs.some((r) => r.errors && r.errors.length > 0) && (
-        <div>
-          <h3 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
-            Últimos erros registrados
-          </h3>
-          <Card className="divide-y max-h-72 overflow-y-auto">
-            {runs
-              .filter((r) => r.errors && r.errors.length > 0)
-              .slice(0, 10)
-              .map((r) => (
-                <div key={r.id} className="px-3 py-2.5 space-y-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] text-muted-foreground tabular-nums">
-                      {format(new Date(r.ran_at), "dd/MM HH:mm:ss", { locale: ptBR })}
-                    </span>
-                    <Badge variant="destructive" className="text-[10px]">
-                      {r.errors!.length} erro(s)
-                    </Badge>
-                  </div>
-                  <ul className="text-[11px] text-muted-foreground space-y-0.5 list-disc list-inside">
-                    {r.errors!.slice(0, 3).map((e, i) => (
-                      <li key={i} className="break-words">{e}</li>
-                    ))}
-                    {r.errors!.length > 3 && (
-                      <li className="opacity-60">+{r.errors!.length - 3} outros…</li>
-                    )}
-                  </ul>
-                </div>
-              ))}
-          </Card>
-        </div>
-      )}
-    </div>
+    </UnifiedLayout>
   );
 }
 

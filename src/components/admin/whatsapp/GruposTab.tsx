@@ -5,8 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Search, Copy, Users } from "lucide-react";
+import { Loader2, Search, Copy, Users, RefreshCw } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { UnifiedLayout } from "./UnifiedLayout";
+import { UnifiedToolbar, ActionButton } from "./shared/UnifiedToolbar";
+import { UnifiedList, UnifiedCardItem } from "./shared/UnifiedList";
+import { cn } from "@/lib/utils";
 
 interface WhatsAppInstance {
   id: string;
@@ -92,97 +96,75 @@ export function GruposTab() {
   const selectedInst = instances.find((i) => i.id === selectedInstance);
 
   return (
-    <div className="space-y-4 pt-2">
-      {/* Controls */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex-1">
-          <Select value={selectedInstance} onValueChange={setSelectedInstance} disabled={loadingInstances}>
-            <SelectTrigger>
-              <SelectValue placeholder={loadingInstances ? "Carregando..." : "Selecione a instância"} />
-            </SelectTrigger>
-            <SelectContent>
-              {instances.map((inst) => (
-                <SelectItem key={inst.id} value={inst.id}>
-                  {inst.friendly_name} ({inst.status})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <Button onClick={fetchGroups} disabled={loading || !selectedInstance} className="shrink-0">
-          {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Search className="h-4 w-4 mr-2" />}
-          Buscar Grupos
-        </Button>
-      </div>
+    <UnifiedLayout>
+      <UnifiedToolbar
+        left={
+          <div className="flex items-center gap-2 min-w-[200px] sm:min-w-[300px]">
+            <Select value={selectedInstance} onValueChange={setSelectedInstance} disabled={loadingInstances}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder={loadingInstances ? "Carregando..." : "Selecione a instância"} />
+              </SelectTrigger>
+              <SelectContent>
+                {instances.map((inst) => (
+                  <SelectItem key={inst.id} value={inst.id}>
+                    {inst.friendly_name} ({inst.status})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <ActionButton
+              label="Buscar"
+              icon={Search}
+              onClick={fetchGroups}
+              loading={loading}
+              disabled={!selectedInstance}
+              variant="default"
+            />
+          </div>
+        }
+        right={
+          <ActionButton
+            label="Atualizar"
+            icon={RefreshCw}
+            onClick={loadInstances}
+          />
+        }
+      />
 
-      {/* Results */}
-      {groups.length > 0 && (
-        <div className="text-xs text-muted-foreground">
-          {groups.length} grupo(s) · {selectedInst?.friendly_name}
-        </div>
-      )}
-
-      {groups.length === 0 && !loading && (
-        <div className="text-center py-12 text-muted-foreground">
-          <Users className="h-10 w-10 mx-auto mb-2 opacity-40" />
-          <p className="text-sm">Selecione uma instância e clique em "Buscar Grupos"</p>
-        </div>
-      )}
-
-      {loading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      )}
-
-      {groups.length > 0 && !isMobile && (
-        <div className="rounded-lg border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome do Grupo</TableHead>
-                <TableHead>ID (JID)</TableHead>
-                <TableHead className="text-center">Participantes</TableHead>
-                <TableHead className="w-[80px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {groups.map((g) => (
-                <TableRow key={g.id}>
-                  <TableCell className="font-medium">{g.subject}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground font-mono max-w-[200px] truncate">{g.id}</TableCell>
-                  <TableCell className="text-center">{g.size}</TableCell>
-                  <TableCell>
-                    <Button size="sm" variant="ghost" onClick={() => copyId(g.id)}>
-                      <Copy className="h-3.5 w-3.5" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      {groups.length > 0 && isMobile && (
-        <div className="space-y-2">
+      <UnifiedList
+        isLoading={loading}
+        count={groups.length}
+        empty={{
+          icon: Users,
+          message: "Nenhum grupo exibido",
+          submessage: "Selecione uma instância e clique em 'Buscar Grupos'"
+        }}
+      >
+        <div className="grid gap-2">
           {groups.map((g) => (
-            <div key={g.id} className="rounded-xl border p-3.5 space-y-2">
-              <div className="flex items-start justify-between gap-2">
-                <span className="font-medium text-sm leading-tight">{g.subject}</span>
-                <Badge variant="secondary" className="text-[10px] shrink-0">{g.size} memb.</Badge>
+            <UnifiedCardItem key={g.id} className="flex items-center justify-between gap-4 py-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                  <Users className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold truncate">{g.subject}</p>
+                  <p className="text-[10px] text-muted-foreground font-mono truncate">{g.id}</p>
+                </div>
               </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] text-muted-foreground font-mono truncate flex-1">{g.id}</span>
-                <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => copyId(g.id)}>
-                  <Copy className="h-3 w-3 mr-1" />
-                  Copiar
+              
+              <div className="flex items-center gap-3 shrink-0">
+                <Badge variant="secondary" className="h-5 text-[10px] px-2 tabular-nums">
+                  {g.size} memb.
+                </Badge>
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => copyId(g.id)}>
+                  <Copy className="h-3.5 w-3.5" />
                 </Button>
               </div>
-            </div>
+            </UnifiedCardItem>
           ))}
         </div>
-      )}
-    </div>
+      </UnifiedList>
+    </UnifiedLayout>
   );
 }
