@@ -58,20 +58,23 @@ export default function SmartLinkRedirect() {
           .eq("id", leadId)
           .maybeSingle();
 
+        const lData = leadData as { email: string | null; celular: string | null } | null;
+
         await supabase.from("events").insert({
           event_type: "smart_link_click",
           source: "smart_link",
           metadata: {
             slug,
-            link_id: data.id,
-            group_name: data.group_name,
+            link_id: (data as any).id,
+            group_name: (data as any).group_name,
             redirect_type: type,
             url_params: Object.fromEntries(urlParams.entries()),
           },
-          lead_email: leadData?.email,
-          lead_phone: leadData?.celular,
-        });
+          lead_email: lData?.email,
+          lead_phone: lData?.celular,
+        } as any);
       }
+
 
       const env = detectEnvironment();
 
