@@ -18,8 +18,8 @@ import { EmailFilaTab } from "@/components/admin/email/EmailFilaTab";
 import { EmailLogsTab } from "@/components/admin/email/EmailLogsTab";
 import { EmailDisparoManualTab } from "@/components/admin/email/EmailDisparoManualTab";
 import { EmailSuppressionsTab } from "@/components/admin/email/EmailSuppressionsTab";
-import { ForceUpdateButton } from "@/components/admin/ForceUpdateButton";
 import { CommunicationHeaderSelector } from "@/components/admin/whatsapp/CommunicationHeaderSelector";
+
 
 const TAB_TITLES: Record<string, string> = {
   instancias: "Instâncias",
