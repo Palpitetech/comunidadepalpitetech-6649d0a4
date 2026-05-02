@@ -96,6 +96,7 @@ export default function AdminBackfill() {
   return (
     <AdminLayout pageTitle="Backfill de Resultados">
       <div className="px-4 py-3 md:container-senior md:py-8 space-y-4">
+        <h1 className="text-2xl font-bold hidden md:block">Backfill de Resultados</h1>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
