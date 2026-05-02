@@ -101,7 +101,9 @@ const EVENT_TYPE_CONFIG: Record<string, { label: string; icon: typeof Activity; 
   // Sistema
   trial_revertido_bug: { label: "Cancelado", icon: XCircle, color: "bg-muted/50 text-muted-foreground border-border/50" },
   agendado: { label: "Agendado", icon: Calendar, color: "bg-purple-500/10 text-purple-700 border-purple-200/50" },
+  smart_link_click: { label: "Clique SmartLink", icon: ExternalLink, color: "bg-blue-500/10 text-blue-700 border-blue-200/50" },
 };
+
 
 
 
