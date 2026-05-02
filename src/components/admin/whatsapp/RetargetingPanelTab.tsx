@@ -3,7 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, TrendingUp, ShieldAlert, AlertTriangle, Inbox, Clock, CheckCircle2, XCircle, LayoutGrid } from "lucide-react";
+import { 
+  Loader2, RefreshCw, TrendingUp, ShieldAlert, AlertTriangle, 
+  Inbox, Clock, CheckCircle2, XCircle, LayoutGrid, Zap, 
+  Settings2, ArrowRight, MousePointerClick
+} from "lucide-react";
 import { format, startOfDay, subDays, formatDistanceToNowStrict } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MetricCard, toneClass, type Tone } from "./shared/MetricCard";
@@ -11,6 +15,7 @@ import { UnifiedLayout } from "./UnifiedLayout";
 import { UnifiedToolbar, ActionButton } from "./shared/UnifiedToolbar";
 import { UnifiedList, UnifiedCardItem } from "./shared/UnifiedList";
 import { cn } from "@/lib/utils";
+import { getEventLabel } from "@/lib/whatsapp-event-labels";
 
 interface ScheduleInfo {
   jobid: number;
@@ -19,6 +24,14 @@ interface ScheduleInfo {
   active: boolean;
   last_ran_at: string | null;
   next_run_at: string | null;
+}
+
+interface AutomationSummary {
+  id: string;
+  name: string;
+  event_trigger: string;
+  is_active: boolean;
+  type: string;
 }
 
 function describeSchedule(schedule: string): string {
