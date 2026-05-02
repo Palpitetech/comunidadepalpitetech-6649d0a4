@@ -120,11 +120,20 @@ export const adminNavConfig: NavSection[] = [
     ],
   },
   {
+    id: "bi-metricas",
+    label: "BI & Métricas",
+    icon: BarChart3,
+    items: [
+      { title: "BI Dashboard", url: "/admin/bi", icon: LayoutDashboard },
+      { title: "Atribuição (UTMs)", url: "/admin/metricas", icon: BarChart2 },
+      { title: "Audit. Atribuição", url: "/admin/metricas/auditoria-atribuicao", icon: Activity },
+    ],
+  },
+  {
     id: "sistema",
     label: "Sistema",
     icon: Settings,
     items: [
-      { title: "Métricas", url: "/admin/metricas", icon: BarChart2 },
       { title: "Integrações", url: "/admin/integracoes", icon: Plug },
       { title: "Backfill Resultados", url: "/admin/backfill", icon: Database },
       { title: "Forçar Atualização", url: "/admin/force-update", icon: RefreshCw },
