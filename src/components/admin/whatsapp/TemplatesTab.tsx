@@ -650,9 +650,9 @@ export function TemplatesTab() {
                 onClick={() => setSelectedTemplate(t)}
                 title={t.name}
                 badge={{
-                  text: (t.is_active ?? true) ? "Ativo" : "Pausado",
-                  color: (t.is_active ?? true) ? "bg-green-500/10 text-green-700 border-green-200/50" : "bg-muted/50 text-muted-foreground border-border/50",
-                  icon: (t.is_active ?? true) ? Play : Pause
+                  text: t.type === 'sequence' ? 'Sequência' : t.type === 'random' ? 'Random' : 'Único',
+                  color: "bg-primary/10 text-primary border-primary/20",
+                  icon: t.type === 'sequence' ? Timer : t.type === 'random' ? Sparkles : MessageSquare
                 }}
                 subtitle={`${getEventLabel(t.event_trigger)} • ${t.content.slice(0, 40)}${t.content.length > 40 ? "..." : ""}`}
                 timestamp={format(new Date(t.created_at), "HH:mm", { locale: ptBR })}
