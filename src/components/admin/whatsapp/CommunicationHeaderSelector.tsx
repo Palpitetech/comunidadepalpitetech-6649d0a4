@@ -1,4 +1,4 @@
-import { Smartphone, FileText, Send, ScrollText, Flame, Users, Megaphone, MessageSquare, Link2, Target, Globe, Mail, Ban, Activity, ChevronDown, Check, Inbox } from "lucide-react";
+import { Smartphone, FileText, Send, ScrollText, Flame, Users, Megaphone, MessageSquare, Link2, Target, Globe, Mail, Ban, Activity, ChevronDown, Check, Inbox, BarChart2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -9,6 +9,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
+import { CommunicationQuickMetrics } from "./CommunicationQuickMetrics";
+
 
 export const communicationSections = [
   {
