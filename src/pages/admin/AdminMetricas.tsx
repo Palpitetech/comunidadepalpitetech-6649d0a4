@@ -208,12 +208,23 @@ export default function AdminMetricas() {
           <BuyersLTVTable
             data={buyersQuery.data}
             headerExtra={
-              <BlockPeriodControl
-                state={buyersState}
-                onChange={setBuyersState}
-                globalPeriodKey={periodKey}
-                globalCustomRange={customRange}
-              />
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 p-0"
+                  onClick={() => exportToCSV(buyersQuery.data?.buyers || [], "compradores-ltv")}
+                  title="Exportar CSV"
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+                <BlockPeriodControl
+                  state={buyersState}
+                  onChange={setBuyersState}
+                  globalPeriodKey={periodKey}
+                  globalCustomRange={customRange}
+                />
+              </div>
             }
           />
         )}
