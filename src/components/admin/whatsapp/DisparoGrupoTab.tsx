@@ -359,17 +359,238 @@ export function DisparoGrupoTab() {
       </Sheet>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        {/* Mantive o diálogo de edição original que é complexo */}
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingConfig ? "Editar Configuração" : "Nova Configuração"}</DialogTitle>
+            <DialogDescription>Configure nome, grupos, slots de envio e palpites.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 pt-4">
-             <div className="space-y-2">
+          <div className="space-y-6 pt-4">
+            {/* Nome + Ativo */}
+            <div className="flex items-end gap-4">
+              <div className="flex-1 space-y-2">
                 <Label>Nome</Label>
-                <Input value={formName} onChange={(e) => setFormName(e.target.value)} />
-             </div>
-             <Button className="w-full" onClick={handleSave} disabled={saving}>{saving ? "Salvando..." : "Salvar"}</Button>
+                <Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Ex: Grupo VIP Lotofácil" />
+              </div>
+              <div className="flex items-center gap-2 pb-1">
+                <Switch checked={formActive} onCheckedChange={setFormActive} />
+                <Label className="text-sm">{formActive ? "Ativo" : "Pausado"}</Label>
+              </div>
+            </div>
+
+            {/* Tag de Membro */}
+            <div className="space-y-2">
+              <Label>Tag de Membro (opcional)</Label>
+              <Input value={formMemberTag} onChange={(e) => setFormMemberTag(e.target.value)} placeholder="Ex: vip_lotofacil" />
+              <p className="text-xs text-muted-foreground">Usada para segmentar membros do grupo no CRM</p>
+            </div>
+
+            {/* Group JIDs */}
+            <div className="space-y-2">
+              <Label>IDs dos Grupos (JIDs)</Label>
+              {formGroupJids.map((jid, idx) => (
+                <div key={idx} className="flex gap-2">
+                  <Input
+                    value={jid}
+                    onChange={(e) => {
+                      const updated = [...formGroupJids];
+                      updated[idx] = e.target.value;
+                      setFormGroupJids(updated);
+                    }}
+                    placeholder="Ex: 5511999999999@g.us"
+                    className="font-mono text-xs"
+                  />
+                  {formGroupJids.length > 1 && (
+                    <Button variant="ghost" size="icon" onClick={() => setFormGroupJids(formGroupJids.filter((_, i) => i !== idx))}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={() => setFormGroupJids([...formGroupJids, ""])}>
+                <Plus className="h-3 w-3 mr-1" /> Adicionar Grupo
+              </Button>
+            </div>
+
+            {/* Slots */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold">Slots de Envio</Label>
+                <Button variant="outline" size="sm" onClick={() => {
+                  const newSlot = createEmptySlot(formSlots.length + 1);
+                  setFormSlots([...formSlots, newSlot]);
+                  setFormTimeInputs({ ...formTimeInputs, [newSlot.id]: "12:00" });
+                }}>
+                  <Plus className="h-3 w-3 mr-1" /> Slot
+                </Button>
+              </div>
+
+              {formSlots.map((slot, slotIdx) => (
+                <Card key={slot.id} className="border-dashed">
+                  <CardContent className="pt-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Slot #{slotIdx + 1}</span>
+                      {formSlots.length > 1 && (
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                          setFormSlots(formSlots.filter((_, i) => i !== slotIdx));
+                        }}>
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Tipo de Mensagem */}
+                      <div className="space-y-1">
+                        <Label className="text-xs">Tipo</Label>
+                        <Select
+                          value={slot.message_type}
+                          onValueChange={(val) => {
+                            const updated = [...formSlots];
+                            updated[slotIdx] = { ...slot, message_type: val as Slot["message_type"] };
+                            setFormSlots(updated);
+                          }}
+                        >
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ai"><div className="flex items-center gap-2"><Sparkles className="h-3 w-3" /> Análise Técnica</div></SelectItem>
+                            <SelectItem value="manual"><div className="flex items-center gap-2"><PenLine className="h-3 w-3" /> Manual</div></SelectItem>
+                            <SelectItem value="palpite"><div className="flex items-center gap-2"><Dices className="h-3 w-3" /> Palpite</div></SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Loteria */}
+                      <div className="space-y-1">
+                        <Label className="text-xs">Loteria</Label>
+                        <Select
+                          value={slot.loteria}
+                          onValueChange={(val) => {
+                            const updated = [...formSlots];
+                            updated[slotIdx] = { ...slot, loteria: val as BlastLoteria };
+                            setFormSlots(updated);
+                          }}
+                        >
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(LOTERIA_LABELS).map(([k, v]) => (
+                              <SelectItem key={k} value={k}>{v}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Conteúdo Manual */}
+                    {slot.message_type === "manual" && (
+                      <div className="space-y-1">
+                        <Label className="text-xs">Mensagem</Label>
+                        <Textarea
+                          value={slot.message_content}
+                          onChange={(e) => {
+                            const updated = [...formSlots];
+                            updated[slotIdx] = { ...slot, message_content: e.target.value };
+                            setFormSlots(updated);
+                          }}
+                          placeholder="Texto da mensagem manual..."
+                          rows={3}
+                        />
+                      </div>
+                    )}
+
+                    {/* Horários */}
+                    <div className="space-y-1">
+                      <Label className="text-xs">Horários (BRT)</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="time"
+                          value={formTimeInputs[slot.id] || "12:00"}
+                          onChange={(e) => setFormTimeInputs({ ...formTimeInputs, [slot.id]: e.target.value })}
+                          className="w-32"
+                        />
+                        <Button variant="outline" size="sm" onClick={() => {
+                          const time = formTimeInputs[slot.id] || "12:00";
+                          if (slot.schedule_times.includes(time)) {
+                            toast.error("Horário já adicionado");
+                            return;
+                          }
+                          const updated = [...formSlots];
+                          updated[slotIdx] = { ...slot, schedule_times: [...slot.schedule_times, time].sort() };
+                          setFormSlots(updated);
+                        }}>
+                          <Plus className="h-3 w-3 mr-1" /> Adicionar
+                        </Button>
+                      </div>
+                      {slot.schedule_times.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {slot.schedule_times.map((t) => (
+                            <Badge key={t} variant="secondary" className="gap-1 font-mono text-xs">
+                              <Clock className="h-3 w-3" /> {t}
+                              <button
+                                className="ml-1 hover:text-destructive"
+                                onClick={() => {
+                                  const updated = [...formSlots];
+                                  updated[slotIdx] = { ...slot, schedule_times: slot.schedule_times.filter((x) => x !== t) };
+                                  setFormSlots(updated);
+                                }}
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Palpite Settings por Loteria */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Configuração de Palpites</Label>
+              {(Object.entries(LOTERIA_LABELS) as [BlastLoteria, string][]).map(([key, label]) => {
+                const settings = formPalpiteSettings[key] ?? { include_palpites: true, vip_group_link: null };
+                return (
+                  <Card key={key} className="border-dashed">
+                    <CardContent className="pt-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{label}</span>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={settings.include_palpites}
+                            onCheckedChange={(checked) => {
+                              setFormPalpiteSettings({
+                                ...formPalpiteSettings,
+                                [key]: { ...settings, include_palpites: checked },
+                              });
+                            }}
+                          />
+                          <Label className="text-xs">Incluir palpites</Label>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Link do Grupo VIP (opcional)</Label>
+                        <Input
+                          value={settings.vip_group_link || ""}
+                          onChange={(e) => {
+                            setFormPalpiteSettings({
+                              ...formPalpiteSettings,
+                              [key]: { ...settings, vip_group_link: e.target.value || null },
+                            });
+                          }}
+                          placeholder="https://chat.whatsapp.com/..."
+                          className="text-xs"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            <Button className="w-full" onClick={handleSave} disabled={saving}>
+              {saving ? "Salvando..." : "Salvar Configuração"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
