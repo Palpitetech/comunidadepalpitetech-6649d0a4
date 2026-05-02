@@ -112,7 +112,10 @@ export function SmartLinksTab() {
     setInstances((data as WaInstance[]) ?? []);
   }, []);
 
-  useEffect(() => { fetchLinks(); }, []);
+  useEffect(() => { 
+    fetchLinks(); 
+    fetchPlans();
+  }, []);
 
   useEffect(() => {
     if (dialogOpen) fetchInstances();
