@@ -34,6 +34,12 @@ interface SmartLink {
   clicks: number;
   is_active: boolean;
   created_at: string;
+  plan_id: string | null;
+  redirect_type: 'whatsapp' | 'checkout';
+  plans?: {
+    name: string;
+    checkout_link: string | null;
+  };
 }
 
 interface WaInstance {
