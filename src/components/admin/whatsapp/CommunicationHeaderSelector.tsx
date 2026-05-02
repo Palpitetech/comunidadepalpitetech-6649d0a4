@@ -47,12 +47,20 @@ export const communicationSections = [
 interface CommunicationHeaderSelectorProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  showMetrics: boolean;
+  onToggleMetrics: (show: boolean) => void;
 }
 
-export function CommunicationHeaderSelector({ activeTab, onTabChange }: CommunicationHeaderSelectorProps) {
+export function CommunicationHeaderSelector({ 
+  activeTab, 
+  onTabChange,
+  showMetrics,
+  onToggleMetrics
+}: CommunicationHeaderSelectorProps) {
   const currentItem = (communicationSections as any)
     .flatMap((s: any) => s.items)
     .find((i: any) => i.value === activeTab);
+
 
   return (
     <DropdownMenu>
