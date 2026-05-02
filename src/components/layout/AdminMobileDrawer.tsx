@@ -259,13 +259,14 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
                   {initials}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex flex-col min-w-0">
+              <div className="flex flex-col min-w-0 flex-1">
                 <span className="text-sm font-bold truncate">
                   {profile?.nome || "Admin"}
                 </span>
-                <span className="text-xs text-muted-foreground truncate">
+                <span className="text-xs text-muted-foreground truncate block">
                   {user?.email}
                 </span>
+                <AppVersion className="mt-1" />
               </div>
             </div>
             <Button 
@@ -284,4 +285,3 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
     </>
   );
 }
-
