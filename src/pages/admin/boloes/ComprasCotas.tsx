@@ -7,7 +7,7 @@ export default function ComprasCotas() {
     <AdminLayout pageTitle="Compras de Cotas">
       <div className="px-4 py-3 md:container-senior md:py-8">
         <Card>
-          <CardHeader>
+          <CardHeader className="hidden md:block">
             <CardTitle>Compras de Cotas</CardTitle>
           </CardHeader>
           <CardContent>
