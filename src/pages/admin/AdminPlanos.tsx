@@ -98,7 +98,7 @@ export default function AdminPlanos() {
   }
 
   return (
-    <AdminLayout>
+    <AdminLayout pageTitle="Planos & Preços">
       <div className="container-senior py-8 max-w-4xl mx-auto">
         <div className="mb-6">
           <KirvanoWebhookCard />
