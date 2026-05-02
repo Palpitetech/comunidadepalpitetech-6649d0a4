@@ -1,6 +1,7 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import {
   ShoppingCart,
   Users,
@@ -17,6 +18,7 @@ import {
   ShoppingBag,
   RefreshCw,
   Percent,
+  BarChart3,
 } from "lucide-react";
 import { useState } from "react";
 import {
