@@ -292,8 +292,14 @@ export function SmartLinksTab() {
           <AdminListContainer loading={loading && links.length === 0}>
             {links.map((link) => (
               <AdminListItem
-                key={link.id} onClick={() => setSelectedLink(link)} title={link.group_name || link.slug}
-                badge={{ text: `${link.clicks} cliques`, color: "bg-blue-500/10 text-blue-700", icon: MousePointer2 }}
+                key={link.id} 
+                onClick={() => setSelectedLink(link)} 
+                title={link.group_name || link.slug}
+                badge={{ 
+                  text: link.redirect_type === 'checkout' ? `🛒 ${link.plans?.name || 'Checkout'}` : `${link.clicks} cliques`, 
+                  color: link.redirect_type === 'checkout' ? "bg-orange-500/10 text-orange-700" : "bg-blue-500/10 text-blue-700", 
+                  icon: link.redirect_type === 'checkout' ? QrCode : MousePointer2 
+                }}
                 subtitle={`${BASE_URL}/g/${link.slug}`}
                 timestamp={format(new Date(link.created_at), "HH:mm", { locale: ptBR })}
               />
