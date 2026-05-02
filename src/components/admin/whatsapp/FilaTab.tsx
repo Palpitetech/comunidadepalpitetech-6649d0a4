@@ -191,40 +191,6 @@ export function FilaTab() {
           submessage: "Crie novos envios através do Disparo Manual"
         }}
       >
-        <div className="space-y-2">
-          {filtered.map((item) => (
-            <UnifiedCardItem key={item.id} className="space-y-3">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold truncate">{item.recipient_name || "—"}</p>
-                  <p className="text-xs text-muted-foreground font-mono">{item.recipient_phone}</p>
-                </div>
-                <MessageStatusBadge status={item.status} variant="short" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-[11px] text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <FileText className="h-3 w-3" />
-                  <span className="truncate">{getTemplateName(item.template_id)}</span>
-                </div>
-                <div className="flex items-center gap-1 justify-end">
-                  <RefreshCw className="h-3 w-3" />
-                  <span>{fmtDate(item.scheduled_at, "full")}</span>
-                </div>
-              </div>
-
-              {item.status === "failed" && (
-                <div className="flex flex-col gap-2 pt-1 border-t border-border/50">
-                  <p className="text-[10px] text-destructive line-clamp-1">⚠️ {item.error_message}</p>
-                  <Button variant="outline" size="sm" className="w-full h-7 text-[10px] gap-1.5" onClick={() => handleRetry(item.id)}>
-                    <RotateCcw className="h-3 w-3" /> Retentar
-                  </Button>
-                </div>
-              )}
-            </UnifiedCardItem>
-          ))}
-        </div>
-      >
         {/* Desktop View */}
         <div className="hidden md:grid gap-3 lg:grid-cols-2">
           {filtered.map((item) => (
