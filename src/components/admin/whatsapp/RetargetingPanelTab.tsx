@@ -143,14 +143,11 @@ export function RetargetingPanelTab() {
   return (
     <UnifiedLayout>
       <UnifiedToolbar
-        left={<p className="text-xs text-muted-foreground">Execuções automáticas (últimos 7 dias)</p>}
+        left={<p className="text-xs text-muted-foreground">Execuções automáticas e gatilhos de CRM</p>}
         right={<ActionButton label="Atualizar" icon={RefreshCw} onClick={fetchData} />}
       />
 
-      <div className="space-y-6">
-        <ScheduleStatusCard schedule={schedule} now={now} />
-
-      <div className="space-y-6">
+      <div className="space-y-6 pb-10">
         <ScheduleStatusCard schedule={schedule} now={now} />
 
         {/* Automações Ativas */}
@@ -186,14 +183,16 @@ export function RetargetingPanelTab() {
                   <span className="text-[10px] text-muted-foreground italic">
                     Gatilho: {auto.event_trigger}
                   </span>
-                  <Button variant="ghost" size="sm" className="h-7 text-[10px] px-2 gap-1" disabled>
-                    <Settings2 className="h-3 w-3" />
-                    Gerenciar
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" className="h-7 text-[10px] px-2 gap-1 opacity-0 group-hover:opacity-100 transition-opacity" disabled>
+                      <Settings2 className="h-3 w-3" />
+                      Ajustar
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}
-            {automations.length === 0 && (
+            {automations.length === 0 && !loading && (
               <div className="sm:col-span-2 p-8 border-2 border-dashed border-muted rounded-2xl flex flex-col items-center justify-center text-center space-y-2">
                 <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground">
                   <Zap className="h-5 w-5" />
@@ -204,6 +203,11 @@ export function RetargetingPanelTab() {
                     Configure gatilhos em seus templates para automatizar o envio.
                   </p>
                 </div>
+              </div>
+            )}
+            {loading && automations.length === 0 && (
+              <div className="sm:col-span-2 p-8 flex justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-primary/40" />
               </div>
             )}
           </div>
