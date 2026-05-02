@@ -343,32 +343,7 @@ export function AquecimentoTab() {
         </CardContent>
       </Card>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <Card>
-          <CardContent className="pt-4 pb-3 sm:pt-5 sm:pb-4 text-center px-2">
-            <Users className="h-4 w-4 sm:h-5 sm:w-5 mx-auto text-muted-foreground mb-1" />
-            <p className="text-lg sm:text-2xl font-bold tabular-nums">{totalConversations}</p>
-            <p className="text-[10px] sm:text-[11px] text-muted-foreground leading-tight">Conversas</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3 sm:pt-5 sm:pb-4 text-center px-2">
-            <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 mx-auto text-muted-foreground mb-1" />
-            <p className="text-lg sm:text-2xl font-bold tabular-nums">{totalMessages}</p>
-            <p className="text-[10px] sm:text-[11px] text-muted-foreground leading-tight">Mensagens</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-3 sm:pt-5 sm:pb-4 text-center px-2">
-            <Clock className="h-4 w-4 sm:h-5 sm:w-5 mx-auto text-muted-foreground mb-1" />
-            <p className="text-xs sm:text-sm font-medium truncate">{lastPairText}</p>
-            <p className="text-[10px] sm:text-[11px] text-muted-foreground">
-              {lastPairTime ? `às ${lastPairTime}` : "Nenhuma"}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Summary Cards removed - centralized in CommunicationQuickMetrics */}
 
       {/* History */}
       <div>
