@@ -150,41 +150,106 @@ export function RetargetingPanelTab() {
       <div className="space-y-6">
         <ScheduleStatusCard schedule={schedule} now={now} />
 
-        <UnifiedList
-          isLoading={loading}
-          count={dailyRows.length}
-          empty={{
-            icon: Inbox,
-            message: "Nenhuma execução encontrada",
-            submessage: "O retargeting automatiza o re-engajamento de leads"
-          }}
-        >
-          <div className="grid gap-3">
-            {dailyRows.map((d) => (
-              <UnifiedCardItem key={d.day} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                    <TrendingUp className="h-5 w-5 text-primary" />
+      <div className="space-y-6">
+        <ScheduleStatusCard schedule={schedule} now={now} />
+
+        {/* Automações Ativas */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 flex items-center gap-2">
+              <Zap className="h-3 w-3 text-amber-500" />
+              Gatilhos de Automação Ativos
+            </h3>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {automations.map((auto) => (
+              <Card key={auto.id} className="p-4 flex flex-col justify-between border-border/60 hover:border-primary/30 transition-colors group">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold group-hover:text-primary transition-colors">{auto.name}</p>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-[10px] h-4 py-0 bg-muted/30">
+                        {getEventLabel(auto.event_trigger)}
+                      </Badge>
+                      <Badge variant="secondary" className="text-[10px] h-4 py-0 uppercase">
+                        {auto.type || "single"}
+                      </Badge>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold">
-                      {format(new Date(d.day + "T12:00:00"), "EEEE, dd 'de' MMMM", { locale: ptBR })}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {d.runs} execução(ões) no período
-                    </p>
-                  </div>
+                  <div className={cn(
+                    "h-2 w-2 rounded-full",
+                    auto.is_active ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-muted-foreground/30"
+                  )} />
                 </div>
                 
-                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-                  <Stat label="Enfileirados" value={d.enqueued} tone="success" />
-                  <Stat label="Dedupe" value={d.dedupe} tone="warning" />
-                  <Stat label="Erros" value={d.db_errors} tone={d.db_errors > 0 ? "error" : "muted"} />
+                <div className="flex items-center justify-between pt-3 border-t border-border/40">
+                  <span className="text-[10px] text-muted-foreground italic">
+                    Gatilho: {auto.event_trigger}
+                  </span>
+                  <Button variant="ghost" size="sm" className="h-7 text-[10px] px-2 gap-1" disabled>
+                    <Settings2 className="h-3 w-3" />
+                    Gerenciar
+                  </Button>
                 </div>
-              </UnifiedCardItem>
+              </Card>
             ))}
+            {automations.length === 0 && (
+              <div className="sm:col-span-2 p-8 border-2 border-dashed border-muted rounded-2xl flex flex-col items-center justify-center text-center space-y-2">
+                <div className="h-10 w-10 rounded-full bg-muted/50 flex items-center justify-center text-muted-foreground">
+                  <Zap className="h-5 w-5" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Nenhuma automação ativa</p>
+                  <p className="text-xs text-muted-foreground/60 max-w-[200px]">
+                    Configure gatilhos em seus templates para automatizar o envio.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
-        </UnifiedList>
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 px-1 flex items-center gap-2">
+            <LayoutGrid className="h-3 w-3" />
+            Histórico de Execuções (Retargeting)
+          </h3>
+          <UnifiedList
+            isLoading={loading}
+            count={dailyRows.length}
+            empty={{
+              icon: Inbox,
+              message: "Nenhuma execução encontrada",
+              submessage: "O retargeting automatiza o re-engajamento de leads"
+            }}
+          >
+            <div className="grid gap-3">
+              {dailyRows.map((d) => (
+                <UnifiedCardItem key={d.day} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">
+                        {format(new Date(d.day + "T12:00:00"), "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {d.runs} execução(ões) no período
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                    <Stat label="Enfileirados" value={d.enqueued} tone="success" />
+                    <Stat label="Dedupe" value={d.dedupe} tone="warning" />
+                    <Stat label="Erros" value={d.db_errors} tone={d.db_errors > 0 ? "error" : "muted"} />
+                  </div>
+                </UnifiedCardItem>
+              ))}
+            </div>
+          </UnifiedList>
+        </div>
 
         {runs.some((r) => r.errors && r.errors.length > 0) && (
           <div className="space-y-3">
