@@ -328,7 +328,7 @@ export default function AdminCustosOperacionais() {
     <AdminLayout>
       <div className="container-senior py-6 space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
+          <div className="hidden md:block">
             <h1 className="text-2xl font-bold">Custos Operacionais</h1>
             <p className="text-sm text-muted-foreground">
               Visão consolidada: assinaturas, chips e lançamentos manuais
