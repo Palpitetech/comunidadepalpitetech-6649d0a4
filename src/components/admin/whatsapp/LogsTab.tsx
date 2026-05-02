@@ -108,19 +108,18 @@ export function LogsTab() {
 
   return (
     <div className="space-y-4">
-      {/* Header and status removed as it is now centralized in CommunicationQuickMetrics */}
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant={hasActiveFilters ? "default" : "outline"}
-            size="sm"
-            className="gap-1.5 text-xs"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="h-3.5 w-3.5" />
-            Filtros
-            {hasActiveFilters && <span className="tabular-nums">({filtered.length})</span>}
-          </Button>
-        </div>
+      {/* Toolbar */}
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          variant={hasActiveFilters ? "default" : "outline"}
+          size="sm"
+          className="gap-1.5 text-xs"
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          <Filter className="h-3.5 w-3.5" />
+          Filtros
+          {hasActiveFilters && <span className="tabular-nums">({filtered.length})</span>}
+        </Button>
       </div>
 
       {showFilters && (
