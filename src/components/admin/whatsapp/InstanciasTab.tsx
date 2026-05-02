@@ -740,6 +740,8 @@ export function InstanciasTab() {
                     value={pct}
                     className={`h-2 ${pct >= 90 ? "[&>div]:bg-destructive" : pct >= 70 ? "[&>div]:bg-yellow-500" : "[&>div]:bg-accent"}`}
                   />
+                </div>
+
                 {/* Last message */}
                 <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
