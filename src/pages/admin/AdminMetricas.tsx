@@ -36,6 +36,8 @@ import {
   FirstVsLastSkeleton,
   FunnelSkeleton,
 } from "@/components/admin/metricas/MetricsSkeletons";
+import { exportToCSV } from "@/utils/exportUtils";
+import { Download } from "lucide-react";
 
 
 const BASE_URL = "comunidadepalpitetech.lovable.app";
