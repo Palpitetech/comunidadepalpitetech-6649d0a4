@@ -7,9 +7,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, DollarSign } from "lucide-react";
+import { Loader2, DollarSign, Wallet, Star, Shield, Layout, Save, Trash2, Check, RefreshCw } from "lucide-react";
 import type { Plan, PlanFeatures, FeatureKey } from "@/types/plans";
 import { FEATURE_LABELS, FEATURE_CATEGORIES } from "@/types/plans";
+import { cn } from "@/lib/utils";
 
 interface PlanFormProps {
   plan: Plan | null;
