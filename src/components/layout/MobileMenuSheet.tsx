@@ -22,6 +22,7 @@ import {
   Gift, ArrowLeft, MessageCircle, LogOut, ChevronRight,
   User, CreditCard, Ticket, Lock, Crown,
 } from "lucide-react";
+import { AppVersion } from "./AppVersion";
 
 interface MobileMenuSheetProps {
   open: boolean;
