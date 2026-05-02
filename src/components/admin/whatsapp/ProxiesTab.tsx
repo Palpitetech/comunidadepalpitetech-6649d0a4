@@ -240,11 +240,7 @@ export function ProxiesTab() {
     fetchData();
   }, [fetchData]);
 
-  const counts = {
-    available: proxies.filter((p) => p.status === "available").length,
-    in_use: proxies.filter((p) => p.status === "in_use").length,
-    disabled: proxies.filter((p) => p.status === "disabled").length,
-  };
+  // Removed legacy counts as they are now centralized in CommunicationQuickMetrics
 
   const handleTestForm = async () => {
     if (!form.host.trim() || !form.port.trim()) {

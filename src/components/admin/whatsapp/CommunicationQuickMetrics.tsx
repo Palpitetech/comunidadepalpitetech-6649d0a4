@@ -27,11 +27,46 @@ export function CommunicationQuickMetrics({ activeTab }: CommunicationQuickMetri
         const { count: instancesOnline } = await supabase
           .from("whatsapp_instances")
           .select("*", { count: 'exact', head: true })
-          .eq("status", "connected");
+          .eq("status", "online");
 
         const { count: totalInstances } = await supabase
           .from("whatsapp_instances")
           .select("*", { count: 'exact', head: true });
+
+        // Proxies
+        const { count: proxiesOnline } = await supabase
+          .from("whatsapp_proxies")
+          .select("*", { count: 'exact', head: true })
+          .eq("status", "available");
+
+        const { count: totalProxies } = await supabase
+          .from("whatsapp_proxies")
+          .select("*", { count: 'exact', head: true });
+
+        // Templates (WhatsApp)
+        const { count: templatesTotal } = await supabase
+          .from("message_templates")
+          .select("*", { count: 'exact', head: true });
+
+        // Queue (WhatsApp)
+        const { count: queuePending } = await supabase
+          .from("message_queue")
+          .select("*", { count: 'exact', head: true })
+          .eq("status", "pending");
+
+        const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const { count: queueProcessed24h } = await supabase
+          .from("message_queue")
+          .select("*", { count: 'exact', head: true })
+          .eq("status", "sent")
+          .gte("sent_at", last24h);
+
+        // Logs/Errors (Recent 24h)
+        const { count: errorLogs } = await supabase
+          .from("message_queue")
+          .select("*", { count: 'exact', head: true })
+          .eq("status", "failed")
+          .gte("created_at", last24h);
 
         setMetrics({
           whatsapp: { 
@@ -39,23 +74,23 @@ export function CommunicationQuickMetrics({ activeTab }: CommunicationQuickMetri
             total: totalInstances || 0 
           },
           proxies: { 
-            online: 8, // Mocked for now
-            total: 10 
+            online: proxiesOnline || 0,
+            total: totalProxies || 0 
           },
           templates: { 
-            approved: 45, // Mocked for now
-            pending: 3 
+            approved: templatesTotal || 0, 
+            pending: 0 
           },
           queue: { 
-            pending: 12, // Mocked for now
-            processed: 850 
+            pending: queuePending || 0, 
+            processed: queueProcessed24h || 0 
           },
           logs: { 
-            errors: 2 // Mocked for now
+            errors: errorLogs || 0
           },
           email: { 
-            sent: 1250, // Mocked for now
-            bounce: 5 
+            sent: 0, 
+            bounce: 0 
           }
         });
       } catch (error) {
@@ -88,7 +123,7 @@ export function CommunicationQuickMetrics({ activeTab }: CommunicationQuickMetri
           <span className="text-[10px] md:text-xs font-medium text-muted-foreground">Instâncias Conectadas:</span>
           <span className={cn(
             "text-[10px] md:text-xs font-bold",
-            metrics?.whatsapp?.online === metrics?.whatsapp?.total ? "text-green-500" : "text-yellow-500"
+            metrics?.whatsapp?.online === metrics?.whatsapp?.total && metrics?.whatsapp?.total > 0 ? "text-green-500" : "text-yellow-500"
           )}>
             {metrics?.whatsapp?.online}/{metrics?.whatsapp?.total}
           </span>
@@ -100,7 +135,7 @@ export function CommunicationQuickMetrics({ activeTab }: CommunicationQuickMetri
       return (
         <div className="flex items-center gap-1.5 shrink-0">
           <Globe className="h-3 w-3 text-muted-foreground" />
-          <span className="text-[10px] md:text-xs font-medium text-muted-foreground">Proxies Online:</span>
+          <span className="text-[10px] md:text-xs font-medium text-muted-foreground">Proxies Disponíveis:</span>
           <span className="text-[10px] md:text-xs font-bold text-green-500">
             {metrics?.proxies?.online}/{metrics?.proxies?.total}
           </span>
@@ -112,9 +147,8 @@ export function CommunicationQuickMetrics({ activeTab }: CommunicationQuickMetri
       return (
         <div className="flex items-center gap-1.5 shrink-0">
           <FileText className="h-3 w-3 text-muted-foreground" />
-          <span className="text-[10px] md:text-xs font-medium text-muted-foreground">Templates:</span>
-          <span className="text-[10px] md:text-xs font-bold text-green-500">{metrics?.templates?.approved} aprovados</span>
-          <span className="text-[10px] md:text-xs font-bold text-yellow-500">{metrics?.templates?.pending} pendentes</span>
+          <span className="text-[10px] md:text-xs font-medium text-muted-foreground">Total de Templates:</span>
+          <span className="text-[10px] md:text-xs font-bold text-primary">{metrics?.templates?.approved}</span>
         </div>
       );
     }
@@ -141,7 +175,7 @@ export function CommunicationQuickMetrics({ activeTab }: CommunicationQuickMetri
       return (
         <div className="flex items-center gap-1.5 shrink-0">
           <ShieldAlert className={cn("h-3 w-3", (metrics?.logs?.errors || 0) > 0 ? "text-destructive" : "text-muted-foreground")} />
-          <span className="text-[10px] md:text-xs font-medium text-muted-foreground">Alertas/Erros Recentes:</span>
+          <span className="text-[10px] md:text-xs font-medium text-muted-foreground">Erros (24h):</span>
           <span className={cn("text-[10px] md:text-xs font-bold", (metrics?.logs?.errors || 0) > 0 ? "text-destructive" : "text-green-500")}>
             {metrics?.logs?.errors}
           </span>

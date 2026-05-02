@@ -645,8 +645,7 @@ export function InstanciasTab() {
 
   return (
     <div className="space-y-6">
-      {/* Banner de saúde da Evolution API */}
-      <EvolutionHealthBanner />
+      {/* Legacy metrics removed - centralized in CommunicationQuickMetrics via Header */}
 
       {/* Header - Ações principais unificadas */}
       <div className="flex flex-col gap-4">
