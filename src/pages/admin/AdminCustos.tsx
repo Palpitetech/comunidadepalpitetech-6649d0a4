@@ -179,7 +179,7 @@ export default function AdminCustos() {
       <div className="container-senior py-6 space-y-6">
         <div className="flex items-center justify-between hidden md:flex">
           <h1 className="text-2xl font-bold">Controle de Custos IA</h1>
-          <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2">
+          <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2 hidden md:flex">
             <RefreshCw className="h-4 w-4" />
             Atualizar
           </Button>
