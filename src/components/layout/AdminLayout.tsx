@@ -29,20 +29,29 @@ export function AdminLayout({ children, pageTitle, headerRightContent }: AdminLa
           <AdminSidebar />
         </div>
 
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Header */}
           <header 
-            className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-background/95 backdrop-blur px-4"
+            className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-background/95 backdrop-blur px-4 flex-none"
             style={{ 
               paddingTop: 'env(safe-area-inset-top, 0px)',
               height: 'calc(3.5rem + env(safe-area-inset-top, 0px))' 
             }}
           >
-            {pageTitle && (
-              <h1 className="text-lg font-semibold truncate flex-1 md:block">{pageTitle}</h1>
-            )}
-            {headerRightContent && <div className="ml-auto">{headerRightContent}</div>}
+            <div className="flex items-center gap-2 overflow-hidden flex-1">
+              {pageTitle && (
+                <h1 className="text-sm md:text-lg font-semibold truncate">
+                  {pageTitle}
+                </h1>
+              )}
+              {headerRightContent && (
+                <div className="flex-1 overflow-hidden">
+                  {headerRightContent}
+                </div>
+              )}
+            </div>
           </header>
+
 
           {/* Content */}
           <main className={cn("flex-1 overflow-auto pb-20 md:pb-0 landscape:pb-16")}>
