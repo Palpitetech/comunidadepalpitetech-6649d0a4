@@ -582,6 +582,11 @@ export function TemplatesTab() {
                     <FileText className="h-4 w-4" />
                   </div>
                   <h3 className="text-sm font-semibold truncate">{t.name}</h3>
+                  <div className="flex items-center gap-1 ml-1">
+                    <Badge variant="outline" className="text-[9px] py-0 h-4 border-primary/20 bg-primary/5 text-primary">
+                      {t.type === 'sequence' ? 'Seq' : t.type === 'random' ? 'Rand' : 'Single'}
+                    </Badge>
+                  </div>
                 </div>
                 <Badge variant={(t.is_active ?? true) ? "default" : "secondary"} className="text-[10px]">
                   {(t.is_active ?? true) ? "Ativo" : "Pausado"}
