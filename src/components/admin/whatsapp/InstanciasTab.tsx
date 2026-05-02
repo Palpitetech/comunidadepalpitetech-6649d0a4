@@ -827,7 +827,10 @@ export function InstanciasTab() {
           </Dialog>
         </div>
       </div>
+      </div>
+
       {/* QR Code Dialog */}
+
       <Dialog
         open={qrDialogOpen}
 
