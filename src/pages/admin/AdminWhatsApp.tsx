@@ -60,7 +60,7 @@ export default function AdminWhatsApp() {
     >
 
       <div className="flex flex-1 min-h-0">
-        <div className="flex-1 min-w-0 overflow-auto">
+        <div className="flex-1 min-w-0">
           {/* Content header (desktop only) */}
           <div className="hidden md:flex items-center gap-2 px-5 lg:px-6 pt-5 lg:pt-6 pb-1">
             <h2 className="text-lg font-semibold">{TAB_TITLES[activeTab] || activeTab}</h2>
