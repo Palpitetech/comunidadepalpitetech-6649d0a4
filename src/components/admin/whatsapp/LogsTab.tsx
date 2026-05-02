@@ -3,16 +3,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, ScrollText, Filter, X, RefreshCw, Smartphone } from "lucide-react";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { 
+  Loader2, ScrollText, Filter, X, RefreshCw, Smartphone, 
+  Phone, Hash, Info, Calendar, CheckCircle2, AlertCircle, FileText
+} from "lucide-react";
 import { startOfDay } from "date-fns";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { MessageStatusBadge } from "./shared/MessageStatusBadge";
 import { fmtDate } from "./shared/format-date";
 import { UnifiedLayout } from "./UnifiedLayout";
 import { UnifiedToolbar, ActionButton } from "./shared/UnifiedToolbar";
 import { UnifiedList, UnifiedCardItem } from "./shared/UnifiedList";
+import { AdminListContainer, AdminListItem } from "../AdminListComponents";
+import { MobileInfoRow } from "./shared/MobileInfoRow";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface SendLog {
   id: string;
@@ -38,11 +46,10 @@ const STATUS_OPTIONS = [
 ];
 
 export function LogsTab() {
-  const isMobile = useIsMobile();
   const [logs, setLogs] = useState<SendLog[]>([]);
   const [instances, setInstances] = useState<InstanceOption[]>([]);
   const [loading, setLoading] = useState(true);
-  const [todayCount, setTodayCount] = useState(0);
+  const [selectedLog, setSelectedLog] = useState<SendLog | null>(null);
   const [filterInstance, setFilterInstance] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterDateFrom, setFilterDateFrom] = useState("");
@@ -73,10 +80,6 @@ export function LogsTab() {
       instance_name: l.instance_id ? instanceMap.get(l.instance_id) || "—" : "—",
     }));
     setLogs(rawLogs);
-
-    const todayStart = startOfDay(new Date()).toISOString();
-    const count = rawLogs.filter((l) => l.sent_at && l.sent_at >= todayStart).length;
-    setTodayCount(count);
 
     setLoading(false);
   }, []);
@@ -180,9 +183,10 @@ export function LogsTab() {
           submessage: "Os logs aparecem após o envio de mensagens"
         }}
       >
-        <div className="space-y-2">
-          {filtered.slice(0, 50).map((log) => (
-            <UnifiedCardItem key={log.id} className="space-y-3">
+        {/* Desktop View */}
+        <div className="hidden md:grid gap-3 lg:grid-cols-2">
+          {filtered.slice(0, 100).map((log) => (
+            <UnifiedCardItem key={log.id} onClick={() => setSelectedLog(log)} className="space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold tabular-nums truncate">{log.recipient_phone}</p>
@@ -206,7 +210,124 @@ export function LogsTab() {
             </UnifiedCardItem>
           ))}
         </div>
+
+        {/* Mobile View - Eventos Style */}
+        <div className="md:hidden border-t border-border/40">
+          <AdminListContainer loading={loading && filtered.length === 0}>
+            {filtered.slice(0, 100).map((log) => (
+              <AdminListItem
+                key={log.id}
+                onClick={() => setSelectedLog(log)}
+                title={log.recipient_phone}
+                badge={{
+                  text: log.status === "sent" ? "Enviado" : log.status === "failed" ? "Falhou" : log.status === "sending" ? "Enviando" : "N/A",
+                  color: log.status === "sent" ? "bg-green-500/10 text-green-700 border-green-200/50" : 
+                         log.status === "failed" ? "bg-red-500/10 text-red-700 border-red-200/50" :
+                         "bg-yellow-500/10 text-yellow-700 border-yellow-200/50",
+                  icon: log.status === "sent" ? CheckCircle2 : log.status === "failed" ? AlertCircle : RefreshCw
+                }}
+                subtitle={`${log.instance_name} • ${log.message_content ? log.message_content.slice(0, 40) : "Sem conteúdo"}`}
+                timestamp={log.sent_at ? format(new Date(log.sent_at), "HH:mm", { locale: ptBR }) : ""}
+              />
+            ))}
+          </AdminListContainer>
+        </div>
       </UnifiedList>
+
+      {/* Mobile Detail View */}
+      {selectedLog && (
+        <div className="fixed inset-0 z-[100] bg-white md:hidden flex flex-col animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center justify-between px-4 h-16 border-b border-border bg-white shrink-0 z-50 relative">
+            <Button variant="ghost" size="icon" onClick={() => setSelectedLog(null)} className="text-gray-500">
+              <X size={24} />
+            </Button>
+            <h2 className="text-base font-bold absolute left-1/2 -translate-x-1/2">Detalhes do Log</h2>
+            <Button variant="ghost" size="icon" onClick={fetchData} className="text-gray-500">
+              <RefreshCw size={22} className={cn(loading && "animate-spin")} />
+            </Button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto bg-white">
+            <div className="p-4 space-y-6 pb-20">
+              <div className="bg-gray-50 rounded-[20px] p-4 flex items-start gap-4 border border-gray-100/50">
+                <div className={cn(
+                  "p-3 rounded-2xl shrink-0 flex items-center justify-center",
+                  selectedLog.status === "sent" ? "bg-green-500/10" : "bg-red-500/10"
+                )}>
+                  <ScrollText size={28} className={selectedLog.status === "sent" ? "text-green-600" : "text-red-600"} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-gray-900 text-lg leading-tight">{selectedLog.recipient_phone}</h3>
+                  <p className="text-sm text-gray-500 mt-0.5 font-medium">
+                    {selectedLog.sent_at ? format(new Date(selectedLog.sent_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR }) : "—"}
+                  </p>
+                  <div className="mt-2">
+                    <MessageStatusBadge status={selectedLog.status} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-5 px-1">
+                <MobileInfoRow icon={Phone} label="Telefone" value={selectedLog.recipient_phone} copyable />
+                <MobileInfoRow icon={Info} label="Instância" value={selectedLog.instance_name || "—"} />
+                <MobileInfoRow icon={Calendar} label="Data do Envio" value={fmtDate(selectedLog.sent_at, "full")} />
+                <MobileInfoRow icon={Hash} label="ID do Log" value={selectedLog.id} copyable />
+                <MobileInfoRow icon={Hash} label="ID da Fila" value={selectedLog.queue_id || "N/A"} copyable />
+              </div>
+
+              {selectedLog.message_content && (
+                <div className="space-y-3 px-1 pt-2">
+                  <h4 className="text-sm font-semibold text-gray-600">Conteúdo Enviado</h4>
+                  <div className="bg-gray-50 rounded-[18px] p-4 border border-gray-100 shadow-inner">
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap italic">"{selectedLog.message_content}"</p>
+                  </div>
+                </div>
+              )}
+              
+              <div className="pt-4">
+                <Button variant="outline" className="w-full h-14 border-border rounded-[18px] text-lg font-bold" onClick={() => setSelectedLog(null)}>
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Sheet View */}
+      <Sheet open={!!selectedLog && window.innerWidth >= 768} onOpenChange={(open) => !open && setSelectedLog(null)}>
+        <SheetContent side="right" className="p-0 flex flex-col md:max-w-lg">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+            <SheetTitle>Detalhes do Log</SheetTitle>
+            <Button variant="ghost" size="icon" onClick={() => setSelectedLog(null)}><X className="h-5 w-5" /></Button>
+          </div>
+          <ScrollArea className="flex-1 bg-white">
+            {selectedLog && (
+              <div className="p-4 space-y-6">
+                <div className="bg-gray-50 rounded-[20px] p-4 flex items-start gap-4 border border-gray-100/50">
+                  <div className={cn("p-3 rounded-2xl shrink-0", selectedLog.status === "sent" ? "bg-green-500/10" : "bg-red-500/10")}>
+                    <ScrollText size={28} className={selectedLog.status === "sent" ? "text-green-600" : "text-red-600"} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-gray-900 text-lg leading-tight">{selectedLog.recipient_phone}</h3>
+                    <p className="text-sm text-gray-500 font-medium">{fmtDate(selectedLog.sent_at, "full")}</p>
+                  </div>
+                </div>
+                <div className="space-y-5">
+                  <MobileInfoRow icon={Phone} label="Telefone" value={selectedLog.recipient_phone} copyable />
+                  <MobileInfoRow icon={Info} label="Instância" value={selectedLog.instance_name || "—"} />
+                  <MobileInfoRow icon={Hash} label="ID" value={selectedLog.id} copyable />
+                </div>
+                {selectedLog.message_content && (
+                  <div className="bg-gray-50 rounded-[18px] p-5 border border-gray-100">
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap italic">"{selectedLog.message_content}"</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
     </UnifiedLayout>
   );
 }
