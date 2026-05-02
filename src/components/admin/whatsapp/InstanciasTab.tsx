@@ -694,14 +694,11 @@ export function InstanciasTab() {
                   <span>Nova</span>
                 </Button>
               </DialogTrigger>
-            </Dialog>
-          </div>
-        </div>
-        <p className="text-xs text-muted-foreground px-1">{instances.length} instância(s) encontrada(s)</p>
-      </div>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>{editingId ? "Editar Instância" : "Nova Instância"}</DialogTitle>
+                </DialogHeader>
 
-      {/* Dialog para Nova/Editar Instância (Renderizado fora do trigger original para evitar quebra de layout) */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
 
 
             <DialogContent className="sm:max-w-md">
