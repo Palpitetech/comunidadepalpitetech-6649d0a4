@@ -829,6 +829,7 @@ export function InstanciasTab() {
       </div>
 
 
+
       {/* QR Code Dialog — fluxo guiado com fallbacks visuais */}
       <Dialog
         open={qrDialogOpen}
