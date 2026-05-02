@@ -4,11 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, ScrollText, Filter, X } from "lucide-react";
+import { Loader2, ScrollText, Filter, X, RefreshCw, Smartphone } from "lucide-react";
 import { startOfDay } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MessageStatusBadge } from "./shared/MessageStatusBadge";
 import { fmtDate } from "./shared/format-date";
+import { UnifiedLayout } from "./UnifiedLayout";
+import { UnifiedToolbar, ActionButton } from "./shared/UnifiedToolbar";
+import { UnifiedList, UnifiedCardItem } from "./shared/UnifiedList";
+import { cn } from "@/lib/utils";
 
 interface SendLog {
   id: string;
@@ -98,38 +102,37 @@ export function LogsTab() {
     setFilterDateTo("");
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      {/* Toolbar */}
-      <div className="flex items-center justify-end gap-2">
-        <Button
-          variant={hasActiveFilters ? "default" : "outline"}
-          size="sm"
-          className="gap-1.5 text-xs"
-          onClick={() => setShowFilters(!showFilters)}
-        >
-          <Filter className="h-3.5 w-3.5" />
-          Filtros
-          {hasActiveFilters && <span className="tabular-nums">({filtered.length})</span>}
-        </Button>
-      </div>
+    <UnifiedLayout>
+      <UnifiedToolbar
+        left={
+          <Button
+            variant={hasActiveFilters ? "default" : "outline"}
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Filter className="h-3.5 w-3.5" /> Filtros
+            {hasActiveFilters && <span>({filtered.length})</span>}
+          </Button>
+        }
+        right={
+          <ActionButton
+            label="Atualizar"
+            icon={RefreshCw}
+            onClick={fetchData}
+          />
+        }
+      />
 
       {showFilters && (
-        <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg border border-border bg-muted/30">
+        <div className="flex flex-wrap items-center gap-2 p-3 mb-4 rounded-xl border border-border bg-muted/30">
           <Select value={filterInstance} onValueChange={setFilterInstance}>
             <SelectTrigger className="w-[140px] h-8 text-xs">
               <SelectValue placeholder="Instância" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas</SelectItem>
+              <SelectItem value="all">Todas as instâncias</SelectItem>
               {instances.map((i) => (
                 <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
               ))}
@@ -152,7 +155,6 @@ export function LogsTab() {
               value={filterDateFrom}
               onChange={(e) => setFilterDateFrom(e.target.value)}
             />
-            <span className="text-xs text-muted-foreground">a</span>
             <Input
               type="date"
               className="w-[130px] h-8 text-xs"
@@ -168,74 +170,43 @@ export function LogsTab() {
         </div>
       )}
 
-      {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
-          <ScrollText className="h-8 w-8 opacity-40" />
-          <p className="text-sm">Nenhum log encontrado</p>
-        </div>
-      ) : isMobile ? (
+      <UnifiedList
+        isLoading={loading}
+        count={filtered.length}
+        total={logs.length}
+        empty={{
+          icon: ScrollText,
+          message: "Nenhum log encontrado",
+          submessage: "Os logs aparecem após o envio de mensagens"
+        }}
+      >
         <div className="space-y-2">
           {filtered.slice(0, 50).map((log) => (
-            <div key={log.id} className="rounded-xl border border-border bg-card p-3.5 space-y-1.5">
+            <UnifiedCardItem key={log.id} className="space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium tabular-nums">{log.recipient_phone}</p>
-                  <p className="text-[11px] text-muted-foreground">{log.instance_name}</p>
+                  <p className="text-sm font-semibold tabular-nums truncate">{log.recipient_phone}</p>
+                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
+                    <Smartphone className="h-2.5 w-2.5" />
+                    <span>{log.instance_name}</span>
+                  </div>
                 </div>
                 <MessageStatusBadge status={log.status} variant="short" />
               </div>
+
               {log.message_content && (
-                <p className="text-[11px] text-muted-foreground line-clamp-2">
-                  {log.message_content}
+                <p className="text-xs text-muted-foreground line-clamp-2 italic">
+                  "{log.message_content}"
                 </p>
               )}
-              <p className="text-[11px] text-muted-foreground tabular-nums">
-                {fmtDate(log.sent_at, "full")}
-              </p>
-            </div>
-          ))}
-          {filtered.length > 50 && (
-            <p className="text-xs text-muted-foreground text-center py-2">
-              Mostrando 50 de {filtered.length} registros
-            </p>
-          )}
-        </div>
-      ) : (
-        <div className="rounded-lg border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs">Data/hora</TableHead>
-                <TableHead className="text-xs">Instância</TableHead>
-                <TableHead className="text-xs">Destinatário</TableHead>
-                <TableHead className="text-xs">Mensagem</TableHead>
-                <TableHead className="text-xs">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((log) => (
-                <TableRow key={log.id}>
-                  <TableCell className="text-xs tabular-nums whitespace-nowrap">{fmtDate(log.sent_at, "full")}</TableCell>
-                  <TableCell className="text-xs">{log.instance_name}</TableCell>
-                  <TableCell className="text-xs">{log.recipient_phone}</TableCell>
-                  <TableCell className="text-xs max-w-[200px] truncate">
-                    {log.message_content
-                      ? log.message_content.length > 60
-                        ? log.message_content.slice(0, 60) + "…"
-                        : log.message_content
-                      : "—"}
-                  </TableCell>
-                  <TableCell><MessageStatusBadge status={log.status} variant="short" /></TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
 
-      <p className="text-xs text-muted-foreground text-center">
-        {filtered.length} de {logs.length} registro(s)
-      </p>
-    </div>
+              <div className="flex items-center justify-end pt-1 border-t border-border/40 font-mono text-[10px] text-muted-foreground">
+                <span>{fmtDate(log.sent_at, "full")}</span>
+              </div>
+            </UnifiedCardItem>
+          ))}
+        </div>
+      </UnifiedList>
+    </UnifiedLayout>
   );
 }
