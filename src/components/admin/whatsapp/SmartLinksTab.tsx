@@ -65,6 +65,7 @@ export function SmartLinksTab() {
   const [selectedLink, setSelectedLink] = useState<SmartLink | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [qrSlug, setQrSlug] = useState<string | null>(null);
+  const [plans, setPlans] = useState<{ id: string, name: string }[]>([]);
 
   // Manual form
   const [originalUrl, setOriginalUrl] = useState("");
@@ -80,13 +81,27 @@ export function SmartLinksTab() {
   const [autoGroupName, setAutoGroupName] = useState("");
   const [autoSlug, setAutoSlug] = useState("");
 
+  // Checkout form
+  const [selectedPlan, setSelectedPlan] = useState("");
+  const [checkoutSlug, setCheckoutSlug] = useState("");
+  const [checkoutName, setCheckoutName] = useState("");
+
   const fetchLinks = async () => {
     const { data } = await supabase
       .from("whatsapp_smart_links")
-      .select("*")
+      .select("*, plans(name, checkout_link)")
       .order("created_at", { ascending: false });
-    setLinks((data as SmartLink[]) ?? []);
+    setLinks((data as any[]) ?? []);
     setLoading(false);
+  };
+
+  const fetchPlans = async () => {
+    const { data } = await supabase
+      .from("plans")
+      .select("id, name")
+      .eq("is_active", true)
+      .order("display_order", { ascending: true });
+    setPlans(data ?? []);
   };
 
   const fetchInstances = useCallback(async () => {
