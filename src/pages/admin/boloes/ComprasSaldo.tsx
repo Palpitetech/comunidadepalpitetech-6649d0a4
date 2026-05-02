@@ -7,7 +7,7 @@ export default function ComprasSaldo() {
     <AdminLayout pageTitle="Compras de Saldo">
       <div className="px-4 py-3 md:container-senior md:py-8">
         <Card>
-          <CardHeader>
+          <CardHeader className="hidden md:block">
             <CardTitle>Compras de Saldo</CardTitle>
           </CardHeader>
           <CardContent>

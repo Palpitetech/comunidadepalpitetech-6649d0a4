@@ -219,8 +219,8 @@ export default function ListagemBolao() {
   return (
     <AdminLayout pageTitle="Bolões">
       <div className="px-4 py-3 md:container-senior md:py-8 space-y-3">
-        <div className="flex items-center justify-between">
-          <h1 className="hidden md:block text-2xl font-bold">Listagem de Bolões</h1>
+        <div className="flex items-center justify-between hidden md:flex">
+          <h1 className="text-2xl font-bold">Listagem de Bolões</h1>
           <Link to="/admin/novo-bolao">
             <Button size="sm" className="gap-1.5">
               <Plus className="h-4 w-4" /> Novo Bolão

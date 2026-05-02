@@ -273,7 +273,7 @@ Content-Type: application/json
     <AdminLayout pageTitle="Integrações">
       <div className="px-4 py-4 md:container md:max-w-3xl md:py-8 space-y-5">
         {/* Page header */}
-        <div>
+        <div className="hidden md:block">
           <h1 className="text-xl md:text-2xl font-bold">Integrações</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Gerencie webhooks e conexões externas

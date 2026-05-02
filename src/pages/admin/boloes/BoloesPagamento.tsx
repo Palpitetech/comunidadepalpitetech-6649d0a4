@@ -212,7 +212,7 @@ export default function BoloesPagamento() {
   return (
     <AdminLayout pageTitle="Pagamentos">
       <div className="max-w-5xl mx-auto py-6 px-4 space-y-4">
-        <div>
+        <div className="hidden md:block">
           <h1 className="text-xl font-bold">Pagamentos</h1>
           <p className="text-sm text-muted-foreground">Bolões com comprovante aprovado aguardando pagamento</p>
         </div>

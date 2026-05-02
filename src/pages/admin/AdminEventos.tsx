@@ -398,7 +398,7 @@ export default function AdminEventos() {
     <AdminLayout pageTitle="Eventos">
       <div className="flex flex-col flex-1 min-h-0 bg-background">
         <AdminHeader 
-          title="Eventos"
+          title=""
           search={search}
           onSearchChange={setSearch}
           onRefresh={() => { fetchEvents(); fetchCounters(); }}

@@ -176,7 +176,7 @@ export default function Carteira() {
   return (
     <AdminLayout pageTitle="Carteira">
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between hidden md:flex">
           <h1 className="text-xl font-bold">💼 Carteira</h1>
           <Button size="sm" onClick={() => setDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-1" /> Nova movimentação

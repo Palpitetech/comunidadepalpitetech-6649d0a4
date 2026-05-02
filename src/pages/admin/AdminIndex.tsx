@@ -91,7 +91,7 @@ export default function AdminIndex() {
   const pick = (q: typeof globalQ) => (perBlock ? q : globalQ);
 
   return (
-    <AdminLayout pageTitle="Dashboard">
+    <AdminLayout pageTitle="Painel Adm.">
       <div className="px-4 py-3 md:container-senior md:py-8 space-y-4 md:space-y-6">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <h1 className="text-xl md:text-3xl font-bold hidden md:block">Painel Administrativo</h1>

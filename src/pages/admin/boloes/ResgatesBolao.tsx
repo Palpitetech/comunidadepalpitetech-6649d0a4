@@ -22,7 +22,7 @@ export default function ResgatesBolao() {
     <AdminLayout pageTitle="Resgates">
       <div className="px-4 py-3 md:container-senior md:py-8">
         <Card>
-          <CardHeader>
+          <CardHeader className="hidden md:block">
             <CardTitle>Solicitações de Resgate</CardTitle>
           </CardHeader>
           <CardContent>

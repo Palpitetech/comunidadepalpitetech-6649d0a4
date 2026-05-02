@@ -172,9 +172,9 @@ export default function AdminConvites() {
   }
 
   return (
-    <AdminLayout>
+    <AdminLayout pageTitle="Convites">
       <div className="container-senior py-4 md:py-8">
-        <div className="mb-4 md:mb-6">
+        <div className="mb-4 md:mb-6 hidden md:block">
           <h1 className="text-lg md:text-senior-2xl font-bold">Convites</h1>
           <p className="text-xs md:text-sm text-muted-foreground">
             Ranking de indicadores

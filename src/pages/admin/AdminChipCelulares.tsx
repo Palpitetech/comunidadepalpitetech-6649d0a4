@@ -326,10 +326,10 @@ export default function AdminChipCelulares() {
   }, [historicoData]);
 
   return (
-    <AdminLayout>
+    <AdminLayout pageTitle="Chips">
       <div className="container-senior py-6 space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
+          <div className="hidden md:block">
             <h1 className="text-2xl font-bold">Chip Celulares</h1>
             <p className="text-sm text-muted-foreground">
               Gestão de chips, planos e recargas

@@ -217,6 +217,7 @@ export default function AdminAtribuicaoAuditoria() {
   return (
     <AdminLayout pageTitle="Auditoria de Atribuição">
       <div className="px-4 py-3 md:container md:py-6 space-y-5 max-w-6xl mx-auto">
+        <h1 className="text-2xl font-bold hidden md:block italic">Auditoria de Atribuição</h1>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
             <Link to="/admin/metricas">

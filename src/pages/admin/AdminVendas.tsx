@@ -247,7 +247,7 @@ export default function AdminVendas() {
     <AdminLayout pageTitle="Vendas">
       <div className="flex flex-col flex-1 min-h-0 bg-background">
         <AdminHeader 
-          title="Vendas"
+          title=""
           search={search}
           onSearchChange={setSearch}
           onRefresh={fetchLogs}

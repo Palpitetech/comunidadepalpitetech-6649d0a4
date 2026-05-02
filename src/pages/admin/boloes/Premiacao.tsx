@@ -306,6 +306,7 @@ export default function Premiacao() {
   return (
     <AdminLayout pageTitle="🏆 Premiação">
     <div className="container max-w-5xl mx-auto py-6 px-4 space-y-6">
+      <h1 className="text-2xl font-bold hidden md:block">🏆 Premiação</h1>
       <div>
         <p className="text-sm text-muted-foreground">Verificação automática de bolões premiados</p>
       </div>

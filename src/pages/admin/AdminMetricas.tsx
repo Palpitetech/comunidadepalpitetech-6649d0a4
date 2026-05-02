@@ -127,6 +127,7 @@ export default function AdminMetricas() {
   return (
     <AdminLayout pageTitle="Métricas">
       <div className="px-4 py-3 md:container md:py-6 space-y-5 max-w-6xl mx-auto">
+        <h1 className="text-2xl font-bold hidden md:block">Métricas</h1>
         {/* Cabeçalho: filtro global + auditoria */}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 flex-wrap">
