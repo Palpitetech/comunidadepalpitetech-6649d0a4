@@ -336,6 +336,7 @@ export function SmartLinksTab() {
               <TabsTrigger value="auto">Automático</TabsTrigger>
               <TabsTrigger value="manual">Manual</TabsTrigger>
             </TabsList>
+            
             <TabsContent value="checkout" className="space-y-4 pt-4">
                <div className="space-y-2">
                   <Label>Produto / Plano</Label>
@@ -358,6 +359,8 @@ export function SmartLinksTab() {
                  {creating ? "Criando..." : "Criar Link de Checkout"}
                </Button>
             </TabsContent>
+
+            <TabsContent value="auto" className="space-y-4 pt-4">
                <div className="space-y-2"><Label>Instância</Label>
                   <Select value={selectedInstance} onValueChange={setSelectedInstance}>
                     <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
@@ -366,6 +369,7 @@ export function SmartLinksTab() {
                </div>
                <Button className="w-full" onClick={handleCreateAuto} disabled={creating}>{creating ? "Criando..." : "Criar"}</Button>
             </TabsContent>
+
             <TabsContent value="manual" className="space-y-4 pt-4">
                <div className="space-y-2"><Label>URL</Label><Input value={originalUrl} onChange={e => setOriginalUrl(e.target.value)} /></div>
                <Button className="w-full" onClick={handleCreateManual} disabled={creating}>{creating ? "Criando..." : "Criar"}</Button>
