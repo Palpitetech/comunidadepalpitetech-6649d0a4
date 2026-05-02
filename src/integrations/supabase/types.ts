@@ -1933,6 +1933,7 @@ export type Database = {
           name: string
           plan_ids: string[]
           tags_match_mode: string
+          type: string | null
         }
         Insert: {
           category?: string | null
@@ -1951,6 +1952,7 @@ export type Database = {
           name: string
           plan_ids?: string[]
           tags_match_mode?: string
+          type?: string | null
         }
         Update: {
           category?: string | null
@@ -1969,6 +1971,7 @@ export type Database = {
           name?: string
           plan_ids?: string[]
           tags_match_mode?: string
+          type?: string | null
         }
         Relationships: []
       }
