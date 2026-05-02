@@ -254,13 +254,29 @@ export function SmartLinksTab() {
             <UnifiedCardItem key={link.id} className={cn("space-y-3", !link.is_active && "opacity-60")}>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10"><Link2 className="h-5 w-5 text-primary" /></div>
+                  <div className={cn(
+                    "flex h-10 w-10 items-center justify-center rounded-full",
+                    link.redirect_type === 'checkout' ? "bg-orange-500/10" : "bg-primary/10"
+                  )}>
+                    {link.redirect_type === 'checkout' ? <QrCode className="h-5 w-5 text-orange-600" /> : <Link2 className="h-5 w-5 text-primary" />}
+                  </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold truncate">{link.group_name || link.slug}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold truncate">{link.group_name || link.slug}</h3>
+                      <Badge variant="outline" className="text-[10px] h-4 px-1 capitalize">
+                        {link.redirect_type === 'checkout' ? 'Kirvano' : 'WhatsApp'}
+                      </Badge>
+                    </div>
                     <p className="text-[10px] text-muted-foreground font-mono truncate">{BASE_URL}/g/{link.slug}</p>
+                    {link.redirect_type === 'checkout' && link.plans && (
+                      <p className="text-[9px] text-orange-600 font-medium truncate uppercase">🛒 {link.plans.name}</p>
+                    )}
                   </div>
                 </div>
-                <Switch checked={link.is_active} onCheckedChange={(v) => handleToggle(link.id, v)} />
+                <div className="flex flex-col items-end gap-1">
+                  <Switch checked={link.is_active} onCheckedChange={(v) => handleToggle(link.id, v)} />
+                  <span className="text-[9px] font-medium text-muted-foreground">{link.clicks} cliques</span>
+                </div>
               </div>
               <div className="flex items-center gap-1 pt-2 border-t border-border">
                 <Button size="icon" variant="ghost" onClick={() => handleCopy(link.slug, link.id)}>{copiedId === link.id ? <CheckCheck className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}</Button>
