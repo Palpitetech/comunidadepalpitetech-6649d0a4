@@ -527,9 +527,6 @@ export function TemplatesTab() {
         scheduled_at: new Date().toISOString(),
         status: "pending",
       });
-        scheduled_at: new Date().toISOString(),
-        status: "pending",
-      });
 
       if (error) throw error;
       toast.success(`Mensagem de teste enfileirada para ${TEST_PHONE}`);
