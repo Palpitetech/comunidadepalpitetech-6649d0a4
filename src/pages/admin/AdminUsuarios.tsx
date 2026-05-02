@@ -32,6 +32,8 @@ import type { Plan, PlanFeatures, ExtendedProfile } from "@/types/plans";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AdminHeader, AdminListContainer, AdminListItem, AdminPagination } from "@/components/admin/AdminListComponents";
+import { LEAD_STATUS_OPTIONS, getLeadStatusConfig } from "@/types/crm";
+
 
 
 const getValidadeInfo = (validade: string | null | undefined) => {
