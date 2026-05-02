@@ -523,30 +523,111 @@ export function TemplatesTab() {
     return <Badge variant="secondary" className="text-[11px]">{getEventLabel(trigger)}</Badge>;
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{templates.length} template(s)</p>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="gap-1.5" onClick={openCreate}>
-              <Plus className="h-4 w-4" />
-              Novo Template
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg max-h-[85vh]">
-            <DialogHeader>
-              <DialogTitle>{editingId ? "Editar Template" : "Novo Template"}</DialogTitle>
-            </DialogHeader>
-            <ScrollArea className="max-h-[calc(85vh-80px)] pr-3">
+    <UnifiedLayout>
+      <UnifiedToolbar
+        left={
+          <ActionButton
+            label="Novo Template"
+            icon={Plus}
+            onClick={openCreate}
+            variant="default"
+          />
+        }
+        right={
+          <ActionButton
+            label="Atualizar"
+            icon={RefreshCw}
+            onClick={fetchTemplates}
+          />
+        }
+      />
+
+      <UnifiedList
+        isLoading={loading}
+        count={templates.length}
+        empty={{
+          icon: FileText,
+          message: "Nenhum template encontrado",
+          submessage: "Crie templates para automatizar suas mensagens"
+        }}
+      >
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {templates.map((t) => (
+            <UnifiedCardItem
+              key={t.id}
+              className={cn(
+                "space-y-3",
+                !(t.is_active ?? true) && "opacity-60 bg-muted/20"
+              )}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <h3 className="text-sm font-semibold truncate">{t.name}</h3>
+                </div>
+                <Badge variant={(t.is_active ?? true) ? "default" : "secondary"} className="text-[10px]">
+                  {(t.is_active ?? true) ? "Ativo" : "Pausado"}
+                </Badge>
+              </div>
+
+              <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <Repeat className="h-3 w-3" />
+                  <span>Gatilho: {getEventLabel(t.event_trigger)}</span>
+                </div>
+                <p className="line-clamp-2 italic">"{t.content}"</p>
+              </div>
+
+              <div className="flex items-center gap-1 pt-2 border-t border-border">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleToggleActive(t)} disabled={!!togglingId}>
+                        {(t.is_active ?? true) ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{(t.is_active ?? true) ? "Pausar" : "Ativar"}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <div className="flex-1" />
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(t)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Editar</TooltipContent>
+                  </Tooltip>
+
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(t.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Excluir</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TooltipProvider>
+              </div>
+            </UnifiedCardItem>
+          ))}
+        </div>
+      </UnifiedList>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh]">
+          <DialogHeader>
+            <DialogTitle>{editingId ? "Editar Template" : "Novo Template"}</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[calc(85vh-80px)] pr-3">
             <div className="space-y-4 pt-2">
               <div className="flex gap-4 p-1 bg-muted/50 rounded-lg border border-border">
                 <button
@@ -554,8 +635,8 @@ export function TemplatesTab() {
                   onClick={() => setForm(f => ({ ...f, category: 'marketing' }))}
                   className={cn(
                     "flex-1 py-2 text-xs font-medium rounded-md transition-all",
-                    form.category === 'marketing' 
-                      ? "bg-background text-foreground shadow-sm" 
+                    form.category === 'marketing'
+                      ? "bg-background text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
@@ -566,8 +647,8 @@ export function TemplatesTab() {
                   onClick={() => setForm(f => ({ ...f, category: 'transactional' }))}
                   className={cn(
                     "flex-1 py-2 text-xs font-medium rounded-md transition-all",
-                    form.category === 'transactional' 
-                      ? "bg-background text-foreground shadow-sm" 
+                    form.category === 'transactional'
+                      ? "bg-background text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
@@ -585,16 +666,12 @@ export function TemplatesTab() {
                   maxLength={100}
                 />
               </div>
+
               <div className="space-y-1.5">
                 <Label>Evento gatilho *</Label>
                 <Popover open={triggerOpen} onOpenChange={setTriggerOpen}>
                   <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={triggerOpen}
-                      className="w-full justify-between font-normal"
-                    >
+                    <Button variant="outline" className="w-full justify-between font-normal">
                       {form.event_trigger ? getEventLabel(form.event_trigger) : "Selecione o gatilho"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -625,293 +702,27 @@ export function TemplatesTab() {
                   </PopoverContent>
                 </Popover>
               </div>
+
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label>Delay de envio</Label>
-                  <Switch
-                    checked={form.delay_enabled}
-                    onCheckedChange={(checked) => {
-                      setForm((f) => ({
-                        ...f,
-                        delay_enabled: checked,
-                        delay_minutes: checked && f.delay_minutes === 0 ? 5 : f.delay_minutes,
-                      }));
-                    }}
-                  />
-                </div>
-                {form.delay_enabled && (
-                  <div className="space-y-1.5">
-                    <p className="text-xs text-muted-foreground">Enviar após:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {DELAY_OPTIONS.map((opt) => (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => setForm((f) => ({ ...f, delay_minutes: opt.value }))}
-                          className={cn(
-                            "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
-                            form.delay_minutes === opt.value
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-muted text-muted-foreground border-border hover:bg-muted/80"
-                          )}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Conteúdo da mensagem (até 10 variações)</Label>
-                  <span className="text-[10px] text-muted-foreground">
-                    Variação ativa: <strong>#{activeSlot}</strong>
-                    {activeSlot === 1 && " (principal)"}
-                  </span>
-                </div>
-                <VariantSlotSelector slots={slots} activeSlot={activeSlot} onSelect={handleSlotSelect} />
-                <div className="rounded-md bg-muted/30 px-2.5 py-1.5 text-[11px] text-muted-foreground border border-border">
-                  Use até 10 variações com o <strong>mesmo conteúdo</strong> escrito de formas diferentes.
-                  O sistema rotaciona automaticamente para evitar bloqueio por mensagens repetidas.
+                  <Label>Conteúdo da mensagem</Label>
                 </div>
                 <Textarea
-                  id="tpl-content"
-                  ref={textareaRef}
-                  placeholder={activeSlot === 1 ? "Olá {{nome}}, tudo bem?" : "Variação alternativa..."}
+                  placeholder="Olá {{nome}}, tudo bem?"
                   value={slots[activeSlot - 1]?.content ?? ""}
                   onChange={(e) => updateActiveSlotContent(e.target.value)}
                   rows={5}
-                  maxLength={2000}
                 />
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-wrap gap-1.5">
-                    {VARIABLES.map((v) => (
-                      <button
-                        key={v}
-                        type="button"
-                        onClick={() => insertVariable(v)}
-                        className="px-2 py-0.5 rounded-md bg-muted text-xs font-mono text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors border border-border"
-                      >
-                        {v}
-                      </button>
-                    ))}
-                  </div>
-                  <span className="text-[10px] text-muted-foreground tabular-nums">
-                    {(slots[activeSlot - 1]?.content ?? "").length}/2000
-                  </span>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleGenerateVariants}
-                  disabled={!mainHasContent || generatingVariants}
-                  className={cn(
-                    "w-full gap-1.5 transition-colors",
-                    !mainHasContent && "opacity-50",
-                    mainHasContent && !hasGenerated &&
-                      "border-amber-500/60 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 dark:text-amber-300 animate-pulse",
-                    hasGenerated &&
-                      "border-emerald-500/60 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300"
-                  )}
-                  title={
-                    !mainHasContent
-                      ? "Escreva a mensagem principal primeiro"
-                      : hasGenerated
-                      ? "Regenerar as 9 variações com IA"
-                      : "Gerar 9 variações automáticas com IA"
-                  }
-                >
-                  {generatingVariants ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Sparkles className="h-4 w-4" />
-                  )}
-                  {generatingVariants
-                    ? "Gerando 9 variações..."
-                    : hasGenerated
-                    ? "Regenerar variações com IA"
-                    : "Gerar variações com IA"}
-                </Button>
-                {activeSlot !== 1 && slots[activeSlot - 1]?.exists && (
-                  <div className="flex gap-2 pt-1">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5 text-xs"
-                      onClick={toggleActiveSlotPaused}
-                    >
-                      {slots[activeSlot - 1]?.isActive ? (
-                        <><Pause className="h-3.5 w-3.5" /> Pausar variação</>
-                      ) : (
-                        <><Play className="h-3.5 w-3.5" /> Ativar variação</>
-                      )}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5 text-xs text-destructive hover:text-destructive"
-                      onClick={deleteActiveSlot}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Excluir variação
-                    </Button>
-                  </div>
-                )}
               </div>
-
-              <TemplateSegmentationSection
-                category={form.category}
-                allTags={allTags}
-                includeTags={form.include_tags}
-                excludeTags={form.exclude_tags}
-                excludeTagsRecent={form.exclude_tags_recent}
-                excludeRecentWindowHours={form.exclude_recent_window_hours}
-                tagsMatchMode={form.tags_match_mode}
-                planIds={form.plan_ids}
-                plans={plans}
-                onIncludeTagsChange={(tags) => setForm((f) => ({ ...f, include_tags: tags }))}
-                onExcludeTagsChange={(tags) => setForm((f) => ({ ...f, exclude_tags: tags }))}
-                onExcludeTagsRecentChange={(tags) => setForm((f) => ({ ...f, exclude_tags_recent: tags }))}
-                onExcludeRecentWindowHoursChange={(hours) => setForm((f) => ({ ...f, exclude_recent_window_hours: hours }))}
-                onTagsMatchModeChange={(mode) => setForm((f) => ({ ...f, tags_match_mode: mode }))}
-                onPlanIdsChange={(ids) => setForm((f) => ({ ...f, plan_ids: ids }))}
-              />
 
               <Button className="w-full" onClick={handleSave} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                {editingId ? "Salvar Alterações" : "Criar Template"}
+                Salvar
               </Button>
             </div>
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {templates.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
-          <FileText className="h-8 w-8 opacity-40" />
-          <p className="text-sm">Nenhum template cadastrado</p>
-        </div>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {templates.map((tpl) => {
-            const isActive = tpl.is_active ?? true;
-            return (
-              <div
-                key={tpl.id}
-                className={cn(
-                  "rounded-xl border border-border bg-card p-4 space-y-3 transition-opacity",
-                  !isActive && "opacity-60"
-                )}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-sm font-semibold truncate">{tpl.name}</h3>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {!isActive && (
-                      <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-300">
-                        Pausado
-                      </Badge>
-                    )}
-                    {tpl.delay_enabled && tpl.delay_minutes && tpl.delay_minutes > 0 && (
-                      <Badge variant="outline" className="text-[10px] gap-0.5">
-                        <Timer className="h-3 w-3" />
-                        {formatDelay(tpl.delay_minutes)}
-                      </Badge>
-                    )}
-                    {triggerBadge(tpl.event_trigger)}
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Badge 
-                    variant={tpl.category === 'transactional' ? "default" : "secondary"} 
-                    className={cn(
-                      "text-[9px] uppercase tracking-wider py-0 px-1.5 h-4",
-                      tpl.category === 'transactional' 
-                        ? "bg-emerald-500 hover:bg-emerald-600 border-none text-white" 
-                        : "bg-blue-500 hover:bg-blue-600 border-none text-white"
-                    )}
-                  >
-                    {tpl.category === 'transactional' ? 'Transacional' : 'Marketing'}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground line-clamp-2">{tpl.content}</p>
-                <div className="flex flex-wrap items-center gap-2">
-                  {tpl.category === 'marketing' && ((tpl.include_tags && tpl.include_tags.length > 0) || (tpl.exclude_tags && tpl.exclude_tags.length > 0)) && (
-                    <div className="flex items-center gap-1">
-                      <Filter className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-[10px] text-muted-foreground">Segmentado</span>
-                    </div>
-                  )}
-                  {tpl.plan_ids && tpl.plan_ids.length > 0 && (
-                    <div className="flex items-center gap-1">
-                      <Check className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-[10px] text-muted-foreground">{tpl.plan_ids.length} plano(s)</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1">
-                    <Repeat className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-[10px] text-muted-foreground">
-                      {(variantCounts[tpl.id] ?? 0) + 1}/10 variantes
-                    </span>
-                  </div>
-                </div>
-                <div className="flex gap-2 pt-1">
-                  <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs" onClick={() => openEdit(tpl)}>
-                    <Pencil className="h-3.5 w-3.5" />
-                    Editar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 text-xs"
-                    onClick={() => handleTestSend(tpl)}
-                    disabled={testingId === tpl.id}
-                    title="Enviar teste"
-                  >
-                    {testingId === tpl.id ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Send className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={cn(
-                      "gap-1.5 text-xs",
-                      isActive ? "text-amber-600 hover:text-amber-700" : "text-emerald-600 hover:text-emerald-700"
-                    )}
-                    onClick={() => handleToggleActive(tpl)}
-                    disabled={togglingId === tpl.id}
-                    title={isActive ? "Pausar" : "Ativar"}
-                  >
-                    {togglingId === tpl.id ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : isActive ? (
-                      <Pause className="h-3.5 w-3.5" />
-                    ) : (
-                      <Play className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 text-xs text-destructive hover:text-destructive"
-                    onClick={() => handleDelete(tpl.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-    </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+    </UnifiedLayout>
   );
 }
