@@ -68,7 +68,7 @@ export const adminNavConfig: NavSection[] = [
     icon: Radio,
     items: [
       { title: "Chat Central", url: "/admin/chat", icon: MessageCircle, badge: "chat", badgeTone: "danger" },
-      { title: "Comunicação", url: "/admin/whatsapp", icon: Radio },
+      { title: "WhatsApp", url: "/admin/whatsapp", icon: Radio },
       { title: "Convites", url: "/admin/convites", icon: Gift },
       { title: "Eventos", url: "/admin/eventos", icon: Activity },
     ],
