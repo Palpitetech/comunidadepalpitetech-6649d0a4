@@ -508,17 +508,25 @@ export function TemplatesTab() {
     setTestingId(tpl.id);
     try {
       // Replace variables with test values
-      const testContent = tpl.content
-        .replace(/\{\{nome\}\}/g, "Teste")
-        .replace(/\{\{telefone\}\}/g, TEST_PHONE)
-        .replace(/\{\{email\}\}/g, "teste@teste.com")
-        .replace(/\{\{produto\}\}/g, "Produto Teste");
+      const currentSlotContent = slots[activeSlot - 1]?.content || tpl.content;
+      
+      const testVariables = { 
+        nome: "Teste Usuário", 
+        telefone: TEST_PHONE, 
+        email: "teste@palpitetech.com.br", 
+        produto: "Produto Exemplo",
+        link_atendimento: "https://wa.me/5516997175392",
+        valor: "R$ 97,00"
+      };
 
       const { error } = await supabase.from("message_queue" as any).insert({
         recipient_phone: TEST_PHONE,
-        recipient_name: "Teste",
+        recipient_name: "Teste Usuário",
         template_id: tpl.id,
-        variables: { nome: "Teste", telefone: TEST_PHONE, email: "teste@teste.com", produto: "Produto Teste" },
+        variables: testVariables,
+        scheduled_at: new Date().toISOString(),
+        status: "pending",
+      });
         scheduled_at: new Date().toISOString(),
         status: "pending",
       });
