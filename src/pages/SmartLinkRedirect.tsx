@@ -23,7 +23,7 @@ export default function SmartLinkRedirect() {
       // Buscar smart link
       const { data, error } = await supabase
         .from("whatsapp_smart_links")
-        .select("group_invite_code, original_url, group_name")
+        .select("group_invite_code, original_url, group_name, redirect_type, plans(checkout_link, name)")
         .eq("slug", slug)
         .eq("is_active", true)
         .maybeSingle();
@@ -33,15 +33,31 @@ export default function SmartLinkRedirect() {
         return;
       }
 
-      setOriginalUrl(data.original_url);
-      setGroupName(data.group_name ?? "");
+      const type = (data.redirect_type as 'whatsapp' | 'checkout') || 'whatsapp';
+      setRedirectType(type);
+      
+      const destinationUrl = type === 'checkout' 
+        ? data.plans?.checkout_link || '' 
+        : data.original_url;
+
+      setOriginalUrl(destinationUrl);
+      setGroupName(data.group_name || data.plans?.name || "");
 
       // Incrementar cliques (fire-and-forget)
       supabase.rpc("increment_smart_link_clicks" as any, { p_slug: slug }).then(() => {});
 
       const env = detectEnvironment();
 
-      // Se está em browser interno, mostrar botão para abrir no navegador
+      if (type === 'checkout') {
+        if (destinationUrl) {
+          window.location.href = destinationUrl;
+        } else {
+          setStatus("error");
+        }
+        return;
+      }
+
+      // Lógica WhatsApp (anterior)
       if (env.isInAppBrowser) {
         setStatus("inapp");
         return;
