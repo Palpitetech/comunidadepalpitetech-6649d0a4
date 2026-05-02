@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, Loader2, Crown, Star, Gift, Copy, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Crown, Star, Gift, Copy, RefreshCw, X, ChevronRight, Check } from "lucide-react";
 import { toast } from "sonner";
 import { PlanForm } from "@/components/admin/PlanForm";
 import { KirvanoWebhookCard } from "@/components/admin/KirvanoWebhookCard";
 import type { Plan, PlanFeatures } from "@/types/plans";
 import { FEATURE_LABELS, FEATURE_CATEGORIES } from "@/types/plans";
+import { cn } from "@/lib/utils";
 
 export default function AdminPlanos() {
   const [plans, setPlans] = useState<Plan[]>([]);
