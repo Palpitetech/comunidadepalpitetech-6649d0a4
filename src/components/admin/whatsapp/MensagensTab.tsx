@@ -9,11 +9,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Inbox, Filter, X, RefreshCw, AlertTriangle, Clock, CheckCircle2, Send, FileText } from "lucide-react";
+import { Loader2, Inbox, Filter, X, RefreshCw, AlertTriangle, Clock, CheckCircle2, Send, FileText, Smartphone } from "lucide-react";
 import { MessageStatusBadge } from "./shared/MessageStatusBadge";
 import { MetricCard } from "./shared/MetricCard";
 import { Field } from "./shared/Field";
 import { fmtDate } from "./shared/format-date";
+import { UnifiedLayout } from "./UnifiedLayout";
+import { UnifiedToolbar, ActionButton } from "./shared/UnifiedToolbar";
+import { UnifiedList, UnifiedCardItem } from "./shared/UnifiedList";
+import { cn } from "@/lib/utils";
 
 interface QueueRow {
   id: string;
