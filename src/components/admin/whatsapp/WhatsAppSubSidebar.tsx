@@ -65,7 +65,7 @@ export function WhatsAppSubSidebar({ activeTab, onTabChange }: WhatsAppSubSideba
         {sections.map((section) => (
           <div key={section.label} className="mb-3">
             <div className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 flex items-center gap-1.5">
-              {section.label === "Email Transacional" ? <Mail className="h-3 w-3" /> : <MessageSquare className="h-3 w-3" />}
+              {section.label === "Email" ? <Mail className="h-3 w-3" /> : <MessageSquare className="h-3 w-3" />}
               {section.label}
             </div>
             <ul className="space-y-0.5 px-2">
