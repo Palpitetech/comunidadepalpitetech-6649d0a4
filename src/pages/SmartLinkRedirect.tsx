@@ -58,7 +58,7 @@ export default function SmartLinkRedirect() {
           .eq("id", leadId)
           .maybeSingle();
 
-        const lData = leadData as { email: string | null; celular: string | null } | null;
+        const lData = leadData as unknown as { email: string | null; celular: string | null } | null;
 
         await supabase.from("events").insert({
           event_type: "smart_link_click",
@@ -74,6 +74,7 @@ export default function SmartLinkRedirect() {
           lead_phone: lData?.celular,
         } as any);
       }
+
 
 
       const env = detectEnvironment();
