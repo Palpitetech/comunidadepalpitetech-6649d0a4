@@ -134,47 +134,7 @@ export function RetargetingPanelTab() {
       {/* Status do agendamento */}
       <ScheduleStatusCard schedule={schedule} now={now} />
 
-      {/* Hoje */}
-      <div>
-        <h3 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Hoje</h3>
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          <MetricCard
-            icon={TrendingUp}
-            label="Enfileiradas"
-            value={today.enqueued}
-            tone="success"
-          />
-          <MetricCard
-            icon={ShieldAlert}
-            label="Bloqueadas (dedupe)"
-            value={today.dedupe}
-            tone="warning"
-          />
-          <MetricCard
-            icon={AlertTriangle}
-            label="Erros de DB"
-            value={today.db_errors}
-            tone={today.db_errors > 0 ? "error" : "muted"}
-          />
-        </div>
-      </div>
-
-      {/* 7d totals */}
-      <div>
-        <h3 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
-          Últimos 7 dias
-        </h3>
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          <MetricCard icon={TrendingUp} label="Enfileiradas" value={total7d.enqueued} tone="success" />
-          <MetricCard icon={ShieldAlert} label="Bloqueadas (dedupe)" value={total7d.dedupe} tone="warning" />
-          <MetricCard
-            icon={AlertTriangle}
-            label="Erros de DB"
-            value={total7d.db_errors}
-            tone={total7d.db_errors > 0 ? "error" : "muted"}
-          />
-        </div>
-      </div>
+      {/* Legacy summary metrics removed - centralized in CommunicationQuickMetrics via Header */}
 
       {/* Daily breakdown */}
       <div>

@@ -206,7 +206,7 @@ export function SmartLinksTab() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pt-2">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">Links inteligentes para convite de grupos WhatsApp</p>
         <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) resetForm(); }}>

@@ -94,7 +94,7 @@ export function EmailDisparoManualTab() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 pt-2">
       <Card>
         <CardHeader className="pb-2"><CardTitle className="text-sm">Template</CardTitle></CardHeader>
         <CardContent>

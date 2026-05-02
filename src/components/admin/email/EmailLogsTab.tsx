@@ -42,7 +42,7 @@ export function EmailLogsTab() {
   useEffect(() => { load(); }, []);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 pt-2">
       <div className="flex gap-2">
         <Input placeholder="Buscar por email..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && load()} className="max-w-xs" />
         <Button size="sm" variant="outline" onClick={load}>Buscar</Button>

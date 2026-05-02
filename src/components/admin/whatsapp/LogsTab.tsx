@@ -108,23 +108,18 @@ export function LogsTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 flex items-center gap-2 flex-1">
-          <span className="text-xl sm:text-2xl font-bold tabular-nums">{todayCount}</span>
-          <span className="text-xs sm:text-sm text-muted-foreground">msgs enviadas hoje</span>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant={hasActiveFilters ? "default" : "outline"}
-            size="sm"
-            className="gap-1.5 text-xs"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="h-3.5 w-3.5" />
-            Filtros
-            {hasActiveFilters && <span className="tabular-nums">({filtered.length})</span>}
-          </Button>
-        </div>
+      {/* Toolbar */}
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          variant={hasActiveFilters ? "default" : "outline"}
+          size="sm"
+          className="gap-1.5 text-xs"
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          <Filter className="h-3.5 w-3.5" />
+          Filtros
+          {hasActiveFilters && <span className="tabular-nums">({filtered.length})</span>}
+        </Button>
       </div>
 
       {showFilters && (

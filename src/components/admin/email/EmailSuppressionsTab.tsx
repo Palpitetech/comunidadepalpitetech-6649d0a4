@@ -39,7 +39,7 @@ export function EmailSuppressionsTab() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 pt-2">
       <p className="text-sm text-muted-foreground">Emails nesta lista não recebem mais nenhum envio (bounce, reclamação ou descadastro).</p>
       <div className="flex gap-2">
         <Input placeholder="email@exemplo.com" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className="max-w-xs" />

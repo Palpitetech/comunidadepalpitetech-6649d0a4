@@ -71,7 +71,7 @@ export function EmailFilaTab() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 pt-2">
       <div className="flex flex-wrap gap-2 items-center">
         <Input placeholder="Buscar por email..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === "Enter" && load()} className="max-w-xs" />
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm">

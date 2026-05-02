@@ -240,11 +240,7 @@ export function ProxiesTab() {
     fetchData();
   }, [fetchData]);
 
-  const counts = {
-    available: proxies.filter((p) => p.status === "available").length,
-    in_use: proxies.filter((p) => p.status === "in_use").length,
-    disabled: proxies.filter((p) => p.status === "disabled").length,
-  };
+  // Removed legacy counts as they are now centralized in CommunicationQuickMetrics
 
   const handleTestForm = async () => {
     if (!form.host.trim() || !form.port.trim()) {
@@ -509,32 +505,7 @@ export function ProxiesTab() {
 
   return (
     <div className="space-y-4">
-      {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <div className="rounded-lg border bg-card p-3">
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Disponíveis</p>
-          <p className="text-2xl font-semibold text-accent tabular-nums">{counts.available}</p>
-        </div>
-        <div className="rounded-lg border bg-card p-3">
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Em uso</p>
-          <p className="text-2xl font-semibold tabular-nums">{counts.in_use}</p>
-        </div>
-        <div className="rounded-lg border bg-card p-3">
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Desativados</p>
-          <p className="text-2xl font-semibold text-muted-foreground tabular-nums">{counts.disabled}</p>
-        </div>
-      </div>
-
-      {/* Aviso sem proxies disponíveis */}
-      {counts.available === 0 && proxies.length > 0 && (
-        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
-          <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-          <div className="text-xs">
-            <p className="font-semibold text-destructive">Sem proxies livres</p>
-            <p className="text-muted-foreground">Novas instâncias não conseguirão conectar. Adicione mais proxies abaixo.</p>
-          </div>
-        </div>
-      )}
+      {/* Summary cards and alert moved to centralized metrics */}
 
       {/* Header com ações */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

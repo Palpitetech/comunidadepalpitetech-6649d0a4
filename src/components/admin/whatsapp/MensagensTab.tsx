@@ -125,41 +125,7 @@ export function MensagensTab() {
 
   return (
     <div className="space-y-4">
-      {/* Status counters */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <MetricCard
-          label="Aguardando"
-          value={counts.pending}
-          icon={Clock}
-          tone="muted"
-          active={statusFilter === "pending"}
-          onClick={() => setStatusFilter(statusFilter === "pending" ? "all" : "pending")}
-        />
-        <MetricCard
-          label="Enviando"
-          value={counts.sending}
-          icon={Send}
-          tone="info"
-          active={statusFilter === "sending"}
-          onClick={() => setStatusFilter(statusFilter === "sending" ? "all" : "sending")}
-        />
-        <MetricCard
-          label="Enviadas"
-          value={counts.sent}
-          icon={CheckCircle2}
-          tone="success"
-          active={statusFilter === "sent"}
-          onClick={() => setStatusFilter(statusFilter === "sent" ? "all" : "sent")}
-        />
-        <MetricCard
-          label="Com erro"
-          value={counts.failed}
-          icon={AlertTriangle}
-          tone="error"
-          active={statusFilter === "failed"}
-          onClick={() => setStatusFilter(statusFilter === "failed" ? "all" : "failed")}
-        />
-      </div>
+      {/* Status counters removed - centralized in CommunicationQuickMetrics */}
 
       {/* Toolbar */}
       <div className="flex items-center gap-2 flex-wrap">
