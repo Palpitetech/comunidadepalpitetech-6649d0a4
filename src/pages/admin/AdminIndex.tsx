@@ -1,7 +1,6 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import {
   ShoppingCart,
   Users,
@@ -18,7 +17,6 @@ import {
   ShoppingBag,
   RefreshCw,
   Percent,
-  BarChart3,
 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -95,36 +93,25 @@ export default function AdminIndex() {
   return (
     <AdminLayout pageTitle="Painel Adm.">
       <div className="px-4 py-3 md:container-senior md:py-8 space-y-4 md:space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl md:text-3xl font-bold">Painel Administrativo</h1>
-            <p className="text-sm text-muted-foreground">Visão geral das operações e assinaturas</p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" size="sm" asChild className="gap-2 bg-primary/5 border-primary/20 text-primary hover:bg-primary/10">
-              <a href="/admin/bi">
-                <BarChart3 className="h-4 w-4" />
-                BI & Performance
-              </a>
-            </Button>
-            <div className="flex items-center gap-3 bg-muted/30 px-3 py-1.5 rounded-lg">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="per-block-toggle" className="text-xs cursor-pointer text-muted-foreground">
-                  Filtro por bloco
-                </Label>
-                <Switch
-                  id="per-block-toggle"
-                  checked={perBlock}
-                  onCheckedChange={setPerBlock}
-                />
-              </div>
-              <PeriodFilter
-                value={periodKey}
-                onChange={setPeriodKey}
-                customRange={customRange}
-                onCustomRangeChange={setCustomRange}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <h1 className="text-xl md:text-3xl font-bold hidden md:block">Painel Administrativo</h1>
+          <div className="flex items-center gap-3 flex-wrap w-full md:w-auto justify-between md:justify-end">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="per-block-toggle" className="text-xs cursor-pointer text-muted-foreground">
+                Filtro por bloco
+              </Label>
+              <Switch
+                id="per-block-toggle"
+                checked={perBlock}
+                onCheckedChange={setPerBlock}
               />
             </div>
+            <PeriodFilter
+              value={periodKey}
+              onChange={setPeriodKey}
+              customRange={customRange}
+              onCustomRangeChange={setCustomRange}
+            />
           </div>
         </div>
 

@@ -49,7 +49,6 @@ import AdminEventos from "./pages/admin/AdminEventos";
 import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
 import Integracoes from "./pages/admin/Integracoes";
 import AdminMetricas from "./pages/admin/AdminMetricas";
-import AdminBI from "./pages/admin/AdminBI";
 import AdminAtribuicaoAuditoria from "./pages/admin/AdminAtribuicaoAuditoria";
 import AdminBackfill from "./pages/admin/AdminBackfill";
 import AdminForceUpdate from "./pages/admin/AdminForceUpdate";
@@ -281,7 +280,6 @@ const App = () => (
                 <Route path="/admin/whatsapp" element={<AdminRoute><AdminWhatsApp /></AdminRoute>} />
                 <Route path="/admin/integracoes" element={<AdminRoute><Integracoes /></AdminRoute>} />
                 <Route path="/admin/metricas" element={<AdminRoute><AdminMetricas /></AdminRoute>} />
-                <Route path="/admin/bi" element={<AdminRoute><AdminBI /></AdminRoute>} />
                 <Route path="/admin/metricas/auditoria-atribuicao" element={<AdminRoute><AdminAtribuicaoAuditoria /></AdminRoute>} />
                 <Route path="/admin/backfill" element={<AdminRoute><AdminBackfill /></AdminRoute>} />
                 <Route path="/admin/force-update" element={<AdminRoute><AdminForceUpdate /></AdminRoute>} />

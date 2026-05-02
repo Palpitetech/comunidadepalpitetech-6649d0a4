@@ -1933,7 +1933,6 @@ export type Database = {
           name: string
           plan_ids: string[]
           tags_match_mode: string
-          type: string | null
         }
         Insert: {
           category?: string | null
@@ -1952,7 +1951,6 @@ export type Database = {
           name: string
           plan_ids?: string[]
           tags_match_mode?: string
-          type?: string | null
         }
         Update: {
           category?: string | null
@@ -1971,7 +1969,6 @@ export type Database = {
           name?: string
           plan_ids?: string[]
           tags_match_mode?: string
-          type?: string | null
         }
         Relationships: []
       }
@@ -3606,8 +3603,6 @@ export type Database = {
           id: string
           is_active: boolean
           original_url: string
-          plan_id: string | null
-          redirect_type: string | null
           slug: string
           updated_at: string
         }
@@ -3620,8 +3615,6 @@ export type Database = {
           id?: string
           is_active?: boolean
           original_url: string
-          plan_id?: string | null
-          redirect_type?: string | null
           slug: string
           updated_at?: string
         }
@@ -3634,8 +3627,6 @@ export type Database = {
           id?: string
           is_active?: boolean
           original_url?: string
-          plan_id?: string | null
-          redirect_type?: string | null
           slug?: string
           updated_at?: string
         }
@@ -3659,13 +3650,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "usuarios_notificaveis_hoje"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "whatsapp_smart_links_plan_id_fkey"
-            columns: ["plan_id"]
-            isOneToOne: false
-            referencedRelation: "plans"
             referencedColumns: ["id"]
           },
         ]

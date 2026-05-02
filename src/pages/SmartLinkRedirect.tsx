@@ -7,11 +7,10 @@ import { Button } from "@/components/ui/button";
 
 export default function SmartLinkRedirect() {
   const { slug } = useParams<{ slug: string }>();
-  const [status, setStatus] = useState<"loading" | "inapp" | "fallback" | "error" | "checkout">("loading");
+  const [status, setStatus] = useState<"loading" | "inapp" | "fallback" | "error">("loading");
   const [originalUrl, setOriginalUrl] = useState("");
   const [groupName, setGroupName] = useState("");
   const [copied, setCopied] = useState(false);
-  const [redirectType, setRedirectType] = useState<'whatsapp' | 'checkout'>('whatsapp');
 
   useEffect(() => {
     if (!slug) {
@@ -19,14 +18,11 @@ export default function SmartLinkRedirect() {
       return;
     }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const leadId = urlParams.get("lid") || urlParams.get("lead_id");
-
     (async () => {
       // Buscar smart link
       const { data, error } = await supabase
         .from("whatsapp_smart_links")
-        .select("id, group_invite_code, original_url, group_name, redirect_type, plans(checkout_link, name)")
+        .select("group_invite_code, original_url, group_name")
         .eq("slug", slug)
         .eq("is_active", true)
         .maybeSingle();
@@ -36,59 +32,15 @@ export default function SmartLinkRedirect() {
         return;
       }
 
-      const type = (data.redirect_type as 'whatsapp' | 'checkout') || 'whatsapp';
-      setRedirectType(type);
-      
-      const destinationUrl = type === 'checkout' 
-        ? data.plans?.checkout_link || '' 
-        : data.original_url;
-
-      setOriginalUrl(destinationUrl);
-      setGroupName(data.group_name || data.plans?.name || "");
+      setOriginalUrl(data.original_url);
+      setGroupName(data.group_name ?? "");
 
       // Incrementar cliques (fire-and-forget)
       supabase.rpc("increment_smart_link_clicks" as any, { p_slug: slug }).then(() => {});
 
-      // Registrar evento se houver lead_id
-      if (leadId) {
-        // Buscar dados do lead para enriquecer o evento se necessário
-        const { data: leadData } = await supabase
-          .from("leads_inbox" as any)
-          .select("email, celular")
-          .eq("id", leadId)
-          .maybeSingle();
-
-        const lData = leadData as unknown as { email: string | null; celular: string | null } | null;
-
-        await supabase.from("events").insert({
-          event_type: "smart_link_click",
-          source: "smart_link",
-          metadata: {
-            slug,
-            link_id: (data as any).id,
-            group_name: (data as any).group_name,
-            redirect_type: type,
-            url_params: Object.fromEntries(urlParams.entries()),
-          },
-          lead_email: lData?.email,
-          lead_phone: lData?.celular,
-        } as any);
-      }
-
-
-
       const env = detectEnvironment();
 
-      if (type === 'checkout') {
-        if (destinationUrl) {
-          window.location.href = destinationUrl;
-        } else {
-          setStatus("error");
-        }
-        return;
-      }
-
-      // Lógica WhatsApp (anterior)
+      // Se está em browser interno, mostrar botão para abrir no navegador
       if (env.isInAppBrowser) {
         setStatus("inapp");
         return;
@@ -104,7 +56,6 @@ export default function SmartLinkRedirect() {
       }, 3000);
     })();
   }, [slug]);
-
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(originalUrl);
@@ -127,9 +78,7 @@ export default function SmartLinkRedirect() {
             </svg>
           </div>
           {groupName && (
-            <h1 className="text-lg font-semibold text-foreground">
-              {redirectType === 'checkout' ? `Redirecionando para: ${groupName}` : groupName}
-            </h1>
+            <h1 className="text-lg font-semibold text-foreground">{groupName}</h1>
           )}
         </div>
 

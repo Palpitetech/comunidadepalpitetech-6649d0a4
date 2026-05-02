@@ -8,7 +8,7 @@ import {
   Activity, UserPlus, ShoppingCart, QrCode,
   CreditCard, XCircle, Clock, Ban, X,
   RefreshCw, Mail, RotateCcw, Inbox,
-  CheckCircle2, User, Calendar, Copy, Globe, Phone, Hash, ExternalLink
+  CheckCircle2, User, Calendar, Copy, Globe, Phone, Hash
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -101,9 +101,7 @@ const EVENT_TYPE_CONFIG: Record<string, { label: string; icon: typeof Activity; 
   // Sistema
   trial_revertido_bug: { label: "Cancelado", icon: XCircle, color: "bg-muted/50 text-muted-foreground border-border/50" },
   agendado: { label: "Agendado", icon: Calendar, color: "bg-purple-500/10 text-purple-700 border-purple-200/50" },
-  smart_link_click: { label: "Clique SmartLink", icon: ExternalLink, color: "bg-blue-500/10 text-blue-700 border-blue-200/50" },
 };
-
 
 
 
@@ -143,10 +141,6 @@ function getMetaSummary(ev: EventRow): string {
   if (t.startsWith("lead_") || t === "email_pendente_criado") {
     return m.webhook_name || m.pagina_origem || m.source || "—";
   }
-  if (t === "smart_link_click") {
-    return `${m.slug}${m.group_name ? ` (${m.group_name})` : ""}`;
-  }
-
   if (m.email) return m.email;
   return "—";
 }
