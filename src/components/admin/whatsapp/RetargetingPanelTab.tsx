@@ -67,27 +67,38 @@ export function RetargetingPanelTab() {
   const [loading, setLoading] = useState(true);
   const [runs, setRuns] = useState<RunRow[]>([]);
   const [schedule, setSchedule] = useState<ScheduleInfo | null>(null);
+  const [automations, setAutomations] = useState<AutomationSummary[]>([]);
   const [now, setNow] = useState(() => new Date());
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     const since = subDays(new Date(), 7).toISOString();
 
-    const runsRes = await supabase
-      .from("lead_retargeting_runs" as never)
-      .select("*")
-      .gte("ran_at", since)
-      .order("ran_at", { ascending: false })
-      .limit(200);
-    if (!runsRes.error && runsRes.data) setRuns(runsRes.data as unknown as RunRow[]);
+    const [runsRes, schedRes, autoRes] = await Promise.all([
+      supabase
+        .from("lead_retargeting_runs" as any)
+        .select("*")
+        .gte("ran_at", since)
+        .order("ran_at", { ascending: false })
+        .limit(200),
+      (supabase.rpc as any)("get_lead_retargeting_schedule"),
+      supabase
+        .from("message_templates" as any)
+        .select("id, name, event_trigger, is_active, type")
+        .neq("event_trigger", "manual")
+        .order("name")
+    ]);
 
-    const schedRes = await (supabase.rpc as unknown as (
-      fn: string
-    ) => Promise<{ data: unknown; error: unknown }>)("get_lead_retargeting_schedule");
+    if (!runsRes.error && runsRes.data) setRuns(runsRes.data as unknown as RunRow[]);
+    
     if (!schedRes.error && Array.isArray(schedRes.data) && schedRes.data.length > 0) {
       setSchedule(schedRes.data[0] as ScheduleInfo);
     } else {
       setSchedule(null);
+    }
+
+    if (!autoRes.error && autoRes.data) {
+      setAutomations(autoRes.data as AutomationSummary[]);
     }
 
     setLoading(false);
