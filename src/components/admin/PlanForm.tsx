@@ -362,5 +362,4 @@ export function PlanForm({ plan, onSaved, onCancel }: PlanFormProps) {
       </form>
     </div>
   );
-  );
 }
