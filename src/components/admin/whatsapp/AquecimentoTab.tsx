@@ -6,10 +6,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Flame, MessageCircle, Users, Clock, Play } from "lucide-react";
+import { Loader2, Flame, MessageCircle, Users, Clock, Play, RefreshCw, Smartphone } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { UnifiedLayout } from "./UnifiedLayout";
+import { UnifiedToolbar, ActionButton } from "./shared/UnifiedToolbar";
+import { UnifiedList, UnifiedCardItem } from "./shared/UnifiedList";
+import { cn } from "@/lib/utils";
 
 /* ── Types ───────────────────────────────────────────── */
 
@@ -245,182 +249,90 @@ export function AquecimentoTab() {
 
   /* ── Render ────────────────────────────────────────── */
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Status Card */}
-      <Card>
-        <CardContent className="flex flex-col gap-3 pt-5 pb-4 sm:flex-row sm:items-center sm:justify-between sm:pt-6">
-          <div className="flex items-center gap-3">
-            <span className="relative flex h-3 w-3 shrink-0">
-              <span
-                className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                  activeWindow ? "bg-green-500" : "bg-muted-foreground/40"
-                }`}
-              />
-              <span
-                className={`relative inline-flex rounded-full h-3 w-3 ${
-                  activeWindow ? "bg-green-500" : "bg-muted-foreground/40"
-                }`}
-              />
+    <UnifiedLayout>
+      <UnifiedToolbar
+        left={
+          <div className="flex gap-2">
+            <ActionButton
+              label="Testar Automação"
+              icon={Play}
+              onClick={handleTestAutomation}
+              loading={testing}
+            />
+            <ActionButton
+              label="Aquecer Dupla"
+              icon={Flame}
+              onClick={handleManualWarm}
+              loading={warming}
+              disabled={!activeWindow}
+              variant="default"
+            />
+          </div>
+        }
+        right={
+          <ActionButton
+            label="Atualizar"
+            icon={RefreshCw}
+            onClick={fetchData}
+          />
+        }
+      />
+
+      <div className="space-y-6">
+        <Card className="border-accent/20 bg-accent/5">
+          <CardContent className="flex items-center gap-3 py-4">
+            <span className="relative flex h-2 w-2">
+              <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", activeWindow ? "bg-green-500" : "bg-muted-foreground/40")} />
+              <span className={cn("relative inline-flex rounded-full h-2 w-2", activeWindow ? "bg-green-500" : "bg-muted-foreground/40")} />
             </span>
-            <div className="min-w-0">
-              <p className="text-xs sm:text-sm font-medium leading-tight">
-                {activeWindow
-                  ? `${windowEmoji(activeWindow.window_name)} ${formatWindowName(activeWindow.window_name)} — ${String(activeWindow.hour_start).padStart(2, "0")}h às ${String(activeWindow.hour_end).padStart(2, "0")}h`
-                  : "Nenhuma janela ativa agora"}
-              </p>
-              {nextWindow && !activeWindow && (
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  ⏰ Próxima: {formatWindowName(nextWindow.window_name)} às{" "}
-                  {String(nextWindow.hour_start).padStart(2, "0")}h00
-                </p>
-              )}
-            </div>
-          </div>
+            <p className="text-xs font-medium">
+              {activeWindow
+                ? `${windowEmoji(activeWindow.window_name)} Janela Ativa: ${formatWindowName(activeWindow.window_name)} (${String(activeWindow.hour_start).padStart(2, "0")}h às ${String(activeWindow.hour_end).padStart(2, "0")}h)`
+                : "Nenhuma janela de aquecimento ativa agora"}
+            </p>
+          </CardContent>
+        </Card>
 
-          <div className="flex gap-2 w-full sm:w-auto">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex-1 sm:flex-initial">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1.5 w-full"
-                      onClick={handleTestAutomation}
-                      disabled={testing}
-                    >
-                      {testing ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Play className="h-4 w-4" />
-                      )}
-                      Testar Automação
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Executa warming-run como o cron faria</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex-1 sm:flex-initial">
-                    <Button
-                      size="sm"
-                      className="gap-1.5 w-full"
-                      onClick={handleManualWarm}
-                      disabled={warming || !activeWindow}
-                    >
-                      {warming ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Flame className="h-4 w-4" />
-                      )}
-                      Aquecer Dupla
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                {!activeWindow && (
-                  <TooltipContent>
-                    <p>Nenhuma janela ativa agora</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Summary Cards removed - centralized in CommunicationQuickMetrics */}
-
-      {/* History */}
-      <div>
-        <h3 className="text-xs sm:text-sm font-semibold mb-3">Histórico de hoje</h3>
-        {historyGroups.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
-            <Flame className="h-8 w-8 opacity-40" />
-            <p className="text-sm">Nenhum aquecimento hoje</p>
-          </div>
-        ) : isMobile ? (
-          /* Mobile card list */
-          <div className="space-y-2">
+        <UnifiedList
+          isLoading={loading}
+          count={historyGroups.length}
+          empty={{
+            icon: Flame,
+            message: "Nenhum aquecimento hoje",
+            submessage: "O aquecimento evita o bloqueio de novas instâncias"
+          }}
+        >
+          <div className="grid gap-2">
             {historyGroups.map((group, idx) => (
-              <div key={idx} className="rounded-xl border border-border bg-card p-3.5 flex items-center gap-3">
-                <div className="flex flex-col items-center shrink-0">
-                  <span className="text-sm font-bold tabular-nums">
-                    {group.firstSentAt
-                      ? format(new Date(group.firstSentAt), "HH:mm", { locale: ptBR })
-                      : "—"}
-                  </span>
-                  <Badge variant="secondary" className="text-[9px] mt-0.5 px-1.5">
+              <UnifiedCardItem key={idx} className="flex items-center justify-between gap-4 py-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    <Smartphone className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold truncate">
+                      {instances[group.fromId] || "—"} ↔ {instances[group.toId] || "—"}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {windowEmoji(group.windowName)} {formatWindowName(group.windowName)}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  <Badge variant="secondary" className="h-5 text-[10px] tabular-nums">
                     {group.count} msgs
                   </Badge>
+                  <span className="text-[10px] text-muted-foreground font-mono">
+                    {group.firstSentAt ? format(new Date(group.firstSentAt), "HH:mm") : "—"}
+                  </span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium truncate">
-                    {instances[group.fromId] || "—"} ↔ {instances[group.toId] || "—"}
-                  </p>
-                  <Badge variant="secondary" className="text-[10px] mt-1">
-                    {windowEmoji(group.windowName)} {formatWindowName(group.windowName)}
-                  </Badge>
-                </div>
-              </div>
+              </UnifiedCardItem>
             ))}
           </div>
-        ) : (
-          /* Desktop table */
-          <div className="rounded-lg border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-xs">Horário</TableHead>
-                  <TableHead className="text-xs">De</TableHead>
-                  <TableHead className="text-xs">Para</TableHead>
-                  <TableHead className="text-xs">Tema</TableHead>
-                  <TableHead className="text-xs text-right">Msgs</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {historyGroups.map((group, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell className="text-xs tabular-nums">
-                      {group.firstSentAt
-                        ? format(new Date(group.firstSentAt), "HH:mm", { locale: ptBR })
-                        : "—"}
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {instances[group.fromId] || "—"}
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {instances[group.toId] || "—"}
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      <Badge variant="secondary" className="text-[10px]">
-                        {formatWindowName(group.windowName)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-right tabular-nums font-medium">
-                      {group.count}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+        </UnifiedList>
       </div>
-    </div>
+    </UnifiedLayout>
   );
 }

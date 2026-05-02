@@ -2,8 +2,9 @@
 import { PipelineHealthCard, PrepareAuditTable, InstanceGroupMatrix } from "./monitor";
 import { GroupBlastLogsCard } from "./GroupBlastLogsCard";
 import { useGroupBlastConfigs } from "@/hooks/useGroupBlastConfigs";
+import { UnifiedLayout } from "./UnifiedLayout";
 
-export default function MonitorGruposTab() {
+export function MonitorGruposTab() {
   const { configs } = useGroupBlastConfigs();
 
   return (
@@ -17,3 +18,5 @@ export default function MonitorGruposTab() {
     </UnifiedLayout>
   );
 }
+
+export default MonitorGruposTab;
