@@ -694,10 +694,15 @@ export function InstanciasTab() {
                   <span>Nova</span>
                 </Button>
               </DialogTrigger>
-               {!editingId ? (
-                 /* === Modo CRIAÇÃO: 1 campo, gera QR automático === */
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>{editingId ? "Editar Instância" : "Nova Instância"}</DialogTitle>
+                </DialogHeader>
 
-                <div className="space-y-4 pt-2">
+                {!editingId ? (
+                  /* === Modo CRIAÇÃO: 1 campo, gera QR automático === */
+                  <div className="space-y-4 pt-2">
+
                   <div className="space-y-1.5">
                     <Label htmlFor="apelido">Apelido *</Label>
                     <Input
