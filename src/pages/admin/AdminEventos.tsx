@@ -8,7 +8,7 @@ import {
   Activity, UserPlus, ShoppingCart, QrCode,
   CreditCard, XCircle, Clock, Ban, X,
   RefreshCw, Mail, RotateCcw, Inbox,
-  CheckCircle2, User, Calendar, Copy, Globe, Phone, Hash
+  CheckCircle2, User, Calendar, Copy, Globe, Phone, Hash, ExternalLink
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
