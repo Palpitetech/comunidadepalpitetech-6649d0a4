@@ -1,14 +1,20 @@
 import { useEffect, useState } from "react";
-import { Smartphone, Send, ScrollText, AlertCircle, Loader2 } from "lucide-react";
+import { Smartphone, Send, ScrollText, AlertCircle, Loader2, Globe, FileText, CheckCircle2, Clock, Mail, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
-export function CommunicationQuickMetrics() {
+interface CommunicationQuickMetricsProps {
+  activeTab: string;
+}
+
+export function CommunicationQuickMetrics({ activeTab }: CommunicationQuickMetricsProps) {
   const [metrics, setMetrics] = useState<{
-    instancesOnline: number;
-    totalInstances: number;
-    pendingQueue: number;
-    errorsToday: number;
+    whatsapp?: { online: number; total: number };
+    proxies?: { online: number; total: number };
+    templates?: { approved: number; pending: number };
+    queue?: { pending: number; processed: number };
+    logs?: { errors: number };
+    email?: { sent: number; bounce: number };
   } | null>(null);
   const [loading, setLoading] = useState(true);
 
