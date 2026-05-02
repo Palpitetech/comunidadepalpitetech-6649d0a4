@@ -107,12 +107,7 @@ export function EmailTemplatesTab() {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-md border-l-4 border-l-primary bg-primary/5 px-4 py-3 text-sm">
-        <p className="font-medium text-foreground">Disparo automático sincronizado com WhatsApp</p>
-        <p className="text-muted-foreground mt-0.5">
-          Cada evento (novo cadastro, PIX, compra aprovada etc.) dispara <strong>WhatsApp e Email em paralelo</strong>, respeitando os atrasos configurados em cada template. Desativar um template aqui pausa apenas o envio por email — o WhatsApp continua.
-        </p>
-      </div>
+      {/* Header banner removed - centralized in CommunicationQuickMetrics if needed */}
       <div className="flex justify-between items-center">
         <p className="text-sm text-muted-foreground">{items.length} templates de email</p>
         <Button onClick={() => setEditing({ ...EMPTY })}>
