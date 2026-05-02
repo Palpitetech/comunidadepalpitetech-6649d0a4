@@ -16,7 +16,7 @@ export default function AdminPlanos() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   const fetchPlans = async () => {
     try {
@@ -46,6 +46,15 @@ export default function AdminPlanos() {
     fetchPlans();
   }, []);
 
+  useEffect(() => {
+    if (isFormOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [isFormOpen]);
+
   const handleDelete = async (planId: string) => {
     if (!confirm("Tem certeza que deseja excluir este plano?")) return;
 
@@ -62,34 +71,29 @@ export default function AdminPlanos() {
 
   const handleEdit = (plan: Plan) => {
     setEditingPlan(plan);
-    setIsDialogOpen(true);
+    setIsFormOpen(true);
   };
 
   const handleNewPlan = () => {
     setEditingPlan(null);
-    setIsDialogOpen(true);
+    setIsFormOpen(true);
   };
 
   const handleSaved = () => {
-    setIsDialogOpen(false);
+    setIsFormOpen(false);
     setEditingPlan(null);
     fetchPlans();
   };
 
   const getPlanIcon = (price: number) => {
-    if (price === 0) return <Gift className="h-5 w-5 text-primary" />;
-    if (price >= 200) return <Crown className="h-5 w-5 text-primary" />;
-    return <Star className="h-5 w-5 text-primary" />;
-  };
-
-  const copyCheckoutLink = (link: string) => {
-    navigator.clipboard.writeText(link);
-    toast.success("Link copiado!");
+    if (price === 0) return <Gift className="h-4 w-4 text-blue-500" />;
+    if (price >= 200) return <Crown className="h-4 w-4 text-yellow-500" />;
+    return <Star className="h-4 w-4 text-primary" />;
   };
 
   if (loading) {
     return (
-      <AdminLayout>
+      <AdminLayout pageTitle="Planos & Preços">
         <div className="flex items-center justify-center min-h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -99,170 +103,111 @@ export default function AdminPlanos() {
 
   return (
     <AdminLayout pageTitle="Planos & Preços">
-      <div className="container-senior py-8 max-w-4xl mx-auto">
-        <div className="mb-6">
+      <div className="flex flex-col flex-1 min-h-0 bg-background">
+        <div className="px-4 py-4 md:px-6 md:py-6 max-w-4xl mx-auto w-full space-y-6">
+          
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold hidden md:block">Planos & Preços</h1>
+            <Button onClick={handleNewPlan} className="gap-2 rounded-xl">
+              <Plus className="h-4 w-4" />
+              Novo Plano
+            </Button>
+          </div>
+
+          <div className="space-y-1">
+            {plans.map((plan) => {
+              const activeFeatures = Object.values(plan.features).filter(Boolean).length;
+              return (
+                <button
+                  key={plan.id}
+                  onClick={() => handleEdit(plan)}
+                  className={cn(
+                    "w-full flex items-center justify-between gap-4 p-4 rounded-2xl bg-card border border-border/50 hover:border-primary/20 transition-all text-left active:scale-[0.98]",
+                    !plan.is_active && "opacity-60"
+                  )}
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="h-10 w-10 rounded-xl bg-muted/50 flex items-center justify-center shrink-0">
+                      {getPlanIcon(plan.price)}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-base truncate">{plan.name}</span>
+                        {!plan.is_active && (
+                          <Badge variant="secondary" className="text-[9px] uppercase tracking-tighter h-4">Inativo</Badge>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground truncate italic">
+                        {activeFeatures} recursos ativos • slug: {plan.slug}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right">
+                      <span className="font-bold text-base">
+                        R$ {plan.price.toFixed(0)}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground block">/mês</span>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/30" />
+                  </div>
+                </button>
+              );
+            })}
+
+            {plans.length === 0 && (
+              <div className="py-20 text-center space-y-3">
+                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto">
+                  <Star className="h-6 w-6 text-muted-foreground/40" />
+                </div>
+                <p className="text-sm text-muted-foreground">Nenhum plano cadastrado ainda.</p>
+              </div>
+            )}
+          </div>
+
           <KirvanoWebhookCard />
         </div>
+      </div>
 
-        <div className="flex items-center justify-between mb-6">
-          <div className="hidden md:block">
-            <h1 className="text-senior-2xl font-bold">Planos & Preços</h1>
-            <p className="text-muted-foreground">Gerencie o catálogo de produtos e preços</p>
-          </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={handleNewPlan} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Novo Plano
+      {/* Full Screen Form View */}
+      {isFormOpen && (
+        <div className="fixed inset-0 z-[100] bg-white flex flex-col animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center justify-between px-4 h-16 border-b border-border bg-white shrink-0 z-50 relative">
+            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full" onClick={() => setIsFormOpen(false)}>
+              <X className="h-6 w-6" />
+            </Button>
+            <h2 className="text-base font-bold absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
+              {editingPlan ? "Editar Plano" : "Novo Plano"}
+            </h2>
+            <div className="flex items-center gap-1">
+              {editingPlan && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-10 w-10 rounded-full text-destructive" 
+                  onClick={() => handleDelete(editingPlan.id)}
+                >
+                  <Trash2 className="h-5 w-5" />
+                </Button>
+              )}
+              <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full" onClick={fetchPlans}>
+                <RefreshCw className={cn("h-5 w-5", loading && "animate-spin")} />
               </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingPlan ? "Editar Plano" : "Novo Plano"}
-                </DialogTitle>
-              </DialogHeader>
+            </div>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto overscroll-contain bg-white">
+            <div className="p-4 pb-[calc(4rem+env(safe-area-inset-bottom))] max-w-2xl mx-auto">
               <PlanForm
                 plan={editingPlan}
                 onSaved={handleSaved}
-                onCancel={() => setIsDialogOpen(false)}
+                onCancel={() => setIsFormOpen(false)}
               />
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        <div className="grid gap-4">
-          {plans.map((plan) => (
-            <PlanCard
-              key={plan.id}
-              plan={plan}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onCopyLink={copyCheckoutLink}
-              getPlanIcon={getPlanIcon}
-            />
-          ))}
-
-          {plans.length === 0 && (
-            <Card>
-              <CardContent className="py-8 text-center text-muted-foreground">
-                Nenhum plano cadastrado. Clique em "Novo Plano" para começar.
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-    </AdminLayout>
-  );
-}
-
-// Extracted PlanCard component
-function PlanCard({
-  plan,
-  onEdit,
-  onDelete,
-  onCopyLink,
-  getPlanIcon,
-}: {
-  plan: Plan;
-  onEdit: (plan: Plan) => void;
-  onDelete: (id: string) => void;
-  onCopyLink: (link: string) => void;
-  getPlanIcon: (price: number) => React.ReactNode;
-}) {
-  return (
-    <Card className={!plan.is_active ? "opacity-60" : ""}>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {getPlanIcon(plan.price)}
-            <div>
-              <CardTitle className="text-senior-lg">{plan.name}</CardTitle>
-              {plan.description && (
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  {plan.description}
-                </p>
-              )}
             </div>
-            {!plan.is_active && <Badge variant="secondary">Inativo</Badge>}
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => onEdit(plan)}>
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onDelete(plan.id)}
-              className="text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
           </div>
         </div>
-        <div className="flex items-center gap-4 mt-2">
-          <CardDescription className="text-base font-medium text-foreground">
-            R$ {plan.price.toFixed(2).replace(".", ",")}
-            <span className="text-muted-foreground font-normal"> / mês</span>
-          </CardDescription>
-          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-            slug: {plan.slug}
-          </span>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {/* Features grouped by category */}
-        <div className="space-y-2">
-          {FEATURE_CATEGORIES.map((category) => {
-            const activeCount = category.features.filter((f) => plan.features[f]).length;
-            if (activeCount === 0) return null;
-
-            return (
-              <div key={category.label}>
-                <p className="text-xs font-medium text-muted-foreground mb-1">
-                  {category.emoji} {category.label}
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {category.features.map((feature) => (
-                    <Badge
-                      key={feature}
-                      variant={plan.features[feature] ? "default" : "outline"}
-                      className={`text-[11px] px-1.5 py-0 ${
-                        plan.features[feature] ? "" : "text-muted-foreground"
-                      }`}
-                    >
-                      {plan.features[feature] ? "✓" : "✗"} {FEATURE_LABELS[feature]}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <p className="text-sm text-muted-foreground">
-          {Object.values(plan.features).filter(Boolean).length} de{" "}
-          {Object.keys(FEATURE_LABELS).length} recursos ativos
-        </p>
-
-        {plan.checkout_link && (
-          <div className="flex items-center gap-2 pt-2 border-t">
-            <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            <span className="text-xs text-muted-foreground truncate flex-1">
-              {plan.checkout_link}
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onCopyLink(plan.checkout_link!)}
-              className="h-7 px-2 gap-1"
-            >
-              <Copy className="h-3 w-3" />
-              Copiar
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      )}
+    </AdminLayout>
   );
 }
