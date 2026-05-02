@@ -47,11 +47,9 @@ interface CommunicationHeaderSelectorProps {
 }
 
 export function CommunicationHeaderSelector({ activeTab, onTabChange }: CommunicationHeaderSelectorProps) {
-  // @ts-ignore - flatMap and as const issues
-  const currentItem = communicationSections
-    .flatMap((s) => s.items)
+  const currentItem = (communicationSections as any)
+    .flatMap((s: any) => s.items)
     .find((i: any) => i.value === activeTab);
-
 
   return (
     <DropdownMenu>
@@ -67,14 +65,14 @@ export function CommunicationHeaderSelector({ activeTab, onTabChange }: Communic
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56 p-1">
-        {communicationSections.map((section, idx) => (
+        {communicationSections.map((section: any, idx) => (
           <DropdownMenuGroup key={section.label}>
             {idx > 0 && <DropdownMenuSeparator />}
             <DropdownMenuLabel className="flex items-center gap-2 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
               {section.label === "Email Transacional" ? <Mail className="h-3 w-3" /> : <MessageSquare className="h-3 w-3" />}
               {section.label}
             </DropdownMenuLabel>
-            {section.items.map((item) => (
+            {section.items.map((item: any) => (
               <DropdownMenuItem
                 key={item.value}
                 onClick={() => onTabChange(item.value)}
