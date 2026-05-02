@@ -54,16 +54,17 @@ export function CommunicationHeaderSelector({ activeTab, onTabChange }: Communic
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-accent transition-colors outline-none group border border-border/50 bg-background/50 backdrop-blur-sm shadow-sm">
-          <div className="flex h-5 w-5 items-center justify-center rounded-sm bg-primary/10 text-primary">
+        <button className="flex items-center gap-2 px-2 md:px-3 py-1.5 rounded-md hover:bg-accent transition-colors outline-none group border border-border/50 bg-background/50 backdrop-blur-sm shadow-sm max-w-full overflow-hidden">
+          <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary">
             {currentItem ? <currentItem.icon className="h-3 w-3" /> : <MessageSquare className="h-3 w-3" />}
           </div>
-          <span className="text-sm font-semibold whitespace-nowrap">
+          <span className="text-xs md:text-sm font-semibold truncate">
             {currentItem ? currentItem.label : "Comunicação"}
           </span>
-          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+          <ChevronDown className="h-3 w-3 md:h-3.5 md:w-3.5 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
         </button>
       </DropdownMenuTrigger>
+
       <DropdownMenuContent align="start" className="w-56 p-1">
         {communicationSections.map((section: any, idx) => (
           <DropdownMenuGroup key={section.label}>
