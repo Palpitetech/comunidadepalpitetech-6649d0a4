@@ -18,8 +18,8 @@ import { EmailFilaTab } from "@/components/admin/email/EmailFilaTab";
 import { EmailLogsTab } from "@/components/admin/email/EmailLogsTab";
 import { EmailDisparoManualTab } from "@/components/admin/email/EmailDisparoManualTab";
 import { EmailSuppressionsTab } from "@/components/admin/email/EmailSuppressionsTab";
-import { ForceUpdateButton } from "@/components/admin/ForceUpdateButton";
 import { CommunicationHeaderSelector } from "@/components/admin/whatsapp/CommunicationHeaderSelector";
+
 
 const TAB_TITLES: Record<string, string> = {
   instancias: "Instâncias",
@@ -61,8 +61,8 @@ export default function AdminWhatsApp() {
 
           <div className="p-4 md:px-5 md:pb-6 lg:px-6">
             <div className="max-w-5xl space-y-4">
-              <ForceUpdateButton />
               {activeTab === "instancias" && <InstanciasTab />}
+
               {activeTab === "proxies" && <ProxiesTab />}
               {activeTab === "templates" && <TemplatesTab />}
               {activeTab === "fila" && <FilaTab />}
