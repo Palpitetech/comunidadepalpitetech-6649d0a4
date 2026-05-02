@@ -180,12 +180,23 @@ export default function AdminMetricas() {
             dimension={dimension}
             onDimensionChange={setDimension}
             headerExtra={
-              <BlockPeriodControl
-                state={attrState}
-                onChange={setAttrState}
-                globalPeriodKey={periodKey}
-                globalCustomRange={customRange}
-              />
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 p-0"
+                  onClick={() => exportToCSV(attrQuery.data?.rows || [], `atribuicao-${dimension}`)}
+                  title="Exportar CSV"
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+                <BlockPeriodControl
+                  state={attrState}
+                  onChange={setAttrState}
+                  globalPeriodKey={periodKey}
+                  globalCustomRange={customRange}
+                />
+              </div>
             }
           />
         )}
