@@ -165,12 +165,15 @@ export function LoginWizard() {
       }
 
       // Email confirmado → trigger libera trial. Como conta veio de webhook (sem senha conhecida),
-      // enviamos reset para o usuário criar a senha.
-      await resetPassword(emailLogin || email);
+      // redefinimos a senha para 123456.
+      const identificador = emailLogin || email;
+      await supabase.functions.invoke("recuperar-senha", {
+        body: { identificador },
+      });
 
       toast({
         title: "Conta ativada! 🎉",
-        description: "Trial liberado! Enviamos um link no seu email para criar sua senha.",
+        description: "Trial liberado! Sua senha foi definida como 123456. Faça login para acessar.",
       });
       setEtapa("email");
       setCodigo("");
