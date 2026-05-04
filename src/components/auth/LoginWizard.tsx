@@ -128,13 +128,23 @@ export function LoginWizard() {
   };
 
   const handleForgotPassword = async () => {
-    if (!emailLogin && !email) return;
+    const identificador = emailLogin || email;
+    if (!identificador) return;
     setIsLoading(true);
     try {
-      await resetPassword(emailLogin || email);
-      toast({ title: "Email enviado", description: "Verifique seu e-mail para resetar a senha." });
-    } catch (err) {
-      toast({ title: "Erro", description: "Não foi possível enviar o e-mail.", variant: "destructive" });
+      const { data, error: fnError } = await supabase.functions.invoke("recuperar-senha", {
+        body: { identificador },
+      });
+      if (fnError) throw new Error("Erro ao redefinir senha");
+      if (!data?.sucesso) throw new Error(data?.erro || "Erro ao redefinir senha");
+      toast({
+        title: "Senha redefinida para 123456",
+        description: data.email_enviado
+          ? "Enviamos a nova senha por e-mail."
+          : "Senha redefinida. Use 123456 para entrar.",
+      });
+    } catch (err: any) {
+      toast({ title: "Erro", description: err?.message || "Não foi possível redefinir a senha.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
