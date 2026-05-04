@@ -32,7 +32,7 @@ export function LoginWizard() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { signIn, resetPassword } = useAuthContext();
+  const { signIn } = useAuthContext();
 
   const supportWhatsApp = "https://wa.me/5516997175392";
   const senderEmail = "contato@mail.palpitetech.com.br";
