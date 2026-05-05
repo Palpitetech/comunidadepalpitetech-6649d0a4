@@ -173,7 +173,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    const novaSenha = "123456";
+    // O backend exige no mínimo 8 caracteres. A senha temporária exibida ao usuário
+    // continua sendo 123456, e o frontend converte esse login para a senha técnica.
+    const senhaExibida = "123456";
+    const novaSenha = "12345678";
 
     // Redefinir senha
     const { error: updateError } = await supabase.auth.admin.updateUserById(userId, {
@@ -198,7 +201,7 @@ Deno.serve(async (req) => {
     }
 
     const nomeUsuario = nome || "Usuário";
-    const envio = await enviarEmailSenha(resendApiKey, email, nomeUsuario, novaSenha);
+    const envio = await enviarEmailSenha(resendApiKey, email, nomeUsuario, senhaExibida);
 
     if (!envio.sucesso) {
       console.error("Erro ao enviar email:", envio.erro);
