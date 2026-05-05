@@ -128,7 +128,7 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
       if (fnError) throw new Error("Erro ao redefinir senha");
       if (!data?.sucesso) throw new Error(data?.erro || "Erro ao redefinir senha");
 
-      toast.success("Senha redefinida para 123456" + (data.email_enviado ? " — email enviado" : ""));
+      toast.success("Senha redefinida para 12345678" + (data.email_enviado ? " — email enviado" : ""));
 
       const telefone = user.celular;
       if (telefone) {
@@ -151,7 +151,7 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
               `Sua senha foi redefinida com sucesso. Acesse com as credenciais abaixo:`,
               ``,
               `📧 Email: ${loginEmail}`,
-              `🔑 Senha: 123456`,
+              `🔑 Senha: 12345678`,
               ``,
               `🔗 Link de acesso:`,
               LOGIN_URL,
@@ -260,7 +260,7 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
         </h3>
         <div className="bg-muted/50 rounded-lg p-3 space-y-2">
           <p className="text-xs text-muted-foreground">
-            Redefine para 123456 e envia notificação por email e WhatsApp com o link de acesso.
+            Redefine para 12345678 e envia notificação por email e WhatsApp com o link de acesso.
           </p>
           <Button
             variant="outline"
@@ -274,7 +274,7 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
             ) : (
               <KeyRound className="h-4 w-4" />
             )}
-            Gerar Nova Senha (123456)
+            Gerar Nova Senha (12345678)
           </Button>
         </div>
       </div>

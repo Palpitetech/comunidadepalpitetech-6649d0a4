@@ -138,10 +138,10 @@ export function LoginWizard() {
       if (fnError) throw new Error("Erro ao redefinir senha");
       if (!data?.sucesso) throw new Error(data?.erro || "Erro ao redefinir senha");
       toast({
-        title: "Senha redefinida para 123456",
+        title: "Senha redefinida para 12345678",
         description: data.email_enviado
           ? "Enviamos a nova senha por e-mail."
-          : "Senha redefinida. Use 123456 para entrar.",
+          : "Senha redefinida. Use 12345678 para entrar.",
       });
     } catch (err: any) {
       toast({ title: "Erro", description: err?.message || "Não foi possível redefinir a senha.", variant: "destructive" });
@@ -165,7 +165,7 @@ export function LoginWizard() {
       }
 
       // Email confirmado → trigger libera trial. Como conta veio de webhook (sem senha conhecida),
-      // redefinimos a senha para 123456.
+      // redefinimos a senha para 12345678.
       const identificador = emailLogin || email;
       await supabase.functions.invoke("recuperar-senha", {
         body: { identificador },
@@ -173,7 +173,7 @@ export function LoginWizard() {
 
       toast({
         title: "Conta ativada! 🎉",
-        description: "Trial liberado! Sua senha foi definida como 123456. Faça login para acessar.",
+        description: "Trial liberado! Sua senha foi definida como 12345678. Faça login para acessar.",
       });
       setEtapa("email");
       setCodigo("");
