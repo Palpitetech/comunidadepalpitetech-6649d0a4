@@ -128,7 +128,7 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
       if (fnError) throw new Error("Erro ao redefinir senha");
       if (!data?.sucesso) throw new Error(data?.erro || "Erro ao redefinir senha");
 
-      toast.success("Senha redefinida para 123456" + (data.email_enviado ? " — email enviado" : ""));
+      toast.success("Senha redefinida para 12345678" + (data.email_enviado ? " — email enviado" : ""));
 
       const telefone = user.celular;
       if (telefone) {
