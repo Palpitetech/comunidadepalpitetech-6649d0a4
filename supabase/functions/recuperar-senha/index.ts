@@ -173,9 +173,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // O backend exige no mínimo 8 caracteres. A senha temporária exibida ao usuário
-    // continua sendo 123456, e o frontend converte esse login para a senha técnica.
-    const senhaExibida = "123456";
+    const senhaExibida = "12345678";
     const novaSenha = "12345678";
 
     // Redefinir senha
