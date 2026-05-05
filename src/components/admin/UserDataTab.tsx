@@ -151,7 +151,7 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
               `Sua senha foi redefinida com sucesso. Acesse com as credenciais abaixo:`,
               ``,
               `📧 Email: ${loginEmail}`,
-              `🔑 Senha: 123456`,
+              `🔑 Senha: 12345678`,
               ``,
               `🔗 Link de acesso:`,
               LOGIN_URL,
