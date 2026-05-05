@@ -884,8 +884,25 @@ Deno.serve(async (req) => {
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
+      // For 400 errors from Evolution (e.g. number not on WhatsApp), return 200 with error details
+      // to prevent frontend crashes / blank screens
+      const errorMessage = data?.message || data?.error || `HTTP ${res.status}`;
+      const isNumberNotFound = res.status === 400 && JSON.stringify(data).includes('"exists":false');
+      
+      if (isNumberNotFound) {
+        return new Response(
+          JSON.stringify({ 
+            error: "Número não encontrado no WhatsApp", 
+            code: "number_not_found",
+            fallback: true,
+            details: data 
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       return new Response(
-        JSON.stringify({ error: data?.message || data?.error || `HTTP ${res.status}`, details: data }),
+        JSON.stringify({ error: errorMessage, details: data }),
         { status: res.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
