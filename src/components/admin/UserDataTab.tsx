@@ -260,7 +260,7 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
         </h3>
         <div className="bg-muted/50 rounded-lg p-3 space-y-2">
           <p className="text-xs text-muted-foreground">
-            Redefine para 123456 e envia notificação por email e WhatsApp com o link de acesso.
+            Redefine para 12345678 e envia notificação por email e WhatsApp com o link de acesso.
           </p>
           <Button
             variant="outline"
