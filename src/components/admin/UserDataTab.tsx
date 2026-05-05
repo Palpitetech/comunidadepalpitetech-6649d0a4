@@ -274,7 +274,7 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
             ) : (
               <KeyRound className="h-4 w-4" />
             )}
-            Gerar Nova Senha (123456)
+            Gerar Nova Senha (12345678)
           </Button>
         </div>
       </div>
