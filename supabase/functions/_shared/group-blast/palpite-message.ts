@@ -6,6 +6,7 @@
 // =============================================================================
 
 import { gerarPalpitesDeterministicos } from "../gerador/pipeline.ts";
+import { getProximoConcursoReal } from "../proximo-concurso-helper.ts";
 import {
   getBlastLotteryConfig,
   type BlastLoteria,
@@ -61,6 +62,14 @@ export async function generatePalpiteMessage(
   const concursoMax = ultimoResultado.concurso;
   const concursoMin = Math.max(1, concursoMax - cfg.periodoAnalise + 1);
 
+  // Determinar o próximo concurso REAL (corrige atraso pós-sorteio)
+  const proxInfo = await getProximoConcursoReal(supabase, cfg.slug);
+  const proximoConcursoReal = proxInfo.proximoConcurso;
+
+  console.log(
+    `[palpite-message] ${cfg.slug}: DB max=${concursoMax}, próximo real=${proximoConcursoReal}, sorteioJaOcorreu=${proxInfo.sorteioJaOcorreu}`,
+  );
+
   // Quantidade de jogos a gerar (para a mensagem):
   //  - Lotofácil: 15 jogos (legacy)
   //  - Mega-Sena: 8 jogos (mais sensato dado que cada jogo tem 6 dezenas)
@@ -77,7 +86,7 @@ export async function generatePalpiteMessage(
       userId: null,
       supabaseAdmin: supabase,
       edgeFunction: `group-blast-palpite-${cfg.slug}`,
-      proximoConcurso: concursoMax + 1,
+      proximoConcurso: proximoConcursoReal,
     });
   } catch (err: any) {
     console.error(
@@ -111,6 +120,7 @@ export async function generatePalpiteMessage(
     ultimoResultado,
     concursoMin,
     concursoMax,
+    proximoConcurso: proximoConcursoReal,
     estrategia: pipelineResult.estrategia,
     jogosValidos,
   });
@@ -126,6 +136,7 @@ interface FormatArgs {
   ultimoResultado: any;
   concursoMin: number;
   concursoMax: number;
+  proximoConcurso: number;
   estrategia: any;
   jogosValidos: string[];
 }
@@ -136,7 +147,7 @@ function formatPalpiteMessage(a: FormatArgs): string {
   const trackedVipLink =
     `${a.baseUrl}${a.hubPath}?utm_source=whatsapp&utm_medium=group&utm_campaign=blast_vip&utm_content=${a.utmContent}`;
 
-  let msg = `🎰 *Palpites ${a.cfgLabel} — Concurso ${a.concursoMax + 1}*\n\n`;
+  let msg = `🎰 *Palpites ${a.cfgLabel} — Concurso ${a.proximoConcurso}*\n\n`;
   msg += `📢 *Último Resultado (Concurso ${a.ultimoResultado.concurso}):*\n`;
   msg += `${
     [...a.ultimoResultado.dezenas]

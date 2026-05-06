@@ -5,6 +5,7 @@ import { getPersona } from "../_shared/guide-post/personas.ts";
 import { getConfig } from "../_shared/guide-post/lottery-configs.ts";
 import { chamarIAComRetry } from "../_shared/guide-post/ai-runner.ts";
 import { montarRodapeProximoConcurso } from "../_shared/guide-post/glossario.ts";
+import { getProximoConcursoReal } from "../_shared/proximo-concurso-helper.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -135,7 +136,16 @@ serve(async (req) => {
     }
 
     const concursos = resultados as unknown as Concurso[];
-    const ultimoConcurso = concursos[0].concurso_id;
+    const ultimoConcursoDB = concursos[0].concurso_id;
+
+    // Determinar o próximo concurso REAL (corrige atraso pós-sorteio)
+    const proxInfo = await getProximoConcursoReal(supabaseAdmin, config.loteria);
+    const proxConcurso = proxInfo.proximoConcurso;
+    const ultimoConcurso = ultimoConcursoDB;
+
+    console.log(
+      `[generate-guide-post] ${loteria}: DB max=${ultimoConcursoDB}, próximo real=${proxConcurso}, sorteioJaOcorreu=${proxInfo.sorteioJaOcorreu}`,
+    );
 
     let historicoCiclos: CicloHistorico[] | undefined;
     if (tipoPost === "analise_ciclo" && ciclosResp.data) {
@@ -158,7 +168,6 @@ serve(async (req) => {
     if (!apiKey) throw new Error("LOVABLE_API_KEY não configurada");
 
     const userPrompt = engine.montarPrompt(tipoPost, fatos, ultimoConcurso);
-    const proxConcurso = ultimoConcurso + 1;
     const titulo = engine.montarTituloDeterministico(tipoPost, proxConcurso);
 
     let conteudo = "";
@@ -208,17 +217,21 @@ serve(async (req) => {
       }
     }
 
-    // Rodapé universal
+    // Rodapé universal — usa dados corrigidos do helper (evita mostrar concurso já sorteado)
     try {
-      const prox = await getProximoConcursoCached(supabaseAdmin, loteria);
-      if (prox) {
+      if (!proxInfo.sorteioJaOcorreu && proxInfo.dataSorteio) {
+        // Só mostra rodapé se sabemos a data do próximo concurso real
         const rodape = montarRodapeProximoConcurso(
           config.loteria_tag,
-          prox.numero_concurso,
-          prox.data_sorteio,
-          prox.premio_estimado,
+          String(proxInfo.proximoConcurso),
+          proxInfo.dataSorteio,
+          proxInfo.premioEstimado,
         );
         if (rodape) conteudo = conteudo + rodape;
+      } else {
+        // Sorteio já ocorreu — mostra só o número do próximo sem data
+        const rodapeSemData = `\n\n📅 Próximo Concurso\n${config.loteria_tag} ${proxInfo.proximoConcurso}`;
+        conteudo = conteudo + rodapeSemData;
       }
     } catch (e) {
       console.warn(`[generate-guide-post] falha rodapé:`, e);
