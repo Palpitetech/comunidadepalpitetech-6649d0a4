@@ -147,7 +147,7 @@ function formatPalpiteMessage(a: FormatArgs): string {
   const trackedVipLink =
     `${a.baseUrl}${a.hubPath}?utm_source=whatsapp&utm_medium=group&utm_campaign=blast_vip&utm_content=${a.utmContent}`;
 
-  let msg = `🎰 *Palpites ${a.cfgLabel} — Concurso ${a.concursoMax + 1}*\n\n`;
+  let msg = `🎰 *Palpites ${a.cfgLabel} — Concurso ${a.proximoConcurso}*\n\n`;
   msg += `📢 *Último Resultado (Concurso ${a.ultimoResultado.concurso}):*\n`;
   msg += `${
     [...a.ultimoResultado.dezenas]
