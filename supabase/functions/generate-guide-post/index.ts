@@ -5,6 +5,7 @@ import { getPersona } from "../_shared/guide-post/personas.ts";
 import { getConfig } from "../_shared/guide-post/lottery-configs.ts";
 import { chamarIAComRetry } from "../_shared/guide-post/ai-runner.ts";
 import { montarRodapeProximoConcurso } from "../_shared/guide-post/glossario.ts";
+import { getProximoConcursoReal } from "../_shared/proximo-concurso-helper.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
