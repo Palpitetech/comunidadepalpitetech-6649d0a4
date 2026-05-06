@@ -6,6 +6,7 @@
 // =============================================================================
 
 import { gerarPalpitesDeterministicos } from "../gerador/pipeline.ts";
+import { getProximoConcursoReal } from "../proximo-concurso-helper.ts";
 import {
   getBlastLotteryConfig,
   type BlastLoteria,
