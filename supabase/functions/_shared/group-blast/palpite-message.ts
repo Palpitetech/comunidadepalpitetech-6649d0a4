@@ -120,6 +120,7 @@ export async function generatePalpiteMessage(
     ultimoResultado,
     concursoMin,
     concursoMax,
+    proximoConcurso: proximoConcursoReal,
     estrategia: pipelineResult.estrategia,
     jogosValidos,
   });
