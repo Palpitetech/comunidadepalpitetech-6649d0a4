@@ -136,6 +136,7 @@ interface FormatArgs {
   ultimoResultado: any;
   concursoMin: number;
   concursoMax: number;
+  proximoConcurso: number;
   estrategia: any;
   jogosValidos: string[];
 }
