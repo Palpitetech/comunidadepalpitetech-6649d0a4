@@ -136,7 +136,16 @@ serve(async (req) => {
     }
 
     const concursos = resultados as unknown as Concurso[];
-    const ultimoConcurso = concursos[0].concurso_id;
+    const ultimoConcursoDB = concursos[0].concurso_id;
+
+    // Determinar o próximo concurso REAL (corrige atraso pós-sorteio)
+    const proxInfo = await getProximoConcursoReal(supabaseAdmin, config.loteria);
+    const proxConcurso = proxInfo.proximoConcurso;
+    const ultimoConcurso = ultimoConcursoDB;
+
+    console.log(
+      `[generate-guide-post] ${loteria}: DB max=${ultimoConcursoDB}, próximo real=${proxConcurso}, sorteioJaOcorreu=${proxInfo.sorteioJaOcorreu}`,
+    );
 
     let historicoCiclos: CicloHistorico[] | undefined;
     if (tipoPost === "analise_ciclo" && ciclosResp.data) {
@@ -159,7 +168,6 @@ serve(async (req) => {
     if (!apiKey) throw new Error("LOVABLE_API_KEY não configurada");
 
     const userPrompt = engine.montarPrompt(tipoPost, fatos, ultimoConcurso);
-    const proxConcurso = ultimoConcurso + 1;
     const titulo = engine.montarTituloDeterministico(tipoPost, proxConcurso);
 
     let conteudo = "";
