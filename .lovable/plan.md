@@ -1,70 +1,59 @@
-## Diagnóstico
 
-Os disparos noturnos de **29/04 (23h BRT)** não saíram porque os logs já estavam na fila **antes do refactor do módulo de Disparo em Grupo** feito hoje mais cedo. Antes do refactor, a mensagem (palpite/IA) era resolvida no momento do envio (`dispatch`). Depois do refactor, o `dispatch` passou a exigir que `message_content` já estivesse preenchido pelo `prepare` — e marca como `failed` qualquer log "órfão" sem conteúdo, com a mensagem:
+## Problem
 
-> *"Órfão da transição de refactor — sem conteúdo pré-resolvido. Use Reenviar para regenerar."*
+After a lottery draw happens (~20:00 BRT), the API takes several hours to publish results. During this gap, all messages and studies still reference the just-drawn contest as "próximo" because:
 
-**Logs afetados no dia 29 (noturno):** 8 logs entre 23:18 e 23:34 BRT, distribuídos entre:
-- Mega Sena - Post (slot_2)
-- Mega Sena - Sala Vip / Sala Secreta
-- Lotofácil - Post (slot_2) / Sala Secreta
+1. `resultados_loterias` hasn't received the new result yet, so `ultimoConcurso + 1` points to the contest that ALREADY happened.
+2. `proximos_concursos.data_sorteio` is in the past but nobody checks that.
+3. The footer "Próximo Concurso" shows a stale date/contest.
 
-Total atual de órfãos pendentes/failed na tabela: **12**.
+**Example**: Draw for Lotofacil 3677 happened on May 5 at 20:00 BRT. Studies and messages generated after that still say "Concurso 3677" and "Próximo Concurso: 3677 - 05/05". They should say "Concurso 3678".
 
-Os disparos diurnos do dia 30 (00h e 12h BRT) saíram normalmente porque foram agendados pelo `prepare` novo (com `message_content` pré-resolvido).
+## Solution
 
-## Por que o "Reagendar agora" não cobriu?
+Create a shared helper that determines the real "próximo concurso" by checking if the `proximos_concursos.data_sorteio` has already passed in BRT. Use this helper in all message/study generation paths.
 
-O botão **Reagendar agora** chama `prepare`, que agenda apenas o **próximo horário** de cada slot (`last_scheduled_index + 1`). Como vários horários noturnos já tinham logs antigos na fila, o `prepare` os ignorou via dedup de 20h e seguiu para o próximo horário do dia seguinte. Ou seja, os órfãos ficaram travando o dedup sem nunca serem substituídos.
+### 1. Create shared helper: `supabase/functions/_shared/proximo-concurso-helper.ts`
 
-## Plano de correção
+A function `getProximoConcursoReal(supabase, loteria)` that:
+- Reads `proximos_concursos` for the lottery
+- Reads the latest `resultados_loterias` concurso
+- Checks if `proximos_concursos.data_sorteio` is today or past (BRT, after 21:00 BRT to account for draw time + margin)
+- If the draw date has passed: returns `{ numero: proximos.numero_concurso + 1, dataSorteio: null, drawAlreadyHappened: true }`
+- If not: returns the normal `proximos_concursos` data with `drawAlreadyHappened: false`
+- Also returns the correct `ultimoConcurso` number (from the DB or from proximos if the draw happened)
 
-### 1. Limpar órfãos travados (one-shot SQL)
+### 2. Update `palpite-message.ts`
 
-Apagar todos os logs sem `message_source` E sem `message_content` que estejam `pending` ou `failed`, para liberar o dedup. Isso é seguro porque eles nunca serão enviados como estão.
+After fetching the latest result, call the helper to determine the real next contest number. If `drawAlreadyHappened`, use `concursoMax + 2` instead of `concursoMax + 1` for the message header "Palpites X - Concurso N".
 
-```sql
-DELETE FROM group_blast_logs
-WHERE message_source IS NULL
-  AND (message_content IS NULL OR message_content = '')
-  AND status IN ('pending','failed');
+### 3. Update `generate-guide-post/index.ts`
+
+Before computing `proxConcurso = ultimoConcurso + 1`, check via the helper if that contest's draw already happened. If so, skip generation (the study would be stale) OR adjust to the real next contest. The lock/dedup mechanism should also account for this.
+
+### 4. Update `glossario.ts` / `montarRodapeProximoConcurso`
+
+The footer function already receives data from `proximos_concursos`. The caller (generate-guide-post) should pass the corrected data from the helper. If the draw already happened and we don't know the next date, omit the footer or show just the contest number without a date.
+
+### 5. Update `resolver.ts` (group blast)
+
+The AI message resolver fetches the latest community post. If the post references a contest that already happened, the message will be stale. The resolver should check the helper before resolving AI messages.
+
+## Technical Details
+
+The BRT cutoff logic:
+```
+- Get current time in BRT
+- If proximos_concursos.data_sorteio < today_BRT: draw happened (past day)
+- If proximos_concursos.data_sorteio == today_BRT AND current_hour_BRT >= 21: draw likely happened (same day, after draw time + buffer)
+- Otherwise: draw hasn't happened yet
 ```
 
-### 2. Forçar replanejamento dos slots noturnos hoje (30/04)
+Files to create/modify:
+- `supabase/functions/_shared/proximo-concurso-helper.ts` (new)
+- `supabase/functions/_shared/group-blast/palpite-message.ts`
+- `supabase/functions/generate-guide-post/index.ts`
+- `supabase/functions/_shared/guide-post/glossario.ts`
+- `supabase/functions/_shared/group-blast/resolver.ts`
 
-Disparar `prepare` com `force=true` apenas para cobrir os horários noturnos. Como `force=true` agenda em `now + 30s * (slotIdx+1)` (modo teste imediato), **não usar force agora**. Em vez disso, basta um `prepare` normal — após a limpeza acima, ele encontrará os slots livres e reagendará os próximos horários (incluindo os noturnos de hoje).
-
-```bash
-# Via UI: botão "Reagendar agora" na aba WhatsApp → Disparo em Grupo
-# OU via curl:
-POST /functions/v1/group-blast-send  body: { "action": "prepare" }
-```
-
-### 3. Hardening no `prepare` para evitar nova ocorrência
-
-Atualizar `supabase/functions/_shared/group-blast/schedule.ts` na função `scheduleOne`: a checagem de dedup atual é
-
-```ts
-.neq("status", "failed")
-```
-
-Adicionar também: ignorar logs órfãos (sem `message_source`) ao calcular dedup. Ou seja, trocar para:
-
-```ts
-.neq("status", "failed")
-.not("message_source", "is", null)
-```
-
-Assim, mesmo se houver órfão "pending" travado, o `prepare` cria um novo log válido por cima e o dispatcher entrega o novo (o órfão envelhece e some do dedup em 20h).
-
-### 4. (Opcional) Limpeza automática
-
-Adicionar um job cron diário (`0 5 * * *` BRT = `8 UTC`) que rode a query do passo 1 para garantir que nenhum órfão fique acumulando.
-
-## Resumo de arquivos a tocar
-
-- **Migração SQL** (one-shot): DELETE dos órfãos.
-- **`supabase/functions/_shared/group-blast/schedule.ts`**: ajuste na query de dedup em `scheduleOne` (~3 linhas).
-- **(Opcional)** Migração SQL adicional: cron diário de limpeza.
-
-Após implantado, clico "Reagendar agora" para repopular a fila de hoje à noite com conteúdo pré-resolvido.
+All affected edge functions will be redeployed and tested.
