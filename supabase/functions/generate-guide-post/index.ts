@@ -217,17 +217,21 @@ serve(async (req) => {
       }
     }
 
-    // Rodapé universal
+    // Rodapé universal — usa dados corrigidos do helper (evita mostrar concurso já sorteado)
     try {
-      const prox = await getProximoConcursoCached(supabaseAdmin, loteria);
-      if (prox) {
+      if (!proxInfo.sorteioJaOcorreu && proxInfo.dataSorteio) {
+        // Só mostra rodapé se sabemos a data do próximo concurso real
         const rodape = montarRodapeProximoConcurso(
           config.loteria_tag,
-          prox.numero_concurso,
-          prox.data_sorteio,
-          prox.premio_estimado,
+          String(proxInfo.proximoConcurso),
+          proxInfo.dataSorteio,
+          proxInfo.premioEstimado,
         );
         if (rodape) conteudo = conteudo + rodape;
+      } else {
+        // Sorteio já ocorreu — mostra só o número do próximo sem data
+        const rodapeSemData = `\n\n📅 Próximo Concurso\n${config.loteria_tag} ${proxInfo.proximoConcurso}`;
+        conteudo = conteudo + rodapeSemData;
       }
     } catch (e) {
       console.warn(`[generate-guide-post] falha rodapé:`, e);
