@@ -62,6 +62,14 @@ export async function generatePalpiteMessage(
   const concursoMax = ultimoResultado.concurso;
   const concursoMin = Math.max(1, concursoMax - cfg.periodoAnalise + 1);
 
+  // Determinar o próximo concurso REAL (corrige atraso pós-sorteio)
+  const proxInfo = await getProximoConcursoReal(supabase, cfg.slug);
+  const proximoConcursoReal = proxInfo.proximoConcurso;
+
+  console.log(
+    `[palpite-message] ${cfg.slug}: DB max=${concursoMax}, próximo real=${proximoConcursoReal}, sorteioJaOcorreu=${proxInfo.sorteioJaOcorreu}`,
+  );
+
   // Quantidade de jogos a gerar (para a mensagem):
   //  - Lotofácil: 15 jogos (legacy)
   //  - Mega-Sena: 8 jogos (mais sensato dado que cada jogo tem 6 dezenas)
@@ -78,7 +86,7 @@ export async function generatePalpiteMessage(
       userId: null,
       supabaseAdmin: supabase,
       edgeFunction: `group-blast-palpite-${cfg.slug}`,
-      proximoConcurso: concursoMax + 1,
+      proximoConcurso: proximoConcursoReal,
     });
   } catch (err: any) {
     console.error(
