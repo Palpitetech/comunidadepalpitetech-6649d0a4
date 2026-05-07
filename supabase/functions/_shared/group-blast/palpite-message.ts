@@ -70,6 +70,16 @@ export async function generatePalpiteMessage(
     `[palpite-message] ${cfg.slug}: DB max=${concursoMax}, próximo real=${proximoConcursoReal}, sorteioJaOcorreu=${proxInfo.sorteioJaOcorreu}`,
   );
 
+  // Se o sorteio já ocorreu mas o resultado ainda não foi sincronizado no banco,
+  // NÃO enviar a mensagem — ela sairia com o resultado antigo.
+  // O blast tentará novamente no próximo ciclo quando o resultado estiver no DB.
+  if (proxInfo.sorteioJaOcorreu && concursoMax < proxInfo.proximoConcurso - 1) {
+    console.warn(
+      `[palpite-message] ${cfg.slug}: Sorteio já ocorreu mas DB ainda tem concurso ${concursoMax} (esperado ${proxInfo.proximoConcurso - 1}). Aguardando sincronização.`,
+    );
+    return null;
+  }
+
   // Quantidade de jogos a gerar (para a mensagem):
   //  - Lotofácil: 15 jogos (legacy)
   //  - Mega-Sena: 8 jogos (mais sensato dado que cada jogo tem 6 dezenas)
