@@ -199,33 +199,46 @@ export async function handleSend(
   let failed = 0;
   let pendingNoInstance = 0;
 
+  // Janela de carência: se a resolução falhar (ex.: sorteio acabou e o
+  // resultado ainda não sincronizou), mantemos o log `pending` por até
+  // GRACE_MINUTES e o cron tenta de novo. Depois disso, marca `failed`.
+  const GRACE_MINUTES = 60;
+
   for (const log of logs) {
-    // Safety net: log sem conteúdo (órfão de transição ou falha de prepare)
-    // Tenta resolver na hora; se falhar, marca failed em vez de ficar preso.
-    if (!log.message_content?.trim()) {
-      console.warn(`[dispatch] log=${log.id} sem message_content — tentando last-chance resolve`);
-      const { data: cfg } = await supabase
-        .from("group_blast_configs")
-        .select("slots, palpite_settings")
-        .eq("id", log.config_id)
-        .maybeSingle();
-      const slot = (cfg?.slots ?? []).find((s: any) => s.id === log.slot_id);
-      const r = await resolveMessage(supabase, slot, cfg, apiKey, baseUrl);
-      if (!r.content) {
-        await markFailed(
-          supabase,
-          log.id,
-          `Sem conteúdo pré-resolvido + last-chance resolve falhou (source=${r.source})`,
+    // SEMPRE reresolve a mensagem no momento do envio para garantir que
+    // o "Último Resultado" reflita o concurso mais novo no DB.
+    const { data: cfg } = await supabase
+      .from("group_blast_configs")
+      .select("slots, palpite_settings")
+      .eq("id", log.config_id)
+      .maybeSingle();
+    const slot = (cfg?.slots ?? []).find((s: any) => s.id === log.slot_id);
+    const r = await resolveMessage(supabase, slot, cfg, apiKey, baseUrl);
+
+    if (!r.content) {
+      const ageMs = Date.now() - new Date(log.scheduled_for).getTime();
+      if (ageMs < GRACE_MINUTES * 60 * 1000) {
+        console.log(
+          `[dispatch] log=${log.id} resolução pendente (source=${r.source}) — mantém pending (carência ${Math.round(ageMs / 60000)}min/${GRACE_MINUTES}min)`,
         );
-        failed++;
         continue;
       }
-      log.message_content = r.content;
-      await supabase
-        .from("group_blast_logs")
-        .update({ message_content: r.content, message_source: r.source })
-        .eq("id", log.id);
+      await markFailed(
+        supabase,
+        log.id,
+        `Resolução falhou após carência ${GRACE_MINUTES}min (source=${r.source})`,
+      );
+      failed++;
+      continue;
     }
+
+    log.message_content = r.content;
+    await supabase
+      .from("group_blast_logs")
+      .update({ message_content: r.content, message_source: r.source })
+      .eq("id", log.id);
+
+    console.log(`[dispatch] log=${log.id} resolved at send time (source=${r.source})`);
 
     const { data: candidates, error: candErr } = await selectInstancesForGroup(
       supabase,
@@ -311,27 +324,26 @@ export async function handleRetry(
   const apiKey = Deno.env.get("LOVABLE_API_KEY") ?? "";
   const baseUrl = Deno.env.get("COMMUNITY_BASE_URL") ?? "";
 
-  // 1) Resolve mensagem (reusa se já tiver)
-  let messageContent = log.message_content?.trim() ? log.message_content : null;
-  let messageSource = log.message_source ?? "reused";
+  // Retry SEMPRE reresolve para evitar reenviar resultado velho
+  const { data: configData } = await supabase
+    .from("group_blast_configs")
+    .select("slots, palpite_settings")
+    .eq("id", log.config_id)
+    .maybeSingle();
+  const slots: Slot[] = configData?.slots ?? [];
+  const slot = slots.find((s) => s.id === log.slot_id);
+  const resolved = await resolveMessage(supabase, slot, configData, apiKey, baseUrl);
+  let messageContent = resolved.content;
+  const messageSource = resolved.source;
 
-  if (!messageContent) {
-    const { data: configData } = await supabase
-      .from("group_blast_configs")
-      .select("slots, palpite_settings")
-      .eq("id", log.config_id)
-      .maybeSingle();
-    const slots: Slot[] = configData?.slots ?? [];
-    const slot = slots.find((s) => s.id === log.slot_id);
-    const r = await resolveMessage(supabase, slot, configData, apiKey, baseUrl);
-    messageContent = r.content;
-    messageSource = r.source;
-    if (messageContent) {
-      await supabase
-        .from("group_blast_logs")
-        .update({ message_content: messageContent, message_source: messageSource })
-        .eq("id", logId);
-    }
+  if (messageContent) {
+    await supabase
+      .from("group_blast_logs")
+      .update({ message_content: messageContent, message_source: messageSource })
+      .eq("id", logId);
+  } else if (log.message_content?.trim()) {
+    // Fallback: se reresolve falhar mas tinha conteúdo antigo, usa esse
+    messageContent = log.message_content;
   }
 
   if (!messageContent) {

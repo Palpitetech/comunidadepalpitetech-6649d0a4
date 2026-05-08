@@ -67,12 +67,11 @@ export async function generatePalpiteMessage(
   const proximoConcursoReal = proxInfo.proximoConcurso;
 
   console.log(
-    `[palpite-message] ${cfg.slug}: DB max=${concursoMax}, próximo real=${proximoConcursoReal}, sorteioJaOcorreu=${proxInfo.sorteioJaOcorreu}`,
+    `[palpite-message] ${cfg.slug}: cabeçalho=Concurso ${proximoConcursoReal} | últimoDB=${concursoMax} | sorteioJaOcorreu=${proxInfo.sorteioJaOcorreu}`,
   );
 
   // Se o sorteio já ocorreu mas o resultado ainda não foi sincronizado no banco,
-  // NÃO enviar a mensagem — ela sairia com o resultado antigo.
-  // O blast tentará novamente no próximo ciclo quando o resultado estiver no DB.
+  // sinalizar para o dispatcher segurar (carência) — ele tenta de novo no próximo ciclo.
   if (proxInfo.sorteioJaOcorreu && concursoMax < proxInfo.proximoConcurso - 1) {
     console.warn(
       `[palpite-message] ${cfg.slug}: Sorteio já ocorreu mas DB ainda tem concurso ${concursoMax} (esperado ${proxInfo.proximoConcurso - 1}). Aguardando sincronização.`,

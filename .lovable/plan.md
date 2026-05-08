@@ -1,59 +1,59 @@
 
-## Problem
+# Plano — Mensagem de Palpites sempre com o resultado mais novo
 
-After a lottery draw happens (~20:00 BRT), the API takes several hours to publish results. During this gap, all messages and studies still reference the just-drawn contest as "próximo" because:
+## Causa raiz (revisão tim‑tim)
 
-1. `resultados_loterias` hasn't received the new result yet, so `ultimoConcurso + 1` points to the contest that ALREADY happened.
-2. `proximos_concursos.data_sorteio` is in the past but nobody checks that.
-3. The footer "Próximo Concurso" shows a stale date/contest.
+Auditei o fluxo completo `group-blast-send` → `schedule.ts` → `resolver.ts` → `palpite-message.ts` → `dispatch.ts`. O bug não está na escolha do "próximo concurso", e sim em **QUANDO a mensagem é montada**:
 
-**Example**: Draw for Lotofacil 3677 happened on May 5 at 20:00 BRT. Studies and messages generated after that still say "Concurso 3677" and "Próximo Concurso: 3677 - 05/05". They should say "Concurso 3678".
+1. O cron `prepare` roda a cada 30 min (e também quando o admin clica "Preparar"). Ele já chama `resolveMessage()` e grava o **texto pronto** em `group_blast_logs.message_content` com status `pending`.
+2. O cron `send` (a cada 1 min) só pega `pending` com `scheduled_for <= now()` e entrega o texto **que já está congelado** no banco — sem nunca reconsultar `resultados_loterias`.
+3. Resultado prático: se o `prepare` rodou antes do resultado novo entrar na base (ex.: 19:30 BRT, sorteio 20:00, sync da API ~21:00) e o `send` dispara só às 21:30, a mensagem entregue carrega o **concurso anterior** mesmo com o novo já gravado em `resultados_loterias`. É exatamente o caso do C.3678 que você relatou.
+4. O guard anterior em `palpite-message.ts` (`return null` quando `sorteioJaOcorreu && concursoMax < proximoConcurso - 1`) apenas marca o log como `failed` no prepare — não conserta nada quando o resultado chega depois, porque ninguém regera.
 
-## Solution
+Conclusão: precisamos **resolver a mensagem na hora do envio**, não no prepare. O prepare deve só **agendar a intenção** (qual slot, qual grupo, qual horário). O conteúdo é montado pelo dispatcher segundos antes do envio, sempre lendo o último resultado da base.
 
-Create a shared helper that determines the real "próximo concurso" by checking if the `proximos_concursos.data_sorteio` has already passed in BRT. Use this helper in all message/study generation paths.
+## Mudanças propostas (sem executar até sua aprovação)
 
-### 1. Create shared helper: `supabase/functions/_shared/proximo-concurso-helper.ts`
+### 1. `schedule.ts` — prepare deixa de resolver
+- Remover a chamada a `resolveMessage()` dentro de `scheduleOne`.
+- Inserir o log com `status = "pending"`, `message_content = ""` (placeholder) e `message_source = "deferred"`.
+- Manter dedup, `last_scheduled_index`, audit em `group_blast_prepare_runs` (campo `slots_resolved` passa a refletir só "agendados").
+- `handleSendNow` passa pelo mesmo caminho — agenda em ~5s e o dispatcher resolve.
 
-A function `getProximoConcursoReal(supabase, loteria)` that:
-- Reads `proximos_concursos` for the lottery
-- Reads the latest `resultados_loterias` concurso
-- Checks if `proximos_concursos.data_sorteio` is today or past (BRT, after 21:00 BRT to account for draw time + margin)
-- If the draw date has passed: returns `{ numero: proximos.numero_concurso + 1, dataSorteio: null, drawAlreadyHappened: true }`
-- If not: returns the normal `proximos_concursos` data with `drawAlreadyHappened: false`
-- Also returns the correct `ultimoConcurso` number (from the DB or from proximos if the draw happened)
+### 2. `dispatch.ts` — `handleSend` resolve antes de cada entrega
+- Para cada log `pending` pronto, **sempre** chamar `resolveMessage()` agora (não só quando `message_content` está vazio — descartar o cache, ele estaria velho).
+- Se resolver retornar `null`:
+  - Se `scheduled_for` ainda está dentro de uma janela de carência (sugestão: 60 min, configurável), **manter `pending`** e tentar de novo no próximo ciclo do cron (1 min depois). Isso cobre o intervalo "sorteio acabou, API ainda não publicou".
+  - Se já passou da carência, marcar `failed` com motivo claro (`source` retornado pelo resolver).
+- Se resolver com sucesso: gravar `message_content` + `message_source` no log e seguir para `deliverViaCandidates`.
+- `handleRetry` fica igual em espírito, mas também **reresolve** sempre (não reaproveita texto antigo).
 
-### 2. Update `palpite-message.ts`
+### 3. `palpite-message.ts` — remover o guard que retornava null
+- O motivo do guard era evitar mandar resultado velho. Com resolução no envio + janela de carência no dispatcher, o guard vira contraproducente (impede a mensagem mesmo depois do sync).
+- Manter o uso de `getProximoConcursoReal()` para o cabeçalho ("Concurso N"), mas a seção "Último Resultado" passa a ler o **último concurso real do DB no momento do envio**, então sempre estará alinhada.
+- Adicionar log claro: `[palpite-message] cabeçalho=Concurso X | últimoDB=Y` para rastrear.
 
-After fetching the latest result, call the helper to determine the real next contest number. If `drawAlreadyHappened`, use `concursoMax + 2` instead of `concursoMax + 1` for the message header "Palpites X - Concurso N".
+### 4. `resolver.ts` — sem mudança funcional
+- Continua sendo a única fonte de verdade da mensagem; só passa a ser chamado em momento diferente.
 
-### 3. Update `generate-guide-post/index.ts`
+### 5. Migração de logs órfãos
+- Logs `pending` antigos com texto já congelado: deixá-los como estão (vão ser entregues na próxima execução; se o dispatcher resolver de novo, sobrescreve com a versão fresca — comportamento desejado).
+- Não precisa migration de schema; nenhuma coluna nova.
 
-Before computing `proxConcurso = ultimoConcurso + 1`, check via the helper if that contest's draw already happened. If so, skip generation (the study would be stale) OR adjust to the real next contest. The lock/dedup mechanism should also account for this.
+## Como vou validar depois de aprovado
 
-### 4. Update `glossario.ts` / `montarRodapeProximoConcurso`
+1. Disparar manualmente um `prepare` (admin /admin/whatsapp) — confirmar que logs entram `pending` com `message_content=""` e `message_source="deferred"`.
+2. Aguardar o cron `send` (ou chamar via curl) — confirmar nos logs do edge function `[dispatch] resolved at send time` e `message_content` preenchido com `Último Resultado (Concurso <último real>)`.
+3. Consultar o DB: o último log enviado deve referenciar o `concurso = max(resultados_loterias.concurso WHERE loteria=...)`.
+4. Simular cenário de atraso: derrubar temporariamente o último resultado da base, agendar `send_now`, ver o log ficar `pending` (carência) em vez de `failed` ou de mandar concurso velho; restaurar o resultado e ver o próximo ciclo entregar.
 
-The footer function already receives data from `proximos_concursos`. The caller (generate-guide-post) should pass the corrected data from the helper. If the draw already happened and we don't know the next date, omit the footer or show just the contest number without a date.
+## Arquivos que serão tocados
 
-### 5. Update `resolver.ts` (group blast)
+- `supabase/functions/_shared/group-blast/schedule.ts` (remover resolução)
+- `supabase/functions/_shared/group-blast/dispatch.ts` (resolver no envio + carência)
+- `supabase/functions/_shared/group-blast/palpite-message.ts` (remover guard, ajustar log)
+- Redeploy: `group-blast-send`
 
-The AI message resolver fetches the latest community post. If the post references a contest that already happened, the message will be stale. The resolver should check the helper before resolving AI messages.
+Nenhuma alteração de schema, nenhuma migration, nenhuma mudança de UI.
 
-## Technical Details
-
-The BRT cutoff logic:
-```
-- Get current time in BRT
-- If proximos_concursos.data_sorteio < today_BRT: draw happened (past day)
-- If proximos_concursos.data_sorteio == today_BRT AND current_hour_BRT >= 21: draw likely happened (same day, after draw time + buffer)
-- Otherwise: draw hasn't happened yet
-```
-
-Files to create/modify:
-- `supabase/functions/_shared/proximo-concurso-helper.ts` (new)
-- `supabase/functions/_shared/group-blast/palpite-message.ts`
-- `supabase/functions/generate-guide-post/index.ts`
-- `supabase/functions/_shared/guide-post/glossario.ts`
-- `supabase/functions/_shared/group-blast/resolver.ts`
-
-All affected edge functions will be redeployed and tested.
+Aguardo sua aprovação para implementar.

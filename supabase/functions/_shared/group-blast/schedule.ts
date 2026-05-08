@@ -8,7 +8,6 @@
 // =============================================================================
 
 import { jsonResponse } from "../whatsapp-utils.ts";
-import { resolveMessage } from "./resolver.ts";
 import type { PreparePayload, Slot } from "./types.ts";
 
 /**
@@ -51,8 +50,10 @@ interface InsertResult {
 }
 
 /**
- * Agenda um único log: resolve mensagem, aplica dedup (se não for force),
- * insere com status pending OU failed conforme resolução.
+ * Agenda um único log SEM resolver mensagem. O conteúdo é montado pelo
+ * dispatcher segundos antes do envio (sempre fresco, lendo o último
+ * resultado do DB no momento). Isso garante que mensagens enviadas tarde
+ * nunca carreguem o resultado anterior já desatualizado.
  */
 async function scheduleOne(
   supabase: any,
@@ -60,18 +61,12 @@ async function scheduleOne(
   slot: Slot,
   groupJid: string,
   scheduledFor: Date,
-  apiKey: string,
-  baseUrl: string,
   force: boolean,
 ): Promise<{ status: "prepared" | "skipped" | "failed"; error?: string }> {
   // Dedup (skip em modo force)
   if (!force) {
     const twentyHoursAgo = new Date(Date.now() - 20 * 60 * 60 * 1000)
       .toISOString();
-    // Dedup ignora:
-    //  - logs `failed` (podem ser substituídos)
-    //  - logs órfãos sem `message_source` (resíduo do refactor pré-2026-04-29;
-    //    nunca seriam entregues, então não devem travar o agendamento).
     const { count } = await supabase
       .from("group_blast_logs")
       .select("id", { count: "exact", head: true })
@@ -84,14 +79,6 @@ async function scheduleOne(
     if ((count ?? 0) > 0) return { status: "skipped" };
   }
 
-  const resolved = await resolveMessage(
-    supabase,
-    slot,
-    { palpite_settings: config.palpite_settings },
-    apiKey,
-    baseUrl,
-  );
-
   const insertPayload: any = {
     config_id: config.id,
     slot_id: slot.id,
@@ -99,28 +86,17 @@ async function scheduleOne(
     scheduled_for: scheduledFor.toISOString(),
     instance_id: null,
     evolution_instance_id: null,
-    message_source: resolved.source,
+    status: "pending",
+    message_content: "",
+    message_source: "deferred",
   };
-
-  if (resolved.content && resolved.content.trim().length > 0) {
-    insertPayload.status = "pending";
-    insertPayload.message_content = resolved.content;
-  } else {
-    insertPayload.status = "failed";
-    insertPayload.message_content = "";
-    insertPayload.error_message =
-      `Resolução de mensagem falhou (source=${resolved.source})`;
-    insertPayload.last_error_at = new Date().toISOString();
-  }
 
   const { error } = await supabase
     .from("group_blast_logs")
     .insert(insertPayload);
 
-  if (error) {
-    return { status: "failed", error: error.message };
-  }
-  return { status: insertPayload.status === "pending" ? "prepared" : "failed" };
+  if (error) return { status: "failed", error: error.message };
+  return { status: "prepared" };
 }
 
 /**
@@ -132,8 +108,6 @@ export async function handlePrepare(
   supabase: any,
   opts: PreparePayload,
 ): Promise<Response> {
-  const apiKey = Deno.env.get("LOVABLE_API_KEY") ?? "";
-  const baseUrl = Deno.env.get("COMMUNITY_BASE_URL") ?? "";
 
   let q = supabase.from("group_blast_configs").select("*");
   q = opts.config_id ? q.eq("id", opts.config_id) : q.eq("is_active", true);
@@ -182,8 +156,6 @@ export async function handlePrepare(
           slot,
           groupJid,
           scheduledFor,
-          apiKey,
-          baseUrl,
           !!opts.force,
         );
 
@@ -271,8 +243,6 @@ export async function handleSendNow(
     return jsonResponse({ error: "Nenhum grupo configurado" }, 400);
   }
 
-  const apiKey = Deno.env.get("LOVABLE_API_KEY") ?? "";
-  const baseUrl = Deno.env.get("COMMUNITY_BASE_URL") ?? "";
   const scheduledFor = new Date(Date.now() + 5_000);
   const results: { group: string; status: string; error?: string }[] = [];
 
@@ -283,8 +253,6 @@ export async function handleSendNow(
       slot,
       groupJid,
       scheduledFor,
-      apiKey,
-      baseUrl,
       true,
     );
     results.push({ group: groupJid, status: r.status, error: r.error });
