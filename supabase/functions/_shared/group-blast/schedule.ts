@@ -108,8 +108,6 @@ export async function handlePrepare(
   supabase: any,
   opts: PreparePayload,
 ): Promise<Response> {
-  const apiKey = Deno.env.get("LOVABLE_API_KEY") ?? "";
-  const baseUrl = Deno.env.get("COMMUNITY_BASE_URL") ?? "";
 
   let q = supabase.from("group_blast_configs").select("*");
   q = opts.config_id ? q.eq("id", opts.config_id) : q.eq("is_active", true);
