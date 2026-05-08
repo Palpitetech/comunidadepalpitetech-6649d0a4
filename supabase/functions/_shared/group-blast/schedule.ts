@@ -243,8 +243,6 @@ export async function handleSendNow(
     return jsonResponse({ error: "Nenhum grupo configurado" }, 400);
   }
 
-  const apiKey = Deno.env.get("LOVABLE_API_KEY") ?? "";
-  const baseUrl = Deno.env.get("COMMUNITY_BASE_URL") ?? "";
   const scheduledFor = new Date(Date.now() + 5_000);
   const results: { group: string; status: string; error?: string }[] = [];
 
@@ -255,8 +253,6 @@ export async function handleSendNow(
       slot,
       groupJid,
       scheduledFor,
-      apiKey,
-      baseUrl,
       true,
     );
     results.push({ group: groupJid, status: r.status, error: r.error });
