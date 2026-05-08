@@ -8,7 +8,6 @@
 // =============================================================================
 
 import { jsonResponse } from "../whatsapp-utils.ts";
-import { resolveMessage } from "./resolver.ts";
 import type { PreparePayload, Slot } from "./types.ts";
 
 /**
