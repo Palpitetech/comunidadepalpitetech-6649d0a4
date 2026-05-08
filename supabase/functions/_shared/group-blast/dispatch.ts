@@ -324,27 +324,26 @@ export async function handleRetry(
   const apiKey = Deno.env.get("LOVABLE_API_KEY") ?? "";
   const baseUrl = Deno.env.get("COMMUNITY_BASE_URL") ?? "";
 
-  // 1) Resolve mensagem (reusa se já tiver)
-  let messageContent = log.message_content?.trim() ? log.message_content : null;
-  let messageSource = log.message_source ?? "reused";
+  // Retry SEMPRE reresolve para evitar reenviar resultado velho
+  const { data: configData } = await supabase
+    .from("group_blast_configs")
+    .select("slots, palpite_settings")
+    .eq("id", log.config_id)
+    .maybeSingle();
+  const slots: Slot[] = configData?.slots ?? [];
+  const slot = slots.find((s) => s.id === log.slot_id);
+  const resolved = await resolveMessage(supabase, slot, configData, apiKey, baseUrl);
+  let messageContent = resolved.content;
+  const messageSource = resolved.source;
 
-  if (!messageContent) {
-    const { data: configData } = await supabase
-      .from("group_blast_configs")
-      .select("slots, palpite_settings")
-      .eq("id", log.config_id)
-      .maybeSingle();
-    const slots: Slot[] = configData?.slots ?? [];
-    const slot = slots.find((s) => s.id === log.slot_id);
-    const r = await resolveMessage(supabase, slot, configData, apiKey, baseUrl);
-    messageContent = r.content;
-    messageSource = r.source;
-    if (messageContent) {
-      await supabase
-        .from("group_blast_logs")
-        .update({ message_content: messageContent, message_source: messageSource })
-        .eq("id", logId);
-    }
+  if (messageContent) {
+    await supabase
+      .from("group_blast_logs")
+      .update({ message_content: messageContent, message_source: messageSource })
+      .eq("id", logId);
+  } else if (log.message_content?.trim()) {
+    // Fallback: se reresolve falhar mas tinha conteúdo antigo, usa esse
+    messageContent = log.message_content;
   }
 
   if (!messageContent) {
