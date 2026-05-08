@@ -156,8 +156,6 @@ export async function handlePrepare(
           slot,
           groupJid,
           scheduledFor,
-          apiKey,
-          baseUrl,
           !!opts.force,
         );
 
