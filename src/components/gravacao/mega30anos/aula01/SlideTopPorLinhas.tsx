@@ -28,40 +28,40 @@ export default function SlideTopPorLinhas({ concursos }: Props) {
   }, [concursos]);
 
   return (
-    <div className="w-full h-full flex flex-col pt-24 pb-6 px-6">
+    <div className="w-full h-full flex flex-col pt-24 pb-4 px-4">
       <Mega30Header
         aula={1}
         estudoNome="Top dezenas por LINHA"
         tipoAnalise={`Top ${TOP_POR_LINHA} de cada uma das 6 linhas em 30 anos`}
       />
-      <div className="flex flex-col gap-2 max-w-6xl mx-auto w-full mt-3">
+      <div className="flex flex-col gap-1.5 max-w-[1180px] mx-auto w-full mt-2 flex-1 justify-center">
         {dados.map((d) => (
           <div
             key={d.linha}
-            className="flex items-center gap-4 rounded-xl px-4 py-2"
+            className="flex items-center gap-3 rounded-lg px-3 py-1.5"
             style={{
               background:
                 "linear-gradient(180deg, rgba(10,40,24,0.92) 0%, rgba(6,28,16,0.92) 100%)",
               border: "2px solid rgba(212,175,55,0.7)",
-              boxShadow: "0 4px 14px rgba(0,0,0,0.45)",
+              boxShadow: "0 3px 12px rgba(0,0,0,0.45)",
             }}
           >
             <div
-              className="flex flex-col items-center justify-center shrink-0 w-16"
+              className="flex items-baseline gap-1.5 shrink-0 w-12"
               style={{
                 color: "#F5E6B3",
                 fontFamily: "'Cinzel', serif",
                 textShadow: "0 1px 3px rgba(0,0,0,0.6)",
               }}
             >
-              <span className="text-[11px] uppercase tracking-wider opacity-75">
+              <span className="text-[10px] uppercase tracking-wider opacity-70">
                 L
               </span>
-              <span className="font-extrabold leading-none" style={{ fontSize: 32 }}>
+              <span className="font-extrabold leading-none" style={{ fontSize: 26 }}>
                 {d.linha}
               </span>
             </div>
-            <div className="flex flex-wrap items-center gap-2 flex-1 justify-center">
+            <div className="flex flex-nowrap items-center gap-1.5 flex-1 justify-around">
               {d.itens.map((it) => (
                 <DezenaBolaMega
                   key={it.dezena}
