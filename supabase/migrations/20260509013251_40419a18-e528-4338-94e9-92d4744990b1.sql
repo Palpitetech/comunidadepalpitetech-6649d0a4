@@ -1,0 +1,1 @@
+UPDATE public.message_template_variants SET content = replace(content, 'https://www.palpitetech.com.br/g/grupo-vip-assinantes', 'https://chat.whatsapp.com/J89dx46Lo97G9YdAaGmR78') WHERE template_id = 'e22db03d-8f07-492d-b3c4-da4b9b011bf3';
