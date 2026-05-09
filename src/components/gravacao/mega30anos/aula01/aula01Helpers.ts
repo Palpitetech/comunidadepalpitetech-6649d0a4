@@ -1,7 +1,7 @@
 // Helpers da Aula 01 — dezenas de cada subdivisão do volante.
 // Usado pelos slides de "Top dezenas por linha/coluna/quadrante/mini-quadrante".
 
-import { MINI_QUADRANTES } from "@/lib/megaEspecialEngine";
+
 
 /** 6 linhas de 10 dezenas. */
 export const DEZENAS_LINHA: Record<number, number[]> = {
