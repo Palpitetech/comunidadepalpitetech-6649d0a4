@@ -71,10 +71,15 @@ describe("filtrarConcursos", () => {
 });
 
 describe("calcularEstudo — dezenas", () => {
-  it("ranking determinístico, dezena 41 lidera (3x)", () => {
+  it("ranking determinístico, dezenas 04 e 41 empatam em 3x (desempate por menor)", () => {
     const r = topDezenasGeral(base, 5);
+    // 04 aparece em c1, c3, c4 = 3x; 41 aparece em c1, c2, c3 = 3x.
+    // Desempate por chave ascendente → 04 lidera.
     expect(r.ranking[0]).toEqual(
-      expect.objectContaining({ chave: 41, freq: 3, posicao: 1, label: "41" }),
+      expect.objectContaining({ chave: 4, freq: 3, posicao: 1, label: "04" }),
+    );
+    expect(r.ranking[1]).toEqual(
+      expect.objectContaining({ chave: 41, freq: 3, posicao: 2 }),
     );
     expect(r.meta.engineVersion).toBe(ENGINE_VERSION);
     expect(r.meta.totalConcursos).toBe(6);
@@ -142,10 +147,11 @@ describe("agregadores", () => {
       expect((a.moldura + a.centro) % 6).toBe(0);
     }
   });
-  it("distribuicaoSoma soma todas as faixas == total concursos", () => {
+  it("distribuicaoSoma cobre faixas 60-360 (concursos fora ficam de fora)", () => {
     const agg = distribuicaoSoma(base);
     const total = agg.reduce((acc, f) => acc + f.freq, 0);
-    expect(total).toBe(base.length);
+    // concurso 4 (1+2+3+4+5+6=21) fica fora das faixas
+    expect(total).toBe(base.length - 1);
   });
   it("distribuicaoRepeticoes tem 7 buckets (0..6)", () => {
     const agg = distribuicaoRepeticoes(base);
