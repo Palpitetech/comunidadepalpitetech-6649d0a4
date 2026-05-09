@@ -91,7 +91,7 @@ export default function SlideTopPorMinis({ concursos, pagina }: Props) {
   const left = dados.slice(0, 4);
   const right = dados.slice(4, 8);
   const inicio = pagina === 1 ? 1 : 9;
-  const fim = pagina === 1 ? 8 : 16;
+  const fim = pagina === 1 ? 8 : 15;
 
   return (
     <div className="w-full h-full flex flex-col pt-24 pb-4 px-4">
