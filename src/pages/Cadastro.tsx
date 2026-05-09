@@ -153,6 +153,14 @@ export default function Cadastro() {
       const { data, error } = await supabase.functions.invoke("cadastro-iniciar-whatsapp", {
         body: { cadastro_id: cadastroId, celular: v.normalized },
       });
+      // Caso especial: rate limit, mas o código anterior já foi enviado
+      // e ainda é válido — avança para a tela de digitar o código.
+      if (data?.ja_enviado) {
+        setCelularMascarado(data.destino_mascarado || celular);
+        setEtapa("codigo-whatsapp");
+        setMsg({ tipo: "info", texto: data?.mensagem ?? "Código já enviado. Verifique seu WhatsApp." });
+        return;
+      }
       if (error || !data?.sucesso) {
         setMsg({
           tipo: "erro",
