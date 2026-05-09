@@ -238,6 +238,28 @@ export function MeusDadosTab({ profile, user }: MeusDadosTabProps) {
         </div>
       </section>
 
+      {/* Segurança */}
+      <section>
+        <SectionLabel>Segurança</SectionLabel>
+        <div className="rounded-2xl border bg-card overflow-hidden divide-y">
+          <DataRow
+            icon={Lock}
+            iconBg="bg-orange-500/10 text-orange-600 dark:text-orange-400"
+            label="Senha de acesso"
+            value="••••••••"
+            displayValue="••••••••"
+            copyable={false}
+            onTap={() => setTrocarSenhaOpen(true)}
+            action={
+              <span className="inline-flex items-center gap-0.5 text-xs font-medium text-primary px-1.5 py-1 rounded">
+                Trocar
+                <ChevronRight className="h-3.5 w-3.5" />
+              </span>
+            }
+          />
+        </div>
+      </section>
+
       {/* Drawers */}
       <EditarNomeDrawer
         open={editNomeOpen}
