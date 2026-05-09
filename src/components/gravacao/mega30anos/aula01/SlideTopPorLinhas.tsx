@@ -8,7 +8,7 @@ interface Props {
   concursos: ConcursoMega[];
 }
 
-const TOP_POR_LINHA = 5;
+const TOP_POR_LINHA = 10;
 
 export default function SlideTopPorLinhas({ concursos }: Props) {
   const dados = useMemo(() => {
