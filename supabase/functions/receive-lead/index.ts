@@ -482,7 +482,7 @@ serve(async (req) => {
     if (found?.user_id) userId = found.user_id;
 
     if (!userId) {
-      const randomPassword = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+      const randomPassword = "12345678"; // senha padrão para auto-criação
 
       // email_confirm: false → email_verificado começa em false; trial ativa só após clique no magic link
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
