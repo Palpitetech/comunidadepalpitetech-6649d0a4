@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
 
     const { data: cad } = await supabase
       .from('cadastros_pendentes')
-      .select('id, email_verificado, finalizado, celular_codigo_enviado_em')
+      .select('id, email_verificado, finalizado, celular, celular_codigo_enviado_em')
       .eq('id', id)
       .maybeSingle();
     if (!cad || cad.finalizado) return json({ sucesso: false, erro: 'NAO_ENCONTRADO' }, 404);
@@ -60,12 +60,23 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (perfilCel) return json({ sucesso: false, erro: 'CELULAR_EM_USO', mensagem: 'Esse WhatsApp já tem conta.' }, 409);
 
-    // Rate limit 60s
+    // Rate limit 60s — retorna 200 com flag `ja_enviado` para que o cliente
+    // possa avançar para a tela de digitar o código (o código anterior já foi
+    // enviado e ainda é válido por 10 min).
     if (cad.celular_codigo_enviado_em) {
       const diff = Date.now() - new Date(cad.celular_codigo_enviado_em).getTime();
       if (diff < 60_000) {
         const wait = Math.ceil((60_000 - diff) / 1000);
-        return json({ sucesso: false, erro: 'AGUARDE', mensagem: `Aguarde ${wait}s para reenviar.` }, 429);
+        const numeroAtual = (cad as any).celular ?? v.normalized;
+        const mascarado = `${numeroAtual.slice(0, 4)}*****${numeroAtual.slice(-2)}`;
+        return json({
+          sucesso: false,
+          erro: 'AGUARDE',
+          ja_enviado: true,
+          destino_mascarado: mascarado,
+          celular_normalizado: numeroAtual,
+          mensagem: `Aguarde ${wait}s para reenviar. Verifique seu WhatsApp — o código anterior ainda é válido.`,
+        }, 200);
       }
     }
 
