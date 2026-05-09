@@ -35,7 +35,7 @@ export default function SlideTopParesPorQuadrantes({ concursos }: Props) {
   }, [concursos]);
 
   return (
-    <div className="w-full h-full flex flex-col pt-20 sm:pt-24 pb-3 sm:pb-4 px-2 sm:px-4">
+    <div className="w-full h-full flex flex-col pt-28 sm:pt-32 lg:pt-36 pb-3 sm:pb-4 px-2 sm:px-4">
       <Mega30Header
         aula={2}
         estudoNome="Top dezenas PARES por QUADRANTE"
