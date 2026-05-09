@@ -272,6 +272,10 @@ export function MeusDadosTab({ profile, user }: MeusDadosTabProps) {
         open={celularOpen}
         onOpenChange={setCelularOpen}
       />
+      <TrocarSenhaDialog
+        open={trocarSenhaOpen}
+        onOpenChange={setTrocarSenhaOpen}
+      />
     </div>
   );
 }
