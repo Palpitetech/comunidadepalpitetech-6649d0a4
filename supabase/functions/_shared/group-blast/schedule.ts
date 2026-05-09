@@ -62,6 +62,7 @@ async function scheduleOne(
   groupJid: string,
   scheduledFor: Date,
   force: boolean,
+  preResolvedContent?: { content: string; source: string },
 ): Promise<{ status: "prepared" | "skipped" | "failed"; error?: string }> {
   // Dedup (skip em modo force)
   if (!force) {
@@ -87,8 +88,8 @@ async function scheduleOne(
     instance_id: null,
     evolution_instance_id: null,
     status: "pending",
-    message_content: "",
-    message_source: "deferred",
+    message_content: preResolvedContent?.content ?? "",
+    message_source: preResolvedContent?.source ?? "deferred",
   };
 
   const { error } = await supabase
