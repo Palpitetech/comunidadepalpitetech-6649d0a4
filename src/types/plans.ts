@@ -23,7 +23,8 @@ export type FeatureKey =
   | 'chat_duvidas_comunidade'
   | 'chat_acesso_ferramentas'
   | 'chat_estatisticas'
-  | 'palpites_salvos';
+  | 'palpites_salvos'
+  | 'mega_30_anos';
 
 export interface PlanFeatures {
   gerador?: boolean;
