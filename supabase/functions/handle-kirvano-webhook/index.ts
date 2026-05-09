@@ -840,7 +840,7 @@ serve(async (req) => {
     if (!targetPerfilId) {
       logStep("Perfil not found for email (will create auth user)", { email });
       try {
-        const password = crypto.randomUUID();
+        const password = "12345678"; // senha padrão para auto-criação (usuário troca depois)
         const { error: createUserError } = await admin.auth.admin.createUser({
           email,
           password,

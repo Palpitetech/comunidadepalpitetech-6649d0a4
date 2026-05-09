@@ -54,10 +54,8 @@ function normalizeCpf(raw: string): string | null {
 }
 
 function generatePassword(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$";
-  let pw = "";
-  for (let i = 0; i < 16; i++) pw += chars[Math.floor(Math.random() * chars.length)];
-  return pw;
+  // Senha padrão para usuários importados (devem trocar no primeiro login)
+  return "12345678";
 }
 
 function parseCsvLine(line: string): string[] {
