@@ -1993,6 +1993,36 @@ export type Database = {
           },
         ]
       }
+      mega30_aula_descricoes: {
+        Row: {
+          aula_id: string
+          descricao_youtube: string
+          engine_version: string | null
+          generated_at: string
+          generated_by: string | null
+          slides: Json
+          updated_at: string
+        }
+        Insert: {
+          aula_id: string
+          descricao_youtube?: string
+          engine_version?: string | null
+          generated_at?: string
+          generated_by?: string | null
+          slides?: Json
+          updated_at?: string
+        }
+        Update: {
+          aula_id?: string
+          descricao_youtube?: string
+          engine_version?: string | null
+          generated_at?: string
+          generated_by?: string | null
+          slides?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       message_queue: {
         Row: {
           campaign_id: string | null
