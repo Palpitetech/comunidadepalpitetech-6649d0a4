@@ -10,7 +10,7 @@ interface Props {
   pagina: 1 | 2;
 }
 
-const TOP_POR_MINI = 3;
+const TOP_POR_MINI = 10;
 
 export default function SlideTopPorMinis({ concursos, pagina }: Props) {
   const dados = useMemo(() => {
