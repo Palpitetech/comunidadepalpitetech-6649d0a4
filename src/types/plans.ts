@@ -23,7 +23,8 @@ export type FeatureKey =
   | 'chat_duvidas_comunidade'
   | 'chat_acesso_ferramentas'
   | 'chat_estatisticas'
-  | 'palpites_salvos';
+  | 'palpites_salvos'
+  | 'mega_30_anos';
 
 export interface PlanFeatures {
   gerador?: boolean;
@@ -49,6 +50,7 @@ export interface PlanFeatures {
   chat_acesso_ferramentas?: boolean;
   chat_estatisticas?: boolean;
   palpites_salvos?: boolean;
+  mega_30_anos?: boolean;
 }
 
 export interface Plan {
@@ -120,6 +122,7 @@ export const FEATURE_LABELS: Record<FeatureKey, string> = {
   chat_acesso_ferramentas: 'Chat: Acesso às ferramentas',
   chat_estatisticas: 'Chat: Conversar sobre estatísticas',
   palpites_salvos: 'Meus Palpites (Salvar)',
+  mega_30_anos: 'Mega 30 Anos (Estudos especiais)',
 };
 
 // Categorias de features
@@ -133,7 +136,7 @@ export const FEATURE_CATEGORIES: FeatureCategory[] = [
   {
     label: 'Ferramentas',
     emoji: '🛠️',
-    features: ['gerador', 'fechamento', 'desdobramento', 'palpites_salvos'],
+    features: ['gerador', 'fechamento', 'desdobramento', 'palpites_salvos', 'mega_30_anos'],
   },
   {
     label: 'Estatísticas',
