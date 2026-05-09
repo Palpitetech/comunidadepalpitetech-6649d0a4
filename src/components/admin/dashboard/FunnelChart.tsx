@@ -17,6 +17,13 @@ import { DailyPoint } from "@/hooks/admin/useDashboardMetrics";
 import { PeriodFilter } from "./PeriodFilter";
 import { CustomRange, PeriodKey } from "@/hooks/useDashboardPeriod";
 
+// Recebe "YYYY-MM-DD" do bucketing em SP e cria a Date sem aplicar fuso,
+// para que o eixo X mostre exatamente o dia agrupado.
+function parseBucketDate(v: string): Date {
+  const [y, m, d] = v.split("-").map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+}
+
 interface FunnelChartProps {
   data: DailyPoint[];
   loading?: boolean;
