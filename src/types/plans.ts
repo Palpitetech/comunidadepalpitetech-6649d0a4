@@ -50,6 +50,7 @@ export interface PlanFeatures {
   chat_acesso_ferramentas?: boolean;
   chat_estatisticas?: boolean;
   palpites_salvos?: boolean;
+  mega_30_anos?: boolean;
 }
 
 export interface Plan {
