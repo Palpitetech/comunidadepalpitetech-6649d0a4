@@ -6,6 +6,9 @@ export interface Slot {
   last_scheduled_index: number;
   message_type?: "ai" | "manual" | "palpite";
   message_content?: string;
+  /** Rotação de textos manuais. Quando presente, ignora message_content e cicla
+   *  pelos textos usando o mesmo índice de schedule_times (1 texto por dia). */
+  message_contents?: string[];
   /** Loteria associada ao slot (relevante para "ai" e "palpite"). Default: lotofacil */
   loteria?: BlastLoteria;
 }
