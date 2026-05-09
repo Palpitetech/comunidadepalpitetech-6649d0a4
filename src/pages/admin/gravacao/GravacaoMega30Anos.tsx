@@ -8,11 +8,30 @@ import Slide04Top15Geral from "@/components/gravacao/mega30anos/estudo01/Slide04
 import capa01 from "@/assets/gravacao/megasena-30anos/capas/capa-01.jpg";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { getEstudo } from "@/lib/mega30/estudosCatalog";
 
 const ANOS_POR_PAGINA = 8;
 
 export default function GravacaoMega30Anos() {
+  const { id } = useParams<{ id?: string }>();
+  const aulaId = id ?? "01";
+  const estudo = getEstudo(aulaId);
   const { data, isLoading, isError } = useGravacaoMega30Anos();
+
+  // Aulas ainda não produzidas: placeholder
+  if (aulaId !== "01") {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center text-center px-8" style={{ background: "#0A2818" }}>
+        <div>
+          <p className="text-2xl font-bold mb-2" style={{ color: "#D4AF37", fontFamily: "Cinzel, serif" }}>
+            Aula {aulaId} — {estudo?.titulo ?? "Estudo"}
+          </p>
+          <p style={{ color: "#D4AF37", opacity: 0.7 }}>Slides em produção.</p>
+        </div>
+      </div>
+    );
+  }
 
   // Carregar Cinzel
   useEffect(() => {
