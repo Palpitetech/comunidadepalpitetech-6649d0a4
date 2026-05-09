@@ -64,9 +64,18 @@ function parseBRL(s?: string | null): number {
   return isNaN(n) ? 0 : n;
 }
 
+// Formata uma Date no fuso de São Paulo como "YYYY-MM-DD"
+const BR_DAY_FMT = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/Sao_Paulo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
 function dayKey(d: Date | string): string {
   const dt = typeof d === "string" ? new Date(d) : d;
-  return dt.toISOString().slice(0, 10);
+  // en-CA já entrega "YYYY-MM-DD"
+  return BR_DAY_FMT.format(dt);
 }
 
 function buildDailySeries(
@@ -77,14 +86,18 @@ function buildDailySeries(
   vendas: { received_at: string }[]
 ): DailyPoint[] {
   const map = new Map<string, DailyPoint>();
-  const cur = new Date(from);
-  cur.setHours(0, 0, 0, 0);
-  const end = new Date(to);
-  end.setHours(0, 0, 0, 0);
-  while (cur <= end) {
-    const k = dayKey(cur);
-    map.set(k, { date: k, cadastros: 0, verificados: 0, vendas: 0 });
-    cur.setDate(cur.getDate() + 1);
+  // Itera dia-a-dia usando o calendário de São Paulo
+  let curKey = dayKey(from);
+  const endKey = dayKey(to);
+  // Avança 1 dia somando 24h ao timestamp UTC e re-formatando em BR;
+  // em datas DST (raro hoje no Brasil) ainda gera a sequência correta.
+  let cursor = new Date(from.getTime());
+  // Garantia de progresso: máximo 400 iterações (>1 ano)
+  let safety = 0;
+  while (curKey <= endKey && safety++ < 400) {
+    map.set(curKey, { date: curKey, cadastros: 0, verificados: 0, vendas: 0 });
+    cursor = new Date(cursor.getTime() + 24 * 60 * 60 * 1000);
+    curKey = dayKey(cursor);
   }
   cadastros.forEach((c) => {
     const k = dayKey(c.created_at);
