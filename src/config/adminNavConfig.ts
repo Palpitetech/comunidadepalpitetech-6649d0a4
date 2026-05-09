@@ -124,7 +124,7 @@ export const adminNavConfig: NavSection[] = [
     label: "Gravação Mega Especial",
     icon: Video,
     items: [
-      // Aulas serão adicionadas conforme você definir os temas
+      { title: "Aula 01 — Top dezenas", url: "/admin/gravacao/mega-especial/01", icon: BarChart3 },
     ],
   },
   {
