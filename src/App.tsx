@@ -16,7 +16,7 @@ import { useForceUpdate } from "@/hooks/useForceUpdate";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
-// RecuperarSenha removido
+import ResetPassword from "./pages/ResetPassword";
 import Comunidade from "./pages/Comunidade";
 import Notificacoes from "./pages/Notificacoes";
 import Resultados from "./pages/Resultados";
@@ -170,7 +170,7 @@ const App = () => (
                 <Route path="/" element={<Central />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/cadastro" element={<Cadastro />} />
-                {/* RecuperarSenha removido */}
+                <Route path="/reset-password" element={<ResetPassword />} />
 {/* AtivarConta e VerificarEmail removidos */}
                 <Route path="/termos" element={<Termos />} />
                 <Route path="/privacidade" element={<Privacidade />} />
