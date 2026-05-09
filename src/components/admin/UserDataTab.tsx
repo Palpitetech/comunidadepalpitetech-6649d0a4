@@ -113,22 +113,31 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
   };
 
   const handleResetPassword = async () => {
-    const identificador = user.email || user.celular;
-    if (!identificador) {
-      toast.error("Usuário não tem email nem celular cadastrado");
+    if (!user.email) {
+      toast.error("Usuário não tem email cadastrado");
       return;
     }
 
     setResettingPassword(true);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("recuperar-senha", {
-        body: { identificador },
-      });
+      const { data, error: fnError } = await supabase.functions.invoke(
+        "admin-generate-recovery-link",
+        { body: { user_id: user.id, email: user.email } }
+      );
 
-      if (fnError) throw new Error("Erro ao redefinir senha");
-      if (!data?.sucesso) throw new Error(data?.erro || "Erro ao redefinir senha");
+      if (fnError) throw new Error(fnError.message || "Erro ao gerar link");
+      if (!data?.sucesso || !data?.action_link) {
+        throw new Error(data?.error || "Erro ao gerar link de recuperação");
+      }
 
-      toast.success("Senha redefinida para 12345678" + (data.email_enviado ? " — email enviado" : ""));
+      const actionLink: string = data.action_link;
+
+      try {
+        await navigator.clipboard.writeText(actionLink);
+        toast.success("Link de recuperação copiado! Válido por 1 hora.");
+      } catch {
+        toast.success("Link de recuperação gerado (válido por 1 hora)");
+      }
 
       const telefone = user.celular;
       if (telefone) {
@@ -143,20 +152,18 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
             const numero = telefone.replace(/\D/g, "");
             const numeroBR = numero.startsWith("55") ? numero : `55${numero}`;
             const nomeUsuario = user.nome || "Usuário";
-            const loginEmail = user.email || identificador;
 
             const mensagem = [
               `Olá ${nomeUsuario}! 👋`,
               ``,
-              `Sua senha foi redefinida com sucesso. Acesse com as credenciais abaixo:`,
+              `Recebemos uma solicitação para redefinir sua senha no Palpite Tech.`,
               ``,
-              `📧 Email: ${loginEmail}`,
-              `🔑 Senha: 12345678`,
+              `🔗 Clique no link abaixo para criar uma nova senha:`,
+              actionLink,
               ``,
-              `🔗 Link de acesso:`,
-              LOGIN_URL,
+              `⏱️ Este link é válido por 1 hora.`,
               ``,
-              `⚠️ Recomendamos que você troque sua senha após o primeiro acesso.`,
+              `Se você não solicitou, ignore esta mensagem.`,
             ].join("\n");
 
             await supabase.functions.invoke("evolution-proxy", {
@@ -168,18 +175,16 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
               },
             });
 
-            toast.success("Mensagem WhatsApp enviada!");
-          } else {
-            toast.info("Nenhuma instância WhatsApp online — apenas email enviado");
+            toast.success("Link enviado por WhatsApp!");
           }
         } catch (whatsErr) {
           console.error("Erro ao enviar WhatsApp:", whatsErr);
-          toast.info("WhatsApp não enviado, mas email foi");
+          toast.info("WhatsApp não enviado — link copiado para a área de transferência");
         }
       }
     } catch (error: any) {
-      console.error("Erro ao redefinir senha:", error);
-      toast.error(error.message || "Erro ao redefinir senha");
+      console.error("Erro ao gerar link:", error);
+      toast.error(error.message || "Erro ao gerar link de recuperação");
     } finally {
       setResettingPassword(false);
     }
