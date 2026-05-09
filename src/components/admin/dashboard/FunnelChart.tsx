@@ -101,7 +101,7 @@ export function FunnelChart({
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
                 <XAxis
                   dataKey="date"
-                  tickFormatter={(v) => format(new Date(v), "dd/MM", { locale: ptBR })}
+                  tickFormatter={(v) => format(parseBucketDate(v), "dd/MM", { locale: ptBR })}
                   fontSize={10}
                   stroke="hsl(var(--muted-foreground))"
                 />
@@ -113,7 +113,7 @@ export function FunnelChart({
                     borderRadius: 8,
                     fontSize: 12,
                   }}
-                  labelFormatter={(v) => format(new Date(v), "dd 'de' MMM", { locale: ptBR })}
+                  labelFormatter={(v) => format(parseBucketDate(v), "dd 'de' MMM", { locale: ptBR })}
                 />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Line
