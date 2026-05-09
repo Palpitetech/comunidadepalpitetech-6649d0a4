@@ -300,6 +300,9 @@ const App = () => (
                 <Route path="/admin/gravacao/resultado/quina" element={<AdminRoute><GravacaoQuina /></AdminRoute>} />
                 <Route path="/admin/gravacao/resultado/megasena" element={<AdminRoute><GravacaoMegasena /></AdminRoute>} />
                 <Route path="/admin/gravacao/mega-30-anos" element={<AdminRoute><GravacaoMega30Anos /></AdminRoute>} />
+                <Route path="/admin/gravacao/mega-especial/:id" element={<AdminRoute><GravacaoMega30Anos /></AdminRoute>} />
+                <Route path="/mega-30" element={<AdminRoute><HubMega30Anos /></AdminRoute>} />
+                <Route path="/mega-30/estudo/:id" element={<AdminRoute><EstudoMega30 /></AdminRoute>} />
                 <Route path="/admin/gravacao/estudos/:loteria" element={<AdminRoute><GravacaoEstudos /></AdminRoute>} />
                 <Route path="/admin/gravacao-estudo/megasena/posicoes-finais" element={<AdminRoute><PosicoesFinaisMegaSena /></AdminRoute>} />
 
