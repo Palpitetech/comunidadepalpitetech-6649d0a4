@@ -13,7 +13,7 @@ import SlideTopParesPorColunas from "@/components/gravacao/mega30anos/aula02/Sli
 import SlideTopParesPorQuadrantes from "@/components/gravacao/mega30anos/aula02/SlideTopParesPorQuadrantes";
 import SlideTopParesPorMinis from "@/components/gravacao/mega30anos/aula02/SlideTopParesPorMinis";
 import SlideTop15ParesFinal from "@/components/gravacao/mega30anos/aula02/SlideTop15ParesFinal";
-import Mega30CapaProvisoria from "@/components/gravacao/mega30anos/Mega30CapaProvisoria";
+import capa02 from "@/assets/gravacao/megasena-30anos/capas/capa-02.jpg";
 import SlideDescricaoYoutube from "@/components/gravacao/mega30anos/SlideDescricaoYoutube";
 import { useMegaEspecialBase } from "@/hooks/useMegaEspecialBase";
 import { topDezenasGeral } from "@/lib/megaEspecialEngine";
