@@ -167,7 +167,7 @@ export default function GravacaoShell({ children, concurso, data, loteria = "lot
             style={{
               width: "100vw",
               height: "100vh",
-              padding: "64px",
+              padding: "120px 64px 80px",
               boxSizing: "border-box",
             }}
           >
