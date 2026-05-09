@@ -124,21 +124,7 @@ export const adminNavConfig: NavSection[] = [
     label: "Gravação Mega Especial",
     icon: Video,
     items: [
-      { title: "Aula 01 — Top 15 nos 30 anos", url: "/admin/gravacao/mega-especial/01", icon: BarChart3 },
-      { title: "Aula 02 — Linhas mais sorteadas", url: "/admin/gravacao/mega-especial/02", icon: BarChart3 },
-      { title: "Aula 03 — Colunas mais sorteadas", url: "/admin/gravacao/mega-especial/03", icon: BarChart3 },
-      { title: "Aula 04 — Quadrantes", url: "/admin/gravacao/mega-especial/04", icon: BarChart3 },
-      { title: "Aula 05 — Mini-quadrantes", url: "/admin/gravacao/mega-especial/05", icon: BarChart3 },
-      { title: "Aula 06 — Top por linha", url: "/admin/gravacao/mega-especial/06", icon: BarChart3 },
-      { title: "Aula 07 — Top por coluna", url: "/admin/gravacao/mega-especial/07", icon: BarChart3 },
-      { title: "Aula 08 — Top por quadrante", url: "/admin/gravacao/mega-especial/08", icon: BarChart3 },
-      { title: "Aula 09 — Top por mini-quadrante", url: "/admin/gravacao/mega-especial/09", icon: BarChart3 },
-      { title: "Aula 10 — Pares × Ímpares", url: "/admin/gravacao/mega-especial/10", icon: BarChart3 },
-      { title: "Aula 11 — Moldura × Centro", url: "/admin/gravacao/mega-especial/11", icon: BarChart3 },
-      { title: "Aula 12 — Soma das dezenas", url: "/admin/gravacao/mega-especial/12", icon: BarChart3 },
-      { title: "Aula 13 — Repetições", url: "/admin/gravacao/mega-especial/13", icon: BarChart3 },
-      { title: "Aula 14 — Sequências", url: "/admin/gravacao/mega-especial/14", icon: BarChart3 },
-      { title: "Aula 15 — Mega da Virada", url: "/admin/gravacao/mega-especial/15", icon: BarChart3 },
+      // Aulas serão adicionadas conforme você definir os temas
     ],
   },
   {
