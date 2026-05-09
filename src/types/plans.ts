@@ -136,7 +136,7 @@ export const FEATURE_CATEGORIES: FeatureCategory[] = [
   {
     label: 'Ferramentas',
     emoji: '🛠️',
-    features: ['gerador', 'fechamento', 'desdobramento', 'palpites_salvos'],
+    features: ['gerador', 'fechamento', 'desdobramento', 'palpites_salvos', 'mega_30_anos'],
   },
   {
     label: 'Estatísticas',
