@@ -40,9 +40,25 @@ function ColunaRow({ coluna, itens }: { coluna: number; itens: ItemDezena[] }) {
         </span>
       </div>
       <div className="flex flex-nowrap items-center gap-1.5 flex-1 justify-around">
-        {itens.map((it) => (
-          <DezenaBolaMega key={it.dezena} numero={it.dezena} size="sm" freq={it.freq} />
-        ))}
+        {itens.map((it, idx) => {
+          const isTop3 = idx < 3;
+          return (
+            <div
+              key={it.dezena}
+              className="rounded-md p-1"
+              style={
+                isTop3
+                  ? {
+                      border: "2px solid #E53935",
+                      boxShadow: "0 0 8px rgba(229,57,53,0.55)",
+                    }
+                  : { border: "2px solid transparent" }
+              }
+            >
+              <DezenaBolaMega numero={it.dezena} size="sm" freq={it.freq} />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
