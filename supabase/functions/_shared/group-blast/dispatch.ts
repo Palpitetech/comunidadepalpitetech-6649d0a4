@@ -213,32 +213,32 @@ export async function handleSend(
       .eq("id", log.config_id)
       .maybeSingle();
     const slot = (cfg?.slots ?? []).find((s: any) => s.id === log.slot_id);
-    const r = await resolveMessage(supabase, slot, cfg, apiKey, baseUrl);
+    const resolved = await resolveMessage(supabase, slot, cfg, apiKey, baseUrl);
 
-    if (!r.content) {
+    if (!resolved.content) {
       const ageMs = Date.now() - new Date(log.scheduled_for).getTime();
       if (ageMs < GRACE_MINUTES * 60 * 1000) {
         console.log(
-          `[dispatch] log=${log.id} resolução pendente (source=${r.source}) — mantém pending (carência ${Math.round(ageMs / 60000)}min/${GRACE_MINUTES}min)`,
+          `[dispatch] log=${log.id} resolução pendente (source=${resolved.source}) — mantém pending (carência ${Math.round(ageMs / 60000)}min/${GRACE_MINUTES}min)`,
         );
         continue;
       }
       await markFailed(
         supabase,
         log.id,
-        `Resolução falhou após carência ${GRACE_MINUTES}min (source=${r.source})`,
+        `Resolução falhou após carência ${GRACE_MINUTES}min (source=${resolved.source})`,
       );
       failed++;
       continue;
     }
 
-    log.message_content = r.content;
+    log.message_content = resolved.content;
     await supabase
       .from("group_blast_logs")
-      .update({ message_content: r.content, message_source: r.source })
+      .update({ message_content: resolved.content, message_source: resolved.source })
       .eq("id", log.id);
 
-    console.log(`[dispatch] log=${log.id} resolved at send time (source=${r.source})`);
+    console.log(`[dispatch] log=${log.id} resolved at send time (source=${resolved.source})`);
 
     const { data: candidates, error: candErr } = await selectInstancesForGroup(
       supabase,
