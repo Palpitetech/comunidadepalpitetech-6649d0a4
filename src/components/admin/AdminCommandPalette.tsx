@@ -69,6 +69,7 @@ const ITEMS: CmdItem[] = [
   { label: "Gravação Lotofácil", url: "/admin/gravacao/lotofacil", icon: BarChart3, group: "Gravação" },
   { label: "Gravação Quina", url: "/admin/gravacao/quina", icon: BarChart3, group: "Gravação" },
   { label: "Gravação Mega-Sena", url: "/admin/gravacao/megasena", icon: BarChart3, group: "Gravação" },
+  { label: "Gravação Mega 30 Anos", url: "/admin/gravacao/mega-30-anos", icon: BarChart3, group: "Gravação" },
 
   { label: "Métricas", url: "/admin/metricas", icon: BarChart2, group: "Sistema" },
   { label: "Integrações", url: "/admin/integracoes", icon: Plug, group: "Sistema" },
