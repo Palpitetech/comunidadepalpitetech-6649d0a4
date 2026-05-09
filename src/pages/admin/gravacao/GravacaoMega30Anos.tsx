@@ -13,7 +13,13 @@ import SlideTopParesPorColunas from "@/components/gravacao/mega30anos/aula02/Sli
 import SlideTopParesPorQuadrantes from "@/components/gravacao/mega30anos/aula02/SlideTopParesPorQuadrantes";
 import SlideTopParesPorMinis from "@/components/gravacao/mega30anos/aula02/SlideTopParesPorMinis";
 import SlideTop15ParesFinal from "@/components/gravacao/mega30anos/aula02/SlideTop15ParesFinal";
+import SlideTopImparesPorLinhas from "@/components/gravacao/mega30anos/aula03/SlideTopImparesPorLinhas";
+import SlideTopImparesPorColunas from "@/components/gravacao/mega30anos/aula03/SlideTopImparesPorColunas";
+import SlideTopImparesPorQuadrantes from "@/components/gravacao/mega30anos/aula03/SlideTopImparesPorQuadrantes";
+import SlideTopImparesPorMinis from "@/components/gravacao/mega30anos/aula03/SlideTopImparesPorMinis";
+import SlideTop15ImparesFinal from "@/components/gravacao/mega30anos/aula03/SlideTop15ImparesFinal";
 import capa02 from "@/assets/gravacao/megasena-30anos/capas/capa-02.jpg";
+import capa03 from "@/assets/gravacao/megasena-30anos/capas/capa-03.jpg";
 import SlideDescricaoYoutube from "@/components/gravacao/mega30anos/SlideDescricaoYoutube";
 import { useMegaEspecialBase } from "@/hooks/useMegaEspecialBase";
 import { topDezenasGeral } from "@/lib/megaEspecialEngine";
@@ -71,7 +77,7 @@ export default function GravacaoMega30Anos() {
   }, [concursos]);
 
   // Aulas ainda não produzidas: placeholder
-  if (aulaId !== "01" && aulaId !== "02") {
+  if (aulaId !== "01" && aulaId !== "02" && aulaId !== "03") {
     return (
       <div
         className="fixed inset-0 flex items-center justify-center text-center px-8"
@@ -122,6 +128,20 @@ export default function GravacaoMega30Anos() {
         <SlideTopParesPorMinis concursos={concursos} pagina={1} />
         <SlideTopParesPorMinis concursos={concursos} pagina={2} />
         <SlideTop15ParesFinal concursos={concursos} />
+      </Mega30Shell>
+    );
+  }
+
+  if (aulaId === "03") {
+    return (
+      <Mega30Shell capaIndices={[0]}>
+        <Mega30Capa src={capa03} alt="Aula 03 — Top dezenas ímpares" />
+        <SlideTopImparesPorLinhas concursos={concursos} />
+        <SlideTopImparesPorColunas concursos={concursos} />
+        <SlideTopImparesPorQuadrantes concursos={concursos} />
+        <SlideTopImparesPorMinis concursos={concursos} pagina={1} />
+        <SlideTopImparesPorMinis concursos={concursos} pagina={2} />
+        <SlideTop15ImparesFinal concursos={concursos} />
       </Mega30Shell>
     );
   }
