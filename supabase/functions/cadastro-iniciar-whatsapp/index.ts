@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
 
     const { data: cad } = await supabase
       .from('cadastros_pendentes')
-      .select('id, email_verificado, finalizado, celular_codigo_enviado_em')
+      .select('id, email_verificado, finalizado, celular, celular_codigo_enviado_em')
       .eq('id', id)
       .maybeSingle();
     if (!cad || cad.finalizado) return json({ sucesso: false, erro: 'NAO_ENCONTRADO' }, 404);
