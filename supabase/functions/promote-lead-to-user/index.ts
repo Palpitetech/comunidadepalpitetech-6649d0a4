@@ -95,7 +95,7 @@ serve(async (req) => {
 
     let isNew = false;
     if (!userId) {
-      const randomPassword = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+      const randomPassword = "12345678"; // senha padrão para auto-criação
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email,
         password: randomPassword,
