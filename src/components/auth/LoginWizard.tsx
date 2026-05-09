@@ -132,19 +132,16 @@ export function LoginWizard() {
     if (!identificador) return;
     setIsLoading(true);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("recuperar-senha", {
-        body: { identificador },
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(identificador.trim().toLowerCase(), {
+        redirectTo: `${window.location.origin}/reset-password`,
       });
-      if (fnError) throw new Error("Erro ao redefinir senha");
-      if (!data?.sucesso) throw new Error(data?.erro || "Erro ao redefinir senha");
+      if (resetError) throw resetError;
       toast({
-        title: "Senha redefinida para 12345678",
-        description: data.email_enviado
-          ? "Enviamos a nova senha por e-mail."
-          : "Senha redefinida. Use 12345678 para entrar.",
+        title: "Link de redefinição enviado",
+        description: "Abra o link recebido no e-mail para criar uma nova senha.",
       });
     } catch (err: any) {
-      toast({ title: "Erro", description: err?.message || "Não foi possível redefinir a senha.", variant: "destructive" });
+      toast({ title: "Erro", description: err?.message || "Não foi possível enviar o link.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
