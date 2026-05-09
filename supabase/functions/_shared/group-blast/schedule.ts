@@ -146,6 +146,20 @@ export async function handlePrepare(
       const nextIndex = ((slot.last_scheduled_index ?? -1) + 1) % times.length;
       const [hh, mm] = times[nextIndex].split(":");
 
+      // Rotação de textos manuais: 1 texto por execução, ciclando pelo array
+      let preResolved: { content: string; source: string } | undefined;
+      if (
+        slot.message_type === "manual" &&
+        Array.isArray(slot.message_contents) &&
+        slot.message_contents.length > 0
+      ) {
+        const arr = slot.message_contents.filter((s) => s && s.trim());
+        if (arr.length > 0) {
+          const contentIdx = nextIndex % arr.length;
+          preResolved = { content: arr[contentIdx], source: `manual:rotated:${contentIdx}` };
+        }
+      }
+
       for (const groupJid of groupJids) {
         const scheduledFor = opts.force
           ? new Date(Date.now() + 30_000 * (slotIdx + 1))
@@ -158,6 +172,7 @@ export async function handlePrepare(
           groupJid,
           scheduledFor,
           !!opts.force,
+          preResolved,
         );
 
         if (r.status === "prepared") {
