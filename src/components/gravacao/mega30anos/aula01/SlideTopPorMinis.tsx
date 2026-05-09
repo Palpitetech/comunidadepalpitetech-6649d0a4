@@ -6,7 +6,7 @@ import Mega30Header from "../Mega30Header";
 
 interface Props {
   concursos: ConcursoMega[];
-  /** 1 = mostra MQ 1-8, 2 = mostra MQ 9-16 */
+  /** 1 = mostra MQ 1-8, 2 = mostra MQ 9-15 */
   pagina: 1 | 2;
 }
 
