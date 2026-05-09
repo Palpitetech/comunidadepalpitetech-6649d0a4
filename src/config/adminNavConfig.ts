@@ -125,6 +125,7 @@ export const adminNavConfig: NavSection[] = [
     icon: Video,
     items: [
       { title: "Aula 01 — Top dezenas", url: "/admin/gravacao/mega-especial/01", icon: BarChart3 },
+      { title: "Aula 02 — Top pares", url: "/admin/gravacao/mega-especial/02", icon: BarChart3 },
     ],
   },
   {
