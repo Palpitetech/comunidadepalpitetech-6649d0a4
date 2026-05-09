@@ -28,6 +28,12 @@ export function useAuth() {
         });
 
         if (session?.user) {
+          const isPasswordRecovery = event === "PASSWORD_RECOVERY";
+          if (isPasswordRecovery) {
+            setProfile(null);
+            return;
+          }
+
           // Fetch profile with setTimeout to avoid race conditions
           setTimeout(async () => {
             const { data } = await supabase

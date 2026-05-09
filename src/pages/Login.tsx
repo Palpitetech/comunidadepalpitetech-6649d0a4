@@ -11,6 +11,13 @@ export default function Auth() {
   const location = useLocation();
 
   useEffect(() => {
+    const hashType = new URLSearchParams(window.location.hash.replace(/^#/, "")).get("type");
+    const searchType = new URLSearchParams(window.location.search).get("type");
+    if (hashType === "recovery" || searchType === "recovery") {
+      navigate(`/reset-password${window.location.search}${window.location.hash}`, { replace: true });
+      return;
+    }
+
     // Redireciona se autenticado e tiver nome (perfil completo)
     if (isAuthenticated && profile?.nome) {
       const from = (location.state as any)?.from?.pathname || "/home";
