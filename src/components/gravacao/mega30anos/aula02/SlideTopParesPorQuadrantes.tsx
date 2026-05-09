@@ -24,7 +24,7 @@ export default function SlideTopParesPorQuadrantes({ concursos }: Props) {
         estudoId: `aula02-quadrante-${q}`,
         agrupamento: "dezena",
         periodo: { tipo: "total" },
-        topN: dezenas.length,
+        topN: 6,
         restringirA: dezenas,
       });
       return {
