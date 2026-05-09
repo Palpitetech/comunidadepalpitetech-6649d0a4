@@ -265,12 +265,12 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
         </h3>
         <div className="bg-muted/50 rounded-lg p-3 space-y-2">
           <p className="text-xs text-muted-foreground">
-            Redefine para 12345678 e envia notificação por email e WhatsApp com o link de acesso.
+            Gera um link seguro de redefinição (válido por 1 hora), copia para a área de transferência e envia por WhatsApp se houver celular.
           </p>
           <Button
             variant="outline"
             onClick={handleResetPassword}
-            disabled={resettingPassword || (!user.email && !user.celular)}
+            disabled={resettingPassword || !user.email}
             className="w-full gap-2"
             size="sm"
           >
@@ -279,7 +279,7 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
             ) : (
               <KeyRound className="h-4 w-4" />
             )}
-            Gerar Nova Senha (12345678)
+            Gerar Link de Redefinição
           </Button>
         </div>
       </div>
