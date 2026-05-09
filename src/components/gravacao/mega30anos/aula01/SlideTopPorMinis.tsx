@@ -69,7 +69,7 @@ function MiniRow({ mini, itens }: { mini: number; itens: ItemDezena[] }) {
 export default function SlideTopPorMinis({ concursos, pagina }: Props) {
   const dados = useMemo(() => {
     const inicio = pagina === 1 ? 1 : 9;
-    const fim = pagina === 1 ? 8 : 16;
+    const fim = pagina === 1 ? 8 : 15;
     const out: { mini: number; itens: ItemDezena[] }[] = [];
     for (let m = inicio; m <= fim; m++) {
       const dezenas = DEZENAS_MINI[m] ?? [];
