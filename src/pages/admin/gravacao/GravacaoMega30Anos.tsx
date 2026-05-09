@@ -5,6 +5,8 @@ import Slide01TopPorMes from "@/components/gravacao/mega30anos/estudo01/Slide01T
 import Slide02TopPorAno from "@/components/gravacao/mega30anos/estudo01/Slide02TopPorAno";
 import Slide03TopPorSemestre from "@/components/gravacao/mega30anos/estudo01/Slide03TopPorSemestre";
 import Slide04Top15Geral from "@/components/gravacao/mega30anos/estudo01/Slide04Top15Geral";
+import SlideDescricaoYoutube from "@/components/gravacao/mega30anos/SlideDescricaoYoutube";
+import type { SlideMeta } from "@/hooks/useMega30AulaDescricao";
 import capa01 from "@/assets/gravacao/megasena-30anos/capas/capa-01.jpg";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
