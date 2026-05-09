@@ -1,7 +1,7 @@
 // Helpers da Aula 01 — dezenas de cada subdivisão do volante.
 // Usado pelos slides de "Top dezenas por linha/coluna/quadrante/mini-quadrante".
 
-import { MINI_QUADRANTES } from "@/lib/megaEspecialEngine";
+
 
 /** 6 linhas de 10 dezenas. */
 export const DEZENAS_LINHA: Record<number, number[]> = {
@@ -29,5 +29,29 @@ export const DEZENAS_QUADRANTE: Record<number, number[]> = {
   4: [36, 37, 38, 39, 40, 46, 47, 48, 49, 50, 56, 57, 58, 59, 60],
 };
 
-/** Re-export para conveniência (mini-quadrantes 1..16). */
-export const DEZENAS_MINI = MINI_QUADRANTES;
+/**
+ * Mini-quadrantes da Aula 01 — 15 blocos de 4 dezenas cada.
+ * Volante 6×10 dividido em 3 bandas de linhas (1-2, 3-4, 5-6)
+ * × 5 bandas de colunas (1-2, 3-4, 5-6, 7-8, 9-10) = 15 mini-quadrantes.
+ */
+export const DEZENAS_MINI: Record<number, number[]> = (() => {
+  const out: Record<number, number[]> = {};
+  let mq = 1;
+  for (let bandaLinha = 0; bandaLinha < 3; bandaLinha++) {
+    for (let bandaCol = 0; bandaCol < 5; bandaCol++) {
+      const linhaTop = bandaLinha * 2 + 1; // 1, 3, 5
+      const colEsq = bandaCol * 2 + 1; // 1, 3, 5, 7, 9
+      const base1 = (linhaTop - 1) * 10; // 0, 20, 40
+      const base2 = linhaTop * 10; // 10, 30, 50
+      out[mq] = [
+        base1 + colEsq,
+        base1 + colEsq + 1,
+        base2 + colEsq,
+        base2 + colEsq + 1,
+      ];
+      mq++;
+    }
+  }
+  return out;
+})();
+
