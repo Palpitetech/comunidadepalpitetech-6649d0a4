@@ -13,7 +13,7 @@ import SlideTopParesPorColunas from "@/components/gravacao/mega30anos/aula02/Sli
 import SlideTopParesPorQuadrantes from "@/components/gravacao/mega30anos/aula02/SlideTopParesPorQuadrantes";
 import SlideTopParesPorMinis from "@/components/gravacao/mega30anos/aula02/SlideTopParesPorMinis";
 import SlideTop15ParesFinal from "@/components/gravacao/mega30anos/aula02/SlideTop15ParesFinal";
-import Mega30CapaProvisoria from "@/components/gravacao/mega30anos/Mega30CapaProvisoria";
+import capa02 from "@/assets/gravacao/megasena-30anos/capas/capa-02.jpg";
 import SlideDescricaoYoutube from "@/components/gravacao/mega30anos/SlideDescricaoYoutube";
 import { useMegaEspecialBase } from "@/hooks/useMegaEspecialBase";
 import { topDezenasGeral } from "@/lib/megaEspecialEngine";
@@ -115,11 +115,7 @@ export default function GravacaoMega30Anos() {
   if (aulaId === "02") {
     return (
       <Mega30Shell capaIndices={[0]}>
-        <Mega30CapaProvisoria
-          aula={2}
-          titulo="Top dezenas PARES"
-          subtitulo="Aula 02 · Maratona Mega Especial 30 anos"
-        />
+        <Mega30Capa src={capa02} alt="Aula 02 — Top dezenas pares" />
         <SlideTopParesPorLinhas concursos={concursos} />
         <SlideTopParesPorColunas concursos={concursos} />
         <SlideTopParesPorQuadrantes concursos={concursos} />
