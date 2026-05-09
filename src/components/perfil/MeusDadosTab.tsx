@@ -157,6 +157,7 @@ export function MeusDadosTab({ profile, user }: MeusDadosTabProps) {
   const queryClient = useQueryClient();
   const [editNomeOpen, setEditNomeOpen] = useState(false);
   const [celularOpen, setCelularOpen] = useState(false);
+  const [trocarSenhaOpen, setTrocarSenhaOpen] = useState(false);
 
   const handleCelularSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["profile"] });
