@@ -978,9 +978,21 @@ serve(async (req) => {
       validade_assinatura: validade,
       plan_id: offerMap.plan_id,
     };
-    if (phone) updateData.celular = phone;
-    if (cpf) updateData.cpf = cpf;
-    if (customerName) updateData.nome = customerName;
+    // Proteção: se o perfil foi encontrado por TELEFONE (email do Kirvano difere do
+    // email cadastrado), NÃO sobrescreve dados pessoais — apenas vincula a venda.
+    // Evita casos onde um cliente digita errado o WhatsApp no checkout e altera
+    // o nome/celular/cpf de outro usuário existente.
+    const matchedByPhoneOnly = foundData?.found_by === "celular";
+    if (!matchedByPhoneOnly) {
+      if (phone) updateData.celular = phone;
+      if (cpf) updateData.cpf = cpf;
+      if (customerName) updateData.nome = customerName;
+    } else {
+      logStep("Skipping personal data overwrite — matched by phone with different email", {
+        perfil_email: perfil?.email,
+        kirvano_email: email,
+      });
+    }
 
     const { error: updateError } = await admin.from("perfis").update(updateData).eq("id", targetPerfilId);
     if (updateError) {
