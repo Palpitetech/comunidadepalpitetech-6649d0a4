@@ -112,6 +112,24 @@ export default function GravacaoMega30Anos() {
     );
   }
 
+  if (aulaId === "02") {
+    return (
+      <Mega30Shell capaIndices={[0]}>
+        <Mega30CapaProvisoria
+          aula={2}
+          titulo="Top dezenas PARES"
+          subtitulo="Aula 02 · Maratona Mega Especial 30 anos"
+        />
+        <SlideTopParesPorLinhas concursos={concursos} />
+        <SlideTopParesPorColunas concursos={concursos} />
+        <SlideTopParesPorQuadrantes concursos={concursos} />
+        <SlideTopParesPorMinis concursos={concursos} pagina={1} />
+        <SlideTopParesPorMinis concursos={concursos} pagina={2} />
+        <SlideTop15ParesFinal concursos={concursos} />
+      </Mega30Shell>
+    );
+  }
+
   return (
     <Mega30Shell capaIndices={[0]}>
       <Mega30Capa src={capa01} alt="Aula 01 — Top dezenas nos 30 anos" />
