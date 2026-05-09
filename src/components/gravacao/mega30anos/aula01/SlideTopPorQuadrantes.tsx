@@ -8,7 +8,7 @@ interface Props {
   concursos: ConcursoMega[];
 }
 
-const TOP_POR_QUADRANTE = 8;
+const TOP_POR_QUADRANTE = 10;
 
 const POSICAO_LABEL: Record<number, string> = {
   1: "Superior Esquerdo",
