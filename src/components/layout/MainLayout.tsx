@@ -7,6 +7,7 @@ import { MobileBottomNav } from "./MobileBottomNav";
 import { MobileMenuSheet } from "./MobileMenuSheet";
 
 import { RequireCelularModal } from "@/components/shared/RequireCelularModal";
+import { MegaEspecialBanner } from "@/components/shared/MegaEspecialBanner";
 import { PageVideo } from "@/components/shared/PageVideo";
 import { PushNotificationBanner } from "@/components/pwa/PushNotificationBanner";
 import { DownloadBanner } from "@/components/pwa/DownloadBanner";
@@ -44,6 +45,9 @@ export function MainLayout({
 
   return (
     <div className="min-h-screen flex flex-col bg-background" style={{ paddingBottom: isMobile ? 'env(safe-area-inset-bottom, 0px)' : undefined }}>
+      {/* Banner promocional global */}
+      <MegaEspecialBanner />
+
       {/* Header unificado mobile + desktop */}
       <AppHeader
         pageTitle={pageTitle}
