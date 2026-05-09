@@ -8,6 +8,12 @@ import SlideTopPorColunas from "@/components/gravacao/mega30anos/aula01/SlideTop
 import SlideTopPorQuadrantes from "@/components/gravacao/mega30anos/aula01/SlideTopPorQuadrantes";
 import SlideTopPorMinis from "@/components/gravacao/mega30anos/aula01/SlideTopPorMinis";
 import SlideTop15Final from "@/components/gravacao/mega30anos/aula01/SlideTop15Final";
+import SlideTopParesPorLinhas from "@/components/gravacao/mega30anos/aula02/SlideTopParesPorLinhas";
+import SlideTopParesPorColunas from "@/components/gravacao/mega30anos/aula02/SlideTopParesPorColunas";
+import SlideTopParesPorQuadrantes from "@/components/gravacao/mega30anos/aula02/SlideTopParesPorQuadrantes";
+import SlideTopParesPorMinis from "@/components/gravacao/mega30anos/aula02/SlideTopParesPorMinis";
+import SlideTop15ParesFinal from "@/components/gravacao/mega30anos/aula02/SlideTop15ParesFinal";
+import Mega30CapaProvisoria from "@/components/gravacao/mega30anos/Mega30CapaProvisoria";
 import SlideDescricaoYoutube from "@/components/gravacao/mega30anos/SlideDescricaoYoutube";
 import { useMegaEspecialBase } from "@/hooks/useMegaEspecialBase";
 import { topDezenasGeral } from "@/lib/megaEspecialEngine";
@@ -65,7 +71,7 @@ export default function GravacaoMega30Anos() {
   }, [concursos]);
 
   // Aulas ainda não produzidas: placeholder
-  if (aulaId !== "01") {
+  if (aulaId !== "01" && aulaId !== "02") {
     return (
       <div
         className="fixed inset-0 flex items-center justify-center text-center px-8"
@@ -103,6 +109,24 @@ export default function GravacaoMega30Anos() {
       >
         <p style={{ color: "#D4AF37" }}>Erro ao carregar dados da Mega-Sena</p>
       </div>
+    );
+  }
+
+  if (aulaId === "02") {
+    return (
+      <Mega30Shell capaIndices={[0]}>
+        <Mega30CapaProvisoria
+          aula={2}
+          titulo="Top dezenas PARES"
+          subtitulo="Aula 02 · Maratona Mega Especial 30 anos"
+        />
+        <SlideTopParesPorLinhas concursos={concursos} />
+        <SlideTopParesPorColunas concursos={concursos} />
+        <SlideTopParesPorQuadrantes concursos={concursos} />
+        <SlideTopParesPorMinis concursos={concursos} pagina={1} />
+        <SlideTopParesPorMinis concursos={concursos} pagina={2} />
+        <SlideTop15ParesFinal concursos={concursos} />
+      </Mega30Shell>
     );
   }
 
