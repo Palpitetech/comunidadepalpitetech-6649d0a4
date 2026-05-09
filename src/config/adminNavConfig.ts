@@ -117,6 +117,7 @@ export const adminNavConfig: NavSection[] = [
     items: [
       { title: "Lotofácil", url: "/admin/gravacao/estudos/lotofacil", icon: BarChart3 },
       { title: "Mega-Sena", url: "/admin/gravacao/estudos/megasena", icon: BarChart3 },
+      { title: "Mega 30 Anos", url: "/admin/gravacao/mega-30-anos", icon: BarChart3 },
     ],
   },
   {
