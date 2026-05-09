@@ -121,6 +121,7 @@ export const FEATURE_LABELS: Record<FeatureKey, string> = {
   chat_acesso_ferramentas: 'Chat: Acesso às ferramentas',
   chat_estatisticas: 'Chat: Conversar sobre estatísticas',
   palpites_salvos: 'Meus Palpites (Salvar)',
+  mega_30_anos: 'Mega 30 Anos (Estudos especiais)',
 };
 
 // Categorias de features
