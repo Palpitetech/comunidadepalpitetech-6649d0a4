@@ -1,8 +1,9 @@
 import { useState, useRef, ReactNode } from "react";
-import { Mail, Phone, User, Hash, Copy, Check, CheckCircle2, AlertCircle, Pencil, ChevronRight, type LucideIcon } from "lucide-react";
+import { Mail, Phone, User, Hash, Copy, Check, CheckCircle2, AlertCircle, Pencil, ChevronRight, Lock, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { AlterarCelularDialog } from "@/components/perfil/AlterarCelularDialog";
 import { EditarNomeDrawer } from "@/components/perfil/EditarNomeDrawer";
+import { TrocarSenhaDialog } from "@/components/perfil/TrocarSenhaDialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatCelularMask } from "@/lib/celular";
 import type { Profile } from "@/types/profile";
