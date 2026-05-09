@@ -1,8 +1,9 @@
 import { useState, useRef, ReactNode } from "react";
-import { Mail, Phone, User, Hash, Copy, Check, CheckCircle2, AlertCircle, Pencil, ChevronRight, type LucideIcon } from "lucide-react";
+import { Mail, Phone, User, Hash, Copy, Check, CheckCircle2, AlertCircle, Pencil, ChevronRight, Lock, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { AlterarCelularDialog } from "@/components/perfil/AlterarCelularDialog";
 import { EditarNomeDrawer } from "@/components/perfil/EditarNomeDrawer";
+import { TrocarSenhaDialog } from "@/components/perfil/TrocarSenhaDialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatCelularMask } from "@/lib/celular";
 import type { Profile } from "@/types/profile";
@@ -156,6 +157,7 @@ export function MeusDadosTab({ profile, user }: MeusDadosTabProps) {
   const queryClient = useQueryClient();
   const [editNomeOpen, setEditNomeOpen] = useState(false);
   const [celularOpen, setCelularOpen] = useState(false);
+  const [trocarSenhaOpen, setTrocarSenhaOpen] = useState(false);
 
   const handleCelularSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["profile"] });
@@ -236,6 +238,28 @@ export function MeusDadosTab({ profile, user }: MeusDadosTabProps) {
         </div>
       </section>
 
+      {/* Segurança */}
+      <section>
+        <SectionLabel>Segurança</SectionLabel>
+        <div className="rounded-2xl border bg-card overflow-hidden divide-y">
+          <DataRow
+            icon={Lock}
+            iconBg="bg-orange-500/10 text-orange-600 dark:text-orange-400"
+            label="Senha de acesso"
+            value="••••••••"
+            displayValue="••••••••"
+            copyable={false}
+            onTap={() => setTrocarSenhaOpen(true)}
+            action={
+              <span className="inline-flex items-center gap-0.5 text-xs font-medium text-primary px-1.5 py-1 rounded">
+                Trocar
+                <ChevronRight className="h-3.5 w-3.5" />
+              </span>
+            }
+          />
+        </div>
+      </section>
+
       {/* Drawers */}
       <EditarNomeDrawer
         open={editNomeOpen}
@@ -247,6 +271,10 @@ export function MeusDadosTab({ profile, user }: MeusDadosTabProps) {
         onSuccess={handleCelularSuccess}
         open={celularOpen}
         onOpenChange={setCelularOpen}
+      />
+      <TrocarSenhaDialog
+        open={trocarSenhaOpen}
+        onOpenChange={setTrocarSenhaOpen}
       />
     </div>
   );
