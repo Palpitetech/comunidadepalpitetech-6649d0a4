@@ -129,6 +129,8 @@ import GerarJogos from "./pages/GerarJogos";
 import Central from "./pages/Central";
 import VerificarWhatsApp from "./pages/VerificarWhatsApp";
 import PalpitesEstudos from "./pages/PalpitesEstudos";
+import HubMega30Anos from "./pages/mega30/HubMega30Anos";
+import EstudoMega30 from "./pages/mega30/EstudoMega30";
 
 const queryClient = new QueryClient();
 
