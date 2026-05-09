@@ -116,6 +116,7 @@ import GeradorEstudo from "./pages/lotofacil/GeradorEstudo";
 import GravacaoLotofacil from "./pages/admin/gravacao/GravacaoLotofacil";
 import GravacaoQuina from "./pages/admin/gravacao/GravacaoQuina";
 import GravacaoMegasena from "./pages/admin/gravacao/GravacaoMegasena";
+import GravacaoMega30Anos from "./pages/admin/gravacao/GravacaoMega30Anos";
 import GravacaoEstudos from "./pages/admin/gravacao/GravacaoEstudos";
 import PosicoesFinaisMegaSena from "./pages/admin/gravacao/estudos/PosicoesFinaisMegaSena";
 import SmartLinkRedirect from "./pages/SmartLinkRedirect";
@@ -298,6 +299,7 @@ const App = () => (
                 <Route path="/admin/gravacao/resultado/lotofacil" element={<AdminRoute><GravacaoLotofacil /></AdminRoute>} />
                 <Route path="/admin/gravacao/resultado/quina" element={<AdminRoute><GravacaoQuina /></AdminRoute>} />
                 <Route path="/admin/gravacao/resultado/megasena" element={<AdminRoute><GravacaoMegasena /></AdminRoute>} />
+                <Route path="/admin/gravacao/mega-30-anos" element={<AdminRoute><GravacaoMega30Anos /></AdminRoute>} />
                 <Route path="/admin/gravacao/estudos/:loteria" element={<AdminRoute><GravacaoEstudos /></AdminRoute>} />
                 <Route path="/admin/gravacao-estudo/megasena/posicoes-finais" element={<AdminRoute><PosicoesFinaisMegaSena /></AdminRoute>} />
 
