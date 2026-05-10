@@ -36,7 +36,7 @@ export function MegaEspecialBanner() {
           </div>
         </div>
         <a
-          href="https://www.palpitetech.com.br/g/90chnh2i"
+          href="https://chat.whatsapp.com/EBHBFt2h8UOGlzIau0nZ54"
           target="_blank"
           rel="noopener noreferrer"
           className="w-full sm:w-auto text-center shrink-0 bg-white text-megasena-primary font-bold text-sm px-4 py-2.5 sm:py-2 rounded-full hover:bg-white/90 active:scale-95 transition shadow min-h-[44px] flex items-center justify-center"
