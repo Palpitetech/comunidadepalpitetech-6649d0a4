@@ -275,14 +275,14 @@ export function LoginWizard() {
                     autoFocus
                     required
                   />
-                  <Button
-                    type="button"
-                    variant="link"
-                    onClick={handleForgotPassword}
-                    className="p-0 h-auto text-xs text-muted-foreground hover:text-primary"
+                  <a
+                    href="https://wa.me/5516997175392?text=Ol%C3%A1!%20Preciso%20resetar%20minha%20senha%20do%20Palpite%20Tech"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block p-0 h-auto text-xs text-muted-foreground hover:text-primary underline-offset-2 hover:underline"
                   >
-                    Esqueci minha senha
-                  </Button>
+                    Esqueci minha senha — falar com suporte
+                  </a>
                 </div>
                 <div className="flex gap-2">
                   <Button
