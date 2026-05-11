@@ -16,7 +16,7 @@ import { useForceUpdate } from "@/hooks/useForceUpdate";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
-import ResetPassword from "./pages/ResetPassword";
+
 import Comunidade from "./pages/Comunidade";
 import Notificacoes from "./pages/Notificacoes";
 import Resultados from "./pages/Resultados";
