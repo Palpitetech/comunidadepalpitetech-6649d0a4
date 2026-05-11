@@ -190,7 +190,7 @@ export function TrocarSenhaDialog({ open, onOpenChange }: TrocarSenhaDialogProps
               <Lock className="h-5 w-5" /> Trocar Senha
             </DrawerTitle>
             <DrawerDescription>
-              Defina uma nova senha de acesso. Use pelo menos 6 caracteres.
+              Informe sua senha atual e crie uma nova.
             </DrawerDescription>
           </DrawerHeader>
           {Form}
