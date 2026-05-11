@@ -127,26 +127,6 @@ export function LoginWizard() {
     }
   };
 
-  const handleForgotPassword = async () => {
-    const identificador = emailLogin || email;
-    if (!identificador) return;
-    setIsLoading(true);
-    try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(identificador.trim().toLowerCase(), {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      if (resetError) throw resetError;
-      toast({
-        title: "Link de redefinição enviado",
-        description: "Abra o link recebido no e-mail para criar uma nova senha.",
-      });
-    } catch (err: any) {
-      toast({ title: "Erro", description: err?.message || "Não foi possível enviar o link.", variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleVerifyPendingEmail = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (codigo.length < 6 || !pendingUserId) return;
