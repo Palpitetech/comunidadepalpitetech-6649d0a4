@@ -173,7 +173,6 @@ const App = () => (
                 <Route path="/" element={<Central />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/cadastro" element={<Cadastro />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
 {/* AtivarConta e VerificarEmail removidos */}
                 <Route path="/termos" element={<Termos />} />
                 <Route path="/privacidade" element={<Privacidade />} />
