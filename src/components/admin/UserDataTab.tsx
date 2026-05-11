@@ -258,11 +258,11 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
         </h3>
         <div className="bg-muted/50 rounded-lg p-3 space-y-2">
           <p className="text-xs text-muted-foreground">
-            Gera um link seguro de redefinição (válido por 1 hora), copia para a área de transferência e envia por WhatsApp se houver celular.
+            Define a senha para <span className="font-mono font-semibold text-foreground">12345678</span> e notifica o usuário por email e WhatsApp.
           </p>
           <Button
             variant="outline"
-            onClick={handleResetPassword}
+            onClick={() => setConfirmResetOpen(true)}
             disabled={resettingPassword || !user.email}
             className="w-full gap-2"
             size="sm"
@@ -272,10 +272,33 @@ export function UserDataTab({ user, onUserUpdated }: UserDataTabProps) {
             ) : (
               <KeyRound className="h-4 w-4" />
             )}
-            Gerar Link de Redefinição
+            Resetar para 12345678
           </Button>
         </div>
       </div>
+
+      <AlertDialog open={confirmResetOpen} onOpenChange={setConfirmResetOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Resetar senha do usuário?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A senha de <span className="font-semibold">{user.nome || user.email}</span> será definida como{" "}
+              <span className="font-mono font-bold">12345678</span>. O usuário receberá a nova senha por email
+              {user.celular ? " e WhatsApp" : ""}. Esta ação é imediata.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={resettingPassword}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleResetPassword(); }}
+              disabled={resettingPassword}
+            >
+              {resettingPassword && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Confirmar reset
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Tags */}
       {user.tags && user.tags.length > 0 && (
