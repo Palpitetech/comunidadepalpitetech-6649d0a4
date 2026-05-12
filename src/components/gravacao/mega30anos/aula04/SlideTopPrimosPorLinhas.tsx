@@ -38,7 +38,7 @@ export default function SlideTopPrimosPorLinhas({ concursos }: Props) {
         {dados.map((d) => (
           <div
             key={d.linha}
-            className="flex items-center gap-3 rounded-lg px-3 py-2"
+            className="flex items-center gap-4 rounded-lg px-5 py-2.5"
             style={{
               background:
                 "linear-gradient(180deg, rgba(10,40,24,0.92) 0%, rgba(6,28,16,0.92) 100%)",
@@ -59,20 +59,21 @@ export default function SlideTopPrimosPorLinhas({ concursos }: Props) {
                 {d.linha}
               </span>
             </div>
-            <div className="flex flex-nowrap items-center gap-3 flex-1 justify-center">
+            <div className="flex flex-nowrap items-center gap-6 flex-1 justify-evenly">
               {d.itens.map((it, idx) => {
                 const isTop = idx < TOP_DESTAQUE;
                 return (
                   <div
                     key={it.dezena}
-                    className="rounded-md p-1"
+                    className="rounded-md"
                     style={
                       isTop
                         ? {
                             border: "2px solid #E53935",
                             boxShadow: "0 0 8px rgba(229,57,53,0.55)",
+                            padding: 2,
                           }
-                        : { border: "2px solid transparent" }
+                        : { border: "2px solid transparent", padding: 2 }
                     }
                   >
                     <DezenaBolaMega numero={it.dezena} size="md" freq={it.freq} />
