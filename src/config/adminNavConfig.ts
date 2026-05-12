@@ -127,6 +127,7 @@ export const adminNavConfig: NavSection[] = [
       { title: "Aula 01 — Top dezenas", url: "/admin/gravacao/mega-especial/01", icon: BarChart3 },
       { title: "Aula 02 — Top pares", url: "/admin/gravacao/mega-especial/02", icon: BarChart3 },
       { title: "Aula 03 — Top ímpares", url: "/admin/gravacao/mega-especial/03", icon: BarChart3 },
+      { title: "Aula 04 — Top primos", url: "/admin/gravacao/mega-especial/04", icon: BarChart3 },
     ],
   },
   {
