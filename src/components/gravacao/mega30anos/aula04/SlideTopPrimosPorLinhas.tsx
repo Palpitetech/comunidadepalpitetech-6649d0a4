@@ -28,17 +28,17 @@ export default function SlideTopPrimosPorLinhas({ concursos }: Props) {
   }, [concursos]);
 
   return (
-    <div className="w-full h-full flex flex-col pt-36 pb-4 px-4">
+    <div className="w-full h-full flex flex-col pt-36 pb-3 px-4">
       <Mega30Header
         aula={4}
         estudoNome="Top dezenas PRIMOS por LINHA"
         tipoAnalise="Top 1 primo destacado em cada uma das 6 linhas"
       />
-      <div className="flex flex-col gap-2 max-w-[1180px] mx-auto w-full mt-6 flex-1 justify-center">
+      <div className="flex flex-col gap-1.5 max-w-[1180px] mx-auto w-full mt-2 flex-1 justify-center">
         {dados.map((d) => (
           <div
             key={d.linha}
-            className="flex items-center gap-4 rounded-lg px-5 py-2.5"
+            className="flex items-center gap-3 rounded-lg px-4 py-1.5"
             style={{
               background:
                 "linear-gradient(180deg, rgba(10,40,24,0.92) 0%, rgba(6,28,16,0.92) 100%)",
@@ -55,11 +55,11 @@ export default function SlideTopPrimosPorLinhas({ concursos }: Props) {
               }}
             >
               <span className="text-[10px] uppercase tracking-wider opacity-70">L</span>
-              <span className="font-extrabold leading-none" style={{ fontSize: 26 }}>
+              <span className="font-extrabold leading-none" style={{ fontSize: 24 }}>
                 {d.linha}
               </span>
             </div>
-            <div className="flex flex-nowrap items-center gap-6 flex-1 justify-evenly">
+            <div className="flex flex-nowrap items-center gap-4 flex-1 justify-evenly">
               {d.itens.map((it, idx) => {
                 const isTop = idx < TOP_DESTAQUE;
                 return (
