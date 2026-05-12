@@ -660,6 +660,28 @@ serve(async (req) => {
 
     await supabaseAdmin.rpc("increment_lead_webhook_count" as any, { webhook_id: webhook.id });
 
+    // === Disparo imediato de WhatsApp privado para Bolão Mega Sena ===
+    // O insert em `events` aciona trigger_queue_event_templates → enfileira
+    // os templates com event_trigger='lead_bolao_mega_sena' (5 variantes em rotação).
+    if (webhook.source_tag === "bolao_6_palpites_7_dezenas_ms_especial") {
+      try {
+        await supabaseAdmin.from("events").insert({
+          user_id: userId,
+          event_type: "lead_bolao_mega_sena",
+          source: "receive-lead",
+          metadata: {
+            webhook_name: webhook.name,
+            webhook_id: webhook.id,
+            slug: slugClean,
+            utm_source: utmSourceClean,
+            utm_campaign: utmCampaignClean,
+          },
+        });
+      } catch (e) {
+        console.error("[receive-lead] erro ao emitir evento lead_bolao_mega_sena:", e);
+      }
+    }
+
     // Marca leads_inbox prévios como convertidos (mesmo email/celular)
     try {
       await supabaseAdmin
