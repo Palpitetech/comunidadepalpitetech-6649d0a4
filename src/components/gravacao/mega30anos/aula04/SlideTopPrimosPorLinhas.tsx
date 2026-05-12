@@ -28,13 +28,13 @@ export default function SlideTopPrimosPorLinhas({ concursos }: Props) {
   }, [concursos]);
 
   return (
-    <div className="w-full h-full flex flex-col pt-24 pb-4 px-4">
+    <div className="w-full h-full flex flex-col pt-36 pb-4 px-4">
       <Mega30Header
         aula={4}
         estudoNome="Top dezenas PRIMOS por LINHA"
         tipoAnalise="Top 1 primo destacado em cada uma das 6 linhas"
       />
-      <div className="flex flex-col gap-2 max-w-[1180px] mx-auto w-full mt-2 flex-1 justify-center">
+      <div className="flex flex-col gap-2 max-w-[1180px] mx-auto w-full mt-6 flex-1 justify-center">
         {dados.map((d) => (
           <div
             key={d.linha}
