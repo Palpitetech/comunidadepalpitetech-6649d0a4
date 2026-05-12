@@ -8,7 +8,7 @@ interface Props {
   concursos: ConcursoMega[];
 }
 
-const TOP_DESTAQUE = 2;
+const TOP_DESTAQUE = 1;
 
 export default function SlideTopPrimosPorLinhas({ concursos }: Props) {
   const dados = useMemo(() => {
@@ -31,8 +31,8 @@ export default function SlideTopPrimosPorLinhas({ concursos }: Props) {
     <div className="w-full h-full flex flex-col pt-24 pb-4 px-4">
       <Mega30Header
         aula={4}
-        estudoNome="Top dezenas PRIMAS por LINHA"
-        tipoAnalise="Top 2 primos destacados em cada uma das 6 linhas"
+        estudoNome="Top dezenas PRIMOS por LINHA"
+        tipoAnalise="Top 1 primo destacado em cada uma das 6 linhas"
       />
       <div className="flex flex-col gap-2 max-w-[1180px] mx-auto w-full mt-2 flex-1 justify-center">
         {dados.map((d) => (
@@ -59,7 +59,7 @@ export default function SlideTopPrimosPorLinhas({ concursos }: Props) {
                 {d.linha}
               </span>
             </div>
-            <div className="flex flex-nowrap items-center gap-2 flex-1 justify-around">
+            <div className="flex flex-nowrap items-center gap-3 flex-1 justify-center">
               {d.itens.map((it, idx) => {
                 const isTop = idx < TOP_DESTAQUE;
                 return (
