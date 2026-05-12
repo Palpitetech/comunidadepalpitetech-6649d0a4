@@ -18,8 +18,14 @@ import SlideTopImparesPorColunas from "@/components/gravacao/mega30anos/aula03/S
 import SlideTopImparesPorQuadrantes from "@/components/gravacao/mega30anos/aula03/SlideTopImparesPorQuadrantes";
 import SlideTopImparesPorMinis from "@/components/gravacao/mega30anos/aula03/SlideTopImparesPorMinis";
 import SlideTop15ImparesFinal from "@/components/gravacao/mega30anos/aula03/SlideTop15ImparesFinal";
+import SlideTopPrimosPorLinhas from "@/components/gravacao/mega30anos/aula04/SlideTopPrimosPorLinhas";
+import SlideTopPrimosPorColunas from "@/components/gravacao/mega30anos/aula04/SlideTopPrimosPorColunas";
+import SlideTopPrimosPorQuadrantes from "@/components/gravacao/mega30anos/aula04/SlideTopPrimosPorQuadrantes";
+import SlideTopPrimosPorMinis from "@/components/gravacao/mega30anos/aula04/SlideTopPrimosPorMinis";
+import SlideTop15PrimosFinal from "@/components/gravacao/mega30anos/aula04/SlideTop15PrimosFinal";
 import capa02 from "@/assets/gravacao/megasena-30anos/capas/capa-02.jpg";
 import capa03 from "@/assets/gravacao/megasena-30anos/capas/capa-03.jpg";
+import capa04 from "@/assets/gravacao/megasena-30anos/capas/capa-04.jpg";
 import SlideDescricaoYoutube from "@/components/gravacao/mega30anos/SlideDescricaoYoutube";
 import { useMegaEspecialBase } from "@/hooks/useMegaEspecialBase";
 import { topDezenasGeral } from "@/lib/megaEspecialEngine";
@@ -77,7 +83,7 @@ export default function GravacaoMega30Anos() {
   }, [concursos]);
 
   // Aulas ainda não produzidas: placeholder
-  if (aulaId !== "01" && aulaId !== "02" && aulaId !== "03") {
+  if (aulaId !== "01" && aulaId !== "02" && aulaId !== "03" && aulaId !== "04") {
     return (
       <div
         className="fixed inset-0 flex items-center justify-center text-center px-8"
@@ -142,6 +148,20 @@ export default function GravacaoMega30Anos() {
         <SlideTopImparesPorMinis concursos={concursos} pagina={1} />
         <SlideTopImparesPorMinis concursos={concursos} pagina={2} />
         <SlideTop15ImparesFinal concursos={concursos} />
+      </Mega30Shell>
+    );
+  }
+
+  if (aulaId === "04") {
+    return (
+      <Mega30Shell capaIndices={[0]}>
+        <Mega30Capa src={capa04} alt="Aula 04 — Top dezenas primas" />
+        <SlideTopPrimosPorLinhas concursos={concursos} />
+        <SlideTopPrimosPorColunas concursos={concursos} />
+        <SlideTopPrimosPorQuadrantes concursos={concursos} />
+        <SlideTopPrimosPorMinis concursos={concursos} pagina={1} />
+        <SlideTopPrimosPorMinis concursos={concursos} pagina={2} />
+        <SlideTop15PrimosFinal concursos={concursos} />
       </Mega30Shell>
     );
   }
