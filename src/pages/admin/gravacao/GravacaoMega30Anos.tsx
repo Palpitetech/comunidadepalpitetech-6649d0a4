@@ -23,6 +23,13 @@ import SlideTopPrimosPorColunas from "@/components/gravacao/mega30anos/aula04/Sl
 import SlideTopPrimosPorQuadrantes from "@/components/gravacao/mega30anos/aula04/SlideTopPrimosPorQuadrantes";
 import SlideTopPrimosPorMinis from "@/components/gravacao/mega30anos/aula04/SlideTopPrimosPorMinis";
 import SlideTop15PrimosFinal from "@/components/gravacao/mega30anos/aula04/SlideTop15PrimosFinal";
+import SlideFreqInicioPorLinha from "@/components/gravacao/mega30anos/aula05/SlideFreqInicioPorLinha";
+import SlideTopInicialPorLinha from "@/components/gravacao/mega30anos/aula05/SlideTopInicialPorLinha";
+import SlideFreqFimPorLinha from "@/components/gravacao/mega30anos/aula05/SlideFreqFimPorLinha";
+import SlideTopFinalPorLinha from "@/components/gravacao/mega30anos/aula05/SlideTopFinalPorLinha";
+import SlideFreqGeralPorLinha from "@/components/gravacao/mega30anos/aula05/SlideFreqGeralPorLinha";
+import SlideSinteseLinhas from "@/components/gravacao/mega30anos/aula05/SlideSinteseLinhas";
+import Mega30CapaProvisoria from "@/components/gravacao/mega30anos/Mega30CapaProvisoria";
 import capa02 from "@/assets/gravacao/megasena-30anos/capas/capa-02.jpg";
 import capa03 from "@/assets/gravacao/megasena-30anos/capas/capa-03.jpg";
 import capa04 from "@/assets/gravacao/megasena-30anos/capas/capa-04.jpg";
@@ -83,7 +90,7 @@ export default function GravacaoMega30Anos() {
   }, [concursos]);
 
   // Aulas ainda não produzidas: placeholder
-  if (aulaId !== "01" && aulaId !== "02" && aulaId !== "03" && aulaId !== "04") {
+  if (aulaId !== "01" && aulaId !== "02" && aulaId !== "03" && aulaId !== "04" && aulaId !== "05") {
     return (
       <div
         className="fixed inset-0 flex items-center justify-center text-center px-8"
@@ -162,6 +169,24 @@ export default function GravacaoMega30Anos() {
         <SlideTopPrimosPorMinis concursos={concursos} pagina={1} />
         <SlideTopPrimosPorMinis concursos={concursos} pagina={2} />
         <SlideTop15PrimosFinal concursos={concursos} />
+      </Mega30Shell>
+    );
+  }
+
+  if (aulaId === "05") {
+    return (
+      <Mega30Shell capaIndices={[0]}>
+        <Mega30CapaProvisoria
+          aula={5}
+          titulo="Linhas Quentes"
+          subtitulo="Início, Fim e Geral — onde os sorteios começam, terminam e mais aparecem"
+        />
+        <SlideFreqInicioPorLinha concursos={concursos} />
+        <SlideTopInicialPorLinha concursos={concursos} />
+        <SlideFreqFimPorLinha concursos={concursos} />
+        <SlideTopFinalPorLinha concursos={concursos} />
+        <SlideFreqGeralPorLinha concursos={concursos} />
+        <SlideSinteseLinhas concursos={concursos} />
       </Mega30Shell>
     );
   }
