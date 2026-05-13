@@ -6,8 +6,8 @@ import {
   freqGeralPorLinha,
   topDezenaInicialPorLinha,
   topDezenaFinalPorLinha,
-  DEZENAS_LINHA_FALLBACK,
 } from "./aula05Helpers";
+import { DEZENAS_LINHA } from "../aula01/aula01Helpers";
 import DezenaBolaMega from "../DezenaBolaMega";
 import Mega30Header from "../Mega30Header";
 
