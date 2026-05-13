@@ -184,11 +184,7 @@ export default function GravacaoMega30Anos() {
   if (aulaId === "05") {
     return (
       <Mega30Shell capaIndices={[0]}>
-        <Mega30CapaProvisoria
-          aula={5}
-          titulo="Linhas Quentes"
-          subtitulo="Início, Fim e Geral — onde os sorteios começam, terminam e mais aparecem"
-        />
+        <Mega30Capa src={capa05} alt="Aula 05 — Linhas Quentes" />
         <SlideFreqInicioPorLinha concursos={concursos} />
         <SlideTopInicialPorLinha concursos={concursos} />
         <SlideFreqFimPorLinha concursos={concursos} />
