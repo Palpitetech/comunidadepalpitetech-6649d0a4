@@ -102,7 +102,7 @@ export default function GravacaoMega30Anos() {
   }, [concursos]);
 
   // Aulas ainda não produzidas: placeholder
-  if (aulaId !== "01" && aulaId !== "02" && aulaId !== "03" && aulaId !== "04" && aulaId !== "05" && aulaId !== "06") {
+  if (aulaId !== "01" && aulaId !== "02" && aulaId !== "03" && aulaId !== "04" && aulaId !== "05" && aulaId !== "06" && aulaId !== "07") {
     return (
       <div
         className="fixed inset-0 flex items-center justify-center text-center px-8"
