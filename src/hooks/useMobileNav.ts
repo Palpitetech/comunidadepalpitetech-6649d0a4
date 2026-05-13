@@ -1,6 +1,14 @@
 import { create } from 'zustand';
 
-export type DrawerView = 'root' | 'comunicacao' | 'financeiro' | 'boloes' | 'gravacao-resultado' | 'gravacao-estudos' | 'sistema';
+export type DrawerView =
+  | 'root'
+  | 'comunicacao'
+  | 'financeiro'
+  | 'boloes'
+  | 'gravacao-resultado'
+  | 'gravacao-estudos'
+  | 'gravacao-mega-especial'
+  | 'sistema';
 
 interface MobileNavState {
   isDrawerOpen: boolean;
