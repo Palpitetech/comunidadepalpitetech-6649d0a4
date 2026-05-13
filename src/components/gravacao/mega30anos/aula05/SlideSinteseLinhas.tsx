@@ -33,7 +33,7 @@ export default function SlideSinteseLinhas({ concursos }: Props) {
     );
 
     // Reforço: top 4 dezenas gerais da linha mais quente (excluindo as já escolhidas)
-    const dezenasLinhaTop = DEZENAS_LINHA_FALLBACK[topGeral.linha];
+    const dezenasLinhaTop = DEZENAS_LINHA[topGeral.linha];
     const ranking = calcularEstudo(concursos, {
       estudoId: "aula05-sintese-reforco",
       agrupamento: "dezena",
