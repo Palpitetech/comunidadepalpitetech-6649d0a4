@@ -173,6 +173,24 @@ export default function GravacaoMega30Anos() {
     );
   }
 
+  if (aulaId === "05") {
+    return (
+      <Mega30Shell capaIndices={[0]}>
+        <Mega30CapaProvisoria
+          aula={5}
+          titulo="Linhas Quentes"
+          subtitulo="Início, Fim e Geral — onde os sorteios começam, terminam e mais aparecem"
+        />
+        <SlideFreqInicioPorLinha concursos={concursos} />
+        <SlideTopInicialPorLinha concursos={concursos} />
+        <SlideFreqFimPorLinha concursos={concursos} />
+        <SlideTopFinalPorLinha concursos={concursos} />
+        <SlideFreqGeralPorLinha concursos={concursos} />
+        <SlideSinteseLinhas concursos={concursos} />
+      </Mega30Shell>
+    );
+  }
+
   return (
     <Mega30Shell capaIndices={[0]}>
       <Mega30Capa src={capa01} alt="Aula 01 — Top dezenas nos 30 anos" />
