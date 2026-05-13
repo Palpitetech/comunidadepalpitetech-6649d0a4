@@ -39,6 +39,8 @@ import Mega30CapaProvisoria from "@/components/gravacao/mega30anos/Mega30CapaPro
 import capa02 from "@/assets/gravacao/megasena-30anos/capas/capa-02.jpg";
 import capa03 from "@/assets/gravacao/megasena-30anos/capas/capa-03.jpg";
 import capa04 from "@/assets/gravacao/megasena-30anos/capas/capa-04.jpg";
+import capa05 from "@/assets/gravacao/megasena-30anos/capas/capa-05.jpg";
+import capa06 from "@/assets/gravacao/megasena-30anos/capas/capa-06.jpg";
 import SlideDescricaoYoutube from "@/components/gravacao/mega30anos/SlideDescricaoYoutube";
 import { useMegaEspecialBase } from "@/hooks/useMegaEspecialBase";
 import { topDezenasGeral } from "@/lib/megaEspecialEngine";
