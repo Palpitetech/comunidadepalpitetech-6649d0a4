@@ -29,6 +29,12 @@ import SlideFreqFimPorLinha from "@/components/gravacao/mega30anos/aula05/SlideF
 import SlideTopFinalPorLinha from "@/components/gravacao/mega30anos/aula05/SlideTopFinalPorLinha";
 import SlideFreqGeralPorLinha from "@/components/gravacao/mega30anos/aula05/SlideFreqGeralPorLinha";
 import SlideSinteseLinhas from "@/components/gravacao/mega30anos/aula05/SlideSinteseLinhas";
+import SlideFreqInicioPorColuna from "@/components/gravacao/mega30anos/aula06/SlideFreqInicioPorColuna";
+import SlideTopInicialPorColuna from "@/components/gravacao/mega30anos/aula06/SlideTopInicialPorColuna";
+import SlideFreqFimPorColuna from "@/components/gravacao/mega30anos/aula06/SlideFreqFimPorColuna";
+import SlideTopFinalPorColuna from "@/components/gravacao/mega30anos/aula06/SlideTopFinalPorColuna";
+import SlideFreqGeralPorColuna from "@/components/gravacao/mega30anos/aula06/SlideFreqGeralPorColuna";
+import SlideSinteseColunas from "@/components/gravacao/mega30anos/aula06/SlideSinteseColunas";
 import Mega30CapaProvisoria from "@/components/gravacao/mega30anos/Mega30CapaProvisoria";
 import capa02 from "@/assets/gravacao/megasena-30anos/capas/capa-02.jpg";
 import capa03 from "@/assets/gravacao/megasena-30anos/capas/capa-03.jpg";
@@ -90,7 +96,7 @@ export default function GravacaoMega30Anos() {
   }, [concursos]);
 
   // Aulas ainda não produzidas: placeholder
-  if (aulaId !== "01" && aulaId !== "02" && aulaId !== "03" && aulaId !== "04" && aulaId !== "05") {
+  if (aulaId !== "01" && aulaId !== "02" && aulaId !== "03" && aulaId !== "04" && aulaId !== "05" && aulaId !== "06") {
     return (
       <div
         className="fixed inset-0 flex items-center justify-center text-center px-8"
