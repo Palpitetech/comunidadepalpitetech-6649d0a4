@@ -197,6 +197,24 @@ export default function GravacaoMega30Anos() {
     );
   }
 
+  if (aulaId === "06") {
+    return (
+      <Mega30Shell capaIndices={[0]}>
+        <Mega30CapaProvisoria
+          aula={6}
+          titulo="Colunas Quentes"
+          subtitulo="Início, Fim e Geral — quais colunas mais sorteiam ao longo dos 30 anos"
+        />
+        <SlideFreqInicioPorColuna concursos={concursos} />
+        <SlideTopInicialPorColuna concursos={concursos} />
+        <SlideFreqFimPorColuna concursos={concursos} />
+        <SlideTopFinalPorColuna concursos={concursos} />
+        <SlideFreqGeralPorColuna concursos={concursos} />
+        <SlideSinteseColunas concursos={concursos} />
+      </Mega30Shell>
+    );
+  }
+
   return (
     <Mega30Shell capaIndices={[0]}>
       <Mega30Capa src={capa01} alt="Aula 01 — Top dezenas nos 30 anos" />
