@@ -35,6 +35,10 @@ import SlideFreqFimPorColuna from "@/components/gravacao/mega30anos/aula06/Slide
 import SlideTopFinalPorColuna from "@/components/gravacao/mega30anos/aula06/SlideTopFinalPorColuna";
 import SlideFreqGeralPorColuna from "@/components/gravacao/mega30anos/aula06/SlideFreqGeralPorColuna";
 import SlideSinteseColunas from "@/components/gravacao/mega30anos/aula06/SlideSinteseColunas";
+import SlideTopInicialGeral from "@/components/gravacao/mega30anos/aula07/SlideTopInicialGeral";
+import SlideTopInicialPares from "@/components/gravacao/mega30anos/aula07/SlideTopInicialPares";
+import SlideTopInicialImpares from "@/components/gravacao/mega30anos/aula07/SlideTopInicialImpares";
+import SlideSinteseInicial from "@/components/gravacao/mega30anos/aula07/SlideSinteseInicial";
 import Mega30CapaProvisoria from "@/components/gravacao/mega30anos/Mega30CapaProvisoria";
 import capa02 from "@/assets/gravacao/megasena-30anos/capas/capa-02.jpg";
 import capa03 from "@/assets/gravacao/megasena-30anos/capas/capa-03.jpg";
