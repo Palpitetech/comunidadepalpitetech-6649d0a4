@@ -39,6 +39,8 @@ import Mega30CapaProvisoria from "@/components/gravacao/mega30anos/Mega30CapaPro
 import capa02 from "@/assets/gravacao/megasena-30anos/capas/capa-02.jpg";
 import capa03 from "@/assets/gravacao/megasena-30anos/capas/capa-03.jpg";
 import capa04 from "@/assets/gravacao/megasena-30anos/capas/capa-04.jpg";
+import capa05 from "@/assets/gravacao/megasena-30anos/capas/capa-05.jpg";
+import capa06 from "@/assets/gravacao/megasena-30anos/capas/capa-06.jpg";
 import SlideDescricaoYoutube from "@/components/gravacao/mega30anos/SlideDescricaoYoutube";
 import { useMegaEspecialBase } from "@/hooks/useMegaEspecialBase";
 import { topDezenasGeral } from "@/lib/megaEspecialEngine";
@@ -182,11 +184,7 @@ export default function GravacaoMega30Anos() {
   if (aulaId === "05") {
     return (
       <Mega30Shell capaIndices={[0]}>
-        <Mega30CapaProvisoria
-          aula={5}
-          titulo="Linhas Quentes"
-          subtitulo="Início, Fim e Geral — onde os sorteios começam, terminam e mais aparecem"
-        />
+        <Mega30Capa src={capa05} alt="Aula 05 — Linhas Quentes" />
         <SlideFreqInicioPorLinha concursos={concursos} />
         <SlideTopInicialPorLinha concursos={concursos} />
         <SlideFreqFimPorLinha concursos={concursos} />
@@ -200,11 +198,7 @@ export default function GravacaoMega30Anos() {
   if (aulaId === "06") {
     return (
       <Mega30Shell capaIndices={[0]}>
-        <Mega30CapaProvisoria
-          aula={6}
-          titulo="Colunas Quentes"
-          subtitulo="Início, Fim e Geral — quais colunas mais sorteiam ao longo dos 30 anos"
-        />
+        <Mega30Capa src={capa06} alt="Aula 06 — Colunas Quentes" />
         <SlideFreqInicioPorColuna concursos={concursos} />
         <SlideTopInicialPorColuna concursos={concursos} />
         <SlideFreqFimPorColuna concursos={concursos} />
