@@ -1,75 +1,82 @@
-# Aula 06 — Colunas Quentes: Início, Fim e Geral
+# Aula 07 — Dezenas de Início (Top Inicial, Pares e Ímpares)
 
-Mesma proposta da Aula 05, porém aplicada às **10 colunas** do volante (C1=01,11,21,31,41,51 … C10=10,20,30,40,50,60), usando todos os 3.006 concursos da Mega-Sena.
+Estudo das **dezenas iniciais** (menor dezena de cada concurso) ao longo dos 3.007 concursos da Mega-Sena.
 
-## 1. Conceito (idêntico à Aula 05, adaptado p/ colunas)
+## 1. Conceito
 
-Para cada concurso de 6 dezenas:
-- **Inicial** = menor dezena → mapeada para sua coluna via `((d-1) % 10) + 1`
-- **Final** = maior dezena → mapeada para sua coluna
-- **Geral** = todas as 6 dezenas → coluna de cada uma (com repetição quando 2+ caem na mesma coluna)
+Para cada concurso, considera-se apenas a **menor dezena sorteada** (posição 01 quando ordenado crescente). Sobre esse universo de 3.007 dezenas iniciais, geramos três rankings independentes:
 
-Base: `useMegaEspecialBase` (mesmo hook da Aula 05).
+- **Top 10 Inicial Geral** — as 10 dezenas que mais vezes apareceram como inicial.
+- **Top 10 Inicial Pares** — filtrando apenas dezenas pares dentre as iniciais.
+- **Top 10 Inicial Ímpares** — filtrando apenas dezenas ímpares dentre as iniciais.
+
+Cada item exibe **dezena, frequência absoluta e % sobre o total de concursos** (3.007).
+
+### Observação estatística (importante para o vídeo)
+A "dezena inicial" é fortemente enviesada para números baixos (probabilidade matemática). A maioria dos iniciais tende a estar entre 01 e ~15. Isso será respeitado no roteiro — não é viés do estudo, é matemática do `min` sobre 6 dezenas em [01..60]. O slide-síntese vai destacar isso.
 
 ## 2. Helpers
 
-Arquivo: `src/components/gravacao/mega30anos/aula06/aula06Helpers.ts`
+Arquivo: `src/components/gravacao/mega30anos/aula07/aula07Helpers.ts`
 
 ```ts
-COLUNAS = [1..10]
-colunaDe(d) = ((d - 1) % 10) + 1
-freqInicioPorColuna(concursos): FreqColuna[]    // soma = 3006
-freqFimPorColuna(concursos):    FreqColuna[]    // soma = 3006
-freqGeralPorColuna(concursos):  FreqColuna[]    // soma = 3006*6
-topDezenaInicialPorColuna(concursos): TopDezenaColuna[]  // dezena mais frequente como inicial em cada coluna
-topDezenaFinalPorColuna(concursos):   TopDezenaColuna[]
+export type DezenaInicialFreq = {
+  dezena: number;       // 01..60
+  freq: number;         // ocorrências como inicial
+  pct: number;          // freq / totalConcursos * 100
+};
+
+dezenaInicialDe(c): número  // min das 6 dezenas
+freqInicialPorDezena(concursos): Map<dezena, freq>  // base bruta
+topInicialGeral(concursos, n=10): DezenaInicialFreq[]
+topInicialPares(concursos, n=10): DezenaInicialFreq[]
+topInicialImpares(concursos, n=10): DezenaInicialFreq[]
 ```
 
-Tipos análogos a `FreqLinha` / `TopDezenaLinha` da Aula 05.
+`pct` sempre calculado sobre `concursos.length` (total de concursos, não sobre o subconjunto par/ímpar) — assim os 3 slides são comparáveis na mesma régua.
 
 ## 3. Componente compartilhado
 
-`src/components/gravacao/mega30anos/aula06/BarraColunaHorizontal.tsx`
+`src/components/gravacao/mega30anos/aula07/RankingDezenaInicial.tsx`
 
-Mesmo padrão visual do `BarraLinhaHorizontal` (dourado/verde, glow no top 1, valor + %), apenas trocando label "L" por "C" e suportando 10 itens (barras um pouco mais finas para caber 10 linhas no slide).
+Lista vertical (10 itens) — mesmo DNA visual das aulas anteriores (dourado/verde-escuro):
 
-## 4. Estrutura dos 7 slides
+```
+[#1] [bola 03]  ████████████████████  248x   8,25%
+[#2] [bola 05]  ██████████████████    231x   7,68%
+...
+```
 
-Pasta: `src/components/gravacao/mega30anos/aula06/`
+- Bola pintada com a cor par/ímpar conforme o slide (verde-claro p/ pares, dourado p/ ímpares, neutro p/ geral)
+- Barra horizontal proporcional ao maior valor da lista
+- Top 1 com glow
+
+## 4. Estrutura dos 5 slides
+
+Pasta: `src/components/gravacao/mega30anos/aula07/`
 
 | # | Componente | Conteúdo |
 |---|---|---|
-| 1 | `Mega30CapaProvisoria` | Capa provisória (aula 6) até o usuário enviar `capa-06.jpg` |
-| 2 | `SlideFreqInicioPorColuna` | Barras horizontais das 10 colunas — quantas vezes cada coluna teve a dezena **inicial**. Top 1 destacado. |
-| 3 | `SlideTopInicialPorColuna` | Volante 6×10 marcando 1 bola por coluna (a dezena que mais foi inicial naquela coluna) com contador. Colunas sem ocorrência apagadas. |
-| 4 | `SlideFreqFimPorColuna` | Espelho do slide 2 para **final**. |
-| 5 | `SlideTopFinalPorColuna` | Espelho do slide 3 para **final**. |
-| 6 | `SlideFreqGeralPorColuna` | Barras horizontais da frequência **geral** por coluna (~10% esperado por coluna), destacando coluna mais quente. |
-| 7 | `SlideSinteseColunas` | Síntese-estratégia: "Comece em C_, termine em C_, reforce C_" + 1 jogo-exemplo de 6 dezenas montado a partir das top dezenas das colunas mais quentes. |
+| 1 | `Mega30CapaProvisoria` | Capa provisória "Aula 07 · Dezenas de Início" até o usuário enviar `capa-07.jpg` |
+| 2 | `SlideTopInicialGeral` | Top 10 dezenas iniciais (qualquer paridade) — ranking + freq + % |
+| 3 | `SlideTopInicialPares` | Top 10 dezenas iniciais **pares** |
+| 4 | `SlideTopInicialImpares` | Top 10 dezenas iniciais **ímpares** |
+| 5 | `SlideSinteseInicial` | Síntese: 1 jogo-exemplo de 6 dezenas começando pela top inicial geral + comentário sobre o viés matemático e como usar (ex: "fixar 03 ou 05 como menor dezena do volante") |
 
 ## 5. Registro
 
-`src/pages/admin/gravacao/GravacaoMega30Anos.tsx`:
-- Importar 6 slides da Aula 06
-- Adicionar `"06"` no guard de aulas válidas
-- Adicionar bloco `if (aulaId === "06") { ... }` com `Mega30CapaProvisoria` + 6 slides
+- `src/pages/admin/gravacao/GravacaoMega30Anos.tsx`: importar slides, adicionar `"07"` ao guard, bloco `if (aulaId === "07") {...}`.
+- `src/config/adminNavConfig.ts`: adicionar `"Aula 07 — Dezenas de início"` → `/admin/gravacao/mega-especial/07`.
+- `src/components/admin/AdminCommandPalette.tsx`: entrada Aula 07.
+- `src/lib/mega30/estudosCatalog.ts`: registrar `aulaId: "07"` com título "Dezenas de Início — Top Geral, Pares e Ímpares".
 
-`src/config/adminNavConfig.ts`:
-- Adicionar item `"Aula 06 — Colunas quentes"` → `/admin/gravacao/mega-especial/06`
+## 6. Pendências
 
-`src/components/admin/AdminCommandPalette.tsx`:
-- Adicionar entrada Aula 06 na categoria "Gravação".
-
-`src/lib/mega30/estudosCatalog.ts`:
-- Verificar/adicionar `aulaId: "06"` com título "Colunas Quentes — Início, Fim e Geral".
-
-## 6. Pendências do usuário
-
-1. **Capa**: enviar `capa-06.jpg` quando estiver pronta. Até lá uso `Mega30CapaProvisoria` (mesmo padrão da Aula 05).
-2. Confirmar subtítulo da capa: sugiro **"Aula 06 · Colunas Quentes — Início, Fim e Geral"**.
+- **Capa**: enviar `capa-07.jpg` quando pronta. Até lá, `Mega30CapaProvisoria`.
+- Confirmar subtítulo: sugiro **"Aula 07 · Dezenas de Início — Top Geral, Pares e Ímpares"**.
 
 ## 7. Fora de escopo
 
-- Não toca em backend, migrations, nem hub público.
-- Sem slide de descrição do YouTube (mesmo padrão das aulas 02–05).
-- Mesma decisão Opção A (interpretação matemática min/max) — sem ordem real de bolas.
+- Sem backend, migrations ou hub público.
+- Sem slide de descrição do YouTube (mesmo padrão das aulas 02–06).
+- Usa `useMegaEspecialBase` (mesma base dos 3.006/3.007 concursos já carregados).
