@@ -213,6 +213,22 @@ export default function GravacaoMega30Anos() {
     );
   }
 
+  if (aulaId === "07") {
+    return (
+      <Mega30Shell capaIndices={[0]}>
+        <Mega30CapaProvisoria
+          aula={7}
+          titulo="Dezenas de Início"
+          subtitulo="Top Geral, Pares e Ímpares"
+        />
+        <SlideTopInicialGeral concursos={concursos} />
+        <SlideTopInicialPares concursos={concursos} />
+        <SlideTopInicialImpares concursos={concursos} />
+        <SlideSinteseInicial concursos={concursos} />
+      </Mega30Shell>
+    );
+  }
+
   return (
     <Mega30Shell capaIndices={[0]}>
       <Mega30Capa src={capa01} alt="Aula 01 — Top dezenas nos 30 anos" />
