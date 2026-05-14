@@ -103,6 +103,7 @@ function NavLeaf({
       <item.icon className="h-4 w-4 shrink-0" />
       <span className="truncate">{item.title}</span>
       {badgeCount ? <NavBadge count={badgeCount} tone={item.badgeTone} /> : null}
+      {item.isNew ? <NovoBadge /> : null}
     </Link>
   );
 
@@ -118,6 +119,7 @@ function NavLeaf({
           <TooltipContent side="right" className="font-medium flex items-center gap-2">
             {item.title}
             {badgeCount ? <NavBadge count={badgeCount} tone={item.badgeTone} /> : null}
+            {item.isNew ? <NovoBadge /> : null}
           </TooltipContent>
         </Tooltip>
       </SidebarMenuItem>
