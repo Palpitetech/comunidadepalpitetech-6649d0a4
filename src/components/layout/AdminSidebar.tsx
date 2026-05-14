@@ -74,6 +74,14 @@ function NavBadge({ count, tone = "info" }: { count: number; tone?: "danger" | "
   );
 }
 
+function NovoBadge() {
+  return (
+    <span className="ml-auto inline-flex items-center justify-center rounded-full px-1.5 min-w-[1.6rem] h-[1.1rem] text-[9px] font-bold leading-none bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
+      Novo
+    </span>
+  );
+}
+
 // ---------- Leaf nav item ----------
 function NavLeaf({
   item,

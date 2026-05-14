@@ -42,6 +42,7 @@ export interface NavItem {
   exact?: boolean;
   badge?: BadgeKey;
   badgeTone?: "danger" | "info";
+  isNew?: boolean;
 }
 
 export interface NavSection {
@@ -50,6 +51,7 @@ export interface NavSection {
   icon?: LucideIcon;
   items: NavItem[];
   inline?: boolean;
+  isNew?: boolean;
 }
 
 export const adminNavConfig: NavSection[] = [
