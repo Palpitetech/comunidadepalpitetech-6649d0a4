@@ -50,6 +50,7 @@ import capa04 from "@/assets/gravacao/megasena-30anos/capas/capa-04.jpg";
 import capa05 from "@/assets/gravacao/megasena-30anos/capas/capa-05.jpg";
 import capa06 from "@/assets/gravacao/megasena-30anos/capas/capa-06.jpg";
 import capa07 from "@/assets/gravacao/megasena-30anos/capas/capa-07.jpg";
+import capa08 from "@/assets/gravacao/megasena-30anos/capas/capa-08.jpg";
 import SlideDescricaoYoutube from "@/components/gravacao/mega30anos/SlideDescricaoYoutube";
 import { useMegaEspecialBase } from "@/hooks/useMegaEspecialBase";
 import { topDezenasGeral } from "@/lib/megaEspecialEngine";
