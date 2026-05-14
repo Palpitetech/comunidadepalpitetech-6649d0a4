@@ -49,6 +49,7 @@ import capa03 from "@/assets/gravacao/megasena-30anos/capas/capa-03.jpg";
 import capa04 from "@/assets/gravacao/megasena-30anos/capas/capa-04.jpg";
 import capa05 from "@/assets/gravacao/megasena-30anos/capas/capa-05.jpg";
 import capa06 from "@/assets/gravacao/megasena-30anos/capas/capa-06.jpg";
+import capa07 from "@/assets/gravacao/megasena-30anos/capas/capa-07.jpg";
 import SlideDescricaoYoutube from "@/components/gravacao/mega30anos/SlideDescricaoYoutube";
 import { useMegaEspecialBase } from "@/hooks/useMegaEspecialBase";
 import { topDezenasGeral } from "@/lib/megaEspecialEngine";
@@ -220,11 +221,7 @@ export default function GravacaoMega30Anos() {
   if (aulaId === "07") {
     return (
       <Mega30Shell capaIndices={[0]}>
-        <Mega30CapaProvisoria
-          aula={7}
-          titulo="Dezenas de Início"
-          subtitulo="Top Geral, Pares e Ímpares"
-        />
+        <Mega30Capa src={capa07} alt="Aula 07 — Dezenas de Início" />
         <SlideTopInicialGeral concursos={concursos} />
         <SlideTopInicialPares concursos={concursos} />
         <SlideTopInicialImpares concursos={concursos} />
