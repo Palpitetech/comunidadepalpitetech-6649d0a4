@@ -39,6 +39,7 @@ interface CmdItem {
   icon: LucideIcon;
   group: string;
   keywords?: string[];
+  isNew?: boolean;
 }
 
 const ITEMS: CmdItem[] = [
