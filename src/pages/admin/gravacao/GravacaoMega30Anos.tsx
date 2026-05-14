@@ -39,6 +39,10 @@ import SlideTopInicialGeral from "@/components/gravacao/mega30anos/aula07/SlideT
 import SlideTopInicialPares from "@/components/gravacao/mega30anos/aula07/SlideTopInicialPares";
 import SlideTopInicialImpares from "@/components/gravacao/mega30anos/aula07/SlideTopInicialImpares";
 import SlideSinteseInicial from "@/components/gravacao/mega30anos/aula07/SlideSinteseInicial";
+import SlideTopInicialPar from "@/components/gravacao/mega30anos/aula08/SlideTopInicialPar";
+import SlideTopFinalPar from "@/components/gravacao/mega30anos/aula08/SlideTopFinalPar";
+import SlideTopParGeral from "@/components/gravacao/mega30anos/aula08/SlideTopParGeral";
+import SlideSintesePares from "@/components/gravacao/mega30anos/aula08/SlideSintesePares";
 import Mega30CapaProvisoria from "@/components/gravacao/mega30anos/Mega30CapaProvisoria";
 import capa02 from "@/assets/gravacao/megasena-30anos/capas/capa-02.jpg";
 import capa03 from "@/assets/gravacao/megasena-30anos/capas/capa-03.jpg";
@@ -102,7 +106,7 @@ export default function GravacaoMega30Anos() {
   }, [concursos]);
 
   // Aulas ainda não produzidas: placeholder
-  if (aulaId !== "01" && aulaId !== "02" && aulaId !== "03" && aulaId !== "04" && aulaId !== "05" && aulaId !== "06" && aulaId !== "07") {
+  if (aulaId !== "01" && aulaId !== "02" && aulaId !== "03" && aulaId !== "04" && aulaId !== "05" && aulaId !== "06" && aulaId !== "07" && aulaId !== "08") {
     return (
       <div
         className="fixed inset-0 flex items-center justify-center text-center px-8"
@@ -225,6 +229,22 @@ export default function GravacaoMega30Anos() {
         <SlideTopInicialPares concursos={concursos} />
         <SlideTopInicialImpares concursos={concursos} />
         <SlideSinteseInicial concursos={concursos} />
+      </Mega30Shell>
+    );
+  }
+
+  if (aulaId === "08") {
+    return (
+      <Mega30Shell capaIndices={[0]}>
+        <Mega30CapaProvisoria
+          aula={8}
+          titulo="Dezenas Pares"
+          subtitulo="Top Inicial, Final e Geral"
+        />
+        <SlideTopInicialPar concursos={concursos} />
+        <SlideTopFinalPar concursos={concursos} />
+        <SlideTopParGeral concursos={concursos} />
+        <SlideSintesePares concursos={concursos} />
       </Mega30Shell>
     );
   }
