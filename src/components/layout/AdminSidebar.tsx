@@ -44,6 +44,7 @@ import {
   Zap,
   ArrowLeft,
   ChevronsRight,
+  Video,
   type LucideIcon,
 } from "lucide-react";
 import { 
@@ -158,6 +159,7 @@ function NavGroup({
     0
   );
   const hasNewItem = section.items.some((i) => i.isNew);
+  const shouldStartOpen = groupActive || section.id === "gravacao-mega-especial";
 
   if (collapsed) {
     return (
@@ -220,7 +222,7 @@ function NavGroup({
 
   return (
     <SidebarGroup>
-      <Collapsible defaultOpen={groupActive}>
+      <Collapsible defaultOpen={shouldStartOpen}>
         <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1.5 text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-[0.12em] hover:text-foreground transition-colors group">
           <div className="flex items-center gap-1.5">
             <GroupIcon className="h-3 w-3" />
@@ -426,9 +428,25 @@ export function AdminSidebar() {
   return (
     <TooltipProvider delayDuration={100}>
       <Sidebar collapsible="none" className="border-r border-sidebar-border">
-        <SidebarContent className="bg-gradient-to-b from-card via-card to-card/95">
+        <SidebarContent className="bg-gradient-to-b from-card via-card to-card/95 pb-3">
           <AdminSidebarHeader collapsed={collapsed} />
           <AdminSidebarSearch collapsed={collapsed} onOpen={() => setPaletteOpen(true)} />
+
+          {!collapsed && (
+            <div className="px-2 pb-1">
+              <Link
+                to="/admin/gravacao/mega-especial/08"
+                className={cn(
+                  "flex items-center gap-2 rounded-md border border-primary/20 bg-primary/10 px-2.5 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/15",
+                  currentPath.startsWith("/admin/gravacao/mega-especial") && "bg-primary/15"
+                )}
+              >
+                <Video className="h-4 w-4 shrink-0" />
+                <span className="truncate">Gravação Mega Especial</span>
+                <NovoBadge />
+              </Link>
+            </div>
+          )}
 
           {sections.map((section, idx) => {
             const isLast = idx === sections.length - 1;
