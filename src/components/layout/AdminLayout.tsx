@@ -44,6 +44,10 @@ interface AdminLayoutProps {
 export function AdminLayout({ children, pageTitle, headerRightContent }: AdminLayoutProps) {
   const { isDrawerOpen, closeDrawer, drawerView, setDrawerView } = useMobileNav();
 
+  useEffect(() => {
+    runAdminNavSelfTest();
+  }, []);
+
   return (
     <SidebarProvider defaultOpen>
       <div className="min-h-screen flex w-full bg-background">
