@@ -1,82 +1,88 @@
-# Aula 07 — Dezenas de Início (Top Inicial, Pares e Ímpares)
+# Aula 08 — Dezenas Pares (Top Inicial Par, Final Par e Geral)
 
-Estudo das **dezenas iniciais** (menor dezena de cada concurso) ao longo dos 3.007 concursos da Mega-Sena.
+Estudo das **dezenas pares** ao longo dos 3.007 concursos da Mega-Sena, no mesmo padrão da Aula 07 (rankings vertical com barra horizontal, frequencia absoluta e percentual).
 
 ## 1. Conceito
 
-Para cada concurso, considera-se apenas a **menor dezena sorteada** (posição 01 quando ordenado crescente). Sobre esse universo de 3.007 dezenas iniciais, geramos três rankings independentes:
+Para cada concurso, das 6 dezenas sorteadas extraimos as **pares**. Sobre esse universo geramos tres rankings:
 
-- **Top 10 Inicial Geral** — as 10 dezenas que mais vezes apareceram como inicial.
-- **Top 10 Inicial Pares** — filtrando apenas dezenas pares dentre as iniciais.
-- **Top 10 Inicial Ímpares** — filtrando apenas dezenas ímpares dentre as iniciais.
+- **Top 10 Inicial Par** — a menor dezena par de cada concurso (quando o concurso tem ao menos 1 par).
+- **Top 10 Final Par** — a maior dezena par de cada concurso (quando o concurso tem ao menos 1 par).
+- **Top 10 Par Geral** — todas as ocorrencias de pares em qualquer posicao do concurso (ranking bruto de frequencia, como o Top 15 da Aula 01, mas filtrando so pares).
 
-Cada item exibe **dezena, frequência absoluta e % sobre o total de concursos** (3.007).
-
-### Observação estatística (importante para o vídeo)
-A "dezena inicial" é fortemente enviesada para números baixos (probabilidade matemática). A maioria dos iniciais tende a estar entre 01 e ~15. Isso será respeitado no roteiro — não é viés do estudo, é matemática do `min` sobre 6 dezenas em [01..60]. O slide-síntese vai destacar isso.
+Cada item exibe **dezena, frequencia absoluta e % sobre o total de concursos** (3.007).
 
 ## 2. Helpers
 
-Arquivo: `src/components/gravacao/mega30anos/aula07/aula07Helpers.ts`
+Arquivo: `src/components/gravacao/mega30anos/aula08/aula08Helpers.ts`
 
 ```ts
-export type DezenaInicialFreq = {
-  dezena: number;       // 01..60
-  freq: number;         // ocorrências como inicial
-  pct: number;          // freq / totalConcursos * 100
+export type DezenaParFreq = {
+  dezena: number;   // 02, 04, 06... 60 (so pares)
+  freq: number;     // ocorrencias
+  pct: number;      // freq / totalConcursos * 100
 };
 
-dezenaInicialDe(c): número  // min das 6 dezenas
-freqInicialPorDezena(concursos): Map<dezena, freq>  // base bruta
-topInicialGeral(concursos, n=10): DezenaInicialFreq[]
-topInicialPares(concursos, n=10): DezenaInicialFreq[]
-topInicialImpares(concursos, n=10): DezenaInicialFreq[]
-```
+// Para cada concurso, retorna as dezenas pares ordenadas
+paresDoConcurso(c): number[]
 
-`pct` sempre calculado sobre `concursos.length` (total de concursos, não sobre o subconjunto par/ímpar) — assim os 3 slides são comparáveis na mesma régua.
+// Menor par do concurso (ou null se nao houver par)
+inicialParDe(c): number | null
+
+// Maior par do concurso (ou null se nao houver par)
+finalParDe(c): number | null
+
+// Mapa dezena -> ocorrencias como inicial par
+freqInicialParPorDezena(concursos): Map<number, number>
+
+// Mapa dezena -> ocorrencias como final par
+freqFinalParPorDezena(concursos): Map<number, number>
+
+// Mapa dezena -> ocorrencias em qualquer posicao (so pares)
+freqParGeralPorDezena(concursos): Map<number, number>
+
+// Rankings
+function rankFromMap(m, total, topN): DezenaParFreq[]
+topInicialPar(concursos, topN=10): DezenaParFreq[]
+topFinalPar(concursos, topN=10): DezenaParFreq[]
+topParGeral(concursos, topN=10): DezenaParFreq[]
+```
 
 ## 3. Componente compartilhado
 
-`src/components/gravacao/mega30anos/aula07/RankingDezenaInicial.tsx`
+`src/components/gravacao/mega30anos/aula08/RankingDezenaPar.tsx`
 
-Lista vertical (10 itens) — mesmo DNA visual das aulas anteriores (dourado/verde-escuro):
-
-```
-[#1] [bola 03]  ████████████████████  248x   8,25%
-[#2] [bola 05]  ██████████████████    231x   7,68%
-...
-```
-
-- Bola pintada com a cor par/ímpar conforme o slide (verde-claro p/ pares, dourado p/ ímpares, neutro p/ geral)
-- Barra horizontal proporcional ao maior valor da lista
-- Top 1 com glow
+Reutiliza o mesmo DNA visual da Aula 07 (`RankingDezenaInicial`), adaptando para dezenas pares:
+- Cor verde (#43A047) como padrao para todos os slides (afinal e tudo par)
+- Bola `DezenaBolaMega` com as dezenas pares
+- Barra horizontal proporcional ao maior valor
+- Top 1 com glow verde
 
 ## 4. Estrutura dos 5 slides
 
-Pasta: `src/components/gravacao/mega30anos/aula07/`
+Pasta: `src/components/gravacao/mega30anos/aula08/`
 
-| # | Componente | Conteúdo |
+| # | Componente | Conteudo |
 |---|---|---|
-| 1 | `Mega30CapaProvisoria` | Capa provisória "Aula 07 · Dezenas de Início" até o usuário enviar `capa-07.jpg` |
-| 2 | `SlideTopInicialGeral` | Top 10 dezenas iniciais (qualquer paridade) — ranking + freq + % |
-| 3 | `SlideTopInicialPares` | Top 10 dezenas iniciais **pares** |
-| 4 | `SlideTopInicialImpares` | Top 10 dezenas iniciais **ímpares** |
-| 5 | `SlideSinteseInicial` | Síntese: 1 jogo-exemplo de 6 dezenas começando pela top inicial geral + comentário sobre o viés matemático e como usar (ex: "fixar 03 ou 05 como menor dezena do volante") |
+| 1 | `Mega30CapaProvisoria` | Capa provisoria "Aula 08 · Dezenas Pares" ate enviar `capa-08.jpg` |
+| 2 | `SlideTopInicialPar` | Top 10 menores pares por concurso — ranking + freq + % |
+| 3 | `SlideTopFinalPar` | Top 10 maiores pares por concurso — ranking + freq + % |
+| 4 | `SlideTopParGeral` | Top 10 pares mais frequentes em qualquer posicao — ranking + freq + % |
+| 5 | `SlideSintesePares` | Top 3 de cada categoria + jogo-exemplo começando com a top inicial par e fechando com a top final par |
 
 ## 5. Registro
 
-- `src/pages/admin/gravacao/GravacaoMega30Anos.tsx`: importar slides, adicionar `"07"` ao guard, bloco `if (aulaId === "07") {...}`.
-- `src/config/adminNavConfig.ts`: adicionar `"Aula 07 — Dezenas de início"` → `/admin/gravacao/mega-especial/07`.
-- `src/components/admin/AdminCommandPalette.tsx`: entrada Aula 07.
-- `src/lib/mega30/estudosCatalog.ts`: registrar `aulaId: "07"` com título "Dezenas de Início — Top Geral, Pares e Ímpares".
+- `src/pages/admin/gravacao/GravacaoMega30Anos.tsx`: importar slides, adicionar `"08"` ao guard, bloco `if (aulaId === "08") {...}`.
+- `src/config/adminNavConfig.ts`: adicionar entrada Aula 08.
+- `src/components/admin/AdminCommandPalette.tsx`: entrada Aula 08.
 
-## 6. Pendências
+## 6. Pendencias
 
-- **Capa**: enviar `capa-07.jpg` quando pronta. Até lá, `Mega30CapaProvisoria`.
-- Confirmar subtítulo: sugiro **"Aula 07 · Dezenas de Início — Top Geral, Pares e Ímpares"**.
+- **Capa**: enviar `capa-08.jpg` quando pronta. Ate la, `Mega30CapaProvisoria`.
+- Confirmar subtitulo: sugiro **"Aula 08 · Dezenas Pares — Top Inicial, Final e Geral"**.
 
 ## 7. Fora de escopo
 
-- Sem backend, migrations ou hub público.
-- Sem slide de descrição do YouTube (mesmo padrão das aulas 02–06).
-- Usa `useMegaEspecialBase` (mesma base dos 3.006/3.007 concursos já carregados).
+- Sem backend, migrations ou hub publico.
+- Sem slide de descricao do YouTube.
+- Usa `useMegaEspecialBase`.
