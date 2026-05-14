@@ -1,12 +1,15 @@
-import type { DezenaParFreq } from "./aula08Helpers";
+import type { DezenaFinalFreq } from "./aula08Helpers";
 import DezenaBolaMega from "../DezenaBolaMega";
 
 interface Props {
-  itens: DezenaParFreq[];
+  itens: DezenaFinalFreq[];
   cor?: string;
 }
 
-export default function RankingDezenaPar({ itens, cor = "#43A047" }: Props) {
+export default function RankingDezenaFinal({
+  itens,
+  cor = "#D4AF37",
+}: Props) {
   const max = Math.max(...itens.map((i) => i.freq), 1);
 
   return (
@@ -43,8 +46,7 @@ export default function RankingDezenaPar({ itens, cor = "#43A047" }: Props) {
               <DezenaBolaMega numero={it.dezena} size="sm" />
             </div>
 
-            <div
-              className="flex-1 h-5 rounded-full relative overflow-hidden"
+            <div className="flex-1 h-5 rounded-full relative overflow-hidden"
               style={{
                 background: "rgba(0,0,0,0.45)",
                 border: "1px solid rgba(212,175,55,0.25)",
