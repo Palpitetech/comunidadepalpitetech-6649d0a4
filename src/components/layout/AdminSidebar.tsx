@@ -74,6 +74,14 @@ function NavBadge({ count, tone = "info" }: { count: number; tone?: "danger" | "
   );
 }
 
+function NovoBadge() {
+  return (
+    <span className="ml-auto inline-flex items-center justify-center rounded-full px-1.5 min-w-[1.6rem] h-[1.1rem] text-[9px] font-bold leading-none bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
+      Novo
+    </span>
+  );
+}
+
 // ---------- Leaf nav item ----------
 function NavLeaf({
   item,
@@ -95,6 +103,7 @@ function NavLeaf({
       <item.icon className="h-4 w-4 shrink-0" />
       <span className="truncate">{item.title}</span>
       {badgeCount ? <NavBadge count={badgeCount} tone={item.badgeTone} /> : null}
+      {item.isNew ? <NovoBadge /> : null}
     </Link>
   );
 
@@ -110,6 +119,7 @@ function NavLeaf({
           <TooltipContent side="right" className="font-medium flex items-center gap-2">
             {item.title}
             {badgeCount ? <NavBadge count={badgeCount} tone={item.badgeTone} /> : null}
+            {item.isNew ? <NovoBadge /> : null}
           </TooltipContent>
         </Tooltip>
       </SidebarMenuItem>
@@ -147,6 +157,7 @@ function NavGroup({
     (sum, i) => sum + (i.badge ? badges?.[i.badge] ?? 0 : 0),
     0
   );
+  const hasNewItem = section.items.some((i) => i.isNew);
 
   if (collapsed) {
     return (
@@ -165,6 +176,9 @@ function NavGroup({
                     <span>{section.label}</span>
                     {groupBadgeTotal > 0 && (
                       <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
+                    )}
+                    {hasNewItem && (
+                      <span className="absolute bottom-1 right-1 h-2 w-2 rounded-full bg-emerald-500" />
                     )}
                   </SidebarMenuButton>
                 </PopoverTrigger>
@@ -190,6 +204,7 @@ function NavGroup({
                           <item.icon className="h-4 w-4 shrink-0" />
                           <span className="truncate flex-1">{item.title}</span>
                           {count ? <NavBadge count={count} tone={item.badgeTone} /> : null}
+                          {item.isNew ? <NovoBadge /> : null}
                         </Link>
                       );
                     })}
@@ -213,6 +228,7 @@ function NavGroup({
             {groupBadgeTotal > 0 && (
               <NavBadge count={groupBadgeTotal} tone="danger" />
             )}
+            {hasNewItem && <NovoBadge />}
           </div>
           <ChevronDown className="h-3 w-3 transition-transform group-data-[state=closed]:-rotate-90" />
         </CollapsibleTrigger>

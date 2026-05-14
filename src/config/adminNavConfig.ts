@@ -42,6 +42,7 @@ export interface NavItem {
   exact?: boolean;
   badge?: BadgeKey;
   badgeTone?: "danger" | "info";
+  isNew?: boolean;
 }
 
 export interface NavSection {
@@ -50,6 +51,7 @@ export interface NavSection {
   icon?: LucideIcon;
   items: NavItem[];
   inline?: boolean;
+  isNew?: boolean;
 }
 
 export const adminNavConfig: NavSection[] = [
@@ -124,14 +126,14 @@ export const adminNavConfig: NavSection[] = [
     label: "Gravação Mega Especial",
     icon: Video,
     items: [
-      { title: "Aula 01 — Top dezenas", url: "/admin/gravacao/mega-especial/01", icon: BarChart3 },
-      { title: "Aula 02 — Top pares", url: "/admin/gravacao/mega-especial/02", icon: BarChart3 },
-      { title: "Aula 03 — Top ímpares", url: "/admin/gravacao/mega-especial/03", icon: BarChart3 },
-      { title: "Aula 04 — Top primos", url: "/admin/gravacao/mega-especial/04", icon: BarChart3 },
-      { title: "Aula 05 — Linhas quentes", url: "/admin/gravacao/mega-especial/05", icon: BarChart3 },
-      { title: "Aula 06 — Colunas quentes", url: "/admin/gravacao/mega-especial/06", icon: BarChart3 },
-      { title: "Aula 07 — Dezenas de início", url: "/admin/gravacao/mega-especial/07", icon: BarChart3 },
-      { title: "Aula 08 — Dezenas pares", url: "/admin/gravacao/mega-especial/08", icon: BarChart3 },
+      { title: "Aula 01 — Top dezenas", url: "/admin/gravacao/mega-especial/01", icon: BarChart3, isNew: true },
+      { title: "Aula 02 — Top pares", url: "/admin/gravacao/mega-especial/02", icon: BarChart3, isNew: true },
+      { title: "Aula 03 — Top ímpares", url: "/admin/gravacao/mega-especial/03", icon: BarChart3, isNew: true },
+      { title: "Aula 04 — Top primos", url: "/admin/gravacao/mega-especial/04", icon: BarChart3, isNew: true },
+      { title: "Aula 05 — Linhas quentes", url: "/admin/gravacao/mega-especial/05", icon: BarChart3, isNew: true },
+      { title: "Aula 06 — Colunas quentes", url: "/admin/gravacao/mega-especial/06", icon: BarChart3, isNew: true },
+      { title: "Aula 07 — Dezenas de início", url: "/admin/gravacao/mega-especial/07", icon: BarChart3, isNew: true },
+      { title: "Aula 08 — Dezenas pares", url: "/admin/gravacao/mega-especial/08", icon: BarChart3, isNew: true },
     ],
   },
   {

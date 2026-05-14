@@ -103,6 +103,12 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
     );
   };
 
+  const NovoBadge = () => (
+    <span className="inline-flex items-center justify-center rounded-full px-1.5 min-w-[1.6rem] h-[1.1rem] text-[9px] font-bold leading-none bg-emerald-500/15 text-emerald-600 uppercase tracking-wide">
+      Novo
+    </span>
+  );
+
   const RenderNavItem = ({ item }: { item: NavItem }) => {
     const active = isActive(item.url, item.exact);
     const badgeCount = item.badge ? badges?.[item.badge] ?? 0 : 0;
@@ -121,6 +127,7 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
         </div>
         <div className="flex items-center gap-2">
           {badgeCount > 0 && <NavBadge count={badgeCount} tone={item.badgeTone} />}
+          {item.isNew && <NovoBadge />}
           <ChevronRight className="h-4 w-4 text-muted-foreground/30" />
         </div>
       </button>
@@ -217,6 +224,7 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
                         (sum, i) => sum + (i.badge ? badges?.[i.badge] ?? 0 : 0),
                         0
                       );
+                      const hasNewItem = section.items.some((i) => i.isNew);
 
                       return (
                         <div key={section.id} className="space-y-1">
@@ -236,6 +244,7 @@ export function AdminMobileDrawer({ isOpen, onClose, view, onViewChange }: Admin
                             </div>
                             <div className="flex items-center gap-2">
                               {sectionBadgeTotal > 0 && <NavBadge count={sectionBadgeTotal} tone="danger" />}
+                              {hasNewItem && <NovoBadge />}
                               <ChevronRight className="h-4 w-4 text-muted-foreground/30" />
                             </div>
                           </button>
