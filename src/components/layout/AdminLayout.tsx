@@ -3,13 +3,36 @@
  * Gerencia a alternância entre Sidebar (Desktop) e BottomBar/Drawer (Mobile).
  * Breakpoint de transição: md (768px).
  */
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminMobileBottomBar } from "./AdminMobileBottomBar";
 import { AdminMobileDrawer } from "./AdminMobileDrawer";
 import { useMobileNav } from "@/hooks/useMobileNav";
 import { cn } from "@/lib/utils";
+import { adminNavConfig } from "@/config/adminNavConfig";
+import { toast } from "sonner";
+
+const REQUIRED_SECTIONS: { id: string; label: string }[] = [
+  { id: "gravacao-mega-especial", label: "Gravação Mega Especial" },
+];
+
+function runAdminNavSelfTest() {
+  const missing = REQUIRED_SECTIONS.filter(
+    (req) => !adminNavConfig.some((s) => s.id === req.id && (s.items?.length ?? 0) > 0)
+  );
+  if (missing.length > 0) {
+    const labels = missing.map((m) => m.label).join(", ");
+    console.error("[AdminNav SelfTest] Seção(ões) ausente(s) na árvore do menu:", labels);
+    toast.error("Menu Admin incompleto", {
+      description: `Seção ausente: ${labels}. Verifique adminNavConfig.ts.`,
+      duration: 8000,
+    });
+    return false;
+  }
+  console.info("[AdminNav SelfTest] OK — todas as seções obrigatórias presentes.");
+  return true;
+}
 
 
 interface AdminLayoutProps {
@@ -20,6 +43,10 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children, pageTitle, headerRightContent }: AdminLayoutProps) {
   const { isDrawerOpen, closeDrawer, drawerView, setDrawerView } = useMobileNav();
+
+  useEffect(() => {
+    runAdminNavSelfTest();
+  }, []);
 
   return (
     <SidebarProvider defaultOpen>
