@@ -158,6 +158,7 @@ function NavGroup({
     0
   );
   const hasNewItem = section.items.some((i) => i.isNew);
+  const shouldStartOpen = groupActive || section.id === "gravacao-mega-especial";
 
   if (collapsed) {
     return (
@@ -220,7 +221,7 @@ function NavGroup({
 
   return (
     <SidebarGroup>
-      <Collapsible defaultOpen={groupActive}>
+      <Collapsible defaultOpen={shouldStartOpen}>
         <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1.5 text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-[0.12em] hover:text-foreground transition-colors group">
           <div className="flex items-center gap-1.5">
             <GroupIcon className="h-3 w-3" />
