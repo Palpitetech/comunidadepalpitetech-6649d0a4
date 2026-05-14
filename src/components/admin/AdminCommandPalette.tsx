@@ -70,14 +70,14 @@ const ITEMS: CmdItem[] = [
   { label: "Gravação Quina", url: "/admin/gravacao/quina", icon: BarChart3, group: "Gravação" },
   { label: "Gravação Mega-Sena", url: "/admin/gravacao/megasena", icon: BarChart3, group: "Gravação" },
   { label: "Gravação Mega 30 Anos", url: "/admin/gravacao/mega-30-anos", icon: BarChart3, group: "Gravação" },
-  { label: "Mega Especial — Aula 01", url: "/admin/gravacao/mega-especial/01", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["top dezenas"] },
-  { label: "Mega Especial — Aula 02", url: "/admin/gravacao/mega-especial/02", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["top pares"] },
-  { label: "Mega Especial — Aula 03", url: "/admin/gravacao/mega-especial/03", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["top impares ímpares"] },
-  { label: "Mega Especial — Aula 04", url: "/admin/gravacao/mega-especial/04", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["top primos"] },
-  { label: "Mega Especial — Aula 05", url: "/admin/gravacao/mega-especial/05", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["linhas quentes inicio fim geral"] },
-  { label: "Mega Especial — Aula 06", url: "/admin/gravacao/mega-especial/06", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["colunas quentes inicio fim geral"] },
-  { label: "Mega Especial — Aula 07", url: "/admin/gravacao/mega-especial/07", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["dezenas inicio menor par impar"] },
-  { label: "Mega Especial — Aula 08", url: "/admin/gravacao/mega-especial/08", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["dezenas pares inicial final geral"] },
+  { label: "Mega Especial — Aula 01", url: "/admin/gravacao/mega-especial/01", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["top dezenas"], isNew: true },
+  { label: "Mega Especial — Aula 02", url: "/admin/gravacao/mega-especial/02", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["top pares"], isNew: true },
+  { label: "Mega Especial — Aula 03", url: "/admin/gravacao/mega-especial/03", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["top impares ímpares"], isNew: true },
+  { label: "Mega Especial — Aula 04", url: "/admin/gravacao/mega-especial/04", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["top primos"], isNew: true },
+  { label: "Mega Especial — Aula 05", url: "/admin/gravacao/mega-especial/05", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["linhas quentes inicio fim geral"], isNew: true },
+  { label: "Mega Especial — Aula 06", url: "/admin/gravacao/mega-especial/06", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["colunas quentes inicio fim geral"], isNew: true },
+  { label: "Mega Especial — Aula 07", url: "/admin/gravacao/mega-especial/07", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["dezenas inicio menor par impar"], isNew: true },
+  { label: "Mega Especial — Aula 08", url: "/admin/gravacao/mega-especial/08", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["dezenas pares inicial final geral"], isNew: true },
 
   { label: "Métricas", url: "/admin/metricas", icon: BarChart2, group: "Sistema" },
   { label: "Integrações", url: "/admin/integracoes", icon: Plug, group: "Sistema" },
@@ -132,6 +132,11 @@ export function AdminCommandPalette({ open, onOpenChange }: AdminCommandPaletteP
                 >
                   <item.icon className="mr-2 h-4 w-4" />
                   <span>{item.label}</span>
+                  {item.isNew && (
+                    <span className="ml-auto inline-flex items-center justify-center rounded-full px-1.5 min-w-[1.6rem] h-[1.1rem] text-[9px] font-bold leading-none bg-emerald-500/15 text-emerald-600 uppercase tracking-wide">
+                      Novo
+                    </span>
+                  )}
                 </CommandItem>
               ))}
             </CommandGroup>
