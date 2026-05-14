@@ -1,6 +1,10 @@
 import { useMemo } from "react";
 import type { ConcursoMega } from "@/lib/megaEspecialEngine";
-import { topInicialPar, topFinalPar, topParGeral } from "./aula08Helpers";
+import {
+  topFinalGeral,
+  topFinalPares,
+  topFinalImpares,
+} from "./aula08Helpers";
 import DezenaBolaMega from "../DezenaBolaMega";
 import Mega30Header from "../Mega30Header";
 
@@ -8,30 +12,27 @@ interface Props {
   concursos: ConcursoMega[];
 }
 
-export default function SlideSintesePares({ concursos }: Props) {
+export default function SlideSinteseFinal({ concursos }: Props) {
   const sintese = useMemo(() => {
-    return {
-      inicial: topInicialPar(concursos, 3),
-      final: topFinalPar(concursos, 3),
-      geral: topParGeral(concursos, 3),
-    };
+    const geral = topFinalGeral(concursos, 3);
+    const par = topFinalPares(concursos, 3);
+    const impar = topFinalImpares(concursos, 3);
+    return { geral, par, impar };
   }, [concursos]);
-
-  const fmt = (n: number) => String(n).padStart(2, "0");
 
   return (
     <div className="w-full h-full flex flex-col pt-32 pb-6 px-6">
       <Mega30Header
         aula={8}
-        estudoNome="Síntese — Dezenas Pares"
-        tipoAnalise="Top 3 inicial, final e geral para o seu volante"
+        estudoNome="Síntese — Dezenas de Final"
+        tipoAnalise="Top 3 de cada categoria para a maior dezena do volante (6ª bola)"
       />
 
       <div className="flex flex-col items-center gap-8 max-w-[1280px] mx-auto w-full mt-2 flex-1 justify-center">
         {[
-          { label: "Inicial", itens: sintese.inicial, cor: "#43A047" },
-          { label: "Final", itens: sintese.final, cor: "#66BB6A" },
           { label: "Geral", itens: sintese.geral, cor: "#D4AF37" },
+          { label: "Par", itens: sintese.par, cor: "#43A047" },
+          { label: "Ímpar", itens: sintese.impar, cor: "#E53935" },
         ].map((cat) => (
           <div
             key={cat.label}
@@ -116,12 +117,19 @@ export default function SlideSintesePares({ concursos }: Props) {
             Estratégia
           </p>
           <p className="text-white/85 text-base md:text-lg leading-relaxed">
-            Comece o seu volante de pares pela{" "}
-            <strong style={{ color: "#A5D6A7" }}>{fmt(sintese.inicial[0].dezena)}</strong>,
-            feche pelo topo com a{" "}
-            <strong style={{ color: "#C5E1A5" }}>{fmt(sintese.final[0].dezena)}</strong>{" "}
-            e reforce com a par mais sorteada de todas, a{" "}
-            <strong style={{ color: "#F5E6B3" }}>{fmt(sintese.geral[0].dezena)}</strong>.
+            Fixe a{" "}
+            <strong style={{ color: "#F5E6B3" }}>
+              {String(sintese.geral[0].dezena).padStart(2, "0")}
+            </strong>{" "}
+            como maior dezena do seu volante. Se quiser fechar com par, prefira a{" "}
+            <strong style={{ color: "#A5D6A7" }}>
+              {String(sintese.par[0].dezena).padStart(2, "0")}
+            </strong>
+            . Se preferir ímpar, escolha a{" "}
+            <strong style={{ color: "#EF9A9A" }}>
+              {String(sintese.impar[0].dezena).padStart(2, "0")}
+            </strong>
+            .
           </p>
         </div>
       </div>

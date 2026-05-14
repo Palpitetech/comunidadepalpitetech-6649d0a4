@@ -39,10 +39,10 @@ import SlideTopInicialGeral from "@/components/gravacao/mega30anos/aula07/SlideT
 import SlideTopInicialPares from "@/components/gravacao/mega30anos/aula07/SlideTopInicialPares";
 import SlideTopInicialImpares from "@/components/gravacao/mega30anos/aula07/SlideTopInicialImpares";
 import SlideSinteseInicial from "@/components/gravacao/mega30anos/aula07/SlideSinteseInicial";
-import SlideTopInicialPar from "@/components/gravacao/mega30anos/aula08/SlideTopInicialPar";
-import SlideTopFinalPar from "@/components/gravacao/mega30anos/aula08/SlideTopFinalPar";
-import SlideTopParGeral from "@/components/gravacao/mega30anos/aula08/SlideTopParGeral";
-import SlideSintesePares from "@/components/gravacao/mega30anos/aula08/SlideSintesePares";
+import SlideTopFinalGeral from "@/components/gravacao/mega30anos/aula08/SlideTopFinalGeral";
+import SlideTopFinalPares from "@/components/gravacao/mega30anos/aula08/SlideTopFinalPares";
+import SlideTopFinalImpares from "@/components/gravacao/mega30anos/aula08/SlideTopFinalImpares";
+import SlideSinteseFinal from "@/components/gravacao/mega30anos/aula08/SlideSinteseFinal";
 import Mega30CapaProvisoria from "@/components/gravacao/mega30anos/Mega30CapaProvisoria";
 import capa02 from "@/assets/gravacao/megasena-30anos/capas/capa-02.jpg";
 import capa03 from "@/assets/gravacao/megasena-30anos/capas/capa-03.jpg";
@@ -235,10 +235,10 @@ export default function GravacaoMega30Anos() {
     return (
       <Mega30Shell capaIndices={[0]}>
         <Mega30Capa src={capa08} alt="Aula 08 — Dezenas Finais" />
-        <SlideTopInicialPar concursos={concursos} />
-        <SlideTopFinalPar concursos={concursos} />
-        <SlideTopParGeral concursos={concursos} />
-        <SlideSintesePares concursos={concursos} />
+        <SlideTopFinalGeral concursos={concursos} />
+        <SlideTopFinalPares concursos={concursos} />
+        <SlideTopFinalImpares concursos={concursos} />
+        <SlideSinteseFinal concursos={concursos} />
       </Mega30Shell>
     );
   }
