@@ -234,11 +234,7 @@ export default function GravacaoMega30Anos() {
   if (aulaId === "08") {
     return (
       <Mega30Shell capaIndices={[0]}>
-        <Mega30CapaProvisoria
-          aula={8}
-          titulo="Dezenas Pares"
-          subtitulo="Top Inicial, Final e Geral"
-        />
+        <Mega30Capa src={capa08} alt="Aula 08 — Dezenas Finais" />
         <SlideTopInicialPar concursos={concursos} />
         <SlideTopFinalPar concursos={concursos} />
         <SlideTopParGeral concursos={concursos} />
