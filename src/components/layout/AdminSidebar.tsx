@@ -44,6 +44,7 @@ import {
   Zap,
   ArrowLeft,
   ChevronsRight,
+  Video,
   type LucideIcon,
 } from "lucide-react";
 import { 
