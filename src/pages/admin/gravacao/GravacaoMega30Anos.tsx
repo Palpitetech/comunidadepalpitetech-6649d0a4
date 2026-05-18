@@ -251,6 +251,21 @@ export default function GravacaoMega30Anos() {
     );
   }
 
+  if (aulaId === "09") {
+    return (
+      <Mega30Shell capaIndices={[0, 1, 2, 3, 4, 5, 6, 7]}>
+        <Mega30Capa src={aula09Slide01} alt="Aula 09 — Slide 01" />
+        <Mega30Capa src={aula09Slide02} alt="Aula 09 — Slide 02" />
+        <Mega30Capa src={aula09Slide03} alt="Aula 09 — Slide 03" />
+        <Mega30Capa src={aula09Slide04} alt="Aula 09 — Slide 04" />
+        <Mega30Capa src={aula09Slide05} alt="Aula 09 — Slide 05" />
+        <Mega30Capa src={aula09Slide06} alt="Aula 09 — Slide 06" />
+        <Mega30Capa src={aula09Slide07} alt="Aula 09 — Slide 07" />
+        <Mega30Capa src={aula09Slide08} alt="Aula 09 — Slide 08" />
+      </Mega30Shell>
+    );
+  }
+
   return (
     <Mega30Shell capaIndices={[0]}>
       <Mega30Capa src={capa01} alt="Aula 01 — Top dezenas nos 30 anos" />
