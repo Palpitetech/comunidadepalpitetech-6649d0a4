@@ -52,7 +52,7 @@ export function AdminLayout({ children, pageTitle, headerRightContent }: AdminLa
     <SidebarProvider defaultOpen>
       <div className="min-h-screen flex w-full bg-background">
         {/* Desktop Sidebar */}
-        <div className="hidden md:flex">
+        <div className="hidden md:flex sticky top-0 h-screen">
           <AdminSidebar />
         </div>
 
