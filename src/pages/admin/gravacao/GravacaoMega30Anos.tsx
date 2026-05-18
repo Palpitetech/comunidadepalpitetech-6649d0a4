@@ -51,6 +51,14 @@ import capa05 from "@/assets/gravacao/megasena-30anos/capas/capa-05.jpg";
 import capa06 from "@/assets/gravacao/megasena-30anos/capas/capa-06.jpg";
 import capa07 from "@/assets/gravacao/megasena-30anos/capas/capa-07.jpg";
 import capa08 from "@/assets/gravacao/megasena-30anos/capas/capa-08.jpg";
+import aula09Slide01 from "@/assets/gravacao/megasena-30anos/aula09/slide-01.jpg";
+import aula09Slide02 from "@/assets/gravacao/megasena-30anos/aula09/slide-02.jpg";
+import aula09Slide03 from "@/assets/gravacao/megasena-30anos/aula09/slide-03.jpg";
+import aula09Slide04 from "@/assets/gravacao/megasena-30anos/aula09/slide-04.jpg";
+import aula09Slide05 from "@/assets/gravacao/megasena-30anos/aula09/slide-05.jpg";
+import aula09Slide06 from "@/assets/gravacao/megasena-30anos/aula09/slide-06.jpg";
+import aula09Slide07 from "@/assets/gravacao/megasena-30anos/aula09/slide-07.jpg";
+import aula09Slide08 from "@/assets/gravacao/megasena-30anos/aula09/slide-08.jpg";
 import SlideDescricaoYoutube from "@/components/gravacao/mega30anos/SlideDescricaoYoutube";
 import { useMegaEspecialBase } from "@/hooks/useMegaEspecialBase";
 import { topDezenasGeral } from "@/lib/megaEspecialEngine";
@@ -108,7 +116,7 @@ export default function GravacaoMega30Anos() {
   }, [concursos]);
 
   // Aulas ainda não produzidas: placeholder
-  if (aulaId !== "01" && aulaId !== "02" && aulaId !== "03" && aulaId !== "04" && aulaId !== "05" && aulaId !== "06" && aulaId !== "07" && aulaId !== "08") {
+  if (aulaId !== "01" && aulaId !== "02" && aulaId !== "03" && aulaId !== "04" && aulaId !== "05" && aulaId !== "06" && aulaId !== "07" && aulaId !== "08" && aulaId !== "09") {
     return (
       <div
         className="fixed inset-0 flex items-center justify-center text-center px-8"
@@ -239,6 +247,21 @@ export default function GravacaoMega30Anos() {
         <SlideTopFinalPares concursos={concursos} />
         <SlideTopFinalImpares concursos={concursos} />
         <SlideSinteseFinal concursos={concursos} />
+      </Mega30Shell>
+    );
+  }
+
+  if (aulaId === "09") {
+    return (
+      <Mega30Shell capaIndices={[0, 1, 2, 3, 4, 5, 6, 7]}>
+        <Mega30Capa src={aula09Slide01} alt="Aula 09 — Slide 01" />
+        <Mega30Capa src={aula09Slide02} alt="Aula 09 — Slide 02" />
+        <Mega30Capa src={aula09Slide03} alt="Aula 09 — Slide 03" />
+        <Mega30Capa src={aula09Slide04} alt="Aula 09 — Slide 04" />
+        <Mega30Capa src={aula09Slide05} alt="Aula 09 — Slide 05" />
+        <Mega30Capa src={aula09Slide06} alt="Aula 09 — Slide 06" />
+        <Mega30Capa src={aula09Slide07} alt="Aula 09 — Slide 07" />
+        <Mega30Capa src={aula09Slide08} alt="Aula 09 — Slide 08" />
       </Mega30Shell>
     );
   }
