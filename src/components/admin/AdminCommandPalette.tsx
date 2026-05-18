@@ -78,6 +78,7 @@ const ITEMS: CmdItem[] = [
   { label: "Mega Especial — Aula 06", url: "/admin/gravacao/mega-especial/06", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["colunas quentes inicio fim geral"], isNew: true },
   { label: "Mega Especial — Aula 07", url: "/admin/gravacao/mega-especial/07", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["dezenas inicio menor par impar"], isNew: true },
   { label: "Mega Especial — Aula 08", url: "/admin/gravacao/mega-especial/08", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["dezenas pares inicial final geral"], isNew: true },
+  { label: "Mega Especial — Aula 09", url: "/admin/gravacao/mega-especial/09", icon: BarChart3, group: "Gravação Mega Especial", keywords: ["aula 09 slides imagens"], isNew: true },
 
   { label: "Métricas", url: "/admin/metricas", icon: BarChart2, group: "Sistema" },
   { label: "Integrações", url: "/admin/integracoes", icon: Plug, group: "Sistema" },
