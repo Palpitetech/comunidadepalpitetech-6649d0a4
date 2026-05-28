@@ -119,6 +119,7 @@ import GravacaoMegasena from "./pages/admin/gravacao/GravacaoMegasena";
 import GravacaoMega30Anos from "./pages/admin/gravacao/GravacaoMega30Anos";
 import GravacaoEstudos from "./pages/admin/gravacao/GravacaoEstudos";
 import PosicoesFinaisMegaSena from "./pages/admin/gravacao/estudos/PosicoesFinaisMegaSena";
+import BolaoLotofacil from "./pages/admin/gravacao/estudos/BolaoLotofacil";
 import SmartLinkRedirect from "./pages/SmartLinkRedirect";
 import GerarNovoPix from "./pages/GerarNovoPix";
 import PerfilDados from "./pages/PerfilDados";
@@ -306,6 +307,7 @@ const App = () => (
                 <Route path="/mega-30/estudo/:id" element={<AdminRoute><EstudoMega30 /></AdminRoute>} />
                 <Route path="/admin/gravacao/estudos/:loteria" element={<AdminRoute><GravacaoEstudos /></AdminRoute>} />
                 <Route path="/admin/gravacao-estudo/megasena/posicoes-finais" element={<AdminRoute><PosicoesFinaisMegaSena /></AdminRoute>} />
+                <Route path="/admin/gravacao-estudo/lotofacil/bolao" element={<AdminRoute><BolaoLotofacil /></AdminRoute>} />
 
                 <Route path="/admin/chat" element={<AdminRoute><ChatAdmin /></AdminRoute>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
