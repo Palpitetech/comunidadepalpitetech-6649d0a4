@@ -402,14 +402,14 @@ function PosicaoBloco({ posicao, top }: { posicao: number; top: { dezena: number
   );
 }
 
-function Slide10({ p1, p2, p24, p25 }: any) {
+function Slide10({ p1, p2, p14, p15 }: any) {
   return (
-    <SlideTitle icon={Crosshair} kicker="Top 2 por Posição · 12 concursos" title="Posições 01 · 02 · 24 · 25">
+    <SlideTitle icon={Crosshair} kicker="Top 2 por Posição · 12 concursos" title="Posições 01 · 02 · 14 · 15">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-4">
         <PosicaoBloco posicao={1} top={p1} />
         <PosicaoBloco posicao={2} top={p2} />
-        <PosicaoBloco posicao={24} top={p24} />
-        <PosicaoBloco posicao={25} top={p25} />
+        <PosicaoBloco posicao={14} top={p14} />
+        <PosicaoBloco posicao={15} top={p15} />
       </div>
       <p className="text-base text-white/55 mt-4 tracking-wider">
         Estudo baseado nos últimos 12 concursos da Lotofácil
@@ -437,8 +437,8 @@ export default function BolaoLotofacil() {
       duplasAusentes,
       p1: calcTopPosicao(concursos, 1),
       p2: calcTopPosicao(concursos, 2),
-      p24: calcTopPosicao(concursos, 14),
-      p25: calcTopPosicao(concursos, 15),
+      p14: calcTopPosicao(concursos, 14),
+      p15: calcTopPosicao(concursos, 15),
     };
   }, [concursos]);
 
@@ -469,7 +469,7 @@ export default function BolaoLotofacil() {
       <Slide07 salto={stats.salto} />
       <Slide08 duplas={stats.duplasJuntas} />
       <Slide09 ausentes={stats.duplasAusentes} />
-      <Slide10 p1={stats.p1} p2={stats.p2} p24={stats.p24} p25={stats.p25} />
+      <Slide10 p1={stats.p1} p2={stats.p2} p14={stats.p14} p15={stats.p15} />
     </BolaoLotofacilShell>
   );
 }
