@@ -469,7 +469,7 @@ export default function BolaoLotofacil() {
       <Slide07 salto={stats.salto} />
       <Slide08 duplas={stats.duplasJuntas} />
       <Slide09 ausentes={stats.duplasAusentes} />
-      <Slide10 p1={stats.p1} p2={stats.p2} p24={stats.p24} p25={stats.p25} />
+      <Slide10 p1={stats.p1} p2={stats.p2} p14={stats.p14} p15={stats.p15} />
     </BolaoLotofacilShell>
   );
 }
