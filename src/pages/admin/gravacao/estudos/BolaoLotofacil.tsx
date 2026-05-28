@@ -508,7 +508,7 @@ export default function BolaoLotofacil() {
       <Slide04 />
       <Slide05 rank={stats.ocorrencias.slice().sort((a, b) => b.qtd - a.qtd)} />
       <Slide06 rank={stats.ocorrencias} />
-      <Slide07 salto={stats.salto} />
+      <Slide07 concursos={concursos!} />
       <Slide08 duplas={stats.duplasJuntas} />
       <Slide09 ausentes={stats.duplasAusentes} />
       <Slide10 p1={stats.p1} p2={stats.p2} p14={stats.p14} p15={stats.p15} />
