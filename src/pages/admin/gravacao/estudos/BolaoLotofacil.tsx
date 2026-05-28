@@ -437,8 +437,8 @@ export default function BolaoLotofacil() {
       duplasAusentes,
       p1: calcTopPosicao(concursos, 1),
       p2: calcTopPosicao(concursos, 2),
-      p24: calcTopPosicao(concursos, 14),
-      p25: calcTopPosicao(concursos, 15),
+      p14: calcTopPosicao(concursos, 14),
+      p15: calcTopPosicao(concursos, 15),
     };
   }, [concursos]);
 
