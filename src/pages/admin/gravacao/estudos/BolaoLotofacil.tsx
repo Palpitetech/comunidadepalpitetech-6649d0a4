@@ -402,14 +402,14 @@ function PosicaoBloco({ posicao, top }: { posicao: number; top: { dezena: number
   );
 }
 
-function Slide10({ p1, p2, p24, p25 }: any) {
+function Slide10({ p1, p2, p14, p15 }: any) {
   return (
-    <SlideTitle icon={Crosshair} kicker="Top 2 por Posição · 12 concursos" title="Posições 01 · 02 · 24 · 25">
+    <SlideTitle icon={Crosshair} kicker="Top 2 por Posição · 12 concursos" title="Posições 01 · 02 · 14 · 15">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-4">
         <PosicaoBloco posicao={1} top={p1} />
         <PosicaoBloco posicao={2} top={p2} />
-        <PosicaoBloco posicao={24} top={p24} />
-        <PosicaoBloco posicao={25} top={p25} />
+        <PosicaoBloco posicao={14} top={p14} />
+        <PosicaoBloco posicao={15} top={p15} />
       </div>
       <p className="text-base text-white/55 mt-4 tracking-wider">
         Estudo baseado nos últimos 12 concursos da Lotofácil
