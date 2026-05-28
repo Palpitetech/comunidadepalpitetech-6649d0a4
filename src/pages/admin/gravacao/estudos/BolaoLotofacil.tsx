@@ -329,18 +329,60 @@ function Slide06({ rank }: { rank: { dezena: number; qtd: number }[] }) {
   );
 }
 
-function Slide07({ salto }: { salto: { dezena: number; qtd: number }[] }) {
-  const top = salto.filter((s) => s.qtd > 0).slice(0, 5);
+function ConcursoMiniCard({ concurso, dezenas, index }: { concurso: number; dezenas: number[]; index: number }) {
+  const set = new Set(dezenas);
   return (
-    <SlideTitle icon={Zap} kicker="Padrão de Tendência" title="Comportamento de Salto Triplo">
-      <p className="text-lg text-white/65 max-w-3xl -mt-2">
-        Dezenas que apareceram em <strong className="text-[#DDD6FE]">3 sorteios consecutivos</strong> dentro dos últimos 12.
+    <div
+      className="rounded-xl p-3 backdrop-blur-sm flex flex-col items-center gap-2"
+      style={{
+        background: "rgba(20, 8, 42, 0.7)",
+        border: "1.5px solid rgba(167, 139, 250, 0.35)",
+        boxShadow: "0 0 16px rgba(167, 139, 250, 0.18)",
+        animation: `fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) ${index * 0.05}s both`,
+      }}
+    >
+      <p className="text-[10px] tracking-[0.3em] uppercase font-black" style={{ color: "#DDD6FE" }}>
+        Concurso {concurso}
       </p>
-      {top.length === 0 ? (
-        <p className="text-white/50 text-xl mt-6">Nenhum salto triplo detectado na janela atual.</p>
-      ) : (
-        <SlideDezenasList items={top} label="salto(s)" />
-      )}
+      <div className="grid grid-cols-5 gap-1">
+        {Array.from({ length: 25 }, (_, i) => i + 1).map((n) => {
+          const hit = set.has(n);
+          return (
+            <div
+              key={n}
+              className="rounded-full flex items-center justify-center font-black"
+              style={{
+                width: 26,
+                height: 26,
+                fontSize: 11,
+                fontFeatureSettings: '"tnum"',
+                background: hit
+                  ? "linear-gradient(160deg, #DDD6FE 0%, #A78BFA 60%, #7C3AED 100%)"
+                  : "rgba(255,255,255,0.04)",
+                color: hit ? "#14082A" : "rgba(255,255,255,0.25)",
+                border: hit ? "1px solid rgba(255,255,255,0.4)" : "1px solid rgba(167,139,250,0.15)",
+                boxShadow: hit ? "0 0 8px rgba(167,139,250,0.6)" : "none",
+              }}
+            >
+              {String(n).padStart(2, "0")}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function Slide07({ concursos }: { concursos: Concurso[] }) {
+  const ord = [...concursos].sort((a, b) => b.concurso - a.concurso).slice(0, 12);
+  return (
+    <SlideTitle icon={Zap} kicker="Histórico · Últimos 12 concursos" title="Dezenas sorteadas (grid 5×5)">
+      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-4">
+        {ord.map((c, i) => (
+          <ConcursoMiniCard key={c.concurso} concurso={c.concurso} dezenas={c.dezenas} index={i} />
+        ))}
+      </div>
+      <style>{`@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }`}</style>
     </SlideTitle>
   );
 }
@@ -466,7 +508,7 @@ export default function BolaoLotofacil() {
       <Slide04 />
       <Slide05 rank={stats.ocorrencias.slice().sort((a, b) => b.qtd - a.qtd)} />
       <Slide06 rank={stats.ocorrencias} />
-      <Slide07 salto={stats.salto} />
+      <Slide07 concursos={concursos!} />
       <Slide08 duplas={stats.duplasJuntas} />
       <Slide09 ausentes={stats.duplasAusentes} />
       <Slide10 p1={stats.p1} p2={stats.p2} p14={stats.p14} p15={stats.p15} />
