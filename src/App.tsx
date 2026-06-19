@@ -10,6 +10,7 @@ import { AdminRoute } from "@/components/auth/AdminRoute";
 import { GatedPage } from "@/components/shared/GatedPage";
 import { UpsellProvider } from "@/contexts/UpsellContext";
 import { CodeProtection } from "@/components/shared/CodeProtection";
+import { V3MaintenanceDialog } from "@/components/shared/V3MaintenanceDialog";
 import { PWAUpdateHandler } from "@/components/pwa/PWAUpdateHandler";
 import { useUTM } from "@/hooks/useUTM";
 import { useForceUpdate } from "@/hooks/useForceUpdate";
@@ -166,6 +167,7 @@ const App = () => (
               <ForceUpdateWatcher />
               <CodeProtection />
               <PWAUpdateHandler />
+              <V3MaintenanceDialog />
               <Toaster />
               <Sonner />
               <LowercaseRedirect />
