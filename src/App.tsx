@@ -167,6 +167,7 @@ const App = () => (
               <ForceUpdateWatcher />
               <CodeProtection />
               <PWAUpdateHandler />
+              <V3MaintenanceDialog />
               <Toaster />
               <Sonner />
               <LowercaseRedirect />
